@@ -15,6 +15,15 @@ These are static frames; existing combat effects provide their movement.
 
 ## Painted player outfits
 
+The new Reaver greatsword reference set in
+`assets/animations/reaver/greatsword-v2/` and the four-class art review pack
+in `art/webp-pack-2026-09-19/` were generated with the built-in OpenAI
+image-generation tool from project-owned painted references. PNG sources,
+exact prompts, WebP exports and approval boundaries are recorded in the pack.
+The owner approved the Reaver greatsword attack order on 2026-09-19.
+These are project-owned AI-generated assets; no third-party license is claimed.
+Only the Reaver binding is activated; the other review-pack sets remain drafts.
+
 Combat technique artwork in `art/painted-combat-2026-09-07/animation-groups/`
 was generated with built-in OpenAI imagegen from the existing project-owned
 painted references for all sixteen outfits. The 144 shield-guard, parry and

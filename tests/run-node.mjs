@@ -1101,4 +1101,10 @@ try {
   zoomExtra++;
   console.error('FAIL The dev sweep fixes (seat tiers, co-op snapshot, post-fight save):', error);
 }
+try {
+  await import('./equipment-animation.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Equipment animation references:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

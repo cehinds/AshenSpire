@@ -1,0 +1,1177 @@
+{
+  "schema": "ashenspire/art-review/v1",
+  "generator": "built-in image_gen",
+  "frameSize": [
+    512,
+    512
+  ],
+  "groups": [
+    {
+      "id": "reaver__greatsword-twoHand",
+      "classId": "reaver",
+      "title": "Greatsword \u00b7 Two-handed",
+      "right": "greatsword",
+      "left": null,
+      "grip": "twoHand",
+      "status": "review",
+      "portrait": "animations/reaver/greatsword-twoHand/PORTRAIT.webp",
+      "atlas": "animations/reaver/greatsword-twoHand/atlas.webp",
+      "preview": "animations/reaver/greatsword-twoHand/attack-preview.webp",
+      "sheet": "animations/reaver/greatsword-twoHand/labeled-sheet.webp",
+      "frames": [
+        {
+          "id": "STANCE-READY",
+          "label": "Basic ready stance",
+          "file": "animations/reaver/greatsword-twoHand/STANCE-READY.webp",
+          "sourceBox": [
+            54,
+            70,
+            316,
+            358
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-01",
+          "label": "Anticipation",
+          "file": "animations/reaver/greatsword-twoHand/ATK-01.webp",
+          "sourceBox": [
+            392,
+            146,
+            660,
+            358
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-02",
+          "label": "Windup",
+          "file": "animations/reaver/greatsword-twoHand/ATK-02.webp",
+          "sourceBox": [
+            782,
+            76,
+            1026,
+            360
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-03",
+          "label": "Maximum windup",
+          "file": "animations/reaver/greatsword-twoHand/ATK-03.webp",
+          "sourceBox": [
+            1154,
+            48,
+            1418,
+            358
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-04",
+          "label": "Release",
+          "file": "animations/reaver/greatsword-twoHand/ATK-04.webp",
+          "sourceBox": [
+            50,
+            404,
+            298,
+            704
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-05",
+          "label": "Impact",
+          "file": "animations/reaver/greatsword-twoHand/ATK-05.webp",
+          "sourceBox": [
+            396,
+            484,
+            724,
+            702
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-06",
+          "label": "Follow-through",
+          "file": "animations/reaver/greatsword-twoHand/ATK-06.webp",
+          "sourceBox": [
+            772,
+            508,
+            1116,
+            704
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-07",
+          "label": "Recovery",
+          "file": "animations/reaver/greatsword-twoHand/ATK-07.webp",
+          "sourceBox": [
+            1166,
+            402,
+            1402,
+            704
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "DEFEND",
+          "label": "Braced defense",
+          "file": "animations/reaver/greatsword-twoHand/DEFEND.webp",
+          "sourceBox": [
+            58,
+            744,
+            302,
+            1028
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "HURT",
+          "label": "Hit recoil",
+          "file": "animations/reaver/greatsword-twoHand/HURT.webp",
+          "sourceBox": [
+            422,
+            752,
+            674,
+            1028
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "CAST",
+          "label": "Spell cast",
+          "file": "animations/reaver/greatsword-twoHand/CAST.webp",
+          "sourceBox": [
+            786,
+            758,
+            1054,
+            1034
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "STANCE-AGGRESSIVE",
+          "label": "Aggressive ready stance",
+          "file": "animations/reaver/greatsword-twoHand/STANCE-AGGRESSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            14,
+            64,
+            1034,
+            709
+          ]
+        },
+        {
+          "id": "STANCE-DEFENSIVE",
+          "label": "Defensive ready stance",
+          "file": "animations/reaver/greatsword-twoHand/STANCE-DEFENSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            913,
+            8,
+            1430,
+            712
+          ]
+        },
+        {
+          "id": "BUFF",
+          "label": "Self enhancement",
+          "file": "animations/reaver/greatsword-twoHand/BUFF.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            1502,
+            150,
+            2096,
+            698
+          ]
+        }
+      ],
+      "notes": [
+        "Generated first-pass art; needs visual review for hand allocation, pose continuity and anatomy before game integration."
+      ],
+      "rightGroup": "greatsword",
+      "leftGroup": null,
+      "groupTitle": "Greatsword + Empty \u00b7 Two-handed",
+      "attackSequence": [
+        "STANCE-READY",
+        "ATK-07",
+        "ATK-04",
+        "ATK-02",
+        "ATK-03",
+        "ATK-05",
+        "ATK-01",
+        "ATK-04",
+        "STANCE-READY"
+      ]
+    },
+    {
+      "id": "rogue__dagger-parryDagger",
+      "classId": "rogue",
+      "title": "Dagger + Parrying Dagger",
+      "right": "dagger",
+      "left": "parryDagger",
+      "grip": "oneHand",
+      "status": "review",
+      "portrait": "animations/rogue/dagger-parryDagger/PORTRAIT.webp",
+      "atlas": "animations/rogue/dagger-parryDagger/atlas.webp",
+      "preview": "animations/rogue/dagger-parryDagger/attack-preview.webp",
+      "sheet": "animations/rogue/dagger-parryDagger/labeled-sheet.webp",
+      "frames": [
+        {
+          "id": "STANCE-READY",
+          "label": "Basic ready stance",
+          "file": "animations/rogue/dagger-parryDagger/STANCE-READY.webp",
+          "sourceBox": [
+            38,
+            34,
+            294,
+            362
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-01",
+          "label": "Anticipation",
+          "file": "animations/rogue/dagger-parryDagger/ATK-01.webp",
+          "sourceBox": [
+            392,
+            60,
+            678,
+            364
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-02",
+          "label": "Windup",
+          "file": "animations/rogue/dagger-parryDagger/ATK-02.webp",
+          "sourceBox": [
+            742,
+            74,
+            1060,
+            364
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-03",
+          "label": "Maximum windup",
+          "file": "animations/rogue/dagger-parryDagger/ATK-03.webp",
+          "sourceBox": [
+            1124,
+            26,
+            1430,
+            364
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-04",
+          "label": "Release",
+          "file": "animations/rogue/dagger-parryDagger/ATK-04.webp",
+          "sourceBox": [
+            22,
+            408,
+            414,
+            702
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-05",
+          "label": "Impact",
+          "file": "animations/rogue/dagger-parryDagger/ATK-05.webp",
+          "sourceBox": [
+            374,
+            428,
+            840,
+            702
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-06",
+          "label": "Follow-through",
+          "file": "animations/rogue/dagger-parryDagger/ATK-06.webp",
+          "sourceBox": [
+            760,
+            418,
+            1164,
+            704
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-07",
+          "label": "Recovery",
+          "file": "animations/rogue/dagger-parryDagger/ATK-07.webp",
+          "sourceBox": [
+            1146,
+            408,
+            1420,
+            706
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "DEFEND",
+          "label": "Braced defense",
+          "file": "animations/rogue/dagger-parryDagger/DEFEND.webp",
+          "sourceBox": [
+            26,
+            734,
+            306,
+            1054
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "HURT",
+          "label": "Hit recoil",
+          "file": "animations/rogue/dagger-parryDagger/HURT.webp",
+          "sourceBox": [
+            394,
+            714,
+            694,
+            1056
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "CAST",
+          "label": "Spell cast",
+          "file": "animations/rogue/dagger-parryDagger/CAST.webp",
+          "sourceBox": [
+            752,
+            702,
+            1036,
+            1064
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "STANCE-AGGRESSIVE",
+          "label": "Aggressive ready stance",
+          "file": "animations/rogue/dagger-parryDagger/STANCE-AGGRESSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            62,
+            144,
+            759,
+            688
+          ]
+        },
+        {
+          "id": "STANCE-DEFENSIVE",
+          "label": "Defensive ready stance",
+          "file": "animations/rogue/dagger-parryDagger/STANCE-DEFENSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            848,
+            29,
+            1376,
+            688
+          ]
+        },
+        {
+          "id": "BUFF",
+          "label": "Self enhancement",
+          "file": "animations/rogue/dagger-parryDagger/BUFF.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            1590,
+            20,
+            2110,
+            690
+          ]
+        }
+      ],
+      "notes": [
+        "Generated first-pass art; needs visual review for hand allocation, pose continuity and anatomy before game integration."
+      ],
+      "rightGroup": "dagger",
+      "leftGroup": "dagger",
+      "groupTitle": "Dagger / parrying blade + Dagger / parrying blade \u00b7 One hand each"
+    },
+    {
+      "id": "starseer__ashStaff-empty",
+      "classId": "starseer",
+      "title": "Ash Staff + Empty hand",
+      "right": "ashStaff",
+      "left": null,
+      "grip": "oneHand",
+      "status": "review",
+      "portrait": "animations/starseer/ashStaff-empty/PORTRAIT.webp",
+      "atlas": "animations/starseer/ashStaff-empty/atlas.webp",
+      "preview": "animations/starseer/ashStaff-empty/attack-preview.webp",
+      "sheet": "animations/starseer/ashStaff-empty/labeled-sheet.webp",
+      "frames": [
+        {
+          "id": "STANCE-READY",
+          "label": "Basic ready stance",
+          "file": "animations/starseer/ashStaff-empty/STANCE-READY.webp",
+          "sourceBox": [
+            92,
+            66,
+            272,
+            370
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-01",
+          "label": "Anticipation",
+          "file": "animations/starseer/ashStaff-empty/ATK-01.webp",
+          "sourceBox": [
+            434,
+            112,
+            660,
+            366
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-02",
+          "label": "Windup",
+          "file": "animations/starseer/ashStaff-empty/ATK-02.webp",
+          "sourceBox": [
+            774,
+            114,
+            1042,
+            370
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-03",
+          "label": "Maximum windup",
+          "file": "animations/starseer/ashStaff-empty/ATK-03.webp",
+          "sourceBox": [
+            1150,
+            48,
+            1390,
+            372
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-04",
+          "label": "Release",
+          "file": "animations/starseer/ashStaff-empty/ATK-04.webp",
+          "sourceBox": [
+            40,
+            454,
+            350,
+            698
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-05",
+          "label": "Impact",
+          "file": "animations/starseer/ashStaff-empty/ATK-05.webp",
+          "sourceBox": [
+            392,
+            456,
+            734,
+            698
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-06",
+          "label": "Follow-through",
+          "file": "animations/starseer/ashStaff-empty/ATK-06.webp",
+          "sourceBox": [
+            758,
+            464,
+            1128,
+            700
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-07",
+          "label": "Recovery",
+          "file": "animations/starseer/ashStaff-empty/ATK-07.webp",
+          "sourceBox": [
+            1164,
+            442,
+            1396,
+            700
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "DEFEND",
+          "label": "Braced defense",
+          "file": "animations/starseer/ashStaff-empty/DEFEND.webp",
+          "sourceBox": [
+            68,
+            770,
+            304,
+            1040
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "HURT",
+          "label": "Hit recoil",
+          "file": "animations/starseer/ashStaff-empty/HURT.webp",
+          "sourceBox": [
+            436,
+            790,
+            672,
+            1040
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "CAST",
+          "label": "Spell cast",
+          "file": "animations/starseer/ashStaff-empty/CAST.webp",
+          "sourceBox": [
+            796,
+            722,
+            1062,
+            1042
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "STANCE-AGGRESSIVE",
+          "label": "Aggressive ready stance",
+          "file": "animations/starseer/ashStaff-empty/STANCE-AGGRESSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            72,
+            128,
+            746,
+            662
+          ]
+        },
+        {
+          "id": "STANCE-DEFENSIVE",
+          "label": "Defensive ready stance",
+          "file": "animations/starseer/ashStaff-empty/STANCE-DEFENSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            917,
+            98,
+            1378,
+            662
+          ]
+        },
+        {
+          "id": "BUFF",
+          "label": "Self enhancement",
+          "file": "animations/starseer/ashStaff-empty/BUFF.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            1620,
+            64,
+            2042,
+            664
+          ]
+        }
+      ],
+      "notes": [
+        "Generated first-pass art; needs visual review for hand allocation, pose continuity and anatomy before game integration."
+      ],
+      "rightGroup": "staff",
+      "leftGroup": null,
+      "groupTitle": "Staff + Empty \u00b7 One hand each"
+    },
+    {
+      "id": "herald__straightSword-buckler",
+      "classId": "herald",
+      "title": "Straight Sword + Buckler",
+      "right": "straightSword",
+      "left": "buckler",
+      "grip": "oneHand",
+      "status": "review",
+      "portrait": "animations/herald/straightSword-buckler/PORTRAIT.webp",
+      "atlas": "animations/herald/straightSword-buckler/atlas.webp",
+      "preview": "animations/herald/straightSword-buckler/attack-preview.webp",
+      "sheet": "animations/herald/straightSword-buckler/labeled-sheet.webp",
+      "frames": [
+        {
+          "id": "STANCE-READY",
+          "label": "Basic ready stance",
+          "file": "animations/herald/straightSword-buckler/STANCE-READY.webp",
+          "sourceBox": [
+            112,
+            46,
+            274,
+            366
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-01",
+          "label": "Anticipation",
+          "file": "animations/herald/straightSword-buckler/ATK-01.webp",
+          "sourceBox": [
+            388,
+            104,
+            654,
+            364
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-02",
+          "label": "Windup",
+          "file": "animations/herald/straightSword-buckler/ATK-02.webp",
+          "sourceBox": [
+            784,
+            50,
+            1022,
+            364
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-03",
+          "label": "Maximum windup",
+          "file": "animations/herald/straightSword-buckler/ATK-03.webp",
+          "sourceBox": [
+            1156,
+            22,
+            1380,
+            366
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-04",
+          "label": "Release",
+          "file": "animations/herald/straightSword-buckler/ATK-04.webp",
+          "sourceBox": [
+            52,
+            416,
+            396,
+            700
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-05",
+          "label": "Impact",
+          "file": "animations/herald/straightSword-buckler/ATK-05.webp",
+          "sourceBox": [
+            404,
+            420,
+            782,
+            700
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-06",
+          "label": "Follow-through",
+          "file": "animations/herald/straightSword-buckler/ATK-06.webp",
+          "sourceBox": [
+            768,
+            446,
+            1092,
+            700
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "ATK-07",
+          "label": "Recovery",
+          "file": "animations/herald/straightSword-buckler/ATK-07.webp",
+          "sourceBox": [
+            1188,
+            390,
+            1360,
+            706
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "DEFEND",
+          "label": "Braced defense",
+          "file": "animations/herald/straightSword-buckler/DEFEND.webp",
+          "sourceBox": [
+            84,
+            758,
+            298,
+            1040
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "HURT",
+          "label": "Hit recoil",
+          "file": "animations/herald/straightSword-buckler/HURT.webp",
+          "sourceBox": [
+            446,
+            750,
+            682,
+            1044
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "CAST",
+          "label": "Spell cast",
+          "file": "animations/herald/straightSword-buckler/CAST.webp",
+          "sourceBox": [
+            774,
+            716,
+            998,
+            1052
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ]
+        },
+        {
+          "id": "STANCE-AGGRESSIVE",
+          "label": "Aggressive ready stance",
+          "file": "animations/herald/straightSword-buckler/STANCE-AGGRESSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            122,
+            66,
+            688,
+            644
+          ]
+        },
+        {
+          "id": "STANCE-DEFENSIVE",
+          "label": "Defensive ready stance",
+          "file": "animations/herald/straightSword-buckler/STANCE-DEFENSIVE.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            892,
+            44,
+            1360,
+            642
+          ]
+        },
+        {
+          "id": "BUFF",
+          "label": "Self enhancement",
+          "file": "animations/herald/straightSword-buckler/BUFF.webp",
+          "size": [
+            512,
+            512
+          ],
+          "root": [
+            256,
+            480
+          ],
+          "sourceBox": [
+            1570,
+            36,
+            2046,
+            644
+          ]
+        }
+      ],
+      "notes": [
+        "Generated first-pass art; needs visual review for hand allocation, pose continuity and anatomy before game integration."
+      ],
+      "rightGroup": "sword",
+      "leftGroup": "shield",
+      "groupTitle": "Sword + Shield \u00b7 One hand each"
+    }
+  ],
+  "maps": [
+    {
+      "id": "bellfoundry",
+      "file": "maps/bellfoundry.webp"
+    }
+  ],
+  "status": "Four first-pass group samples. Remaining weapon-group hand combinations are pending. Not integrated into gameplay.",
+  "poseCountPerSet": 14
+}

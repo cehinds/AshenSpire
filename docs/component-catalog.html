@@ -211,6 +211,7 @@
 </aside>
 <script>
 const V = {
+  equipmentAnimation:'<div class="mini mini-stack"><div class="mini-label">REAVER · GREATSWORD + EMPTY</div><div class="mini-row"><img src="../assets/animations/reaver/greatsword-v2/STANCE-READY.webp" alt="Reaver ready stance" style="height:105px"><img src="../assets/animations/reaver/greatsword-v2/PORTRAIT.webp" alt="Reaver portrait" style="height:80px"></div><div class="mini-label">Ready → 07 → 04 → 02 → 03 → 05 → 01 → 04 → Ready</div><div class="mini-label">Attack · Defend · Buff · Hurt · Cast · Stance</div></div>',
   touchFlick:'<div class="mini mini-stack"><div class="mini-label">CARD FLICK DISTANCE</div><div class="mini-btn">64 px · Reset</div><div style="width:150px;border-top:3px solid var(--gold);margin:10px"></div><div class="mini-panel" style="height:65px">↑ Practice flick</div><div class="mini-label">Selection + Information stay separate</div></div>',
   kitPageDoor:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>EYEBROW</b><span>✕</span></div><div class="mini-title">Page door</div><div class="mini-label">sm · md · lg · xl, or full</div><div class="mini-btnrow"><div class="mini-btn">Back</div><div class="mini-btn on">Confirm</div></div></div>',
   kitOptionCard:'<div class="mini mini-stack" style="width:100%"><div class="mini-row"><span class="coin">◆</span><div><div class="mini-title">Option name</div><div class="mini-label">what taking it does</div></div></div><div class="mini-label">selected · disabled · with trail</div></div>',
@@ -363,6 +364,7 @@ const V = {
   relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
 };
 const SEMANTIC_COMPONENTS = [
+ ['equipment-animation-reference','equipmentAnimationForLoadout + equipmentAnimations.json','paintedOutfits.createPaintedStage + assets.playerSprite','combat','Solo + co-op + Armoury + conversation + portrait','Derives a presentation set from class, armour, ordered hand weapon groups and optional grip. Named clips provide action and view references; missing bindings retain existing class art. The approved Reaver greatsword set is active; other art-pack sets remain review candidates.','equipmentAnimation'],
  ['touch-flick-practice','TouchFlickModel','settingsRowHtml + mountFlickPractice','menu','Accessibility settings + combat hand','Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Touch, mouse, trackpad and pen share nearest legal target selection on release; selection and Information stay separate.','touchFlick'],
  ['startup-gate','startupGateModel','startupGate.mountStartupGate','screen','Cold boot','Input-gated River Citadel lights, configurable lit-city pause, then an opacity fade into the layered hall before Title mounts. Reduced motion skips the hold.','startupGate'],
  ['startup-ash-field','startupGateModel.properties.particles','startupGate.mountStartupGate','primitive','Startup Gate','Decorative particle host removed with the gate.','startupAshField'],
