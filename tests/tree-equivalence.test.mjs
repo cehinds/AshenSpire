@@ -108,7 +108,7 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 435, 'the 435 shipped objects, every one');
+  assert.equal(counted, 438, 'the 438 shipped objects, every one (435 at the tree phase; phase 3b added the head, hands and feet slots)');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

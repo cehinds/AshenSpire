@@ -9197,6 +9197,24 @@ export const tagging = [
   {
     "family": "slot",
     "scope": "",
+    "objectId": "head",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "hands",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "feet",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
     "objectId": "talisman",
     "tagId": "classification.slot"
   },

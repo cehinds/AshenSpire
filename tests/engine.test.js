@@ -70,7 +70,10 @@ import {
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
+  deckMinimum, loadoutLeaveRefusal,
 } from '../src/model/loadout.js';
+import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
+import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
@@ -8248,6 +8251,87 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(healed.zones.hands.main, healed.loadout.sets.rightHand[healed.loadout.active.rightHand], 'the loaded projection reads the healed loadout');
     eq(healed.zones.worn.body, healed.loadout.sets.armor[healed.loadout.active.armor], 'and its armour');
     eq(JSON.stringify(healed.collection), JSON.stringify(healed.deck), 'the loaded collection is the re-stamped deck, card for card');
+  });
+
+  test('83. the worn zone has four slots, the figure reads the zones, the deck has a floor, and the lock is grantedBy (plan phase 3b)', () => {
+    // The slot split. Three new rows, one set each, out of combat, and the run's
+    // loadout gains a cell for each — the projection reads REAL slots now.
+    const slotIds = REG.equipment.slots.map((s) => s.id);
+    for (const id of ['head', 'hands', 'feet']) {
+      const slot = REG.equipment.slots.find((s) => s.id === id);
+      assert(slot, `slot '${id}' is authored`);
+      eq(slot.kinds.join('|'), id, `slot '${id}' accepts the kind of the same name`);
+      eq(slot.sets, 1, `slot '${id}' carries one set`);
+      eq(slot.swap, 'outOfCombat', `slot '${id}' swaps out of combat`);
+      eq(slotHand(slot), null, `slot '${id}' is worn, not held`);
+    }
+    const run = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    eq(Object.keys(run.zones.worn).join('|'), 'body|head|hands|feet|talisman', 'the worn zone has its five slots in order');
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(run.loadout.sets[id]) && run.loadout.sets[id].length === 1, `loadout.sets.${id} is one empty cell`);
+      eq(run.zones.worn[id], null, `zones.worn.${id} is null with no piece authored`);
+    }
+    eq(run.zones.worn.body, run.loadout.sets.armor[0], 'body is still the armour slot');
+    // The map is the one home: every slot row is a zone, every zone is a slot.
+    for (const id of slotIds) assert(wornZoneOf(id) || handZoneOf(id), `slot '${id}' fills a zone`);
+    for (const slotId of Object.values(WORN_SLOT_IDS)) assert(slotIds.includes(slotId), `worn zone slot '${slotId}' is an authored slot`);
+    for (const slotId of Object.values(HAND_SLOT_IDS)) assert(slotIds.includes(slotId), `hand zone slot '${slotId}' is an authored slot`);
+    // A slot row no zone names is refused by name at boot.
+    const cloak = { id: 'cloak', label: 'Cloak', positionLabel: 'Cloak {n}', positionCode: 'CLK', kinds: ['cloak'], hand: '', sets: 1, swap: 'outOfCombat', storage: false, order: 9, blurb: 'probe' };
+    const withCloak = validateContent({ ...testBundle(), equipment: { ...contentBundle.equipment, slots: [...contentBundle.equipment.slots, cloak] } });
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    assert(!withCloak.ok && said(withCloak).some((e) => /equipment\.slots\.cloak/.test(e) && /no worn zone names/.test(e)), `a worn slot outside the map is named — got ${JSON.stringify(said(withCloak)).slice(0, 300)}`);
+    const thirdHand = { ...cloak, id: 'thirdHand', hand: 'right', kinds: ['weapon'] };
+    const withHand = validateContent({ ...testBundle(), equipment: { ...contentBundle.equipment, slots: [...contentBundle.equipment.slots, thirdHand] } });
+    assert(!withHand.ok && said(withHand).some((e) => /equipment\.slots\.thirdHand/.test(e) && /no hands zone names/.test(e)), 'a hand slot outside the map is named');
+
+    // The figure reads the zones: body from worn.body, the three new layers
+    // from their slots, the hands from the pieces their zones name.
+    const spec = figureSpec(REG, run.loadout, run.class);
+    eq(spec.armourId, run.zones.worn.body, 'the body layer is zones.worn.body');
+    eq(spec.rightId, run.zones.hands.main, 'the right hand draws zones.hands.main');
+    eq(spec.leftId, run.zones.hands.off, 'the left hand draws zones.hands.off');
+    eq(spec.headId, null); eq(spec.handsId, null); eq(spec.feetId, null);
+    const helmed = structuredClone(run.loadout); helmed.sets.head[0] = 'probeHelm'; helmed.sets.feet[0] = 'probeBoots';
+    const spec2 = figureSpec(REG, helmed, run.class);
+    eq(spec2.headId, 'probeHelm', 'a piece in the head slot is the head layer, table or no table');
+    eq(spec2.feetId, 'probeBoots', 'and the feet slot the feet layer');
+    eq(spec2.handsId, null, 'an empty slot is no layer');
+
+    // The deck's floor: balance.deck through deckMinimum, level 0 until phase 6.
+    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 0 is balance.deck.minimum');
+    eq(deckMinimum(REG, { ...run, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'and one more every two levels');
+    eq(deckMinimum(REG, { ...run, characterLevel: 3 }), REG.balance.deck.minimum + 1, 'three levels is still one step');
+    eq(deckMinimum(REG, { ...run, characterLevel: 4 }), REG.balance.deck.minimum + 2);
+    const badDeck = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, deck: { ...contentBundle.balance.deck, minimum: 7.5 } } });
+    assert(!badDeck.ok && said(badDeck).some((e) => /balance\.deck\.minimum/.test(e)), 'a fractional floor is refused by name');
+    // The door: leaving under the floor is refused with both numbers; a deficit
+    // the run arrived with is not this screen's to refuse; unequipping is free.
+    eq(loadoutLeaveRefusal(REG, run, { enteredWith: run.deck.length }), '', 'a full deck leaves');
+    const entered = run.deck.length;
+    run.loadout.sets.rightHand = [null, null, null];
+    run.loadout.sets.leftHand = [null, null, null];
+    stampDeck(REG, run);
+    assert(run.deck.length < deckMinimum(REG, run), `unequipping both hands takes the deck under the floor (${run.deck.length} < ${deckMinimum(REG, run)}) — the floor is live, not dormant`);
+    const refusal = loadoutLeaveRefusal(REG, run, { enteredWith: entered });
+    assert(new RegExp(`holds ${run.deck.length} cards`).test(refusal) && new RegExp(`floor is ${deckMinimum(REG, run)}`).test(refusal), `the refusal names both numbers — got '${refusal}'`);
+    eq(loadoutLeaveRefusal(REG, run, { enteredWith: run.deck.length }), '', 'a deck that arrived under the floor may leave');
+
+    // The lock is grantedBy: a lent card cannot be removed while its piece is
+    // worn, and is gone — not unlocked — once the piece is not.
+    const fresh = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const lent = fresh.deck.filter(isItemOwned);
+    assert(lent.length > 0, 'the starting hands lend cards');
+    for (const inst of lent) {
+      assert(inst.grantedBy, `'${inst.cardId}' names the piece that lent it`);
+      eq(canRemoveDeckCard(inst), false, `'${inst.cardId}' cannot be removed while its piece is worn`);
+    }
+    assert(fresh.deck.filter((c) => !isItemOwned(c)).every((c) => canRemoveDeckCard(c)), 'the run\'s own cards can be');
+    fresh.loadout.sets.rightHand = [null, null, null];
+    fresh.loadout.sets.leftHand = [null, null, null];
+    stampDeck(REG, fresh);
+    eq(fresh.deck.filter(isItemOwned).length, 0, 'unequipping removes every lent instance');
+    eq(fresh.zones.worn.head, null, 'and the projection still reads');
   });
 
   const passed = results.filter((r) => r.ok).length;

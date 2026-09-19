@@ -51,6 +51,14 @@ export const balance = {
     onFill: [{ op: 'applyStatus', target: 'self', status: 'staggered', stacks: 2 }],
   },
 
+  // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
+  // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
+  // is the floor at character level 0; it rises by `minimumPerStep` every
+  // `minimumStepLevels` levels (the proposal's "+1 every 2 levels"). Character
+  // level lands in phase 6; until then every run reads as level 0 and the
+  // floor is `minimum`. model/loadout.js deckMinimum is the one reader.
+  deck: { minimum: 8, minimumStepLevels: 2, minimumPerStep: 1 },
+
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,

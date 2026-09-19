@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1183",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Armoury has places for your head, hands and feet, and your deck has a floor",
+    "detail": "Three new equipment positions sit beside your armour and talisman in the Armoury. They are empty: nothing yet exists to wear there, and the picture of what you wear and hold that your save carries now reads those positions as real slots. The one thing that plays differently: you can no longer leave the Armoury holding fewer than eight cards. Taking off both weapons can drop a fresh deck to four, and the door now says so, with both numbers, and waits for you to put something back or equip a piece that carries cards. A deck that was already under eight when you walked in is still let out; the door refuses what you did in that room, never what happened before it.",
+    "build": "0.7.1.186",
+    "pullRequest": 1183,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1183"
+  },
+  {
     "id": "pr-1166",
     "date": "2026-09-18",
     "group": "2026-09-18",
