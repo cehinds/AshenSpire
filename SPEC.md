@@ -1226,9 +1226,12 @@ keeps the same state and focus contract without meaningful animation.
   must not require a branch in the screen. Item kind determines eligibility only: the selected
   hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
   position renders it in the right hand and placing a sword in a left-hand position renders it in
-  the left hand. The current figure composer supports armour/body plus authored left/right-hand
-  layers; a future foot, back, or other visible attachment also requires an explicit asset-composer
-  and configuration extension rather than an inferred screen coordinate.
+  the left hand. The figure composer supports armour/body, the three worn layers the slot split
+  added (`head`, `hands`, `feet`, drawn from `assets/equipment/<slot>_<id>.webp` and drawing nothing
+  when the file is absent), plus authored left/right-hand layers; a back or other visible attachment
+  still requires an explicit asset-composer and configuration extension rather than an inferred
+  screen coordinate. Which zone a slot fills is `model/zones.js`'s one map (§13.4b), and a slot row
+  it does not name is refused at boot.
 
   Inventory owns one logical item-card action surface in both folded and expanded forms. The
   `armouryUi.layout.cardClasses.inventoryItem.holdAction` class capability opts action-capable
@@ -1726,6 +1729,15 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **Migration** (`migrateRunSchema`): a run at schemaVersion ≤ 6 gains its projection from its own fields; nothing else moves and no RNG is drawn. A schema-7 save whose carried projection is well-formed but **wrong** (disagrees with its legacy fields) is **re-projected and noted** on the load ledger (`save.js:loadRun`, field `zones`), never refused — the truth is intact. A carried projection that is **malformed** (`zones` missing or null, an unknown worn slot, a non-id in a hand) is refused by `validateRunShape` like any other malformed row: the shape is proven before any heal fires, and a file that fails its own shape is archived, not repaired.
 
 *Falsify:* a save written at schemaVersion 7 with `zones` and `collection` removed and the stamp set back to 6 loads with `zones.hands.main` equal to its active right-hand piece and `collection` equal to its deck; `validateRunShape({ ...run, zones: { ...run.zones, worn: { ...run.zones.worn, cloak: null } } })` names `zones.worn.cloak`; a save with `zones.passive` edited loads with the relics' order restored and one ledger row on `zones`; a save with `loadout` removed leaves the load door with `zones.hands.main` equal to the healed loadout's active piece and `collection` equal to the re-stamped deck; a co-op member record with a stale `collection` is emitted by `serialize` with the member's deck.
+
+### 13.4b The worn zone has four slots and the deck has a floor (plan phase 3b)
+
+- **Slots.** `content/source/equipSlots.csv` carries `head`, `hands` and `feet` beside `armor` and `talisman`, one set each, `swap: outOfCombat`, kinds `head`/`hands`/`feet`. No piece ships for them yet: the slots exist so the run's `zones.worn` is projected from real loadout slots and the Armoury renders them as empty positions, the way `talisman` already did. `zones.js` is the ONE map from worn/hands zone to loadout slot (`WORN_SLOT_IDS`: body ← `armor`, the rest by name; `HAND_SLOT_IDS`: main ← `rightHand`, off ← `leftHand`); `projectZones` reads it, `figureSpec` draws from it, and `validateContent` refuses a slot row no zone names. The `armor` slot id is kept for `body` because renaming it would move every save's `loadout.sets.armor`.
+- **The figure reads the zones.** `figureSpec(registries, loadout, classId)` projects the loadout to zones and draws body from `zones.worn.body`, `headId`/`handsId`/`feetId` from the other worn slots, and each hand from the piece its hand zone names; `equippedFigure` layers feet, hands, head over the body and under the held pieces, and a layer whose art does not exist draws nothing.
+- **The deck's floor.** `balance.deck = { minimum, minimumStepLevels, minimumPerStep }` (8, 2, 1); `deckMinimum(registries, run)` = `minimum + ⌊characterLevel / minimumStepLevels⌋ × minimumPerStep`, with character level read as 0 until phase 6 lands it. `loadoutLeaveRefusal(registries, run, { enteredWith })` returns the sentence that refuses LEAVING the Armoury with fewer cards than the floor; every road the player takes out of the Armoury (Back, ✕, Escape, the tap outside) asks it and shows the sentence in place. A run that was already under the floor when the screen opened may leave: the door refuses what this screen did, never a state it inherited. Unequipping itself is never refused.
+- **The lock is `grantedBy`.** A card an equipped piece lends carries `grantedBy` and `canRemoveDeckCard` refuses it; unequipping the piece removes the instance at the next reconcile. The plan's `locked: true` would be a second home for that fact and is not written.
+
+*Falsify:* a fresh run's `zones.worn` has five keys with `body` the active armour and the other three null, and `Object.keys(run.loadout.sets)` includes `head`, `hands`, `feet`; `validateContent` on a bundle whose slot table gains `{ id: 'cloak', hand: '' }` names `equipment.slots.cloak`; `deckMinimum` reads 8 at level 0 and 9 at level 2; `loadoutLeaveRefusal` on a 4-card deck entered at 10 names both numbers and on the same deck entered at 4 is empty; a granted instance is refused by `canRemoveDeckCard` and is gone after its piece is unequipped and the deck re-stamped; `figureSpec` with a loadout whose `head` slot holds `probeHelm` reports `headId: 'probeHelm'`.
 
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 

@@ -1594,6 +1594,9 @@ basicCardProfile,,staffTechnique,classification.basicCardProfile
 slot,,rightHand,classification.slot
 slot,,leftHand,classification.slot
 slot,,armor,classification.slot
+slot,,head,classification.slot
+slot,,hands,classification.slot
+slot,,feet,classification.slot
 slot,,talisman,classification.slot
 startingKit,,reaverBaseline,classification.startingKit
 startingKit,,reaverGreatsword,classification.startingKit
