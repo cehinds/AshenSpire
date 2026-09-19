@@ -13,6 +13,12 @@ FONT=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',16)
 def key(row):
     return row['classId']+('' if row['id']=='default' else '-'+row['id'])
 
+def appearance(row):
+    # Shared armor has a dedicated painting for each wearer, despite its legacy art alias.
+    return {**row,'id':row['id'] if str(row.get('sharedSet','')).lower()=='true' else row['artKey'] or row['id']}
+
+EXPECTED_APPEARANCES={key(appearance(row)) for row in OUTFITS}
+
 def write_webp(image,path):
     image.save(path,'WEBP',quality=90,method=3,exact=True)
     decoded=Image.open(path)
@@ -21,7 +27,7 @@ def write_webp(image,path):
 
 groups=[]
 for row in OUTFITS:
-    if row['artKey']: continue
+    if key(appearance(row)) != key(row): continue
     outfit=key(row)
     dest=PACK/'frames'/outfit
     source=PACK/'sources'/f'{outfit}.png'
@@ -67,13 +73,13 @@ for row in OUTFITS:
 manifest={'motionProfile':'greatswordTwoHand','sequence':ORDER,'frameMs':100,'groups':groups,'outfits':OUTFITS,'generator':'built-in image_gen'}
 (PACK/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8',newline='\n')
 (PACK/'data.js').write_text('window.GREATSWORD_ART='+json.dumps(manifest)+';\n',encoding='utf-8',newline='\n')
-print(f'Exported {len(groups)}/16 unique appearances; catalog has {len(OUTFITS)} armor entries.')
+print(f'Exported {len(groups)}/{len(EXPECTED_APPEARANCES)} unique appearances; catalog has {len(OUTFITS)} armor entries.')
 if '--bind' in sys.argv:
-    assert len(groups)==16, 'Refuse partial runtime bindings'
+    assert {g['id'] for g in groups}==EXPECTED_APPEARANCES, 'Refuse partial runtime bindings'
     path=ROOT/'content/config/ui/presentation/equipmentAnimations.json'
     doc=json.loads(path.read_text());data=doc['components'];base=data['sets']['reaverGreatsword']
     profile=data.get('motionProfiles',{}).get('greatswordTwoHand') or {k:base[k] for k in ['normalLungeMs','clips','references','poseRoles']}
-    data['motionProfiles']={'greatswordTwoHand':profile}
+    data.setdefault('motionProfiles',{})['greatswordTwoHand']=profile
     set_ids={}
     for group in groups:
         outfit=group['id'];set_id='reaverGreatsword' if outfit=='reaver' else outfit+'Greatsword'
@@ -88,8 +94,8 @@ if '--bind' in sys.argv:
         data['sets'][set_id]={'motionProfile':'greatswordTwoHand','frames':metadata}
     data['bindings']=[b for b in data['bindings'] if b['setId']!='reaverGreatsword' and b['setId'] not in set_ids.values()]
     for row in OUTFITS:
-        visual={**row,'id':row['artKey'] or row['id']}
+        visual=appearance(row)
         for right,left in [('greatsword','empty'),('empty','greatsword')]:
             data['bindings'].append({'classId':row['classId'],'armourId':row['id'],'rightGroup':right,'leftGroup':left,'setId':set_ids[key(visual)]})
     path.write_text(json.dumps(doc,indent=2)+'\n',encoding='utf-8',newline='\n')
-    print('Bound all 19 class/armor entries and either occupied hand to the shared greatsword motion profile.')
+    print(f'Bound all {len(OUTFITS)} class/armor entries and either occupied hand to the shared greatsword motion profile.')

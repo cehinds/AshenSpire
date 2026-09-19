@@ -19,7 +19,7 @@ Reference slots: idle, attack, defend, buff, hurt, cast, stanceActivate, stanceD
 
 ## Greatsword bindings
 
-All four classes and all 19 catalog armor entries select their own greatsword appearance when one hand holds the greatsword group and the other is empty. Either ordered hand combination is supported. The 16 distinct appearances share one motion profile; the three catalog art aliases reuse their matching outfit frames. The default Reaver retains set ID `reaverGreatsword`. The shared approved attack is:
+All four classes and all 35 catalog armor entries select their own greatsword appearance when one hand holds the greatsword group and the other is empty. Either ordered hand combination is supported. The 32 distinct appearances share one motion profile; the three catalog art aliases reuse their matching outfit frames. The default Reaver retains set ID `reaverGreatsword`. The shared approved attack is:
 
 `STANCE-READY → ATK-07 → ATK-04 → ATK-02 → ATK-03 → ATK-05 → ATK-01 → ATK-04 → STANCE-READY`
 

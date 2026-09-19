@@ -5,7 +5,7 @@ armour, ordered right/left weapon groups and optional grip. Its model is
 `src/model/equipmentAnimation.js`; authored references live in
 `content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
 Armoury, conversation and portrait views share those references. The visual
-catalog includes greatsword ready stances for all four classes. One shared motion profile serves 19 armor entries with 16 outfit appearances; catalog art aliases reuse their corresponding frames.
+catalog includes greatsword ready stances for all four classes. One shared motion profile serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from

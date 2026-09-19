@@ -45,8 +45,12 @@ try {
     const variant=createPaintedStage(outfit.classId,outfit.id,{animation:selected});
     document.body.append(variant.el);
     const played=variant.play('attack',900);
-    const images=[...variant.el.querySelectorAll('img')].filter(img=>img.getAttribute('src'));
-    await Promise.all(images.map(img=>img.decode()));
+    // A playing stage changes src every 100ms, which cancels decode() on that element.
+    // Independent images verify every authored file without racing the animation timer.
+    await Promise.all(Object.values(selected.frames).map(async frame=>{
+      const image=new Image();image.src=frame.file;
+      try{await image.decode();}catch(error){throw new Error(`Cannot decode ${outfit.classId}/${outfit.id}: ${frame.file}`,{cause:error});}
+    }));
     checks.outfits.push({id:outfit.classId+'/'+outfit.id,set:variant.animationSetId,played,profile:selected.motionProfile});
     variant.dispose();variant.el.remove();
   }
@@ -66,7 +70,7 @@ try {
  assert.deepEqual(result.timing,{totalMs:900,impactMs:500});assert.equal(result.buff,'BUFF');assert.equal(result.hurt,'hit');
  assert.equal(result.stanceStart,'BUFF');assert.equal(result.stanceEnd,'STANCE-DEFENSIVE');assert.equal(result.stanceAfterAttack,'STANCE-DEFENSIVE');assert.ok(result.disposed);assert.equal(result.reducedPlayed,false);
  assert.match(result.portrait,/greatsword-outfits\/reaver\/PORTRAIT.webp$/);assert.match(result.conversation,/greatsword-outfits\/reaver\/STANCE-READY.webp$/);
- assert.equal(result.outfits.length,19);assert.ok(result.outfits.every(o=>o.set&&o.played&&o.profile==='greatswordTwoHand'));
+ assert.equal(result.outfits.length,35);assert.ok(result.outfits.every(o=>o.set&&o.played&&o.profile==='greatswordTwoHand'));
  // Real combat renderer: load the screenshot fixture, change equipped hands, cause a render, then play a card.
  await page.goto(origin+'/?shot=combat');await page.waitForFunction(()=>window.__combat&&document.querySelector('.combatant.player'));
  const fixture=await page.evaluate(()=>Object.keys(window.__combat));
