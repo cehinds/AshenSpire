@@ -1081,6 +1081,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         choice({ glyph: '✚', name: 'Rest', description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
         choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
         ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+        // A denied Rest is not a way on: the member leaves instead, and the
+        // host counts the leave as their choice (as the solo screen's LEAVE).
+        ...(restDenied ? [choice({ glyph: '→', name: 'Leave', description: 'Take nothing here and move on with the party.', attrs: { dataset: { shrine: 'leave' } } })] : []),
       ], { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));

@@ -24,6 +24,7 @@ import { createRunContext, syncRunContext, drainRunContext } from './actions.js'
 import { emitEvent } from './triggers.js';
 import { mountProperties, unmountProperties } from './properties.js';
 import { passiveMult } from '../model/registries.js';
+import { createRng } from './rng.js';
 import { locationTags, locationRestTags, locationServices, restDeniedBy } from '../model/locations.js';
 
 const OWNER_KEY = 'player';
@@ -116,7 +117,11 @@ export function restAt(visit) {
 export function previewRest(visit) {
   const { registries, rng } = visit.ctx;
   const clone = structuredClone(visit.ctx.run);
-  const dry = createLocationVisit({ run: clone, registries, rng }, visit.locationId, visit.opts);
+  // The dry run rolls on a COPY of the streams (same seed, same counters), so
+  // a preview — or a screen re-mounting — advances nothing the real rest
+  // will read, and the two agree when a rule happens to roll.
+  const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : rng;
+  const dry = createLocationVisit({ run: clone, registries, rng: dryRng }, visit.locationId, visit.opts);
   dry.restDenied = null;
   const receipt = restAt(dry);
   leaveLocation(dry);

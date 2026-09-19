@@ -897,6 +897,9 @@ export function createSession({ registries, seedString, endless = false, restore
       }
       if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
       restAt(visit);
+    } else if (choice === 'leave') {
+      // Taking nothing is a choice: a member whose Rest a relic denies, with
+      // no smith candidate and no ally to Mend, still marks the stop done.
     } else if (choice === 'mend') {
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);

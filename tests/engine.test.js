@@ -9223,7 +9223,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(arrival.events.some((e) => e.type === 'arrived' && e.locationId === 'shrine'), '`arrived` is emitted with the place');
     eq(shrineRun.flaskCharges.hpCurrent, shrineRun.fullHpCharges, 'the restFlasks rule refilled the charges on arrival');
     eq(shrineRun.hp, 10, 'arriving heals nothing');
+    const countersBefore = JSON.stringify(shrine.ctx.rng.getCounters());
     const preview = previewRest(shrine);
+    eq(JSON.stringify(shrine.ctx.rng.getCounters()), countersBefore, 'the preview rolls on a copy of the streams');
     const floor = Math.floor((shrineRun.maxMana * rest.mana.floorPct) / 100);
     eq(preview.heal, Math.floor((shrineRun.maxHp * rest.hpPartialPct) / 100), 'the preview reads the partial rest\'s row');
     eq(preview.manaAfter, floor, 'the preview reads the floor');
