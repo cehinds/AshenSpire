@@ -11,9 +11,9 @@ export function equipmentCardModel(registries, piece) {
   const type = armor ? `Armor · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });
   const facts = armor
-    ? [field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
+    ? [field('DR', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armor bonus to Defense cards: adds this much Block. This is not damage reduction or the full equipped Defense Rating.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
     : [field('Attack', piece.attackRating, 'Base intrinsic Attack Rating, before attributes and smithing. This is not the final damage of a played card.'), field('Defense', piece.defenseRating, 'Base intrinsic Defense Rating. See the live comparison and resulting cards for actual Block and combat bonuses.'), field('Weight', piece.weight, 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
-  const bonuses = (piece.mods || []).map(raw => {
+  const bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
     const mod = parseMod(raw);
     const spec = registries.equipment.modFields[mod.field];
     const target = mod.prefix === 'self' ? '' : mod.prefix === 'power' ? 'Class power: ' : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)}: `;
