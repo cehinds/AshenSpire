@@ -1,6 +1,7 @@
 import { renderEquipmentCard, renderEquipmentInspection } from './equipmentCard.js';
 import { relicText } from './card.js';
 import { assetUrl } from '../assetmap.js';
+import { relicArtUrl } from '../assets.js';
 import { openModal } from './modalShell.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 
@@ -18,7 +19,7 @@ function presentation(registries, item, kind, { charges = null } = {}) {
   const usage = potion ? variant.usage || 'Consumable' : null;
   return {
     id: item.id, name: item.name, cardKind: kind.toLowerCase(), type: usage ? `${kind} · ${usage}` : kind,
-    art: item.artAsset ? assetUrl(item.artAsset) : null,
+    art: (!potion && relicArtUrl(item)) || (item.artAsset ? assetUrl(item.artAsset) : null),
     glyph: potion ? '⚗︎' : '◆',
     accent: item.tint || (potion ? '#87b5d0' : '#d0ac5d'),
     typeExplanation: potion ? 'A carried potion. Use it through the potion action menu.'
@@ -27,7 +28,7 @@ function presentation(registries, item, kind, { charges = null } = {}) {
     variant,
     tags: [],
     effectsLabel: 'Effect', bonuses: [{ label: effect || 'No effect text authored.', explanation: effect || 'No effect text authored.' }],
-    flavor: item.blurb || (potion ? 'A draught carried for the road ahead.' : 'A keepsake carried through the Spire.'),
+    flavor: item.flavor || item.blurb || (potion ? 'A draught carried for the road ahead.' : 'A keepsake carried through the Spire.'),
     requirement: potion ? 'Potion slot' : 'Active while owned',
     requirementExplanation: potion ? 'An available potion slot is required to collect it.' : 'This relic applies its authored effects while it is owned.',
     rarity: item.rarity || 'common',
