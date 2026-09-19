@@ -80,7 +80,8 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelector.js';
+import { openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -858,6 +859,35 @@ function persist() {
   sendLanStatus();
 }
 
+// The run the way its save slot names it (W2e's target line, W1r's, W2d's).
+function runIdentityParts() {
+  return {
+    className: run && registries.classes.has(run.class) ? registries.classes.get(run.class).name : run?.class,
+    slot: activeSlot,
+    facts: run ? slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }) : '',
+  };
+}
+
+// W1r: an EXPLICIT Save says what happened. Autosave (persist) keeps throwing,
+// so a boot path never hides a failure; the Save row lands here instead, keeps
+// the run, and opens the status door whose Retry saves again — the save, never
+// the play. Returns the slot it wrote, or false when the door is open.
+function saveNow({ returnFocusElement = null } = {}) {
+  try {
+    persist();
+    return activeSlot;
+  } catch (error) {
+    openSaveStatusReview({
+      ...runIdentityParts(),
+      savedAt: run?.savedAt ?? null,
+      error,
+      onRetry: () => saveNow({ returnFocusElement }),
+      returnFocusElement,
+    });
+    return false;
+  }
+}
+
 // ---- Forsaken Together (LAN) -------------------------------------------------
 // The run is server-authoritative (the launcher owns it via tools/session.mjs);
 // the browser is a thin client that renders snapshots and sends intents. Solo
@@ -1102,13 +1132,19 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
   // hands the seed to a review door on the way through; this path has no
   // review door, so the receipt belongs here.
   const summary = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
-  const climb = summary
-    ? `${summary.className} — ${slotFacts(summary)}. Seed ${summary.seedString}. `
-    : '';
+  // W2d: the target is the saved climb, the consequence is exactly what the
+  // current run loses (ui/models/ConfirmationReviewModel.js).
+  const review = loadOverRunReview({
+    slot,
+    className: summary?.className ?? null,
+    facts: summary ? slotFacts(summary) : null,
+    seed: summary?.seedString ?? null,
+  });
   openConfirmationModal({
-    title: `Load slot ${slot}?`,
-    message: `${climb}The saved run will replace changes made since your last save.`,
-    confirmLabel: 'Load saved run',
+    title: review.question,
+    target: review.target,
+    message: review.message,
+    confirmLabel: review.confirmLabel,
     consequence: 'DISCARDS UNSAVED CHANGES',
     // Whether this reads as destructive is the ConfirmationRegistry's call.
     tone: registries.framework.confirmationTone('action.loadSlot'),
@@ -1433,10 +1469,7 @@ function showOverlay(initialTab = 'settings') {
     },
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();
@@ -1567,7 +1600,24 @@ function showCustomize(slot = 1, catalog = false) {
       ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
       : null,
     onBack: showTitle,
-    onStart: (config) => newRun({ ...config, slot }),
+    // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
+    // an occupied slot on the title touched nothing; Begin is where the old
+    // climb would be written over, so this is where it is asked, naming both
+    // the save that goes and the character that replaces it.
+    onStart: (config) => {
+      // The title's own slot record: the class NAME, as the slot list prints it.
+      const existing = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
+      if (!existing) return newRun({ ...config, slot });
+      openReplaceSaveReview({
+        slot,
+        existing: { className: existing.className, facts: slotFacts(existing) },
+        replacement: { className: registries.classes.get(config.classId)?.name ?? config.classId, seed: config.seedString },
+        tone: (policyAction) => registries.framework.confirmationTone(policyAction),
+        returnFocusElement: document.activeElement,
+        onConfirm: () => newRun({ ...config, slot }),
+      });
+      return undefined;
+    },
     catalog,
   });
 }
@@ -1648,10 +1698,7 @@ function showMap() {
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();
@@ -2004,8 +2051,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     quickControls: quickMenuControls,
     onSave: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
-      persist();
-      return activeSlot;
+      return saveNow();
     },
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
@@ -2252,10 +2298,7 @@ function roomHud(returnTo) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSettingsChange: persistSettingsChange,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();

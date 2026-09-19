@@ -143,13 +143,14 @@ export function mountTitle(app, {
       return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
     }
     const model = selectionModel();
+    // W1l: titled by what it is for, primary by what it does.
     const door = slotDoor({
-      eyebrow: 'New game',
-      title: 'Choose a slot',
+      eyebrow: '',
+      title: t('title.slots.door.new'),
       closeLabel: 'Close New Game',
       rows: modalSlotRows(model),
-      backLabel: 'Back',
-      continueLabel: 'Continue',
+      backLabel: t('common.back'),
+      continueLabel: t('title.slots.primary.new'),
       canContinue: !!model.properties.canContinue,
       actionSlot: model.properties.actionSlot,
     });

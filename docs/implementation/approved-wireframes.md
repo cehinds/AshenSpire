@@ -2440,3 +2440,84 @@ Limits:
 - `portraits.fit: "clipToLane"` (the close-up-with-clipping reading of the
   drawing) was built in the docs preview and not shipped; `shrinkToLane` is
   what plays.
+## Save flow: slot doors, save status and the save reviews (W1l, W1m, W1r, W2b, W2c, W2d)
+
+Branch `feature/wireframe-save-flow`, based on dev `6818bb06`. The slot doors
+and the save reviews already existed; this audits them against the six
+drawings and closes the gaps. Every new sentence is a row in
+`content/source/uiStrings.csv`; no layout number changed.
+
+- **W1l / W1m, one slot door.** The title's New game and Load game doors and
+  the quick menu's Load door are the same `slotDoor`. The door is titled by
+  its purpose (“New game”, “Load game”), with no “Choose a slot” sub-heading
+  and no eyebrow, and its primary by what it does (“Create character”,
+  “Load”). Rows print the class, act · floor · HP and now “Saved 12:29 AM”.
+  - `saveRun` stamps `run.savedAt` when the write lands (a full store that
+    throws leaves the stamp alone), `slotSummary` reports it, and the run
+    shape admits it as an optional field. A save from before the stamp
+    prints its seed alone.
+  - Selecting never overwrites. The old “Overwrite slot n?” door that a
+    New-game tap on an occupied slot opened is a plain notice now (“Start in
+    slot n?” — nothing changes until you begin the new one; you will be
+    asked to replace it then), and Continue is not a danger button.
+- **W2c Replace, at the write boundary.** Begin on the creation screen over
+  an occupied slot asks “Replace this save?”: the existing save as the
+  target, “Replacement: Starseer, seed 1P1I6FU. The saved climb in slot 1
+  is removed and cannot be recovered.”, Back and Replace (danger). Back keeps
+  the old save and the draft. FRONTEND-WIREFRAMES asks for exactly this:
+  “perform the existing required replacement confirmation at the actual
+  write boundary.”
+- **W2b Delete.** The ✕'s review filled only the question; its body was the
+  generic “Review this change…” line. It now names the save and states the
+  save manager's real policy: `clearRun` removes the run, the archive keeps
+  only saves that failed to load, and the profile stays.
+- **W2d Load over an active run.** The in-run review packed the climb and the
+  loss into one message; now the target slot holds the saved climb and seed
+  and the consequence slot the exact loss.
+- **W1r Save status.** The four Save rows go through `saveNow`: a save that
+  lands still says “Saved · Slot n” in place (the owner's rule for the quick
+  menu, which is the drawing's Saved state); a save that throws keeps the run
+  and opens “Save game” — the run's identity, “The save did not land: …
+  Your run is unchanged; try the save again.”, the destination slot with
+  “Last saved …”, Back and Retry save. Retry saves again and never repeats a
+  gameplay action. Autosave (`persist`) still throws, so a boot path never
+  hides a failure.
+- **Models.** `ConfirmationReviewModel` gains `deleteSaveReview`,
+  `replaceSaveReview` and `loadOverRunReview`; `SaveStatusModel` owns the
+  W1r words and the saved-time format (today: the time; otherwise date and
+  time; never “Invalid Date”). `tests/wireframe-save-flow.test.mjs` (7 tests)
+  is in `run-node.mjs`.
+
+Browser evidence (in-app browser, source `index.html`, durable storage, a
+Reaver made through the creation screen into slot 1):
+
+| Viewport | Load door (w×h at x,y) | Delete review (w×h at x,y) | Fits | Page scroll | Controls < 44 px |
+|---|---|---|---|---:|---|
+| 1280×800 | — | — | yes | 0 | none |
+| 844×390 | 366×376 at 239,14 (rows scroll 33 px inside) | 366×376 at 239,7 | yes | 277 (title screen, pre-existing) | none |
+| 390×844 | 373×452 at 9,205 | 376×381 at 7,232 | yes | 0 | none |
+| 375×667 | 361×404 at 7,139 | 361×381 at 7,143 | yes | 177 (title screen, pre-existing) | none |
+| 360×780 | 346×391 at 7,202 | 346×372 at 7,204 | yes | 0 | none |
+
+- W1r at 1280×800, with `Storage.prototype.setItem` made to throw
+  `QuotaExceededError`: Save Game opened the door (460×429), Retry with
+  storage restored closed it and the slot held the run.
+- W2c at 1280×800: Begin over the Reaver in slot 1 asked; Replace began the
+  Starseer there (slot class `reaver` → `starseer`, `savedAt` stamped).
+- W2d at 1280×800: an `alertdialog` with the DISCARDS UNSAVED CHANGES eyebrow;
+  focus on Back.
+- W2b: `alertdialog`, CANNOT BE UNDONE, focus on Back, DELETE in danger tone.
+
+Limits and owner decisions:
+- The pre-creation review doors (“Start in slot n?”, “Load slot n?”) are the
+  owner's 2026-09-04 request and stay; the drawings show none. Delete stays
+  the row's ✕ (owner, 2026-09-11) rather than one “Delete selected” button.
+- W1r, W2c and W2d were measured at 1280×800 only; they share the frame
+  measured for W2b at the four smaller sizes.
+- The title screen itself scrolls at 375×667 and 844×390; the doors fit the
+  viewport regardless. That scroll predates this branch.
+- `tools/uistrings.mjs --check` was red on dev before this branch (settings,
+  customize, uiContent, card); the baseline records only this branch's two
+  shrunk files.
+- `tools/receipts.mjs --check` reports merged PRs without receipts on dev;
+  none is this branch's.

@@ -355,3 +355,31 @@ piles.eyebrow,,Pile,Which pile this door is reading.,Pile
 piles.empty,,Empty.,Nothing is in this pile.,Empty
 piles.spent.title,,Card piles,The cards this fight has spent — discarded and exhausted.,Card piles
 piles.spent.nav,,Piles,Choose which spent pile to read.,Piles
+# W1l / W1m: the slot doors are titled by what they are for and their primary by what it does.
+title.slots.door.new,,New game,Choose the slot a new climb will be saved in.,
+title.slots.door.load,,Load game,Choose the saved climb to continue.,
+title.slots.primary.new,,Create character,Go on to make the character that starts in the chosen slot.,
+title.slots.primary.load,,Load,Load the chosen saved climb.,
+title.slots.saved,,Saved {when},When this slot was last written.,
+title.slots.seed,,Seed {seed},,
+title.slots.start.occupied,,Start in slot {slot}?,,
+title.slots.start.occupied.prompt,,This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.,,
+# W2b / W2c / W2d: the save reviews name the save and say exactly what happens to it.
+save.review.delete,,Delete slot {slot}?,,
+save.review.delete.message,,The saved climb in slot {slot} is removed. It is not kept anywhere and cannot be recovered. Your profile stays as it is.,,
+save.review.delete.confirm,,DELETE,,
+save.review.replace,,Replace this save?,,
+save.review.replace.message,,"Replacement: {className}, seed {seed}. The saved climb in slot {slot} is removed and cannot be recovered.",,
+save.review.replace.confirm,,Replace,,
+save.review.load,,Load slot {slot}?,,
+save.review.load.message,,The saved climb replaces everything done since your last save.,,
+save.review.load.confirm,,Load saved run,,
+# W1r: the save status door — the run, its slot, when it was last written, and what happened.
+save.status.title,,Save game,,
+save.status.destination,,Slot {slot},Where this run is saved.,
+save.status.lastSaved,,Last saved {when},,
+save.status.neverSaved,,Not saved yet,,
+save.status.saved,,Saved.,,
+save.status.failed,,The save did not land: {reason}. Your run is unchanged; try the save again.,,
+save.status.retry,,Retry save,,
+save.status.save,,Save,,
