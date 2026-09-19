@@ -17,7 +17,7 @@ import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
-import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
+import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
 } from '../../model/mapknowledge.js';
@@ -255,6 +255,8 @@ const ROWS = [
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
+    note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
