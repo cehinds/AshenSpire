@@ -1374,6 +1374,23 @@
 
 /* Advanced presentation dials only change the painted figure. Combat boxes,
    meters and targeting remain in their authored formation cells. */
+.formation-grid {
+  display: none; position: absolute; inset: 0; z-index: 8;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  pointer-events: none; user-select: none;
+}
+:root[data-formation-grid='true'] .formation-grid { display: grid; }
+.formation-grid-cell {
+  border: 1px solid #d5cc63b0; background: #71822912;
+  min-width: 0; padding: .2rem; box-sizing: border-box;
+}
+.formation-grid-cell[data-side='enemy'] { border-color: #e1a679b0; background: #9c552512; }
+.formation-grid-cell span {
+  display: inline-block; background: #14110de6; color: #fff2bb;
+  font: 700 .7rem/1.4 var(--font-ui, sans-serif); padding: .1rem .25rem;
+  border-radius: .2rem;
+}
 :root .combat .combatant.player .sprite {
   scale: var(--player-sprite-scale, .9);
   translate: var(--player-spawn-column-offset, 0) var(--player-spawn-row-offset, 0);

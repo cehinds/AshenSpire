@@ -692,6 +692,7 @@ function applyCardSizeSettings(settings) {
 function applyDisplaySettings(settings) {
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
+  document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
   const rootStyle = document.documentElement.style;
   rootStyle.setProperty('--player-sprite-scale', String(advancedPresentation.playerSpriteScale));
   rootStyle.setProperty('--enemy-sprite-scale', String(advancedPresentation.enemySpriteScale));
