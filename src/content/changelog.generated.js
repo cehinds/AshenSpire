@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1210",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your Poise bar now fills as the blows land, and a party's receipts name who was hit",
+    "detail": "The Poise meter went live last change, but during the enemy's turn the bar sat still and then reset, because the paced view had no case for an impact; it now fills on the beat that caused it. In co-op the impact receipts carry the seat that was struck, so a hook meant for the player who was hit no longer fires for their teammates.",
+    "build": "0.7.1.297",
+    "pullRequest": 1210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1210"
+  },
+  {
     "id": "pr-1203",
     "date": "2026-09-19",
     "group": "2026-09-19",
