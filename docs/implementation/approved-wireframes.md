@@ -2371,3 +2371,72 @@ time, and Exhaust starts off the edge until the rail scrolls; that is
 recorded, not judged. The comment beside the Shop pane rule in
 `styles/kit.css` says the thumb colour comes from `.screen`; it comes from
 `.as-pane`. Both are left for the owner.
+
+## Quest dialogue (W4c, WGQ0–WGQ8)
+
+Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141; this
+section was written at dev `6818bb06`. The quest dialogue is now its own
+screen, `src/ui/screens/dialogue.js`, a child of the W4 parent combat uses,
+and every number it draws by is data in
+`content/config/ui/scenes/w4c-dialogue.json` (through `uiConfig.scenes.w4c`).
+
+- **Bands (WGQ0).** HUD 10 / scene 40 / context 35 / footer 15 of the frame;
+  12 / 40 / 33 / 15 when the HUD folds to one row on a compact host
+  (`dialogueHudCompact`: the screen is shorter than 500 physical px or
+  narrower than the parent's compact width). `dialogueBands` allocates them
+  through the shared W4 allocator, so the screen never scrolls.
+- **Layer stack.** The environment plate, skybox over a 60% floor, is the base
+  of the frame (z2, z3); the two figures stand on it (z4); the opaque context
+  band (z5) is the reveal line; HUD and footer are z6. The entrance fades the
+  figures in over 400 ms and raises the band 2 vh 300 ms later; reduced
+  motion skips it, and a run-HUD remount keeps the beat and never replays it.
+- **Figures (WGQ2, WGQ3).** Each is the whole art zoomed so one third stands
+  above the reveal line (all of it on a compact host). A figure keeps to its
+  lane: half the frame less the two insets and `max(minGapVw, 24 px)`. Wider
+  than the lane, it may lean 8 vw over the outer frame edge first, then shrinks
+  as a whole and sinks so its top third still meets the reveal line, never
+  under 22 vh visible. The NPC is mirrored to face the player; the speaker
+  draws above the listener, who dims no further than opacity 0.62, brightness
+  0.8, saturation 0.55. The stage re-measures a figure when its art decodes, so
+  a listener can no longer stay invisible at 844×390 or 740×372.
+- **Context band (WGQ4).** Quest title, narrative, responses; no eyebrow,
+  speaker line or prompt hint (hints are tooltips). Four responses must show
+  without scrolling; five or more may scroll the band. The response grid tries
+  `behavior.responseLayouts` in order (one column below the text, two below,
+  two beside it at a 0.45 text share) and keeps the first that measures as
+  holding them. Responses clamp to two lines between 2.75 and 5.5 rem; the
+  title's 1.45 line-height clears its ink.
+- **Speech (WGQ5–WGQ8).** The event text is split into beats. Continue
+  advances one; Skip speech ends the clip and keeps the caption; a finished
+  clip may advance prose but never picks a response; Back reviews without
+  replaying effects. The responses appear on the last beat only and commit
+  through `commitEventChoice`, the Event screen's own door; a binding response
+  keeps its hold-to-confirm beat. The beat is never saved.
+
+Evidence. `tests/quest-dialogue.test.mjs` 17/17 and
+`tests/wireframe-dialogue-frame.test.mjs` 28/28. `tools/dialogue-context-fit.mjs`
+(the real screen mounted at each host, the grid driven to 3, 4 and 5
+responses) and `tools/dialogue-hud-fit.mjs` (`?shot=event`, every HUD reading
+checked for overlap), both green on 2026-09-19 in headless Edge:
+
+| Host | Figures (px) | Gap (px) | Band (px) | 4 responses | 5 responses | HUD |
+|---|---:|---:|---:|---|---|---|
+| 1280×800 | 853 / 853 | 149 | 229 | 2 columns below, no scroll | scrolls (229/296) | two rows, 75.9 in 74.8 |
+| 844×390 | 717 / 717 | 463 | 178 | 2 columns beside, no scroll | scrolls (178/202) | one row |
+| 740×372 | 228 / 228 | 644 | 169 | 2 beside, no scroll | scrolls (169/197) | one row |
+| 411×783 | 313 / 313 | 49 | 236 | 2 columns below, no scroll | 1 column, no scroll | one row |
+| 390×844 | 357 / 357 | 24 | 269 | 2 columns below, no scroll | 1 column, no scroll | one row |
+
+Band slack (empty strip under the last response) is at most 1.1 px against
+the 4 px allowance at every host. Every response is at least 44 px tall.
+
+Limits:
+- 375×667 and 360×780 are not among the tools' hosts; the ledger keeps those
+  two columns pending and names the nearest measured host.
+- A real tap on a response and the entrance sequence are covered by the node
+  tests and the owner's previews of 2026-09-18, not by the tools.
+- 740×372 is still covered by the game's own short-window gate by default;
+  whether to lower that threshold is an owner decision.
+- `portraits.fit: "clipToLane"` (the close-up-with-clipping reading of the
+  drawing) was built in the docs preview and not shipped; `shrinkToLane` is
+  what plays.
