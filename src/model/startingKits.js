@@ -129,9 +129,22 @@ export function startingKitSnapshot(kit) {
 }
 
 /** Validate persisted identity, or stamp the one explicit v1 baseline migration. */
+/**
+ * bornClassOf(run) → the class the run was created as: the first
+ * `classSwapped` history row's `from`, or the run's class when it has never
+ * swapped (plan phase 5c). The starting kit, its snapshot and the creation
+ * armour grant are the BIRTH's — the run was born once — so they are held
+ * to this class, not to the core card the Turncoat's Mirror later wrote.
+ */
+export function bornClassOf(run) {
+  const swap = Array.isArray(run && run.history) ? run.history.find((h) => h && h.kind === 'classSwapped') : null;
+  return swap && typeof swap.from === 'string' ? swap.from : run.class;
+}
+
 export function validateRunStartingKit(run, registries, meta = {}, { legacy = false } = {}) {
+  const bornClass = bornClassOf(run);
   if (legacy) {
-    const baseline = resolveStartingKit(registries, run.class, undefined, {});
+    const baseline = resolveStartingKit(registries, bornClass, undefined, {});
     run.startingKitId = baseline.id;
     run.startingKitSnapshot = startingKitSnapshot(baseline);
     return run;
@@ -141,15 +154,15 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
   const armourGrant = run.loadout && run.loadout.creationArmourGrant;
   if (armourGrant != null) {
     if (!armourGrant || typeof armourGrant !== 'object' || Array.isArray(armourGrant)
-      || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
+      || armourGrant.classId !== bornClass || typeof armourGrant.id !== 'string') {
       throw new Error('run creationArmourGrant is malformed');
     }
-    if (!armourRows(registries, run.class).some((piece) => piece && piece.id === armourGrant.id)) {
+    if (!armourRows(registries, bornClass).some((piece) => piece && piece.id === armourGrant.id)) {
       throw new Error(`run creationArmourGrant names unknown armour '${armourGrant.id}'`);
     }
   }
   if (run.startingKitSnapshot.customized === true) {
-    if (run.startingKitSnapshot.id !== run.startingKitId || run.startingKitSnapshot.classId !== run.class) {
+    if (run.startingKitSnapshot.id !== run.startingKitId || run.startingKitSnapshot.classId !== bornClass) {
       throw new Error(`startingKitId '${run.startingKitId}' disagrees with customized startingKitSnapshot identity`);
     }
     const hands = ['leftHand', 'rightHand'].map((slotId) => [slotId, run.startingKitSnapshot[slotId] || null]);
@@ -166,7 +179,7 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
     }
     return run;
   }
-  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
+  const row = resolveStartingKit(registries, bornClass, run.startingKitId, meta);
   const expected = startingKitSnapshot(row);
   if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
     throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);

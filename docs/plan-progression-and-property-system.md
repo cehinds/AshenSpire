@@ -396,6 +396,18 @@ only screen today. SPEC §13.4g; engine test 88.
 | Class-swap item: a run opcode `swapClass {classId}` in `RUN_OPCODES`; authored on one event and one boss reward; replaces `zones.core`, clears `coreTags` not permitted by the new class, resets `skills['class:*']` | `actions.js:810` run-effect door |
 | Character-creation screen lists unlocked class cards from the profile | `src/ui/screens/` creation |
 
+**5c AS BUILT (2026-09-19):** the unlock table gained a `class` kind and two
+conditions (`classLevel`, `bossWithGroup`); no shipped class is gated, so the
+gate is a row the owner may write, and the creation screen lists a gated
+class locked with the row's hint. The swap is the run opcode `swapClass`
+(named or `random`), shipped on ONE door, the Turncoat's Mirror event; the
+boss-reward door is NOT shipped — a reward row is a kind of its own and
+which boss gives it is the owner's call. The swap keeps the deck, relics,
+loadout, attributes and weapon skills, resets every class track, prunes the
+tree picks the new class has no seat for, and does not deal the new class's
+kit (the run was born once). Progress records `maxClassLevel` and the item
+types each boss fell to. SPEC §13.4h; engine test 89.
+
 Acceptance: four classes start from core cards with kits; a tier-3 node
 swaps art and name; an old save with `run.class` loads with its core card
 mounted; class swap removes disallowed tags and keeps weapon skills.

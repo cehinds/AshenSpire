@@ -36,6 +36,7 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
+import { swapRunClass } from '../model/classSwap.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -812,6 +813,14 @@ function runRunOpcode(ctx, action, eff) {
     case 'startCombat': {
       ctx.registries.encounters.get(eff.encounterId); // throws on dangling id
       run.combatEntered = eff.encounterId;
+      break;
+    }
+    case 'swapClass': {
+      // Plan phase 5c: the core card is replaced (model/classSwap.js). A
+      // random swap rolls on the 'misc' stream among every other class.
+      const others = ctx.registries.classes.ids().filter((id) => id !== run.class);
+      const classId = eff.random ? (others.length ? ctx.rng.pick('misc', others) : run.class) : eff.classId;
+      swapRunClass(ctx.registries, run, classId);
       break;
     }
     default:

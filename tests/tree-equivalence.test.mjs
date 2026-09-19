@@ -120,7 +120,7 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 446, 'the 446 shipped objects, every one (435 at the tree phase; phase 3b added the head, hands and feet slots; phase 5a the four class ability cards and four kit relics)');
+  assert.equal(counted, 447, 'the 447 shipped objects, every one (435 at the tree phase; phase 3b added the head, hands and feet slots; phase 5a the four class ability cards and four kit relics; phase 5c the Turncoat\'s Mirror event)');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

@@ -8459,6 +8459,12 @@ export const tagging = [
   {
     "family": "event",
     "scope": "",
+    "objectId": "turncoatMirror",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
     "objectId": "bloodstainedAltar",
     "tagId": "classification.event"
   },

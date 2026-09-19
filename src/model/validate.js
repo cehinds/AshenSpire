@@ -2011,6 +2011,15 @@ export function validateEffects(effects, path, vctx) {
     if (eff.target !== undefined && !TARGETS.includes(eff.target)) {
       err(`${p}.target`, `Unknown target '${eff.target}' (closed set: ${TARGETS.join(', ')})`);
     }
+    // swapClass is `{ classId } | { random: true }` — one selector, never
+    // neither (the door would swap to nothing) nor both (one would be ignored).
+    if (eff.op === 'swapClass') {
+      const named = eff.classId !== undefined;
+      const random = eff.random !== undefined;
+      if (random && eff.random !== true) err(`${p}.random`, `'random' must be true on opcode 'swapClass' (omit it for a named swap)`);
+      if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
+      else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
+    }
     for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }

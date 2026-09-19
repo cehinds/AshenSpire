@@ -31,8 +31,10 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createCombat } from './engine/combat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
+import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
+import { peakClassLevel } from './model/classSwap.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -1460,6 +1462,9 @@ function runResult(victory) {
     // Which bosses fell. beatBoss unlocks need this, and a run that ends in
     // act 3 has already earned the act 1 and 2 kills whatever happens next.
     bosses: [...(run.bossesBeaten || [])],
+    // Plan phase 5c: the class-card unlock conditions read these.
+    maxClassLevel: peakClassLevel(run),
+    bossGroups: structuredClone(run.bossGroups || {}),
   };
 }
 
@@ -2083,6 +2088,10 @@ async function onCombatEnd(result, combat, enc) {
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
     for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
+    // …and the item types in hand as it fell (plan phase 5c, bossWithGroup).
+    run.bossGroups = run.bossGroups || {};
+    const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
+    for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
     // Endless Spire: no summit — the climb loops until death.
     if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn())) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.

@@ -258,8 +258,8 @@ enemy-sourced effect it resolves to the player.
 
 Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
 `upgradeCard {card?|random?}`, `addRelic {id?|random?}`, `addFlask
-{id?|random?}`, `loseMaxHpPct {pct}`, `startCombat {encounterId}`) require a
-run context — use:
+{id?|random?}`, `loseMaxHpPct {pct}`, `startCombat {encounterId}`, `swapClass
+{classId?|random?}`) require a run context — use:
 
 ```js
 import { executeRunEffects } from './src/engine/actions.js';

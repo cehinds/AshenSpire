@@ -71,6 +71,8 @@ export const RUN_OPCODES = Object.freeze([
   'addFlaskCapacity',
   'loseMaxHpPct',
   'startCombat',
+  // Plan phase 5c: the class swap — an event or a boss's gift, never a menu.
+  'swapClass',
 ]);
 
 export const OPCODES = Object.freeze([...COMBAT_OPCODES, ...RUN_OPCODES]);
@@ -468,6 +470,8 @@ export const EFFECT_SPECS = Object.freeze({
   addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
   loseMaxHpPct: { allowed: ['pct'], required: ['pct'], refs: {} },
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
+  // `classId` names the class; `random: true` picks any class but the run's own.
+  swapClass: { allowed: ['classId', 'random'], required: [], refs: { classId: 'classes' } },
 });
 
 // ---------------------------------------------------------------------------
