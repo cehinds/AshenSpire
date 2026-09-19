@@ -88,6 +88,10 @@ export const DEFAULT_SETTINGS = {
   // The game's zoom/layout decision (balance.ui.uiScale). The server replaces
   // these with the live values from src/content/balance.js when it can.
   gameLayout: { designW: 1200, designH: 730, min: 0.62, max: 1.7, narrowW: 430, narrowH: 780, narrowMax: 520, shortWideMinH: 340, gateBelowH: 465 },
+  // Screens that ask their own width question. The Armoury reads
+  // content/source/armouryUi.json layout.responsive.breakpoint (phone at or
+  // below it); the server replaces this with the live value when it can.
+  screens: { armouryBreakpointPx: 760 },
   save: { compileAfterSave: true, keepBackups: 40 },
 };
 
@@ -473,7 +477,7 @@ const remPx = (tokens) => (tokens && tokens.refRemPx) || 16;
  * path, unit }. Values here are nominal — the numbers as authored — with the
  * one floor the W4 parent states (footer minimum) shown, not silently applied.
  */
-export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide' } = {}) {
+export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {} } = {}) {
   const W = viewport.width, H = viewport.height, rem = remPx(tokens);
   const vw = (n) => (W * n) / 100, vh = (n) => (H * n) / 100;
   const sizing = (data && data.sizing) || {}, positioning = (data && data.positioning) || {};
@@ -589,10 +593,14 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       break;
     }
     case 'armoury': {
-      const share = num(layoutMode === 'wide' ? sizing.collectionShare : sizing.compactCollectionShare, 0.5);
-      const stacked = layoutMode !== 'wide';
-      if (stacked) {
-        push({ id: 'collection', label: `collection ${round(share * 100)}%`, x: 0, y: 0, w: W, h: H * share, edit: { kind: 'path', path: 'sizing.compactCollectionShare', unit: 'fractionOfHeight', axis: 'h' } });
+      // src/ui/screens/equipment.js: phone when the viewport width is at or
+      // below content/source/armouryUi.json layout.responsive.breakpoint;
+      // ArmouryWorkspaceModel.armouryPaneSplit then stacks rows with
+      // compactCollectionShare, otherwise columns with collectionShare.
+      const phone = W <= num(screens.armouryBreakpointPx, 760);
+      const share = num(phone ? sizing.compactCollectionShare : sizing.collectionShare, 0.5);
+      if (phone) {
+        push({ id: 'collection', label: `collection ${round(share * 100)}% (phone, ≤${num(screens.armouryBreakpointPx, 760)}px)`, x: 0, y: 0, w: W, h: H * share, edit: { kind: 'path', path: 'sizing.compactCollectionShare', unit: 'fractionOfHeight', axis: 'h' } });
         push({ id: 'detail', label: 'detail', x: 0, y: H * share, w: W, h: H * (1 - share) });
       } else {
         push({ id: 'collection', label: `collection ${round(share * 100)}%`, x: 0, y: 0, w: W * share, h: H, edit: { kind: 'path', path: 'sizing.collectionShare', unit: 'fractionOfWidth', axis: 'w' } });
@@ -738,6 +746,24 @@ export function updateBoxGeometry(sketch, boxId, geometry, { breakpointId = null
   return out;
 }
 
+/**
+ * Write the geometry a box SHOWS (its resolved rect at this breakpoint, in
+ * viewport px) back to the sketch. In breakpoint scope the override takes
+ * the whole rect. In base scope only the CHANGE moves onto the base — the
+ * coordinates an override supplies stay the override's, so moving a box
+ * whose width is overridden never copies that width into every other size.
+ */
+export function applyResolvedRect(sketch, boxId, nextPx, viewport, { breakpointId = null, scope = 'base' } = {}) {
+  const box = sketch.boxes.find((b) => b.id === boxId);
+  if (!box) return clone(sketch);
+  const next = pxToBox(nextPx, sketch.unit, viewport);
+  if (scope === 'breakpoint' && breakpointId) return updateBoxGeometry(sketch, boxId, next, { breakpointId, scope });
+  const shown = resolveBox(box, breakpointId);
+  const geometry = {};
+  for (const k of ['x', 'y', 'w', 'h']) geometry[k] = round(box[k] + (next[k] - shown[k]), sketch.unit === 'px' ? 0 : 2);
+  return updateBoxGeometry(sketch, boxId, geometry, { scope: 'base' });
+}
+
 export function clearOverride(sketch, boxId, breakpointId) {
   const out = clone(sketch);
   const box = out.boxes.find((b) => b.id === boxId);
@@ -762,7 +788,7 @@ export function alignBoxes(sketch, ids, edge, viewport, { breakpointId = null, s
     if (edge === 'top') next.y = bounds.y;
     if (edge === 'bottom') next.y = bounds.b - r.h;
     if (edge === 'vcenter') next.y = (bounds.y + bounds.b) / 2 - r.h / 2;
-    out = updateBoxGeometry(out, b.id, pxToBox(next, sketch.unit, viewport), { breakpointId, scope });
+    out = applyResolvedRect(out, b.id, next, viewport, { breakpointId, scope });
   }
   return out;
 }

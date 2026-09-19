@@ -82,6 +82,10 @@ test('settings merge over the defaults and refuse a broken shape; sketches valid
   const { workspace } = await fixture(t);
   const before = await workspace.settings();
   assert.equal(before.grid.sizePx, 8);
+  assert.equal(before.screens.armouryBreakpointPx, 760, 'the default stands when the checkout has no armouryUi.json');
+  await fs.mkdir(path.join(workspace.root, 'content/source'), { recursive: true });
+  await fs.writeFile(path.join(workspace.root, 'content/source/armouryUi.json'), JSON.stringify({ layout: { responsive: { breakpoint: 700 } } }));
+  assert.equal((await workspace.settings()).screens.armouryBreakpointPx, 700, 'the live source wins');
   await assert.rejects(workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: -1 } }), /grid\.sizePx/);
   const dir = path.join(path.dirname(fileURLToPath(new URL('../server.mjs', import.meta.url))), 'workspace');
   const settingsFile = path.join(dir, 'settings.json');

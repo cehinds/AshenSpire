@@ -39,6 +39,9 @@ function viewport() {
 }
 const layoutFor = (vp) => M.gameLayoutFor(vp, state.settings.gameLayout);
 const breakpointFor = (vp) => M.breakpointFor(state.settings.breakpoints, vp);
+// A sketch carries its own breakpoints (they travel with the file), so its
+// overrides resolve against those, never against the studio's current list.
+const sketchBreakpointFor = (vp) => M.breakpointFor(state.sketch.present.breakpoints || [], vp);
 const fileOf = (rel) => state.files.get(rel);
 const activeRel = () => wireframe().file;
 const activeFile = () => fileOf(activeRel());
@@ -51,10 +54,10 @@ function regions() {
   if (!file) return [];
   const wf = wireframe();
   const parent = wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null;
-  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: layoutFor(viewport()).mode });
+  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: layoutFor(viewport()).mode, screens: state.settings.screens });
 }
 function sketchBoxesPx(vp = viewport()) {
-  const s = state.sketch.present, bp = breakpointFor(vp);
+  const s = state.sketch.present, bp = sketchBreakpointFor(vp);
   return s.boxes.map((b) => { const r = M.resolveBox(b, bp && bp.id); return { ...r, ...M.boxToPx(r, s.unit, vp) }; });
 }
 function scaleFor(vp, host) {
@@ -144,7 +147,7 @@ function redo() {
   if (state.mode === 'sketch') state.sketch.redo(); else { const f = activeFile(); if (f) f.history.redo(); }
   persistDrafts(); renderAll();
 }
-function sketchScope() { const bp = breakpointFor(viewport()); return { breakpointId: bp && bp.id, scope: state.scope === 'breakpoint' && bp ? 'breakpoint' : 'base' }; }
+function sketchScope() { const bp = sketchBreakpointFor(viewport()); return { breakpointId: bp && bp.id, scope: state.scope === 'breakpoint' && bp ? 'breakpoint' : 'base' }; }
 function selectedBoxes() { return state.sketch.present.boxes.filter((b) => state.selection.has(b.id)); }
 function deleteSelection() {
   if (state.mode !== 'sketch' || !state.selection.size) return;
@@ -164,7 +167,7 @@ function nudge(dx, dy) {
   for (const b of selectedBoxes()) {
     if (b.locked) continue;
     const r = M.boxToPx(M.resolveBox(b, sc.breakpointId), unit, vp);
-    s = M.updateBoxGeometry(s, b.id, M.pxToBox({ ...r, x: r.x + dx, y: r.y + dy }, unit, vp), sc);
+    s = M.applyResolvedRect(s, b.id, { ...r, x: r.x + dx, y: r.y + dy }, vp, sc);
   }
   commitSketch(s);
 }
@@ -199,7 +202,8 @@ function sketchDirty() { return JSON.stringify(state.sketch.present) !== JSON.st
 function renderLeft() {
   const left = $('#left');
   if (state.mode === 'sketch') {
-    const s = state.sketch.present, bp = breakpointFor(viewport());
+    const s = state.sketch.present, bp = sketchBreakpointFor(viewport());
+    const sameList = JSON.stringify(s.breakpoints || []) === JSON.stringify(state.settings.breakpoints);
     left.innerHTML = `
       <section><h3>Tools</h3><div class="tools">
         <button data-tool="select" class="${state.tool === 'select' ? 'active' : ''}" title="Select (V)">↖ Select</button>
@@ -215,7 +219,7 @@ function renderLeft() {
         <div class="row"><input class="grow" id="sketch-title" value="${esc(s.name)}" aria-label="Sketch title"></div>
         <div class="row"><label>Units</label><select id="sketch-unit"><option value="percent"${s.unit === 'percent' ? ' selected' : ''}>% of viewport (responsive)</option><option value="px"${s.unit === 'px' ? ' selected' : ''}>px (fixed)</option></select></div>
         <div class="row"><label>Edits go to</label><select id="sketch-scope"><option value="base"${state.scope === 'base' ? ' selected' : ''}>every size (base)</option><option value="breakpoint"${state.scope === 'breakpoint' ? ' selected' : ''}>this breakpoint only${bp ? ` (${esc(bp.label)})` : ''}</option></select></div>
-        <div class="hint">Current breakpoint: <strong>${esc(bp ? bp.label : 'none matches')}</strong>. A box edited for one breakpoint keeps its base geometry elsewhere.</div>
+        <div class="hint">Current breakpoint: <strong>${esc(bp ? bp.label : 'none matches')}</strong> (the sketch's own list: ${(s.breakpoints || []).map((b) => esc(b.id)).join(', ') || 'none'}). A box edited for one breakpoint keeps its base geometry elsewhere.${sameList ? '' : ' <button class="small" data-act="adopt-breakpoints">Use the studio\'s breakpoints</button>'}</div>
       </section>
       <section><h3>Boxes <span class="dim">(${s.boxes.length}, top last)</span></h3><ul class="list" id="box-list">${[...s.boxes].reverse().map((b) => {
         const r = M.resolveBox(b, bp && bp.id);
@@ -246,7 +250,7 @@ function renderStage() {
       return orientations.map((o) => {
         const v = M.viewportFor(dev, o), l = layoutFor(v), b = breakpointFor(v);
         const wf = wireframe(), file = fileOf(wf.file);
-        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode }) : [];
+        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode, screens: state.settings.screens }) : [];
         const svg = canvasSvg({ viewport: v, scale: Math.min(230 / v.width, 250 / v.height), grid: state.settings.grid, canvas: state.settings.canvas, regions: regs, boxes: sketchBoxesPx(v), selection: new Set(), compact: true });
         return `<figure data-device="${esc(dev.id)}" data-orientation="${o}"><figcaption><span>${esc(dev.label)} ${o === 'landscape' ? '⟷' : '↕'}</span><span>${v.width}×${v.height} · <span class="badge ${l.mode}">${l.mode}</span> ${l.zoom}× · ${esc(b ? b.id : '—')}</span></figcaption>${svg}</figure>`;
       });
@@ -353,7 +357,7 @@ function selectionConfigHtml() {
 
 function selectionSketchHtml() {
   const s = state.sketch.present, sel = selectedBoxes(), vp = viewport(), sc = sketchScope();
-  const bp = breakpointFor(vp);
+  const bp = sketchBreakpointFor(vp);
   let html = `<h3>${sel.length ? `${sel.length} selected` : 'Nothing selected'}</h3>`;
   if (!sel.length) return `${html}<p class="hint">Click a box, drag a marquee, or draw a new one with the Box tool (B). Shift-click adds to the selection.</p><p class="hint">Arrow keys nudge by ${state.settings.grid.nudgePx}px, Shift+arrows by ${state.settings.grid.nudgeLargePx}px. Ctrl+D duplicates, Delete removes.</p>`;
   html += `<div class="tools"><button data-align="left" title="Align left">⇤</button><button data-align="hcenter" title="Centre horizontally">↔</button><button data-align="right" title="Align right">⇥</button><button data-align="top" title="Align top">⤒</button><button data-align="vcenter" title="Centre vertically">↕</button><button data-align="bottom" title="Align bottom">⤓</button></div>
@@ -411,6 +415,7 @@ function settingsHtml() {
     <h3>Game layout decision</h3>
     <div class="row">${['designW', 'designH', 'narrowW', 'narrowH', 'narrowMax', 'gateBelowH', 'shortWideMinH', 'min', 'max'].map((k) => `<label>${k}</label><input type="number" step="any" data-setting="gameLayout.${k}" value="${s.gameLayout[k]}">`).join('')}</div>
     <div class="hint">Read from <code>balance.ui.uiScale</code> when the server runs; the badge on every device uses the same rule as <code>src/main.js</code>. Change these only to ask "what if".</div>
+    <div class="row"><label>Armoury phone at or below</label><input type="number" data-setting="screens.armouryBreakpointPx" value="${s.screens.armouryBreakpointPx}"> px <span class="hint">(<code>content/source/armouryUi.json</code> layout.responsive.breakpoint, read by the server)</span></div>
     <h3>Wireframe catalog</h3>
     <table class="grid"><thead><tr><th>label</th><th>file</th><th>draw</th><th>?shot</th><th></th></tr></thead><tbody>${s.wireframes.map(wfr).join('')}</tbody></table>
     <div class="row"><button data-act="add-wf">+ Add wireframe</button><button data-act="reset-wf">Reset catalog</button></div>
@@ -499,6 +504,7 @@ function onLeftClick(e) {
   if (act === 'add-box') { const s = M.clone(state.sketch.present); const box = M.newBox({ label: `Box ${s.boxes.length + 1}`, x: 35, y: 40, w: 30, h: 20 }); if (s.unit === 'px') { const vp = viewport(); Object.assign(box, M.pxToBox({ x: vp.width * 0.35, y: vp.height * 0.4, w: vp.width * 0.3, h: vp.height * 0.2 }, 'px', vp)); } s.boxes.push(box); state.selection = new Set([box.id]); commitSketch(s); }
   if (act === 'dup') duplicateSelection();
   if (act === 'del') deleteSelection();
+  if (act === 'adopt-breakpoints') { const s = M.clone(state.sketch.present); s.breakpoints = M.clone(state.settings.breakpoints); const ids = new Set(s.breakpoints.map((b) => b.id)); for (const b of s.boxes) for (const k of Object.keys(b.overrides || {})) if (!ids.has(k)) delete b.overrides[k]; commitSketch(s); }
   if (act === 'new-sketch') { if (sketchDirty() && !confirm('Discard the current sketch?')) return; state.sketch = new M.History(M.newSketch({ breakpoints: state.settings.breakpoints })); state.sketchName = ''; state.sketchHash = null; state.sketchSaved = M.clone(state.sketch.present); state.selection.clear(); persistDrafts(); renderAll(); }
   if (act === 'open-json') $('#open-json').click();
 }
@@ -541,8 +547,11 @@ function onRightChange(e) {
   }
   if (t.dataset.path) { setLeaf(t); return; }
   if (t.dataset.box && t.dataset.boxGeom) {
-    const s = state.sketch.present; const sc = sketchScope();
-    commitSketch(M.updateBoxGeometry(s, t.dataset.box, { [t.dataset.boxGeom]: Number(t.value) }, sc)); return;
+    const s = state.sketch.present; const sc = sketchScope(); const vp = viewport();
+    const box = s.boxes.find((b) => b.id === t.dataset.box); if (!box) return;
+    const shown = M.resolveBox(box, sc.breakpointId);
+    const next = M.boxToPx({ ...shown, [t.dataset.boxGeom]: Number(t.value) }, s.unit, vp);
+    commitSketch(M.applyResolvedRect(s, box.id, next, vp, sc)); return;
   }
   if (t.dataset.box && t.dataset.boxField) {
     const s = M.clone(state.sketch.present); const b = s.boxes.find((x) => x.id === t.dataset.box); if (!b) return;
@@ -700,7 +709,7 @@ function onPointerDown(e) {
       state.guides = snapped.guides;
       let draft = s;
       const sdx = snapped.rect.x - r0.x, sdy = snapped.rect.y - r0.y;
-      for (const b of moving) { const r = starts.get(b.id); const next = mode === 'move' ? { ...r, x: r.x + sdx, y: r.y + sdy } : b.id === primary.id ? snapped.rect : r; draft = M.updateBoxGeometry(draft, b.id, M.pxToBox(next, unit, vp), sc); }
+      for (const b of moving) { const r = starts.get(b.id); const next = mode === 'move' ? { ...r, x: r.x + sdx, y: r.y + sdy } : b.id === primary.id ? snapped.rect : r; draft = M.applyResolvedRect(draft, b.id, next, vp, sc); }
       state.sketch.replace(draft); renderStage();
     };
     window.addEventListener('pointermove', move);

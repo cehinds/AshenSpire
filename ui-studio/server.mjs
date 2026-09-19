@@ -70,6 +70,11 @@ export class Workspace {
       const { balance } = await import(pathToFileURL(path.join(this.root, 'src/content/balance.js')).href);
       if (balance && balance.ui && balance.ui.uiScale) merged.gameLayout = { ...merged.gameLayout, ...balance.ui.uiScale };
     } catch { /* an older checkout, or a headless import that fails: the defaults stand */ }
+    try {
+      const armoury = JSON.parse(await fs.readFile(path.join(this.root, 'content/source/armouryUi.json'), 'utf8'));
+      const breakpoint = armoury && armoury.layout && armoury.layout.responsive && armoury.layout.responsive.breakpoint;
+      if (Number.isFinite(breakpoint)) merged.screens = { ...merged.screens, armouryBreakpointPx: breakpoint };
+    } catch { /* no source file: the default stands */ }
     return merged;
   }
 

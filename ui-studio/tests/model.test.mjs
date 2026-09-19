@@ -329,3 +329,32 @@ test('an edge already on a guide is a hit, and settings and sketches refuse the 
   const s = M.newSketch(); s.boxes.push({ ...M.newBox(), id: 'a:b' });
   assert.ok(M.sketchProblems(s).some((p) => p.includes('may not contain ":"')));
 });
+
+test('the Armoury stacks at or below its own breakpoint, whatever the game zoom mode says', () => {
+  const armoury = readConfig('ui/screens/armoury.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-armoury');
+  const at = (width) => M.regionsFor(wf, armoury, { width, height: 800 }, { tokens, layoutMode: 'wide', screens: { armouryBreakpointPx: 760 } }).find((r) => r.id === 'collection');
+  assert.equal(at(600).edit.path, 'sizing.compactCollectionShare');
+  assert.equal(at(600).w, 600, 'stacked: the collection spans the width');
+  assert.equal(at(760).edit.path, 'sizing.compactCollectionShare', 'at the breakpoint is phone (<=)');
+  assert.equal(at(761).edit.path, 'sizing.collectionShare');
+  assert.equal(at(761).h, 800, 'columns: the collection spans the height');
+});
+
+test('applyResolvedRect moves the base by the change and leaves an override\'s own coordinates alone', () => {
+  const vp = { width: 1000, height: 500 };
+  const s = M.newSketch();
+  const box = M.newBox({ x: 10, y: 10, w: 30, h: 20 });
+  box.overrides = { narrow: { w: 50 } };
+  s.boxes.push(box);
+  // Shown at narrow: x10 y10 w50 h20 → moved 10% right in base scope.
+  const shown = M.boxToPx(M.resolveBox(box, 'narrow'), 'percent', vp);
+  const moved = M.applyResolvedRect(s, box.id, { ...shown, x: shown.x + 100 }, vp, { breakpointId: 'narrow', scope: 'base' });
+  assert.deepEqual([moved.boxes[0].x, moved.boxes[0].w, moved.boxes[0].overrides.narrow.w], [20, 30, 50], 'base x moved; base w and the override untouched');
+  // The same drag in breakpoint scope lands whole in the override.
+  const over = M.applyResolvedRect(s, box.id, { ...shown, x: shown.x + 100 }, vp, { breakpointId: 'narrow', scope: 'breakpoint' });
+  assert.deepEqual([over.boxes[0].x, over.boxes[0].overrides.narrow], [10, { x: 20, y: 10, w: 50, h: 20 }]);
+  // alignBoxes goes the same way: aligning right at narrow keeps the base width.
+  const right = M.alignBoxes(s, [box.id], 'right', vp, { breakpointId: 'narrow', scope: 'base' });
+  assert.deepEqual([right.boxes[0].x, right.boxes[0].w], [10 + (50 - 50) + (100 - 50 - 10), 30]);
+});
