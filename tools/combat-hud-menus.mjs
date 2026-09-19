@@ -165,9 +165,9 @@ for(const shape of SHAPES) {
  const page=await openTarget(shape);
  await cdp.send('Page.navigate',{url:server.url+(STANDALONE?'AshenSpire.html':'')+'?shot=combat'},page.sessionId);
  await page.until('!!window.__combat && !!document.querySelector(".combat-potions")','combat');
- const geom=await page.evaluate(`[...document.querySelectorAll('.combat-action-row > button')].map(el=>{const r=el.getBoundingClientRect();return {text:el.textContent,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})`);
- check(geom.length===5 && geom.every(r=>r.width>=43.5&&r.height>=43.5&&r.left>=0&&r.right<=shape.width&&r.bottom<=shape.height&&Math.abs(r.top-geom[0].top)<2),shape.name+': five reachable 44px action buttons',geom);
- check(await page.evaluate('document.querySelector(".combat-action-row").lastElementChild.matches(".combat-potions")'),shape.name+': potions far right');
+ const geom=await page.evaluate(`[...document.querySelectorAll('.combat-action-row > :is(button, .energy-orb)')].map(el=>{const r=el.getBoundingClientRect();return {text:el.textContent,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})`);
+ check(geom.length===5 && geom.every(r=>r.width>=43.5&&r.height>=43.5&&r.left>=0&&r.right<=shape.width&&r.bottom<=shape.height&&Math.abs((r.top+r.bottom)-(geom[0].top+geom[0].bottom))<2),shape.name+': five reachable 44px action cells',geom);
+ check(await page.evaluate('[...document.querySelectorAll(".combat-action-row > button")].at(-1).matches(".combat-potions")'),shape.name+': potions far right');
  await screenshot(page,shape,'.combat-action-row','hud');
  await trustedClick(page,shape,'.pile.spent');
  check(await page.evaluate('document.querySelector(".spent-pile-modal [role=tab][aria-selected=true]").dataset.modalTab==="discard"'),shape.name+': starts in discard');
@@ -184,21 +184,21 @@ for(const shape of SHAPES) {
  check(await page.evaluate('document.querySelectorAll(".combat-potion-menu .as-option").length>=2'),shape.name+': health and mana entries');
  await screenshot(page,shape,'.combat-potion-menu','potions');
  await trustedClick(page,shape,'.combat-potion-menu .as-option');
- check(await page.evaluate('!!document.querySelector(".flask-action-menu")'),shape.name+': selection opens actions');
+ check(await page.evaluate('!!document.querySelector(".combat-potion-menu .potion-fold[open] .potion-use")'),shape.name+': selection expands details with Use');
  check((await page.evaluate('JSON.stringify({charges:window.__combat.player.flaskCharges,flasks:window.__combat.player.flasks})'))===before,shape.name+': selection spends nothing');
  await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  // Shortcut opens an action menu, never consumes a charge.
  await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'f',code:'KeyF',windowsVirtualKeyCode:70},page.sessionId);
  await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'f',code:'KeyF',windowsVirtualKeyCode:70},page.sessionId);
- check(await page.evaluate('!!document.querySelector(".flask-action-menu")'),shape.name+': health shortcut opens actions');
+ check(await page.evaluate('!!document.querySelector(".combat-potion-menu .potion-fold[open] .potion-use")'),shape.name+': health shortcut expands details with Use');
  check((await page.evaluate('JSON.stringify({charges:window.__combat.player.flaskCharges,flasks:window.__combat.player.flasks})'))===before,shape.name+': shortcut spends nothing');
  await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  await page.evaluate('window.__combat.player.flasks=[{flaskId:"blightCoating"}];window.__renderCombatForShot()');
  await trustedClick(page,shape,'.combat-potions');
- await trustedClick(page,shape,'.combat-potion-menu .as-option:last-child');
- await trustedClick(page,shape,'[data-flask-action=use]');
+ await trustedClick(page,shape,'.combat-potion-menu .potion-fold:last-child > summary');
+ await trustedClick(page,shape,'.combat-potion-menu .potion-fold[open] .potion-use');
  // Targeted Use enters aim; it cannot spend until a target is confirmed.
  if (await page.evaluate('!!document.querySelector(".confirmation-modal .primary")')) await trustedClick(page,shape,'.confirmation-modal .primary');
  await wait(800);
@@ -210,8 +210,8 @@ for(const shape of SHAPES) {
  for (const [kind,index] of [['hp',1],['mana',2]]) {
    await page.evaluate(`(() => {const p=window.__combat.player;p.hp=10;p.maxMana=20;p.mana=0;p.flaskCharges.${kind}Current=2;window.__hudUseBefore={hp:p.hp,mana:p.mana,events:window.__combat.eventLog.length};window.__renderCombatForShot();})()`);
    await trustedClick(page,shape,'.combat-potions');
-   await trustedClick(page,shape,'.combat-potion-menu .as-option:nth-child('+index+')');
-   await trustedClick(page,shape,'[data-flask-action=use]');
+   await trustedClick(page,shape,'.combat-potion-menu .potion-fold:nth-child('+index+') > summary');
+   await trustedClick(page,shape,'.combat-potion-menu .potion-fold[open] .potion-use');
    if(await page.evaluate('!!document.querySelector(".confirmation-modal .primary")')) await trustedClick(page,shape,'.confirmation-modal .primary');
  await wait(800);
    await wait(1800);
@@ -221,31 +221,21 @@ for(const shape of SHAPES) {
  await page.evaluate('window.__combat.player.flaskCharges.hpCurrent=0;window.__renderCombatForShot()');
  await trustedClick(page,shape,'.combat-potions');
  await trustedClick(page,shape,'.combat-potion-menu .as-option:first-child');
- check(await page.evaluate('document.querySelector("[data-flask-action=use]").getAttribute("aria-disabled")==="true"'),shape.name+': zero charge Use disabled');
+ check(await page.evaluate('document.querySelector(".combat-potion-menu .potion-fold[open] .potion-use").disabled===true'),shape.name+': zero charge Use disabled');
  await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
  await page.evaluate(`(() => {const run=window.__combatRunForShot,c=window.__combat;const art={instanceId:'qa-art',cardId:'quickCut',equipmentRole:'weaponArt',upgraded:false};run.deck.push(art,{...art,instanceId:'qa-art-draw'});c.piles.hand.push({...art});c.piles.draw.push({...art,instanceId:'qa-art-draw'});c.player.energy=20;c.player.mana=20;c.player.stamina=20;window.__renderCombatForShot();})()`);
- await trustedClick(page,shape,'.combat-arts');
- check(await page.evaluate('!!document.querySelector(".combat-art-menu")'),shape.name+': arts menu');
- await screenshot(page,shape,'.combat-art-menu','arts');
- check(await page.evaluate('![...document.querySelectorAll(".choose-weapon-art:not([disabled])")].some(el=>!window.__combat.piles.hand.some(card=>card.instanceId===el.dataset.instanceId))'),shape.name+': only hand arts selectable');
- const art=await page.evaluate('document.querySelector(".choose-weapon-art[data-instance-id=qa-art]:not([disabled])")?.dataset.instanceId || null');
- check(!!art,shape.name+': fixture contains a weaponArt role in hand');
+ // Weapon Arts are played from the hand; no separate Arts menu is shipped.
+ check(await page.evaluate('!!document.querySelector(".hand .card[data-instance-id=qa-art]") && !document.querySelector(".hand .card[data-instance-id=qa-art-draw]")'),shape.name+': only drawn weapon Art is present in hand');
  const plays=await page.evaluate('window.__combat.eventLog.filter(e=>e.type==="cardPlayed").length');
- if(art) {
-   await trustedClick(page,shape,'.choose-weapon-art[data-instance-id=qa-art]:not([disabled])');
-   check(await page.evaluate('!document.querySelector(".combat-art-menu")'),shape.name+': art uses existing hand selection');
-   // Synthetic selection arms self cards. Cancel must leave card and costs alone.
-   await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
-   await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
-   check((await page.evaluate('window.__combat.eventLog.filter(e=>e.type==="cardPlayed").length'))===plays,shape.name+': cancel art targeting spends nothing');
- } else await trustedClick(page,shape,'.combat-art-menu .modal-close');
- await trustedClick(page,shape,'.combat-arts');
- check(await page.evaluate('document.querySelector(".choose-weapon-art[data-instance-id=qa-art-draw]").disabled'),shape.name+': undrawn weaponArt remains unavailable');
- await trustedClick(page,shape,'.choose-weapon-art[data-instance-id=qa-art]:not([disabled])');
+ await trustedClick(page,shape,'.hand .card[data-instance-id=qa-art]');
+ await cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
+ await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27},page.sessionId);
+ check((await page.evaluate('window.__combat.eventLog.filter(e=>e.type==="cardPlayed").length'))===plays,shape.name+': cancel art targeting spends nothing');
+ await trustedClick(page,shape,'.hand .card[data-instance-id=qa-art]');
  if(await page.evaluate('window.__combat.piles.hand.some(c=>c.instanceId==="qa-art")')) await trustedClick(page,shape,'.combatant.enemy');
  await wait(2200);
- check(await page.evaluate('window.__combat.eventLog.filter(e=>e.type==="cardPlayed"&&e.cardInstanceId==="qa-art").length===1 && !window.__combat.piles.hand.some(c=>c.instanceId==="qa-art")'),shape.name+': weaponArt commits once through hand targeting');
+ check(await page.evaluate('window.__combat.eventLog.filter(e=>e.type==="cardPlayed"&&e.cardInstanceId==="qa-art").length===1 && !window.__combat.piles.hand.some(c=>c.instanceId==="qa-art")'),shape.name+': weapon Art commits once through hand targeting');
  check(diagnostics.length===0,shape.name+': no runtime or dispatch failures',diagnostics);
  await cdp.send('Target.closeTarget',{targetId:page.targetId});
 }

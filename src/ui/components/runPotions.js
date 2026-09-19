@@ -42,6 +42,7 @@ export function mountRunPotions(host, { registries, run, meta, onChange = null }
   // hovering anything else on the screen.
   const hover = resolveTooltipSettings(meta.settings);
   host.style.setProperty('--potion-reveal-delay', `${hover.open}ms`);
+  host.style.setProperty('--potion-focus-delay', `${hover.focus}ms`);
   host.style.setProperty('--potion-reveal-fade', `${hover.fade}ms`);
   const openList = () => openRunPotions({ registries, run, opener: control, planFor, onAction: act });
   const minis = iconTray({ label: t('iconTray.potions'), attrs: { class: 'run-potion-minis' } });

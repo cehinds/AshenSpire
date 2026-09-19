@@ -193,19 +193,30 @@
   font-size: 0.95rem; line-height: 1; color: var(--parchment);
   text-shadow: 0 1px 2px #000, 0 0 3px #000;
 }
-.map-potions:hover .run-potion-minis,
-.map-potions:focus-within .run-potion-minis { visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms); }
+.map-potions:has(:focus-visible) .run-potion-minis {
+  visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
+}
 .map-potions .run-potion-minis > * {
   opacity: 0; transform: translateY(0.7rem);
   transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
 }
-.map-potions:hover .run-potion-minis > *,
-.map-potions:focus-within .run-potion-minis > * { opacity: 1; transform: none; }
+.map-potions:has(:focus-visible) .run-potion-minis > * { opacity: 1; transform: none; }
 /* One after another, nearest the button first — the tray holds four at most. */
-.map-potions:hover .run-potion-minis > *:nth-last-child(1), .map-potions:focus-within .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-reveal-delay, 500ms); }
-.map-potions:hover .run-potion-minis > *:nth-last-child(2), .map-potions:focus-within .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 40ms); }
-.map-potions:hover .run-potion-minis > *:nth-last-child(3), .map-potions:focus-within .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 80ms); }
-.map-potions:hover .run-potion-minis > *:nth-last-child(4), .map-potions:focus-within .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 120ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
+/* Touch browsers may keep :hover latched after a tap. Only a device with an
+   actual fine hover pointer gets the hover reveal; touch keeps the large
+   Potions button as its direct, one-tap route to the full list. */
+@media (hover: hover) and (pointer: fine) {
+  .map-potions:hover .run-potion-minis { visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms); }
+  .map-potions:hover .run-potion-minis > * { opacity: 1; transform: none; }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-reveal-delay, 500ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 40ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 80ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 120ms); }
+}
 .reduced-motion .map-potions .run-potion-minis > * { transform: none; }
 
 .map-tray-reveal {

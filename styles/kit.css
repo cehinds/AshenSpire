@@ -2418,20 +2418,24 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   transform: translate(-50%, -50%);
 }
 
-/* The relic rail leaves the HUD band and hangs directly beneath its left edge,
-   on every screen. It is the shared icon tray (§ ICON TRAY): the combatant
-   card's status row is its reference, so a relic is the same round Pip at the
-   same size and gap, and the row never wraps. Potions are not here — the
-   combat footer's Potions control and its minis own them (WGH6, WGH8). Only
-   the icons take a press; the empty rest of the row passes it to the screen. */
-.shared-hud .hud-bottom {
-  position: absolute;
-  z-index: 85;
-  top: calc(100% + 0.4rem);
-  left: 1.6rem; right: 1.6rem;
-  width: auto;
-  pointer-events: none;
+/* Resources and relics share the left grid column. The rail participates in
+   normal flow, so expanding its icons grows the background with the content. */
+.shared-hud > .hud-top {
+  display: grid; width: 100%; min-width: 0; height: auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info info" "meters actions" "rail actions" "route route";
+  align-items: start; gap: 0.5rem 1.2rem;
 }
+.shared-hud .hud-resource-row { display: contents; }
+.shared-hud .hud-info-row { grid-area: info; }
+.shared-hud .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: start; }
+.shared-hud .hud-control-grid { grid-area: actions; align-self: start; }
+.shared-hud .act-route-strip { grid-area: route; }
+.shared-hud .hud-bottom {
+  position: static; grid-area: rail; min-width: 0; width: 100%;
+  align-self: start; pointer-events: none;
+}
+.shared-hud .hud-bottom:empty { display: none; }
 .shared-hud .hud-bottom > :not(.icon-tray) { pointer-events: auto; }
 .as-band { position: relative; }
 /* A detail selected by a tap, waiting for the second tap that explains it
@@ -2640,22 +2644,22 @@ body.pad-mode .as-keycap.float { display: none; }
   --mh-inset: calc(var(--map-header-inset-px, 4) * 1px / var(--ui-zoom, 1));
   --mh-gap: calc(var(--map-header-gap-px, 2) * 1px / var(--ui-zoom, 1));
   box-sizing: border-box; justify-content: center; gap: 0;
-  height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1)); min-height: 0;
+  height: auto; min-height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1));
   padding: var(--mh-inset) 2.5%;
 }
 .shared-hud[data-hud-layout="map-compact"] > .hud-top {
-  display: grid; height: 100%; min-height: 0; min-width: 0;
+  display: grid; height: auto; min-height: 0; min-width: 0;
   align-content: center; align-items: center;
   column-gap: calc(12px / var(--ui-zoom, 1)); row-gap: var(--mh-gap);
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "info actions" "meters actions" "route actions";
+  grid-template-areas: "info actions" "meters actions" "rail actions" "route actions";
 }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] > .hud-top {
   grid-template-columns: fit-content(32%) minmax(0, 1fr) auto;
-  grid-template-areas: "route info actions" "route meters actions";
+  grid-template-areas: "route info actions" "route meters actions" "route rail actions";
 }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] > .hud-top {
-  grid-template-areas: "info actions" "meters actions";
+  grid-template-areas: "info actions" "meters actions" "rail actions";
 }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] .act-route-strip { display: none; }
 .shared-hud[data-hud-layout="map-compact"] .hud-resource-row { display: contents; }
@@ -4224,17 +4228,21 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    bands and divides them itself. */
 :root :is(.combat[data-layout='formation'], .w4-frame) {
   display: grid; flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
-  grid-template-rows: var(--w4-band-hud, 10%) minmax(0, 1fr)
+  grid-template-rows: auto minmax(0, 1fr)
     var(--w4-band-context, var(--w4-context-fallback, 35%)) var(--w4-band-footer, var(--w4-footer-fallback, 15%));
 }
-:root .w4-frame > .topbar { grid-row: 1; min-height: 0; height: 100%; box-sizing: border-box; overflow: visible; }
+:root .w4-frame > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
 :root .combat[data-layout='formation'] {
   --w4-context-fallback: max(calc(208px / var(--ui-zoom, 1)), 30%);
-  --w4-footer-fallback: max(calc(56px / var(--ui-zoom, 1)), 5%);
+  --w4-footer-fallback: max(calc(68px / var(--ui-zoom, 1)), 5%);
+}
+/* Footer allocation must include the 52px controls and both 8px insets. */
+:root .combat[data-layout='formation'] {
+  grid-template-rows: auto minmax(0, 1fr) var(--w4-band-context, var(--w4-context-fallback)) max(calc(68px / var(--ui-zoom, 1)), var(--w4-band-footer, var(--w4-footer-fallback)));
 }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3 / span 2;
-  grid-template-rows: minmax(0, 1fr) var(--w4-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
+  grid-template-rows: minmax(0, 1fr) max(calc(68px / var(--ui-zoom, 1)), var(--w4-band-footer, 14.2857%));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
   position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
@@ -4336,11 +4344,6 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation']:not(.coop) > .topbar {
   padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
-}
-/* The relic and potion belt hangs from the band's padding edge, so the
-   band's padding does not move it; it takes the insets itself. */
-:root .combat[data-layout='formation']:not(.coop) .shared-hud .hud-bottom {
-  left: max(1.6rem, var(--safe-left-local, 0px)); right: max(1.6rem, var(--safe-right-local, 0px));
 }
 @media (max-height: 500px) {
   :root .combat[data-layout='formation']:not(.coop) > .topbar {
@@ -4641,9 +4644,8 @@ button[data-button-size] {
    THEIR OWN LINE and are drawn smaller (below), and below the narrow gate the
    band is four things and fits without either (§ BAND ON A PHONE). They sat
    side by side on one line until 2026-09-18, which is what drew CLASS over
-   ACT. The relic and potion belt still hangs
-   beneath the band's edge, exactly as it does in combat (.shared-hud
-   .hud-bottom); that is the band's own design, not an overflow. */
+   ACT. The relic and potion belt follows vitality in the same grid.
+   Its height contributes to the band, including when relics expand. */
 /* dev's own answer to the same overlap (25f513d, "owner, a real phone"):
    both rows KEEP THEIR OWN LINE here and are drawn smaller. It stands — it
    is what a SHORT WIDE host needs, where the facts are still drawn. § BAND
@@ -4708,8 +4710,8 @@ button[data-button-size] {
 .dialogue-screen[data-mirror-npc='false'] .dialogue-portrait[data-layer='npcPortrait'] .facing { transform: none !important; }
 .dialogue-portrait-slot {
   position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end;
-  top: calc(var(--w4-band-hud, 10%) + var(--dialogue-slot-top, 2%));
-  height: calc(var(--dialogue-reveal-line, 50%) - var(--w4-band-hud, 10%) - var(--dialogue-slot-top, 2%));
+  top: calc(var(--dialogue-scene-top, var(--w4-band-hud, 10%)) + var(--dialogue-slot-top, 2%));
+  height: calc(var(--dialogue-reveal-line, 50%) - var(--dialogue-scene-top, var(--w4-band-hud, 10%)) - var(--dialogue-slot-top, 2%));
   width: var(--dialogue-portrait-w, 20%);
 }
 .dialogue-portrait[data-side='left'] > .dialogue-portrait-slot { left: var(--dialogue-inset-x, 2.5%); }
@@ -4846,3 +4848,14 @@ button[data-button-size] {
 .customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-preview-off="true"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
+
+/* Intrinsic run-HUD sizing wins over host percentage bands and short-landscape
+   chrome. All content stays inside its background; menu never shares a row
+   with the relic icons. */
+:root .shared-hud > .hud-top { height: auto; }
+:root .shared-hud .resbars { display: flex; flex-direction: column; align-items: stretch; }
+:root[data-layout='narrow'] .shared-hud > .hud-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info info" "meters actions" "rail actions";
+}
+:root[data-layout='narrow'] .shared-hud .hud-control-grid { align-self: start; }
