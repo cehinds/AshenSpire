@@ -1,5 +1,5 @@
 import { resolveLocationPresentation } from './model/locationPresentation.js';
-import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
+import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
@@ -1908,10 +1908,29 @@ function combatMods(pool) {
 }
 
 function showLegacyDungeon() {
+  if (run.pendingReward) return mountPendingReward();
+  if (run.legacyDungeon.activeRest) return showRest();
   if (run.legacyDungeon.pending) return showDungeonDialogue();
   mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
-    onTravel: id => { if (travelDungeon(run, id)) { persist(); showDungeonDialogue(); } },
-    onInspect: showDungeonDialogue, onLeave: leaveLegacyDungeon });
+    onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
+    onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
+}
+
+function enterDungeonLocation() {
+  switch (dungeonNodeAction(run)) {
+    case 'rest':
+      run.legacyDungeon.activeRest ||= { nodeId: run.legacyDungeon.current, refilled: false };
+      persist(); return showRest();
+    case 'treasure': {
+      const relicId = rollRelicReward(registries, rng, run.relics);
+      const armamentId = rollDrop('treasure');
+      resolveDungeonNode(run);
+      return beginPendingReward({ relicId, armamentId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+    }
+    case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
+    case 'dialogue': return showDungeonDialogue();
+    default: return showLegacyDungeon();
+  }
 }
 
 function showDungeonDialogue() {
@@ -1929,6 +1948,7 @@ function showDungeonDialogue() {
     onDone: () => {
       const encounterId = dungeonNode(run).encounter;
       const action = continueDungeon(run);
+      if (action === 'rest') { persist(); return showRest(); }
       if (action === 'combat') return enterCombat(run.legacyDungeon.parentNodeId, encounterId);
       persist(); showMap();
     },
@@ -2380,7 +2400,7 @@ function showRest(openPanel = null) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
-  const restState = worldRest ? run.journey.serviceStates[worldRest.pointId] : null;
+  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
   const refill = restState?.refilled ? { hp: 0, mana: 0, total: 0 } : applyGraceRefill(registries, run, { counts });
   if (restState && !restState.refilled) { restState.refilled = true; persist(); }
   if (refill.total) persist();
@@ -2406,7 +2426,8 @@ function showRest(openPanel = null) {
     // leaving it, and the screen carries its own LEAVE.
     multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
-      finishWorldService();
+      if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
+      else finishWorldService();
       persist();
       showMap();
     },

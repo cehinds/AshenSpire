@@ -10,6 +10,12 @@ export function beginDungeon(run, def, parentNodeId) {
   run.legacyDungeon = { version: 1, id: def.id, parentNodeId, current: def.entrance,
     previous: def.entrance, visited: [def.entrance], resolved: [], cleared: false, pending: null };
 }
+// Typed map nodes enter their normal game room; only event nodes use dialogue.
+export function dungeonNodeAction(run) {
+  const s = run.legacyDungeon, n = dungeonNode(run);
+  if (s.resolved.includes(n.id) || s.cleared) return 'map';
+  return n.kind === 'shrine' ? 'rest' : n.kind === 'cache' ? 'treasure' : ['fight', 'boss'].includes(n.kind) ? 'combat' : 'dialogue';
+}
 export function dungeonNeighbors(run, id = run.legacyDungeon.current) {
   return dungeonDefinition(run).edges.filter(e => e.a === id || e.b === id).map(e => e.a === id ? e.b : e.a);
 }
@@ -39,6 +45,7 @@ export function resolveDungeonNode(run) {
   if (!s.resolved.includes(s.current)) s.resolved.push(s.current);
   if (s.current === dungeonDefinition(run).bossNode) s.cleared = true;
   s.pending = null;
+  delete s.activeRest;
 }
 // One persisted receipt owns the response, its roll and its effects. Reloads
 // continue the receipt rather than rolling escape or awarding a cache again.
@@ -55,9 +62,9 @@ export function chooseDungeon(run, choiceId, rng) {
     action = success ? 'retreat' : 'combat';
     text = `Escape roll ${roll} / ${escapeChance(run)}. ${success ? 'You slip back along the road. The encounter remains.' : 'Your route closes. You must fight.'}`;
   } else if (choiceId === 'listen') {
-    if (n.kind === 'shrine') { const healed = Math.min(run.maxHp - run.hp, Math.ceil(run.maxHp * .25)); run.hp += healed; text += ` Rest restores ${healed} health.`; }
+    if (n.kind === 'shrine') action = 'rest';
     if (n.kind === 'cache') { run.cinders += 20; text += ' You recover 20 cinders.'; }
-    resolveDungeonNode(run);
+    if (action !== 'rest') resolveDungeonNode(run);
   }
   s.pending = { choiceId, action, text, roll, nodeId: n.id };
   return s.pending;
@@ -65,6 +72,7 @@ export function chooseDungeon(run, choiceId, rng) {
 export function continueDungeon(run) {
   const s = run.legacyDungeon, p = s.pending;
   if (!p) return 'map';
+  if (p.action === 'rest') s.activeRest = { nodeId: s.current, refilled: false };
   if (p.action === 'retreat') s.current = s.previous;
   s.pending = null;
   return p.action;
@@ -80,7 +88,8 @@ export function legacyDungeonProblems(run) {
   if (!ids.has(s.current) || !ids.has(s.previous)) errors.push('legacyDungeon: invalid position');
   for (const k of ['visited', 'resolved']) if (!Array.isArray(s[k]) || s[k].some(id => !ids.has(id)) || new Set(s[k]).size !== s[k].length) errors.push(`legacyDungeon: invalid ${k}`);
   if (typeof s.cleared !== 'boolean' || (s.cleared && !(Array.isArray(s.resolved) && s.resolved.includes(d.bossNode)))) errors.push('legacyDungeon: invalid clear');
-  if (s.pending && (!['map', 'retreat', 'combat'].includes(s.pending.action) || !['listen', 'fight', 'flee', 'leave'].includes(s.pending.choiceId) || s.pending.nodeId !== s.current || typeof s.pending.text !== 'string' || (s.pending.roll !== null && (!Number.isInteger(s.pending.roll) || s.pending.roll < 1 || s.pending.roll > 100)))) errors.push('legacyDungeon: invalid pending response');
+  if (s.pending && (!['map', 'retreat', 'combat', 'rest'].includes(s.pending.action) || !['listen', 'fight', 'flee', 'leave'].includes(s.pending.choiceId) || s.pending.nodeId !== s.current || typeof s.pending.text !== 'string' || (s.pending.roll !== null && (!Number.isInteger(s.pending.roll) || s.pending.roll < 1 || s.pending.roll > 100)))) errors.push('legacyDungeon: invalid pending response');
+  if (s.activeRest && (s.activeRest.nodeId !== s.current || dungeonNode(run)?.kind !== 'shrine' || s.resolved.includes(s.current) || typeof s.activeRest.refilled !== 'boolean')) errors.push('legacyDungeon: invalid rest');
   if (run.combatEntered && (run.combatEntered.nodeId !== s.parentNodeId || run.combatEntered.encounterId !== dungeonNode(run)?.encounter)) errors.push('legacyDungeon: combat does not match location');
   return errors;
 }

@@ -6,7 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { buildActMap } from '../src/engine/actmap.js';
-import { LEGACY_DUNGEONS, LEGACY_SCENES, beginDungeon, dungeonNeighbors, dungeonNode, dungeonChoices, dungeonScene, travelDungeon, chooseDungeon, continueDungeon, resolveDungeonNode, escapeChance, legacyDungeonProblems } from '../src/model/legacyDungeon.js';
+import { LEGACY_DUNGEONS, LEGACY_SCENES, beginDungeon, dungeonNeighbors, dungeonNode, dungeonNodeAction, dungeonChoices, dungeonScene, travelDungeon, chooseDungeon, continueDungeon, resolveDungeonNode, escapeChance, legacyDungeonProblems } from '../src/model/legacyDungeon.js';
 
 const registries = createRegistries(contentBundle);
 for (const def of LEGACY_DUNGEONS) {
@@ -32,6 +32,7 @@ for (const def of LEGACY_DUNGEONS) {
     assert.ok(registries.encounters.has(n.encounter), n.encounter);
     run.legacyDungeon.current = n.id;
     assert.ok(dungeonScene(run), n.id);
+    assert.equal(dungeonNodeAction(run), n.kind === 'shrine' ? 'rest' : n.kind === 'cache' ? 'treasure' : ['fight', 'boss'].includes(n.kind) ? 'combat' : 'dialogue', n.id);
   }
   run.legacyDungeon.current = def.entrance;
   chooseDungeon(run, 'listen', rng); continueDungeon(run);
@@ -61,6 +62,22 @@ for (const def of LEGACY_DUNGEONS) {
   chooseDungeon(run, 'listen', rng); chooseDungeon(run, 'listen', rng); continueDungeon(run);
   assert.equal(run.cinders, before + 20);
   assert.throws(() => chooseDungeon(run, 'listen', rng), /Unavailable/);
+  const shrine = def.nodes.find(n => n.kind === 'shrine');
+  run.legacyDungeon.current = shrine.id;
+  run.hp = Math.max(1, run.maxHp - 20);
+  const hpBeforeRest = run.hp;
+  assert.equal(chooseDungeon(run, 'listen', rng).action, 'rest');
+  assert.equal(run.hp, hpBeforeRest, 'dialogue must not auto-heal or skip rest choices');
+  assert.ok(!run.legacyDungeon.resolved.includes(shrine.id));
+  saves.saveRun(run, rng);
+  assert.equal(saves.loadRun(registries).legacyDungeon.pending.action, 'rest');
+  assert.equal(continueDungeon(run), 'rest');
+  assert.equal(travelDungeon(run, dungeonNeighbors(run)[0]), false);
+  saves.saveRun(run, rng);
+  assert.deepEqual(saves.loadRun(registries).legacyDungeon.activeRest, { nodeId: shrine.id, refilled: false });
+  resolveDungeonNode(run);
+  assert.equal(run.legacyDungeon.activeRest, undefined);
+  assert.deepEqual(dungeonChoices(run).map(c => c.id), ['leave']);
   run.legacyDungeon.current = def.bossNode;
   assert.equal(dungeonScene(run).boss, true);
   chooseDungeon(run, 'fight', rng); continueDungeon(run);

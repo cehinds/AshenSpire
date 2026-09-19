@@ -1,7 +1,7 @@
 # Playable legacy dungeons
 
 The dungeon integration is merged into local `dev`. `AshenSpire-LegacyPreview.html`
-at the repository root is a compiled external-art preview (0.7.1.242), using
+at the repository root is a compiled external-art preview (0.7.1.244), using
 the repository's `assets/` folder. It is separate from the normal build aliases
 so concurrent settings/build work remains intact.
 
@@ -10,8 +10,9 @@ mountMapBoard, including native SVG nodes, selection tray, Back/Enter, tooltips,
 legend, camera, zoom and input controls. An adapter supplies authored positions
 and road polylines. Map paintings, road geometry, gate approaches and paired
 combat/dialogue art are unchanged. Dark smoky fog and brown road haze remain.
-Entering a reachable location opens its dialogue immediately, matching normal
-map travel. Select the cleared boss node and Enter to leave the dungeon.
+Entering a reachable location uses its normal game room: shrine options,
+treasure rewards, or combat. Only question-mark nodes open lore dialogue.
+Shrine progress and treasure reward receipts persist across saves. Select the cleared boss node and Enter to leave the dungeon.
 
 All three native-map entrance-to-boss routes passed dialogue, combat, rewards,
 saved clear and exit checks with zero page errors. Desktop screenshots for all
