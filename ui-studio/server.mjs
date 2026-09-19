@@ -122,12 +122,13 @@ export class Workspace {
       }
       await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
       for (const t of targets) { await fs.mkdir(path.dirname(t.abs), { recursive: true }); await fs.writeFile(t.abs, t.text); }
-      await this.pruneBackups();
+      await this.pruneBackups((await this.settings()).save.keepBackups);
       return { backup: id, files: targets.map((t) => ({ rel: t.rel, hash: hash(t.text) })) };
     });
   }
 
   async pruneBackups(keep = 40) {
+    if (!(Number.isInteger(keep) && keep >= 1)) keep = 40;
     const dir = path.join(this.stateDir, 'backups');
     const ids = (await fs.readdir(dir).catch(() => [])).sort();
     for (const id of ids.slice(0, Math.max(0, ids.length - keep))) await fs.rm(path.join(dir, id), { recursive: true, force: true });
@@ -199,6 +200,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     const current = job;
     workspace.serialize(() => new Promise((resolve) => {
       const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true });
+      current.child = child;
       const append = (d) => { current.output = (current.output + d).slice(-60000); };
       child.stdout.on('data', append); child.stderr.on('data', append);
       child.on('error', (e) => { append(e.message); current.status = 'failed'; resolve(); });
@@ -225,7 +227,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           if (url.pathname === '/api/sketches') return send(res, 200, await workspace.sketches());
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.sketch(url.searchParams.get('name')));
           if (url.pathname === '/api/backups') return send(res, 200, await workspace.backups());
-          if (url.pathname === '/api/compile') return send(res, 200, job || { status: 'idle', output: '' });
+          if (url.pathname === '/api/compile') { const { child, ...publicJob } = job || { status: 'idle', output: '' }; return send(res, 200, publicJob); }
         }
         if (req.method === 'POST') {
           const data = await body(req);
@@ -261,7 +263,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } };
+  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => { if (job && job.child) job.child.kill(); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

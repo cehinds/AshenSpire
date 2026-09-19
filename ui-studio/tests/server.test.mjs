@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { createUiStudio, Workspace, safePath, hash } from '../server.mjs';
 import { SKETCH_SCHEMA } from '../model.mjs';
 
@@ -82,7 +83,7 @@ test('settings merge over the defaults and refuse a broken shape; sketches valid
   const before = await workspace.settings();
   assert.equal(before.grid.sizePx, 8);
   await assert.rejects(workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: -1 } }), /grid\.sizePx/);
-  const dir = path.join(path.dirname(new URL('../server.mjs', import.meta.url).pathname), 'workspace');
+  const dir = path.join(path.dirname(fileURLToPath(new URL('../server.mjs', import.meta.url))), 'workspace');
   const settingsFile = path.join(dir, 'settings.json');
   const had = await fs.readFile(settingsFile, 'utf8').catch(() => null);
   t.after(async () => { if (had === null) await fs.rm(settingsFile, { force: true }); else await fs.writeFile(settingsFile, had); });

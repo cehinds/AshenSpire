@@ -41,16 +41,21 @@ frame and sketch files need the server.
 Every device shows the **game's own layout decision** — `wide`, `narrow`,
 `short-wide` or `short` and the zoom — computed with the same rule as
 `src/main.js` (`balance.ui.uiScale`, read live by the server). A device that
-would raise the upright gate says so.
+would raise the upright gate says so. Each wireframe's drawing follows its own
+model's rules where they differ from that badge: the dialogue's compact bands
+and portrait slot follow `DialogueModel` (short height or narrow width; narrow
+width alone), the shop's stacked panes follow `ShopWorkspaceModel` (the whole
+width against `wideMinRem`).
 
 ## Grid and snapping
 
 Settings → Grid, or the toggles above the canvas (`G` grid, `S` snap):
 
-- grid step in device px and its subdivisions; snap distance in screen px;
+- grid step in device px and its subdivisions; snap distance, also in device
+  px (at 50% zoom a 6 px distance is 3 screen px);
 - snap targets: the grid, the viewport's edges and centre, the safe-area
   insets, and other boxes' edges and centres (guides draw as pink lines while
-  you drag; hold `Alt` to drag free);
+  you drag; hold `Alt` while moving or resizing a box to drag free);
 - band step: config drags round band percentages and fractions to this;
 - nudge sizes for the arrow keys (`Shift` for the large step).
 
@@ -106,7 +111,7 @@ ui-studio/
                               regions, sketches, formatter, history (pure)
   server.mjs                  local server: config read/validate/save, compile,
                               settings, sketches, game preview
-  workspace/settings.json     your settings (written on first change)
+  workspace/settings.json     your settings (written on first change; ignored by git)
   workspace/sketches/*.json   saved sketches (ashenspire.ui-sketch/1)
   tests/*.test.mjs            node --test ui-studio/tests/*.test.mjs
   tests/browser.mjs           node ui-studio/tests/browser.mjs (needs Playwright;

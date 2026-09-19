@@ -133,7 +133,7 @@ export function settingsProblems(s) {
       if (b && b.minWidth != null && b.maxWidth != null && b.minWidth > b.maxWidth) out.push(`breakpoints[${i}] has minWidth above maxWidth`);
     }
   }
-  if (!Array.isArray(s.wireframes)) out.push('wireframes must be an array');
+  if (!Array.isArray(s.wireframes) || !s.wireframes.length) out.push('wireframes must be a non-empty array');
   else for (const [i, w] of s.wireframes.entries()) {
     if (!w || typeof w.id !== 'string' || !w.id) out.push(`wireframes[${i}].id is required`);
     if (!w || typeof w.file !== 'string' || !/^ui\/(tokens\.json|(scenes|components|screens|presentation)\/[\w-]+\.json)$/.test(w.file)) out.push(`wireframes[${i}].file must be a content/config ui/ path`);
@@ -247,7 +247,7 @@ export function snapRect(rect, { grid, guidesX = [], guidesY = [], mode = 'move'
         if (g.guide !== null) return { delta: g.value - v, guide: { axis, at: g.guide } };
         const s = step ? snapToStep(v, step, threshold) : v;
         return { delta: s - v, guide: null };
-      }).filter((c) => c.delta !== 0);
+      }).filter((c) => c.delta !== 0 || c.guide);
       const pool = candidates.some((c) => c.guide) ? candidates.filter((c) => c.guide) : candidates;
       if (!pool.length) return { delta: 0, guide: null };
       return pool.reduce((a, b) => (Math.abs(b.delta) < Math.abs(a.delta) ? b : a));
@@ -479,7 +479,10 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
   const sizing = (data && data.sizing) || {}, positioning = (data && data.positioning) || {};
   const out = [];
   const push = (r) => out.push({ kind: 'region', ...r });
-  const resolve = (v) => (isRef(v) ? (tokens[v.slice(1)] ?? (data.vars || {})[v.slice(1)]) : isFraction(v) ? v.numerator / v.denominator : v);
+  // A "$name" reads the file's own vars first, then ui/tokens.json — the
+  // compiler's order (content/config/README.md), so a shadowed token draws
+  // the number the game will use.
+  const resolve = (v) => (isRef(v) ? ((data.vars || {})[v.slice(1)] ?? tokens[v.slice(1)]) : isFraction(v) ? v.numerator / v.denominator : v);
   const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' ? r : fallback; };
 
   const drawBands = (bands, bandsPath) => {
@@ -515,23 +518,30 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       break;
     }
     case 'dialogue': {
-      const compact = layoutMode !== 'wide' && sizing.bandsCompact;
-      drawBands(compact ? sizing.bandsCompact : sizing.bands, compact ? 'sizing.bandsCompact' : 'sizing.bands');
+      // src/ui/models/DialogueModel.js: the bands fold to bandsCompact when the
+      // screen is SHORT (height below sizing.hud.compactBelowHeightPx) or
+      // NARROW (width below the W4 parent's compactBelowPx); the portrait slot
+      // takes its compact width on the narrow test alone. Both in physical px.
+      const compactBelowPx = parent ? num(getPath(parent, 'sizing.compactBelowPx'), Infinity) : Infinity;
+      const narrowHost = W < compactBelowPx;
+      const shortHost = H < num(getPath(sizing, 'hud.compactBelowHeightPx'), 0);
+      const compactBands = (narrowHost || shortHost) && sizing.bandsCompact;
+      drawBands(compactBands ? sizing.bandsCompact : sizing.bands, compactBands ? 'sizing.bandsCompact' : 'sizing.bands');
       const scene = out.find((r) => r.band === 'scene');
       if (scene && typeof sizing.floorPercent === 'number') {
         push({ id: 'floor', label: `floor ${sizing.floorPercent}%`, x: 0, y: scene.y + scene.h * sizing.floorPercent / 100, w: W, h: 1, line: true, edit: { kind: 'path', path: 'sizing.floorPercent', unit: 'percentOf', of: 'band.scene' } });
       }
       const slot = sizing.portraitSlot || {};
-      const slotW = vw(num(compact ? slot.compactWidthVw : slot.widthVw));
+      const slotW = vw(num(narrowHost ? slot.compactWidthVw : slot.widthVw));
       const inset = vw(num((positioning.portraitSlot || {}).insetVw));
       const top = vh(num((positioning.portraitSlot || {}).topOffsetVh));
       if (scene && slotW) {
-        push({ id: 'portrait.player', label: 'player portrait', x: inset, y: scene.y + top, w: slotW, h: scene.h - top, dashed: true, edit: { kind: 'path', path: compact ? 'sizing.portraitSlot.compactWidthVw' : 'sizing.portraitSlot.widthVw', unit: 'vw', axis: 'w' } });
+        push({ id: 'portrait.player', label: `player portrait${narrowHost ? ' (compact)' : ''}`, x: inset, y: scene.y + top, w: slotW, h: scene.h - top, dashed: true, edit: { kind: 'path', path: narrowHost ? 'sizing.portraitSlot.compactWidthVw' : 'sizing.portraitSlot.widthVw', unit: 'vw', axis: 'w' } });
         push({ id: 'portrait.npc', label: 'npc portrait', x: W - inset - slotW, y: scene.y + top, w: slotW, h: scene.h - top, dashed: true });
       }
       const ctx = out.find((r) => r.band === 'context');
       const ctxW = vw(num((sizing.context || {}).widthVw, 100));
-      if (ctx) push({ id: 'context.text', label: `context ${num((sizing.context || {}).widthVw, 100)}vw`, x: (W - ctxW) / 2, y: ctx.y, w: ctxW, h: ctx.h, dashed: true, edit: { kind: 'path', path: 'sizing.context.widthVw', unit: 'vw', axis: 'w' } });
+      if (ctx) push({ id: 'context.text', label: `context ${num((sizing.context || {}).widthVw, 100)}vw`, x: (W - ctxW) / 2, y: ctx.y, w: ctxW, h: ctx.h, dashed: true, edit: { kind: 'path', path: 'sizing.context.widthVw', unit: 'vw', axis: 'w', centered: true } });
       break;
     }
     case 'map': {
@@ -546,7 +556,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
     case 'choiceBody': {
       const fw = vw(num(sizing.frameWidthVw, 95)), fh = vh(num(sizing.frameHeightVh, 90));
       const fx = (W - fw) / 2, fy = (H - fh) / 2;
-      push({ id: 'frame', label: `frame ${num(sizing.frameWidthVw)}vw × ${num(sizing.frameHeightVh)}vh`, x: fx, y: fy, w: fw, h: fh, edit: { kind: 'path', path: 'sizing.frameWidthVw', unit: 'vw', axis: 'w', pathH: 'sizing.frameHeightVh', unitH: 'vh' } });
+      push({ id: 'frame', label: `frame ${num(sizing.frameWidthVw)}vw × ${num(sizing.frameHeightVh)}vh`, x: fx, y: fy, w: fw, h: fh, edit: { kind: 'path', path: 'sizing.frameWidthVw', unit: 'vw', axis: 'w', pathH: 'sizing.frameHeightVh', unitH: 'vh', centered: true } });
       const hh = vh(num(sizing.headerMinVh)), fth = vh(num(sizing.footerMinVh));
       push({ id: 'header', label: `header ≥${num(sizing.headerMinVh)}vh`, x: fx, y: fy, w: fw, h: hh, edit: { kind: 'path', path: 'sizing.headerMinVh', unit: 'vh', axis: 'h' } });
       push({ id: 'footer', label: `footer ≥${num(sizing.footerMinVh)}vh`, x: fx, y: fy + fh - fth, w: fw, h: fth, edit: { kind: 'path', path: 'sizing.footerMinVh', unit: 'vh', axis: 'h', anchor: 'bottom' } });
@@ -555,14 +565,27 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       break;
     }
     case 'shop': {
-      const railW = clamp(W * num(sizing.railFraction), num(sizing.railMinRem) * rem, num(sizing.railMaxRem) * rem);
+      // src/ui/models/ShopWorkspaceModel.js shopWorkspaceLayout: wide when the
+      // WHOLE width reaches wideMinRem; then the rail is a clamped side column
+      // and offers/detail share the rest. Otherwise the rail sits on top at
+      // full width (its height is its content's) and the panes stack, the
+      // detail capped at detailMaxFraction of the height.
       const gap = num((positioning || {}).gapRem) * rem;
-      push({ id: 'rail', label: `rail ${round(num(sizing.railFraction) * 100, 1)}% (${num(sizing.railMinRem)}–${num(sizing.railMaxRem)}rem)`, x: 0, y: 0, w: railW, h: H, edit: { kind: 'path', path: 'sizing.railFraction', unit: 'fractionOfWidth', axis: 'w' } });
-      const rest = W - railW - gap;
-      const wide = rest >= num(sizing.wideMinRem) * rem;
-      const offersW = wide ? rest * num(sizing.offersFraction, 0.5) : rest;
-      push({ id: 'offers', label: `offers ${wide ? `${round(num(sizing.offersFraction) * 100)}%` : 'stacked (narrow)'}`, x: railW + gap, y: 0, w: offersW, h: wide ? H : H * 0.5 });
-      push({ id: 'detail', label: `detail ≤${round(num(sizing.detailMaxFraction) * 100)}%`, x: wide ? railW + gap + offersW : railW + gap, y: wide ? 0 : H * 0.5, w: wide ? rest - offersW : rest, h: wide ? H : H * 0.5, dashed: true });
+      const wide = W >= num(sizing.wideMinRem) * rem;
+      if (wide) {
+        const railW = Math.round(clamp(W * num(sizing.railFraction), num(sizing.railMinRem) * rem, num(sizing.railMaxRem) * rem));
+        push({ id: 'rail', label: `rail ${round(num(sizing.railFraction) * 100, 1)}% (${num(sizing.railMinRem)}–${num(sizing.railMaxRem)}rem)`, x: 0, y: 0, w: railW, h: H, edit: { kind: 'path', path: 'sizing.railFraction', unit: 'fractionOfWidth', axis: 'w' } });
+        const rest = W - railW - gap;
+        const offersW = rest * num(sizing.offersFraction, 0.5);
+        push({ id: 'offers', label: `offers ${round(num(sizing.offersFraction) * 100)}%`, x: railW + gap, y: 0, w: offersW, h: H, edit: { kind: 'path', path: 'sizing.offersFraction', unit: 'fractionOf', of: 'offers+detail', axis: 'w' } });
+        push({ id: 'detail', label: `detail ${round((1 - num(sizing.offersFraction, 0.5)) * 100)}%`, x: railW + gap + offersW, y: 0, w: rest - offersW, h: H, dashed: true });
+      } else {
+        const railH = 3 * rem;
+        push({ id: 'rail', label: `rail on top (below ${num(sizing.wideMinRem)}rem the panes stack)`, x: 0, y: 0, w: W, h: railH });
+        const detailH = Math.floor((H - railH - gap) * num(sizing.detailMaxFraction, 0.5));
+        push({ id: 'offers', label: 'offers (stacked)', x: 0, y: railH + gap, w: W, h: H - railH - gap - detailH });
+        push({ id: 'detail', label: `detail ≤${round(num(sizing.detailMaxFraction) * 100)}% of the height`, x: 0, y: H - detailH, w: W, h: detailH, dashed: true, edit: { kind: 'path', path: 'sizing.detailMaxFraction', unit: 'fractionOfHeight', axis: 'h', anchor: 'bottom' } });
+      }
       break;
     }
     case 'armoury': {
@@ -618,11 +641,22 @@ export function applyRegionDrag(data, region, deltaPx, viewport, { grid, regions
   const value = isRef(current) || isFraction(current) ? null : current;
   if (typeof value !== 'number') return data; // a $ref or fraction is edited by hand, never dragged over
   let next = value;
+  // A centred region (the modal frame, the context column) grows on both
+  // sides, so its edge moves half the value change: the value moves twice
+  // the drag. A bottom-anchored edge moves the value the other way.
+  const both = edit.centered ? 2 : 1;
+  const sign = edit.anchor === 'bottom' ? -1 : 1;
   switch (edit.unit) {
     case 'percentOf': { const of = regions.find((r) => r.id === edit.of); next = value + (deltaPx / (of ? of.h : H)) * 100; break; }
-    case 'vw': next = value + (deltaPx / W) * 100 * (edit.axis === 'w' && region.id.startsWith('portrait') ? 1 : edit.axis === 'w' && region.id === 'frame' ? 2 : edit.axis === 'w' ? 1 : 1); break;
-    case 'vh': next = value + (deltaPx / H) * 100 * (region.id === 'frame' ? 2 : 1) * (edit.anchor === 'bottom' ? -1 : 1); break;
-    case 'fractionOfHeight': next = value + deltaPx / H; break;
+    case 'fractionOf': {
+      // The span is the named region, or the sum of the named regions ("a+b").
+      const named = String(edit.of).split('+').map((id) => regions.find((r) => r.id === id)).filter(Boolean);
+      const span = named.length ? named.reduce((a, r) => a + (edit.axis === 'w' ? r.w : r.h), 0) : (edit.axis === 'w' ? W : H);
+      next = value + deltaPx / span; break;
+    }
+    case 'vw': next = value + (deltaPx / W) * 100 * both; break;
+    case 'vh': next = value + (deltaPx / H) * 100 * both * sign; break;
+    case 'fractionOfHeight': next = value + (deltaPx / H) * sign; break;
     case 'fractionOfWidth': next = value + deltaPx / W; break;
     default: return data;
   }
@@ -660,6 +694,7 @@ export function sketchProblems(s) {
     const at = `boxes[${i}]`;
     if (!isObject(b)) { out.push(`${at} must be an object`); continue; }
     if (typeof b.id !== 'string' || !b.id) out.push(`${at}.id is required`);
+    else if (b.id.includes(':')) out.push(`${at}.id "${b.id}" may not contain ":"`);
     else if (ids.has(b.id)) out.push(`${at}.id "${b.id}" is used twice`);
     else ids.add(b.id);
     for (const k of ['x', 'y', 'w', 'h']) if (typeof b[k] !== 'number' || !Number.isFinite(b[k])) out.push(`${at}.${k} must be a finite number`);

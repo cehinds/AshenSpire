@@ -101,7 +101,8 @@ async function boot() {
   const drafts = store.get(LS.drafts, {});
   for (const [rel, draft] of Object.entries(drafts)) { const f = fileOf(rel); if (f && draft.hash === f.hash) f.history = new M.History(draft.data); }
   const sketch = store.get(LS.sketch);
-  if (sketch && !M.sketchProblems(sketch.sketch).length) { state.sketch = new M.History(sketch.sketch); state.sketchName = sketch.name || ''; state.sketchHash = sketch.hash || null; }
+  if (sketch && !M.sketchProblems(sketch.sketch).length) { state.sketch = new M.History(sketch.sketch); state.sketchName = sketch.name || ''; state.sketchHash = sketch.hash || null; state.sketchSaved = sketch.saved || null; }
+  else state.sketchSaved = M.clone(state.sketch.present);
   if (!state.settings.wireframes.some((w) => w.id === state.wireframeId)) state.wireframeId = state.settings.wireframes[0].id;
   if (!state.settings.devices.some((d) => d.id === state.deviceId)) state.deviceId = state.settings.devices[0].id;
   bindChrome();
@@ -119,7 +120,7 @@ function persistDrafts() {
   const drafts = {};
   for (const [rel, f] of state.files) if (isDirty(f)) drafts[rel] = { hash: f.hash, data: f.history.present };
   store.set(LS.drafts, drafts);
-  store.set(LS.sketch, { sketch: state.sketch.present, name: state.sketchName, hash: state.sketchHash });
+  store.set(LS.sketch, { sketch: state.sketch.present, name: state.sketchName, hash: state.sketchHash, saved: state.sketchSaved || null });
 }
 async function persistSettings() {
   const problems = M.settingsProblems(state.settings);
@@ -315,9 +316,11 @@ function leafInput(path, value, kind, vars) {
   }
 }
 function varsFor(file) {
+  // The file's own vars first, then the tokens: the compiler's lookup order,
+  // so `#` and the picker name the number the game will use.
   const out = [];
-  for (const [name, value] of Object.entries(tokens())) out.push({ name, value, from: 'tokens' });
   for (const [name, value] of Object.entries((file && file.history.present.vars) || {})) out.push({ name, value, from: 'file' });
+  for (const [name, value] of Object.entries(tokens())) if (!out.some((v) => v.name === name)) out.push({ name, value, from: 'tokens' });
   return out;
 }
 
@@ -496,7 +499,7 @@ function onLeftClick(e) {
   if (act === 'add-box') { const s = M.clone(state.sketch.present); const box = M.newBox({ label: `Box ${s.boxes.length + 1}`, x: 35, y: 40, w: 30, h: 20 }); if (s.unit === 'px') { const vp = viewport(); Object.assign(box, M.pxToBox({ x: vp.width * 0.35, y: vp.height * 0.4, w: vp.width * 0.3, h: vp.height * 0.2 }, 'px', vp)); } s.boxes.push(box); state.selection = new Set([box.id]); commitSketch(s); }
   if (act === 'dup') duplicateSelection();
   if (act === 'del') deleteSelection();
-  if (act === 'new-sketch') { if (sketchDirty() && !confirm('Discard the current sketch?')) return; state.sketch = new M.History(M.newSketch({ breakpoints: state.settings.breakpoints })); state.sketchName = ''; state.sketchHash = null; state.sketchSaved = null; state.selection.clear(); persistDrafts(); renderAll(); }
+  if (act === 'new-sketch') { if (sketchDirty() && !confirm('Discard the current sketch?')) return; state.sketch = new M.History(M.newSketch({ breakpoints: state.settings.breakpoints })); state.sketchName = ''; state.sketchHash = null; state.sketchSaved = M.clone(state.sketch.present); state.selection.clear(); persistDrafts(); renderAll(); }
   if (act === 'open-json') $('#open-json').click();
 }
 function onLeftChange(e) {
@@ -512,6 +515,10 @@ function onLeftChange(e) {
 
 function onBandInput(input) {
   const f = activeFile(); if (!f) return;
+  // The first movement of a slider remembers the state before it, so the
+  // change event can record one undo step from there (a live slider must not
+  // push a step per pixel, and a push of an equal state records nothing).
+  if (!state.bandEditStart) state.bandEditStart = { rel: activeRel(), data: f.history.present };
   const path = input.dataset.bandsPath; const bands = M.getPath(f.history.present, path);
   const next = M.setBand(bands, input.dataset.band, Number(input.value));
   f.history.replace(M.setPath(f.history.present, path, next));
@@ -526,7 +533,12 @@ function onRightChange(e) {
     persistSettings().then(() => renderAll());
     return;
   }
-  if (t.dataset.band) { onBandInput(t); const f = activeFile(); f.history.push(f.history.present); commitFile(activeRel(), f.history.present); return; }
+  if (t.dataset.band) {
+    onBandInput(t);
+    const f = activeFile(); const now = f.history.present; const start = state.bandEditStart; state.bandEditStart = null;
+    if (start && start.rel === activeRel()) f.history.replace(start.data);
+    commitFile(activeRel(), now); return;
+  }
   if (t.dataset.path) { setLeaf(t); return; }
   if (t.dataset.box && t.dataset.boxGeom) {
     const s = state.sketch.present; const sc = sketchScope();
@@ -587,7 +599,12 @@ function onRightClick(e) {
     persistSettings().then(() => renderAll()); return;
   }
   if (b.dataset.bpAct === 'del' && row) { state.settings.breakpoints.splice(Number(row.dataset.bpRow), 1); persistSettings().then(() => renderAll()); return; }
-  if (b.dataset.wfAct === 'del' && row) { state.settings.wireframes.splice(Number(row.dataset.wfRow), 1); persistSettings().then(() => renderAll()); return; }
+  if (b.dataset.wfAct === 'del' && row) {
+    if (state.settings.wireframes.length <= 1) { toast('Keep at least one wireframe', true); return; }
+    state.settings.wireframes.splice(Number(row.dataset.wfRow), 1);
+    if (!state.settings.wireframes.some((w) => w.id === state.wireframeId)) state.wireframeId = state.settings.wireframes[0].id;
+    persistSettings().then(() => renderAll()); return;
+  }
   const act = b.dataset.act;
   if (act === 'add-device') { state.settings.devices.push({ id: `device-${Date.now().toString(36)}`, label: 'New device', width: 800, height: 600, category: 'other', enabled: true }); persistSettings().then(() => renderAll()); }
   if (act === 'reset-devices') { state.settings.devices = M.clone(M.DEFAULT_DEVICES); persistSettings().then(() => renderAll()); }
@@ -749,7 +766,11 @@ async function saveConfig() {
     state.validation = null; persistDrafts();
     toast(`Saved ${result.files.length} file(s) (backup ${result.backup})`);
     if (state.settings.save.compileAfterSave) await compile();
-  } catch (e) { state.validation = { errors: e.message.split('\n').slice(1), files: 0 }; toast(e.message.split('\n')[0], true); }
+  } catch (e) {
+    const lines = e.message.split('\n');
+    state.validation = { errors: lines.length > 1 ? lines.slice(1) : [e.message], files: 0 };
+    toast(lines[0], true);
+  }
   renderAll();
 }
 async function compile() {

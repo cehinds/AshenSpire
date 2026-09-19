@@ -259,3 +259,73 @@ test('canvasSvg writes hit targets for bands, edges, boxes and grips, and escape
   assert.equal(rulerStep(0.5), 20);
   assert.equal(rulerStep(2), 5);
 });
+
+test('a file variable shadows a token, as the compiler resolves it', () => {
+  const w4c = readConfig('ui/scenes/w4c-dialogue.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4c');
+  const shadowed = { ...w4c, vars: { ...w4c.vars, gutterVw: 10 } };
+  const vp = { width: 1000, height: 800 };
+  const inset = (data) => M.regionsFor(wf, data, vp, { parent: w4, tokens }).find((r) => r.id === 'portrait.player').x;
+  assert.equal(inset(w4c), tokens.gutterVw * 10);
+  assert.equal(inset(shadowed), 100);
+});
+
+test('the dialogue folds its bands on a short OR narrow host and its slot on a narrow one, as DialogueModel does', () => {
+  const w4c = readConfig('ui/scenes/w4c-dialogue.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4c');
+  const at = (width, height) => {
+    const regs = M.regionsFor(wf, w4c, { width, height }, { parent: w4, tokens, layoutMode: 'wide' });
+    return { hud: regs.find((r) => r.band === 'hud').percent, slot: regs.find((r) => r.id === 'portrait.player').edit.path, bands: regs.find((r) => r.band === 'hud').edit.path };
+  };
+  assert.deepEqual(at(1280, 800), { hud: 10, slot: 'sizing.portraitSlot.widthVw', bands: 'sizing.bands' });
+  // 600 wide is below the parent's 768: compact bands and the compact slot, whatever the game's zoom mode says.
+  assert.deepEqual(at(600, 800), { hud: 12, slot: 'sizing.portraitSlot.compactWidthVw', bands: 'sizing.bandsCompact' });
+  // 844x390 is short (below hud.compactBelowHeightPx 500) but not narrow: compact bands, wide slot.
+  assert.deepEqual(at(844, 390), { hud: 12, slot: 'sizing.portraitSlot.widthVw', bands: 'sizing.bandsCompact' });
+});
+
+test('the shop stacks below wideMinRem with the rail on top, as ShopWorkspaceModel does', () => {
+  const shop = readConfig('ui/screens/shop.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-shop');
+  const wide = M.regionsFor(wf, shop, { width: 1280, height: 800 }, { tokens });
+  const rail = wide.find((r) => r.id === 'rail');
+  assert.equal(rail.w, Math.round(Math.min(Math.max(1280 * 21.6 / 95, 11 * 16), 28 * 16)));
+  assert.equal(rail.h, 800);
+  const offers = wide.find((r) => r.id === 'offers'), detail = wide.find((r) => r.id === 'detail');
+  assert.equal(offers.w, detail.w, 'offersFraction 0.5 splits the rest evenly');
+  // 390 px is under 60rem: the rail spans the top, the panes stack, the detail takes at most half the height.
+  const phone = M.regionsFor(wf, shop, { width: 390, height: 844 }, { tokens });
+  const top = phone.find((r) => r.id === 'rail');
+  assert.deepEqual([top.x, top.y, top.w], [0, 0, 390]);
+  const stacked = phone.find((r) => r.id === 'detail');
+  assert.equal(stacked.w, 390);
+  assert.equal(stacked.h, Math.floor((844 - 3 * 16 - 16) * 0.5));
+  assert.equal(stacked.y + stacked.h, 844);
+});
+
+test('a centred region moves its value twice the drag; a bottom-anchored one the other way', () => {
+  const w4c = readConfig('ui/scenes/w4c-dialogue.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4c');
+  const vp = { width: 1280, height: 800 };
+  const regs = M.regionsFor(wf, w4c, vp, { parent: w4, tokens });
+  const ctx = regs.find((r) => r.id === 'context.text');
+  assert.equal(M.applyRegionDrag(w4c, ctx, -64, vp, { grid: { bandStepPercent: 1 }, regions: regs }).sizing.context.widthVw, 85, '64 px of 1280 is 5vw, on both sides');
+  const authored = readConfig('ui/components/choiceBody.json');
+  const cwf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-choice');
+  const aregs = M.regionsFor(cwf, authored, vp, { tokens });
+  assert.equal(M.applyRegionDrag(authored, aregs.find((r) => r.id === 'footer'), -40, vp, { grid: { bandStepPercent: 1 }, regions: aregs }), authored, 'a $ref is never dragged over');
+  const choice = { ...authored, sizing: { ...authored.sizing, footerMinVh: 10 } };
+  const cregs = M.regionsFor(cwf, choice, vp, { tokens });
+  const footer = cregs.find((r) => r.id === 'footer');
+  assert.equal(M.applyRegionDrag(choice, footer, -40, vp, { grid: { bandStepPercent: 1 }, regions: cregs }).sizing.footerMinVh, 15, 'dragging the footer\'s top edge up by 5vh grows it');
+});
+
+test('an edge already on a guide is a hit, and settings and sketches refuse the shapes the app cannot survive', () => {
+  const grid = { snap: true, sizePx: 8, subdivisions: 2, thresholdPx: 6 };
+  const onGuide = M.snapRect({ x: 100, y: 50, w: 97, h: 50 }, { grid, guidesX: [100, 200], guidesY: [], mode: 'move' });
+  assert.equal(onGuide.rect.x, 100);
+  assert.deepEqual(onGuide.guides, [{ axis: 'x', at: 100 }]);
+  assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, wireframes: [] }).some((p) => p.includes('wireframes must be a non-empty array')));
+  const s = M.newSketch(); s.boxes.push({ ...M.newBox(), id: 'a:b' });
+  assert.ok(M.sketchProblems(s).some((p) => p.includes('may not contain ":"')));
+});
