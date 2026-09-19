@@ -4960,3 +4960,13 @@ button[data-button-size] {
 .customize .cc-starting-package > h4 { display:none; }
 .customize .cc-starting-package { margin-top:8px; }
 .customize .cc-starting-summary { padding:8px; }
+
+.customize .cc-equipment-header { font-size:max(14px,calc(14px / var(--ui-zoom,1))); }
+.customize #cz-equipment-count { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+.customize .cc-card-selectors .equipment-poker-card { width:min(100%,max(180px,calc(180px / var(--ui-zoom,1)))); max-width:max(180px,calc(180px / var(--ui-zoom,1))); }
+.customize .cc-equip-group[data-equipment-section] { max-width:max(440px,calc(440px / var(--ui-zoom,1))); }
+@media (max-width:700px) {
+  .customize:has(#cz-equipment-panel) .cz-railed { display:block; }
+  .customize:has(#cz-equipment-panel) .as-rail { display:none; }
+  .customize:has(#cz-equipment-panel) .cz-pane { width:100%; height:100%; }
+}
