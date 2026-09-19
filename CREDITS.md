@@ -188,6 +188,10 @@ controlled independently from the doorway and sconces.
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
 
+### Greatsword outfit suites (2026-09-19)
+
+Thirty-one original atlas edits generated with the built-in image_gen tool from the project's approved Reaver motion and existing class/outfit references. Full prompts and PNG masters are in `art/greatsword-outfits-2026-09-19/`; WebP exports cover 32 appearances including the unchanged approved Reaver. Three armor aliases reuse catalog-authorized artwork. No third-party downloads or asserted CC license.
+
 ### Shared armor inventory art (2026-09-19)
 Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
 

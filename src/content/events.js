@@ -209,7 +209,7 @@ export const events = [
       'like frost.\n\nThe mound is quiet — the particular quiet of something that could stop being quiet.',
     choices: [
       {
-        label: 'Dig for cinders (gain 90 cinders; the keeper may wake)',
+        label: 'Dig for cinders (gain 90 cinders; the grave may wake)',
         effects: [
           { op: 'addCinders', amount: 90 },
           { op: 'startCombat', encounterId: 'loneSoldier', if: { p: 'random', pct: 40 } },
@@ -221,7 +221,7 @@ export const events = [
         effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 15 } }],
         resultText: 'You right a fallen blade and stand a while. When you leave, you are lighter than you came.',
       },
-      { label: 'Leave', effects: [], resultText: 'You leave the nameless to their naming.' },
+      { label: 'Leave', effects: [], resultText: 'You leave the broken swords where they lie. No name is written here.' },
     ],
   },
   {
@@ -523,9 +523,9 @@ export const events = [
         resultText: 'The cinders go back into the lantern one by one. The keeper turns without a word and walks the way you came.',
       },
       {
-        label: 'Face the keeper (fight; keep what you took)',
+        label: 'Stand your ground (fight; keep what you took)',
         effects: [{ op: 'startCombat', encounterId: 'patrol' }],
-        resultText: 'The lantern goes out. Things that were following the keeper are not so patient.',
+        resultText: 'The keeper turns away, the lantern dimming along the road. The figures following it stop in front of you and draw their weapons.',
       },
       {
         label: "Accept the keeper's thanks (gain the Gravetender's Bell)",
@@ -537,54 +537,54 @@ export const events = [
   },
   {
     id: 'namelessRest',
-    name: 'The Nameless at Rest',
+    name: 'The Second Cairn',
     art: '🪦',
     text:
-      'The road ends at a second cairn, newer than the first — every sword standing, every name struck ' +
-      'into the stone.\n\nThe keeper is not here. Whatever it was walking toward, it arrived.',
+      'Beside the road stands a second cairn. Its swords have fallen into the mud; no names are carved ' +
+      'on its stones.\n\nThe keeper is not here. The road continues beyond it, and you cannot tell which way the keeper went.',
     choices: [
       {
-        label: 'Keep the vigil (upgrade 2 random cards)',
+        label: 'Raise every sword and keep the vigil (upgrade 2 random cards)',
         effects: [{ op: 'upgradeCard', random: true }, { op: 'upgradeCard', random: true }],
-        resultText: 'You stand until the cinder-light gutters. The bell in your pack rings once, though nothing moved it.',
+        resultText: 'You raise every fallen sword and stand among them until the cinder-light gutters. The bell in your pack rings once, though nothing moved it. The stones remain unwritten.',
       },
       {
-        label: 'Rest among the stones (heal 30% max HP)',
+        label: 'Raise every sword, then rest (heal 30% max HP)',
         effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 30 } }],
-        resultText: 'What you returned bought you this much: a night among the nameless, and no one waking you.',
+        resultText: 'You set every sword upright before lying down among the stones. What you returned bought you this much: a night among the nameless, and no one waking you.',
       },
       {
         label: 'Loot the barrow (gain 120 cinders, gain a Guilt curse)',
         effects: [{ op: 'addCinders', amount: 120 }, { op: 'addCardToDeck', card: 'guilt' }],
-        resultText: 'Second time is easier. The names on the stone do not object. That is the part that follows you.',
+        resultText: 'You drag the fallen swords aside and prise the cinders from beneath them. Second time is easier. You leave the blades in the mud; that is the part that follows you.',
       },
-      { label: 'Leave', effects: [], resultText: 'You leave the cairn as you found it, which is more than the first one got.' },
+      { label: 'Leave', effects: [], resultText: 'You leave the swords fallen and follow the road. The cairn keeps its silence.' },
     ],
   },
   // A two-step investment in the road, answered at a later Unknown node.
   {
     id: 'lastLantern', name: 'The Last Lantern', art: '🏮',
-    text: 'The Warden braces a broken signal lantern against the rain. Beyond the ridge, a supply caravan waits for its light.\n\n' +
-      '"Oil costs forty cinders. Or help me haul the spare beacon up the scree. Either way, the road remembers."',
+    text: 'An unmarked routekeeper braces a broken signal lantern against the rain. The drivers call this traveler the Road Warden; there is no Fell Courtyard crest on the coat.\n\n' +
+      '"That caravan carries medicine to Lantern Haven and the cold hamlets beyond. Oil costs forty cinders. Or help me haul the spare beacon up the scree."',
     choices: [
       {
         label: 'Buy signal oil (pay 40 cinders; aid the caravan)',
         requires: { cinders: 40 },
         effects: [{ op: 'addCinders', amount: -40 }],
-        resultText: 'The wick catches. The Warden marks your name on a weathered supply ledger.',
+        resultText: 'The wick catches. The Road Warden records forty cinders beside Lantern Haven in a weathered supply ledger.',
       },
       {
         label: 'Haul the beacon (take 8 damage; aid the caravan)',
         effects: [{ op: 'damage', target: 'self', amount: 8 }],
-        resultText: 'The iron frame cuts your palms, but its light clears the ridge. The Warden promises to remember the work.',
+        resultText: 'The iron frame cuts your palms, but its light clears the ridge. The Road Warden waves Lantern Haven’s wagons through and promises to remember the work.',
       },
       { label: 'Leave', effects: [], resultText: 'You pass the unlit lantern. The caravan must find another way.' },
     ],
   },
   {
     id: 'lanternCaravan', name: 'The Caravan Comes Through', art: '🏮',
-    text: 'The Warden stands beside a line of mud-spattered wagons. The last one carries the lantern you helped raise.\n\n' +
-      '"You bought these people a road. We can pay our debt, or you can take the emergency strongbox. That choice is yours."',
+    text: 'The Road Warden stands beside Lantern Haven’s mud-spattered wagons. The last one carries the lantern you helped raise.\n\n' +
+      '"You bought these people a road. We can pay our debt. That strongbox is for medicine at the next trading post; it belongs to the cold hamlets."',
     choices: [
       {
         label: 'Accept the quartermaster’s lesson (upgrade a random card)',
@@ -594,12 +594,12 @@ export const events = [
       {
         label: 'Accept wages for the climb (gain 60 cinders)',
         effects: [{ op: 'addCinders', amount: 60 }],
-        resultText: 'The Warden counts out fair wages. The cuts on your hands have earned their keep.',
+        resultText: 'The Road Warden counts out fair wages. The cuts on your hands have earned their keep.',
       },
       {
-        label: 'Claim the emergency strongbox (gain 100 cinders and a Guilt curse)',
+        label: 'Steal the emergency strongbox (gain 100 cinders and a Guilt curse)',
         effects: [{ op: 'addCinders', amount: 100 }, { op: 'addCardToDeck', card: 'guilt' }],
-        resultText: 'No one stops you. A driver quietly removes the medicine crate from the next village’s manifest.',
+        resultText: 'No one stops you. A driver crosses the medicine purchase off Lantern Haven’s manifest. The hamlets’ names remain beneath it, with nothing beside them.',
       },
       { label: 'Leave', effects: [], resultText: 'You wave the wagons onward, asking nothing in return.' },
     ],
@@ -660,7 +660,7 @@ export const eventChoiceHistoryRequirements = Object.freeze({
     undefined,
   ],
   // The second cairn answers the keeper: the thanked keep the vigil, the
-  // penitent rest, the one who fought loots again.
+  // penitent rest, the one who fought the followers loots again.
   namelessRest: [
     { all: [{ eventId: 'namelessKeeper', choiceId: 'acceptThanks' }] },
     { all: [{ eventId: 'namelessKeeper', choiceId: 'returnCinders' }] },

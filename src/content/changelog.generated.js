@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1205",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The roads tell the stories of the places they cross",
+    "detail": "The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.",
+    "build": "0.7.1.282",
+    "pullRequest": 1205,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1205"
+  },
+  {
+    "id": "pr-1204",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Every class and armour keeps its own look while using the approved greatsword motion",
+    "detail": "Equipping a greatsword with the other hand empty now selects the nine-step attack and matching defend, hurt, cast, buff, stance and portrait art for all four classes and all 35 current armour entries. Thirty-two distinct appearances share one configurable motion profile, including separate paintings of each shared armour for each class. The original Reaver sequence stays intact. A synchronized gallery shows every outfit with labeled playback steps, source pose references and portraits. Other weapon combinations keep their existing presentation.",
+    "build": "0.7.1.280",
+    "pullRequest": 1204,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1204"
+  },
+  {
+    "id": "pr-1173",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Holding a card now asks where it should go",
+    "detail": "In combat, holding a card that needs a target selects it and shows its legal targets, and the effect lands once when you choose one — the same flow a tap opens, so no hold plays a targeted card on its own. A card with no target still plays from a hold, the hold's fill starts the moment you press instead of after a hidden delay, and tapping, dragging, keyboard and controller play are unchanged.",
+    "build": "0.7.1.278",
+    "pullRequest": 1173,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1173"
+  },
+  {
     "id": "pr-1198",
     "date": "2026-09-19",
     "group": "2026-09-19",
