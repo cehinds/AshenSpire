@@ -27,7 +27,7 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     if (refill?.shortfalls.length) result.facts.push('Full flask slots limit the arrival refill.');
     result.facts.push(level.offerable
       ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
-      : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants ${level.pointsPerLevel} attribute point${level.pointsPerLevel === 1 ? '' : 's'} to assign here.`);
+      : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants attribute points to assign here.`);
     result.action = 'Enter rest services';
   } else if (handlerId === 'smith') {
     const plan = smithingPlan(registries, run);

@@ -2915,12 +2915,13 @@ if (shotState === 'combat-test') {
       run.smithingStones = shotSmithingStones;
     }
     // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
-    // already states about its own remove grid: a fresh run holds 0 cinders, so
-    // the Level up panel this state now has to reach mounts LOCKED, and a
-    // photograph of a greyed-out feature is a green on nothing. Same posing
-    // discipline as the twenty-card deck above — enough to reach the control,
-    // no rng, identical every run.
-    run.cinders = 999;
+    // already states about its own remove grid: a fresh run has earned no
+    // point, so the Level up panel this state now has to reach mounts LOCKED,
+    // and a photograph of a greyed-out feature is a green on nothing. Same
+    // posing discipline as the twenty-card deck above — enough to reach the
+    // control, no rng, identical every run. Five points waiting on the ledger
+    // (plan phase 6): what five levels grant, without the fights.
+    run.level.unspentPoints = Math.max(run.level.unspentPoints || 0, 5);
     // `?shot=smith` — THE SAME SHRINE WITH THE UPGRADE TRANSACTION OPEN. The
     // Smith is a modal over the Shrine, not a screen of its own, so the review
     // of 2026-09-11 could not photograph it: `?shot=smith` was not a state and

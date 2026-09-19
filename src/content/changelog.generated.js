@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Your character level is earned in the fight now, not bought at the shrine",
     "detail": "Every fight you win, and every enemy you fell, pays experience; each level you reach grants an attribute point, and the points wait at the shrine's Level up card until you assign them, as many at once as you like. Cinders no longer buy levels, so every cinder is yours for the merchant. Every fifth level past the first also raises your maximum HP, Mana and Stamina, and every tenth adds a card to your hand. Your level shows on the combat inspector, the armoury and the character sheet. A run saved before this change keeps the levels it bought, at the level those purchases reached, and never gains the new level bonuses it was not born with.",
-    "build": "0.7.1.219",
+    "build": "0.7.1.221",
     "pullRequest": 1194,
     "url": "https://github.com/cehinds/AshenSpire/pull/1194"
   },

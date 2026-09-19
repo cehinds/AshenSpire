@@ -534,35 +534,36 @@ async function main() {
     else ok('B4', shape, 'the shrine level card uses the five-row shared stat allocator');
     const assignment = await ev(`(() => {
       const level = document.querySelector('.level-up-modal');
-      // The dialog previews the purse from its first draw ("− 0 cinders ·
-      // N remaining"); what a press owes is that the preview MOVES.
-      const cinderResultBefore = level.querySelector('[data-level-cinder-result]');
-      const cinderTextBefore = cinderResultBefore?.textContent || '';
+      // The dialog previews the ledger from its first draw ("N points to
+      // assign · N remaining"; plan phase 6 — no cinder is named); what a press
+      // owes is that the preview MOVES.
+      const pointsResultBefore = level.querySelector('[data-level-points-result]');
+      const pointsTextBefore = pointsResultBefore?.textContent || '';
       const before = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
       level.querySelector('[data-stat-action="increase"]').click();
       const after = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
-      const cinderResultAfter = level.querySelector('[data-level-cinder-result]');
-      const cinderCost = level.querySelector('.level-cinder-cost');
+      const pointsResultAfter = level.querySelector('[data-level-points-result]');
+      const pointsWaiting = level.querySelector('.level-points-waiting');
       return {
         changed: after.filter((n, i) => n !== before[i]).length,
         delta: after.reduce((n, value, i) => n + value - before[i], 0),
         // Multi-point (Constantine, 2026-09-04): the pending row's minus is the
-        // one undo, every plus stays live while the purse still covers a level.
+        // one undo, every plus stays live while a point still waits.
         minusOpen: [...level.querySelectorAll('[data-stat-action="decrease"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
         plusOpen: [...level.querySelectorAll('[data-stat-action="increase"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
         poolLeft: Number((level.querySelector('.se-pool')?.textContent || '').match(/\\d+/)?.[0] || 0),
         doneReady: level.querySelector('[data-stat-done]').getAttribute('aria-disabled') === 'false',
-        cinderPreviewMoved: (cinderResultAfter?.textContent || '') !== cinderTextBefore,
-        cinderPreviewVisibleAfter: cinderResultAfter?.hidden === false,
-        cinderPreviewText: cinderResultAfter?.textContent || '',
-        cinderCostStyled: cinderCost ? getComputedStyle(cinderCost).color !== getComputedStyle(level).color : false
+        pointsPreviewMoved: (pointsResultAfter?.textContent || '') !== pointsTextBefore,
+        pointsPreviewVisibleAfter: pointsResultAfter?.hidden === false,
+        pointsPreviewText: pointsResultAfter?.textContent || '',
+        pointsWaitingStyled: pointsWaiting ? getComputedStyle(pointsWaiting).color !== getComputedStyle(level).color : false
       };
     })()`);
     const plusRight = assignment.poolLeft > 0 ? assignment.plusOpen === 5 : assignment.plusOpen === 0;
     if (assignment.changed !== 1 || assignment.delta !== 1 || assignment.minusOpen !== 1 || !plusRight || !assignment.doneReady
-      || !assignment.cinderPreviewMoved || !assignment.cinderPreviewVisibleAfter || !/remaining/.test(assignment.cinderPreviewText) || !assignment.cinderCostStyled) {
-      bad('B4', shape, `level assignment did not add one point, offer its one undo, keep the rest of the purse's points open and preview the cinder spend (changed ${assignment.changed}, delta ${assignment.delta}, minusOpen ${assignment.minusOpen}, plusOpen ${assignment.plusOpen}, poolLeft ${assignment.poolLeft}, doneReady ${assignment.doneReady}, cinders ${assignment.cinderPreviewText})`);
-    } else ok('B4', shape, 'level assignment adds one point, offers only its undo, keeps further affordable points open, and previews the remaining cinders');
+      || !assignment.pointsPreviewMoved || !assignment.pointsPreviewVisibleAfter || !/remaining/.test(assignment.pointsPreviewText) || !assignment.pointsWaitingStyled) {
+      bad('B4', shape, `level assignment did not add one point, offer its one undo, keep the rest of the waiting points open and preview the points remaining (changed ${assignment.changed}, delta ${assignment.delta}, minusOpen ${assignment.minusOpen}, plusOpen ${assignment.plusOpen}, poolLeft ${assignment.poolLeft}, doneReady ${assignment.doneReady}, points ${assignment.pointsPreviewText})`);
+    } else ok('B4', shape, 'level assignment adds one point, offers only its undo, keeps the other waiting points open, and previews the points remaining');
     await ev(`document.querySelector('.level-up-modal [data-stat-cancel]').click(); true`);
     await until(`!document.querySelector('.level-up-modal')`, 'level-up dialog closed');
     await ev(`(() => { document.querySelector('#flask-reallocate').open = true; return true; })()`);

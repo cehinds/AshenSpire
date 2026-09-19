@@ -1814,7 +1814,7 @@ async function main() {
     const lState = () => ev(`(() => {
       const rows = [...document.querySelectorAll('#level-opt .se-row')];
       const done = document.querySelector('#level-opt [data-stat-done]');
-      const result = document.querySelector('#level-opt [data-level-cinder-result]');
+      const result = document.querySelector('#level-opt [data-level-points-result]');
       return {
         rows: rows.length,
         values: rows.map((r) => Number(((r.querySelector('.se-value') || {}).textContent || '').trim())),
