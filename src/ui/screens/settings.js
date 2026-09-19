@@ -64,6 +64,14 @@ let exportWritePending = false;
 // current render records itself here and the export's settlement reads this
 // rather than its own closure.
 let panelSettings = null;
+// A NOTICE POSTED TO A CLOSED PANEL IS LOST, and the late clipboard landing is
+// the only notice in this screen that can arrive after its panel has gone:
+// `showSettingsNotice` finds no `[data-settings-host]` and returns. So the
+// clipboard would be overwritten after the UI had said it was not, with the
+// announcement that was supposed to cover exactly that dropped on the floor.
+// It is held here instead and posted by the next render. The console gets it
+// either way, because a panel that is never reopened must not swallow it.
+let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -1497,6 +1505,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
     else clearSettingsNotice('card-size');
   }
+  // A LATE CLIPBOARD LANDING THAT HAD NO PANEL TO SPEAK TO WAITS HERE FOR ONE,
+  // and it waits until AFTER the refusal check above: that check clears the
+  // `card-size` tag when the ladder is valid, so flushing any earlier would
+  // have posted the held notice and wiped it in the same render.
+  if (deferredCardSizeNotice) {
+    const held = deferredCardSizeNotice;
+    deferredCardSizeNotice = null;
+    showSettingsNotice(held.msg);
+  }
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
@@ -1566,7 +1583,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         write.then((landed) => {
           exportWritePending = false;
           if (!landed || !timedOut) return;
-          showSettingsNotice('The clipboard answered late: it now holds the block from that copy, not a fresh read of the sliders.', 'card-size');
+          // UNTAGGED ON PURPOSE. The `card-size` tag exists so a REFUSAL can be
+          // withdrawn once the ladder is valid — and `applyCardSizeSettings`
+          // (`src/main.js`) clears that tag on every settings change, so a
+          // tagged announcement was wiped by the next tab click: measured as an
+          // EMPTY notice element after reopening Settings. This is news, not a
+          // standing claim about the sliders, so nothing should withdraw it.
+          const msg = 'The clipboard answered late: it now holds the block from that copy, not a fresh read of the sliders.';
+          console.warn(`card sizes: ${msg}`);
+          if (!showSettingsNotice(msg)) deferredCardSizeNotice = { msg };
         });
         try {
           copied = await Promise.race([write, timeout]);
@@ -1818,7 +1843,10 @@ export function showSettingsNotice(msg, tag = '') {
   // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
   // whatever container it filled, so the notice lands wherever Settings is.
   const host = document.querySelector('[data-settings-host]');
-  if (!host) return;
+  // RETURNS WHETHER IT SPOKE, because one caller — the late clipboard landing —
+  // has to know: its news arrives after its panel may have closed, and a false
+  // here is what sends it to the deferred slot instead of nowhere.
+  if (!host) return false;
   let el = host.querySelector('.set-notice');
   if (!el) {
     el = document.createElement('p');
@@ -1828,6 +1856,7 @@ export function showSettingsNotice(msg, tag = '') {
   }
   el.textContent = msg;
   if (tag) el.dataset.noticeTag = tag; else delete el.dataset.noticeTag;
+  return true;
 }
 
 /**
