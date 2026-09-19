@@ -17,6 +17,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
+import { runClassIdentity } from '../../model/classCard.js';
 import { cardKind } from '../../model/tree.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -132,7 +133,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: { className: registries.classes.get(run.class).name },
+        identity: { className: runClassIdentity(registries, run).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
@@ -1309,7 +1310,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p),
-      name: markMeterRow(labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }), 'name'),
+      name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
     };
@@ -2305,7 +2306,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const node = $(selector);
     node.tabIndex = 0;
     attachTooltip(node, () => `<div class="tt-title">${esc(title)}</div>${esc(helpText(message, {
-      className: registries.classes.get(run.class).name, classDescription: registries.classes.get(run.class).description || '',
+      className: runClassIdentity(registries, run).name, classDescription: registries.classes.get(run.class).description || '',
       cinders: run.cinders, act: run.actNumber, floor: run.floor, turn: $('.turn-ribbon').textContent,
       instruction: helpText(combatEl.dataset.turn === 'player' ? 'playerTurn' : 'enemyTurn'),
     }))}`);

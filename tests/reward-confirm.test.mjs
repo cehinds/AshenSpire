@@ -55,6 +55,38 @@ export function runRewardConfirmTests() {
       check(app.querySelector('.reward-claim-required'), null, 'no choice waits once the card is taken');
       app.remove();
     }
+    // THE CLASS DRAFT (plan phase 5b): node tiles carry the node's name and its
+    // sentence with the numbers read; one selection path; Confirm picks the
+    // node once, spends the draft and writes the checkpoint's node.
+    {
+      const app = document.createElement('main'); document.body.append(app);
+      const run = { class: 'reaver', cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] }, coreTags: [], skills: { 'class:reaver': { xp: 0, level: 1, pendingDrafts: 1 } } };
+      const checkpoint = { states: {}, chosenCardId: null, chosenDraftNodeIds: {} };
+      let writes = 0;
+      mountRewards(app, { registries, run, checkpoint, rewards: { classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }] }, onDone() {}, onPersist() { writes++; } });
+      check(!!app.querySelector('.reward-claim-required'), true, 'the node choice is required');
+      app.querySelector('[data-kind="classDraft"]').click();
+      const tiles = app.querySelectorAll('.reward-row .reward-node');
+      check(tiles.map(tile => tile.querySelector('h3').textContent), ['Iron Footing', 'Blood Tempo'], 'each tile names its node');
+      check(tiles.map(tile => /\d/.test(tile.querySelector('p').textContent) && !/\{\w+\}/.test(tile.querySelector('p').textContent)), [true, true], 'each sentence reads its numbers');
+      const confirm = app.querySelector('#reward-card-confirm');
+      check(confirm.disabled, true, 'no selection cannot confirm');
+      tiles[1].click();
+      check(confirm.disabled, false, 'a tapped tile enables Confirm');
+      check(app.querySelectorAll('.reward-selected').map(tile => tile.dataset.nodeId), ['bloodTempo'], 'one tile is lit');
+      check(app.querySelectorAll('.is-chosen').map(tile => tile.dataset.nodeId), ['bloodTempo'], 'and rings');
+      check(run.coreTags, [], 'selection never picks');
+      tiles[0].click();
+      check(app.querySelectorAll('.reward-selected').map(tile => tile.dataset.nodeId), ['ironFooting'], 'switch replaces the prior tile');
+      confirm.click(); confirm.click();
+      check(run.coreTags, ['ironFooting'], 'Confirm picks the node exactly once');
+      check(run.skills['class:reaver'].pendingDrafts, 0, 'and spends the draft');
+      check(checkpoint.states['classDraft:reaver:0'], 'taken', 'the checkpoint records Taken');
+      check(checkpoint.chosenDraftNodeIds['classDraft:reaver:0'], 'ironFooting', 'and the node');
+      check(writes, 1, 'one persist');
+      check(app.querySelector('.reward-claim-required'), null, 'no choice waits once the node is picked');
+      app.remove();
+    }
     return checks;
   } finally { for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
 }

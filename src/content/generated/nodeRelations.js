@@ -139,5 +139,29 @@ export const nodeRelations = [
     "relation": "PERMITS",
     "targetId": "utility",
     "precedence": 10
+  },
+  {
+    "sourceId": "warlord",
+    "relation": "CONFLICTS_WITH",
+    "targetId": "bulwarkKing",
+    "precedence": 10
+  },
+  {
+    "sourceId": "conduit",
+    "relation": "CONFLICTS_WITH",
+    "targetId": "reservoir",
+    "precedence": 10
+  },
+  {
+    "sourceId": "martyr",
+    "relation": "CONFLICTS_WITH",
+    "targetId": "saint",
+    "precedence": 10
+  },
+  {
+    "sourceId": "assassin",
+    "relation": "CONFLICTS_WITH",
+    "targetId": "shadow",
+    "precedence": 10
   }
 ];

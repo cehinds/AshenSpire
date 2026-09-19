@@ -21,6 +21,7 @@ import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { awardClassXp } from '../src/model/classTree.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -462,6 +463,7 @@ export function createSession({ registries, seedString, endless = false, restore
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
+      coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -686,6 +688,8 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
         // The seat's skill receipt, keyed by its own id (plan phase 4a).
         applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
+        // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
+        awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
       }
     }
     live = null;

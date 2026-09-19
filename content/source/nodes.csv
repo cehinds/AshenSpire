@@ -184,6 +184,30 @@ ashenGrip,property,Ashen Grip,8C7A5B,🤚,,,,,What Ashen Grip does when the figh
 lodestarShard,property,Lodestar Shard,8C7A5B,🌟,,,,,What Lodestar Shard does when the fight gives it its moment.
 waxenSeal,property,Waxen Seal,8C7A5B,🕯,,,,,What Waxen Seal does when the fight gives it its moment.
 whetstonePouch,property,Whetstone Pouch,8C7A5B,👝,,,,,What Whetstone Pouch does when the fight gives it its moment.
+ironFooting,property,Iron Footing,9FC3E8,🦶,,,,,"Every stance you enter braces you."
+bloodTempo,property,Blood Tempo,9FC3E8,♪,,,,,"A change of footing is a breath."
+ashenReserve,property,Ashen Reserve,9FC3E8,🤚,,,,,"The grip gives back a little more."
+grimHarvest,property,Grim Harvest,9FC3E8,🩸,,,,,"What falls feeds you."
+warlord,property,Warlord,9FC3E8,👑,,,,,"The subclass that opens every fight already swinging."
+bulwarkKing,property,Bulwark King,9FC3E8,🏰,,,,,"The subclass that is never caught open."
+attunedMind,property,Attuned Mind,9FC3E8,✴,,,,,"Mana found is a card found."
+starlitFocus,property,Starlit Focus,9FC3E8,✦,,,,,"The charge is there before the first cast."
+lodestarCap,property,Lodestar Cap,9FC3E8,🌟,,,,,"The shard opens the fight wider."
+arcaneDraw,property,Arcane Draw,9FC3E8,🌀,,,,,"The first break each combat is a hand."
+conduit,property,Conduit,9FC3E8,⚡,,,,,"The subclass whose casts cost breath, not blood."
+reservoir,property,Reservoir,9FC3E8,🫙,,,,,"The subclass that never runs dry."
+warmth,property,Warmth,9FC3E8,☀,,,,,"Every heal braces you."
+vigil,property,Vigil,9FC3E8,🕯,,,,,"The litany never quite stops."
+sealOfPlenty,property,Seal of Plenty,9FC3E8,📿,,,,,"The first heal pays for the next cast."
+wakingRot,property,Waking Rot,9FC3E8,🦠,,,,,"Your blows carry the blight."
+martyr,property,Martyr,9FC3E8,✝,,,,,"The subclass that turns every wound to a wall."
+saint,property,Saint,9FC3E8,🌞,,,,,"The subclass that walks in whole."
+quickHands,property,Quick Hands,9FC3E8,🤏,,,,,"Prepared before the first card."
+secondWind,property,Second Wind,9FC3E8,💨,,,,,"What you burn, you draw."
+honedEdge,property,Honed Edge,9FC3E8,🔪,,,,,"Every prepared cut opens a vein."
+poisonedPouch,property,Poisoned Pouch,9FC3E8,☠,,,,,"The whetstone is not the only thing in the pouch."
+assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a stagger as an opening."
+shadow,property,Shadow,9FC3E8,🌑,,,,,"The subclass nothing quite reaches."
 classification,,classification,,,INTERNAL,0,CLASSIFICATION,true,
 classification.attack,classification,attack,,,PRIMARY,10,,,
 classification.strike,classification,strike,,,PRIMARY,11,,,

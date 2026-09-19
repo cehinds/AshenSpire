@@ -65,6 +65,8 @@ export function projectZones(run) {
   return {
     zones: {
       core: idOrNull(run && run.class),
+      // The core card's picked tree nodes (plan phase 5b), a copy of run.coreTags.
+      coreTags: Array.isArray(run && run.coreTags) ? run.coreTags.filter((id) => typeof id === 'string' && id) : [],
       worn,
       hands,
       passive: Array.isArray(run && run.relics) ? run.relics.filter((id) => typeof id === 'string' && id) : [],

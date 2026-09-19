@@ -44,6 +44,7 @@ import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js'
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -95,12 +96,34 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
   return added;
 }
 
+/**
+ * The class tree's picks, by the run's own class (plan phase 5b): the picks
+ * on the run, the picks a fight in progress carries, and the class a pending
+ * draft names. The shape door proves the arrays; this door proves the tree.
+ */
+function classTreeReferenceProblems(run, registries) {
+  const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  const snapshot = run.combatEntered && run.combatEntered.snapshot;
+  if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
+  for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {
+    if (draft && draft.classId !== run.class) problems.push(`class draft class '${draft.classId}' is not the run's class '${run.class}'`);
+  }
+  return problems;
+}
+
 function pendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
   for (const cardId of rewards.cardIds || []) {
     if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  for (const draft of rewards.classDrafts || []) {
+    const tree = new Set(classTreeRows(registries, draft && draft.classId).map((row) => row.nodeId));
+    if (!draft || !registries.classes.has(draft.classId)) problems.push(`class draft class '${draft && draft.classId}' is unknown`);
+    for (const nodeId of (draft && draft.nodeIds) || []) {
+      if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
+    }
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
@@ -549,6 +572,8 @@ export function createSaveManager(storage) {
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
+        const treeProblems = classTreeReferenceProblems(run, registries);
+        if (treeProblems.length) throw new Error(`Malformed class tree references: ${treeProblems.join('; ')}`);
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -579,6 +604,24 @@ export function createSaveManager(storage) {
             why: 'the saved zones disagreed with the class, loadout, relics and deck they are projected from; those fields own the truth until phase 3b, so the projection was re-derived',
           });
           delete run.reprojectedZones;
+        }
+        // Plan phase 5b: a class-tree pick no tree holds any more — a content
+        // update renamed or dropped the node — is stale, not a tamper (another
+        // class's node is refused above). It is dropped here, where the ledger
+        // is open, from the run and from a fight in progress; the rest stay.
+        for (const [holder, field] of [[run, 'coreTags'], [run.combatEntered && run.combatEntered.snapshot, 'combatEntered.snapshot.coreTags']]) {
+          const stale = holder ? staleCoreTags(registries, run.class, holder.coreTags) : [];
+          if (!stale.length) continue;
+          const was = [...holder.coreTags];
+          holder.coreTags = holder.coreTags.filter((id) => !stale.includes(id));
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was,
+            now: [...holder.coreTags],
+            why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
+          });
         }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });

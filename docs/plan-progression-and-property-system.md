@@ -374,6 +374,20 @@ engine test 87.
 | Class XP source: `combatEnd` win, `questCompleted` (the event phase 10a adds; completing a journey node is not completing a quest), boss kill | engine |
 | Draft screen for class level-ups reuses `rollSkillDraftIds` with the node list as the pool; picking writes a tagging row into `run.zones.coreTags` | `reward.js` |
 
+**5b AS BUILT (2026-09-19):** the tree is a TABLE (`content/source/classTree.csv`)
+rather than a `requires: classLevelAtLeast N` on each rule row — a tier is
+the row's own column and the level it opens at is one balance list
+(`skill.class.tierAt`), so the gate lives where the draft reads it, and
+`requires`/`excludes` stay the relation rows the mount path already reads.
+Six nodes per class (two per tier) rather than "about twelve": the shape is
+complete and the count is rows. The pick is `run.coreTags` (schema 9),
+projected as `zones.coreTags` — a projection cannot be written, so the
+field is the run's and the zone reads it. Class XP is paid by the RUN'S
+OWNER (the combat does not know the door's pool); quest XP waits for 10a.
+No `presentation: {artKey, name}` column: the subclass node's own label and
+glyph are the card's face, read off the row. The reward door is the tree's
+only screen today. SPEC §13.4g; engine test 88.
+
 **PR 5c: unlocks and swap.**
 
 | Change | Where |

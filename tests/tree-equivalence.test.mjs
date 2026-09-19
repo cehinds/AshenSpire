@@ -95,9 +95,13 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
   const PHASE_5A_PROPERTIES = ['favored', 'ashenGrip', 'lodestarShard', 'waxenSeal', 'whetstonePouch'];
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && PHASE_5A_PROPERTIES.includes(t.id))),
-    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a\'s named property nodes');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...PHASE_5A_PROPERTIES].sort(), 'and the property additions are exactly the named ones');
+  // Plan phase 5b's class tree: its nodes are named by the tree table itself,
+  // one row per node, so the table is the list.
+  const PHASE_5B_PROPERTIES = contentBundle.classTree.map((row) => row.nodeId);
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES];
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id))),
+    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b\'s named property nodes');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED].sort(), 'and the property additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 

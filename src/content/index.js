@@ -48,6 +48,7 @@ import {
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
+import { classTree } from './generated/classTree.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
@@ -124,6 +125,8 @@ export const contentBundle = {
     armouryUi: ARMOURY_UI,
   },
   unlocks,
+  // Plan phase 5b: the class tree — which property nodes a class may pick, by tier.
+  classTree,
   // The tag schema rides the bundle so every carrier — effect `tags`,
   // taggedVulnerability lists, creature kinds, equipment, relics — validates
   // against ONE vocabulary home (#61). Five normalised tables: the domain

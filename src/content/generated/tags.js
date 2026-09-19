@@ -1281,6 +1281,222 @@ export const tags = [
     "blurb": "What Whetstone Pouch does when the fight gives it its moment."
   },
   {
+    "id": "ironFooting",
+    "domain": "property",
+    "label": "Iron Footing",
+    "color": "9FC3E8",
+    "glyph": "🦶",
+    "visibility": "",
+    "blurb": "Every stance you enter braces you."
+  },
+  {
+    "id": "bloodTempo",
+    "domain": "property",
+    "label": "Blood Tempo",
+    "color": "9FC3E8",
+    "glyph": "♪",
+    "visibility": "",
+    "blurb": "A change of footing is a breath."
+  },
+  {
+    "id": "ashenReserve",
+    "domain": "property",
+    "label": "Ashen Reserve",
+    "color": "9FC3E8",
+    "glyph": "🤚",
+    "visibility": "",
+    "blurb": "The grip gives back a little more."
+  },
+  {
+    "id": "grimHarvest",
+    "domain": "property",
+    "label": "Grim Harvest",
+    "color": "9FC3E8",
+    "glyph": "🩸",
+    "visibility": "",
+    "blurb": "What falls feeds you."
+  },
+  {
+    "id": "warlord",
+    "domain": "property",
+    "label": "Warlord",
+    "color": "9FC3E8",
+    "glyph": "👑",
+    "visibility": "",
+    "blurb": "The subclass that opens every fight already swinging."
+  },
+  {
+    "id": "bulwarkKing",
+    "domain": "property",
+    "label": "Bulwark King",
+    "color": "9FC3E8",
+    "glyph": "🏰",
+    "visibility": "",
+    "blurb": "The subclass that is never caught open."
+  },
+  {
+    "id": "attunedMind",
+    "domain": "property",
+    "label": "Attuned Mind",
+    "color": "9FC3E8",
+    "glyph": "✴",
+    "visibility": "",
+    "blurb": "Mana found is a card found."
+  },
+  {
+    "id": "starlitFocus",
+    "domain": "property",
+    "label": "Starlit Focus",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The charge is there before the first cast."
+  },
+  {
+    "id": "lodestarCap",
+    "domain": "property",
+    "label": "Lodestar Cap",
+    "color": "9FC3E8",
+    "glyph": "🌟",
+    "visibility": "",
+    "blurb": "The shard opens the fight wider."
+  },
+  {
+    "id": "arcaneDraw",
+    "domain": "property",
+    "label": "Arcane Draw",
+    "color": "9FC3E8",
+    "glyph": "🌀",
+    "visibility": "",
+    "blurb": "The first break each combat is a hand."
+  },
+  {
+    "id": "conduit",
+    "domain": "property",
+    "label": "Conduit",
+    "color": "9FC3E8",
+    "glyph": "⚡",
+    "visibility": "",
+    "blurb": "The subclass whose casts cost breath, not blood."
+  },
+  {
+    "id": "reservoir",
+    "domain": "property",
+    "label": "Reservoir",
+    "color": "9FC3E8",
+    "glyph": "🫙",
+    "visibility": "",
+    "blurb": "The subclass that never runs dry."
+  },
+  {
+    "id": "warmth",
+    "domain": "property",
+    "label": "Warmth",
+    "color": "9FC3E8",
+    "glyph": "☀",
+    "visibility": "",
+    "blurb": "Every heal braces you."
+  },
+  {
+    "id": "vigil",
+    "domain": "property",
+    "label": "Vigil",
+    "color": "9FC3E8",
+    "glyph": "🕯",
+    "visibility": "",
+    "blurb": "The litany never quite stops."
+  },
+  {
+    "id": "sealOfPlenty",
+    "domain": "property",
+    "label": "Seal of Plenty",
+    "color": "9FC3E8",
+    "glyph": "📿",
+    "visibility": "",
+    "blurb": "The first heal pays for the next cast."
+  },
+  {
+    "id": "wakingRot",
+    "domain": "property",
+    "label": "Waking Rot",
+    "color": "9FC3E8",
+    "glyph": "🦠",
+    "visibility": "",
+    "blurb": "Your blows carry the blight."
+  },
+  {
+    "id": "martyr",
+    "domain": "property",
+    "label": "Martyr",
+    "color": "9FC3E8",
+    "glyph": "✝",
+    "visibility": "",
+    "blurb": "The subclass that turns every wound to a wall."
+  },
+  {
+    "id": "saint",
+    "domain": "property",
+    "label": "Saint",
+    "color": "9FC3E8",
+    "glyph": "🌞",
+    "visibility": "",
+    "blurb": "The subclass that walks in whole."
+  },
+  {
+    "id": "quickHands",
+    "domain": "property",
+    "label": "Quick Hands",
+    "color": "9FC3E8",
+    "glyph": "🤏",
+    "visibility": "",
+    "blurb": "Prepared before the first card."
+  },
+  {
+    "id": "secondWind",
+    "domain": "property",
+    "label": "Second Wind",
+    "color": "9FC3E8",
+    "glyph": "💨",
+    "visibility": "",
+    "blurb": "What you burn, you draw."
+  },
+  {
+    "id": "honedEdge",
+    "domain": "property",
+    "label": "Honed Edge",
+    "color": "9FC3E8",
+    "glyph": "🔪",
+    "visibility": "",
+    "blurb": "Every prepared cut opens a vein."
+  },
+  {
+    "id": "poisonedPouch",
+    "domain": "property",
+    "label": "Poisoned Pouch",
+    "color": "9FC3E8",
+    "glyph": "☠",
+    "visibility": "",
+    "blurb": "The whetstone is not the only thing in the pouch."
+  },
+  {
+    "id": "assassin",
+    "domain": "property",
+    "label": "Assassin",
+    "color": "9FC3E8",
+    "glyph": "🗡",
+    "visibility": "",
+    "blurb": "The subclass that reads a stagger as an opening."
+  },
+  {
+    "id": "shadow",
+    "domain": "property",
+    "label": "Shadow",
+    "color": "9FC3E8",
+    "glyph": "🌑",
+    "visibility": "",
+    "blurb": "The subclass nothing quite reaches."
+  },
+  {
     "id": "classification.attack",
     "domain": "classification",
     "label": "attack",

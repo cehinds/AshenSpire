@@ -35,3 +35,7 @@ classification.guard,PERMITS,scaling,10
 classification.guard,PERMITS,utility.evasion,10
 classification.skill,PERMITS,scaling,10
 classification.skill,PERMITS,utility,10
+warlord,CONFLICTS_WITH,bulwarkKing,10
+conduit,CONFLICTS_WITH,reservoir,10
+martyr,CONFLICTS_WITH,saint,10
+assassin,CONFLICTS_WITH,shadow,10

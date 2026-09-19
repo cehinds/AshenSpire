@@ -140,6 +140,8 @@ export function createCombat({
     // (triggers.js skillLevelAtLeast / classLevelAtLeast). A copy: combat
     // never writes it.
     skills: player.skills ? structuredClone(player.skills) : {},
+    // The core card's picked tree nodes (plan phase 5b), mounted with the class.
+    coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },

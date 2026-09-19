@@ -356,5 +356,130 @@ export const nodeVariables = [
     "nodeId": "cost.mana",
     "variable": "amount",
     "role": "amount"
+  },
+  {
+    "nodeId": "ironFooting",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "bloodTempo",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "ashenReserve",
+    "variable": "restoreStamina",
+    "role": "amount"
+  },
+  {
+    "nodeId": "grimHarvest",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "warlord",
+    "variable": "strength",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "bulwarkKing",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "attunedMind",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "starlitFocus",
+    "variable": "starstoneCharge",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "lodestarCap",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "arcaneDraw",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "conduit",
+    "variable": "restoreStamina",
+    "role": "amount"
+  },
+  {
+    "nodeId": "reservoir",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "warmth",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "vigil",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "sealOfPlenty",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "wakingRot",
+    "variable": "crimsonBlight",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "martyr",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "saint",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "quickHands",
+    "variable": "prepared",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "secondWind",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "honedEdge",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "poisonedPouch",
+    "variable": "venom",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "assassin",
+    "variable": "prepared",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "assassin",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "shadow",
+    "variable": "block",
+    "role": "amount"
   }
 ];

@@ -138,12 +138,30 @@ export function relicCarrier(registries, relicId, ownerKey) {
  * scoped by its other tags (the item types it names). Null when the class
  * carries no property.
  */
-export function classCarrier(registries, classId, ownerKey) {
+export function classCarrier(registries, classId, ownerKey, coreTags = []) {
   const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
-  const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length
-    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds: [...tagIds], scopeTags: [...(def.tags || [])] }
+  const own = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
+  // card's own tagging rows: they mount beside the class's authored tags.
+  // Only the class's OWN tree mounts (the review of #1192): a pick the tree
+  // does not hold is the load door's — another class's node refused, one a
+  // content update dropped let go with a ledger row — never this carrier's
+  // to confer.
+  const rules = registries.propertyRules;
+  const tree = new Set((Array.isArray(registries.classTree) ? registries.classTree : []).filter((row) => row && row.classId === classId).map((row) => row.nodeId));
+  const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => tree.has(id) && rules && typeof rules.has === 'function' && rules.has(id) && !own.includes(id));
+  const tagIds = [...own, ...picked];
+  return tagIds.length && def
+    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
     : null;
+}
+
+/** The core tags an entity's seat holds: the seat's own in co-op, the combat's in solo. */
+function coreTagsOf(combat, owner) {
+  if (combat.players instanceof Map) {
+    for (const P of combat.players.values()) if (P.entity === owner) return P.coreTags || [];
+  }
+  return combat.coreTags || [];
 }
 
 /**
@@ -155,7 +173,7 @@ export function syncClassProperties(combat, entity) {
   const owner = entity || (combat && combat.player);
   if (!combat || !owner || !owner.classId) return;
   const ownerKey = triggerOwnerKey(combat, owner);
-  const carrier = classCarrier(combat.registries, owner.classId, ownerKey);
+  const carrier = classCarrier(combat.registries, owner.classId, ownerKey, coreTagsOf(combat, owner));
   if (!carrier) return;
   const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
   if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);

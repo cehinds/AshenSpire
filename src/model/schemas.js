@@ -170,6 +170,9 @@ export const PREDICATES = Object.freeze([
   // full HP with amount 0, and a once-per-combat rule must not spend itself
   // on it (plan phase 5a's Waxen Seal was the first to).
   'healPositive',
+  // A `manaRestored` event that restored something: restoreMana emits the
+  // event at full Mana with amount 0 (plan phase 5b's Attuned Mind).
+  'manaPositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
