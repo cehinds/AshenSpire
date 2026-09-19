@@ -6,6 +6,7 @@
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -319,6 +320,8 @@ const ROWS = [
 
   { cat: 'Display', key: 'showPlayedCard', def: false, label: 'Show played card animation',
     note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
+
+  ...HUD_VISIBILITY_SETTINGS,
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
