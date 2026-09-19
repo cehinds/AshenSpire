@@ -2402,5 +2402,19 @@ export const uiStrings = [
     "short": "Slot {slot}",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.view.grid",
+    "extends": "",
+    "short": "Grid view",
+    "full": "The choices as a grid.",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.list",
+    "extends": "",
+    "short": "List view",
+    "full": "The choices as a list.",
+    "tip": ""
   }
 ];

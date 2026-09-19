@@ -2588,3 +2588,27 @@ Limits and owner decisions:
   read the old `.cz-flow` fold and are owed a re-teach (neither is in
   run-node).
 - WC3 / WC3a / WC3b (the class and starting-kit cards) are untouched here.
+
+Review round (QA agent on the push, 2026-09-19):
+- Every spacing the W1c CSS block reads (rail gap, rail value scale, attribute
+  gap, review padding, head-tool gap, portrait gap, view-switch padding and
+  glyph, the compact and bare fit densities) is a `sizing` key in
+  `creation.json`, projected as `--creation-*` by
+  `creationCssProperties` and written on the screen root in both branches;
+  `kit.css` names no number for this screen.
+- The rail is built from `creationRailItems`; a configured category the
+  screen cannot draw throws at mount instead of on activation.
+- A class pick re-runs the fit (the preview column changes the split's height
+  without moving the pane's box).
+- The view switch names its views through `creation.view.grid` /
+  `creation.view.list`.
+- The component catalogue (`?shot=components`) keeps its scrolling page and
+  shows the live portrait as a specimen; the workspace's `overflow: hidden`
+  body is scoped away from it.
+- Dead `sectionHead` / `nextRow` / `nextGates` removed.
+- Kept, as an owner decision: the third fit rung
+  (`data-choice-fit="bare"`, descriptions hidden). FRONTEND-WIREFRAMES W1c
+  allows the pane to scroll and asks that long descriptions reach the shared
+  detail view; the owner asked on 2026-09-19 for every class in view without
+  scrolling. The rung is reached only when one-line descriptions with the
+  preview column gone still overflow (no tested viewport reaches it).

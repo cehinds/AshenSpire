@@ -97,6 +97,40 @@ export function creationChoiceLines(config = CONFIG) {
   return lines;
 }
 
+/**
+ * creationCssProperties(config) → every `--creation-*` custom property the
+ * screen writes on its root, from config: the portrait, the description
+ * lines, the attribute grid's resting column count (the narrow one, until the
+ * pane is measured) and each spacing the W1c CSS block reads. kit.css names
+ * no number of its own for this screen; a missing or non-positive value is a
+ * config error, not a silent default.
+ */
+export function creationCssProperties(config = CONFIG) {
+  const s = config.sizing;
+  const positive = (name) => {
+    const value = s[name];
+    if (!(value > 0)) throw new Error(`creation sizing.${name} must be > 0, got ${value}`);
+    return value;
+  };
+  return Object.freeze({
+    '--creation-portrait': `${creationPortraitRem(config)}rem`,
+    '--creation-choice-lines': String(creationChoiceLines(config)),
+    '--creation-attribute-columns': String(creationAttributeColumns({}, config)),
+    '--creation-rail-gap': `${positive('railGapPx')}px`,
+    '--creation-rail-value-scale': String(positive('railValueScale')),
+    '--creation-attribute-gap': `${positive('attributeGapPx')}px`,
+    '--creation-review-pad': `${positive('reviewPadRem')}rem`,
+    '--creation-head-tools-gap': `${positive('headToolsGapRem')}rem`,
+    '--creation-portrait-gap': `${positive('portraitGapRem')}rem`,
+    '--creation-view-switch-pad': `${positive('viewSwitchPadRem')}rem`,
+    '--creation-view-switch-glyph': `${positive('viewSwitchGlyphRem')}rem`,
+    '--creation-choice-compact-pad': `${positive('choiceCompactPadRem')}rem`,
+    '--creation-choice-compact-gap': `${positive('choiceCompactGapRem')}rem`,
+    '--creation-choice-bare-pad': `${positive('choiceBarePadRem')}rem`,
+    '--creation-choice-bare-gap': `${positive('choiceBareGapRem')}rem`,
+  });
+}
+
 /** Whether the class choices are fitted to the pane (descriptions folded, then the preview stepped aside). */
 export function creationFitsChoices(config = CONFIG) {
   return config.behavior.fitChoicesToPane === true;

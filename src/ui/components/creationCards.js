@@ -13,6 +13,7 @@
 // elements as hooks and draw nothing of their own.
 
 import { attachTooltip, esc } from './tooltip.js';
+import { t } from '../strings.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
@@ -129,9 +130,10 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
  */
 export function viewModeSwitch(value, onChoose, label = 'View choices') {
   const next = value === 'grid' ? 'list' : 'grid';
+  const name = t(`creation.view.${next}`);
   const control = el('button', {
     type: 'button', class: 'as-btn small cc-view-switch', text: next === 'grid' ? '\u25a6' : '\u2630',
-    dataset: { viewMode: next }, 'aria-label': `${label}: ${next === 'grid' ? 'Grid' : 'List'} view`, title: `${next === 'grid' ? 'Grid' : 'List'} view`,
+    dataset: { viewMode: next }, 'aria-label': `${label}: ${name}`, title: name,
   });
   control.addEventListener('click', () => onChoose?.(next));
   return markUiComponent(control, UI.viewModeToggle);

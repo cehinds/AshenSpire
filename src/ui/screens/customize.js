@@ -50,11 +50,11 @@ import {
   selectionSectionFace,
 } from '../components/creationCards.js';
 import {
-  el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
+  el, eyebrow, subtitle, flavour, hairline, artWell, options, row, labelStack,
   button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
 import {
-  creationCategories, creationStep, creationFooterPlan, creationAttributeColumns, creationPortraitRem, creationChoiceLines, creationFitsChoices,
+  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices,
 } from '../models/CreationWorkspaceModel.js';
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
@@ -63,22 +63,6 @@ import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { levelForView } from '../../model/cardFields.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
-
-/** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
-function sectionHead(kicker, title, trail = []) {
-  return el('div', { class: 'as-pane-head' }, [
-    el('div', { class: 'set-section-head' }, [eyebrow(kicker), titleS(title, { tag: 'h3' })]),
-    trail.length ? el('span', { class: 'r-trail' }, trail) : null,
-  ]);
-}
-
-/** The way on from a section: one long button, at the end of the row.
- *  A gated step's button is primary — green once the step is complete, muted
- *  with its reason until then (refusal.js). The seed's is a plain button:
- *  Begin, in the foot, is the one that turns green at the end. */
-function nextRow(label, next, weight = 'primary') {
-  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, weight, className: 'cz-next', attrs: { dataset: { next } } })] });
-}
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
  *  author display rules beat the UA `[hidden]` rule (disclosure.js measured it). */
@@ -241,8 +225,14 @@ export function mountCustomize(app, {
   // one at a time inside the W1 pane below.
   const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
   const categories = creationCategories();
-  const railItems = categories.map((id) => {
-    const item = railItem({ label: t(`creation.category.${id}`), member: id, id: `cz-tab-${id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
+  for (const id of categories) {
+    if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
+  }
+  const railItems = creationRailItems({
+    categories, current: categories[0],
+    labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
+  }).map((entry) => {
+    const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
     item.append(el('span', { class: 'cz-tab-value as-status' }));
     return item;
   });
@@ -286,6 +276,8 @@ export function mountCustomize(app, {
     || Object.values(stages).map((stage) => (stage.matches(selector) ? stage : stage.querySelector(selector))).find(Boolean)
     || null;
   const customizeScreen = $('.screen.customize');
+  // Every --creation-* the W1c CSS reads, from the model (uiConfig.screens.creation); kit.css names no number for this screen.
+  for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
@@ -701,6 +693,7 @@ export function mountCustomize(app, {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        fitStage();
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a
@@ -712,7 +705,7 @@ export function mountCustomize(app, {
         if (state.classChosen || state.classId === id) return;
         // The kit, relic and armour follow the class; nothing is chosen yet,
         // so the reset costs the player nothing.
-        state.classId = id; resetClassChoices(); renderClassPreview();
+        state.classId = id; resetClassChoices(); renderClassPreview(); fitStage();
       });
     }
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
@@ -1301,6 +1294,8 @@ export function mountCustomize(app, {
       { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
+      // W1c moved the live portrait into the head; the catalogue still shows it.
+      { key: 'creation-portrait', label: 'Live portrait (W1c head)', node: portrait },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);
@@ -1320,8 +1315,6 @@ export function mountCustomize(app, {
       onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
     });
     nav.attach(railed);
-    customizeScreen.style.setProperty('--creation-portrait', `${creationPortraitRem()}rem`);
-    customizeScreen.style.setProperty('--creation-choice-lines', String(creationChoiceLines()));
     // The attribute grid's columns follow the pane's width (two when they fit,
     // one in narrow portrait), asked of the model in local CSS px.
     const applyColumns = () => {
@@ -1336,10 +1329,6 @@ export function mountCustomize(app, {
 
   // THE WAY ON, per step: what it waits for, and what it opens inside the next
   // section so the player lands on the next question rather than a shut fold.
-  const nextGates = {
-    character: { problem: classProblem, tip: 'On to the character.' },
-    equipment: { problem: characterProblem, tip: 'On to starting equipment.' },
-  };
   const openInside = {
     character: () => {
       characterFold.open('primary');

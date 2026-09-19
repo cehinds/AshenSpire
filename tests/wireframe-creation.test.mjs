@@ -70,6 +70,22 @@ test('the header portrait size is the config value', () => {
   assert.throws(() => creationPortraitRem({ sizing: { headPortraitRem: 0 } }), /must be > 0/);
 });
 
+test('every --creation-* property the CSS reads comes from config, and a bad value is a config error', async () => {
+  const { creationCssProperties } = await import('../src/ui/models/CreationWorkspaceModel.js');
+  const properties = creationCssProperties();
+  for (const [name, value] of Object.entries(properties)) {
+    assert.match(name, /^--creation-[a-z-]+$/, name);
+    assert.ok(typeof value === 'string' && value.length, `${name} is empty`);
+  }
+  assert.equal(properties['--creation-portrait'], `${uiConfig.screens.creation.sizing.headPortraitRem}rem`);
+  assert.equal(properties['--creation-choice-lines'], String(uiConfig.screens.creation.sizing.choiceDescriptionLines));
+  assert.equal(properties['--creation-attribute-columns'], String(uiConfig.screens.creation.sizing.attributeColumnsNarrow), 'unmeasured, the grid rests at the narrow count');
+  assert.equal(properties['--creation-attribute-gap'], `${uiConfig.screens.creation.sizing.attributeGapPx}px`);
+  const broken = structuredClone(uiConfig.screens.creation);
+  broken.sizing.choiceCompactGapRem = 0;
+  assert.throws(() => creationCssProperties(broken), /choiceCompactGapRem must be > 0/);
+});
+
 test('choice descriptions clip to the config lines and the fit rule is data', async () => {
   const { creationChoiceLines, creationFitsChoices } = await import('../src/ui/models/CreationWorkspaceModel.js');
   assert.equal(creationChoiceLines(), uiConfig.screens.creation.sizing.choiceDescriptionLines);

@@ -4815,35 +4815,34 @@ button[data-button-size] {
    region; the page and the body never scroll. The portrait's size and the
    attribute grid's column count are the model's (uiConfig.screens.creation),
    written as custom properties by the screen; nothing here is a number. */
-.customize .modal-body.cz-scroll { display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0; }
+.customize:not(.component-catalog) .modal-body.cz-scroll { display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0; }
 .customize .cz-railed { flex: 1 1 auto; min-height: 0; height: 100%; width: 100%; }
 .customize .cz-pane { overflow: auto; min-height: 0; height: 100%; }
 .customize .cz-pane > .cz-stage { height: auto; }
 .customize .modal-head .figure.cz-portrait {
   flex: 0 0 auto; width: var(--creation-portrait) !important; height: var(--creation-portrait) !important;
-  min-height: 0 !important; min-width: 0 !important; max-width: none; margin-inline-start: auto; border-radius: 50%; overflow: hidden; align-self: center;
+  min-height: 0 !important; min-width: 0 !important; max-width: none; margin-inline-start: var(--creation-portrait-gap); border-radius: 50%; overflow: hidden; align-self: center;
 }
 .customize .modal-head .figure.cz-portrait > * { width: 100%; height: 100%; object-fit: cover; }
-.customize .cz-tab { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; white-space: normal; }
-.customize .cz-tab-value { font-size: 0.85em; color: var(--muted); }
-.customize .cc-primary-stats { display: grid; grid-template-columns: repeat(var(--creation-attribute-columns), minmax(0, 1fr)); gap: 8px; }
-.customize .cc-review { padding: 0 1.4rem 1.4rem; }
+.customize .cz-tab { display: flex; flex-direction: column; align-items: flex-start; gap: var(--creation-rail-gap); white-space: normal; }
+.customize .cz-tab-value { font-size: calc(1em * var(--creation-rail-value-scale)); color: var(--muted); }
+.customize .cc-primary-stats { display: grid; grid-template-columns: repeat(var(--creation-attribute-columns), minmax(0, 1fr)); gap: var(--creation-attribute-gap); }
+.customize .cc-review { padding: 0 var(--creation-review-pad) var(--creation-review-pad); }
 
 /* W1c, the choices in view: no head over a choice collection, only the small
    view switch at the right; descriptions clip to the config's lines; a pane
    too short for the class list folds them to one line, then drops the
    preview column so the cards take the width (customize.js fitStage). */
-.customize .cz-head-tools { display: flex; align-items: center; gap: 0.4rem; margin-inline-start: auto; }
+.customize .cz-head-tools { display: flex; align-items: center; gap: var(--creation-head-tools-gap); margin-inline-start: auto; }
 .customize .cz-head-tools > [hidden] { display: none; }
-.customize .modal-head .figure.cz-portrait { margin-inline-start: 0.6rem; }
-.customize .cc-view-switch { min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.6rem; font-size: 1.6rem; line-height: 1; }
+.customize .cc-view-switch { min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: var(--creation-view-switch-pad); font-size: var(--creation-view-switch-glyph); line-height: 1; }
 .customize .cz-class .od { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--creation-choice-lines); overflow: hidden; }
 .customize .cz-railed[data-choice-fit="compact"] .cz-class .od { -webkit-line-clamp: 1; }
-.customize .cz-railed[data-choice-fit="compact"] .cz-class { padding-block: 0.4rem; }
-.customize .cz-railed[data-choice-fit="compact"] .cc-choice-collection { gap: 0.4rem; }
+.customize .cz-railed[data-choice-fit="compact"] .cz-class { padding-block: var(--creation-choice-compact-pad); }
+.customize .cz-railed[data-choice-fit="compact"] .cc-choice-collection { gap: var(--creation-choice-compact-gap); }
 .customize .cz-railed[data-choice-fit="bare"] .cz-class .od { display: none; }
-.customize .cz-railed[data-choice-fit="bare"] .cz-class { padding-block: 0.3rem; }
-.customize .cz-railed[data-choice-fit="bare"] .cc-choice-collection { gap: 0.3rem; }
+.customize .cz-railed[data-choice-fit="bare"] .cz-class { padding-block: var(--creation-choice-bare-pad); }
+.customize .cz-railed[data-choice-fit="bare"] .cc-choice-collection { gap: var(--creation-choice-bare-gap); }
 .customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-preview-off="true"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
