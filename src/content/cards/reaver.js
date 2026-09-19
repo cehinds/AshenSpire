@@ -62,6 +62,7 @@ export const reaverCards = [
   },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    flavor: "Keep your blade raised until the bell releases you. — Warden's field-book",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -169,6 +170,7 @@ export const reaverCards = [
   },
   {
     id: 'enterGorefire', name: 'Enter: Gorefire', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Hold the flame in the blade; it still takes the hand. — Warden's field-book",
     keywords: [], icon: '🔥',
     effects: [
       { op: 'enterStance', stance: 'gorefire' },
@@ -179,6 +181,7 @@ export const reaverCards = [
   },
   {
     id: 'enterBulwark', name: 'Enter: Bulwark', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "The gate is a wall you carry. — Warden's field-book",
     keywords: [], icon: '🛡',
     effects: [{ op: 'enterStance', stance: 'bulwark' }],
     textTemplate: 'Enter Bulwark Stance.',
@@ -256,6 +259,7 @@ export const reaverCards = [
   },
   {
     id: 'rallyingStandard', name: 'Rallying Standard', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
+    flavor: "The bell rang; log that the line held. — Warden's field-book",
     keywords: [], icon: '⚑',
     effects: [{ op: 'applyStatus', target: 'self', status: 'rallyingStandard', stacks: one }],
     textTemplate: 'At the start of your turn, gain 1 Strength and take 1 damage.',
@@ -266,6 +270,7 @@ export const reaverCards = [
   },
   {
     id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "Stitch it standing; the stool is for the dead. — Warden's field-book",
     keywords: ['exhaust'], icon: '⚕',
     effects: [
       {
@@ -382,6 +387,7 @@ export const reaverCards = [
   // ---- Rares -------------------------------------------------------------------
   {
     id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    flavor: "The Warden's cane was a blade once; remember that. — Warden's field-book",
     keywords: [], icon: '⚰',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: { p: 'hasStatus', of: 'target', status: 'staggered' } } },
@@ -421,6 +427,7 @@ export const reaverCards = [
   },
   {
     id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, type: 'skill',
+    flavor: "The Fell Courtyard: one gate, one man, still one man. — Warden's field-book",
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
     textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 20).',
@@ -533,6 +540,7 @@ export const reaverCards = [
   },
   {
     id: 'ironVowCard', name: 'Iron Vow', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
+    flavor: "Keep the Bastion contract beside your unmarked wrist. — Warden's field-book",
     keywords: [], icon: '⛓',
     effects: [{ op: 'applyStatus', target: 'self', status: 'ironVow', stacks: one }],
     textTemplate: 'Whenever you lose HP, gain 3 Block.',
@@ -540,6 +548,7 @@ export const reaverCards = [
   },
   {
     id: 'bloodTithe', name: 'Blood Tithe', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    flavor: "The field takes blood; leave names out of the ledger. — Warden's field-book",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },

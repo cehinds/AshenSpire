@@ -19,6 +19,7 @@ export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
     id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    flavor: "The fragment fell burning; by morning it was cold. — Astronomer's chart margin",
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -38,6 +39,7 @@ export const starseerCards = [
   // ---- Commons ----------------------------------------------------------------
   {
     id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 0, type: 'attack',
+    flavor: "Chart 41 recorded a fall; chart 42 showed a hearth. — Astronomer's chart margin",
     keywords: [], icon: '☄',
     effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage.',
@@ -244,6 +246,7 @@ export const starseerCards = [
   },
   {
     id: 'stargazerCard', name: 'Stargazer', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
+    flavor: "A hundred winters darkened the lens; the coal still dimmed. — Astronomer's chart margin",
     keywords: [], icon: '🔭',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stargazer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge.',
@@ -376,6 +379,7 @@ export const starseerCards = [
   // ---- Rares -----------------------------------------------------------------------
   {
     id: 'supernova', name: 'Supernova', class: 'starseer', rarity: 'rare', cost: 'X', type: 'attack',
+    flavor: "The last chart predicted light enough to burn the paper. — Astronomer's chart margin",
     keywords: [], icon: '💥',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 8, hits: { f: 'energySpent' } }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage to ALL enemies once per Energy spent.',
@@ -383,6 +387,7 @@ export const starseerCards = [
   },
   {
     id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, type: 'skill',
+    flavor: "The eclipse ended; the observatory clock disagreed. — Astronomer's chart margin",
     keywords: ['exhaust'], icon: '⏳',
     effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'draw', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards. Exhaust.',
@@ -409,6 +414,7 @@ export const starseerCards = [
   },
   {
     id: 'constellationCard', name: 'Constellation', class: 'starseer', rarity: 'rare', cost: 2, type: 'power',
+    flavor: "Three flames, three twigs; the crest matched the star chart. — Astronomer's chart margin",
     keywords: [], icon: '💫',
     effects: [{ op: 'applyStatus', target: 'self', status: 'constellation', stacks: one }],
     textTemplate: 'Whenever you gain Starstone Charge, deal 4 damage to a random enemy.',
@@ -515,6 +521,7 @@ export const starseerCards = [
   },
   {
     id: 'starPath', name: 'Star Path', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "The fourth spur appeared on charts before the coast. — Astronomer's chart margin",
     keywords: [], icon: '🌌',
     effects: [
       { op: 'draw', amount: 1 },
@@ -556,6 +563,7 @@ export const starseerCards = [
   },
   {
     id: 'astromancerCard', name: 'Astromancer', class: 'starseer', rarity: 'rare', cost: 1, type: 'power',
+    flavor: "The apprentice took the charts and left the birth-roll. — Astronomer's chart margin",
     keywords: [], icon: '📚',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astromancer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge and draw a card.',
@@ -582,6 +590,7 @@ export const starseerCards = [
   },
   {
     id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "The ledger ended where the fourth hearth appeared. — Astronomer's chart margin",
     keywords: [], icon: '🌠',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
