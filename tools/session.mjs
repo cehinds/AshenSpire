@@ -872,7 +872,15 @@ export function createSession({ registries, seedString, endless = false, restore
       reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
       return { ok: true, allocation: { ...m.run.flaskCharges } };
     } else if (choice === 'rest') {
-      const visit = shrineVisits.get(memberId) || createLocationVisit({ run: m.run, registries, rng }, 'shrine');
+      // A restored session keeps the shrine scene but not the visits: the
+      // member's is rebuilt here, arrived (the refill is a top-up, so the
+      // restore pours nothing twice) and kept for the leave below.
+      let visit = shrineVisits.get(memberId);
+      if (!visit) {
+        visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine');
+        arriveAt(visit);
+        shrineVisits.set(memberId, visit);
+      }
       if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
       restAt(visit);
     } else if (choice === 'mend') {
@@ -895,6 +903,9 @@ export function createSession({ registries, seedString, endless = false, restore
       return { ok: false, error: `unknown shrine choice '${choice}'` };
     }
     session.scene.done[memberId] = true;
+    // A Mend moved an ally's pools: every member's rest view is re-read so
+    // the next snapshot shows what a Rest would do now.
+    session.scene.rest = Object.fromEntries(livingMembers().map((mm) => [mm.id, restView(shrineVisits.get(mm.id))]));
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
     if (!waiting.length) {
       for (const visit of shrineVisits.values()) leaveLocation(visit);

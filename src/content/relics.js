@@ -282,7 +282,7 @@ export const relics = [
     // Denies the shrine's Rest (and any place whose set holds the partial
     // rest) — a town's bed and a camp's rough rest stay open (plan phase 7).
     passives: { restDenied: ['restHpPartial'] },
-    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines no longer offer Rest.',
+    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines and chapels no longer offer Rest.',
     flavor: 'It still beats. It expects something of you.',
   },
   {

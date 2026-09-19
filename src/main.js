@@ -1081,7 +1081,9 @@ function resumeRun(slot = 1) {
   } else if (run.shopStock) {
     showShop();
   } else if (run.journey?.activeService?.handlerId === 'rest') {
-    showRest(null, run.journey.activeService.locationId || 'shrine');
+    // A save written before the visit carried its place resolves it from the
+    // point it stood at, exactly as entering the service does.
+    showRest(null, restLocationAt(run.journey.activeService.pointId));
   } else {
     showMap();
   }
@@ -1742,13 +1744,21 @@ function worldLocationAction(action) {
   }
   if (handlerId === 'rest') {
     // WHICH PLACE THIS IS (plan phase 7): the point's own tagging row, else
-    // its service type's (inn, chapel), else the classic Shrine. Kept on the
-    // active service so a resumed save re-opens the same place.
-    j.activeService.locationId = resolveLocationId(registries, { nodeId: action.pointId, serviceTypeId: service.serviceTypeId }) || 'shrine';
+    // its service type's (inn, chapel), else the classic Shrine — resolved
+    // from the point here and again at resume, never stored, so a tagging
+    // row removed between save and load cannot refuse the save.
     persist();
-    return showRest(null, j.activeService.locationId);
+    return showRest(null, restLocationAt(action.pointId));
   }
   throw Error(`Unsupported atlas service ${handlerId}`);
+}
+
+/** The location an atlas rest point is: its own row, else its service type's, else the Shrine. */
+function restLocationAt(pointId) {
+  const offered = (ATLAS.nodeServices[pointId] || [])
+    .map((s) => ATLAS.services[s.serviceId])
+    .find((service) => service && ATLAS.serviceTypes[service.serviceTypeId]?.handlerId === 'rest');
+  return resolveLocationId(registries, { nodeId: pointId, serviceTypeId: offered ? offered.serviceTypeId : null }) || 'shrine';
 }
 
 function finishWorldService() {
@@ -2276,6 +2286,10 @@ function roomHud(returnTo) {
 // The place the Rest screen stands at, kept across its own re-mounts (the
 // HUD's remount passes no location). The door that enters a place names it.
 let restLocationId = 'shrine';
+// THE OPEN VISIT (engine/locations.js): one per stay. A HUD remount re-uses
+// it rather than arriving again, so an `arrived` rule fires once per stay
+// whatever the screen does; leaving closes it.
+let openVisit = null;
 
 function showRest(openPanel = null, locationId = null) {
   if (locationId) restLocationId = locationId;
@@ -2295,14 +2309,19 @@ function showRest(openPanel = null, locationId = null) {
   for (const b of bad) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
-  const visit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
   const worldRest = run.journey?.activeService;
   const restState = worldRest ? run.journey.serviceStates[worldRest.pointId] : null;
-  // A resumed atlas visit arrived once already; the classic map re-arrives on
-  // every mount, and the refill is a top-up so that pours nothing twice.
-  const refill = restState?.refilled ? null : arriveAt(visit).refill;
-  if (restState && !restState.refilled) { restState.refilled = true; persist(); }
-  if (refill && refill.total) persist();
+  if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
+    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
+    // A resumed atlas visit arrived once already (the service state says so);
+    // a resumed classic shrine arrives again, and the refill is a top-up so
+    // that pours nothing twice.
+    if (!restState?.refilled) arriveAt(openVisit);
+    if (restState && !restState.refilled) { restState.refilled = true; persist(); }
+    if (openVisit.refill && openVisit.refill.total) persist();
+  }
+  const visit = openVisit;
+  const refill = visit.refill;
   mountRest(app, {
     registries,
     run,
@@ -2313,9 +2332,9 @@ function showRest(openPanel = null, locationId = null) {
     refill,
     meta: saves.loadMeta(),
     // Which smith services this place offers — the table's word, resolved
-    // here so the screen reads one answer (a chance of 100 consumes no roll).
-    // The screen shows the smith only where the place carries the `smith` tag.
-    services: smithServicesAt(registries, 'shrine', rng),
+    // here so the screen reads one answer (a chance of 100 consumes no roll),
+    // and only where the place carries the `smith` tag.
+    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -2328,6 +2347,7 @@ function showRest(openPanel = null, locationId = null) {
     multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
       leaveLocation(visit);
+      openVisit = null;
       finishWorldService();
       persist();
       showMap();

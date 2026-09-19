@@ -113,7 +113,9 @@ export function restReview({ shrine, heal, manaGain = 0, hp, maxHp, mana, maxMan
       shrine: String(shrine), hp: amount(hp, 'restReview hp'), maxHp: amount(maxHp, 'restReview maxHp'),
       mana: amount(mana, 'restReview mana'), maxMana: amount(maxMana, 'restReview maxMana'),
     }),
-    message: t(multiUse ? 'rest.review.stay' : 'rest.review.leave', { heal: amount(heal, 'restReview heal'), mana: amount(manaGain, 'restReview mana gain') }),
+    // One sentence per shape: the Mana clause appears only when Mana moves,
+    // exactly as the card's own line reads (rest.js).
+    message: t(manaGain > 0 ? (multiUse ? 'rest.review.stay' : 'rest.review.leave') : (multiUse ? 'rest.review.stayHp' : 'rest.review.leaveHp'), { heal: amount(heal, 'restReview heal'), mana: amount(manaGain, 'restReview mana gain') }),
     confirmLabel: t('rest.review.confirm'),
     policyAction: null,
   });

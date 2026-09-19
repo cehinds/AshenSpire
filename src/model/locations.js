@@ -11,7 +11,8 @@
 // location holds, what the tag set means for the screen, and the refusals.
 //
 // THE ID IS THE MAP'S, NEVER A SECOND VOCABULARY. A location id is one of:
-//   - a classic node type (model/floorplan.js NODE_TYPES: `shrine`),
+//   - the classic node type the door visits (`shrine`; a fight or a merchant
+//     node opens no visit, so tagging one is refused),
 //   - `camp`, the Unknown node's rest outcome (the classic map has no node
 //     type for it — an event resolves to it),
 //   - an atlas service TYPE id (`inn`, `chapel`): every point of that type
@@ -51,9 +52,12 @@ export const SERVICE_TAGS = Object.freeze({
   flasks: 'restFlasks',
 });
 
+/** The classic node types the door opens a visit at (main.js enterNode). */
+export const VISITED_NODE_TYPES = Object.freeze(NODE_TYPES.filter((type) => type === 'shrine'));
+
 /** Every id a `location` tagging row may name (see the file comment). */
 export function locationIds(atlas = ATLAS) {
-  const ids = new Set([...NODE_TYPES, CAMP_LOCATION]);
+  const ids = new Set([...VISITED_NODE_TYPES, CAMP_LOCATION]);
   for (const id of Object.keys((atlas && atlas.serviceTypes) || {})) ids.add(id);
   for (const id of Object.keys((atlas && atlas.nodes) || {})) ids.add(id);
   return ids;
@@ -84,7 +88,11 @@ export function resolveLocationId(registries, { nodeId = null, serviceTypeId = n
  * is kept as authored; `restMana` beside it is dropped rather than doubled.
  */
 export function locationRestTags(registries, tags) {
-  const mode = registries.balance.rest.mana.mode;
+  return resolveRestTags(registries.balance.rest.mana.mode, tags);
+}
+
+/** The same resolution from a bare mode, for the validator that has only the bundle. */
+export function resolveRestTags(mode, tags) {
   const fixed = REST_MANA_TAG_BY_MODE[mode];
   if (!fixed) throw new Error(`balance.rest.mana.mode '${mode}' names no rest tag (one of ${REST_MANA_MODES.join(', ')})`);
   const out = [];
@@ -124,20 +132,24 @@ export function restDeniedBy(registries, run, tags) {
 /**
  * locationTaggingProblems(bundle) → [{ path, message }]: a `location` tagging
  * row naming an id the map does not have, a rest-mana mode tag no rule
- * exists for, and a `restDenied` filter naming a tag no location carries.
+ * exists for, and a `restDenied` filter naming a tag no location EFFECTIVELY
+ * carries — the set a visit mounts, with `restMana` resolved to the shipped
+ * mode's tag, since that is the set restDeniedBy reads (a filter naming
+ * `restMana` itself would match nothing and is refused).
  */
 export function locationTaggingProblems(bundle, atlas = ATLAS) {
   const problems = [];
   const b = bundle || {};
   const ids = locationIds(atlas);
-  const carried = new Set();
+  const authored = new Map();
   for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
     if (!row || row.family !== LOCATION_FAMILY) continue;
-    carried.add(row.tagId);
+    if (!authored.has(row.objectId)) authored.set(row.objectId, []);
+    authored.get(row.objectId).push(row.tagId);
     if (!ids.has(row.objectId)) {
       problems.push({
         path: `tagging.${LOCATION_FAMILY}.${row.objectId}`,
-        message: `'${row.objectId}' is not a location — a classic node type (${NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas service type or an atlas node id`,
+        message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas service type or an atlas node id`,
       });
     }
   }
@@ -147,11 +159,16 @@ export function locationTaggingProblems(bundle, atlas = ATLAS) {
       if (!rules.has(tag)) problems.push({ path: `propertyRules.${tag}`, message: `rest-mana mode '${mode}' resolves to '${tag}', which has no property rule` });
     }
   }
+  const mode = b.balance && b.balance.rest && b.balance.rest.mana ? b.balance.rest.mana.mode : null;
+  const carried = new Set();
+  for (const tags of authored.values()) {
+    for (const tag of REST_MANA_TAG_BY_MODE[mode] ? resolveRestTags(mode, tags) : tags) carried.add(tag);
+  }
   for (const relic of Array.isArray(b.relics) ? b.relics : []) {
     const denied = relic && relic.passives && relic.passives.restDenied;
     if (!Array.isArray(denied)) continue;
     for (const tag of denied) {
-      if (!carried.has(tag)) problems.push({ path: `relics.${relic.id}.passives.restDenied`, message: `names '${tag}', which no location carries in content/source/tagging.csv` });
+      if (!carried.has(tag)) problems.push({ path: `relics.${relic.id}.passives.restDenied`, message: `names '${tag}', which no location carries once its rest tags resolve (content/source/tagging.csv; restMana resolves to the mode's tag, so name that)` });
     }
   }
   return problems;

@@ -113,7 +113,7 @@
   },
   "wyrmHeart": {
     "name": "Wyrm Heart",
-    "text": "Gain 1 extra Energy each turn. Shrines no longer offer Rest."
+    "text": "Gain 1 extra Energy each turn. Shrines and chapels no longer offer Rest."
   },
   "ancestralHorn": {
     "name": "Ancestral Horn",

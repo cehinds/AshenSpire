@@ -45,7 +45,7 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
-import { t } from '../strings.js';
+import { t, has } from '../strings.js';
 import { restReview } from '../models/ConfirmationReviewModel.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
@@ -97,7 +97,7 @@ function partnerName(registries, kind) {
 
 /** The place's own title row when one is authored; the Shrine's otherwise. */
 function locationTitle(locationId) {
-  try { return t(`location.${locationId}.title`); } catch { return t('rest.title'); }
+  return has(`location.${locationId}.title`) ? t(`location.${locationId}.title`) : t('rest.title');
 }
 
 export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null }) {

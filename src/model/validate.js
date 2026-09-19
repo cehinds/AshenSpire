@@ -21,6 +21,7 @@ import {
   SCHEMAS,
   OPCODES,
   EFFECT_SPECS,
+  RUN_LEVEL_EVENTS,
   TARGETS,
   TRIGGER_EVENTS,
   PREDICATES,
@@ -1064,6 +1065,15 @@ function collectContentProblems(bundle, errors = []) {
   // The tree the tag tables and the property rules are derived from: parents,
   // cycles, edges, families, variables against bindings, kinds against
   // collections (model/tree.js says what each refusal is).
+  // A combat source hooked on a run-level event (arrived, rested) would never
+  // fire: only the location visit emits them, outside any fight.
+  for (const [collection, field] of [['statuses', 'hooks'], ['stances', 'hooks'], ['enemies', 'phases']]) {
+    for (const def of Array.isArray(b[collection]) ? b[collection] : []) {
+      (def && Array.isArray(def[field]) ? def[field] : []).forEach((hook, i) => {
+        if (hook && RUN_LEVEL_EVENTS.includes(hook.on)) err(`${collection}.${def.id}.${field}[${i}].on`, `'${hook.on}' is a run-level event (the location visit's) that no ${collection.slice(0, -1)} hook can hear`);
+      });
+    }
+  }
   for (const p of treeProblems(b)) err(p.path, p.message);
   // Locations (plan phase 7): a `location` tagging row names a map id, every
   // rest-mana mode has its rule, and a restDenied filter names a carried tag.

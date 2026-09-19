@@ -486,8 +486,10 @@ and `restDenied` (true | tag list; the Wyrm Heart carries
 rule. `generateJourney` takes `{ townsPerActMax }` and counts city nodes
 per act (the start is not a stop; every shipped city is act 1 and a route
 holds one hub, so the shipped cap of 1 changes no seeded route). Note the
-retune this design carries: the shrine's Rest used to restore Mana to
-full; under the default mode it restores to 50% or full. SPEC §13.4j;
+retunes this design carries: the shrine's Rest used to restore Mana to
+full; under the default mode it restores to 50% or full. The Unknown
+node's rest outcome used to open the Shrine (35%, refill, smith,
+level-up); it opens the camp now (25%, Mana, nothing else). SPEC §13.4j;
 engine test 91, local-map and world-atlas tests.
 
 ## Phase 8 — Mana costing and Exposure properties (1 PR, can run beside 4)

@@ -1658,14 +1658,14 @@ export const uiStrings = [
     "id": "rest.eyebrow",
     "extends": "",
     "short": "Rest",
-    "full": "Recover and use this Shrine's services before moving on.",
+    "full": "Recover and use this place's services before moving on.",
     "tip": ""
   },
   {
     "id": "rest.title",
-    "extends": "",
-    "short": "Shrine of Ember",
-    "full": "The Shrine you are resting at.",
+    "extends": "location.shrine.title",
+    "short": "",
+    "full": "",
     "tip": ""
   },
   {
@@ -1700,7 +1700,7 @@ export const uiStrings = [
     "id": "rest.status.available",
     "extends": "",
     "short": "{available} of {total} available",
-    "full": "How many of this Shrine's choices you can take now.",
+    "full": "How many of this place's choices you can take now.",
     "tip": ""
   },
   {
@@ -1725,9 +1725,23 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "rest.review.leaveHp",
+    "extends": "",
+    "short": "Heal {heal} HP, then leave.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "rest.review.stay",
     "extends": "",
     "short": "Heal {heal} HP and restore {mana} Mana. You stay and leave when you choose.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.stayHp",
+    "extends": "",
+    "short": "Heal {heal} HP. You stay and leave when you choose.",
     "full": "",
     "tip": ""
   },

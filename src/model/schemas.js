@@ -152,6 +152,12 @@ export const EVENTS = Object.freeze([
   'relicTriggered',
 ]);
 
+// The events only the run-level door emits (engine/locations.js): a status,
+// stance or enemy-phase hook naming one could never fire, so validate.js
+// refuses it by name. A property rule may name them — that is how a location
+// confers what it does.
+export const RUN_LEVEL_EVENTS = Object.freeze(['arrived', 'rested']);
+
 // Names a trigger's `on` may use (SPEC §3.6): every bus event, the owner-
 // relative turn hooks, and the enemy-phase threshold trigger.
 export const TRIGGER_EVENTS = Object.freeze([

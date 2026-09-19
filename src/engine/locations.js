@@ -65,6 +65,7 @@ export function createLocationVisit({ run, registries, rng }, locationId, { heal
     ctx,
     arrived: false,
     rested: false,
+    refill: null,
   };
 }
 
@@ -78,17 +79,20 @@ function emitAndDrain(visit, type) {
 }
 
 /**
- * arriveAt(visit) → { events, refill }. Emits `arrived`; the `restFlasks`
- * rule's refill receipt (engine/encounters.js applyGraceRefill's plan) rides
- * back for the screen's refill line, null when the place refills nothing.
- * Idempotent in effect: the refill is a top-up, so a resumed save that
- * arrives again pours nothing twice.
+ * arriveAt(visit) → { events, refill }. Emits `arrived` ONCE per visit — a
+ * second call answers with the first arrival's receipt and fires nothing,
+ * so a screen that re-mounts cannot fire an arrival rule twice. The
+ * `restFlasks` rule's refill receipt (engine/encounters.js applyGraceRefill's
+ * plan) rides back for the screen's refill line, null when the place refills
+ * nothing; it is kept on `visit.refill`.
  */
 export function arriveAt(visit) {
+  if (visit.arrived) return { events: [], refill: visit.refill };
   delete visit.ctx.receipts.refill;
   const events = emitAndDrain(visit, 'arrived');
   visit.arrived = true;
-  return { events, refill: visit.ctx.receipts.refill || null };
+  visit.refill = visit.ctx.receipts.refill || null;
+  return { events, refill: visit.refill };
 }
 
 /**

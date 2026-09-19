@@ -15,7 +15,7 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     // service type's, else the classic Shrine. The preview runs its rules on
     // a clone — the same answer the Rest button gives, nothing written.
     const locationId = resolveLocationId(registries, { nodeId, serviceTypeId }) || 'shrine';
-    const visit = createLocationVisit({ run: structuredClone(run), registries, rng: null }, locationId, { healMult });
+    const visit = createLocationVisit({ run, registries, rng: null }, locationId, { healMult });
     const noRest = !!visit.restDenied;
     const rest = noRest ? null : previewRest(visit);
     leaveLocation(visit);

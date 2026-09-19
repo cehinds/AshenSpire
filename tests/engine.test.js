@@ -9322,6 +9322,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(withCard([{ op: 'restoreMana', target: 'self' }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with neither selector is refused');
     assert(said(withCard([{ op: 'restoreMana', target: 'self', amount: 2, toFloorPct: 50 }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with both is refused');
     assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restSauna'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming a tag no location carries is refused by name');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restMana'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming the unresolved restMana is refused: a visit never holds it');
+    assert(validateContent({ ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restManaFloor'] } } : r)) }).ok, 'a filter naming the resolved mode tag is a location\'s effective tag');
+    assert(said(validateContent({ ...testBundle(), statuses: contentBundle.statuses.map((st, i) => (i === 0 ? { ...st, hooks: [...(st.hooks || []), { on: 'rested', do: [] }] } : st)) })).some((e) => /statuses\..*hooks\[\d+\]\.on/.test(e)), 'a status hooked on a run-level event is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'boss', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.boss/.test(e)), 'a node type the door never visits is not a location');
+    const twice = visitTo(fresh(), 'shrine');
+    const first = arriveAt(twice);
+    const again = arriveAt(twice);
+    eq(again.events.length, 0, 'a second arrival fires nothing');
+    eq(again.refill, first.refill, 'and answers with the first receipt');
     assert(validateContent(contentBundle).ok, 'the shipped bundle stays green');
   });
 
