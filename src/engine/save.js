@@ -32,6 +32,7 @@ import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLoc
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { healMissingSlotCells } from '../model/loadout.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -618,6 +619,21 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      // A slot row that arrived after this save was written (phase 3b: head,
+      // hands, feet) has no cells in it. Give each its empty cells, as a fresh
+      // run has them, and say so — a position the Armoury cannot draw is a
+      // piece the player could never equip.
+      const slotsAdded = healMissingSlotCells(registries, run.loadout);
+      if (slotsAdded.length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout.sets',
+          was: undefined,
+          now: { slots: slotsAdded },
+          why: `the slot table gained ${slotsAdded.join(', ')} after this save was written; each has its empty cells now, as a fresh run does`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);

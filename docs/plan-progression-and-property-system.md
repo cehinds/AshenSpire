@@ -190,7 +190,7 @@ plan's four because the slot table already declares it. SPEC §13.4a.
 | `src/content/equipment.js` armament and armour rows gain `cardType: 'equipment'`, `slot` (existing `SLOTS`), and are registered in the card registry with a `zone` field; `SCHEMAS.card` gains `zone?: en('draw','core','worn','hands','passive')` | schemas, registries |
 | Armour slots split: `body`, `head`, `hands`, `feet` in `SLOTS`; existing armour rows map to `body`; new head/hands/feet rows ship as data with the slot→layer table from proposal §4 as mods | content |
 | `reconcileGrantedCards` (`loadout.js:2011`) and `reconcileGrantedCardsInCombat` (`:2212`) reconcile against `collection`, and mark granted instances `locked: true` while their source is equipped | |
-| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumPerLevel`; `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
+| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumStepLevels`, `balance.deck.minimumPerStep` (as built); `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
 | `figureSpec` (`loadout.js:2280`) reads `zones.worn` and `zones.hands`; `equippedFigure` (`assets.js:558`) accepts head/hands/feet layer ids and falls back to nothing when art is missing | |
 
 **3b AS BUILT (2026-09-19):** the half of 3b that is feel-neutral shipped;

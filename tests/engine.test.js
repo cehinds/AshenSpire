@@ -8332,6 +8332,29 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(REG, fresh);
     eq(fresh.deck.filter(isItemOwned).length, 0, 'unequipping removes every lent instance');
     eq(fresh.zones.worn.head, null, 'and the projection still reads');
+
+    // The review of #1183. The body layer is the RESOLVED armour row: an id the
+    // table does not know keeps the default body rather than asking for art
+    // that does not exist.
+    const stale = structuredClone(run.loadout); stale.sets.armor[0] = 'notAnArmourSet';
+    eq(figureSpec(REG, stale, run.class).armourId, 'default', 'an unknown armour id draws the default body');
+    // A save written before the slot split has no cells for head, hands and
+    // feet; the load door gives it each slot's empty cells and says so.
+    const storage2 = createMemoryStorage();
+    const saves2 = createSaveManager(storage2);
+    saves2.saveRun(createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG }), createRng(1));
+    const old = JSON.parse(storage2.getItem(RUN_KEY));
+    for (const id of ['head', 'hands', 'feet']) { delete old.loadout.sets[id]; delete old.loadout.active[id]; }
+    delete old.zones; delete old.collection; old.schemaVersion = 6;
+    storage2.setItem(RUN_KEY, JSON.stringify(old));
+    const grown = saves2.loadRun(REG);
+    assert(grown, 'the pre-split save loads');
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(grown.loadout.sets[id]) && grown.loadout.sets[id].length === 1 && grown.loadout.sets[id][0] === null, `loadout.sets.${id} gained its one empty cell`);
+      eq(grown.loadout.active[id], 0, `and an active index`);
+    }
+    const healRow = (saves2.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
+    assert(healRow && healRow.kind === 'heal' && /head, hands, feet/.test(healRow.why), `the ledger names the slots that were filled — got ${JSON.stringify(healRow).slice(0, 200)}`);
   });
 
   test('84. the grip is read off the hands, its tags ride the action snapshot and no card, and cardTagIs reads both lists (plan phase 3c)', () => {

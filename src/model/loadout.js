@@ -13,7 +13,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
-import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf } from './zones.js';
+import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -2294,7 +2294,12 @@ export function figureSpec(registries, loadout, classId) {
   // save cannot disagree about what is worn or held: body ← zones.worn.body,
   // the three new layers ← zones.worn.head/hands/feet, the hands ← zones.hands.
   const { zones } = projectZones({ class: classId, loadout, relics: [], deck: [] });
-  if (zones.worn.body) spec.armourId = zones.worn.body;
+  // The body layer is the RESOLVED armour row for this class, as it always
+  // was: a raw id the table does not know (a stale save, a co-op member's
+  // loadout that never crossed the load door) keeps the default body rather
+  // than asking for art that does not exist.
+  const body = zones.worn.body ? equippedIn(registries, loadout, classId, WORN_SLOT_IDS.body) : null;
+  if (body) spec.armourId = body.id;
   spec.headId = zones.worn.head;
   spec.handsId = zones.worn.hands;
   spec.feetId = zones.worn.feet;
@@ -2387,6 +2392,29 @@ export function gripRefusal(registries, loadout, classId, slotId, setIndex, item
     return `${two.name || two.id} needs both hands, and ${other.name || other.id} is in the other one. Free that hand first.`;
   }
   return '';
+}
+
+/**
+ * healMissingSlotCells(registries, loadout) → the ids of the slots whose cells
+ * were absent and are now present, empty. A save written before a slot row
+ * existed (phase 3b added head, hands and feet) carries no cells for it, so
+ * the Armoury drew no position and equipPiece refused the slot; this gives it
+ * what createLoadout gives a fresh run, and nothing else. Both load doors
+ * call it (save.js loadRun, which notes it on the ledger; tools/session.mjs
+ * restoreSession, which has no ledger).
+ */
+export function healMissingSlotCells(registries, loadout) {
+  if (!loadout || typeof loadout !== 'object') return [];
+  loadout.sets = loadout.sets || {};
+  loadout.active = loadout.active || {};
+  const added = [];
+  for (const slot of (((registries || {}).equipment || {}).slots || [])) {
+    if (Array.isArray(loadout.sets[slot.id])) continue;
+    loadout.sets[slot.id] = new Array(Math.max(1, slot.sets || 1)).fill(null);
+    loadout.active[slot.id] = 0;
+    added.push(slot.id);
+  }
+  return added;
 }
 
 /**
