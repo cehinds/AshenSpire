@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Holding two blades is now something the game can see",
     "detail": "Nothing you see changes. When you play a card, the game now notes how your hands are held at that moment: one weapon, a two-handed one, or two of the same kind. That note lives on the moment the card is played, never on the card itself, so a knife in each hand can be asked about by a relic or an event without any card being rewritten. A weapon that needs both hands can no longer be put beside something in the other hand: the Armoury names both pieces and asks you to free the hand first. No weapon in the game needs both hands yet, so today the only grip you can feel is two blades.",
-    "build": "0.7.1.188",
+    "build": "0.7.1.189",
     "pullRequest": 1186,
     "url": "https://github.com/cehinds/AshenSpire/pull/1186"
   },

@@ -8375,11 +8375,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const reaver = createRunState({ seed: 0x3c3c, classId: 'reaver', registries: REG });
     const refusal = gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword');
     assert(/Greatsword/.test(refusal) && /Round Shield/.test(refusal) && /both hands/.test(refusal), `the refusal names both pieces — got '${refusal}'`);
-    eq(equipPiece(twoHanded, reaver.loadout, 'rightHand', 0, 'greatsword', { has: () => true }, { inCombat: false, classId: 'reaver' }), false, 'equipPiece refuses the grip');
+    const equipCtx = { inCombat: false, classId: 'reaver', attributes: reaver.attributes };
+    eq(equipPiece(twoHanded, reaver.loadout, 'rightHand', 0, 'greatsword', { has: () => true }, equipCtx), false, 'equipPiece refuses the grip');
     eq(reaver.loadout.sets.rightHand[0], 'straightSword', 'and the hand is unchanged');
     eq(canEquip(twoHanded, 'rightHand', { inCombat: false }).ok, true, 'a bare "may this slot change" question keeps its answer');
     reaver.loadout.sets.leftHand[0] = null;
     eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword'), '', 'with the other hand free, the two-hander goes in');
+    // A move is not a second copy: the two-hander in the LEFT hand may be
+    // moved to the right without being refused for standing beside itself.
+    const moving = structuredClone(reaver.loadout); moving.sets.leftHand[0] = 'greatsword'; moving.sets.rightHand[0] = null;
+    eq(gripRefusal(twoHanded, moving, 'reaver', 'rightHand', 0, 'greatsword'), '', 'moving a two-hander hand to hand is not refused');
+    assert(equipPiece(twoHanded, moving, 'rightHand', 0, 'greatsword', { has: () => true }, equipCtx), 'and equipPiece moves it — the same call the refusal above declined, so the refusal was the grip and not the requirements');
+    eq(moving.sets.rightHand[0], 'greatsword'); eq(moving.sets.leftHand[0], null, 'the old cell is cleared');
     reaver.loadout.sets.rightHand[0] = 'greatsword';
     eq(gripOf(twoHanded, reaver.loadout, 'reaver').mode, 'two');
     eq(gripTags(gripOf(twoHanded, reaver.loadout, 'reaver')).join('|'), 'equipment.twoHanded');

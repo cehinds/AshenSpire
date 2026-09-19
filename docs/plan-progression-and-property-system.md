@@ -251,8 +251,10 @@ card snapshot in solo and co-op combat as `derivedTags`, and the `cardPlayed`
 event carries `cardTags` and `derivedTags`; the preview builds its card the
 same way (and now reads the kind tag, which the tree phase had left at
 `def.type` on that one site). `canEquip` refuses the one illegal grip (a
-two-hander beside an occupied hand) when told what is going where; the DEX
-gate on `dual` is phase 9's row, as the plan sequences it. No shipped package
+two-hander beside an occupied hand) when told what is going where — the same
+rule the deck plan's gate already held at `cycleSet`/`equipPiece` by throwing,
+asked earlier and with a sentence the Armoury's seal can show; the DEX gate on
+`dual` is phase 9's row, as the plan sequences it. No shipped package
 requires two hands, so `two` is dormant and proven with a probe registry;
 `dual` is live (knife and sword). SPEC §13.4c; engine test 84.
 
