@@ -343,7 +343,13 @@ export function setBand(bands, id, percent, { minPercent = 0 } = {}) {
 // JSON paths, flattening, and the house-style formatter
 // ---------------------------------------------------------------------------
 
-export const splitPath = (path) => (Array.isArray(path) ? path : String(path).split('.').filter(Boolean));
+/**
+ * A path is an array of keys, or a string joined with '.' in which a key's
+ * own dot is escaped as '\\.' (`joinPath` writes it, `splitPath` reads it), so
+ * a key such as "0.3s" in presentation/startupGate.json stays one key.
+ */
+export const splitPath = (path) => (Array.isArray(path) ? path : String(path).split(/(?<!\\)\./).map((k) => k.replace(/\\\./g, '.')).filter(Boolean));
+export const joinPath = (keys) => keys.map((k) => String(k).replace(/\./g, '\\.')).join('.');
 
 export function getPath(obj, path) {
   let cur = obj;
@@ -397,7 +403,7 @@ export function flattenConfig(data) {
     if (kind === 'object' || kind === 'array') {
       const entries = Array.isArray(v) ? v.map((x, i) => [String(i), x]) : Object.entries(v);
       for (const [k, x] of entries) walk(x, [...path, k], section);
-    } else out.push({ path: path.join('.'), section, value: v, kind });
+    } else out.push({ path: joinPath(path), section, value: v, kind });
   };
   for (const [section, v] of Object.entries(data || {})) walk(v, [section], section);
   return out;
@@ -482,6 +488,47 @@ export function jsonSpans(text) {
 // ---------------------------------------------------------------------------
 
 /**
+ * combatPlan(data, parent, { width, height, zoom, rem, cardRatio, tokens }) →
+ * the combat bands the game will draw, in PHYSICAL px: a port of
+ * src/ui/models/CombatLayout.js allocateCombatBands / packCombatRails /
+ * minimumHandHeight, with each local-px term multiplied back by the zoom.
+ * The hand and footer keep their physical minimums and the battlefield
+ * absorbs the difference; when that stacked plan cannot fit one readable
+ * combatant and behavior.shortHostRails is on, the footer folds into rails
+ * beside the hand (footer 0) and the hand yields height to the field.
+ */
+export function combatPlan(data, parent, { width, height, zoom = 1, rem = 10, cardRatio = 5 / 7, resolve = (v) => v } = {}) {
+  const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : fallback; };
+  const sizing = data.sizing || {}, hand = sizing.hand || {}, formation = sizing.formation || {}, footer = sizing.footer || {};
+  const bands = sizing.bands || {};
+  const share = (id) => num(bands[id]) / 100;
+  const footerMinPx = num(getPath(parent || {}, 'sizing.minimums.footerPx'));
+  const hud = height * share('hud');
+  const context = Math.max(height * share('context'), num(hand.minimumHeightPx));
+  const footerPx = Math.max(height * share('footer'), footerMinPx);
+  const minimumBattlefield = num(formation.minimumSpritePx) + num(formation.detailReserveRem) * rem;
+  const field = height - hud - context - footerPx;
+  const stacked = { arrangement: 'stacked', hud, battlefield: Math.max(0, field), hand: context, footer: footerPx, minimumBattlefield, supported: field >= minimumBattlefield, rails: null, footerRaised: footerPx > height * share('footer') + 1e-9, handRaised: context > height * share('context') + 1e-9 };
+  if (stacked.supported || !(width > 0) || !getPath(data, 'behavior.shortHostRails')) return stacked;
+  const gap = num(footer.gapRem, num(getPath(data, 'positioning.footer.gapRem'))) * rem;
+  const target = num(footer.minimumTargetPx);
+  const diameter = Math.max(target, footerMinPx * num(footer.heightFraction, 1));
+  const pileWidth = Math.max(target, num(footer.pileMinimumRem) * rem);
+  const railWidth = diameter + gap + pileWidth;
+  const handWidth = Math.max(0, width - railWidth * 2 - gap * 2);
+  const minimumHandWidth = num(hand.minWidthRem) * rem + (num(hand.minCapacity) - 1) * num(hand.exposedTargetPx) + num(getPath(data, 'positioning.hand.verticalInsetRem')) * rem * 2;
+  const rails = { gap, diameter, pileWidth, railWidth, height: diameter * 2 + gap, handWidth, minimumHandWidth, supported: handWidth >= minimumHandWidth };
+  if (!rails.supported) return stacked;
+  const place = data.positioning && data.positioning.hand ? data.positioning.hand : {};
+  const minimumHandHeight = num(hand.minWidthRem) * rem / cardRatio + (num(place.verticalInsetRem) * 2 + num(place.selectedLiftRem) + num(place.arcRem)) * rem;
+  const preferred = Math.max(height * (share('context') + share('footer')), num(hand.minimumHeightPx));
+  const floor = Math.max(minimumHandHeight, rails.height);
+  const railHand = Math.max(floor, Math.min(preferred, height - hud - minimumBattlefield));
+  const railField = height - hud - railHand;
+  return { arrangement: 'rails', hud, battlefield: Math.max(0, railField), hand: railHand, footer: 0, minimumBattlefield, supported: railField >= minimumBattlefield, rails, footerRaised: false, handRaised: false };
+}
+
+/**
  * regionsFor(wireframe, data, viewport, { parent, tokens, layoutMode, screens, zoom, rootFontPx }) →
  * [{ id, label, x, y, w, h, kind, edit? }]. `edit` says what dragging the
  * region's lower edge changes: { kind: 'bandEdge', index } or { kind: 'path',
@@ -498,7 +545,7 @@ export function jsonSpans(text) {
  * physical px; a px value the game states as physical (the hand's minimum
  * height, the W4 footer minimum, the map header floor) is used as written.
  */
-export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {}, zoom = 1, rootFontPx = 10 } = {}) {
+export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {}, zoom = 1, rootFontPx = 10, configs = {} } = {}) {
   const W = viewport.width, H = viewport.height, rem = rootFontPx * zoom;
   const vw = (n) => (W * n) / 100, vh = (n) => (H * n) / 100;
   const sizing = (data && data.sizing) || {}, positioning = (data && data.positioning) || {};
@@ -535,26 +582,50 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
 
   switch (wireframe.draw) {
     case 'bands': {
-      const compact = layoutMode !== 'wide' && sizing.bandsCompact;
-      drawBands(compact ? sizing.bandsCompact : sizing.bands, compact ? 'sizing.bandsCompact' : 'sizing.bands');
+      // The combat plan the game draws (CombatLayout.allocateCombatBands): the
+      // hand and footer keep their physical minimums, the battlefield takes
+      // the rest, and a short host folds the footer into rails beside the
+      // hand. The band EDGES still edit the nominal percents.
+      const cardData = configs['ui/components/card.json'];
+      const cardRatio = cardData && cardData.sizing && cardData.sizing.ratio ? (() => { const r = resolve(cardData.sizing.ratio); return typeof r === 'number' && r > 0 ? r : 5 / 7; })() : 5 / 7;
+      const plan = combatPlan(data, parent, { width: W, height: H, zoom, rem, cardRatio, resolve });
+      const entries = bandEntries(sizing.bands);
+      const drawn = { hud: plan.hud, scene: plan.battlefield, context: plan.hand, footer: plan.footer };
+      let y = 0;
+      entries.forEach((b, i) => {
+        const h = drawn[b.id] != null ? drawn[b.id] : vh(b.percent);
+        if (b.id === 'footer' && plan.arrangement === 'rails') return;
+        const nominal = vh(b.percent);
+        const label = `${b.id} ${b.percent}%${Math.abs(h - nominal) > 0.5 ? ` → ${round(h, 0)}px drawn` : ''}`;
+        push({ id: `band.${b.id}`, label, x: 0, y, w: W, h, band: b.id, percent: b.percent,
+          edit: i < entries.length - 1 ? { kind: 'bandEdge', index: i, path: 'sizing.bands' } : null });
+        y += h;
+      });
       const scene = out.find((r) => r.band === 'scene');
       if (scene && typeof sizing.floorPercent === 'number') {
         push({ id: 'floor', label: `floor ${sizing.floorPercent}%`, x: 0, y: scene.y + scene.h * sizing.floorPercent / 100, w: W, h: 1, line: true, edit: { kind: 'path', path: 'sizing.floorPercent', unit: 'percentOf', of: 'band.scene' } });
       }
+      const handBand = out.find((r) => r.band === 'context');
       const hand = sizing.hand;
-      if (hand) {
-        const ctx = out.find((r) => r.band === 'context');
-        const wide = num(hand.wideWidthRem) * rem, narrow = num(hand.narrowWidthRem) * rem;
-        const width = Math.min(W, layoutMode === 'narrow' ? narrow : wide);
-        // minimumHeightPx is physical: CombatLayout.allocateSceneBands divides
-        // it by the zoom to get local px, so on this physical canvas it is
-        // used as written.
-        const height = Math.max(num(hand.minimumHeightPx), ctx ? ctx.h : 0);
-        push({ id: 'hand', label: `hand ≥${num(hand.minimumHeightPx)}px, ${layoutMode === 'narrow' ? hand.narrowWidthRem : hand.wideWidthRem}rem wide`, x: (W - width) / 2, y: ctx ? ctx.y + ctx.h - height : H - height, w: width, h: height, dashed: true });
+      if (hand && handBand) {
+        if (plan.arrangement === 'rails') {
+          const rw = plan.rails.railWidth, gap = plan.rails.gap;
+          push({ id: 'rail.left', label: 'rail: actions, draw', x: 0, y: handBand.y, w: rw, h: handBand.h, dashed: true });
+          push({ id: 'rail.right', label: 'rail: end turn, discard, potions', x: W - rw, y: handBand.y, w: rw, h: handBand.h, dashed: true });
+          push({ id: 'hand', label: `hand between rails (${round(plan.rails.handWidth, 0)}px, needs ${round(plan.rails.minimumHandWidth, 0)})`, x: rw + gap, y: handBand.y, w: plan.rails.handWidth, h: handBand.h, dashed: true });
+        } else {
+          const wide = num(hand.wideWidthRem) * rem, narrow = num(hand.narrowWidthRem) * rem;
+          const width = Math.min(W, layoutMode === 'narrow' ? narrow : wide);
+          push({ id: 'hand', label: `hand ≥${num(hand.minimumHeightPx)}px, ${layoutMode === 'narrow' ? hand.narrowWidthRem : hand.wideWidthRem}rem wide`, x: (W - width) / 2, y: handBand.y, w: width, h: handBand.h, dashed: true });
+        }
+        if (plan.handRaised) handBand.note = `raised to the hand's ${num(hand.minimumHeightPx)}px minimum`;
       }
-      const footerMin = parent && num(getPath(parent, 'sizing.minimums.footerPx'));
-      const footer = out.find((r) => r.band === 'footer');
-      if (footer && footerMin && footer.h < footerMin) footer.note = `below the W4 minimum ${footerMin}px (${round(footer.h, 0)}px)`;
+      const footerBand = out.find((r) => r.band === 'footer');
+      if (footerBand && plan.footerRaised) footerBand.note = `raised to the W4 minimum ${num(getPath(parent || {}, 'sizing.minimums.footerPx'))}px`;
+      if (scene) {
+        if (plan.arrangement === 'rails') scene.note = 'short host: the footer folds into rails beside the hand';
+        if (!plan.supported) scene.note = `${scene.note ? `${scene.note}; ` : ''}the game reports this host as unsupported (battlefield under ${round(plan.minimumBattlefield, 0)}px)`;
+      }
       break;
     }
     case 'dialogue': {

@@ -144,23 +144,39 @@ test('formatJson changes only the edited line and keeps a changed object in its 
   assert.equal(M.formatJson({ a: { b: 1, c: [1, 2] }, d: [{ e: 1 }] }), '{\n  "a": { "b": 1, "c": [1, 2] },\n  "d": [\n    { "e": 1 }\n  ]\n}\n');
 });
 
-test('regionsFor draws the combat bands, floor, hand and the footer floor note', () => {
-  const w4a = readConfig('ui/scenes/w4a-combat.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+test('regionsFor draws the combat plan the game draws: physical minimums, the hand, and rails on a short host', () => {
+  const w4a = readConfig('ui/scenes/w4a-combat.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars, card = readConfig('ui/components/card.json');
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4a');
-  const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide', zoom: 1.07, rootFontPx: 10 });
+  const configs = { 'ui/components/card.json': card };
+  const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide', zoom: 1.07, rootFontPx: 10, configs });
   const bands = regs.filter((r) => r.band);
-  assert.deepEqual(bands.map((r) => [r.band, r.h]), [['hud', 80], ['scene', 440], ['context', 240], ['footer', 40]]);
+  // hud 10% = 80; the footer's 5% (40) rises to the W4 56 px minimum; the hand keeps 30% (240 > 208); the field takes the rest.
+  assert.deepEqual(bands.map((r) => [r.band, r.h]), [['hud', 80], ['scene', 800 - 80 - 240 - 56], ['context', 240], ['footer', 56]]);
   assert.equal(bands[0].edit.kind, 'bandEdge');
   assert.equal(bands[3].edit, null);
-  assert.match(bands[3].note, /below the W4 minimum 56px/);
+  assert.match(bands[3].note, /raised to the W4 minimum 56px/);
   const floor = regs.find((r) => r.id === 'floor');
-  assert.equal(floor.y, 80 + 440 * 0.8);
+  assert.equal(M.round(floor.y, 6), M.round(80 + bands[1].h * 0.8, 6));
   const hand = regs.find((r) => r.id === 'hand');
   assert.equal(M.round(hand.w, 6), M.round(75 * 10 * 1.07, 6), 'wide hand width is wideWidthRem × rootFontPx × zoom');
-  const short = M.regionsFor(wf, w4a, { width: 844, height: 390 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10 }).find((r) => r.id === 'hand');
-  assert.equal(short.h, 208, 'the hand minimum is physical px, not scaled by the zoom');
-  const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow', zoom: 0.9, rootFontPx: 10 }).find((r) => r.id === 'hand');
+  const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow', zoom: 0.9, rootFontPx: 10, configs }).find((r) => r.id === 'hand');
   assert.equal(narrow.w, 22 * 10 * 0.9);
+  // 844x390 at zoom 0.62: the stacked plan leaves 87 px of field under the 114 px one readable combatant needs,
+  // so the footer folds into rails, the hand keeps its 208 px physical minimum and the field takes the rest.
+  // combatPlan reads "$name" through the resolver regionsFor hands it; here the tokens stand in.
+  const resolve = (v) => (typeof v === 'string' && v.startsWith('$') ? tokens[v.slice(1)] : v);
+  const plan = M.combatPlan(w4a, w4, { width: 844, height: 390, zoom: 0.62, rem: 6.2, cardRatio: 5 / 7, resolve });
+  assert.equal(plan.arrangement, 'rails');
+  assert.deepEqual([plan.hud, plan.hand, plan.footer, plan.battlefield], [39, 208, 0, 390 - 39 - 208]);
+  assert.equal(plan.supported, true);
+  const short = M.regionsFor(wf, w4a, { width: 844, height: 390 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
+  assert.equal(short.find((r) => r.band === 'footer'), undefined, 'no footer band under rails');
+  assert.equal(short.find((r) => r.band === 'context').h, 208);
+  assert.ok(short.some((r) => r.id === 'rail.left') && short.some((r) => r.id === 'rail.right'));
+  assert.match(short.find((r) => r.band === 'scene').note, /rails/);
+  // With rails switched off in behavior, the stacked plan stands and is reported unsupported.
+  const noRails = M.combatPlan({ ...w4a, behavior: { ...w4a.behavior, shortHostRails: false } }, w4, { width: 844, height: 390, zoom: 0.62, rem: 6.2, resolve });
+  assert.deepEqual([noRails.arrangement, noRails.supported], ['stacked', false]);
 });
 
 test('regionsFor draws every catalogued wireframe without throwing', () => {
@@ -426,4 +442,17 @@ test('settings refuse a hollowed group and a stored null cannot replace one', ()
   assert.deepEqual(merged.canvas, M.DEFAULT_SETTINGS.canvas);
   assert.deepEqual(merged.grid, M.DEFAULT_SETTINGS.grid);
   assert.deepEqual(M.settingsProblems(merged), []);
+});
+
+test('a key with a dot in it survives the path round trip', () => {
+  const data = { motion: { entrance: { holdDurations: { '0.3s': 300, plain: 1 } } } };
+  const leaves = M.flattenConfig(data);
+  const dotted = leaves.find((l) => l.value === 300);
+  assert.equal(dotted.path, 'motion.entrance.holdDurations.0\\.3s');
+  assert.deepEqual(M.splitPath(dotted.path), ['motion', 'entrance', 'holdDurations', '0.3s']);
+  assert.equal(M.getPath(data, dotted.path), 300);
+  const next = M.setPath(data, dotted.path, 400);
+  assert.deepEqual(next.motion.entrance.holdDurations, { '0.3s': 400, plain: 1 }, 'the dotted key is written, not split');
+  assert.equal(M.unitOf(dotted.path), '');
+  assert.deepEqual(M.splitPath(['a', 'b.c']), ['a', 'b.c'], 'an array path is taken as given');
 });

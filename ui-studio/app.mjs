@@ -46,6 +46,8 @@ const fileOf = (rel) => state.files.get(rel);
 const activeRel = () => wireframe().file;
 const activeFile = () => fileOf(activeRel());
 const tokens = () => { const t = fileOf('ui/tokens.json'); return (t && t.history.present.vars) || {}; };
+// Every loaded file's current draft by path, for a drawing that reads a second file (combat reads the card ratio).
+const loadedConfigs = () => Object.fromEntries([...state.files].map(([rel, f]) => [rel, f.history.present]));
 const proposedText = (file) => M.formatJson(file.history.present, { original: file.text });
 const isDirty = (file) => proposedText(file) !== file.text.replace(/\r\n/g, '\n');
 const dirtyFiles = () => [...state.files.entries()].filter(([, f]) => isDirty(f));
@@ -55,7 +57,7 @@ function regions() {
   const wf = wireframe();
   const parent = wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null;
   const lay = layoutFor(viewport());
-  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: lay.mode, screens: state.settings.screens, zoom: lay.zoom, rootFontPx: state.settings.gameLayout.rootFontPx });
+  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: lay.mode, screens: state.settings.screens, zoom: lay.zoom, rootFontPx: state.settings.gameLayout.rootFontPx, configs: loadedConfigs() });
 }
 function sketchBoxesPx(vp = viewport()) {
   const s = state.sketch.present, bp = sketchBreakpointFor(vp);
@@ -126,9 +128,13 @@ function persistDrafts() {
   store.set(LS.drafts, drafts);
   store.set(LS.sketch, { sketch: state.sketch.present, name: state.sketchName, hash: state.sketchHash, saved: state.sketchSaved || null });
 }
-async function persistSettings() {
+/**
+ * Persist the settings as they stand; a refused shape restores `before`
+ * when given, so a rejected edit never lingers in the session.
+ */
+async function persistSettings(before = null) {
   const problems = M.settingsProblems(state.settings);
-  if (problems.length) { toast(problems[0], true); return false; }
+  if (problems.length) { toast(problems[0], true); if (before) state.settings = before; return false; }
   if (state.api) { try { await api('settings', state.settings); } catch (e) { toast(e.message, true); return false; } }
   else store.set(LS.settings, state.settings);
   return true;
@@ -257,7 +263,7 @@ function renderStage() {
       return orientations.map((o) => {
         const v = M.viewportFor(dev, o), l = layoutFor(v), b = breakpointFor(v);
         const wf = wireframe(), file = fileOf(wf.file);
-        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode, screens: state.settings.screens, zoom: l.zoom, rootFontPx: state.settings.gameLayout.rootFontPx }) : [];
+        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode, screens: state.settings.screens, zoom: l.zoom, rootFontPx: state.settings.gameLayout.rootFontPx, configs: loadedConfigs() }) : [];
         const svg = canvasSvg({ viewport: v, scale: Math.min(230 / v.width, 250 / v.height), grid: state.settings.grid, canvas: state.settings.canvas, regions: regs, boxes: sketchBoxesPx(v), selection: new Set(), compact: true });
         return `<figure data-device="${esc(dev.id)}" data-orientation="${o}"><figcaption><span>${esc(dev.label)} ${o === 'landscape' ? '⟷' : '↕'}</span><span>${v.width}×${v.height} · <span class="badge ${l.mode}">${l.mode}</span> ${l.zoom}× · ${esc(b ? b.id : '—')}</span></figcaption>${svg}</figure>`;
       });
@@ -496,7 +502,7 @@ function onLeftClick(e) {
   if (li && li.dataset.file) {
     const rel = li.dataset.file;
     let w = state.settings.wireframes.find((x) => x.file === rel);
-    if (!w) { w = { id: `file-${rel.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`, label: rel.replace(/^ui\//, ''), file: rel, draw: 'generic', shot: 'combat' }; state.settings.wireframes.push(w); persistSettings(); }
+    if (!w) { const before = M.clone(state.settings); w = { id: `file-${rel.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`, label: rel.replace(/^ui\//, ''), file: rel, draw: 'generic', shot: 'combat' }; state.settings.wireframes.push(w); persistSettings(before); }
     state.wireframeId = w.id; state.selection.clear(); state.tab = 'values'; persistView(); renderAll(); return;
   }
   if (li && li.dataset.box) {
@@ -540,10 +546,11 @@ function onBandInput(input) {
 }
 function onRightChange(e) {
   const t = e.target;
+  const before = M.clone(state.settings);
   if (t.dataset.setting) {
     const v = t.type === 'checkbox' ? t.checked : t.type === 'number' ? Number(t.value) : t.value;
     state.settings = M.setPath(state.settings, t.dataset.setting, v);
-    persistSettings().then(() => renderAll());
+    persistSettings(before).then(() => renderAll());
     return;
   }
   if (t.dataset.band) {
@@ -571,16 +578,16 @@ function onRightChange(e) {
   if (row && t.dataset.dev) {
     const d = state.settings.devices[Number(row.dataset.deviceRow)]; const k = t.dataset.dev;
     if (k === 'enabled') d.enabled = t.checked; else if (k === 'safeTop' || k === 'safeBottom') { d.safe = d.safe || {}; d.safe[k === 'safeTop' ? 'top' : 'bottom'] = Number(t.value) || 0; } else d[k] = t.type === 'number' ? Number(t.value) : t.value;
-    persistSettings().then((ok) => { if (ok) renderAll(); }); return;
+    persistSettings(before).then(() => renderAll()); return;
   }
   if (row && t.dataset.bp) {
     const b = state.settings.breakpoints[Number(row.dataset.bpRow)]; const k = t.dataset.bp;
     if (t.type === 'number') { if (t.value === '') delete b[k]; else b[k] = Number(t.value); } else b[k] = t.value.trim();
-    persistSettings().then((ok) => { if (ok) renderAll(); }); return;
+    persistSettings(before).then(() => renderAll()); return;
   }
   if (row && t.dataset.wf) {
     const w = state.settings.wireframes[Number(row.dataset.wfRow)]; w[t.dataset.wf] = t.value.trim();
-    persistSettings().then((ok) => { if (ok) renderAll(); });
+    persistSettings(before).then(() => renderAll());
   }
 }
 function setLeaf(input) {
@@ -599,6 +606,7 @@ function setLeaf(input) {
 }
 function onRightClick(e) {
   const b = e.target.closest('button'); const li = e.target.closest('li');
+  const before = M.clone(state.settings);
   if (li && li.dataset.diff && !b) { const f = fileOf(li.dataset.diff); dialog(`<h3 class="mono">${esc(li.dataset.diff)}</h3>${diffHtml(f.text, proposedText(f))}`); return; }
   if (li && li.dataset.backup && !b) { stageBackup(li.dataset.backup); return; }
   if (!b) return;
@@ -612,21 +620,21 @@ function onRightClick(e) {
     const i = Number(row.dataset.deviceRow);
     if (b.dataset.devAct === 'del') { if (state.settings.devices.length <= 1) return; state.settings.devices.splice(i, 1); }
     else { const d = M.clone(state.settings.devices[i]); d.id = `${d.id}-${Date.now().toString(36)}`; d.label = `${d.label} copy`; state.settings.devices.splice(i + 1, 0, d); }
-    persistSettings().then(() => renderAll()); return;
+    persistSettings(before).then(() => renderAll()); return;
   }
-  if (b.dataset.bpAct === 'del' && row) { state.settings.breakpoints.splice(Number(row.dataset.bpRow), 1); persistSettings().then(() => renderAll()); return; }
+  if (b.dataset.bpAct === 'del' && row) { state.settings.breakpoints.splice(Number(row.dataset.bpRow), 1); persistSettings(before).then(() => renderAll()); return; }
   if (b.dataset.wfAct === 'del' && row) {
     if (state.settings.wireframes.length <= 1) { toast('Keep at least one wireframe', true); return; }
     state.settings.wireframes.splice(Number(row.dataset.wfRow), 1);
     if (!state.settings.wireframes.some((w) => w.id === state.wireframeId)) state.wireframeId = state.settings.wireframes[0].id;
-    persistSettings().then(() => renderAll()); return;
+    persistSettings(before).then(() => renderAll()); return;
   }
   const act = b.dataset.act;
-  if (act === 'add-device') { state.settings.devices.push({ id: `device-${Date.now().toString(36)}`, label: 'New device', width: 800, height: 600, category: 'other', enabled: true }); persistSettings().then(() => renderAll()); }
-  if (act === 'reset-devices') { state.settings.devices = M.clone(M.DEFAULT_DEVICES); persistSettings().then(() => renderAll()); }
-  if (act === 'add-bp') { state.settings.breakpoints.push({ id: `bp${state.settings.breakpoints.length + 1}`, label: 'New breakpoint' }); persistSettings().then(() => renderAll()); }
-  if (act === 'add-wf') { state.settings.wireframes.push({ id: `wf-${Date.now().toString(36)}`, label: 'New wireframe', file: 'ui/scenes/w4.json', draw: 'generic', shot: 'combat' }); persistSettings().then(() => renderAll()); }
-  if (act === 'reset-wf') { state.settings.wireframes = M.clone(M.DEFAULT_WIREFRAMES); persistSettings().then(() => renderAll()); }
+  if (act === 'add-device') { state.settings.devices.push({ id: `device-${Date.now().toString(36)}`, label: 'New device', width: 800, height: 600, category: 'other', enabled: true }); persistSettings(before).then(() => renderAll()); }
+  if (act === 'reset-devices') { state.settings.devices = M.clone(M.DEFAULT_DEVICES); persistSettings(before).then(() => renderAll()); }
+  if (act === 'add-bp') { state.settings.breakpoints.push({ id: `bp${state.settings.breakpoints.length + 1}`, label: 'New breakpoint' }); persistSettings(before).then(() => renderAll()); }
+  if (act === 'add-wf') { state.settings.wireframes.push({ id: `wf-${Date.now().toString(36)}`, label: 'New wireframe', file: 'ui/scenes/w4.json', draw: 'generic', shot: 'combat' }); persistSettings(before).then(() => renderAll()); }
+  if (act === 'reset-wf') { state.settings.wireframes = M.clone(M.DEFAULT_WIREFRAMES); persistSettings(before).then(() => renderAll()); }
   if (act === 'reset-settings') { if (!confirm('Reset every studio setting to its default?')) return; state.settings = M.clone(M.DEFAULT_SETTINGS); persistSettings().then(() => renderAll()); }
   if (act === 'export-settings') download('ui-studio-settings.json', `${JSON.stringify(state.settings, null, 2)}\n`);
   if (act === 'import-settings') { state.pendingImport = 'settings'; $('#open-json').click(); }
