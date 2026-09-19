@@ -255,7 +255,10 @@ export function applyHeal(ctx, target, amount) {
     : null;
   ctx.emit('healed', {
     targetId: target.id,
-    ...(playerId ? { playerId } : {}),
+    // `playerId` for the readers that always had it; `targetPlayerId` so
+    // eventTargetIsOwner resolves the HEALED seat in co-op, as it does for a
+    // hit — an ally's heal is the ally's, not the active seat's.
+    ...(playerId ? { playerId, targetPlayerId: playerId } : {}),
     amount: gained,
     requested: n,
   });

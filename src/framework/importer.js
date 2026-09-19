@@ -428,6 +428,9 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,
+        // The kit (plan phase 5a): the ability card and the kit relic.
+        abilityCard: klass.abilityCard,
+        kitRelic: klass.kitRelic,
         eligibleStartingKitIds: klass.eligibleStartingKitIds,
         cardPool: klass.cardPool,
         glyph: klass.glyph,

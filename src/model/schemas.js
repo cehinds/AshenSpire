@@ -166,6 +166,10 @@ export const PREDICATES = Object.freeze([
   'random',
   'eventIsAttack',
   'hpDamagePositive',
+  // A `healed` event that healed something: applyHeal emits the event at
+  // full HP with amount 0, and a once-per-combat rule must not spend itself
+  // on it (plan phase 5a's Waxen Seal was the first to).
+  'healPositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',

@@ -1118,7 +1118,15 @@ export const propertyRuleEffects = {
         "on": "healed",
         "once": true,
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
         },
         "do": [
           {

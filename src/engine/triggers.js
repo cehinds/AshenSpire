@@ -50,7 +50,12 @@ export function emitEvent(ctx, type, payload = {}) {
  * keep their own (already unique) entity ids.
  */
 function ownerKeyFor(ctx, entity) {
-  if (ctx.foundation && ctx.playerIdForEntity) return ctx.playerIdForEntity(entity) || entity?.id || 'none';
+  // A combat that can name seats (co-op, with or without a foundation
+  // ruleset) keys by the seat the ENTITY sits in, so an inactive seat's
+  // mounts and gates are its own when an event names it (a heal's
+  // targetPlayerId); the active seat's key is unchanged, since its entity
+  // resolves to the same id ctx.playerKey holds.
+  if (typeof ctx.playerIdForEntity === 'function') return ctx.playerIdForEntity(entity) || entity?.id || 'none';
   if (entity && entity.kind === 'player' && ctx.playerKey) return ctx.playerKey;
   return entity ? entity.id : 'none';
 }
@@ -70,7 +75,12 @@ function scanTriggers(ctx, event) {
     else { const fired = maybeFire(ctx, key, trigger, owner, event); if (fired) after?.(); }
   };
 
-  const owners = ctx.foundation && ctx.players && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded'].includes(event.type)
+  // A heal names its seat (targetPlayerId), so every seat's mounts hear it
+  // with or without a foundation ruleset — an ally's heal is the ally's.
+  const everySeat = ctx.players && (
+    (ctx.foundation && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded', 'healed'].includes(event.type))
+    || event.type === 'healed');
+  const owners = everySeat
     ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
   // Relics and stances react for their actual owner, including inactive co-op seats.
   for (const player of owners) {
@@ -329,11 +339,16 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return !!pctx.event && pctx.event.isAttack === true;
     case 'hpDamagePositive':
       return pctx.event?.type === 'damageDealt' && pctx.event.amount > pctx.event.blocked;
+    case 'healPositive':
+      return pctx.event?.type === 'healed' && pctx.event.amount > 0;
+    // A seat id on the event names the seat, whenever the combat can name
+    // seats (co-op, with or without a foundation ruleset): every player
+    // entity is id 'player', so the bare id cannot tell an ally from the owner.
     case 'eventSourceIsOwner':
-      if (ctx.foundation && pctx.event?.sourcePlayerId) return pctx.event.sourcePlayerId === ctx.playerIdForEntity?.(pctx.owner);
+      if (pctx.event?.sourcePlayerId && typeof ctx.playerIdForEntity === 'function') return pctx.event.sourcePlayerId === ctx.playerIdForEntity(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.sourceId === pctx.owner.id;
     case 'eventTargetIsOwner':
-      if (ctx.foundation && pctx.event?.targetPlayerId) return pctx.event.targetPlayerId === ctx.playerIdForEntity?.(pctx.owner);
+      if (pctx.event?.targetPlayerId && typeof ctx.playerIdForEntity === 'function') return pctx.event.targetPlayerId === ctx.playerIdForEntity(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.targetId === pctx.owner.id;
     case 'eventStatusIs':
       return !!pctx.event && pctx.event.status === pred.status;

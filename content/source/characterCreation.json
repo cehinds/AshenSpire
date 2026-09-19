@@ -1,9 +1,6 @@
 {
   "spritePreviewSide": "right",
-  "visibleModeIds": [
-    "standard",
-    "pointbuy"
-  ],
+  "visibleModeIds": ["standard", "pointbuy"],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
@@ -11,99 +8,36 @@
     "equipmentAutoAdvance": false
   },
   "equipmentSections": [
-    {
-      "id": "armour",
-      "label": "STARTING ARMOUR",
-      "kind": "armour"
-    },
-    {
-      "id": "rightHand",
-      "label": "MAIN HAND",
-      "kind": "hand",
-      "slot": "rightHand"
-    },
-    {
-      "id": "leftHand",
-      "label": "OFF HAND",
-      "kind": "hand",
-      "slot": "leftHand"
-    },
-    {
-      "id": "equipSlot",
-      "label": "EQUIP SLOT",
-      "kind": "slot",
-      "slot": "talisman"
-    },
-    {
-      "id": "relic",
-      "label": "RELIC",
-      "kind": "relic"
-    }
+    { "id": "armour", "label": "STARTING ARMOUR", "kind": "armour" },
+    { "id": "rightHand", "label": "MAIN HAND", "kind": "hand", "slot": "rightHand" },
+    { "id": "leftHand", "label": "OFF HAND", "kind": "hand", "slot": "leftHand" },
+    { "id": "equipSlot", "label": "EQUIP SLOT", "kind": "slot", "slot": "talisman" },
+    { "id": "relic", "label": "RELIC", "kind": "relic" }
   ],
   "classes": {
     "reaver": {
-      "armourIds": [
-        "default",
-        "vigil"
-      ],
-      "handIds": [
-        "straightSword",
-        "roundShield",
-        "greatsword",
-        "buckler"
-      ],
+      "armourIds": ["default", "vigil"],
+      "handIds": ["straightSword", "roundShield", "greatsword", "buckler"],
       "equipSlotIds": [],
-      "relicIds": [
-        "forsakenMedallion",
-        "goldenSprout"
-      ]
+      "relicIds": ["forsakenMedallion", "goldenSprout"]
     },
     "starseer": {
-      "armourIds": [
-        "default",
-        "eclipse"
-      ],
-      "handIds": [
-        "ashStaff",
-        "starstoneStaff"
-      ],
+      "armourIds": ["default", "eclipse"],
+      "handIds": ["ashStaff", "starstoneStaff"],
       "equipSlotIds": [],
-      "relicIds": [
-        "starstoneShard",
-        "goldenSprout"
-      ]
+      "relicIds": ["starstoneShard", "goldenSprout"]
     },
     "rogue": {
-      "armourIds": [
-        "default",
-        "nightveil"
-      ],
-      "handIds": [
-        "dagger",
-        "buckler",
-        "shortbow",
-        "parryDagger"
-      ],
+      "armourIds": ["default", "nightveil"],
+      "handIds": ["dagger", "buckler", "shortbow", "parryDagger"],
       "equipSlotIds": [],
-      "relicIds": [
-        "cutpursesCoin",
-        "goldenSprout"
-      ]
+      "relicIds": ["cutpursesCoin", "goldenSprout"]
     },
     "herald": {
-      "armourIds": [
-        "default",
-        "ossuary"
-      ],
-      "handIds": [
-        "boneSceptre",
-        "emberlightSceptre"
-      ],
+      "armourIds": ["default", "ossuary"],
+      "handIds": ["boneSceptre", "emberlightSceptre"],
       "equipSlotIds": [],
-      "relicIds": [
-        "goldFigurine",
-        "goldenSprout"
-      ]
+      "relicIds": ["goldFigurine", "goldenSprout"]
     }
   },
   "keepsakes": [
@@ -119,37 +53,21 @@
       "name": "Old Cinder",
       "icon": "🪙",
       "desc": "Begin the climb with 50 cinders.",
-      "effects": [
-        {
-          "op": "addCinders",
-          "amount": 50
-        }
-      ]
+      "effects": [{ "op": "addCinders", "amount": 50 }]
     },
     {
       "id": "travelersFlask",
       "name": "Traveler's Flask",
       "icon": "🧪",
       "desc": "Begin with one additional Crimson charge.",
-      "effects": [
-        {
-          "op": "addFlaskCapacity",
-          "kind": "hp",
-          "amount": 1
-        }
-      ]
+      "effects": [{ "op": "addFlaskCapacity", "kind": "hp", "amount": 1 }]
     },
     {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
       "icon": "🪨",
       "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
-      "effects": [
-        {
-          "op": "upgradeCard",
-          "card": "strike"
-        }
-      ]
+      "effects": [{ "op": "upgradeCard", "card": "strike" }]
     }
   ]
 }

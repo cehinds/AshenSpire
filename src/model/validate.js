@@ -600,8 +600,16 @@ function collectContentProblems(bundle, errors = []) {
         err(`tagging.class.${cls.id}`, "carries 'favored' but names no item type — the leaning has no group to favour");
       }
     }
+    // Only a class carries the leaning: on any other carrier its scope is
+    // empty and it multiplies nothing, silently.
+    for (const r of rows) {
+      if (r && r.tagId === 'favored' && r.family !== 'class') err(`tagging.${r.family}.${r.objectId}`, "'favored' is the class card's leaning — no other carrier scopes it");
+    }
   }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    // The kit relic rides beside the starting relic (plan phase 5a); naming
+    // the same relic twice would drop silently to one.
+    if (cls && cls.kitRelic && cls.kitRelic === cls.startingRelic) err(`classes.${cls.id}.kitRelic`, `'${cls.kitRelic}' is already the starting relic — the kit relic is a second relic`);
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
       || a.hp + a.mana !== flaskCapacity) {
@@ -2044,6 +2052,7 @@ const PREDICATE_FIELDS = {
   random: ['pct'],
   eventIsAttack: [],
   hpDamagePositive: [],
+  healPositive: [],
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],
