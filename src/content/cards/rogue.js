@@ -64,7 +64,7 @@ export const rogueCards = [
     upgrade: { effects: [prepare(), { op: 'draw', amount: 1 }, { op: 'block', target: 'self', amount: 3 }], textTemplate: 'Become Prepared. Draw {draw} card. Gain {block} Block.' },
   },
   {
-    id: 'backstep', name: 'Backstep', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: [], icon: '👣',
+    id: 'backstep', name: 'Backstep', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '👣',
     effects: [{ op: 'block', target: 'self', amount: 6 }, prepare()],
     textTemplate: 'Gain {block} Block. Become Prepared.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 9 }, prepare()] },
@@ -100,7 +100,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] },
   },
   {
-    id: 'ricochet', name: 'Ricochet', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '➶',
+    id: 'ricochet', name: 'Ricochet', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack', keywords: [], icon: '➶',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 4 }],
     textTemplate: 'Deal {damage} damage to ALL enemies.',
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 7 }] },
@@ -119,7 +119,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, { op: 'discard', amount: 1, random: true }] },
   },
   {
-    id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
+    id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
     flavor: "Nothing under the bridge but ice, if anyone asks. — Frozen-dock cant",
     effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
     textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand. Exhaust.',
@@ -134,7 +134,7 @@ export const rogueCards = [
 
   // ---- Uncommons (13) -----------------------------------------------------
   {
-    id: 'bladeDanceRogue', name: 'Blade Dance', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '⚔',
+    id: 'bladeDanceRogue', name: 'Blade Dance', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack', keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }, { op: 'damage', target: 'enemy', amount: 1, hits: 3, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage {hits} times. Prepared: deal {damage.2} damage {hits.2} times. Consume Prepared.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 3 }, { op: 'damage', target: 'enemy', amount: 1, hits: 3, if: PREPARED }, spendPrepared()] },
@@ -159,7 +159,7 @@ export const rogueCards = [
     upgrade: { effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }], textTemplate: 'Become Prepared. Gain {gainEnergy} Energy. Draw {draw} card. Add a Shiv to your hand. Exhaust.' },
   },
   {
-    id: 'acrobaticsRogue', name: 'Acrobatics', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '🤸',
+    id: 'acrobaticsRogue', name: 'Acrobatics', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '🤸',
     effects: [{ op: 'block', target: 'self', amount: 7 }, { op: 'draw', amount: 2 }, { op: 'discard', amount: 1, random: true }],
     textTemplate: 'Gain {block} Block. Draw {draw} cards. Discard 1 at random.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 9 }, { op: 'draw', amount: 3 }, { op: 'discard', amount: 1, random: true }] },
@@ -184,7 +184,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }] },
   },
   {
-    id: 'shadowstep', name: 'Shadowstep', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '◐',
+    id: 'shadowstep', name: 'Shadowstep', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '◐',
     effects: [{ op: 'block', target: 'self', amount: 5 }, prepare(), { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Become Prepared. Draw {draw} card.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 7 }, prepare(), { op: 'draw', amount: 1 }] },
@@ -209,7 +209,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 6 }, prepare()] },
   },
   {
-    id: 'misdirect', name: 'Misdirect', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '↪',
+    id: 'misdirect', name: 'Misdirect', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '↪',
     flavor: "The Decree said dawn; the bridge watch had other arrangements. — Frozen-dock cant",
     effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }, prepare()],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Become Prepared.',
@@ -218,13 +218,13 @@ export const rogueCards = [
 
   // ---- Rares (10) ---------------------------------------------------------
   {
-    id: 'assassinate', name: 'Assassinate', class: 'rogue', rarity: 'rare', cost: 2, manaCost: 1, type: 'attack', keywords: ['exhaust'], icon: '🗡',
+    id: 'assassinate', name: 'Assassinate', class: 'rogue', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack', keywords: ['exhaust'], icon: '🗡',
     effects: [{ op: 'damage', target: 'enemy', amount: 14 }, { op: 'damage', target: 'enemy', amount: 14, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage. Prepared: deal {damage.2} more. Consume Prepared. Exhaust.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 18 }, { op: 'damage', target: 'enemy', amount: 18, if: PREPARED }, spendPrepared()] },
   },
   {
-    id: 'thousandCutsRogue', name: 'Thousand Cuts', class: 'rogue', rarity: 'rare', cost: 2, type: 'attack', keywords: [], icon: '✣',
+    id: 'thousandCutsRogue', name: 'Thousand Cuts', class: 'rogue', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack', keywords: [], icon: '✣',
     effects: [{ op: 'damage', target: 'enemy', amount: 2, hits: 6 }, { op: 'damage', target: 'enemy', amount: 1, hits: 6, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage {hits} times. Prepared: deal {damage.2} damage {hits.2} times. Consume Prepared.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 6 }, { op: 'damage', target: 'enemy', amount: 1, hits: 6, if: PREPARED }, spendPrepared()] },
@@ -254,7 +254,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'venom', stacks: 7 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] },
   },
   {
-    id: 'smokeBomb', name: 'Smoke Bomb', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '💨',
+    id: 'smokeBomb', name: 'Smoke Bomb', class: 'rogue', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '💨',
     effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 3 }],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Exhaust.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 4 }] },
@@ -266,7 +266,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 4 }, prepare(), { op: 'draw', amount: 1 }] },
   },
   {
-    id: 'perfectHeist', name: 'Perfect Heist', class: 'rogue', rarity: 'rare', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '💎',
+    id: 'perfectHeist', name: 'Perfect Heist', class: 'rogue', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '💎',
     flavor: "The Regent's mirrors: every one accounted for, every one gone. — Frozen-dock cant",
     effects: [{ op: 'draw', amount: 3 }, { op: 'gainEnergy', amount: 1 }],
     textTemplate: 'Draw {draw} cards. Gain {gainEnergy} Energy. Exhaust.',

@@ -109,6 +109,19 @@ export const balance = {
       elite: { common: 45, uncommon: 40, rare: 15 },
       boss: { common: 45, uncommon: 40, rare: 15 },
     },
+    // Caster rewards favor uncommon/rare cards when the skill gate allows them.
+    rarityWeightsByClass: {
+      starseer: {
+        normal: { common: 35, uncommon: 50, rare: 15 },
+        elite: { common: 25, uncommon: 50, rare: 25 },
+        boss: { common: 20, uncommon: 45, rare: 35 },
+      },
+      herald: {
+        normal: { common: 35, uncommon: 50, rare: 15 },
+        elite: { common: 25, uncommon: 50, rare: 25 },
+        boss: { common: 20, uncommon: 45, rare: 35 },
+      },
+    },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,

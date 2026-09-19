@@ -1,5 +1,5 @@
 // src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3,
-// 22 with the first quest chain)
+// 24 with the Nameless and Last Lantern quest chains)
 //
 // Every choice is a real trade-off, StS-style. `requires` is checked by the
 // event screen (e.g. { cinders: 50 }); `effects` are run-level opcodes executed
@@ -561,12 +561,57 @@ export const events = [
       { label: 'Leave', effects: [], resultText: 'You leave the cairn as you found it, which is more than the first one got.' },
     ],
   },
+  // A two-step investment in the road, answered at a later Unknown node.
+  {
+    id: 'lastLantern', name: 'The Last Lantern', art: '🏮',
+    text: 'The Warden braces a broken signal lantern against the rain. Beyond the ridge, a supply caravan waits for its light.\n\n' +
+      '"Oil costs forty cinders. Or help me haul the spare beacon up the scree. Either way, the road remembers."',
+    choices: [
+      {
+        label: 'Buy signal oil (pay 40 cinders; aid the caravan)',
+        requires: { cinders: 40 },
+        effects: [{ op: 'addCinders', amount: -40 }],
+        resultText: 'The wick catches. The Warden marks your name on a weathered supply ledger.',
+      },
+      {
+        label: 'Haul the beacon (take 8 damage; aid the caravan)',
+        effects: [{ op: 'damage', target: 'self', amount: 8 }],
+        resultText: 'The iron frame cuts your palms, but its light clears the ridge. The Warden promises to remember the work.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You pass the unlit lantern. The caravan must find another way.' },
+    ],
+  },
+  {
+    id: 'lanternCaravan', name: 'The Caravan Comes Through', art: '🏮',
+    text: 'The Warden stands beside a line of mud-spattered wagons. The last one carries the lantern you helped raise.\n\n' +
+      '"You bought these people a road. We can pay our debt, or you can take the emergency strongbox. That choice is yours."',
+    choices: [
+      {
+        label: 'Accept the quartermaster’s lesson (upgrade a random card)',
+        effects: [{ op: 'upgradeCard', random: true }],
+        resultText: 'The quartermaster shows you the economy of a practiced motion. Your investment returns as knowledge.',
+      },
+      {
+        label: 'Accept wages for the climb (gain 60 cinders)',
+        effects: [{ op: 'addCinders', amount: 60 }],
+        resultText: 'The Warden counts out fair wages. The cuts on your hands have earned their keep.',
+      },
+      {
+        label: 'Claim the emergency strongbox (gain 100 cinders and a Guilt curse)',
+        effects: [{ op: 'addCinders', amount: 100 }, { op: 'addCardToDeck', card: 'guilt' }],
+        resultText: 'No one stops you. A driver quietly removes the medicine crate from the next village’s manifest.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You wave the wagons onward, asking nothing in return.' },
+    ],
+  },
 ];
 
 // Stable history ids live beside event content without widening the validated
 // event opcode schema. Labels may change; these ids are durable save facts.
 export const eventChoiceIds = Object.freeze({
   turncoatMirror: ['stepThrough', 'turnAway'],
+  lastLantern: ['buyOil', 'haulBeacon', 'leave'],
+  lanternCaravan: ['acceptLesson', 'acceptWages', 'claimStrongbox', 'leave'],
   goldboughAvatar: ['offerCard', 'pray', 'leave'],
   abandonedCart: ['lootStrongbox', 'leave'],
   weepingPilgrim: ['giveCinders', 'refuse'],
@@ -595,6 +640,12 @@ export const eventChoiceIds = Object.freeze({
 // abandoned cart. Stealing remains available, and Leave is deliberately
 // requirement-free so this history branch can never trap the player.
 export const eventChoiceHistoryRequirements = Object.freeze({
+  lanternCaravan: [
+    { all: [{ eventId: 'lastLantern', choiceId: 'buyOil' }] },
+    { all: [{ eventId: 'lastLantern', choiceId: 'haulBeacon' }] },
+    undefined,
+    undefined,
+  ],
   merchantsGhost: [
     { none: [{ eventId: 'abandonedCart', choiceId: 'lootStrongbox' }] },
     undefined,
@@ -624,6 +675,12 @@ export const eventChoiceHistoryRequirements = Object.freeze({
 // step cannot be met before the step it answers. Events not listed are
 // ungated, exactly as before.
 export const eventHistoryRequirements = Object.freeze({
+  lanternCaravan: {
+    any: [
+      { eventId: 'lastLantern', choiceId: 'buyOil' },
+      { eventId: 'lastLantern', choiceId: 'haulBeacon' },
+    ],
+  },
   namelessKeeper: {
     any: [
       { eventId: 'graveOfTheNameless', choiceId: 'digForCinders' },
@@ -646,6 +703,14 @@ export const eventHistoryRequirements = Object.freeze({
 // (validate.js refuses it by name). Grave of the Nameless is the first chain:
 // any answer at the second cairn but Leave finishes the walk.
 export const questChains = Object.freeze({
+  lastLantern: Object.freeze({
+    steps: Object.freeze(['lastLantern', 'lanternCaravan']),
+    completes: Object.freeze([
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'acceptLesson' }),
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'acceptWages' }),
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'claimStrongbox' }),
+    ]),
+  }),
   nameless: Object.freeze({
     steps: Object.freeze(['graveOfTheNameless', 'namelessKeeper', 'namelessRest']),
     completes: Object.freeze([
@@ -662,6 +727,8 @@ export const questChains = Object.freeze({
 // second cairn are spoken by the Nameless themselves, the fork in the road by
 // their Keeper (docs/LORE-CAST.md).
 export const eventSpeakers = Object.freeze({
+  lastLantern: 'roadWarden',
+  lanternCaravan: 'roadWarden',
   graveOfTheNameless: 'theNameless',
   namelessKeeper: 'keeperOfTheNameless',
   namelessRest: 'theNameless',

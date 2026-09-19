@@ -5895,8 +5895,10 @@
       "combatFormation([{\"width\":800,\"height\":600,\"friends\":[\"a\",\"b\"],\"enemies\":[\"x\",\"y\",\"z\"]}])": {
         "__keys": [
           "ground",
+          "rowSpacing",
           "friendlyWidth",
           "enemyWidth",
+          "cells",
           "slots"
         ],
         "frozen": false,
@@ -5904,11 +5906,679 @@
           "ground": {
             "__number": "544"
           },
+          "rowSpacing": {
+            "__number": "119.875"
+          },
           "friendlyWidth": {
             "__number": "367.8787878787879"
           },
           "enemyWidth": {
             "__number": "367.8787878787879"
+          },
+          "cells": {
+            "__array": [
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "87.96969696969697"
+                  },
+                  "ground": {
+                    "__number": "304.25"
+                  },
+                  "fitGround": {
+                    "__number": "270"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "215.9090909090909"
+                  },
+                  "ground": {
+                    "__number": "304.25"
+                  },
+                  "fitGround": {
+                    "__number": "270"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "127.96969696969697"
+                  },
+                  "ground": {
+                    "__number": "424.125"
+                  },
+                  "fitGround": {
+                    "__number": "407"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "255.90909090909088"
+                  },
+                  "ground": {
+                    "__number": "424.125"
+                  },
+                  "fitGround": {
+                    "__number": "407"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "167.96969696969697"
+                  },
+                  "ground": {
+                    "__number": "544"
+                  },
+                  "fitGround": {
+                    "__number": "544"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "295.9090909090909"
+                  },
+                  "ground": {
+                    "__number": "544"
+                  },
+                  "fitGround": {
+                    "__number": "544"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "712.030303030303"
+                  },
+                  "ground": {
+                    "__number": "304.25"
+                  },
+                  "fitGround": {
+                    "__number": "270"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "584.0909090909091"
+                  },
+                  "ground": {
+                    "__number": "304.25"
+                  },
+                  "fitGround": {
+                    "__number": "270"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "672.030303030303"
+                  },
+                  "ground": {
+                    "__number": "424.125"
+                  },
+                  "fitGround": {
+                    "__number": "407"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "544.0909090909091"
+                  },
+                  "ground": {
+                    "__number": "424.125"
+                  },
+                  "fitGround": {
+                    "__number": "407"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "632.030303030303"
+                  },
+                  "ground": {
+                    "__number": "544"
+                  },
+                  "fitGround": {
+                    "__number": "544"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "504.0909090909091"
+                  },
+                  "ground": {
+                    "__number": "544"
+                  },
+                  "fitGround": {
+                    "__number": "544"
+                  },
+                  "width": {
+                    "__number": "143.93939393939394"
+                  },
+                  "artWidth": {
+                    "__number": "143.93939393939394"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              }
+            ],
+            "frozen": false
           },
           "slots": {
             "__array": [
@@ -6195,8 +6865,10 @@
       "combatFormation([{\"width\":375,\"height\":812,\"friends\":[\"a\"],\"enemies\":[\"x\"]}])": {
         "__keys": [
           "ground",
+          "rowSpacing",
           "friendlyWidth",
           "enemyWidth",
+          "cells",
           "slots"
         ],
         "frozen": false,
@@ -6204,11 +6876,679 @@
           "ground": {
             "__number": "756"
           },
+          "rowSpacing": {
+            "__number": "170.88749999999993"
+          },
           "friendlyWidth": {
             "__number": "165.875"
           },
           "enemyWidth": {
             "__number": "165.875"
+          },
+          "cells": {
+            "__array": [
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "48.09375"
+                  },
+                  "ground": {
+                    "__number": "414.225"
+                  },
+                  "fitGround": {
+                    "__number": "365.40000000000003"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "104.78125"
+                  },
+                  "ground": {
+                    "__number": "414.225"
+                  },
+                  "fitGround": {
+                    "__number": "365.40000000000003"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "66.84375"
+                  },
+                  "ground": {
+                    "__number": "585.1125"
+                  },
+                  "fitGround": {
+                    "__number": "560.7"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "123.53125"
+                  },
+                  "ground": {
+                    "__number": "585.1125"
+                  },
+                  "fitGround": {
+                    "__number": "560.7"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "85.59375"
+                  },
+                  "ground": {
+                    "__number": "756"
+                  },
+                  "fitGround": {
+                    "__number": "756"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "142.28125"
+                  },
+                  "ground": {
+                    "__number": "756"
+                  },
+                  "fitGround": {
+                    "__number": "756"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "326.90625"
+                  },
+                  "ground": {
+                    "__number": "414.225"
+                  },
+                  "fitGround": {
+                    "__number": "365.40000000000003"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "270.21875"
+                  },
+                  "ground": {
+                    "__number": "414.225"
+                  },
+                  "fitGround": {
+                    "__number": "365.40000000000003"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "308.15625"
+                  },
+                  "ground": {
+                    "__number": "585.1125"
+                  },
+                  "fitGround": {
+                    "__number": "560.7"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "251.46875"
+                  },
+                  "ground": {
+                    "__number": "585.1125"
+                  },
+                  "fitGround": {
+                    "__number": "560.7"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "289.40625"
+                  },
+                  "ground": {
+                    "__number": "756"
+                  },
+                  "fitGround": {
+                    "__number": "756"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "232.71875"
+                  },
+                  "ground": {
+                    "__number": "756"
+                  },
+                  "fitGround": {
+                    "__number": "756"
+                  },
+                  "width": {
+                    "__number": "64.1875"
+                  },
+                  "artWidth": {
+                    "__number": "64.1875"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              }
+            ],
+            "frozen": false
           },
           "slots": {
             "__array": [
@@ -6330,8 +7670,10 @@
       "combatFormation([{\"width\":1400,\"height\":900,\"friends\":[\"a\",\"b\",\"c\",\"d\"],\"enemies\":[\"w\",\"x\",\"y\",\"z\"]}])": {
         "__keys": [
           "ground",
+          "rowSpacing",
           "friendlyWidth",
           "enemyWidth",
+          "cells",
           "slots"
         ],
         "frozen": false,
@@ -6339,11 +7681,679 @@
           "ground": {
             "__number": "844"
           },
+          "rowSpacing": {
+            "__number": "192.0625"
+          },
           "friendlyWidth": {
             "__number": "649"
           },
           "enemyWidth": {
             "__number": "649"
+          },
+          "cells": {
+            "__array": [
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "143.25"
+                  },
+                  "ground": {
+                    "__number": "459.875"
+                  },
+                  "fitGround": {
+                    "__number": "405"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "369.75"
+                  },
+                  "ground": {
+                    "__number": "459.875"
+                  },
+                  "fitGround": {
+                    "__number": "405"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "213.25"
+                  },
+                  "ground": {
+                    "__number": "651.9375"
+                  },
+                  "fitGround": {
+                    "__number": "624.5"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "439.75"
+                  },
+                  "ground": {
+                    "__number": "651.9375"
+                  },
+                  "fitGround": {
+                    "__number": "624.5"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C1"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "283.25"
+                  },
+                  "ground": {
+                    "__number": "844"
+                  },
+                  "fitGround": {
+                    "__number": "844"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-player-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C2"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "509.75"
+                  },
+                  "ground": {
+                    "__number": "844"
+                  },
+                  "fitGround": {
+                    "__number": "844"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-0"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "A4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "1256.75"
+                  },
+                  "ground": {
+                    "__number": "459.875"
+                  },
+                  "fitGround": {
+                    "__number": "405"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-1"
+                  },
+                  "row": {
+                    "__number": "0"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "A3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "1030.25"
+                  },
+                  "ground": {
+                    "__number": "459.875"
+                  },
+                  "fitGround": {
+                    "__number": "405"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.9"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-2"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "B4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "1186.75"
+                  },
+                  "ground": {
+                    "__number": "651.9375"
+                  },
+                  "fitGround": {
+                    "__number": "624.5"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-3"
+                  },
+                  "row": {
+                    "__number": "1"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "B3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "960.25"
+                  },
+                  "ground": {
+                    "__number": "651.9375"
+                  },
+                  "fitGround": {
+                    "__number": "624.5"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "0.95"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-4"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "0"
+                  },
+                  "formationRow": {
+                    "__string": "back-row"
+                  },
+                  "cell": {
+                    "__string": "C4"
+                  },
+                  "layer": {
+                    "__number": "200"
+                  },
+                  "x": {
+                    "__number": "1116.75"
+                  },
+                  "ground": {
+                    "__number": "844"
+                  },
+                  "fitGround": {
+                    "__number": "844"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "id",
+                  "row",
+                  "column",
+                  "formationRow",
+                  "cell",
+                  "layer",
+                  "x",
+                  "ground",
+                  "fitGround",
+                  "width",
+                  "artWidth",
+                  "depth"
+                ],
+                "frozen": false,
+                "values": {
+                  "id": {
+                    "__string": "grid-enemy-5"
+                  },
+                  "row": {
+                    "__number": "2"
+                  },
+                  "column": {
+                    "__number": "1"
+                  },
+                  "formationRow": {
+                    "__string": "front-row"
+                  },
+                  "cell": {
+                    "__string": "C3"
+                  },
+                  "layer": {
+                    "__number": "0"
+                  },
+                  "x": {
+                    "__number": "890.25"
+                  },
+                  "ground": {
+                    "__number": "844"
+                  },
+                  "fitGround": {
+                    "__number": "844"
+                  },
+                  "width": {
+                    "__number": "254.5"
+                  },
+                  "artWidth": {
+                    "__number": "254.5"
+                  },
+                  "depth": {
+                    "__number": "1"
+                  }
+                }
+              }
+            ],
+            "frozen": false
           },
           "slots": {
             "__array": [

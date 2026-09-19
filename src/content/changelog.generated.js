@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "A studio for the game's layout, with the phones and desktops it will be played on",
     "detail": "Nothing you see changes in play. A new local editor, beside the content editor and the pose studio, draws the combat, map, conversation and shop screens as the wireframes the layout file describes, at the real size of a desktop, an iPad, an iPhone or a Galaxy, and lets the numbers be dragged on a snapping grid rather than typed: how tall the top bar is, where the floor sits, how wide a portrait may be. Every size shows how the game itself will decide to lay out at that screen, the whole set can be compared side by side, and the real game can be opened at that size in the same window. A change is checked by the game's own build rule before it is written, and the file keeps its old bytes wherever it was not touched. Free wireframe sketches, with a different arrangement per screen size, save as their own files.",
-    "build": "0.7.1.225",
+    "build": "0.7.1.228",
     "pullRequest": 1198,
     "url": "https://github.com/cehinds/AshenSpire/pull/1198"
   },
@@ -71,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.192",
     "pullRequest": 1189,
     "url": "https://github.com/cehinds/AshenSpire/pull/1189"
+  },
+  {
+    "id": "pr-1187",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
+    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
+    "build": "0.7.1.226",
+    "pullRequest": 1187,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
   },
   {
     "id": "pr-1186",

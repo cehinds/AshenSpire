@@ -13,7 +13,8 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "The armour you were buried in.",
-    "poiseThreshold": 8
+    "poiseThreshold": 8,
+    "artKey": ""
   },
   {
     "id": "vigil",
@@ -26,7 +27,8 @@ export const outfits = [
     "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
     "blurb": "Blackened at the court that broke.",
-    "poiseThreshold": 7
+    "poiseThreshold": 7,
+    "artKey": ""
   },
   {
     "id": "oathsworn",
@@ -42,7 +44,8 @@ export const outfits = [
     ],
     "unlock": "winAsReaver",
     "blurb": "Kept bright by an oath unbroken.",
-    "poiseThreshold": 9
+    "poiseThreshold": 9,
+    "artKey": ""
   },
   {
     "id": "warden",
@@ -58,7 +61,8 @@ export const outfits = [
     ],
     "unlock": "reachAshenCrown",
     "blurb": "Issued, not chosen.",
-    "poiseThreshold": 10
+    "poiseThreshold": 10,
+    "artKey": ""
   },
   {
     "id": "default",
@@ -71,7 +75,8 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Dyed with the dark between stars.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": ""
   },
   {
     "id": "eclipse",
@@ -84,7 +89,8 @@ export const outfits = [
     "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
     "blurb": "Worn only when the moon is eaten.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": ""
   },
   {
     "id": "starlit",
@@ -100,7 +106,8 @@ export const outfits = [
     ],
     "unlock": "beatFellWarden",
     "blurb": "It catches light that is not there.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": ""
   },
   {
     "id": "astral",
@@ -116,7 +123,8 @@ export const outfits = [
     ],
     "unlock": "winTwice",
     "blurb": "Cut for someone taller than you.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": ""
   },
   {
     "id": "default",
@@ -129,7 +137,8 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Plain cloth, plainly kept.",
-    "poiseThreshold": 5
+    "poiseThreshold": 5,
+    "artKey": ""
   },
   {
     "id": "ossuary",
@@ -142,7 +151,8 @@ export const outfits = [
     "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
     "blurb": "Threaded through with quiet bone.",
-    "poiseThreshold": 6
+    "poiseThreshold": 6,
+    "artKey": ""
   },
   {
     "id": "emberhabit",
@@ -158,7 +168,8 @@ export const outfits = [
     ],
     "unlock": "beatKingAsHerald",
     "blurb": "Warm long after the fire is out.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": ""
   },
   {
     "id": "pilgrim",
@@ -174,7 +185,8 @@ export const outfits = [
     ],
     "unlock": "reachStitchedCourt",
     "blurb": "Road dust worked into the weave.",
-    "poiseThreshold": 5
+    "poiseThreshold": 5,
+    "artKey": ""
   },
   {
     "id": "default",
@@ -187,7 +199,8 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Quiet leather for a loud profession.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": ""
   },
   {
     "id": "nightveil",
@@ -200,7 +213,8 @@ export const outfits = [
     "mods": "defend.block=+2",
     "unlock": "rogueBeatWarden",
     "blurb": "Dark cloth that swallows the outline.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": ""
   },
   {
     "id": "duelist",
@@ -216,7 +230,8 @@ export const outfits = [
     ],
     "unlock": "winAsRogue",
     "blurb": "Cut close so nothing catches the blade.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": ""
   },
   {
     "id": "shadow",
@@ -229,6 +244,58 @@ export const outfits = [
     "mods": "self.strength=+1",
     "unlock": "rogueReachCrown",
     "blurb": "The hem remembers every alley.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": ""
+  },
+  {
+    "id": "bastion",
+    "classId": "reaver",
+    "name": "Bastion Harness",
+    "plate": "3F4C5A",
+    "plateLt": "64798E",
+    "leather": "3A3226",
+    "under": "24272A",
+    "mods": [
+      "defend.block=+4",
+      "self.maxStamina=-1"
+    ],
+    "unlock": "reachStitchedCourt",
+    "blurb": "Iron shelter that taxes every step.",
+    "poiseThreshold": 11,
+    "artKey": "warden"
+  },
+  {
+    "id": "rimeweave",
+    "classId": "starseer",
+    "name": "Rimeweave Robes",
+    "plate": "4A5E96",
+    "plateLt": "93AEE2",
+    "leather": "3A3226",
+    "under": "242A40",
+    "mods": [
+      "strike.frost=+2",
+      "defend.block=-1"
+    ],
+    "unlock": "beatFellWarden",
+    "blurb": "Cold threads hold the enemy at a distance.",
+    "poiseThreshold": 3,
+    "artKey": "starlit"
+  },
+  {
+    "id": "waywatcher",
+    "classId": "rogue",
+    "name": "Waywatcher Coat",
+    "plate": "20272A",
+    "plateLt": "3B4B4A",
+    "leather": "211F25",
+    "under": 151719,
+    "mods": [
+      "self.maxStamina=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "rogueBeatWarden",
+    "blurb": "A light coat for the long retreat.",
+    "poiseThreshold": 3,
+    "artKey": "nightveil"
   }
 ];

@@ -43,7 +43,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
+    id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🦠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -114,7 +114,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, type: 'attack',
+    id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🪦',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
@@ -144,7 +144,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     keywords: [], icon: '☣',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 2 }],
     textTemplate: 'Apply {crimsonBlight} Crimson Blight to ALL enemies.',
@@ -208,7 +208,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     keywords: ['exhaust'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
@@ -217,7 +217,7 @@ export const heraldCards = [
     upgrade: { keywords: [], textTemplate: "Double the target's Crimson Blight." },
   },
   {
-    id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "We gild the sickle and bless what it takes. — Chapel liturgy",
     keywords: [], icon: '🌾',
     effects: [
@@ -233,14 +233,14 @@ export const heraldCards = [
     },
   },
   {
-    id: 'thornHaloCard', name: 'Thorn Halo', class: 'herald', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'thornHaloCard', name: 'Thorn Halo', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🌿',
     effects: [{ op: 'applyStatus', target: 'self', status: 'thornHalo', stacks: one }],
     textTemplate: 'At the start of your turn, apply 1 Crimson Blight to ALL enemies.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, type: 'power',
+    id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
     flavor: "We watched from Tidebound Chapel and never saw the heresy lit. — Chapel liturgy",
     keywords: [], icon: '🕊',
     effects: [{ op: 'applyStatus', target: 'self', status: 'communion', stacks: one }],
@@ -264,7 +264,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'plagueBearer', name: 'Plague Bearer', class: 'herald', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'plagueBearer', name: 'Plague Bearer', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🐀',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -296,7 +296,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'stigmataCard', name: 'Stigmata', class: 'herald', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'stigmataCard', name: 'Stigmata', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🩹',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stigmata', stacks: one }],
     textTemplate: 'Whenever you lose HP, heal 2 HP.',
@@ -335,7 +335,7 @@ export const heraldCards = [
 
   // ---- Rares -----------------------------------------------------------------------
   {
-    id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
     keywords: ['exhaust'], icon: '🌸',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'missingHp', of: 'self' }] } },
@@ -344,7 +344,7 @@ export const heraldCards = [
     upgrade: { cost: 1 },
   },
   {
-    id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, type: 'skill',
+    id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'skill',
     keywords: [], icon: '🦋',
     effects: [
       { op: 'loseHp', target: 'self', amount: 4 },
@@ -359,7 +359,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'lifeTitheCard', name: 'Life Tithe', class: 'herald', rarity: 'rare', cost: 1, type: 'power',
+    id: 'lifeTitheCard', name: 'Life Tithe', class: 'herald', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     flavor: "We bring the cradle where the bier once stood. — Chapel liturgy",
     keywords: [], icon: '⚰',
     effects: [{ op: 'applyStatus', target: 'self', status: 'lifeTithe', stacks: one }],
@@ -367,7 +367,7 @@ export const heraldCards = [
     upgrade: { cost: 0 },
   },
   {
-    id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🔺',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5, hits: { f: 'energySpent' } },
@@ -383,7 +383,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '💥',
     effects: [
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
@@ -397,7 +397,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "We leave no name upon the cold headstone. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🕯',
     effects: [
@@ -411,14 +411,14 @@ export const heraldCards = [
     },
   },
   {
-    id: 'zealotryCard', name: 'Zealotry', class: 'herald', rarity: 'rare', cost: 2, type: 'power',
+    id: 'zealotryCard', name: 'Zealotry', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '⚡',
     effects: [{ op: 'applyStatus', target: 'self', status: 'zealotry', stacks: one }],
     textTemplate: 'Whenever you lose HP, deal 3 damage to a random enemy.',
     upgrade: { cost: 1 },
   },
   {
-    id: 'bloodHarvest', name: 'Blood Harvest', class: 'herald', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'bloodHarvest', name: 'Blood Harvest', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🌾',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 4, hits: { f: 'energySpent' } },
@@ -453,7 +453,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'witheringTouch', name: 'Withering Touch', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
+    id: 'witheringTouch', name: 'Withering Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🦠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -491,7 +491,7 @@ export const heraldCards = [
     upgrade: { cost: 0 },
   },
   {
-    id: 'bloodOfferingRite', name: 'Blood Offering', class: 'herald', rarity: 'rare', cost: 1, type: 'attack',
+    id: 'bloodOfferingRite', name: 'Blood Offering', class: 'herald', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '⚰',
     effects: [
       { op: 'loseHp', target: 'self', amount: 6 },
@@ -506,7 +506,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'harbingerOfBlightCard', name: 'Harbinger of Blight', class: 'herald', rarity: 'rare', cost: 2, type: 'power',
+    id: 'harbingerOfBlightCard', name: 'Harbinger of Blight', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '❀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfBlight', stacks: one }],
     textTemplate: 'Whenever Crimson Blight is applied to an enemy, heal 1 HP.',

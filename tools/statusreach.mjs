@@ -592,12 +592,23 @@ async function selftest(real) {
   expect('P3  ...and bleedResist falls with it (R3 is transitive)', r.unreached.includes('bleedResist'), true);
 
   // 5 — R4 needs BOTH halves: the vocabulary row without a wielder is not reach.
+  // Use a dedicated status/field: burn now also has a card applier, so removing
+  // only its equipment users correctly leaves it reached through another door.
+  // First prove this planted row is reached through equipment, then remove its
+  // sole wielder while retaining the vocabulary. Both halves must hold.
   b = clone(real);
+  b.statuses.push({ id: 'plantedEquipmentOnly', name: 'Planted', icon: '?', stackMode: 'add', decay: 'none' });
+  b.equipment.modFields.plantedEquipmentOnly = {
+    field: 'plantedEquipmentOnly', apply: 'status', op: APPLY_OP, status: 'plantedEquipmentOnly',
+  };
+  b.equipment.armaments[0].mods = [...(b.equipment.armaments[0].mods || []), 'strike.plantedEquipmentOnly=+1'];
+  const equippedReached = !statusReach(b, codeOk()).unreached.includes('plantedEquipmentOnly');
   for (const p of [...b.equipment.armaments, ...b.equipment.armour]) {
-    p.mods = (p.mods || []).filter((m) => !String(m).includes('.burn='));
+    p.mods = (p.mods || []).filter((m) => !String(m).includes('.plantedEquipmentOnly='));
   }
   r = statusReach(b, codeOk());
-  expect('P4  the burn mod field with nothing equipping it', r.unreached.includes('burn'), true);
+  expect('P4  equipment reaches a status only while its field has a wielder',
+    equippedReached && r.unreached.includes('plantedEquipmentOnly'), true);
 
   // 6 — F1: no population at all is not a pass.
   b = clone(real); b.statuses = [];
