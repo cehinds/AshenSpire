@@ -43,6 +43,7 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -94,6 +95,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   const combat = {
     registries,
     rng,
+    ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),

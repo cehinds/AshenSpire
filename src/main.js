@@ -14,6 +14,7 @@ import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armam
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
@@ -1356,6 +1357,7 @@ const quickMenuControls = {
 function showSettings() {
   openSettings({
     meta: activeMeta,
+    previewAttributes: run?.attributes,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });
@@ -1959,6 +1961,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
+    handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
     registries,
     rng,
     player: {

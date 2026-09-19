@@ -88,6 +88,8 @@ import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButto
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
 import { formationMovePlan } from '../../model/formationMovement.js';
+import { discardChoicePlan } from '../../engine/handRules.js';
+import { openHandDiscard } from '../components/handDiscard.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -2304,26 +2306,32 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dlog('ignored', 'endTurn', why);
       return;
     }
-    selected = null;
-    selectedFlask = null;
-    hideTooltip();
-    disp = takeSnapshot();
-    let out;
-    try {
-      heldTurnHand = [...disp.hand];
-      enemyPlayback = true;
-      out = dispatch(combat, { type: 'endTurn' });
-    } catch (err) {
-      console.warn("[combat] dispatch rejected:", err && err.message);
-      dlog('rejected', 'endTurn', err && err.message);
-      heldTurnHand = null;
-      enemyPlayback = false;
-      disp = null;
-      return;
-    }
-    dlog('dispatch', 'endTurn', { events: out.events.length });
-    busy = true;
-    afterDispatch(out.events);
+    const finish = (discardIds = []) => {
+      if (busy || combat.result || combat.phase !== 'player') return;
+      selected = null;
+      selectedFlask = null;
+      hideTooltip();
+      disp = takeSnapshot();
+      let out;
+      try {
+        heldTurnHand = [...disp.hand];
+        enemyPlayback = true;
+        out = dispatch(combat, { type: 'endTurn', discardIds });
+      } catch (err) {
+        console.warn("[combat] dispatch rejected:", err && err.message);
+        dlog('rejected', 'endTurn', err && err.message);
+        heldTurnHand = null;
+        enemyPlayback = false;
+        disp = null;
+        return;
+      }
+      dlog('dispatch', 'endTurn', { events: out.events.length });
+      busy = true;
+      afterDispatch(out.events);
+    };
+    const plan = discardChoicePlan(combat);
+    if (plan.prompt) openHandDiscard(registries, plan, finish, $('.end-turn'));
+    else finish();
     },
   });
   endTurnBeat.refresh();

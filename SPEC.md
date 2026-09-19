@@ -652,6 +652,25 @@ scope and verification.
 
 ### 4.1 Turn loop
 
+**Configurable hand rules (2026-09-19):** Solo gameplay snapshots Advanced →
+Hand & Draw Rules at the start of each new combat. The default opening draw is
+3 + floor(max(0, INT − 10) / 10), bounded by starting-draw limits and hand
+capacity. Unplayed cards are retained by default; later turns fill to current
+capacity. Fixed-draw mode defaults to 2 instead. Opening draw, fixed turn draw,
+and capacity independently configure base, stat enablement/source/baseline,
+points per additional card, and minimum/maximum. Opening stats are evaluated
+at combat start; subsequent draw and capacity values at turn start.
+
+Optional discards are selected when ending a turn; cancel leaves the turn
+untouched. Turn-end effects resolve before eligible selected cards move to
+discard and normal cleanup runs. Ethereal/explicit lifecycle rules still apply.
+Optional replacement draws add to the next fixed draw, capped by capacity.
+Overflow either preserves existing cards or requires selection of excess cards
+at turn end. Draw effects stop at capacity without consuming the draw pile;
+reshuffling can be disabled. Rules and pending replacement draws survive saves.
+Settings changes apply next combat. Existing saved fights and LAN combat retain
+their previous rules; the numbered legacy sequence below describes those rules.
+
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
 3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size **10** — excess drawn cards go to discard with a "hand full" toast (StS behavior).

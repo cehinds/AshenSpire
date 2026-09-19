@@ -611,3 +611,16 @@ Combatant overhead controls: `combatantOverhead.js` shares Information and enlar
 Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
 
 Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
+### Hand & Draw Rules
+
+Advanced Settings groups the controls into Starting hand, Turn draws, Hand
+capacity, and Retention & discards. `src/model/handRules.js` owns row metadata,
+stat calculations and the live preview; `settings.js` uses the shared setting
+rows and desktop/compact navigation. In-run previews use the character's current
+attributes; title-screen previews show baseline values.
+
+`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
+read-only card faces and footer buttons into the turn-end discard selector.
+Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
+cancel without changing combat state. `src/engine/handRules.js` validates the
+selection independently before the turn can advance.

@@ -15,6 +15,8 @@ import { formationMovePlan } from '../model/formationMovement.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
+import { scaledCards } from '../model/handRules.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -60,7 +62,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {},
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null,
 }) {
   const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -85,6 +87,7 @@ export function createCombat({
       ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
       : 0);
   const combat = {
+    ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     equipmentProfileRuleSnapshot,
@@ -112,7 +115,7 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: bal.handMax != null ? bal.handMax : 10,
+    handMax: handRules ? scaledCards(handRules.capacity, player.attributes) : (bal.handMax != null ? bal.handMax : 10),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
@@ -303,7 +306,7 @@ function startPlayerTurn(combat) {
   p.pendingActionLoss = 0;
 
   // Draw.
-  A.drawCards(combat, combat.drawPerTurn);
+  A.drawCards(combat, turnDrawCount(combat));
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
@@ -311,7 +314,7 @@ function startPlayerTurn(combat) {
   drainQueue(combat);
 }
 
-function endPlayerTurn(combat) {
+function endPlayerTurn(combat, discardIds = []) {
   const p = combat.player;
 
   // (4) playerTurnEnd triggers first…
@@ -341,11 +344,11 @@ function endPlayerTurn(combat) {
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
   const keep = [];
+  applyDiscardChoice(combat, discardIds);
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
-    const def = resolveCard(combat.registries, card);
-    const fate = combat.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : combat.registries.framework.endTurnFate(def);
+    const fate = endTurnCardFate(combat, card);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
@@ -584,7 +587,7 @@ export function dispatch(combat, intent) {
         doPlayCard(combat, intent);
         break;
       case 'endTurn':
-        doEndTurn(combat);
+        doEndTurn(combat, intent.discardIds);
         break;
       case 'useFlask':
         doUseFlask(combat, intent);
@@ -972,9 +975,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   }
 }
 
-function doEndTurn(combat) {
+function doEndTurn(combat, discardIds = []) {
   if (combat.phase !== 'player') throw new Error('Not the player turn');
-  endPlayerTurn(combat);
+  validateDiscardChoice(combat, discardIds);
+  endPlayerTurn(combat, discardIds);
   if (combat.result) return;
   enemyPhase(combat);
   if (combat.result) return;

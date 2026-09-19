@@ -397,7 +397,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
  */
 export function drawCards(ctx, n) {
   for (let i = 0; i < n; i++) {
+    if (ctx.handRules && ctx.piles.hand.length >= ctx.handMax) return;
     if (ctx.piles.draw.length === 0) {
+      if (ctx.handRules?.reshuffle === false) return;
       if (ctx.piles.discard.length === 0) return;
       reshuffleDiscardIntoDraw(ctx);
     }

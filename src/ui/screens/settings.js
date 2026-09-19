@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -575,6 +576,7 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
   { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
@@ -801,6 +803,11 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       </div>`;
   }
   if (r.type === 'choice') {
+    if (r.dropdown || r.key.startsWith(HAND_RULES_PREFIX)) {
+      const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
+      const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
+    }
     const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
     const cur = r.choices.includes(stored) ? stored : r.def;
     const opts = r.choices
@@ -1306,6 +1313,16 @@ function categoryHtml(cat, settings, saves) {
           + '><div class="set-changelog-mount"></div></section>';
       }
       const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
+      if (group.id === 'Hand & Draw') {
+        const topics = ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards'];
+        const selected = topics.includes(settings.handRulesTopic) ? settings.handRulesTopic : topics[0];
+        return `<section class="set-advanced-group" data-advanced-panel="Hand & Draw"${hidden}>`
+          + `<p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
+          + `<select class="set-choice-select" data-hand-topic aria-label="Hand rule group">${topics.map(topic => `<option${topic === selected ? ' selected' : ''}>${esc(topic)}</option>`).join('')}</select>`
+          + '<p data-hand-summary aria-live="polite" class="set-advanced-tip"></p>'
+          + topics.map(topic => `<div class="set-card-list" data-hand-topic-panel="${esc(topic)}"${topic === selected ? '' : ' hidden'}>${rows.filter(row => row.handTopic === topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`).join('')
+          + '</section>';
+      }
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
         + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
@@ -1344,7 +1361,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, previewAttributes = null }) {
   panelSettings = settings;
   let html = '';
   let cats = [];
@@ -1430,6 +1447,25 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // the applied-zoom readout) is installed once per open, below.
   const wire = () => {
   const reportAdvancedProblems = () => {
+    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    if (section) {
+      section.querySelector('[data-hand-summary]').textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {});
+      for (const row of handRulesRows(contentBundle.attributes)) {
+        const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
+        const read = path => path.split('.').reduce((v, k) => v[k], rules);
+        const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
+          || (row.fixedOnly && rules.drawMode !== 'fixed')
+          || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
+        controls.forEach(control => {
+          control.disabled = !!disabled;
+          control.setAttribute('aria-disabled', String(!!disabled));
+          const wrapper = control.closest('.set-row');
+          wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
+          if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
+        });
+      }
+    }
     const problems = advancedConfigProblems(contentBundle, settings);
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
     else clearSettingsNotice('game-config');
@@ -1469,13 +1505,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       total += 1;
       const match = !query || row.textContent.toLocaleLowerCase().includes(query)
         || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
-      row.hidden = !match;
+      row.hidden = !match || row.dataset.handHidden === 'true';
       if (match) shown += 1;
     });
     const count = container.querySelector('[data-config-count]');
     if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
   };
   advancedSearch?.addEventListener('input', filterAdvancedRows);
+  container.querySelector('[data-hand-topic]')?.addEventListener('change', event => {
+    settings.handRulesTopic = event.target.value;
+    onChange({ handRulesTopic: event.target.value });
+    container.querySelectorAll('[data-hand-topic-panel]').forEach(panel => { panel.hidden = panel.dataset.handTopicPanel !== event.target.value; });
+    filterAdvancedRows();
+  });
   filterAdvancedRows();
 
   container.querySelectorAll('[data-reset-config]').forEach((button) => {
@@ -1491,7 +1533,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         changed[key] = undefined;
       }
       onChange(changed);
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes });
     });
   });
 
@@ -1504,6 +1546,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  container.querySelectorAll('.set-choice-select[data-key]').forEach(select => {
+    select.addEventListener('change', () => {
+      settings[select.dataset.key] = select.value;
+      onChange({ [select.dataset.key]: select.value });
+      reportAdvancedProblems();
+    });
   });
 
   container.querySelectorAll('.set-color').forEach(input => {
@@ -1607,7 +1657,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2012,7 +2062,7 @@ export function clearSettingsNotice(tag) {
   }
 }
 
-export function openSettings({ meta, onChange, saves = null, onOffline = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -2029,7 +2079,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, previewAttributes }); },
     secondary: offline ? [offline] : [],
     primary: done,
     footSize: 'short',

@@ -9,6 +9,14 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+Hand management lives in `src/content/handRules.js` (defaults),
+`src/model/handRules.js` (settings and stat formula), and
+`src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
+per-fight snapshot from profile settings; legacy snapshots omit it. Run
+`node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
+for the focused rules, persistence and settings checks. Advanced → Hand & Draw
+Rules provides separate starting-hand, turn-draw, capacity and discard groups.
+
 `node tools/launch.mjs --build-only` produces the standalone aliases and an
 external-art web edition in `build/web/`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described

@@ -1,4 +1,5 @@
 import { retiredAttackSlots } from './cardRemoval.js';
+import { handRulesProblems } from './handRules.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -69,6 +70,8 @@ export function combatSnapshotProblems(snapshot) {
     if (!Number.isInteger(snapshot[key]) || snapshot[key] < 0) problems.push(`${key} must be a non-negative integer`);
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
+  if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
+  if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.

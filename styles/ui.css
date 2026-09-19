@@ -1001,3 +1001,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }
 .flick-practice[data-ready='true'] { border-style:solid; box-shadow:inset 0 0 12px #c9a84c55; }
 .flick-practice output { min-height:3em; font-size:14px; }
+/* Hand rule labels stay readable in the compact settings pane. */
+[data-advanced-panel="Hand & Draw"] .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
+[data-advanced-panel="Hand & Draw"] [aria-disabled="true"] { opacity: .5; }
+.modal.hand-discard-modal { background: var(--bg-raise); }
+.hand-discard-modal .modal-head h2 { white-space: normal; }
+.hand-discard-item { display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(100%, calc(220px / var(--ui-zoom, 1))); }
+.hand-discard-item label { cursor: pointer; min-height: 44px; }
+.hand-discard-item input { width: 20px; height: 20px; accent-color: #c5a32b; }
