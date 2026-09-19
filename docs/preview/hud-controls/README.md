@@ -12,7 +12,7 @@ The earlier hover change (#1143) applied only to map potions; this change covers
 
 Browser verification uses Edge at 375×667, 1440×900 and 844×390. Source previews cover combat, map and dialogue containment, hidden HUD combinations, and opening Menu with optional components hidden. Actual Settings interaction covers all five switches, reopening the panel and restoring them. Potion checks cover rest, hover, keyboard, touch and reduced motion.
 
-Packaged build: **0.7.1.229**, source digest **ba7c5d716a**. All 12 packaged containment/visibility cases pass; 83/83 HUD action checks, 118/118 engine tests and 397/397 focused tests pass.
+Packaged build: **0.7.1.230**, source digest **ac7ef425f1**. All 12 packaged containment/visibility cases pass; 83/83 HUD action checks, 118/118 engine tests and 405/405 focused tests pass.
 
 ![Phone HUD](phone.png)
 ![Desktop HUD](desktop.png)
