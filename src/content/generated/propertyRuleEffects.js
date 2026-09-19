@@ -1275,7 +1275,15 @@ export const propertyRuleEffects = {
         "on": "manaRestored",
         "limitPerTurn": 1,
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "manaPositive"
+            }
+          ]
         },
         "do": [
           {
@@ -1374,7 +1382,15 @@ export const propertyRuleEffects = {
       {
         "on": "healed",
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
         },
         "do": [
           {
@@ -1410,7 +1426,15 @@ export const propertyRuleEffects = {
         "on": "healed",
         "once": true,
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
         },
         "do": [
           {

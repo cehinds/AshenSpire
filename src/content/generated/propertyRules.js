@@ -342,7 +342,7 @@ export const propertyRules = [
     "tag": "bloodTempo",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Entering a stance draws {draw} card."
+    "textTemplate": "The first stance you enter each turn draws {draw} card."
   },
   {
     "tag": "ashenReserve",

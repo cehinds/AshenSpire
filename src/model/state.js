@@ -888,8 +888,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
         });
       }
-      if (pending.chosenDraftNodeIds !== undefined) {
-        const chosen = pending.chosenDraftNodeIds;
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft names its node holds all the same.
+        const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
         else {
           const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);

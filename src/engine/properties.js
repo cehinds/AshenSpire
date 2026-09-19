@@ -144,8 +144,9 @@ export function classCarrier(registries, classId, ownerKey, coreTags = []) {
   // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
   // card's own tagging rows: they mount beside the class's authored tags.
   // Only the class's OWN tree mounts (the review of #1192): a pick the tree
-  // does not hold — another class's node, or one a content update dropped —
-  // is the load door's to refuse and never this carrier's to confer.
+  // does not hold is the load door's — another class's node refused, one a
+  // content update dropped let go with a ledger row — never this carrier's
+  // to confer.
   const rules = registries.propertyRules;
   const tree = new Set((Array.isArray(registries.classTree) ? registries.classTree : []).filter((row) => row && row.classId === classId).map((row) => row.nodeId));
   const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => tree.has(id) && rules && typeof rules.has === 'function' && rules.has(id) && !own.includes(id));

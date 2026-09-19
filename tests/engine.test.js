@@ -79,8 +79,8 @@ import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
 import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft, reconcileSkillUpgrades } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
-import { classCard } from '../src/model/classCard.js';
-import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems } from '../src/model/classTree.js';
+import { classCard, runClassIdentity } from '../src/model/classCard.js';
+import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
 import { classCarrier } from '../src/engine/properties.js';
 import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
@@ -8925,14 +8925,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // each refused by name, where the shape door could only count strings.
     {
       const storage = createMemoryStorage(); const saves = createSaveManager(storage);
-      const tamper = (edit) => { saves.saveRun(run, createRng(1)); const raw = JSON.parse(storage.getItem(RUN_KEY)); edit(raw); storage.setItem(RUN_KEY, JSON.stringify(raw)); return saves.loadRun(REG) ? '' : saves.runStatus().reason; };
+      const tamperRun = (edit) => { saves.saveRun(run, createRng(1)); const raw = JSON.parse(storage.getItem(RUN_KEY)); edit(raw); storage.setItem(RUN_KEY, JSON.stringify(raw)); return saves.loadRun(REG); };
+      const tamper = (edit) => (tamperRun(edit) ? '' : saves.runStatus().reason);
       eq(tamper(() => {}), '', 'the run with its own pick loads');
-      assert(/coreTags 'attunedMind' is not in the 'reaver' tree/.test(tamper((r) => { r.coreTags = ['attunedMind']; })), "another class's node is refused by name");
-      assert(/coreTags 'ironFooting' is not in the 'starseer' tree/.test(tamper((r) => { r.class = 'starseer'; })), 'a class that does not own the pick is refused');
+      // A node NO tree holds — a content update renamed or dropped it — is
+      // stale, not a tamper: the pick is dropped with a ledger row, the run loads.
+      const stale = tamperRun((r) => { r.coreTags = ['ironFooting', 'notANodeAnyMore']; });
+      assert(stale && stale.coreTags.join(',') === 'ironFooting', `a stale pick is dropped, the rest kept — got ${stale && JSON.stringify(stale.coreTags)}`);
+      const staleRow = (saves.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'coreTags');
+      assert(staleRow && staleRow.kind === 'overwrite' && /notANodeAnyMore/.test(JSON.stringify(staleRow.was)), `the ledger names the dropped pick — got ${JSON.stringify(staleRow).slice(0, 200)}`);
+      assert(/coreTags 'attunedMind' is another class's node \('starseer'\)/.test(tamper((r) => { r.coreTags = ['attunedMind']; })), "another class's node is refused by name");
+      assert(/coreTags 'ironFooting' is another class's node \('reaver'\)/.test(tamper((r) => { r.class = 'starseer'; })), 'a class that does not own the pick is refused');
       const draft = { schemaVersion: 1, source: 'normal', after: 'map', rewards: { classDrafts: [{ classId: 'starseer', level: 1, nodeIds: ['attunedMind'] }] }, states: {}, chosenCardId: null, chosenDraftNodeIds: {} };
       assert(/class draft class 'starseer' is not the run's class 'reaver'/.test(tamper((r) => { r.pendingReward = draft; })), "a draft for another class is refused by name");
       eq(coreTagsTreeProblems(REG, 'reaver', ['ironFooting', 'warlord']).length, 0, 'the tree owns its own nodes');
-      eq(coreTagsTreeProblems(REG, 'reaver', ['conduit'], 'combatEntered.snapshot.coreTags')[0], "combatEntered.snapshot.coreTags 'conduit' is not in the 'reaver' tree", 'the path is the caller\'s');
+      eq(coreTagsTreeProblems(REG, 'reaver', ['conduit'], 'combatEntered.snapshot.coreTags')[0], "combatEntered.snapshot.coreTags 'conduit' is another class's node ('starseer')", 'the path is the caller\'s');
+      eq(coreTagsTreeProblems(REG, 'reaver', ['notANodeAnyMore']).length, 0, 'a node no tree holds is stale, not refused');
+      eq(staleCoreTags(REG, 'reaver', ['ironFooting', 'notANodeAnyMore']).join(','), 'notANodeAnyMore');
     }
     // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
     const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
@@ -8966,6 +8975,31 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const sub = classCard(REG, 'reaver', ['ironFooting', 'warlord']);
     eq(sub.subclassId, 'warlord'); eq(sub.presentation.name, 'Warlord', 'the subclass is the name'); eq(sub.presentation.glyph, '👑');
     eq(sub.picked.join(','), 'ironFooting,warlord');
+    // THE NAME REACHES THE PLAYER (the review of #1192): the HUD, the combat
+    // name plate and the save slot read runClassIdentity — the subclass once
+    // its node is picked, the class until then.
+    eq(runClassIdentity(REG, { class: 'reaver', coreTags: ['ironFooting', 'warlord'] }).name, 'Warlord', 'the subclass names the run');
+    eq(runClassIdentity(REG, { class: 'reaver', coreTags: ['ironFooting'] }).name, 'Reaver', 'the class until then');
+    eq(runClassIdentity(REG, { class: 'nope', coreTags: [] }).name, 'nope', 'an unknown class keeps its id');
+    // A HEAL THAT HEALS NOTHING and a Mana restore that restores nothing fire
+    // no node (the review of #1192): Warmth, Seal of Plenty and Attuned Mind
+    // gate on healPositive / manaPositive. The gates' fire counts are read, as
+    // test 87 reads them: the rule's actions wait on the queue.
+    {
+      const her = createRunState({ seed: 0x5b5c, classId: 'herald', registries: REG });
+      const hc = createCombat({ registries: REG, rng: createRng(0x5b5c), player: { classId: 'herald', attributes: her.attributes, skills: her.skills, coreTags: ['warmth', 'sealOfPlenty'], maxHp: 70, hp: 70, mana: 2, maxMana: 2, energyMax: her.energyMax, drawPerTurn: her.drawPerTurn, deck: her.deck, loadout: her.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+      const fires = (c, key) => (c.triggerState.get(key) || {}).fires || 0;
+      applyHeal(hc, hc.player, 5);
+      eq(fires(hc, 'property:player:class:herald:0'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 0, 'and spends no Seal of Plenty');
+      hc.player.hp = 60; applyHeal(hc, hc.player, 5);
+      eq(fires(hc, 'property:player:class:herald:0'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 1, 'and Seal of Plenty once');
+      const star = createRunState({ seed: 0x5b5d, classId: 'starseer', registries: REG });
+      const sc = createCombat({ registries: REG, rng: createRng(0x5b5d), player: { classId: 'starseer', attributes: star.attributes, skills: star.skills, coreTags: ['attunedMind'], maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: star.energyMax, drawPerTurn: star.drawPerTurn, deck: star.deck, loadout: star.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+      sc.emit('manaRestored', { targetId: sc.player.id, amount: 0 });
+      eq(fires(sc, 'property:player:class:starseer:0'), 0, 'a restore at full Mana wakes no Attuned Mind');
+      sc.emit('manaRestored', { targetId: sc.player.id, amount: 1 });
+      eq(fires(sc, 'property:player:class:starseer:0'), 1, 'a restore that restores does');
+    }
     // THE MENU: a class draft is a keyed choice row of nodes, ahead of the skill draft; auto-collect picks a node.
     const plan = rewardPlan({ classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }], skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
     eq(plan.rows.map((r) => r.key).join(','), 'classDraft:reaver:0,skillDraft:item:blade:0');
@@ -8975,11 +9009,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'ironFooting' }), '', 'a taken class draft with its node passes');
     assert(/chosenDraftNodeIds\.classDraft:reaver:0 must name a node of that draft/.test(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'warlord' })));
     assert(/Taken state requires its chosen node/.test(pending({ 'classDraft:reaver:0': 'taken' }, {})));
+    assert(/Taken state requires its chosen node/.test(pending({ 'classDraft:reaver:0': 'taken' }, undefined)), 'a save without the pick map is held to the same rule');
     assert(/classDrafts\[0\]\.nodeIds must be a non-empty array/.test(pending({}, {}, [{ classId: 'reaver', level: 1, nodeIds: [] }])));
     // VALIDATION of the tree, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const badTree = (rows2) => validateContent({ ...testBundle(), classTree: rows2 });
-    assert(said(badTree([...contentBundle.classTree, { classId: 'nope', nodeId: 'ironFooting', tier: 1 }])).some((e) => /unknown class 'nope'/.test(e) || /already sits in class/.test(e)), 'an unknown class is refused by name');
+    assert(said(badTree([...contentBundle.classTree, { classId: 'nope', nodeId: 'siphon', tier: 1 }])).some((e) => /unknown class 'nope'/.test(e)), 'an unknown class is refused by name');
     assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'blade', tier: 1 }])).some((e) => /is not a property node/.test(e)), 'a non-property node is refused by name');
     assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'siphon', tier: 7 }])).some((e) => /must be a tier 1\.\.3/.test(e)), 'a tier the balance rows do not open is refused by name');
     assert(said(badTree(contentBundle.classTree.map((r) => (r.nodeId === 'bulwarkKing' ? { ...r, nodeId: 'siphon' } : r)))).some((e) => /do not exclude one another/.test(e)), 'two subclasses that do not exclude one another are refused by name');

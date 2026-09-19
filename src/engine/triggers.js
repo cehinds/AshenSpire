@@ -341,6 +341,8 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return pctx.event?.type === 'damageDealt' && pctx.event.amount > pctx.event.blocked;
     case 'healPositive':
       return pctx.event?.type === 'healed' && pctx.event.amount > 0;
+    case 'manaPositive':
+      return pctx.event?.type === 'manaRestored' && pctx.event.amount > 0;
     // A seat id on the event names the seat, whenever the combat can name
     // seats (co-op, with or without a foundation ruleset): every player
     // entity is id 'player', so the bare id cannot tell an ally from the owner.

@@ -23,6 +23,7 @@ import { actionHint } from '../input.js';
 import { MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from './quicknav.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
+import { runClassIdentity } from '../../model/classCard.js';
 import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { hudShellHtml } from './hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -58,7 +59,7 @@ export function seatNameOf(registries, run) {
 
 export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '' }) {
   const map = run.mapGraph;
-  const className = registries.classes.get(run.class).name;
+  const className = runClassIdentity(registries, run).name;
   return hudShellHtml(runHudViewModel({
     place,
     headerClass,

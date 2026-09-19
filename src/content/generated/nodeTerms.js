@@ -306,7 +306,7 @@ export const nodeTerms = [
     "nodeId": "bloodTempo",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Entering a stance draws {draw} card."
+    "template": "The first stance you enter each turn draws {draw} card."
   },
   {
     "nodeId": "ashenReserve",

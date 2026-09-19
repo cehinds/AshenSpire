@@ -30,7 +30,11 @@ export function classCard(registries, classId, coreTags = []) {
   // glyph, read off the node row rather than authored again.
   const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => typeof id === 'string' && id);
   const tree = classTreeRows(registries, classId);
-  const topTier = Math.max(0, ...tree.map((row) => row.tier));
+  // The subclass tier is the ladder's last rung (balance.skill.class.tierAt),
+  // the tier validate.js holds to exclusivity — not the highest tier the
+  // class happens to have authored.
+  const ladder = ((((registries || {}).balance || {}).skill || {}).class || {}).tierAt;
+  const topTier = Array.isArray(ladder) && ladder.length ? ladder.length : Math.max(0, ...tree.map((row) => row.tier));
   const subclassId = picked.find((id) => tree.some((row) => row.nodeId === id && row.tier === topTier && topTier > 0)) || null;
   const subclass = subclassId ? (registries.nodes || []).find((n) => n && n.id === subclassId) : null;
   const kits = ((registries.equipment || {}).startingKits) || [];
@@ -60,4 +64,17 @@ export function classCard(registries, classId, coreTags = []) {
     subclassId,
     presentation: { name: subclass ? subclass.label : def.name, glyph: subclass ? (subclass.glyph || def.glyph || null) : (def.glyph || null) },
   };
+}
+
+/**
+ * runClassIdentity(registries, run) → { name, glyph }: what the run's class
+ * is called where the player reads it (the HUD, the combat name plate, the
+ * save slot) — the subclass once its node is picked, the class until then.
+ * Reads the class card's `presentation`; a class the registries do not know
+ * keeps its id as its name.
+ */
+export function runClassIdentity(registries, run) {
+  const classId = run && run.class;
+  if (!registries.classes || !registries.classes.has(classId)) return { name: String(classId || ''), glyph: null };
+  return classCard(registries, classId, (run && run.coreTags) || []).presentation;
 }

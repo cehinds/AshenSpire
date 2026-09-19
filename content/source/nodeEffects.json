@@ -1272,7 +1272,15 @@
         "on": "manaRestored",
         "limitPerTurn": 1,
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "manaPositive"
+            }
+          ]
         },
         "do": [
           {
@@ -1371,7 +1379,15 @@
       {
         "on": "healed",
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
         },
         "do": [
           {
@@ -1407,7 +1423,15 @@
         "on": "healed",
         "once": true,
         "if": {
-          "p": "eventTargetIsOwner"
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
         },
         "do": [
           {

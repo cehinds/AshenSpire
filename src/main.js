@@ -32,6 +32,7 @@ import { createCombat } from './engine/combat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
+import { runClassIdentity } from './model/classCard.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -1131,7 +1132,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     title: 'Quit without saving?',
     // W2e: the run this leaves, named the way its save slot names it.
     target: run ? runIdentity({
-      className: registries.classes.has(run.class) ? registries.classes.get(run.class).name : run.class,
+      className: runClassIdentity(registries, run).name,
       slot: activeSlot,
       facts: slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }),
     }) : '',
@@ -1447,7 +1448,7 @@ function runResult(victory) {
     victory,
     seed: run.seedString,
     class: run.class,
-    className: registries.classes.get(run.class).name,
+    className: runClassIdentity(registries, run).name,
     act: run.actNumber,
     floor: run.floor,
     fightsWon: run.stats.fightsWon,

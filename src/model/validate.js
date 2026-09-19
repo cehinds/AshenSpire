@@ -2104,6 +2104,7 @@ const PREDICATE_FIELDS = {
   eventIsAttack: [],
   hpDamagePositive: [],
   healPositive: [],
+  manaPositive: [],
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],

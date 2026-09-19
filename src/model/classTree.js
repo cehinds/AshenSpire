@@ -87,15 +87,25 @@ export function awardClassXp(registries, run, { victory = false, pool = 'normal'
 
 /**
  * coreTagsTreeProblems(registries, classId, coreTags, path) → the refusals a
- * REGISTRY can make, for the load door: every pick must be a node of this
- * class's tree. The shape door (coreTagsProblems) cannot know the tree; a
- * save that names another class's node — or a node the tree no longer holds —
- * would otherwise mount it with the class card.
+ * REGISTRY can make, for the load door: a pick that is ANOTHER class's node
+ * is a tampered save, refused by name — the shape door (coreTagsProblems)
+ * cannot know the trees. A pick no tree holds is not refused here: a content
+ * update renamed or dropped it, and the door drops it with a ledger row
+ * (staleCoreTags), as the skills ledger keeps a track no registry knows.
  */
 export function coreTagsTreeProblems(registries, classId, coreTags, path = 'coreTags') {
   if (!Array.isArray(coreTags) || !coreTags.length) return [];
+  const owner = new Map((Array.isArray(registries && registries.classTree) ? registries.classTree : []).map((row) => [row.nodeId, row.classId]));
+  return coreTags
+    .filter((id) => owner.has(id) && owner.get(id) !== classId)
+    .map((id) => `${path} '${id}' is another class's node ('${owner.get(id)}')`);
+}
+
+/** staleCoreTags(registries, classId, coreTags) → the picks no tree holds, for the door to drop. */
+export function staleCoreTags(registries, classId, coreTags) {
+  if (!Array.isArray(coreTags)) return [];
   const tree = new Set(classTreeRows(registries, classId).map((row) => row.nodeId));
-  return coreTags.filter((id) => !tree.has(id)).map((id) => `${path} '${id}' is not in the '${classId}' tree`);
+  return coreTags.filter((id) => !tree.has(id));
 }
 
 /** coreTagsProblems(coreTags) → the shape's refusals, registry-free, for the save door. */

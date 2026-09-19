@@ -58,7 +58,7 @@ internal.unplayable,term.unplayable,term.tooltip.unplayable,
 siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
 overcharge,,,Your hits build Arcane Exposure faster.
 ironFooting,,,"Entering a stance grants {block} Block."
-bloodTempo,,,"Entering a stance draws {draw} card."
+bloodTempo,,,"The first stance you enter each turn draws {draw} card."
 ashenReserve,,,"At the start of your turn, recover {restoreStamina} Stamina."
 grimHarvest,,,"Whenever an enemy dies, heal {heal}."
 warlord,,,"Begin each combat with {strength} Strength."

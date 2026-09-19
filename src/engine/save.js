@@ -44,7 +44,7 @@ import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js'
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
-import { classTreeRows, coreTagsTreeProblems } from '../model/classTree.js';
+import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -604,6 +604,24 @@ export function createSaveManager(storage) {
             why: 'the saved zones disagreed with the class, loadout, relics and deck they are projected from; those fields own the truth until phase 3b, so the projection was re-derived',
           });
           delete run.reprojectedZones;
+        }
+        // Plan phase 5b: a class-tree pick no tree holds any more — a content
+        // update renamed or dropped the node — is stale, not a tamper (another
+        // class's node is refused above). It is dropped here, where the ledger
+        // is open, from the run and from a fight in progress; the rest stay.
+        for (const [holder, field] of [[run, 'coreTags'], [run.combatEntered && run.combatEntered.snapshot, 'combatEntered.snapshot.coreTags']]) {
+          const stale = holder ? staleCoreTags(registries, run.class, holder.coreTags) : [];
+          if (!stale.length) continue;
+          const was = [...holder.coreTags];
+          holder.coreTags = holder.coreTags.filter((id) => !stale.includes(id));
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was,
+            now: [...holder.coreTags],
+            why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
+          });
         }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
