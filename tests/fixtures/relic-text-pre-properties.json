@@ -218,5 +218,21 @@
   "wrathCoil": {
     "name": "Wrath Coil",
     "text": "Whenever you lose HP, deal 3 damage to a random enemy."
+  },
+  "ashenGrip": {
+    "name": "Ashen Grip",
+    "text": "The first stance you enter each turn refunds 1 Stamina."
+  },
+  "lodestarShard": {
+    "name": "Lodestar Shard",
+    "text": "Begin each combat with 1 extra Mana."
+  },
+  "waxenSeal": {
+    "name": "Waxen Seal",
+    "text": "The first time you heal each combat, heal 3 more."
+  },
+  "whetstonePouch": {
+    "name": "Whetstone Pouch",
+    "text": "Your first attack while Prepared each combat applies 2 Bleed."
   }
 }

@@ -17,6 +17,8 @@
 //   impactDealt to the wearer (heavy: 1 per impactPerXp; medium: half)
 //   attackEvaded by the wearer (light: evadeXp; medium: half)
 //   arcaneExposureChanged by the caster (focus: 1 per buildupPerXp)
+//   × the class card's `favored` leaning (skillXpMult) for the tracks the
+//     card names (plan phase 5a)
 //
 // Receipts are kept per OWNER KEY ('player' solo; the seat id in co-op, the
 // same key triggers.js gates on), so a party's hits do not pool.
@@ -44,9 +46,31 @@ function receiptFor(combat, ownerKey) {
   return combat.skillXp[ownerKey] || (combat.skillXp[ownerKey] = { xp: {}, killGroup: null });
 }
 
-function pay(receipt, skillId, amount) {
+/**
+ * favoredMult(combat, ownerKey, skillId) → the product of every mounted
+ * `skillXpMult` passive whose carrier's own tags name the track (plan phase
+ * 5a): the class card carries `favored` beside the item types it favours,
+ * so a Reaver's blade XP is multiplied and its shield XP is not. Read off
+ * the mount records' scopeTags — never unscoped, never a second table.
+ */
+function favoredMult(combat, ownerKey, skillId) {
+  const mounts = combat.propertyMounts && combat.propertyMounts[ownerKey];
+  let m = 1;
+  if (!mounts) return m;
+  for (const key of Object.keys(mounts).sort()) {
+    const mount = mounts[key];
+    if (!Array.isArray(mount.scopeTags) || !mount.scopeTags.includes(skillId)) continue;
+    for (const rule of mount.rules || []) {
+      const v = rule.passives && rule.passives.skillXpMult;
+      if (typeof v === 'number') m *= v;
+    }
+  }
+  return m;
+}
+
+function pay(receipt, skillId, amount, mult = 1) {
   if (!skillId || !(amount > 0)) return;
-  receipt.xp[skillId] = (receipt.xp[skillId] || 0) + amount;
+  receipt.xp[skillId] = (receipt.xp[skillId] || 0) + amount * mult;
 }
 
 /** The item type (group) of a held piece, or null. */
@@ -120,8 +144,8 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      pay(receipt, group, rows.perHit);
-      if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit);
+      pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       // damageDealt fires after HP is taken and before afterHpChange marks
       // the death, so the kill is read from the HP, not the flag.
       const target = (combat.enemies || []).find((e) => e.id === event.targetId);
@@ -136,30 +160,30 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      pay(receipt, group, rows.perHit);
-      if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit);
+      pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       return;
     }
     case 'impactDealt': {
       const owner = ownerKeyOf(combat, event.targetId, event.targetPlayerId);
       if (!owner || !(event.amount > 0)) return;
       const wc = weightClassId(combat);
-      if (wc === 'heavy') pay(receiptFor(combat, owner), armourSkillId(wc), event.amount / rows.impactPerXp);
-      else if (wc === 'medium') pay(receiptFor(combat, owner), armourSkillId(wc), event.amount / rows.impactPerXp / 2);
+      if (wc === 'heavy') pay(receiptFor(combat, owner), armourSkillId(wc), event.amount / rows.impactPerXp, favoredMult(combat, owner, armourSkillId(wc)));
+      else if (wc === 'medium') pay(receiptFor(combat, owner), armourSkillId(wc), event.amount / rows.impactPerXp / 2, favoredMult(combat, owner, armourSkillId(wc)));
       return;
     }
     case 'attackEvaded': {
       const owner = ownerKeyOf(combat, event.targetId, event.targetPlayerId);
       if (!owner) return;
       const wc = weightClassId(combat);
-      if (wc === 'light') pay(receiptFor(combat, owner), armourSkillId(wc), rows.evadeXp);
-      else if (wc === 'medium') pay(receiptFor(combat, owner), armourSkillId(wc), rows.evadeXp / 2);
+      if (wc === 'light') pay(receiptFor(combat, owner), armourSkillId(wc), rows.evadeXp, favoredMult(combat, owner, armourSkillId(wc)));
+      else if (wc === 'medium') pay(receiptFor(combat, owner), armourSkillId(wc), rows.evadeXp / 2, favoredMult(combat, owner, armourSkillId(wc)));
       return;
     }
     case 'arcaneExposureChanged': {
       const owner = ownerKeyOf(combat, event.sourceId, event.sourcePlayerId);
       if (!owner || !(event.amount > 0)) return;
-      pay(receiptFor(combat, owner), FOCUS_ITEM_TYPE, event.amount / rows.buildupPerXp);
+      pay(receiptFor(combat, owner), FOCUS_ITEM_TYPE, event.amount / rows.buildupPerXp, favoredMult(combat, owner, FOCUS_ITEM_TYPE));
       return;
     }
     case 'combatEnd': {
@@ -169,9 +193,9 @@ export function recordSkillXp(combat, event) {
       for (const seat of seatsOf(combat)) {
         const receipt = receiptFor(combat, seat.ownerKey);
         for (const group of heldGroups(combat, seat.loadout, seat.classId)) {
-          pay(receipt, group, rows.perWinEquipped * (receipt.killGroup === group ? rows.killMult : 1));
+          pay(receipt, group, rows.perWinEquipped * (receipt.killGroup === group ? rows.killMult : 1), favoredMult(combat, seat.ownerKey, group));
         }
-        if (isDual(combat, seat.loadout, seat.classId)) pay(receipt, DUAL_WIELD_SKILL, rows.perWinEquipped);
+        if (isDual(combat, seat.loadout, seat.classId)) pay(receipt, DUAL_WIELD_SKILL, rows.perWinEquipped, favoredMult(combat, seat.ownerKey, DUAL_WIELD_SKILL));
       }
       return;
     }

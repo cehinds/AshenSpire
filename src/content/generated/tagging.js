@@ -57,6 +57,54 @@ export const tagging = [
     "tagId": "oath"
   },
   {
+    "family": "class",
+    "scope": "",
+    "objectId": "reaver",
+    "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "reaver",
+    "tagId": "item:blade"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "starseer",
+    "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "starseer",
+    "tagId": "item:magic-focus"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "rogue",
+    "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "rogue",
+    "tagId": "item:blade"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "herald",
+    "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "herald",
+    "tagId": "item:magic-focus"
+  },
+  {
     "family": "card",
     "scope": "",
     "objectId": "ambush",
@@ -625,6 +673,30 @@ export const tagging = [
     "scope": "",
     "objectId": "enterBulwark",
     "tagId": "oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "brace",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "attune",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warmLitany",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "prepare",
+    "tagId": "guile"
   },
   {
     "family": "card",
@@ -6747,6 +6819,30 @@ export const tagging = [
     "tagId": "wrathCoil"
   },
   {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ashenGrip",
+    "tagId": "ashenGrip"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "lodestarShard",
+    "tagId": "lodestarShard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "waxenSeal",
+    "tagId": "waxenSeal"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "whetstonePouch",
+    "tagId": "whetstonePouch"
+  },
+  {
     "family": "card",
     "scope": "",
     "objectId": "strike",
@@ -6828,6 +6924,30 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "enterBulwark",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "brace",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "attune",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warmLitany",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "prepare",
     "tagId": "classification.skill"
   },
   {
@@ -8226,6 +8346,30 @@ export const tagging = [
     "family": "relic",
     "scope": "",
     "objectId": "wrathCoil",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ashenGrip",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "lodestarShard",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "waxenSeal",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "whetstonePouch",
     "tagId": "classification.relic"
   },
   {

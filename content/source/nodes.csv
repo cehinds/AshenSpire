@@ -179,6 +179,11 @@ gravetendersBell,property,Gravetender's Bell,6E9C6E,🔔,,,,,What Gravetender's 
 sentinelsOath,property,Sentinel's Oath,6E9C6E,🛡,,,,,What Sentinel's Oath does when the fight gives it its moment.
 forsakenWarflag,property,Forsaken Warflag,B08CC9,🏴,,,,,What Forsaken Warflag does when the fight gives it its moment.
 wrathCoil,property,Wrath Coil,B08CC9,⚡,,,,,What Wrath Coil does when the fight gives it its moment.
+favored,property,Favored,9FC3E8,✦,,,,,"A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+ashenGrip,property,Ashen Grip,8C7A5B,🤚,,,,,What Ashen Grip does when the fight gives it its moment.
+lodestarShard,property,Lodestar Shard,8C7A5B,🌟,,,,,What Lodestar Shard does when the fight gives it its moment.
+waxenSeal,property,Waxen Seal,8C7A5B,🕯,,,,,What Waxen Seal does when the fight gives it its moment.
+whetstonePouch,property,Whetstone Pouch,8C7A5B,👝,,,,,What Whetstone Pouch does when the fight gives it its moment.
 classification,,classification,,,INTERNAL,0,CLASSIFICATION,true,
 classification.attack,classification,attack,,,PRIMARY,10,,,
 classification.strike,classification,strike,,,PRIMARY,11,,,

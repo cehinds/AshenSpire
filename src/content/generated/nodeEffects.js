@@ -1073,5 +1073,96 @@ export const nodeEffects = {
         ]
       }
     ]
+  },
+  "favored": {
+    "passives": {
+      "skillXpMult": {
+        "variable": "skillXpMult"
+      }
+    }
+  },
+  "ashenGrip": {
+    "triggers": [
+      {
+        "on": "stanceEntered",
+        "limitPerTurn": 1,
+        "do": [
+          {
+            "op": "restoreStamina",
+            "amount": {
+              "variable": "restoreStamina"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lodestarShard": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "restoreMana",
+            "amount": {
+              "variable": "restoreMana"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "waxenSeal": {
+    "triggers": [
+      {
+        "on": "healed",
+        "once": true,
+        "if": {
+          "p": "eventTargetIsOwner"
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "owner",
+            "amount": {
+              "variable": "heal"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "whetstonePouch": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "hasStatus",
+              "of": "owner",
+              "status": "prepared"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "status": "bleed",
+            "stacks": {
+              "variable": "bleed"
+            }
+          }
+        ]
+      }
+    ]
   }
 };

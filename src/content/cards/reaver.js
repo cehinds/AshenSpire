@@ -613,4 +613,18 @@ export const reaverCards = [
       ],
     },
   },
+  // ---- The class ability card (plan phase 5a, proposal §4) -----------------
+  // Brace: the Reaver's loop is stance switching as tempo. Enter Brace, a
+  // stance that holds the line; leaving it hits harder (stances.js brace).
+  {
+    id: 'brace', name: 'Brace', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: 'Plant the heel before the swing. — Warden\'s field-book',
+    keywords: [], icon: '🦶',
+    effects: [{ op: 'enterStance', stance: 'brace' }],
+    textTemplate: 'Enter Brace Stance.',
+    upgrade: {
+      effects: [{ op: 'enterStance', stance: 'brace' }, { op: 'block', target: 'self', amount: 3 }],
+      textTemplate: 'Enter Brace Stance. Gain {block} Block.',
+    },
+  },
 ];

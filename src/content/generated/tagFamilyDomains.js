@@ -11,6 +11,10 @@ export const tagFamilyDomains = [
     "domain": "card"
   },
   {
+    "family": "class",
+    "domain": "itemType"
+  },
+  {
     "family": "relic",
     "domain": "item"
   },

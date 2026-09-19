@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, relicPropertyRules } from '../src/model/registries.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import {
@@ -132,7 +132,10 @@ test('WC2c1–WC2c3: consumable purpose comes from the effect opcode', () => {
 test('every number a row states is one the item authors', () => {
   const numbers = (s) => (s.match(/\d+(?:\.\d+)?/g) || []);
   const check = (item, variant) => {
-    const source = JSON.stringify(item);
+    // The numbers a relic's row may state live on the item AND on its property
+    // rules (a trigger's per-turn limit is the rule's, plan phase 5a's Ashen
+    // Grip being the first relic to author one).
+    const source = JSON.stringify([item, item.propertyTags ? relicPropertyRules(r, item) : []]);
     for (const row of variant.lines || []) {
       for (const n of numbers(row.text)) assert.ok(source.includes(n), `${item.id}: '${row.text}' states ${n}`);
     }

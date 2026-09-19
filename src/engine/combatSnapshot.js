@@ -6,7 +6,7 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties } from './properties.js';
 import { attachSkillXp } from './skillXp.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
@@ -141,6 +141,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // derives them.
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
+  syncClassProperties(combat);
   return combat;
 }
 

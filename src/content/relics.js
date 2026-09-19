@@ -501,4 +501,39 @@ export const relics = [
     textTemplate: 'Whenever you lose HP, deal {damage} damage to a random enemy.',
     flavor: 'It winds tighter with every wound and lets go all at once, at someone else.',
   },
+  // ---- The class kit relics (plan phase 5a, proposal §4) -------------------
+  // Each reinforces its class's loop; the trigger is a property rule
+  // (content/source/nodeEffects.json), as every relic's is since phase 2.
+  {
+    id: 'ashenGrip',
+    name: 'Ashen Grip',
+    rarity: 'starter',
+    icon: '🤚',
+    textTemplate: 'The first stance you enter each turn refunds {restoreStamina} Stamina.',
+    flavor: 'The leather remembers every hand that held it, and gives a little back.',
+  },
+  {
+    id: 'lodestarShard',
+    name: 'Lodestar Shard',
+    rarity: 'starter',
+    icon: '🌟',
+    textTemplate: 'Begin each combat with {restoreMana} extra Mana.',
+    flavor: 'It points nowhere on any map. It points at the next cast.',
+  },
+  {
+    id: 'waxenSeal',
+    name: 'Waxen Seal',
+    rarity: 'starter',
+    icon: '🕯',
+    textTemplate: 'The first time you heal each combat, heal {heal} more.',
+    flavor: 'Pressed once, it holds. Pressed twice, it is only wax.',
+  },
+  {
+    id: 'whetstonePouch',
+    name: 'Whetstone Pouch',
+    rarity: 'starter',
+    icon: '👝',
+    textTemplate: 'Your first attack while Prepared each combat applies {bleed} Bleed.',
+    flavor: 'A thumb along the edge before the first cut. Habit, and then not.',
+  },
 ];

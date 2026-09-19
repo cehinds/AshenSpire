@@ -178,7 +178,8 @@ export function createRunState({
     // derive it from. So it is recorded here, once, and carried like the
     // profile snapshot beside it.
     equipmentAttackSlotCount: null, // filled in below, from the deck just built
-    relics: [startingRelic.id],
+    // The starting relic, and the class kit's relic beside it (plan phase 5a).
+    relics: [startingRelic.id, ...(classDef.kitRelic && classDef.kitRelic !== startingRelic.id ? [classDef.kitRelic] : [])],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),

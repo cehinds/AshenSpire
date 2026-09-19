@@ -301,5 +301,35 @@ export const propertyRules = [
     "requires": "",
     "excludes": "",
     "textTemplate": ""
+  },
+  {
+    "tag": "favored",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "ashenGrip",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "lodestarShard",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "waxenSeal",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "whetstonePouch",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
   }
 ];

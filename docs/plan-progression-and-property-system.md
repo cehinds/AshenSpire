@@ -346,6 +346,26 @@ over 8 runs. SPEC §13.4e; engine test 86.
 | `createRunState` (`state.js:63`) builds `zones.core` and injects the kit through the existing starting-kit path (`startingDeckPlan`, `loadout.js:1801`) | |
 | `mountProperties` mounts the core card at run start and combat start | |
 
+**5a AS BUILT (2026-09-19):** the class card is DERIVED (`model/classCard.js`)
+from the class row, its free kit and its tagging rows — no `cardType`/`zone`/
+`kit` fields were authored, because every one of them is a fact another row
+already owns. Decisions to state: (1) the kit relic rides BESIDE the starting
+relic (`kitRelic`, `run.relics = [startingRelic, kitRelic]`) rather than
+replacing it — the starting relics carry the pool modifiers the HP/Mana
+formulas and a dozen tests read, and a swap would have been a balance change
+hidden in a content phase. (2) `favored<Group>` is ONE rule, `favored`, scoped
+by the carrier's own item-type tag (`class,,reaver,item:blade`; the family
+gained `class → itemType`) — a rule per group would have been N rows saying
+one number. (3) The ability cards are authored to the nearest shipped word:
+Brace is a stance (damage taken −25%, Block on entering, Strength on leaving)
+rather than "impact taken −2", Attune restores Mana rather than discounting
+the next cast's Stamina, Warm Litany heals and blocks without the overheal
+charge, Prepare prepares without the cost discount — each needs vocabulary
+the engine has not got, and the owner may want the proposal's exact words
+when it does. (4) `startingDeckSize` is 11 (`roleCopies.ability: 1`). The
+core zone mounts in solo, co-op (per seat) and on restore. SPEC §13.4f;
+engine test 87.
+
 **PR 5b: class tree.**
 
 | Change | Where |

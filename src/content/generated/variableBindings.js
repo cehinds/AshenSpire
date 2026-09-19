@@ -446,6 +446,41 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "favored",
+    "variable": "skillXpMult",
+    "balancePath": "skill.favoredXpMult"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "ashenGrip",
+    "variable": "restoreStamina",
+    "balancePath": "powers.ashenGrip.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "lodestarShard",
+    "variable": "restoreMana",
+    "balancePath": "powers.lodestarShard.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "waxenSeal",
+    "variable": "heal",
+    "balancePath": "powers.waxenSeal.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "whetstonePouch",
+    "variable": "bleed",
+    "balancePath": "powers.whetstonePouch.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "cost.action",
     "variable": "amount",
     "balancePath": "costs.action"

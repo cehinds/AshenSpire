@@ -261,6 +261,10 @@ export const PASSIVE_TYPES = Object.freeze({
   // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
   // properties alike. The wand's `overcharge` property confers it (plan 1b).
   exposureBuildupMult: 'num',
+  // Skill XP × for the tracks a carrier's own tags name (plan phase 5a): the
+  // class card's `favored` property confers it, and engine/skillXp.js reads
+  // it scoped to the mounts whose tags include the track — never unscoped.
+  skillXpMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
@@ -943,6 +947,13 @@ export const SCHEMAS = Object.freeze({
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
     startingSignatureCard: ref('cards'),
+    // The class ability card (plan phase 5a, proposal §4): one card that
+    // teaches the class's resource loop, granted at creation beside the
+    // signature and, from phase 5b, what the class tree upgrades.
+    abilityCard: ref('cards'),
+    // The kit relic (plan phase 5a, proposal §4): held from creation beside
+    // the starting relic, and the one that reinforces the ability card's loop.
+    kitRelic: ref('relics'),
     eligibleStartingKitIds: arr(str),
     cardPool: arr(ref('cards')),
     description: opt(str),
