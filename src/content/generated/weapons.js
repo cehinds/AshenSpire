@@ -783,6 +783,7 @@ export const weapons = [
     "techniqueProfile": "staffTechnique",
     "mods": [
       "strike.blight=+1",
+      "defend.block=+1",
       "self.maxMana=+1"
     ],
     "unlock": "",

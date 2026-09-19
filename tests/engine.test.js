@@ -3496,9 +3496,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const ids = weapons.map((w) => w.id);
     eq(ids.length, new Set(ids).size, 'armament ids are unique');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 9, 'nine weapons');
+    const expectedArmaments = ['straightSword', 'greatsword', 'dagger', 'shortbow', 'katana', 'halberd', 'warhammer', 'twinblade', 'battleaxe',
+      'buckler', 'kiteShield', 'towerShield', 'roundShield', 'spikedShield', 'lantern', 'torch', 'parryDagger',
+      'ashStaff', 'starstoneStaff', 'boneSceptre', 'emberlightSceptre', 'goldboughBranch', 'blightRod', 'gorefireBrand', 'wyrmhornStaff',
+      'frostSpear', 'cinderAxe', 'duskChime'];
+    eq([...ids].sort().join('|'), expectedArmaments.sort().join('|'), 'exact expanded armament roster');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 11, 'eleven weapons');
     eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
-    eq(weapons.filter((w) => w.kind === 'staff').length, 8, 'eight staves');
+    eq(weapons.filter((w) => w.kind === 'staff').length, 9, 'nine staves');
 
     const checkMods = (mods, where) => {
       if (mods === '') return;
@@ -3533,10 +3538,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
 
-    // Armour: four sets per class, exactly one of them unlocked from the start.
+    // Each class keeps its baseline roster plus explicitly named additions.
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
-      eq(mine.length, 4, `class '${id}' has four armour sets`);
+      const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
+      eq(mine.length, additions[id] ? 5 : 4, `class '${id}' has its full armour roster`);
+      if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
       eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
@@ -3553,7 +3560,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(LEGACY_REG).join('; '), '', 'every authored piece parses against the vocabulary');
 
     const intrinsicReceipts = LEGACY_REG.equipment.armaments.map(armamentIntrinsicReceipt);
-    eq(intrinsicReceipts.length, 25, 'all 25 armaments expose an intrinsic stat receipt');
+    eq(intrinsicReceipts.length, 28, 'all 28 armaments expose an intrinsic stat receipt');
+    eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
+      weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
     assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
     'each intrinsic receipt exposes five explicit non-negative integer facts');
@@ -5196,7 +5205,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     for (const o of REG.equipment.armour) {
       const key = `${o.classId}/${o.id}`;
-      const entry = manifest.armour[key];
+      const artKey = `${o.classId}/${o.artKey || o.id}`;
+      const entry = manifest.armour[artKey];
       if (!entry) {
         stale.push(`${key}: no art rendered`);
         continue;
@@ -5221,7 +5231,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // pass every assertion above by having nothing to disagree with.
     const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
     eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
-    eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
+    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.classId}/${o.artKey || o.id}`));
+    eq(Object.keys(manifest.armour).length, armourArtKeys.size, 'every distinct armour art key is covered');
   });
 
   // ---- 34. armour sets must be visibly distinct in the RENDER --------------
