@@ -29,7 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncRelicProperties, syncClassProperties } from './properties.js';
+import { syncRelicProperties, syncClassProperties, syncLoadoutProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -128,6 +128,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   // look them up by, which is the per-seat scoping test 24 exists for.
   for (const P of livingPlayers(C)) {
     setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
     C.emit('combatStart', {});
@@ -209,6 +210,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // the wrong hand.
     const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
     setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
     setActive(C, wasActive || null);

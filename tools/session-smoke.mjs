@@ -803,6 +803,18 @@ try {
   }
   const hostEnemy = S.live.combat.enemies[0];
   const snapshotEnemy = S.snapshot().scene.enemies.find((enemy) => enemy.id === hostEnemy.id);
+  const seatSnap = S.snapshot().scene.players.find((p) => p.id === 'p1');
+  const seatHost = S.live.combat.players.get('p1').entity;
+  ok(JSON.stringify(seatSnap.poiseMeter) === JSON.stringify(seatHost.poiseMeter),
+    `the seat's Poise vessel reaches its client (${JSON.stringify(seatSnap.poiseMeter)}) — the co-op HUD draws the bar from this alone`);
+  {
+    // THE SEAT'S KIT CONFERS ITS PROPERTIES. Phase 8 hung staggerBreak on the
+    // staves; a co-op seat holding one must mount it under its OWN owner key.
+    const P = S.live.combat.players.get('p1');
+    const mounted = Object.values(S.live.combat.propertyMounts || {})
+      .some((owned) => Object.values(owned || {}).some((m) => m.kind === 'armament' || m.kind === 'armour'));
+    ok(!P.loadout || mounted, 'a co-op seat mounts its loadout properties, as the solo player does');
+  }
   ok(JSON.stringify(snapshotEnemy.arcaneExposure) === JSON.stringify(hostEnemy.arcaneExposure), 'combat snapshot transports the host Arcane Exposure state exactly');
   ok(JSON.stringify(snapshotEnemy.damageResistanceBySchool) === JSON.stringify(hostEnemy.damageResistanceBySchool), 'combat snapshot keeps raw school resistance separate');
   const twoPMult = coopHpMult(2);

@@ -376,6 +376,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
     const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
     if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
       entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
+      // Recorded, so a later restamp from the receipt (an armament swap, a
+      // restored fight) rebuilds the GROWN vessel and not the opening one.
+      entity.poiseMeter.growth = (entity.poiseMeter.growth || 1) * growth;
     }
     if (ctx.foundation) { entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value); break; }
   }

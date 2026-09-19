@@ -34,6 +34,7 @@ import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun, syncZones } from '../src/model/state.js';
+import { stampPlayerPoiseMax } from '../src/model/state.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
@@ -9478,6 +9479,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(hit, { type: 'endTurn' });
     eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
     eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
+    // AND THE WIDENED VESSEL SURVIVES A RESTAMP. A fill grows the max by
+    // balance.poise.growthMult; the receipt only knows the base, so an
+    // armament swap or a restored fight must rebuild the grown vessel.
+    const grownMax = hit.player.poiseMeter.max;
+    assert(grownMax > perHit * 2, 'the fill widened the vessel');
+    stampPlayerPoiseMax(hit.player, perHit * 2);
+    eq(hit.player.poiseMeter.max, grownMax, 'a restamp from the base receipt keeps the growth a Stagger paid for');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerImpactPerHit: -1 } } })).some((e) => /balance\.poise\.playerImpactPerHit/.test(e)), 'a negative impact row is refused by name');
     const { poise: _noPoise, ...sansPoise } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansPoise })).some((e) => /^balance\.poise:/.test(e)), 'a bundle without the poise block is refused by name');

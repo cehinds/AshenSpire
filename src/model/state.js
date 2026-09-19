@@ -1249,8 +1249,15 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
  */
 export function stampPlayerPoiseMax(entity, max) {
   if (Number.isInteger(max) && max > 0) {
-    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
-    entity.poiseMeter = { value, max };
+    // THE GROWTH SURVIVES THE RESTAMP. A fill widens the vessel by
+    // balance.poise.growthMult and records the factor on the meter; the
+    // receipt only ever knows the BASE, so a swap of armaments (or a
+    // restored fight) would otherwise hand a staggered player their
+    // opening threshold back and make the next break cheaper (Codex, #1203).
+    const growth = (entity.poiseMeter && entity.poiseMeter.growth) || 1;
+    const grownMax = growth !== 1 ? Math.ceil(max * growth) : max;
+    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, grownMax)) : 0;
+    entity.poiseMeter = { value, max: grownMax, ...(growth !== 1 ? { growth } : {}) };
   } else {
     delete entity.poiseMeter;
   }
