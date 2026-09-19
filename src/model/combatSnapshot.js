@@ -7,6 +7,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
 import { skillsProblems } from './skills.js';
+import { coreTagsProblems } from './classTree.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -72,6 +73,7 @@ export function combatSnapshotProblems(snapshot) {
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
   if (snapshot.skillXp !== undefined) {
     if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');
     else for (const [owner, receipt] of Object.entries(snapshot.skillXp)) {

@@ -331,5 +331,157 @@ export const propertyRules = [
     "requires": "",
     "excludes": "",
     "textTemplate": ""
+  },
+  {
+    "tag": "ironFooting",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Entering a stance grants {block} Block."
+  },
+  {
+    "tag": "bloodTempo",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Entering a stance draws {draw} card."
+  },
+  {
+    "tag": "ashenReserve",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of your turn, recover {restoreStamina} Stamina."
+  },
+  {
+    "tag": "grimHarvest",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever an enemy dies, heal {heal}."
+  },
+  {
+    "tag": "warlord",
+    "requires": "",
+    "excludes": [
+      "bulwarkKing"
+    ],
+    "textTemplate": "Begin each combat with {strength} Strength."
+  },
+  {
+    "tag": "bulwarkKing",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "tag": "attunedMind",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you restore Mana each turn, draw {draw} card."
+  },
+  {
+    "tag": "starlitFocus",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat with {starstoneCharge} Starstone Charge."
+  },
+  {
+    "tag": "lodestarCap",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat with {restoreMana} more Mana."
+  },
+  {
+    "tag": "arcaneDraw",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Arcane break each combat draws {draw} cards."
+  },
+  {
+    "tag": "conduit",
+    "requires": "",
+    "excludes": [
+      "reservoir"
+    ],
+    "textTemplate": "At the start of your turn, recover {restoreStamina} Stamina."
+  },
+  {
+    "tag": "reservoir",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of your turn, restore {restoreMana} Mana."
+  },
+  {
+    "tag": "warmth",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you heal, gain {block} Block."
+  },
+  {
+    "tag": "vigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of your turn, heal {heal}."
+  },
+  {
+    "tag": "sealOfPlenty",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each combat, restore {restoreMana} Mana."
+  },
+  {
+    "tag": "wakingRot",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your attacks apply {crimsonBlight} Crimson Blight."
+  },
+  {
+    "tag": "martyr",
+    "requires": "",
+    "excludes": [
+      "saint"
+    ],
+    "textTemplate": "Whenever you lose HP, gain {block} Block."
+  },
+  {
+    "tag": "saint",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat healing {heal}."
+  },
+  {
+    "tag": "quickHands",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat with {prepared} Prepared."
+  },
+  {
+    "tag": "secondWind",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first card you exhaust each turn draws {draw} card."
+  },
+  {
+    "tag": "honedEdge",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your attacks while Prepared apply {bleed} Bleed."
+  },
+  {
+    "tag": "poisonedPouch",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your attacks while Prepared apply {venom} Venom."
+  },
+  {
+    "tag": "assassin",
+    "requires": "",
+    "excludes": [
+      "shadow"
+    ],
+    "textTemplate": "When an enemy staggers, gain {prepared} Prepared and draw {draw} card."
+  },
+  {
+    "tag": "shadow",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of your turn, gain {block} Block."
   }
 ];

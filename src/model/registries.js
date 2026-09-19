@@ -215,7 +215,9 @@ export function createRegistries(contentBundle) {
   // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
   // rules above are views of these; both are on the registries so a reader can
   // take whichever shape its question is in.
-  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings']) {
+  // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
+  // model/classTree.js as a plain table, like the tree's own companions.
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree']) {
     registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });

@@ -30,7 +30,8 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools } from './model/skills.js';
+import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
+import { awardClassXp } from './model/classTree.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -42,6 +43,7 @@ import {
   rollRuneReward,
   rollCardRewardIds,
   rollSkillDraftIds,
+  rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
@@ -1883,6 +1885,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       classId: run.class,
       attributes: run.attributes,
       skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
+      coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,
@@ -2040,6 +2043,9 @@ async function onCombatEnd(result, combat, enc) {
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
   applySkillXp(registries, run, skillXpReceipt(combat));
+  // The class track (plan phase 5b) is paid by the run's owner, who knows
+  // the door's pool: a won fight, more for a boss; a lost one nothing.
+  awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2091,11 +2097,13 @@ async function onCombatEnd(result, combat, enc) {
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = rollSkillDrafts('boss');
+    const bossClassDrafts = rollClassDrafts();
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
+      classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      cardIds: bossDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -2107,11 +2115,13 @@ async function onCombatEnd(result, combat, enc) {
   // a level the fight bought is offered as a pick from the track's own
   // schools, and while one is on the table the class-card offer is not.
   const drafts = rollSkillDrafts(enc.pool);
+  const classDrafts = rollClassDrafts();
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
+    classDrafts,
     skillDrafts: drafts,
-    cardIds: drafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not
@@ -2144,6 +2154,23 @@ function rollSkillDrafts(pool) {
   return out;
 }
 
+/**
+ * The class drafts the ledger has queued (plan phase 5b): a pick from the
+ * class tree per class level climbed, capped per door like a skill draft; a
+ * level whose tier offers nothing draftable keeps its draft.
+ */
+function rollClassDrafts() {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const row = run.skills && run.skills[classSkillId(run.class)];
+  const out = [];
+  if (!row || !(row.pendingDrafts > 0)) return out;
+  for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
+    const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
+    if (nodeIds.length) out.push({ classId: run.class, level: row.level, nodeIds });
+  }
+  return out;
+}
+
 function beginPendingReward(rewards, { source, after }) {
   run.pendingReward = {
     schemaVersion: 1,
@@ -2153,6 +2180,7 @@ function beginPendingReward(rewards, { source, after }) {
     states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
     chosenCardId: null,
     chosenDraftCardIds: {},
+    chosenDraftNodeIds: {},
   };
   persist();
   return mountPendingReward();

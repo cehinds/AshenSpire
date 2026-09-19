@@ -101,6 +101,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'scripts',
   'equipment',
   'unlocks',
+  'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -558,9 +559,19 @@ function collectContentProblems(bundle, errors = []) {
       }
       if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
       else {
-        for (const key of Object.keys(skill.class)) if (key !== 'xp') err(`balance.skill.class.${key}`, 'Unknown field');
+        for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
         curve(skill.class.xp, 'balance.skill.class.xp');
-        if (skill.class.xp && typeof skill.class.xp === 'object') for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+        if (skill.class.xp && typeof skill.class.xp === 'object') {
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          // The class XP sources (plan phase 5b), each present and non-negative.
+          for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
+        }
+        // The class levels the tree's tiers open at (plan phase 5b): one per
+        // tier, rising, the first at level 1 or above.
+        const tierAt = skill.class.tierAt;
+        if (!Array.isArray(tierAt) || !tierAt.length || tierAt.some((n) => !posInt(n)) || tierAt.some((n, i) => i > 0 && n <= tierAt[i - 1])) {
+          err('balance.skill.class.tierAt', `must be a rising list of positive integer levels, one per tier, got ${JSON.stringify(tierAt)}`);
+        }
       }
     }
   }
@@ -585,6 +596,46 @@ function collectContentProblems(bundle, errors = []) {
       }
     } catch (error) {
       err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
+    }
+  }
+  // THE CLASS TREE (plan phase 5b, content/source/classTree.csv): every row
+  // names a class and a property node, sits in a tier the balance rows open,
+  // a node sits in one class, and the top tier's nodes exclude one another
+  // by a relation row — the subclass is a choice, never a stack.
+  {
+    const rows = Array.isArray(b.classTree) ? b.classTree : [];
+    const classIds = new Set((Array.isArray(b.classes) ? b.classes : []).map((c) => c && c.id));
+    const nodesById = new Map((Array.isArray(b.nodes) ? b.nodes : []).map((n) => [n && n.id, n]));
+    const rootOf = (id) => { let n = nodesById.get(id); let guard = 0; while (n && n.parentId && guard++ < 64) n = nodesById.get(n.parentId); return n ? n.id : null; };
+    const tiers = ((((b.balance || {}).skill || {}).class || {}).tierAt) || [];
+    const tierCount = Array.isArray(tiers) ? tiers.length : 0;
+    const relations = Array.isArray(b.nodeRelations) ? b.nodeRelations : [];
+    const conflicts = (x, y) => relations.some((r) => r && r.relation === 'CONFLICTS_WITH' && ((r.sourceId === x && r.targetId === y) || (r.sourceId === y && r.targetId === x)));
+    const seenNode = new Map();
+    const byClassTier = new Map();
+    rows.forEach((row, i) => {
+      const path = `classTree[${i}]`;
+      if (!row || typeof row !== 'object') { err(path, 'must be { classId, nodeId, tier }'); return; }
+      if (!classIds.has(row.classId)) err(`${path}.classId`, `unknown class '${row.classId}'`);
+      const node = nodesById.get(row.nodeId);
+      if (!node) err(`${path}.nodeId`, `'${row.nodeId}' is not a node`);
+      else if (rootOf(row.nodeId) !== 'property') err(`${path}.nodeId`, `'${row.nodeId}' is not a property node — a tree node confers behaviour`);
+      const tier = Number(row.tier);
+      if (!Number.isInteger(tier) || tier < 1 || (tierCount && tier > tierCount)) err(`${path}.tier`, `must be a tier 1..${tierCount || '?'} (balance.skill.class.tierAt names one level per tier), got ${JSON.stringify(row.tier)}`);
+      if (seenNode.has(row.nodeId)) err(`${path}.nodeId`, `'${row.nodeId}' already sits in class '${seenNode.get(row.nodeId)}' — a node sits in one class`);
+      else seenNode.set(row.nodeId, row.classId);
+      const key = `${row.classId}\u0000${tier}`;
+      if (!byClassTier.has(key)) byClassTier.set(key, []);
+      byClassTier.get(key).push(row.nodeId);
+    });
+    if (tierCount) {
+      for (const [key, ids] of byClassTier) {
+        const [classId, tier] = key.split('\u0000');
+        if (Number(tier) !== tierCount) continue;
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+          if (!conflicts(ids[i], ids[j])) err(`classTree.${classId}`, `tier ${tier} nodes '${ids[i]}' and '${ids[j]}' do not exclude one another — the subclass is a choice: add a CONFLICTS_WITH row in nodeRelations.csv`);
+        }
+      }
     }
   }
   // The class card's leaning (plan phase 5a): a class carrying `favored`

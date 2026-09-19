@@ -320,6 +320,7 @@ const EXPLAINED_CHANGES = {
   zones: 'syncZones projects the zone view of the loadout and deck onto a pre-zones save (plan phase 3a); a projection, re-derived on every write',
   collection: 'syncZones projects the collection view of the deck onto a pre-zones save (plan phase 3a); a projection, re-derived on every write',
   skills: 'a save from before the skill ledger (schema ≤ 7) gains the empty ledger at the migration door (plan phase 4a)',
+  coreTags: 'a save from before the class tree (schema ≤ 8) gains no picks at the migration door (plan phase 5b)',
   hp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   maxHp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   mana: 'pools are re-derived under the current rules',

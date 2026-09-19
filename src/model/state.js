@@ -30,6 +30,7 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
+import { coreTagsProblems } from './classTree.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 
@@ -44,7 +45,7 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 8;
+export const RUN_SCHEMA_VERSION = 9;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -143,6 +144,8 @@ export function createRunState({
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
+    // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
+    coreTags: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -598,6 +601,9 @@ export const RUN_SHAPE = [
   // the migration door from the four legacy fields, no registries needed.
   { key: 'zones', type: 'object' },
   { key: 'collection', type: 'array' },
+  // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
+  // with no picks at the migration door.
+  { key: 'coreTags', type: 'array' },
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
@@ -662,7 +668,13 @@ export function zonesProblems(zones) {
   }
   if (!Array.isArray(zones.passive)) problems.push('zones.passive must be an array of relic ids');
   else zones.passive.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.passive[${i}] must be a relic id`); });
-  for (const key of Object.keys(zones)) if (!['core', 'worn', 'hands', 'passive'].includes(key)) problems.push(`zones.${key} is not a zone (core, worn, hands, passive)`);
+  // The core card's picked tree nodes (plan phase 5b); absent on a projection
+  // written before them, an array of node ids since.
+  if (zones.coreTags !== undefined) {
+    if (!Array.isArray(zones.coreTags)) problems.push('zones.coreTags must be an array of node ids');
+    else zones.coreTags.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.coreTags[${i}] must be a node id`); });
+  }
+  for (const key of Object.keys(zones)) if (!['core', 'coreTags', 'worn', 'hands', 'passive'].includes(key)) problems.push(`zones.${key} is not a zone (core, coreTags, worn, hands, passive)`);
   return problems;
 }
 
@@ -678,13 +690,19 @@ function typeOk(value, type) {
 /** The draft rows a pending offer carries, keyed as the reward menu keys them (model/rewardplan.js rowKey). */
 function pendingDraftRows(pending) {
   const seen = {};
-  return (Array.isArray(pending && pending.rewards && pending.rewards.skillDrafts) ? pending.rewards.skillDrafts : [])
+  const rewards = (pending && pending.rewards) || {};
+  const skill = (Array.isArray(rewards.skillDrafts) ? rewards.skillDrafts : [])
     .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-    .map((d) => ({ key: `skillDraft:${d.skillId}:${(seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1}`, cardIds: d.cardIds }));
+    .map((d) => ({ key: `skillDraft:${d.skillId}:${(seen[`s:${d.skillId}`] = (seen[`s:${d.skillId}`] || 0) + 1) - 1}`, cardIds: d.cardIds, ids: d.cardIds }));
+  // A class draft (plan phase 5b) picks a tree node, keyed by class and ordinal.
+  const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
+    .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
+    .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
+  return [...cls, ...skill];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills } = {}) {
   const problems = [];
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
@@ -695,6 +713,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preSeats && f.key === 'seatOrder') continue;
     if (preZones && (f.key === 'zones' || f.key === 'collection')) continue;
     if (preSkills && f.key === 'skills') continue;
+    if (preCoreTags && f.key === 'coreTags') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -713,6 +732,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   if (Array.isArray(run.collection)) {
     run.collection.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -846,7 +866,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         const chosen = pending.chosenDraftCardIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
         else {
-          const drafts = pendingDraftRows(pending);
+          const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
           for (const [key, cardId] of Object.entries(chosen)) {
             const draft = drafts.find((d) => d.key === key);
             if (!draft || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
@@ -854,6 +874,32 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           }
           for (const draft of drafts) {
             if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
+          }
+        }
+      }
+      if (pending.rewards?.classDrafts !== undefined) {
+        const drafts = pending.rewards.classDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.classDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
+          if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
+        });
+      }
+      if (pending.chosenDraftNodeIds !== undefined) {
+        const chosen = pending.chosenDraftNodeIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
+        else {
+          const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
+          for (const [key, nodeId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d.key === key);
+            if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
           }
         }
       }
@@ -1066,11 +1112,14 @@ export function migrateRunSchema(run) {
   // v7 and older: no skill ledger. Filled HERE with the empty ledger — a run
   // that never recorded a hit has none, and the shape wants the object.
   const preSkills = [1, 2, 3, 4, 5, 6, 7].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, ${RUN_SCHEMA_VERSION})`);
+  // v8 and older: no class tree picks. Filled HERE with none (plan phase 5b).
+  const preCoreTags = [1, 2, 3, 4, 5, 6, 7, 8].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
+  if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
   // The projection is re-derived at every load. A schema-7 save that carried
   // zones disagreeing with its legacy fields (an edit by hand; serializeRun

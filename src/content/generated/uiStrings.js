@@ -248,6 +248,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.classDraft.title",
+    "extends": "",
+    "short": "{class} · level {level}",
+    "full": "A class level: pick one node of the class tree.",
+    "tip": ""
+  },
+  {
+    "id": "reward.classDraft.joins",
+    "extends": "",
+    "short": "<b>{name}</b> joins your class card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.classDraft.spent",
+    "extends": "",
+    "short": "This class pick is no longer open. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.kind.flask",
     "extends": "",
     "short": "Flask",

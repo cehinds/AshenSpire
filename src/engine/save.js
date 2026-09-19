@@ -44,6 +44,7 @@ import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js'
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { classTreeRows } from '../model/classTree.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -101,6 +102,13 @@ function pendingRewardReferenceProblems(pending, registries) {
   const problems = [];
   for (const cardId of rewards.cardIds || []) {
     if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  for (const draft of rewards.classDrafts || []) {
+    const tree = new Set(classTreeRows(registries, draft && draft.classId).map((row) => row.nodeId));
+    if (!draft || !registries.classes.has(draft.classId)) problems.push(`class draft class '${draft && draft.classId}' is unknown`);
+    for (const nodeId of (draft && draft.nodeIds) || []) {
+      if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
+    }
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);

@@ -192,6 +192,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
     skills: p.skills ? structuredClone(p.skills) : {},
+    coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,

@@ -28,7 +28,7 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
 
 /**
  * A row's KEY is what its state is kept under (`states[key]`): the kind for
@@ -39,7 +39,11 @@ export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'ski
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}` : kind);
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
+  : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}` : kind);
+
+/** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
+export const pickIds = (row) => (Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -56,6 +60,17 @@ const KINDS = {
   smithingStone: {
     present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
     row: (r) => ({ ...r.smithingStoneReceipt }),
+    blocked: () => null,
+  },
+  classDraft: {
+    // A class level's pick from the class tree (plan phase 5b): one row per
+    // draft, keyed by class and ordinal, a choice among tree NODES.
+    present: (r) => Array.isArray(r.classDrafts) && r.classDrafts.some((d) => d && Array.isArray(d.nodeIds) && d.nodeIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.classDrafts.filter((d) => d && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
+        .map((d) => ({ classId: d.classId, ordinal: (seen[d.classId] = (seen[d.classId] || 0) + 1) - 1, level: d.level, nodeIds: d.nodeIds.slice(), choice: d.nodeIds.length > 1 }));
+    },
     blocked: () => null,
   },
   skillDraft: {
@@ -151,9 +166,10 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (row.kind === 'card' || row.kind === 'skillDraft') {
-        const cardId = row.choice ? row.cardIds[pick(row.cardIds.length) % row.cardIds.length] : row.cardIds[0];
-        take.push({ ...row, cardId });
+      if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
+        const ids = pickIds(row);
+        const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
+        take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id } : { cardId: id }) });
       } else {
         take.push(row);
       }
@@ -188,7 +204,7 @@ export function rewardClaimStatus(plan, states = {}) {
     skipped: count('skipped'),
     blocked: count('blocked'),
     available: count('available'),
-    requiredChoice: choice ? Object.freeze({ kind: choice.kind, key: choice.key, count: choice.cardIds.length }) : null,
+    requiredChoice: choice ? Object.freeze({ kind: choice.kind, key: choice.key, count: pickIds(choice).length }) : null,
     rows: Object.freeze(rows),
   });
 }

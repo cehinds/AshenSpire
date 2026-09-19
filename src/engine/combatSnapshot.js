@@ -69,6 +69,7 @@ export function serializeCombatSnapshot(combat) {
     // far (plan phase 4a): a fight resumed mid-way keeps what it earned.
     skills: combat.skills,
     skillXp: combat.skillXp,
+    coreTags: combat.coreTags,
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -128,6 +129,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // the gates read level 0 and the receipt starts here, as createCombat's do.
     skills: saved.skills ?? {},
     skillXp: saved.skillXp ?? {},
+    coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;

@@ -73,7 +73,11 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: { base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5 },
-    class: { xp: { base: 60, growth: 1.25, roundTo: 5 } },
+    // The class track (plan phase 5b): a slower curve; paid by the run's
+    // owner for a won fight, more for a boss (the owner knows the door's
+    // pool; the combat does not), and per quest once phase 10a's event
+    // exists. `tierAt` is the class level each tree tier opens at.
+    class: { xp: { base: 60, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5] },
     // The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
     // `draftSize` cards of the track's schools; at most `draftsPerCombat`
     // drafts per track per reward door, the rest queue; a rarity is drafted
@@ -1082,6 +1086,84 @@ export const balance = {
   // amount of its own. Bound in variableBindings.csv; read into the generated
   // framework data at build.
   costs: { action: 1, stamina: 1, mana: 1 },
+  // The class tree's numbers (plan phase 5b): one row per node, read by its
+  // variable bindings; the tree itself is content/source/classTree.csv.
+  classTree: {
+    ironFooting: {
+        block: 3
+    },
+    bloodTempo: {
+        draw: 1
+    },
+    ashenReserve: {
+        restoreStamina: 1
+    },
+    grimHarvest: {
+        heal: 3
+    },
+    warlord: {
+        strength: 2
+    },
+    bulwarkKing: {
+        block: 3
+    },
+    attunedMind: {
+        draw: 1
+    },
+    starlitFocus: {
+        starstoneCharge: 1
+    },
+    lodestarCap: {
+        restoreMana: 1
+    },
+    arcaneDraw: {
+        draw: 2
+    },
+    conduit: {
+        restoreStamina: 1
+    },
+    reservoir: {
+        restoreMana: 1
+    },
+    warmth: {
+        block: 2
+    },
+    vigil: {
+        heal: 1
+    },
+    sealOfPlenty: {
+        restoreMana: 1
+    },
+    wakingRot: {
+        crimsonBlight: 1
+    },
+    martyr: {
+        block: 2
+    },
+    saint: {
+        heal: 5
+    },
+    quickHands: {
+        prepared: 1
+    },
+    secondWind: {
+        draw: 1
+    },
+    honedEdge: {
+        bleed: 1
+    },
+    poisonedPouch: {
+        venom: 1
+    },
+    assassin: {
+        prepared: 1,
+        draw: 1
+    },
+    shadow: {
+        block: 3
+    }
+},
+
   powers: {
     forsakenMedallion: { poiseDamage: 4 },
     starstoneShard: { starstoneCharge: 1, restoreMana: 1 },

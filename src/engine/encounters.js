@@ -19,6 +19,7 @@ import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/g
 import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
 import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
+import { classDraftPool } from '../model/classTree.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -145,6 +146,23 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
       continue;
     }
     picks.push(rng.pick('cardRewards', options));
+  }
+  return picks;
+}
+
+/**
+ * rollClassDraftIds(registries, rng, { classId, coreTags, level, size }) →
+ * distinct tree node ids for one class draft (plan phase 5b): the class's
+ * draftable nodes (model/classTree.js classDraftPool), `balance.skill.draftSize`
+ * picks on the 'cardRewards' stream. An empty pool draws nothing.
+ */
+export function rollClassDraftIds(registries, rng, { classId, coreTags = [], level = 0, size }) {
+  const count = Number.isInteger(size) ? size : (registries.balance.skill || {}).draftSize;
+  const pool = classDraftPool(registries, classId, coreTags, level);
+  if (!pool.length || !(count > 0)) return [];
+  const picks = [];
+  while (picks.length < Math.min(count, pool.length)) {
+    picks.push(rng.pick('cardRewards', pool.filter((id) => !picks.includes(id))));
   }
   return picks;
 }
