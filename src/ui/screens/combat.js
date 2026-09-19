@@ -66,7 +66,7 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
-import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -1616,7 +1616,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let ghostWidth = 0;
     let ghostHeight = 0;
     let lastConfirmTap = 0;
-    let selectedThisPress = false;
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
@@ -1858,7 +1857,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
-      if (selectedThisPress) { selectedThisPress = false; return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       const now = performance.now();
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
@@ -1870,13 +1868,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     el.appendChild(holdProgress);
     return armHold(el, {
       ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
-      // A hand card is dragged to play it, so the press must prove it is not a
-      // drag before it shows a fill. Without this the first 12 px of every
-      // drag-to-play flashed a hold that then died under the thumb.
-      settleMs: HOLD_DRAG_SETTLE_MS,
-      onHoldStart: () => { selectedThisPress = selected !== inst.instanceId && selfArm !== inst.instanceId; if (!busy && affordable && selectedThisPress) select(); el.dispatchEvent(new CustomEvent('cardholdstart')); },
+      // A card hold is an alternate input for the same selection flow as a tap,
+      // not a delayed second route that silently commits before the player has
+      // chosen a target. Paint from pointer-down; crossing the shared movement
+      // slop still cancels the hold and lets the drag path below continue.
+      onHoldStart: () => { el.dispatchEvent(new CustomEvent('cardholdstart')); },
       onTap: tap, tapOnEarlyRelease: true,
-      onConfirm: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0 ? confirm() : tap(),
+      onConfirm: () => {
+        if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
+        if (busy || !affordable || dragging) return;
+        if (pv.needsTarget || dragTargetMode === 'all') {
+          select();
+          focusTargeting();
+          return;
+        }
+        playCard(inst.instanceId, null);
+      },
     });
   }
 
