@@ -62,7 +62,6 @@ import {
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { levelForView } from '../../model/cardFields.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
@@ -912,7 +911,7 @@ export function mountCustomize(app, {
         // mapping is one line in src/model/cardFields.js rather than a second
         // authored table per view — views x levels x surfaces is the shape
         // this design exists to avoid.
-        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: levelForView(state.equipmentChoiceView) });
+        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: 'glance' });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
         face.addEventListener('cardinspectionselect', () => {
