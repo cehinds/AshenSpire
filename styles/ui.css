@@ -987,8 +987,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-tabs .set-subtab { width: 100%; min-width: 0; text-align: left; white-space: normal; font-size: 1.1rem; }
 [data-settings-host] .set-subtab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 [data-settings-host] .set-panel .set-subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
-.settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
-.settings-modal .set-subtabs > button { flex: 1 0 auto; }
+[data-settings-host] .set-subtabs { display: flex; flex-wrap: wrap; }
+[data-settings-host] .set-subtabs > button { flex: 1 0 auto; }
 .set-section-select, .set-topic-select { display: none; }
 /* Settings has a bounded three-row navigation band on every device. */
 :root [data-settings-host] .set-railed.set-railed[data-cat-nav='selector'] > .set-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .25rem .7rem; gap: .4rem; }
@@ -1071,7 +1071,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-config-actions { flex-wrap: nowrap; gap: .4rem; }
 [data-settings-host] .set-config-search { flex: 1 1 12rem; min-width: 0; }
 [data-settings-host] .set-tabs .set-subtab { min-height: 2.8rem; padding-block: .45rem; }
-.settings-modal .set-tabs { gap: .35rem; }
+[data-settings-host] .set-tabs { gap: .35rem; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .as-catnav-toggle { display: none; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-row: 1; padding: .6rem; gap: .4rem; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs > .set-tab { width: 100%; min-width: 0; padding: .5rem .25rem; text-align: center; }
@@ -1088,8 +1088,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
 @media (max-width: 600px) {
   .modal.settings-modal[data-size='lg'] { width: 100%; border-radius: var(--r-3); }
-  .settings-modal .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
-  .settings-modal .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
+  [data-settings-host] .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
+  [data-settings-host] .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
 }
 /* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
    CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector

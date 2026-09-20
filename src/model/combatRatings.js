@@ -102,18 +102,18 @@ export function resolveCombatRatings(settings, bundle) {
     for (const key of path.slice(0, -1)) dest = dest[key] ||= {};
     dest[path.at(-1)] = value;
   }
-  // A status weight is written ONE FIELD AT A TIME, and only the seven statuses
-  // in `combatRatingDefaults.statuses` arrive with both fields already present.
-  // Tuning Poise for any other status therefore created `{ poise: 0.5 }` with
-  // no `ward` — which combatRatingProblems reads as a broken config and reports
-  // as "Invalid status resistance weights" forever, on a panel the player left
-  // in a perfectly reasonable state. The pair is the unit: whichever side was
-  // not written falls back to its authored weight, or to 0 (unresisted) for a
-  // status the defaults never named.
-  for (const [id, weights] of Object.entries(config.statuses)) {
-    for (const field of ['poise', 'ward']) {
-      if (!Number.isFinite(weights[field])) weights[field] = combatRatingDefaults.statuses[id]?.[field] || 0;
-    }
+  // A status weight is written ONE FIELD AT A TIME, and the clone above carries
+  // both fields only for the seven statuses `combatRatingDefaults.statuses`
+  // names. Tuning Poise for any other status therefore created `{ poise: 0.5 }`
+  // with no `ward` — which combatRatingProblems reads as a broken config and
+  // reports as "Invalid status resistance weights" forever, on a panel the
+  // player left in a perfectly reasonable state. The pair is the unit, so a
+  // side nobody wrote reads 0: unresisted, which is exactly what the row's own
+  // note promises for a status with no weights. A named status never reaches
+  // this — its authored weight came in with the clone and is already finite —
+  // so there is no second home for the defaults here.
+  for (const weights of Object.values(config.statuses)) {
+    for (const field of ['poise', 'ward']) if (!Number.isFinite(weights[field])) weights[field] = 0;
   }
   return config;
 }
