@@ -1,0 +1,42 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "encoding": {
+    "format": "WebP",
+    "quality": 90,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  },
+  "assets": [
+    {
+      "variant": "desktop",
+      "dimensions": [
+        1586,
+        992
+      ],
+      "master": "masters/carry-herald-desktop.png",
+      "deliverable": "deliverables/carry-herald-desktop.webp",
+      "integration_destination": "assets/prologue/carry-herald-desktop.webp",
+      "master_bytes": 2876346,
+      "webp_bytes": 480148,
+      "reduction_percent": 83.3,
+      "master_sha256": "401fcd102cad1b9c823d05a066a9e141189a13ead551e999b4fa6dd42696bcdd",
+      "webp_sha256": "e5a854d02fb1400fcb73668dfa59f560c8d416eae8405dd40e409d6ad59f6c89"
+    },
+    {
+      "variant": "mobile",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "master": "masters/carry-herald-mobile.png",
+      "deliverable": "deliverables/carry-herald-mobile.webp",
+      "integration_destination": "assets/prologue/carry-herald-mobile.webp",
+      "master_bytes": 2883623,
+      "webp_bytes": 491844,
+      "reduction_percent": 82.9,
+      "master_sha256": "d2be8d8d08d8bd4653bd873fcd0313e527ccf597e844e60bfe9dcb68ad250c23",
+      "webp_sha256": "e5c2b6b70912c740abc69a761daefc894b52a57e591fa0a1025d0bb40da62d63"
+    }
+  ]
+}

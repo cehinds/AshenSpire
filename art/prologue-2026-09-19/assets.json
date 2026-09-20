@@ -9,16 +9,16 @@
     },
     {
       "file": "assets/prologue/carry-herald-desktop.webp",
-      "width": 1280,
-      "height": 801,
-      "bytes": 184364,
+      "width": 1586,
+      "height": 992,
+      "bytes": 480148,
       "alpha": false
     },
     {
       "file": "assets/prologue/carry-herald-mobile.webp",
-      "width": 768,
-      "height": 1365,
-      "bytes": 187604,
+      "width": 941,
+      "height": 1672,
+      "bytes": 491844,
       "alpha": false
     },
     {
@@ -169,5 +169,5 @@
       "alpha": false
     }
   ],
-  "totalBytes": 4720132
+  "totalBytes": 5320156
 }
