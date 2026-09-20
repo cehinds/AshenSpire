@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1229",
+    "id": "pr-1233",
     "date": "2026-09-20",
     "group": "2026-09-20",
-    "summary": "Picking a node on the map brings it to the middle of the screen",
-    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
-    "build": "0.7.1.335",
-    "pullRequest": 1229,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
+    "summary": "The merchant shows four cards at once, and a card is no longer a small picture in a big empty box",
+    "detail": "Every shelf at the merchant — cards, armaments, weapon arts, relics, flasks and what he will buy — now lays its stock out four across and wraps below, instead of one or two per row with the rest behind a scroll. An armament for sale is the card itself: the panel that used to stand around it, twice its width and mostly empty, now appears only under the pointer, under keyboard focus, or on the offer being described beside the shelf. The offers column takes the room a shelf of cards needs, and the description column keeps a readable minimum. On a phone the same shelves show two across at the card's full size. Every card on a shelf is the same width, including the last row. The deck list a smith shows when seating a card follows the same rule.",
+    "build": "0.7.1.337",
+    "pullRequest": 1233,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
     "id": "pr-1225",
