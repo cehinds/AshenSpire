@@ -9593,6 +9593,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Asked without attributes, the question keeps its old answer.
     assert(canEquip(REG, 'rightHand', { inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0, itemId: 'greatsword' }).ok,
       'a caller that names no attributes is not judged by them');
+    // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
+    // every armour minimum unenforced while the table said otherwise.
+    const plate = canEquip(REG, 'armor', {
+      inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0,
+      itemId: 'wayfarerPlate', attributes: weak.attributes,
+    });
+    assert(!plate.ok && /STR/.test(plate.reason), `the armour minimum is enforced as well: ${plate.reason}`);
+    // An absent attribute is unknown, never a silent zero.
+    const blind = canEquip(REG, 'armor', {
+      inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0,
+      itemId: 'wayfarerPlate', attributes: {},
+    });
+    assert(/you have unknown/.test(blind.reason), `a missing stat reads as unknown: ${blind.reason}`);
   });
 
 

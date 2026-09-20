@@ -3164,13 +3164,23 @@ export function canEquip(registries, slotId, ctx) {
   // the candidate and the attributes to judge it by; a bare "may this slot
   // change" question keeps its old answer.
   if (ctx.itemId && ctx.attributes) {
-    const piece = ((registries.equipment || {}).armaments || []).find((row) => row.id === ctx.itemId);
+    // BOTH HALVES OF THE WARDROBE. equipmentRequirements.csv carries armour
+    // rows (the plate asks Strength, the vestments Wisdom) as well as
+    // armaments, and a gate that searched only the weapons would have left
+    // every armour minimum unenforced while reading as though it enforced
+    // them — worse than no gate, because the table says otherwise.
+    const eq = registries.equipment || {};
+    const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
+      || (eq.armour || []).find((row) => row.id === ctx.itemId);
     if (piece) {
       const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, { itemUpgradeLevels: ctx.itemUpgradeLevels || {} });
       if (!receipt.ok) {
         const shortOf = receipt.failures[0];
         const label = (registries.attributes.get(shortOf.attributeId) || {}).shortLabel || shortOf.attributeId;
-        return { ok: false, reason: `${piece.name || piece.id} requires ${label} ${shortOf.required} (you have ${shortOf.actual === null ? 0 : shortOf.actual})` };
+        // An absent attribute is UNKNOWN, not zero: a caller that hands in a
+        // partial allocation is not a character with nothing in that stat.
+        const have = shortOf.actual === null ? 'unknown' : shortOf.actual;
+        return { ok: false, reason: `${piece.name || piece.id} requires ${label} ${shortOf.required} (you have ${have})` };
       }
     }
   }

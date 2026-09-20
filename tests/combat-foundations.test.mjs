@@ -46,7 +46,7 @@ test('native two-handed grip requires ceil(1.5x STR) only when one-handed', () =
   const before = JSON.stringify(equipment);
   assert.throws(() => deriveGear(equipment), new RegExp(`requires ${oneHanded} strength`));
   assert.equal(JSON.stringify(equipment), before);
-  equipment.hands.mainHand.grip = 'twoHand'; equipment.attributes.strength = 12;
+  equipment.hands.mainHand.grip = 'twoHand'; equipment.attributes.strength = authored;
   assert.equal(deriveGear(equipment).sources.mainHand.grip, 'twoHand');
   equipment.items[0].requirements.strength = 13;
   equipment.hands.mainHand.grip = 'oneHand'; equipment.attributes.strength = 19;
