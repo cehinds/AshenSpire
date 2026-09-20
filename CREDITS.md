@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Opening sequence art (2026-09-19)
+
+Twelve original desktop/portrait paintings and four transparent class
+adventurers generated with OpenAI's built-in Image Generation tool using the
+project's intro and Crownfall paintings and the owner's weapon-placement
+annotation as references. Source/provenance: `art/prologue-2026-09-19/prompts.json`.
+Runtime art: `assets/prologue/`, compressed WebP with alpha preserved. Original
+PNG masters remain in the author's local art archive. No third-party game
+assets were used and no third-party asset license is claimed.
+
 Every third-party asset shipped in this repository is listed here with its source and license. **A PR that adds an asset without a row in this file does not merge.**
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
