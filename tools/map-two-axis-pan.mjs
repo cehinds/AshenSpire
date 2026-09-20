@@ -110,17 +110,24 @@ try {
     // two-axis mode the horizontal camera is `scrollLeft` rather than the
     // viewBox — which is exactly the axis a `scrollLeft = 0` inside the glide
     // used to throw away, landing the act in the right half of the screen on
-    // every pick. Start from the far right so a camera that does nothing
-    // horizontally cannot pass by luck.
-    await evaluate(`(() => {
+    // every pick. THE NODE IS THE RIGHTMOST LIT ONE AND THE CAMERA STARTS AT THE
+    // FAR LEFT: the two ends of the axis, so the pick has the longest horizontal
+    // journey this act affords and a camera that does nothing across cannot pass
+    // by luck. Taking `.map-node.reachable` in document order would take
+    // whichever column the generator happened to emit first, which on some seeds
+    // is already near the middle — a gate whose strength varies with the seed is
+    // not one.
+    const pickedNode = await evaluate(`(() => {
       const port = document.querySelector('.map-scroll');
-      port.scrollLeft = Math.max(0, port.scrollWidth - port.clientWidth);
+      port.scrollLeft = 0;
       port.dispatchEvent(new Event('scroll'));
+      const lit = [...document.querySelectorAll('.map-node.reachable')];
+      const centre = (n) => { const r = n.getBoundingClientRect(); return r.left + r.width / 2; };
+      const target = lit.reduce((best, n) => (centre(n) > centre(best) ? n : best), lit[0]);
       // A <g> is not an HTMLElement: there is no .click() on it, and the board
       // listens for a plain bubbling click.
-      document.querySelector('.map-node.reachable')
-        .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      return true;
+      target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      return { id: target.dataset.node, lit: lit.length };
     })()`);
     await wait(1200);
     const picked = await evaluate(`(() => {
@@ -154,6 +161,7 @@ try {
         trayOpen: !!reveal && rr.height > 0,
         dx: (nr.left + nr.width / 2) - (pr.left + right) / 2,
         dy: (nr.top + nr.height / 2) - (pr.top + floor) / 2,
+        node: node.dataset.node,
         scrollLeft: port.scrollLeft,
         maxLeft: port.scrollWidth - port.clientWidth,
         covered: rr ? Math.round(rr.height) : 0,
@@ -171,11 +179,12 @@ try {
       penMovesBothAxes: moves(evidence.pen),
       reachableNodeRemains: evidence.nodeReachable,
       selectionOpensTray: picked.selected && picked.trayOpen,
+      selectionTookTheNodePicked: picked.selected && picked.node === pickedNode.id,
       selectionCentersHorizontally: picked.selected && Math.abs(picked.dx) <= 2,
       selectionCentersVertically: picked.selected && Math.abs(picked.dy) <= 2,
     };
     const pass = Object.values(checks).every(Boolean);
-    rows.push({ viewport: viewport.name, pass, checks, evidence: { ...evidence, picked } });
+    rows.push({ viewport: viewport.name, pass, checks, evidence: { ...evidence, pickedNode, picked } });
 
     if (WRITE_SHOTS) {
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);

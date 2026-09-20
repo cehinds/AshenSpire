@@ -289,6 +289,7 @@ jobs:
   #   shotguard-probe           26s
   #   startup-gate              72s
   #   screenreach --only         32s
+  #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
   # plus checkout and node setup. Against that: #720's regression sat undetected
   # across two promotions and cost three dispatched 3-OS matrices to find.
   browser-gates:
@@ -325,6 +326,18 @@ jobs:
 
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+      # THE MAP CAMERA MOVES ON BOTH AXES — the player's hand on it, and the
+      # board's own hand when a pick opens the tray. #1229 landed here because
+      # the second half was measurable and unmeasured: the glide wrote
+      # `scrollLeft = 0`, which is the vertical-only camera's honest answer and
+      # the two-axis camera's far-left pan, and every pick threw the act into
+      # the right half of the screen. The tool is a gate only where something
+      # runs it, and ci.yml has been dispatch-only since 2026-08-01, so this is
+      # the door. `--no-screenshots` because the writing arm would dirty
+      # docs/preview/ in a tree the `reproducible` job diffs.
+      - name: Picking a map node brings it to the middle, on both axes
+        run: node tools/verdict.mjs -- node tools/map-two-axis-pan.mjs --no-screenshots
 
       # SCREENREACH IS DELIBERATELY NOT HERE, AND THIS IS THE RETRACTION OF MY
       # OWN STEP RATHER THAN A GATE BEING SWITCHED OFF.
