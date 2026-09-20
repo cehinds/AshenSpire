@@ -67,8 +67,8 @@ def bind(manifest):
     data['sets'].update(additive['sets'])
     data['bindings'] = [b for b in data['bindings'] if b['setId'] not in owned] + additive['bindings']
     assert all(data['motionProfiles'][k] == v for k, v in original_other_profiles.items())
-    (PACK / 'runtime-additions.json').write_text(json.dumps(additive, indent=2) + '\n', encoding='utf-8')
-    path.write_text(json.dumps(doc, indent=2) + '\n', encoding='utf-8')
+    (PACK / 'runtime-additions.json').write_text(json.dumps(additive, indent=2) + '\n', encoding='utf-8', newline='\n')
+    path.write_text(json.dumps(doc, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(f'Bound {len(expected)} appearances / {len(additive["bindings"])} catalog entries. Reverse hand order retains fallback.')
 
 if __name__ == '__main__':

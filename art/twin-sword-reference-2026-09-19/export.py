@@ -124,8 +124,8 @@ def main():
                              'authoredOrder': {'right': 'straightSword', 'left': 'katana'},
                              'fallbackOrder': {'right': 'katana', 'left': 'straightSword'}},
                 'generator': 'OpenAI built-in image_gen'}
-    (PACK / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-    (PACK / 'data.js').write_text('window.TWIN_SWORD_ART = ' + json.dumps(manifest) + ';\n', encoding='utf-8')
+    (PACK / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
+    (PACK / 'data.js').write_text('window.TWIN_SWORD_ART = ' + json.dumps(manifest) + ';\n', encoding='utf-8', newline='\n')
     print(f'Coverage: {len(groups)}/{len(plan)} appearances, {len(outfits)} catalog entries.', flush=True)
     if '--bind' in sys.argv:
         from bind import bind

@@ -36,5 +36,5 @@ for group in manifest['groups']:
             assert error <= 0.500001, (group['id'], pose, error)
             maximum_anchor_error = max(maximum_anchor_error, error)
     reports.append({'id': group['id'], 'frames': 16, 'alphaExact': True, 'sourceEdgesClear': True, 'maxAnchorErrorPixels': maximum_anchor_error})
-(PACK / 'validation.json').write_text(json.dumps({'appearanceCount': 32, 'catalogEntries': 35, 'frames': 512, 'groups': reports}, indent=2) + '\n', encoding='utf-8')
+(PACK / 'validation.json').write_text(json.dumps({'appearanceCount': 32, 'catalogEntries': 35, 'frames': 512, 'groups': reports}, indent=2) + '\n', encoding='utf-8', newline='\n')
 print('PASS: 32 sources / 512 PNG-WebP pairs, exact alpha, shared scale, anchors within half a pixel, transparent source edges, complete catalog.')
