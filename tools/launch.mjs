@@ -153,7 +153,10 @@ if (web.status !== 0) process.exit(web.status || 1);
 
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.
-  console.log(`launch: OK — ${landed + landedMobile}/${aliases.length + mobileAliases.length} current-build aliases refreshed (full + mobile).`);
+  // Both editions counted in one ratio; the noun and the full stop are what
+  // tools/verdict.mjs admits, so the edition note goes on the line before.
+  console.log(`launch: full ${landed}/${aliases.length}, mobile ${landedMobile}/${mobileAliases.length}`);
+  console.log(`launch: OK — ${landed + landedMobile}/${aliases.length + mobileAliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
 

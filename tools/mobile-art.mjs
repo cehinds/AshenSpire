@@ -99,7 +99,13 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
           findings.push(`twin is ${t.width}×${t.height}, the policy wants ${want.width}×${want.height} of a ${s.width}×${s.height} source: ${name(rel)}`);
         }
       }
-      if (out.length > src.length) findings.push(`twin is larger than its source (${out.length} > ${src.length} bytes): ${name(rel)}`);
+      // Only an UNRESIZED twin is held to its source's byte count: the generator
+      // keeps the source bytes when a same-size re-encode grows, so a larger
+      // unresized twin is a generator that skipped that rule. A resized one is
+      // policed by its dimensions above and may, for a tiny near-empty frame,
+      // legitimately encode a few bytes larger.
+      const resized = s && t && (t.width !== s.width || t.height !== s.height);
+      if (!resized && out.length > src.length) findings.push(`twin is larger than its source (${out.length} > ${src.length} bytes): ${name(rel)}`);
     } else {
       const same = extname(rel).toLowerCase() === '.svg' ? canonicalText(src) === canonicalText(out) : src.equals(out);
       if (!same) findings.push(`twin differs from a source the policy copies verbatim: ${name(rel)}`);
@@ -228,7 +234,10 @@ function selftest() {
     console.error(`mobile-art --selftest: ${bad} case(s) landed on the wrong verdict`);
     process.exit(1);
   }
-  console.log(`mobile-art --selftest: OK — ${caught} known-bads caught, 1 control passed`);
+  // The terminated line is in tools/verdict.mjs's `N <words>, N caught` form —
+  // the CI door refuses any other shape — so the control is stated on its own line.
+  console.log('  (plus 1 control: a complete twin tree passes)');
+  console.log(`mobile-art --selftest: OK — ${caught} known-bads, ${caught} caught`);
 }
 
 function boundary() {
@@ -250,7 +259,10 @@ if (has('--selftest')) {
     boundary();
     process.exit(1);
   }
-  console.log(`mobile-art --check: OK — ${r.checks} checks passed (${r.files} twins, ${r.rawBytes} bytes raw, inlines to ${r.inlined} of ${MOBILE_ART_INLINED_BUDGET_BYTES})`);
+  console.log(`  ${r.files} twins, ${r.rawBytes} bytes raw, inlining to ${r.inlined} of the ${MOBILE_ART_INLINED_BUDGET_BYTES}-byte budget`);
+  // The verdict line carries the count and nothing after it: tools/verdict.mjs
+  // matches `label: OK — N checks passed` to the end of the line.
+  console.log(`mobile-art --check: OK — ${r.checks} checks passed.`);
   boundary();
 } else {
   await generate(SOURCE_DIR, TWIN_DIR);

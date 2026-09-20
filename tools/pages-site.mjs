@@ -404,11 +404,16 @@ function assemble(outDir, keep) {
       // (readGitArtifact hydrates and verifies the LFS pointer), served beside
       // the full file, proven the same way below. `mobileBytes` is the fact
       // every page reads to decide whether to offer the second link.
-      let mobileHtml = null;
-      // stderr is dropped on purpose: a build that predates the edition is the
-      // expected case, not a message to print.
-      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT); } catch { mobileHtml = null; }
-      if (mobileHtml) {
+      // ONLY THE EXISTENCE PROBE IS GUARDED. A build that predates the edition
+      // is the expected case (stderr dropped, nothing printed); a build that HAS
+      // the file and cannot hydrate it — an unfetched LFS object, a size or
+      // SHA-256 mismatch — is a failure readGitArtifact throws, and it must
+      // take the run down rather than publish the build without its mobile
+      // link and call that "predates".
+      let hasMobile = true;
+      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
+      if (hasMobile) {
+        const mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
         mkdirSync(join(dir, 'mobile'), { recursive: true });
         writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
         if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${branch}/${b.ordinal}: written mobile build differs from git blob`);
@@ -416,11 +421,18 @@ function assemble(outDir, keep) {
         checks++;
       }
       // Detail belongs to this exact build, not main's potentially older art.
+      // The tiles are resolved against the page's own URL (mapDetail.js reads
+      // document.baseURI), so the mobile page at mobile/ needs its own copy
+      // beside it or every tile 404s and the hosted mobile build falls back
+      // to the low-detail map while the full one beside it shows detail.
       const detailFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'map-detail']).toString('utf8').trim().split('\n').filter(Boolean);
       for (const file of detailFiles) {
-        const destination = join(dir, file);
-        mkdirSync(dirname(destination), {recursive:true});
-        writeFileSync(destination, gitBuf(['show', `${b.sha}:${file}`]));
+        const tile = gitBuf(['show', `${b.sha}:${file}`]);
+        for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
+          const destination = join(base, file);
+          mkdirSync(dirname(destination), {recursive:true});
+          writeFileSync(destination, tile);
+        }
       }
       writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
