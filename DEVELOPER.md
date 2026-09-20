@@ -9,6 +9,12 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+Install Git LFS before cloning, or run `git lfs install` and `git lfs pull`
+in an existing checkout. The three generated standalone HTML aliases use LFS
+because the full artwork exceeds GitHub's regular-file size limit. Source art
+stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
+CI hydrates these files, and historical build readers verify their content hashes.
+
 `node tools/launch.mjs --build-only` produces the standalone aliases and an
 external-art web edition in `build/web/`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described

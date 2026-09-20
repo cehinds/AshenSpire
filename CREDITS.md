@@ -203,6 +203,10 @@ to WebP at quality 90 for the menu's separate background layer.
 
 Thirty-one original atlas edits generated with the built-in image_gen tool from the project's approved Reaver motion and existing class/outfit references. Full prompts and PNG masters are in `art/greatsword-outfits-2026-09-19/`; WebP exports cover 32 appearances including the unchanged approved Reaver. Three armor aliases reuse catalog-authorized artwork. No third-party downloads or asserted CC license.
 
+## Sword and shield outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generated with the built-in image_gen tool using the project's class/outfit references. Full prompts, PNG masters and adaptive extraction metadata are retained in `art/sword-shield-outfits-2026-09-19/`, including `prompts-no-aura.json`. The 512 runtime WebPs cover 32 appearances and 35 armor entries. Canonical right-sword/left-shield paintings are shared by reversed hand selectors; no separately painted hand swap is claimed. No third-party artwork was downloaded and no third-party license is claimed.
+
 ### Shared armor inventory art (2026-09-19)
 Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
 

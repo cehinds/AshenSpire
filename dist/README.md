@@ -1,5 +1,10 @@
 # dist — the standalone build
 
+The three current standalone HTML files are stored through Git LFS. Use GitHub's
+download button or a hydrated checkout (`git lfs pull`) to obtain the playable
+file; the small LFS pointer shown by raw Git commands is not the game. Once
+downloaded, the complete HTML still plays offline without Git or other tools.
+
 **There are two shapes of this build now, and this directory holds one of them.**
 `tools/bundle.mjs` writes the consolidated single file by default and the
 de-inlined one with `--external-art`:

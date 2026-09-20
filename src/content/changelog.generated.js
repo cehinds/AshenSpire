@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1212",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Sword and shield now share the approved motion across every class and armour",
+    "detail": "All four classes and 35 armour entries select their own appearance from 32 painted suites when equipping a sword and shield. The eleven-step attack uses the aura-free buff pose, holds ATK05, then returns through defensive stance to Ready. Defend, hurt, cast, buff, stances, portrait and conversation remain separately configurable. The labeled gallery shows the same sequence. The complete offline build uses large-file storage to retain the approved artwork without reducing its quality.",
+    "build": "0.7.1.310",
+    "pullRequest": 1212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1212"
+  },
+  {
     "id": "pr-1211",
     "date": "2026-09-19",
     "group": "2026-09-19",
