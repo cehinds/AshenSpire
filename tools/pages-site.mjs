@@ -30,6 +30,7 @@
 // VERDICT (tools/verdict.mjs form): "pages-site: OK — N checks passed", where a
 // check is one build page proven byte-identical to its git blob, plus one per
 // index page proven to link every build it lists.
+import { readGitArtifact } from './git-artifact.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -334,6 +335,10 @@ function assemble(outDir, keep) {
   execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
   try { execFileSync('tar', ['-xf', archive, '-C', outDir]); }
   finally { rmSync(tmp, { recursive: true, force: true }); }
+  // git archive preserves LFS pointers; hydrate the three downloadable aliases.
+  for (const artifact of ['AshenSpire.html', 'build/AshenSpire.html', 'dist/AshenSpire.html']) {
+    if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
+  }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   writeFileSync(join(outDir, '.nojekyll'), '');
 
@@ -342,7 +347,7 @@ function assemble(outDir, keep) {
   for (const branch of BRANCHES) {
     const { head, builds } = buildsOf(branch, keep);
     for (const b of builds) {
-      const html = gitBuf(['show', `${b.sha}:AshenSpire.html`]);
+      const html = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
       b.version = versionIn(html.toString('latin1'));
       const dir = join(outDir, branch, String(b.ordinal));
       mkdirSync(dir, { recursive: true });
@@ -390,7 +395,7 @@ function check(outDir) {
   const manifest = JSON.parse(readFileSync(join(outDir, 'builds.json'), 'utf8'));
   let checks = 0;
   for (const d of manifest.branches) for (const b of d.builds) {
-    const blob = gitBuf(['show', `${b.sha}:AshenSpire.html`]);
+    const blob = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
     const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
     const download = JSON.parse(readFileSync(join(outDir, d.branch, String(b.ordinal), 'build.json'), 'utf8'));
     if (download.bytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
@@ -529,7 +534,7 @@ try {
       // the deletion is noticed at all — a known-bad that cannot fail, which is
       // the exact defect these plants exist to catch. So the build goes back to
       // its git blob and the deletion is then the ONLY thing wrong.
-      writeFileSync(f, gitBuf(['show', `${victim.builds[0].sha}:AshenSpire.html`]));
+      writeFileSync(f, readGitArtifact(ROOT, victim.builds[0].sha, 'AshenSpire.html'));
       const b1 = process.exitCode;
       check(dir);
       // CARRY THE FAILURE, DO NOT PRINT AND DROP IT. Restoring the exit code

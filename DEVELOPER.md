@@ -9,6 +9,13 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+Install Git LFS before cloning, or run `git lfs install` and `git lfs pull`
+in an existing checkout. The three generated standalone HTML aliases use LFS
+because the full artwork exceeds GitHub's regular-file size limit. Source art
+stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
+CI hydrates these files, and historical build readers verify their content hashes.
+
+
 Hand management lives in `src/content/handRules.js` (defaults),
 `src/model/handRules.js` (settings and stat formula), and
 `src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
