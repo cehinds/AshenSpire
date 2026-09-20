@@ -9616,9 +9616,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       derivedStatOptions: { modeModifiers: { defaults: { pointsPerTier: 2 } } },
     });
     const tunedRow = tuned.derivedStatRuleSnapshot.rules.rules.poise;
-    eq(playerPoiseThresholdReceipt(REG, tuned).attribute,
-      tunedRow.base + Math.floor(tuned.attributes.constitution / tunedRow.pointsPerTier) * tunedRow.gainPerTier,
-      'the meter reads the run-owned row, tier size and all');
+    const owed = tunedRow.base + Math.floor(tuned.attributes.constitution / tunedRow.pointsPerTier) * tunedRow.gainPerTier;
+    eq(playerPoiseThresholdReceipt(REG, tuned).attribute, owed, 'the meter reads the run-owned row, tier size and all');
+    // AND THE RULE TRAVELS INTO THE FIGHT. The receipt reading the snapshot
+    // is no use if every combat adapter hands it a run object without one:
+    // the sheet would show the override and the meter the live table.
+    const overridden = createCombat({
+      registries: REG, rng: createRng(1), enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: tuned.class, attributes: tuned.attributes,
+        derivedStatRuleSnapshot: tuned.derivedStatRuleSnapshot,
+        maxHp: tuned.maxHp, hp: tuned.hp, maxMana: tuned.maxMana, mana: tuned.mana,
+        maxStamina: tuned.maxStamina, stamina: tuned.stamina, energyMax: 3, drawPerTurn: 5,
+        relicIds: tuned.relics, flasks: [], loadout: tuned.loadout,
+        itemUpgradeLevels: tuned.itemUpgradeLevels, deck: tuned.deck,
+      },
+    });
+    eq(overridden.player.poiseMeter.max, playerPoiseThresholdReceipt(REG, tuned).value,
+      'the fight stamps the vessel the run owns, not the one the live table would price');
 
     // A PRESET MUST BE ABLE TO HOLD ITS OWN KIT. The rebase moved the
     // attributes and the minima at once and nothing cross-read them, so the

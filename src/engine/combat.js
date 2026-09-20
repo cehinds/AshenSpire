@@ -82,7 +82,15 @@ export function createCombat({
   const poiseMax = Number.isInteger(player.poiseMax)
     ? player.poiseMax
     : (player.loadout
-      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
+      ? playerPoiseThresholdReceipt(registries, {
+        loadout: player.loadout, relics: player.relicIds || [], class: player.classId,
+        itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null,
+        // THE RUN'S OWN RULE TRAVELS WITH IT. Without this the meter is
+        // priced from live content while the character sheet shows the
+        // snapshot's number, and an Advanced tier override moves one and
+        // not the other (Codex, #1217).
+        derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
+      }).value
       : 0);
   const combat = {
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -136,6 +144,9 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // Carried for the same reason the attributes are: every mid-fight
+    // restamp of the Poise vessel must read the rule this run was born with.
+    derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
     // The run's skill ledger, read by the progression predicates
     // (triggers.js skillLevelAtLeast / classLevelAtLeast). A copy: combat
     // never writes it.
@@ -725,7 +736,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+    loadout: combat.loadout, relics: p.relicIds || [], class: p.classId,
+    itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+  }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -828,6 +843,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
     attributes: combat.attributes || null,
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
   }).value);
 
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);

@@ -154,6 +154,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
+      derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
     }).value);
   }
   return combat;
