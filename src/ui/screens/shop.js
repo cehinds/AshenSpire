@@ -806,8 +806,14 @@ function wireShopLayout(root) {
   function apply() {
     pending = 0;
     if (!root.isConnected) { release(); return; }
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    const plan = shopWorkspaceLayout({ width: frame.clientWidth, bodyWidth: body.clientWidth, bodyHeight: body.clientHeight, rem });
+    const style = getComputedStyle(document.documentElement);
+    const rem = parseFloat(style.fontSize) || 16;
+    // How wide a resting card is ACTUALLY drawn. `--card-w-glance` is what
+    // main.js projects after a player's card-size overrides and the phone's
+    // own variant, and it is the same property the shelf's own cap reads, so
+    // the column the shelf stands in and the cards in it cannot disagree.
+    const restingWidthPx = parseFloat(style.getPropertyValue('--card-w-glance'));
+    const plan = shopWorkspaceLayout({ width: frame.clientWidth, bodyWidth: body.clientWidth, bodyHeight: body.clientHeight, rem, restingWidthPx });
     // Rail or selector is the kit categoryNav's decision (it writes
     // data-shop-rail); this plan sizes the rail when there is one and lays
     // out the pane.

@@ -202,6 +202,43 @@ test('D — at the photographed shape the merchant shows four cards, where it sh
   assert.ok(layout.detailFr * columns >= ui.detailMinRem * 10 - 1e-9);
 });
 
+test('D — the offers ask for the shelf that is actually standing there, not the authored one', () => {
+  // `applyCardSizeSettings` lays a player's overrides over the authored table
+  // and projects the result; a phone takes `glance.variants.mobile`. Sizing the
+  // offers column from the authored 152 while the cards were drawn at 100
+  // would reserve room for a shelf nobody was going to stand in, and squeeze
+  // the detail column to pay for it.
+  const ui = wireframeUi.shop;
+  const { maxColumns, restingPx } = cardShelf();
+  const floor = ui.detailMinRem * 10;
+  // A pane wide enough for the TUNED shelf and the detail's floor, and narrow
+  // enough that the authored fraction is not what decides it either way.
+  const shelfFor = (px) => cardShelfWidthPx(maxColumns, px);
+  const tuned = 100;
+  const pane = shelfFor(tuned) + floor + 40;
+  assert.ok(pane * ui.offersFraction < shelfFor(tuned), 'the share must not be what decides this case');
+  // Tuned DOWN: the offers ask for the shelf that is there, and the detail
+  // keeps everything the authored width would have taken from it.
+  assert.equal(shopOffersWidthPx(pane, 10, ui, tuned), shelfFor(tuned));
+  assert.ok(shopOffersWidthPx(pane, 10, ui, tuned) < shopOffersWidthPx(pane, 10, ui, restingPx));
+  // Tuned UP: it asks for more, at a pane with the room for it.
+  const wide = restingPx + 80;
+  const widePane = shelfFor(wide) + floor + 40;
+  assert.equal(shopOffersWidthPx(widePane, 10, ui, wide), shelfFor(wide));
+  assert.ok(shopOffersWidthPx(widePane, 10, ui, wide) > shopOffersWidthPx(widePane, 10, ui, restingPx));
+  // The layout carries the same term end to end, rather than the model reading
+  // one width while the cards on the shelf are drawn at another.
+  const box = { width: 1235, bodyWidth: 917, bodyHeight: 520, rem: 10 };
+  const layout = shopWorkspaceLayout({ ...box, restingWidthPx: tuned });
+  const columns = 917 - layout.gap;
+  assert.equal(layout.offersFr * columns, shopOffersWidthPx(columns, 10, ui, tuned));
+  assert.ok(layout.offersFr < shopWorkspaceLayout(box).offersFr);
+  // Nonsense falls back to the authored width rather than reserving NaN.
+  for (const bad of [0, -20, NaN, null, undefined, 'wide']) {
+    assert.equal(shopOffersWidthPx(pane, 10, ui, bad), shopOffersWidthPx(pane, 10, ui), `restingPx ${String(bad)}`);
+  }
+});
+
 test('D — the detail floor binds before the shelf does, at every width and root size', () => {
   const ui = wireframeUi.shop;
   for (const rem of [10, 12, 16]) {

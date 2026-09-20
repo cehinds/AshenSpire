@@ -3402,7 +3402,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
 .epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
 .collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
-.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:8px; }
+/* THE SAME BARGAIN THE ARMAMENT OFFER MAKES, and for a second reason here:
+   `box-sizing` is border-box repo-wide, so the tile's 8px of padding and its
+   border came OUT of the shelf's track — a relic's face was drawn at 136px on
+   a 152px track while an armament's filled it, and the primitive's promise
+   that a resting card is drawn at its resting width was false on two of the
+   merchant's five shelves. Measured at 1328x744 before this: armaments 152,
+   relics and flasks 136. So the face is the tile here too, and the OptionCard's
+   panel appears under the pointer, under focus, or on the offer being
+   described. The body keeps its own gap from the face rather than borrowing
+   the tile's padding for it. */
+.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:0; background:none; border-color:transparent; }
+.shop-collectible-offer:is(:hover, :focus-visible, :focus-within) { background:var(--panel); border-color:var(--line); }
+.shop-offer.shop-collectible-offer.is-selected { background:var(--panel); border-color:var(--line); }
+/* `:root` for the weight, not for the root. A narrow shape re-declares
+   `.class-pick`'s padding and centring at (0,3,0) — styles/ui.css, for a
+   COLUMN of text OptionCards, which is not what a tile on a card shelf is —
+   and the phone kept the 16px inset that had just been taken off the desktop:
+   measured 106px faces on a 137px track. One class more, so a shelf answers
+   for its own tiles at every width. */
+:root .card-shelf > .shop-collectible-offer { padding:0; align-items:stretch; }
 .shop-collectible-offer > .equipment-poker-card { width:100%; }
 .shop-collectible-offer > .cp-body { width:100%; margin-top:8px; }
 .beat-hold[data-hold='holding'] .equipment-poker-card::after {
