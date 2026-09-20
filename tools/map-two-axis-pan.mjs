@@ -103,6 +103,63 @@ try {
     })()`);
     await wait(180);
 
+    // #1168'S OTHER HALF: THE CAMERA MOVING ITSELF. Everything above proves the
+    // PLAYER can pan both axes; this proves the board can. Selecting a node
+    // opens the tray and asks the camera to bring that node to the middle of
+    // what the tray leaves visible (screens/map.js -> centerOnNode), and in
+    // two-axis mode the horizontal camera is `scrollLeft` rather than the
+    // viewBox — which is exactly the axis a `scrollLeft = 0` inside the glide
+    // used to throw away, landing the act in the right half of the screen on
+    // every pick. Start from the far right so a camera that does nothing
+    // horizontally cannot pass by luck.
+    await evaluate(`(() => {
+      const port = document.querySelector('.map-scroll');
+      port.scrollLeft = Math.max(0, port.scrollWidth - port.clientWidth);
+      port.dispatchEvent(new Event('scroll'));
+      // A <g> is not an HTMLElement: there is no .click() on it, and the board
+      // listens for a plain bubbling click.
+      document.querySelector('.map-node.reachable')
+        .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      return true;
+    })()`);
+    await wait(1200);
+    const picked = await evaluate(`(() => {
+      const port = document.querySelector('.map-scroll');
+      const node = document.querySelector('.map-node.selected');
+      if (!node) return { selected: false };
+      const pr = port.getBoundingClientRect();
+      const nr = (node.querySelector('circle') || node).getBoundingClientRect();
+      const reveal = document.querySelector('.map-tray-reveal');
+      const rr = reveal ? reveal.getBoundingClientRect() : null;
+      // THE CONTENT BOX, NOT THE BORDER BOX, AND IN THE RIGHT UNITS. Two
+      // measuring errors dressed as camera errors live here:
+      //   * a classic scrollbar (this port asks for scrollbar-width: thin, not
+      //     overlay) takes layout width, so the middle of the BORDER box is half
+      //     a scrollbar off the middle the camera aims at — 4.6 px across and
+      //     5.2 px down at 1440x900, and 0 on a phone with overlay scrollbars.
+      //   * clientWidth/clientHeight are LOCAL px (past --ui-zoom) and every
+      //     rect here is DEVICE px. Subtracting one from the other is a 124 px
+      //     lie at desktop's 1.2 and a 21 px one at the phone's 0.9.
+      // So the content box is measured in local px and scaled into the rect's
+      // space by the port's own border-box ratio.
+      const sx = port.offsetWidth ? pr.width / port.offsetWidth : 1;
+      const sy = port.offsetHeight ? pr.height / port.offsetHeight : 1;
+      const right = pr.left + port.clientWidth * sx;
+      const foot = pr.top + port.clientHeight * sy;
+      // The tray's reveal panel is absolutely positioned over the foot of the
+      // scrollport, so the band the player can actually see ends where it starts.
+      const floor = rr && rr.height > 0 ? Math.min(foot, rr.top) : foot;
+      return {
+        selected: true,
+        trayOpen: !!reveal && rr.height > 0,
+        dx: (nr.left + nr.width / 2) - (pr.left + right) / 2,
+        dy: (nr.top + nr.height / 2) - (pr.top + floor) / 2,
+        scrollLeft: port.scrollLeft,
+        maxLeft: port.scrollWidth - port.clientWidth,
+        covered: rr ? Math.round(rr.height) : 0,
+      };
+    })()`);
+
     const moves = (sample) => Math.abs(sample.moved.left - sample.before.left - 60) < 1.5
       && Math.abs(sample.moved.top - sample.before.top - 60) < 1.5 && sample.moved.grabbed && sample.cleaned;
     const checks = {
@@ -113,9 +170,12 @@ try {
       touchMovesBothAxes: moves(evidence.touch),
       penMovesBothAxes: moves(evidence.pen),
       reachableNodeRemains: evidence.nodeReachable,
+      selectionOpensTray: picked.selected && picked.trayOpen,
+      selectionCentersHorizontally: picked.selected && Math.abs(picked.dx) <= 2,
+      selectionCentersVertically: picked.selected && Math.abs(picked.dy) <= 2,
     };
     const pass = Object.values(checks).every(Boolean);
-    rows.push({ viewport: viewport.name, pass, checks, evidence });
+    rows.push({ viewport: viewport.name, pass, checks, evidence: { ...evidence, picked } });
 
     if (WRITE_SHOTS) {
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
