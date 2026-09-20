@@ -58,8 +58,9 @@ test('weapon impact categories and per-card overrides are configurable', () => {
   assert.equal(attackImpact(c, c.player, magical), 1);
   for (const item of registries.equipment.armaments) {
     const w = item.weight || 0;
-    assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: item.id }), w <= 4 ? 1 : w <= 8 ? 2 : w <= 12 ? 3 : 4);
+    assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: item.id }), w <= 3 ? 1 : w <= 6 ? 2 : w <= 8 ? 3 : 4);
   }
+  for (const [id, expected] of [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]]) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
   c.ratingsRules.attackImpact.strike = 0;
   assert.equal(attackImpact(c, c.player, magical), 0);
 });

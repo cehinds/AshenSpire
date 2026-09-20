@@ -14,7 +14,7 @@ export const combatRatingDefaults = {
   },
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
-    lightMaxWeight: 4, mediumMaxWeight: 8, heavyMaxWeight: 12, unarmed: 1, enemyPhysical: 2 },
+    lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
   breaks: { poiseActionLoss: 1, wardActionLoss: 1, thresholdGrowth: 1.25, recoveryPerTurn: 0 },
   statuses: {
     bleed: { poise: 1, ward: 0 }, frost: { poise: 0.5, ward: 0.5 },
