@@ -44,6 +44,22 @@ hand for touch, mouse, trackpad dragging and pen. Existing saved settings retain
 their values. The selected card and separate Information button remain unchanged.
 See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
 
+`card-shelf` is the one row of resting cards. Up to four stand across it; every
+track is the same width, floored at a legible minimum and capped at the card's
+resting width, and when the room for four is not there it drops a column rather
+than shaving the cards. The three numbers are authored at
+`content/config/ui/components/card.json -> sizing.shelf`;
+`src/ui/models/CardSizeModel.js` owns the arithmetic
+(`cardShelf`, `cardShelfColumnsAt`, `cardShelfTrackPx`),
+`styles/kit.css` draws it, and `src/ui/components/cardShelf.js` measures each
+shelf so a last row of two is not drawn wider than the four above it. Reuse
+surfaces: the merchant's six shelves, the card-removal grid, and the mount
+service deck list. A tile that holds no card — the SELL shelf's relics and
+flasks — keeps the OptionCard measure instead (`.shop-text-offer`). The
+merchant's offers column is sized from the same model
+(`ShopWorkspaceModel.shopOffersWidthPx`), so the column and the cards standing
+in it cannot disagree about how wide a shelf is.
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated
