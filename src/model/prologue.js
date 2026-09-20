@@ -31,6 +31,7 @@ export function prologueRows() {
   add(['presentation', 'tintSource'], 'Artwork tint follows', 'Motif', choice(['accent','character','custom'], {accent:'Interface accent',character:'Character tint',custom:'Custom colour'}));
   add(['presentation', 'customTint'], 'Custom artwork colour', 'Motif', {type:'color'});
   add(['presentation', 'wash'], 'Colour wash strength', 'Motif', number(0,.4,.01));
+  add(['presentation', 'shadowStrength'], 'Character shadow strength', 'Motif', number(0,1,.05));
   for (const [index, scene] of PROLOGUE_DEFAULTS.scenes.entries()) {
     const path = ['scenes', String(index)];
     add([...path,'name'], 'Scene title', scene.name, text(160));

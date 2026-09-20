@@ -9,11 +9,12 @@ import { createRunState, serializeRun, deserializeRun } from '../src/model/state
 import { createRegistries } from '../src/model/registries.js';
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
-  const edits = {'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.2.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.4.actor.mobile.height':36};
+  const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.2.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.4.actor.mobile.height':36};
   const imported = parseAdvancedConfigFile(advancedConfigExport(edits),contentBundle);
   assert.deepEqual(imported,edits);
   const config=prologueConfig(imported);
   assert.equal(config.presentation.transitionSeconds,12.5);
+  assert.equal(config.presentation.shadowStrength,.4);
   assert.equal(config.scenes[2].text,edits['gameConfig.prologue.scenes.2.text']);
   assert.equal(prologueCopy(config.scenes[3],config,{classId:'herald'}).text,'My words.');
   assert.equal(prologueCopy(config.scenes[3],config,{classId:'reaver'}).text,config.classes.reaver.line);

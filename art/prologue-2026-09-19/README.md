@@ -38,3 +38,5 @@ Focused verification: `node --test tests/prologue.test.mjs tests/advanced-config
 ## Combined build packaging
 
 The initial full dev rebuild exceeded GitHub’s file limit. Existing environment and animation WebPs were recompressed at quality 75, with unchanged dimensions and byte-identical alpha channels; only smaller encodes were kept. `build-compression.json` records every retained before/after size and the original Git revision. Legacy dungeon plates use the independently compressed files from PR #1210, which landed during this work; those files are excluded from this compression receipt. Original bytes remain in Git history. The final standalone remains below GitHub’s per-file limit.
+
+The traveller and its contact/cast shadow are a single transparent character layer. Shadow strength is editable in the studio and Advanced → Opening sequence → Motif, and is saved in exported settings. Download character layer exports that combined transparent WebP; scene downloads use the same layer on both desktop and mobile. Old presets without a shadow setting use the default strength of 0.7.

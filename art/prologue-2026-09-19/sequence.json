@@ -131,7 +131,8 @@
     "accent": "gold",
     "characterTint": "gold",
     "wash": 0.14,
-    "reduceMotion": false
+    "reduceMotion": false,
+    "shadowStrength": 0.7
   },
   "palettes": {
     "accent": {

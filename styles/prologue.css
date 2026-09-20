@@ -2,7 +2,7 @@
 .prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
 .prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
 .prologue-background{width:100%;height:100%;object-fit:cover;display:block}
-.prologue-actor{position:absolute;width:auto;max-width:70%;object-fit:contain;transform:translateX(-50%)}
+.prologue-actor{position:absolute;width:auto;transform:translateX(-50%);pointer-events:none}
 .prologue-wash{position:absolute;inset:0;mix-blend-mode:color;pointer-events:none}
 .prologue-caption{position:relative;z-index:2;padding:1rem max(1.25rem,env(safe-area-inset-right)) max(1rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
 .prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}

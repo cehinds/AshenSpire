@@ -141,7 +141,8 @@
         "autoAdvance": true,
         "customTint": "#c9a227",
         "previewClass": "reaver",
-        "previewScene": "warmth"
+        "previewScene": "warmth",
+        "shadowStrength": 0.7
       },
       "palettes": {
         "accent": {

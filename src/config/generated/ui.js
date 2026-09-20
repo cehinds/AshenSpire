@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json ecc98e21f5308dff
+// source content/config/ui/screens/prologue.json 7276540476429eef
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -904,7 +904,8 @@ export const uiConfig = deepFreeze({
             "autoAdvance": true,
             "customTint": "#c9a227",
             "previewClass": "reaver",
-            "previewScene": "warmth"
+            "previewScene": "warmth",
+            "shadowStrength": 0.7
           },
           "palettes": {
             "accent": {

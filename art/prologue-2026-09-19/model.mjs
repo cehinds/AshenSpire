@@ -10,6 +10,7 @@ export function validateSequence(value, defaults) {
   for(const id of classIds){const src=value.classes?.[id];if(!src)throw new Error(`Missing class: ${id}`);result.classes[id].name=string(src.name,'Class name',160);result.classes[id].line=string(src.line,'Class dialogue');}
   for(const key of Object.keys(result.labels))result.labels[key]=string(value.labels?.[key],key,100);
   const p=value.presentation;if(!p)throw new Error('Missing presentation settings.');
+  result.presentation.shadowStrength=number(p.shadowStrength ?? defaults.presentation.shadowStrength,'Character shadow strength',0,1);
   result.presentation.transitionSeconds=number(p.transitionSeconds,'Transition',0,30);result.presentation.speed=number(p.speed,'Speed',.25,3);result.presentation.wash=number(p.wash,'Colour wash',0,.4);
   if(!['accent','character'].includes(p.tintSource)||!Object.hasOwn(defaults.palettes.accent,p.accent)||!Object.hasOwn(defaults.palettes.character,p.characterTint)||typeof p.reduceMotion!=='boolean')throw new Error('Unknown motif or motion setting.');
   for(const key of ['tintSource','accent','characterTint','reduceMotion'])result.presentation[key]=p[key];

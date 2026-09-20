@@ -1,3 +1,4 @@
+import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
 import { topVeil } from '../components/veil.js';
@@ -62,10 +63,15 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{destinationArt:scene.id === 'step' ? destination.art : null})});
     const images = [background]; plate.append(background);
     if (scene.character) {
-      const actor = el('img',{class:'prologue-actor',alt:'',src:prologueArtwork(classId)});
-      const pos = scene.actor[layout];
-      Object.assign(actor.style,{left:`${pos.x}%`,bottom:`${100-pos.y}%`,height:`${pos.height}%`});
-      plate.append(actor); images.push(actor);
+      const source = new Image(); source.src = prologueArtwork(classId);
+      const actor = el('canvas',{class:'prologue-actor'});
+      await ready(source);
+      if (stopped || token !== serial) return;
+      if (source.naturalWidth) {
+        paintPrologueCharacter(actor,source,p.shadowStrength);
+        placePrologueCharacter(actor,scene.actor[layout]);
+        plate.append(actor);
+      }
     }
     const wash = el('div',{class:'prologue-wash'});
     wash.style.background = prologueTint(config,settings,run.customization);
