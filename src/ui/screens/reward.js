@@ -556,7 +556,7 @@ export function mountRewards(app, {
       progress.character
         ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'))])
         : null,
-      skills.length ? el('h3', { class: 'as-eyebrow', text: t('reward.progress.skills') }) : null,
+      skills.length ? el('h4', { class: 'as-eyebrow', text: t('reward.progress.skills') }) : null,
       skills.length ? el('ul', { class: 'reward-progress-list' }, skills) : null,
       progress.hidden
         ? el('p', { class: 'reward-progress-more', text: t('reward.progress.more', { count: progress.hidden, plural: progress.hidden === 1 ? '' : 's' }) })

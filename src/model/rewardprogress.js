@@ -37,6 +37,29 @@ import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js'
 /** His layout's ceiling: three tracks shown, the rest counted. */
 export const MAX_SKILL_ROWS = 3;
 
+/**
+ * combatXpGains({ receipt, awards, levelGained }) → the offer's receipt,
+ * `{ level, tracks }`: the fight's per-track XP as the combat recorded it
+ * (engine/skillXp.js skillXpReceipt), plus every award the run's OWNER made
+ * on top of it — the class track's pay, which the combat cannot know — and
+ * what the character level was paid. Summed, never replaced: a track that
+ * appears in both was genuinely paid twice, and the door shows the total.
+ *
+ * ONE HOME, because this shape is the contract between the fight and the
+ * door and it crosses the save: main.js composes it here rather than inline,
+ * so what a reload resumes is the same derivation a test can hold.
+ */
+export function combatXpGains({ receipt = null, awards = [], levelGained = 0 } = {}) {
+  const tracks = {};
+  const add = (id, xp) => {
+    if (typeof id !== 'string' || !id || !(Number.isFinite(xp) && xp > 0)) return;
+    tracks[id] = (tracks[id] || 0) + Math.floor(xp);
+  };
+  for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
+  for (const award of awards || []) if (award) add(award.skillId, award.gained);
+  return { level: Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0, tracks };
+}
+
 /** A class row from either registry shape (a registry, or the authored array). */
 function classRow(registries, classId) {
   if (!classId) return null;
@@ -125,23 +148,16 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
 }
 
 /**
- * rewardProgress(registries, run, gains, opts) → { character, skills, hidden,
- * gainedXp } — the whole panel, frozen. `gains` is the fight's receipt,
- * `{ level, tracks: { [skillId]: xp } }`; an offer that carries none (a
- * treasure room, an old save) still draws the standing ledgers, with no gain
- * lines. `gainedXp` is what the fight paid in total, for a caller that wants
- * the one number.
+ * rewardProgress(registries, run, gains, opts) → { character, skills, hidden }
+ * — the whole panel, frozen. `gains` is the fight's receipt as combatXpGains
+ * shapes it, `{ level, tracks: { [skillId]: xp } }`; asked without one, it
+ * still reads the standing ledgers, with no gain lines (the door itself does
+ * not ask where there was no fight).
  */
 export function rewardProgress(registries, run, gains = null, { maxSkills = MAX_SKILL_ROWS } = {}) {
   const level = gains && Number.isFinite(gains.level) ? Math.max(0, Math.floor(gains.level)) : 0;
   const tracks = (gains && gains.tracks && typeof gains.tracks === 'object' && !Array.isArray(gains.tracks)) ? gains.tracks : {};
   const character = characterProgress(registries, run, level);
   const { rows, hidden } = skillProgress(registries, run, tracks, { maxSkills });
-  const trackTotal = Object.values(tracks).reduce((sum, xp) => sum + (Number.isFinite(xp) && xp > 0 ? Math.floor(xp) : 0), 0);
-  return Object.freeze({
-    character,
-    skills: Object.freeze(rows),
-    hidden,
-    gainedXp: level + trackTotal,
-  });
+  return Object.freeze({ character, skills: Object.freeze(rows), hidden });
 }

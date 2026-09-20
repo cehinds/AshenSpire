@@ -8,11 +8,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardProgress } from '../src/model/rewardprogress.js';
+import { rewardProgress, combatXpGains } from '../src/model/rewardprogress.js';
 import { awardSkillXp } from '../src/model/skills.js';
 import { awardLevelXp } from '../src/model/levelup.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
@@ -44,7 +45,6 @@ test('asked without a receipt, the derivation still reads the standing ledgers',
   const progress = rewardProgress(registries, run, null);
   assert.equal(progress.character.gained, 0);
   assert.deepEqual(progress.skills.map((row) => row.gained), [0, 0, 0]);
-  assert.equal(progress.gainedXp, 0);
 });
 
 test('a track whose curve will not read is dropped, never shown as capped', () => {
@@ -67,7 +67,6 @@ test('the tracks this fight paid lead, three are shown and the rest are counted'
   assert.deepEqual(progress.skills.map((row) => row.id), ['item:shield', 'class:reaver', 'item:blade'],
     'paid first, biggest gain leading; the deepest untouched track after');
   assert.equal(progress.hidden, 1, 'heavy armour is the fourth candidate and is only counted');
-  assert.equal(progress.gainedXp, 23, 'the level and both tracks');
   assert.equal(progress.skills[0].kind, 'weapon');
   assert.equal(progress.skills[1].kind, 'class');
 });
@@ -99,6 +98,43 @@ test('the award receipts carry the XP they paid, which is what the door shows', 
   assert.equal(awardSkillXp(registries, run, 'item:blade', 0).gained, 0);
   assert.equal(awardLevelXp(registries, run, 12).gained, 12);
   assert.equal(awardLevelXp(registries, run, -3).gained, 0);
+});
+
+test('the receipt sums the combat\'s tracks with the owner\'s own awards', () => {
+  // What main.js composes at onCombatEnd: the fight's per-track receipt, the
+  // class award the combat cannot make, and the character level's pay.
+  const gains = combatXpGains({
+    receipt: { 'item:blade': 18, 'armour:heavy': 6 },
+    awards: [{ skillId: 'class:reaver', gained: 10 }, null],
+    levelGained: 24,
+  });
+  assert.deepEqual(gains, { level: 24, tracks: { 'item:blade': 18, 'armour:heavy': 6, 'class:reaver': 10 } });
+  assert.deepEqual(
+    combatXpGains({ receipt: { 'class:reaver': 4 }, awards: [{ skillId: 'class:reaver', gained: 10 }], levelGained: 0 }),
+    { level: 0, tracks: { 'class:reaver': 14 } },
+    'a track paid twice is summed, not replaced — both payments happened',
+  );
+  // A lost fight, an award that paid nothing, and a caller that hands none.
+  assert.deepEqual(combatXpGains({ awards: [{ skillId: 'class:reaver', gained: 0 }], levelGained: -5 }), { level: 0, tracks: {} });
+  assert.deepEqual(combatXpGains(), { level: 0, tracks: {} });
+});
+
+test('the receipt crosses the save door on a real run and comes back whole', () => {
+  const run = createRunState({ seed: 0x5170, classId: 'reaver', registries });
+  run.pendingReward = {
+    schemaVersion: 1,
+    source: 'elite',
+    after: 'map',
+    rewards: { title: 'VICTORY', cinders: 32, xpGains: combatXpGains({ receipt: { 'item:blade': 18 }, levelGained: 24 }) },
+    states: {},
+    chosenCardId: null,
+    chosenDraftCardIds: {},
+    chosenDraftNodeIds: {},
+  };
+  assert.deepEqual(validateRunShape(run), [], 'the load door accepts an offer carrying the receipt');
+  const back = deserializeRun(serializeRun(run));
+  assert.deepEqual(back.pendingReward.rewards.xpGains, { level: 24, tracks: { 'item:blade': 18 } },
+    'a reload resumes the same numbers the door first showed');
 });
 
 test('the door draws the panel beside the claim status, gains and all', () => {

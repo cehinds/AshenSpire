@@ -888,7 +888,7 @@ export const uiStrings = [
     "id": "reward.progress.more",
     "extends": "",
     "short": "+{count} other skill{plural}",
-    "full": "Tracks this fight did not touch and the panel does not list.",
+    "full": "Tracks the panel does not list.",
     "tip": ""
   },
   {

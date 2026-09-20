@@ -158,7 +158,7 @@ reward.progress.next,,Lv. {level},,
 reward.progress.gained,,Gained: {xp} xp,What this fight paid into this track.,
 reward.progress.xp,,{xp} / {next} XP,{xp} of {next} XP toward level {level}.,
 reward.progress.capped,,Max,This track has reached its ceiling; XP still banks.,
-reward.progress.more,,+{count} other skill{plural},Tracks this fight did not touch and the panel does not list.,
+reward.progress.more,,+{count} other skill{plural},Tracks the panel does not list.,
 # ---- the title screen -----------------------------------------------------
 title.save.eyebrow,,Your climb,The saved run Continue resumes.,
 title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,

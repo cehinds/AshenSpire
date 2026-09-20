@@ -1427,8 +1427,11 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-progress { display: grid; gap: .5rem; min-width: 0; grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto; }
 .reward-door .reward-progress > * { grid-column: 1 / -1; }
 .reward-door .reward-progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+/* `row-gap: 0` and a margin on the gain line, not a gap: the gain row is
+   declared for every row but filled only where the fight paid, and a gap
+   would make a row with no gain a hair taller than one with. */
 .reward-door .reward-progress-row {
-  display: grid; min-width: 0; gap: .15rem .6rem; align-items: center;
+  display: grid; min-width: 0; gap: 0 .6rem; align-items: center;
   grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto;
   grid-template-areas: 'name level bar next' 'gain gain gain gain';
 }
@@ -1450,9 +1453,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); }
 .reward-door .rp-level { grid-area: level; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
 .reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
-.reward-door .rp-gain { grid-area: gain; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
-.reward-door .reward-progress-row[data-gained='0'] .rp-gain { display: none; }
-.reward-door .rp-bar { grid-area: bar; --meter-tone: var(--gold); min-width: 0; }
+.reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
+.reward-door .rp-bar { grid-area: bar; min-width: 0; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
 :root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
 :root[data-layout='narrow'] .reward-door .reward-progress-row {

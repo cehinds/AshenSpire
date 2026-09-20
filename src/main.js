@@ -41,6 +41,7 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { awardLevelXp, combatLevelXp } from './model/levelup.js';
+import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -2236,19 +2237,17 @@ async function onCombatEnd(result, combat, enc) {
   // fight and every kill by the door's pool. His level-value dial is read at
   // the moment the level is reached — the points it grants wait on the
   // ledger for the shrine.
-  const levelXp = combatLevelXp(registries, {
+  const levelAward = awardLevelXp(registries, run, combatLevelXp(registries, {
     victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
-  });
-  awardLevelXp(registries, run, levelXp, { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
+  }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
   // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
   // above moved before the door opens, so the screen cannot re-derive what
   // this fight paid — it is handed the amounts, on the offer, where the
   // pending-reward checkpoint persists them and a reload resumes the same
-  // sentence. Ledger state is read live from the run; only the GAIN is kept.
-  const xpGains = { level: levelXp, tracks: { ...trackReceipt } };
-  if (classAward && classAward.gained > 0) {
-    xpGains.tracks[classAward.skillId] = (xpGains.tracks[classAward.skillId] || 0) + classAward.gained;
-  }
+  // sentence. Ledger state is read live from the run; only the GAIN is kept,
+  // and it is the amount each award SAYS it paid, never a second reading of
+  // the same numbers beside it.
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
