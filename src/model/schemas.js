@@ -277,6 +277,7 @@ export const VARIABLE_SCOPES = Object.freeze(['default', 'class', 'upgrade', 'in
 // list is derived from them, and the schema is built from the same object below:
 // adding a passive is one row and the two cannot disagree about what exists.
 export const PASSIVE_TYPES = Object.freeze({
+  arBonus: 'num', drBonus: 'num', prBonus: 'num', poiseBonus: 'num', wardBonus: 'num',
   runeGainMult: 'num', // cinder rewards ×
   eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
   flaskPowerMult: 'num', // flask effect amounts ×
@@ -558,6 +559,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  damageSchool: opt(en(...DAMAGE_SCHOOLS)),
   intent: en(...INTENT_KINDS),
   damage: opt(int),
   hits: opt(int),
@@ -688,6 +690,7 @@ export const SCHEMAS = Object.freeze({
   }),
   creationMode: obj({
     id: str,
+    statConversionScale: opt(num),
     label: str,
     baseline: int,
     bonusPool: int,

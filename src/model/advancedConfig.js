@@ -1,9 +1,12 @@
+import { prologueRows, prologuePresetOverrides } from './prologue.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
+import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
+import { startingStatRows, applyStartingStatConfig } from './startingStatConfig.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
-import { prologueRows, prologuePresetOverrides } from './prologue.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -116,7 +119,7 @@ function explicitRows(bundle) {
       if (!Number.isFinite(def)) continue;
       rows.push({
         cat: 'Advanced', advancedGroup: 'Classes', type: 'number', integer: true, step: 1,
-        min: 1, max: 99, def,
+        min: 1, max: 495, def,
         key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${bundle.attributeRules.defaultMode}.${classDef.id}.${attribute.id}`,
         label: `${classLabel} — ${attribute.label}`,
         note: `Starting ${attribute.label.toLowerCase()} for ${classLabel} in the default ${bundle.attributeRules.defaultMode} mode. Applies to a new run.`,
@@ -267,7 +270,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return [...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
+  return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
@@ -284,6 +287,7 @@ export function advancedConfigSettings(settings = {}, additionalKeys = []) {
 export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
+    ratingsVersion: 1,
     overrides: advancedConfigSettings(settings),
   });
 }
@@ -294,6 +298,7 @@ function cloneConfigurableBundle(bundle) {
     balance: structuredClone(bundle.balance),
     classes: bundle.classes.map((row) => structuredClone(row)),
     attributeRules: structuredClone(bundle.attributeRules),
+    creationModes: structuredClone(bundle.creationModes),
     derivedStatRules: structuredClone(bundle.derivedStatRules),
   };
 }
@@ -307,6 +312,8 @@ function setPath(target, path, value) {
 export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const settings = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
   const configured = cloneConfigurableBundle(bundle);
+  applyStartingStatConfig(configured, bundle, settings);
+  const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
@@ -346,7 +353,17 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       const values = configured.attributes.map((attribute) => preset?.[attribute.id]);
       const valid = values.every((value) => Number.isInteger(value) && value >= floor && value <= mode.maximum)
         && values.reduce((sum, value) => sum + value, 0) === expected;
-      if (!valid) configured.attributeRules.presets[mode.id][classDef.id] = structuredClone(bundle.attributeRules.presets[mode.id][classDef.id]);
+      if (!valid) configured.attributeRules.presets[mode.id][classDef.id] = structuredClone(defaultPresets[mode.id][classDef.id]);
+    }
+  }
+  configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
+  if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  if (configured.balance.combatRatings.enabled) {
+    for (const mode of configured.creationModes) {
+      mode.equipmentProfiles ||= {};
+      for (const profile of configured.equipment.basicCardProfiles) {
+        mode.equipmentProfiles[profile.id] = { ...mode.equipmentProfiles[profile.id], baseValue: profile.baseValue, gainPerTier: 0 };
+      }
     }
   }
   return configured;
@@ -354,15 +371,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
 
 export function advancedConfigProblems(bundle, settings = {}) {
   const problems = [];
-  const modeId = bundle.attributeRules.defaultMode;
-  const mode = bundle.creationModes.find((row) => row.id === modeId);
+  const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
+  const modeId = poolDefaults.attributeRules.defaultMode;
+  const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
   if (!mode) return problems;
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
   for (const classDef of bundle.classes) {
     const values = bundle.attributes.map((attribute) => {
       const key = `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classDef.id}.${attribute.id}`;
-      return Number(settings[key] ?? bundle.attributeRules.presets[modeId][classDef.id][attribute.id]);
+      return Number(settings[key] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
     });
     const badCell = values.some((value) => !Number.isInteger(value) || value < floor || value > mode.maximum);
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -375,7 +393,7 @@ export function advancedConfigProblems(bundle, settings = {}) {
 
 export function advancedConfigStructuralProblems(bundle, settings = {}) {
   const configured = configuredContentBundle(bundle, settings);
-  const problems = [];
+  const problems = [...handRulesSettingsProblems(settings), ...combatRatingProblems(resolveCombatRatings(settings, bundle))];
   const walk = (value, path = []) => {
     if (!value || typeof value !== 'object') return;
     if (Array.isArray(value)) {
@@ -432,9 +450,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
-  if (file?.kind === 'AshenSpire prologue art') file = {
-    schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION, game: 'Ashen Spire', overrides: prologuePresetOverrides(file),
-  };
+  if (file?.kind === 'AshenSpire prologue art') file = { schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION, game: 'Ashen Spire', overrides: prologuePresetOverrides(file) };
   if (!file || file.game !== 'Ashen Spire' || file.schemaVersion !== ADVANCED_CONFIG_SCHEMA_VERSION
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
