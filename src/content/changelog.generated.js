@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Your level and every skill you are training now have bars you can watch",
     "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.332",
+    "build": "0.7.1.334",
     "pullRequest": 1228,
     "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
+    "id": "pr-1226",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The in-run Settings panel gets its toolbar back, and a status weight you tuned stops calling itself invalid",
+    "detail": "Opening Settings from the map or a fight showed two empty boxes where the search and options buttons belong, Download & saves stranded on a row of its own, and a second scrollbar down the shell — all of it styling the Settings door from the title screen had and this one did not. The two doors share one panel now: the buttons carry their icons, the download button and the toolbar ride one row, and the panel is the only thing that scrolls. Separately, tuning the Poise or Ward weight of any status outside the seven the defaults name left the other half of the pair unwritten, so Advanced reported \"Invalid status resistance weights\" from then on and quietly kept the authored numbers. The side you did not touch now keeps its authored weight, or none at all, and the warning clears the next time you open Settings. Values outside 0–1 are still refused.",
+    "build": "0.7.1.332",
+    "pullRequest": 1226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1226"
   },
   {
     "id": "pr-1217",
