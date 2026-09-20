@@ -56,10 +56,11 @@ el('apply').onclick = () => {
   order = next; el('action').value = 'attack'; setAction(); el('message').textContent = `Applied ${next.length} playback steps.`;
 };
 el('reset').onclick = () => { order = [...art.sequence]; el('order').value = order.join(', '); el('speed').value = String(art.frameMs); el('speedValue').textContent = String(art.frameMs); el('action').value = 'attack'; setAction(); el('message').textContent = 'Original order and timing restored.'; };
-el('download').onclick = () => {
+el('export').onclick = () => {
   const settings = {motionProfile:art.motionProfile, rightGroup:'empty', leftGroup:'empty', classId:art.classId, armourId:art.armourId, frames:order, frameMs:Number(el('speed').value), approval:'review-settings-only'};
-  const url = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(settings,null,2)+'\n');
-  const a = document.createElement('a'); a.href = url; a.download = 'unarmed-review-settings.json'; document.body.append(a); a.click(); a.remove();
+  el('settingsJson').value = JSON.stringify(settings,null,2)+'\n';
+  el('settingsJson').hidden = false; el('settingsJson').focus(); el('settingsJson').select();
+  el('message').textContent = 'Sequence JSON is selected below. Copy it to keep your settings.';
 };
 const appearances = new Set(collection.expansion.map(r => r.appearanceId));
 el('planSummary').textContent = `${collection.expansion.length} armor entries across four classes map to ${appearances.size} distinct appearances. All gallery figures share the selected action, order and timing. Catalog aliases are listed below.`;
