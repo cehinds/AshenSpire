@@ -141,12 +141,39 @@ const ROWS = [
     note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
+  // ---- cat: 'Combat' -----------------------------------------------------
+  //
+  // HIS REPORT, LOOKING AT THE ADVANCED SECTION LIST: "no good section to
+  // customize combat, combat animation, etc". He was right, and the reason is
+  // that combat's presentation had no home — it had three.
+  //
+  //   Combat pacing / Rendering quality / Screen shake / played-card animation
+  //     -> General > Display > "Effects & pacing", a bag that also held the
+  //        TITLE SCREEN's lit-city pause, so its name did not promise combat.
+  //   Character sprites -> Advanced > Interface > "Characters", i.e. behind the
+  //        debugging surface, for a row that decides what a player looks at for
+  //        the whole run.
+  //   Combat Armaments / phone placement -> General > Display > "Interface",
+  //        filed with the accent colour and the UI scale.
+  //
+  // And the one section NAMED for combat — Advanced > "Combat & actors" — is
+  // authored balance constants (poise, exposure), which is the opposite of what
+  // the name offers someone hunting for an animation switch.
+  //
+  // So these seven rows carry `cat: 'Combat'` and the General tab grows a third
+  // group beside Display and Audio (GENERAL_GROUPS). NOT a fourth top-level tab:
+  // `filedCategories()` is authored, so a new `cat` adds a GROUP and never a tab
+  // — the tab strip stays three wide at every screen size it was measured at.
+  //
+  // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
+  // Advanced tip now says where the feel settings went so the section named for
+  // combat stops being a dead end.
+  { cat: 'Combat', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
-  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',
+  { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
     note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },
-  { cat: 'Display', key: 'performanceMode', type: 'choice', def: 'auto',
+  { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto',
     choices: ['auto', 'full', 'lite'], label: 'Rendering quality',
     note: 'Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.' },
   { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
@@ -256,7 +283,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
-  { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
+  { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
@@ -315,14 +342,14 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
-  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+  { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: 'Combat Armaments',
     note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
-  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+  { cat: 'Combat', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
     choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
     note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
 
-  { cat: 'Display', key: 'showPlayedCard', def: false, label: 'Show played card animation',
+  { cat: 'Combat', key: 'showPlayedCard', def: false, label: 'Show played card animation',
     note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
 
   ...HUD_VISIBILITY_SETTINGS,
@@ -586,7 +613,11 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
   { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
-  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
+  // THE TIP CARRIES A FORWARDING ADDRESS, and it is the other half of the
+  // report: this section is NAMED for combat and holds authored constants, so
+  // it is exactly where someone looking for an animation switch lands and finds
+  // nothing they recognise. One clause ends that walk.
+  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
   { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
   { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
@@ -606,6 +637,21 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 
+// The groups the General tab's first picker offers, in the order it offers
+// them. ONE HOME: the tab's row filter, the picker, the stored-value migration
+// and Reset-this-group all read this list, and a fifth group is one entry here
+// plus a branch in `generalGroups`. They were four separate `['Display',
+// 'Audio']` literals before Combat existed, which is four places for a fifth
+// group to be forgotten in.
+export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio'];
+
+/** The General group a stored value names, or the first one. Never undefined:
+ *  a bag written by an older build can hold a group this one dropped. */
+export function generalGroup(settings) {
+  return GENERAL_GROUPS.includes(settings?.settingsGeneralCategory)
+    ? settings.settingsGeneralCategory : GENERAL_GROUPS[0];
+}
+
 // W1a names the first category Display, as its id already is. (It read "Game"
 // from f17d9a2e; restoring that is one entry here.)
 const CATEGORY_LABELS = {};
@@ -622,7 +668,7 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: ROWS.filter(row => ['Display', 'Audio'].includes(row.cat)) };
+  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat)) };
   if (SECTIONS[cat]) return SECTIONS[cat];
   const rows = ROWS.filter((r) => r.cat === cat);
   return rows.length ? { rows } : null;
@@ -1301,13 +1347,24 @@ function shownCategories(saves) {
   });
 }
 
-/** The body of one category, as HTML. */
-function generalGroups(category) {
+/** The topics one General group is drawn in, as Map(label -> rows).
+ *
+ * EXPORTED so the Combat group's shape is asserted rather than described: the
+ * report that created it ("no good section to customize combat, combat
+ * animation") is a claim about which NAME holds which ROW, and that claim is
+ * only worth anything if something reads it back. */
+export function generalGroups(category) {
   const groups = new Map();
   for (const row of categoryHandler(category).rows) {
     const key = row.key;
     const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
-      : /anim|performance|titleCity|screenShake|showPlayed/.test(key) ? 'Effects & pacing' : 'Interface'
+      // "Effects & pacing" USED TO CATCH THE COMBAT ROWS TOO, and that is the
+      // bag the report was about: a player hunting for an animation switch had
+      // to guess that combat lived under a title-screen word. Those keys are
+      // `cat: 'Combat'` now, so what is left here is the title entrance — and
+      // the topic is named for the one thing it holds.
+      : /titleCity/.test(key) ? 'Title screen' : 'Interface'
+      : category === 'Combat' ? /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
@@ -1318,7 +1375,7 @@ function generalGroups(category) {
 
 function categoryHtml(cat, settings, saves) {
   if (cat === 'General' || cat === 'Accessibility') {
-    const groups = cat === 'Accessibility' ? ['Accessibility'] : ['Display', 'Audio'];
+    const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
     const topics = generalGroups(selected);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
@@ -1419,7 +1476,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const stored = settings[CAT_KEY];
     current = cats.includes(stored) ? stored : ['Changelog', 'About'].includes(stored) ? 'Advanced' : cats[0] || null;
     if (['Changelog', 'About'].includes(stored)) settings[ADVANCED_CAT_KEY] = stored;
-    if (['Display', 'Audio', 'Accessibility'].includes(stored)) settings.settingsGeneralCategory = stored;
+    if ([...GENERAL_GROUPS, 'Accessibility'].includes(stored)) settings.settingsGeneralCategory = stored;
     if (!cats.length) {
       // Nothing is filed anywhere. assertSurfaces fails the boot before a
       // player can meet this, so it is a developer's message, not a player's.
@@ -1524,7 +1581,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
-    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : ['Display', 'Audio'].includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display'}`;
+    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
@@ -1693,7 +1750,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
       const rows = button.dataset.resetConfig === 'all' ? ROWS
         : current === 'General' || current === 'Accessibility' ? (() => {
-          const section = current === 'Accessibility' ? 'Accessibility' : ['Display', 'Audio'].includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display';
+          const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
