@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1226",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The in-run Settings panel gets its toolbar back, and a status weight you tuned stops calling itself invalid",
+    "detail": "Opening Settings from the map or a fight showed two empty boxes where the search and options buttons belong, Download & saves stranded on a row of its own, and a second scrollbar down the shell — all of it styling the Settings door from the title screen had and this one did not. The two doors share one panel now: the buttons carry their icons, the download button and the toolbar ride one row, and the panel is the only thing that scrolls. Separately, tuning the Poise or Ward weight of any status outside the seven the defaults name left the other half of the pair unwritten, so Advanced reported \"Invalid status resistance weights\" from then on and quietly kept the authored numbers. The side you did not touch now keeps its authored weight, or none at all, and the warning clears the next time you open Settings. Values outside 0–1 are still refused.",
+    "build": "0.7.1.330",
+    "pullRequest": 1226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1226"
+  },
+  {
     "id": "pr-1217",
     "date": "2026-09-20",
     "group": "2026-09-20",
