@@ -34,6 +34,8 @@ groups=json.loads((PACK/'manifest.json').read_text(encoding='utf-8'))['groups'] 
 if bind_only or refresh:
     for group in groups:
         assert hashlib.sha256((PACK/'sources'/f"{group['id']}.png").read_bytes()).hexdigest()==group['sourceSha256'], 'Source changed since reviewed export'
+        if bind_only:
+            assert hashlib.sha256((PACK/'sources'/'buff-no-aura'/f"{group['id']}.png").read_bytes()).hexdigest()==group['variantSourceSha256'], 'Aura-free source changed since reviewed export; refresh playback first'
         for pose,digest in group['frameSha256'].items():
             assert hashlib.sha256((PACK/group['directory']/f'{pose}.webp').read_bytes()).hexdigest()==digest, 'Frame changed since reviewed export'
 for row in ([] if bind_only or refresh else OUTFITS):
