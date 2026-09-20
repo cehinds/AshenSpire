@@ -107,7 +107,11 @@ are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. Weapon-art packages are authored in
+mounting and save round-trip coverage. How many cards a shelf of resting cards
+holds — the merchant's shelves, a mount's deck list — is authored once at
+`content/config/ui/components/card.json -> sizing.shelf`, laid out by
+`.card-shelf` in styles/kit.css, and checked by
+`node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and

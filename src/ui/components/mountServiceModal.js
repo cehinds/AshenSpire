@@ -27,6 +27,7 @@ import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { openModal } from './modalShell.js';
+import { wireCardShelf } from './cardShelf.js';
 import { bindCardInspection } from './cardInspection.js';
 import { renderEquipmentInspection } from './equipmentCard.js';
 import { el, artWell, eyebrow, prose, flavour, detailCard, railItem, railed, statusText, categoryNav } from '../kit/index.js';
@@ -120,6 +121,8 @@ export function mountMountServiceModal(host, initialModel, {
     class: 'as-pane smith-preview-region', id: 'mount-preview-region', 'aria-live': 'polite', 'aria-label': 'Selected item\'s mounts',
   }, [count, previewHost, consequence]);
 
+  // Declared before the shell so `onClose` never reads it in its dead zone.
+  let shelves = null;
   const shell = openModal({
     size: 'xl',
     className: 'smith-upgrade-modal mount-service-modal',
@@ -133,6 +136,7 @@ export function mountMountServiceModal(host, initialModel, {
       closed = true;
       disarmDecision?.();
       disarmDecision = null;
+      shelves?.release();
       if (leaving === 'back') onBack();
     },
     opener,
@@ -217,7 +221,7 @@ export function mountMountServiceModal(host, initialModel, {
       ])] : [],
       cards: mount ? [
         heading(t('smith.heading.deck'), `${mount.cards.length} card${mount.cards.length === 1 ? '' : 's'} this mount takes`),
-        el('div', { class: 'mount-card-list', role: 'listbox', 'aria-label': 'Deck cards this mount takes' }),
+        el('div', { class: 'mount-card-list card-shelf', role: 'listbox', 'aria-label': 'Deck cards this mount takes' }),
       ] : [],
       installPreview: p.selectedCard ? [el('div', { class: 'mount-service-outcome mount-install-preview' },
         prose(t('smith.preview.install', { card: p.selectedCard.cardName, item: selected.name })))] : [],
@@ -346,11 +350,15 @@ export function mountMountServiceModal(host, initialModel, {
   // way out — all four land on onBack through onClose. An open compact item
   // list takes Escape first (w1Workspace.js listens a step earlier).
   back.addEventListener('click', shell.close);
+  // The deck list is a `.card-shelf`; the wire keeps its last row the same
+  // width as the rows above it (components/cardShelf.js). `draw` REPLACES the
+  // preview, list and all, so the wire is asked to look again after each one.
   draw(initialModel);
+  shelves = wireCardShelf(modal);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
 
   return {
-    update(model) { draw(model); },
+    update(model) { draw(model); shelves?.apply(); },
     close() {
       leaving = 'screen';
       shell.close();

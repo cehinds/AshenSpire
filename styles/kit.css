@@ -1160,6 +1160,77 @@ input[type="range"] { min-height: var(--tap-floor); }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
 
+/* ═══ CARD SHELF — a row of resting cards, four across, whole ══════════════ */
+/* WHAT THIS REPLACES. A shelf of cards you are browsing past was laid out five
+   different ways: the merchant's armaments in `min(280px, 100%)` tiles (the
+   FOCUS width, around a 152px GLANCE card), its relics and flasks in
+   `flex: 1 1 26rem` OptionCards, a mount's deck list and the pile viewer in
+   fixed 140px and 220px boxes. None of them said how many cards a row holds,
+   so the answer was whatever the container happened to be — at 1328x744 the
+   merchant's armament shelf held ONE, with the rest behind a scroll.
+
+   THE RULE, ONCE. `maxColumns` cards across; each track as wide as the row
+   allows, never below `--card-shelf-min` and never above a card's resting
+   width; below that floor the row holds fewer rather than shaving them. The
+   three numbers are authored at `content/config/ui/components/card.json ->
+   sizing.shelf` and projected by CardSizeModel.js, whose `cardShelfColumnsAt`
+   is this rule's arithmetic, asked from Node by tests/card-shelf.test.mjs.
+
+   The floor is written `min(--card-shelf-min, --card-w-glance)` for the same
+   reason the model clamps it: a card tuned (or a phone variant dropped) below
+   the floor would otherwise be stretched to a floor wider than itself. */
+.card-shelf {
+  --card-shelf-track: max(
+    min(var(--card-shelf-min, 120px), var(--card-w-glance, 152px)),
+    calc((100% - (var(--card-shelf-cols, 4) - 1) * var(--card-shelf-gap, 12px)) / var(--card-shelf-cols, 4))
+  );
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--card-shelf-gap, 12px);
+  width: 100%;
+  max-width: none;
+}
+/* NO GROW. A wrapping flex row lets the last row's stragglers spread into the
+   slack beside them — measured on the merchant's five-card shelf at 1328x744:
+   four cards at 145px and the fifth, alone on its row, at 155. One shelf, one
+   card, two sizes. The track already fills the row, because
+   components/cardShelf.js writes `--card-shelf-cols` from the count the shelf
+   actually holds at its measured width, so there is nothing left for growth to
+   do but break the agreement between the rows. */
+.card-shelf > * {
+  flex: 0 1 var(--card-shelf-track);
+  min-width: 0;
+  max-width: var(--card-w-glance, 152px);
+  margin: 0;
+}
+/* A line of prose on a shelf is not a card: an empty shelf's "nothing for sale
+   on this visit" would otherwise be squeezed into one 152px column. */
+.card-shelf > :is(.as-status, p, h3, .shop-offer-avail) { flex-basis: 100%; max-width: none; }
+/* NOR IS AN OFFER WITH NO CARD IN IT. The merchant's SELL shelf is mixed: an
+   armament he will buy is a card, a relic or flask is an OptionCard with a
+   name, a description and a price and no face at all. Capping THAT at a card's
+   width ellipsised the name and stood the description in a 152px strip, so a
+   tile that holds no card keeps the kit's own measure (`.class-pick`, kit
+   above) and takes a row of its own. `.shop-collectible-offer` is the tile
+   that DOES hold a face and is deliberately not exempt. */
+.card-shelf > .shop-text-offer { flex: 1 1 26rem; max-width: 40rem; }
+/* THE PLAYING CARD IS A FIXED BOX and `flex-shrink: 0`, so on a shelf it would
+   have overflowed its track rather than fitting in it. `--card-w` is the box's
+   one width input and the height is computed from its landmarks, not from the
+   width — so a narrower card is the same card with its text clamped by the
+   budget that already clamps it (`.ctext` line-clamp, and the chevron that
+   says so), never a cut-off one. */
+.card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
+/* `[data-small]` scales the card by transform: on a shelf the TRACK is what
+   makes it small, and a transform on top of that only opens a gap. Hover and
+   focus keep their lift. */
+.card-shelf .card[data-small="true"]:not(:hover, :focus-visible, :focus-within) { transform: none; }
+/* The pick row's lift, kept: a shop shelf used to be a `.reward-row` and wore
+   it, and the signal should not depend on which class a shelf happens to have. */
+.card-shelf .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+
 /* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
 /* The head names the event and its {Status}; the narrative (ArtWell + prose)
    stands beside the responses, stacked on narrow hosts; the foot holds
@@ -3261,8 +3332,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-reveal:has(.poker-inventory-detail) { flex-basis:100%; min-width:0; }
 
 /* The merchant shares the same equipment canvas; prices stay outside the card. */
-.shop-armament-offer { width:min(280px,100%); min-width:0; }
-.shop-armament-offer > .as-option { display:block; width:100%; padding:8px; }
+/* THE FACE IS THE TILE. The offer used to be a 280px OptionCard — panel,
+   border and 8px of padding — wrapped around a card rendered at the 152px
+   resting width, so more than half of every tile was empty box and two tiles
+   did not fit the offers column. The shelf sizes the tile now, and the
+   OptionCard's chrome appears only when it means something: under the pointer,
+   under focus, or on the offer the pane is describing. It is the same
+   `.as-option` element with the same hit target, inspection and outline. */
+.shop-armament-offer { min-width:0; }
+.shop-armament-offer > .as-option { display:block; width:100%; padding:0; background:none; border-color:transparent; }
+.shop-armament-offer > .as-option:is(:hover, :focus-visible, :focus-within) { background:var(--panel); border-color:var(--line); }
+.shop-offer.shop-armament-offer.is-selected > .as-option { background:var(--panel); border-color:var(--line); }
 .shop-armament-offer > .as-status { display:block; margin-top:8px; white-space:normal; }
 
 /* Playing cards share the equipment motif without changing the hand's geometry. */
@@ -3322,9 +3402,15 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    The picker arm therefore reads the container's own `data-view` now. The
    armoury and shop shelves have no toggle and keep the sniff; consolidating
    those onto one mechanism belongs with the card-size work, not here. */
+/* THE MERCHANT'S SHELVES LEFT THIS RULE, 2026-09-20. `#shop-armaments`,
+   `#shop-relics` and `#shop-flasks` were `auto-fill` tracks of up to 280px —
+   the FOCUS width, for cards drawn at the 152px resting width — so the offers
+   column fitted two tracks at best and one below 360px, with the rest behind a
+   scroll. They are `.card-shelf` now, which is the one place that answers how
+   many resting cards a row holds. The armoury's faces and the creation
+   picker's grid keep the rule: their items are not resting cards. */
 .armoury .disc-faces:has(.poker-inventory-face),
-.cc-card-selectors[data-view="grid"],
-#shop-armaments, #shop-relics, #shop-flasks {
+.cc-card-selectors[data-view="grid"] {
   display:grid; grid-template-columns:repeat(auto-fill,minmax(0,280px));
   justify-content:center; align-items:start; gap:16px;
 }
@@ -3332,7 +3418,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .disc-reveal:has(.poker-inventory-detail) { grid-column:1 / -1; }
 .epc-art-glyph { font-size:90px; filter:drop-shadow(0 5px 10px #0008); }
 .collectible-poker-card .epc-frame { grid-template-rows:45px minmax(0,1fr) 25px 39px 19px 100px 36px 13px; }
-.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:8px; }
+/* THE SAME BARGAIN THE ARMAMENT OFFER MAKES, and for a second reason here:
+   `box-sizing` is border-box repo-wide, so the tile's 8px of padding and its
+   border came OUT of the shelf's track — a relic's face was drawn at 136px on
+   a 152px track while an armament's filled it, and the primitive's promise
+   that a resting card is drawn at its resting width was false on two of the
+   merchant's five shelves. Measured at 1328x744 before this: armaments 152,
+   relics and flasks 136. So the face is the tile here too, and the OptionCard's
+   panel appears under the pointer, under focus, or on the offer being
+   described. The body keeps its own gap from the face rather than borrowing
+   the tile's padding for it. */
+.shop-collectible-offer { display:flex; flex-direction:column; width:100%; min-width:0; padding:0; background:none; border-color:transparent; }
+.shop-collectible-offer:is(:hover, :focus-visible, :focus-within) { background:var(--panel); border-color:var(--line); }
+.shop-offer.shop-collectible-offer.is-selected { background:var(--panel); border-color:var(--line); }
+/* `:root` for the weight, not for the root. A narrow shape re-declares
+   `.class-pick`'s padding and centring at (0,3,0) — styles/ui.css, for a
+   COLUMN of text OptionCards, which is not what a tile on a card shelf is —
+   and the phone kept the 16px inset that had just been taken off the desktop:
+   measured 106px faces on a 137px track. One class more, so a shelf answers
+   for its own tiles at every width. */
+:root .card-shelf > .shop-collectible-offer { padding:0; align-items:stretch; }
 .shop-collectible-offer > .equipment-poker-card { width:100%; }
 .shop-collectible-offer > .cp-body { width:100%; margin-top:8px; }
 .beat-hold[data-hold='holding'] .equipment-poker-card::after {
@@ -3342,8 +3447,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   box-shadow:inset 0 0 0 3px #f6d46f;
 }
 @media(max-width:360px) {
-  .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors[data-view="grid"],
-  #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
+  .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors[data-view="grid"] { grid-template-columns:minmax(0,280px); }
 }
 
 /* ═══ W1d / W1v — THE MERCHANT AS A WORKSPACE (screens/shop.js) ═══════════

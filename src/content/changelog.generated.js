@@ -3,12 +3,22 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1233",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The merchant shows four cards at once, and a card is no longer a small picture in a big empty box",
+    "detail": "Every shelf at the merchant — cards, armaments, weapon arts, relics, flasks and what he will buy — now lays its stock out four across and wraps below, instead of one or two per row with the rest behind a scroll. An armament for sale is the card itself: the panel that used to stand around it, twice its width and mostly empty, now appears only under the pointer, under keyboard focus, or on the offer being described beside the shelf. The offers column takes the room a shelf of cards needs, and the description column keeps a readable minimum. On a phone the same shelves show two across at the card's full size. Every card on a shelf is the same width, including the last row. The deck list a smith shows when seating a card follows the same rule.",
+    "build": "0.7.1.337",
+    "pullRequest": 1233,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1233"
+  },
+  {
     "id": "pr-1228",
     "date": "2026-09-20",
     "group": "2026-09-20",
     "summary": "Your level and every skill you are training now have bars you can watch",
     "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.335",
+    "build": "0.7.1.339",
     "pullRequest": 1228,
     "url": "https://github.com/cehinds/AshenSpire/pull/1228"
   },

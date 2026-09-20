@@ -4,6 +4,7 @@
     "railMinRem": "$w1RailMinRem",
     "railMaxRem": 28,
     "offersFraction": 0.5,
+    "detailMinRem": 22,
     "wideMinRem": 60,
     "detailMaxFraction": 0.5
   },
