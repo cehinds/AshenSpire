@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1229",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Picking a node on the map brings it to the middle of the screen",
+    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
+    "build": "0.7.1.339",
+    "pullRequest": 1229,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
+  },
+  {
     "id": "pr-1233",
     "date": "2026-09-20",
     "group": "2026-09-20",
