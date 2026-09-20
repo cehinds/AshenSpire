@@ -31,7 +31,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -306,8 +306,16 @@ export function mountCustomize(app, {
   for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
-  const STANDARD = 'standard';
-  const POINTBUY = 'pointbuy';
+  // THE EDITABLE MODE IS DATA, NOT A LITERAL (plan phase 9). This screen used
+  // to name 'pointbuy' as the one mode with points to place and 'standard' as
+  // the preset it previewed from. The rebase made `tuned2` both, and two
+  // hard-coded ids would have left the advertised ten placeable points
+  // uneditable while the preview showed a retired mode's character (Codex,
+  // #1217). Both now resolve from attributeRules.defaultMode, which is the
+  // mode creation offers.
+  const EDITABLE = defaultCreationModeId(registries);
+  const STANDARD = EDITABLE;
+  const POINTBUY = EDITABLE;
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.
@@ -408,14 +416,17 @@ export function mountCustomize(app, {
     // so the common case is one click per step, not four mandatory picks.
     state.startingArmourId = gated ? null : armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
-    if (state.attributeMode === POINTBUY) resetAttributes();
+    // A NEW CLASS IS A NEW ALLOCATION, and it must be one the player can
+    // still reach: resetting the points while leaving the mode selected
+    // would block Continue with no way back into the editor.
+    if (state.attributeMode === POINTBUY) { state.attributeMode = ''; state.attributes = null; }
   }
 
   // ---- what each step still needs ------------------------------------------
   // One reason per step, read by that step's Continue AND by Begin, so the
   // foot and the section can never disagree about what is missing.
   function classProblem() { return state.classChosen ? null : 'Choose a class.'; }
-  function modeProblem() { return state.attributeMode ? null : 'Choose Standard or Assign points.'; }
+  function modeProblem() { return state.attributeMode ? null : 'Choose how to assign your stats.'; }
   function keepsakeProblem() { return state.keepsakeId ? null : 'Choose a keepsake.'; }
   function armourProblem() { return state.startingArmourId ? null : 'Choose starting armour.'; }
   /** The stats step: the mode, then a complete and legal allocation. */
@@ -504,7 +515,14 @@ export function mountCustomize(app, {
       return { id: `${role}Rating`, faceLabel, value: rating?.receipt.value ?? 0,
         formula: `${label} rating · ${rating?.profile.displayName || 'Unarmed'} · before card-specific modifiers.` };
     });
-    const resources = projection.derived.map(entry => ({ ...entry, faceLabel: { hp: 'HP', mana: 'MP', stamina: 'SP' }[entry.id] || entry.faceLabel }));
+    // ONE POISE CHIP, AND IT IS THE WHOLE THRESHOLD. The derived row carries
+    // the Constitution term only (plan phase 9); the strip's own chip is the
+    // receipt — Constitution, body armour and relics — so projecting the row
+    // here too would stand two chips labelled Poise side by side with
+    // different numbers (Codex, #1217).
+    const resources = projection.derived
+      .filter(entry => entry.id !== 'poise')
+      .map(entry => ({ ...entry, faceLabel: { hp: 'HP', mana: 'MP', stamina: 'SP' }[entry.id] || entry.faceLabel }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
   }
@@ -698,11 +716,20 @@ export function mountCustomize(app, {
           advanceToKeepsake({ focus: restore });
           return;
         }
-        state.attributeMode = STANDARD;
+        // CANCEL RETURNS TO UNCHOSEN, NOT TO A SECOND MODE. Creation offers
+        // one mode since the rebase (plan phase 9), so "cancel" can no longer
+        // mean "take the other one": re-selecting the value already in the
+        // select fires no change event, so the editor could never reopen,
+        // while the reset allocation left points unplaced and Continue
+        // refused for good (Codex, #1217). Clearing the choice puts the
+        // placeholder back, and choosing the mode again is a fresh
+        // allocation — which is what entering it always meant.
+        state.attributeMode = '';
+        state.attributes = null;
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         if (restore) {
-          const standard = statBox.querySelector('.cc-mode-select');
-          standard?.focus(); focusElement(standard);
+          const chooser = statBox.querySelector('.cc-mode-select');
+          chooser?.focus(); focusElement(chooser);
         }
       },
     });

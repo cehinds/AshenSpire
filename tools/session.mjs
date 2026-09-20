@@ -499,7 +499,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
       // upgraded armour's threshold bought at the Shrine did nothing here
       // while its weight still priced the seat's dodge (Codex, #528).
-      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes }).value,
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot }).value,
     };
   }
 

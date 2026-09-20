@@ -38,7 +38,7 @@ test('weapon basics, merchant-only cards and starter exceptions retain their cos
   }
   assert.deepEqual(profile(reg.cards.get('katanaDrawCut')), [1, 0]);
   assert.deepEqual(profile(reg.cards.get('greatswordSunderingHew')), [1, 0]);
-  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [1, 1], 'a signature art costs stamina beside its Mana (plan phase 8): Mana is never the first cost line');
+  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [1, 1], 'a signature art costs stamina beside its Mana: Mana is never the first cost line. The 2/2 step needs run-stamped costs, not a bigger number (plan phase 9 as built)');
   assert.deepEqual(profile(reg.cards.get('dodgeRoll')), [1, 0]);
 });
 

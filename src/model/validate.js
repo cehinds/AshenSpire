@@ -593,11 +593,41 @@ function collectContentProblems(bundle, errors = []) {
         }
       }
     }
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S KIT (plan phase 9). The
+    // rebase moved every attribute and every equipment minimum at once, and
+    // nothing cross-read the two: the Starseer's preset lost the Intelligence
+    // its own staff asks for, so creation refused the character the table had
+    // just authored. Summing to the mode total is not enough — the kit the
+    // class starts in has to be wearable by the points the class starts with.
+    const presetTables = (b.attributeRules || {}).presets;
+    const kitRows = ((b.equipment || {}).startingKits) || [];
+    const reqRows = ((b.equipment || {}).equipmentRequirements) || [];
+    if (presetTables && typeof presetTables === 'object' && kitRows.length && reqRows.length) {
+      const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
+      const defaultMode = (b.attributeRules || {}).defaultMode;
+      const byClass = presetTables[defaultMode];
+      if (byClass && typeof byClass === 'object') {
+        for (const kit of kitRows) {
+          if (!kit || !kit.baseline) continue;
+          const allocation = byClass[kit.classId];
+          if (!allocation) continue;
+          for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
+            for (const row of minimaFor(itemId)) {
+              const have = allocation[row.attributeId];
+              if (Number.isInteger(row.minimum) && Number.isInteger(have) && have < row.minimum) {
+                err(`attributeRules.presets.${defaultMode}.${kit.classId}.${row.attributeId}`,
+                  `is ${have}, but the class's baseline kit item '${itemId}' asks ${row.minimum} — the preset cannot hold the kit it starts in`);
+              }
+            }
+          }
+        }
+      }
+    }
     const poise = b.balance.poise;
-    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerPerConstitution, playerImpactPerHit } — the poise meters read it (plan phase 8)');
+    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
     else {
-      if (!(Number.isInteger(poise.playerPerConstitution) && poise.playerPerConstitution >= 0)) err('balance.poise.playerPerConstitution', `must be a non-negative integer, got ${JSON.stringify(poise.playerPerConstitution)}`);
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
+      if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {

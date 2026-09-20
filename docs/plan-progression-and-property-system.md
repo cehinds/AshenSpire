@@ -539,6 +539,41 @@ Acceptance: `derivedStatPresentationProblems` clean; every class preset sums
 to the mode total; the simulator's win-rate band is re-measured and recorded
 in `docs/BALANCE.md`.
 
+**9 AS BUILT (2026-09-20):** `tuned2` (baseline 5, pool 10, floor 3, ceiling
+12, total 35) is `attributeRules.defaultMode` and the only mode
+`characterCreation.visibleModeIds` offers; `tuned`, `standard` and `pointbuy`
+stay in the table for the saves admitted against them. Ruleset 5 ships the
+five formulas above; Mana and Stamina lose their five-point tier, so the two
+Poise deferral lands here: it is a derived row (`rules.poise`) whose
+coefficient left `balance.poise`. **The 2/2 signature arts do NOT land**, and
+the reason is a mechanism rather than a number — a card resolves its cost from
+the live table while a run's pools are snapshotted, so raising the cost strands
+the starter card of every run already under way (a ruleset-4 Reaver at Wisdom 8
+holds one Mana, a Starseer at Constitution 8 one stamina). Raised to 2/2 inside
+this PR and reverted once review named it; the step needs run-stamped card
+costs, which is its own task. The required row set is now a function of the ruleset
+version (`derivedStatIdsFor`), so a version-4 snapshot is not asked for a Poise
+row it never had. `tuned2` carries its own `equipmentProfiles` at `baseValue`
+-1: Defend scales off Dexterity, the stat the rebase compressed hardest, and
+at -3 the simulator read a collapsed tier-1 boss band. `equipmentRequirements.csv`
+is rebased onto the 3–12 scale (10 → 5, 11 → 6, 12 → 8) and `canEquip` answers
+the minima question in words for a caller that names the candidate and the
+attributes; `equipPiece` was already the gate on the mutation and remains it.
+Three class presets moved: the Rogue for the Strength its dagger's damage
+profile scales on, the Starseer for the Constitution to survive a tier-1 boss
+and then back to Intelligence 8, because review found the first version of
+that preset could not hold the Ash Staff or the Nightweave its own class
+starts in. `validateContent` refuses that by name now — summing to the mode
+total was never enough, and nothing cross-read the presets against the
+equipment minima until this phase broke it. Snapshots of ruleset 1 and 2 are
+migration inputs and now migrate onto 5 rather than 4, so such a save's pools
+change; 3 and 4 are preserved verbatim. `docs/BALANCE.md` is regenerated: the tier-1 boss band moved UP across the
+board — Reaver 78/80/72 → 95/98/94, Rogue and Herald at or near 100 with ten to
+eighteen HP lost, Starseer 37/37/19 → 35/68/39. That is hotter than the game
+was and is the M3 pass's to settle rather than this phase's; what this phase
+owed was the measurement, not the verdict. SPEC §13.4l; engine
+test 93.
+
 ## Phase 10 — Quests: completion, board, and dialogue (2 PRs)
 
 Proposal §7.5. Both halves ship: a quest completes through one door, and every

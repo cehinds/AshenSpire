@@ -41,14 +41,31 @@ export function playerPoiseThresholdReceipt(registries, run) {
       note: 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
   }
   const levels = run.itemUpgradeLevels || {};
-  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): Constitution ×
-  // balance.poise.playerPerConstitution, the worn BODY ARMOUR's threshold (a
+  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): the derived
+  // Poise row read against Constitution, the worn BODY ARMOUR's threshold (a
   // weapon's poiseThreshold is its weight, not the wearer's footing), and the
   // relics' poiseThresholdAdd. A run handed without attributes (a headless
   // fixture) has no attribute term.
-  const perCon = Number.isInteger(registries.balance?.poise?.playerPerConstitution) ? registries.balance.poise.playerPerConstitution : 0;
+  // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
+  // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
+  // not been written yet; reading it from two places would be the copy Law 1
+  // forbids. A run whose own snapshot predates the row falls through to the
+  // live table, which is what a headless fixture and a creation preview need;
+  // a run that HAS the row is priced by its own, below.
+  // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
+  // fallback for a caller that carries no run (a headless fixture, a
+  // creation preview). A run born under an Advanced tier-size override
+  // records that override in its snapshot, and reading the authored row
+  // instead would price its meter by numbers that run never agreed to
+  // (Codex, #1217).
+  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
+    || registries.derivedStatRules?.rules?.poise;
+  const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
+    : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
+  const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
+  const poiseBase = Number.isFinite(poiseRule?.base) ? poiseRule.base : 0;
   const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
-  const attribute = perCon * con;
+  const attribute = poiseRule ? poiseBase + Math.floor(con / (perTier || 1)) * gain : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
@@ -67,7 +84,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
     id: 'poiseThreshold',
     label: 'Poise threshold',
     sources: [
-      ...(perCon > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      ...(attribute > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
       ...pieceSources, ...relicSources,
     ],
     attribute,
@@ -160,7 +177,16 @@ export function statProjection(registries, run) {
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = presentationRows(registries).map((presentation) => {
+  // A ROW THE RUN'S SNAPSHOT NEVER HAD IS NOT PROJECTED. The presentation
+  // table is the LIVE one and grows with the content — Poise joined it in
+  // ruleset 5 (plan phase 9) — while a run keeps the rules it was born
+  // under. Asking a version-3 snapshot for a Poise receipt threw by name and
+  // took every stat surface down with it (Codex, #1217). The pairing the
+  // content door enforces is between the live table's halves; across a
+  // version boundary the snapshot decides.
+  const derived = presentationRows(registries).filter((presentation) => (
+    snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
+  )).map((presentation) => {
     const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;

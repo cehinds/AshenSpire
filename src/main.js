@@ -2067,6 +2067,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     player: {
       classId: run.class,
       attributes: run.attributes,
+      // The rule this run was born with, so the Poise vessel combat stamps
+      // is the one its character sheet shows (plan phase 9).
+      derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
       skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
       coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
       maxHp: run.maxHp,

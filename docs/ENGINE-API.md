@@ -71,7 +71,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
 | `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
-| `poise.playerPerConstitution` (1) | the player's poise max per point of Constitution, beside body armour and relic `poiseThresholdAdd` (SPEC §13.4k) |
+| `derivedStatRules.rules.poise` | the player's poise max per point of Constitution, beside body armour and relic `poiseThresholdAdd` (SPEC §13.4k, §13.4l). Retired from `balance.poise` in plan phase 9; a copy there is refused by name |
 | `stagger.player` | `{ actionLoss, statuses: { <statusId>: stacks } }` — what a player Stagger takes: actions off the next turn and the statuses applied |
 | `mana.minActionCost` / `minStaminaCost` (1 / 1) | a card that costs Mana costs at least these (validation) |
 | `exposure.staggerBreakPoise` / `resonanceSpreadPct` / `buildupPerManaSpell` (6 / 50 / 5) | the focus properties' numbers and the Mana spell's buildup floor |

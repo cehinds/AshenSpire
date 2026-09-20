@@ -5,41 +5,41 @@ export const equipmentRequirements = [
   {
     "itemId": "straightSword",
     "attributeId": "strength",
-    "minimum": 10
+    "minimum": 5
   },
   {
     "itemId": "greatsword",
     "attributeId": "strength",
-    "minimum": 12
+    "minimum": 8
   },
   {
     "itemId": "dagger",
     "attributeId": "dexterity",
-    "minimum": 11
+    "minimum": 6
   },
   {
     "itemId": "ashStaff",
     "attributeId": "intelligence",
-    "minimum": 12
+    "minimum": 8
   },
   {
     "itemId": "wayfarerPlate",
     "attributeId": "strength",
-    "minimum": 12
+    "minimum": 8
   },
   {
     "itemId": "nightweave",
     "attributeId": "intelligence",
-    "minimum": 12
+    "minimum": 8
   },
   {
     "itemId": "riteVestments",
     "attributeId": "wisdom",
-    "minimum": 12
+    "minimum": 8
   },
   {
     "itemId": "gutterLeathers",
     "attributeId": "dexterity",
-    "minimum": 12
+    "minimum": 8
   }
 ];

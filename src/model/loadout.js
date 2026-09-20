@@ -3156,6 +3156,42 @@ export function canEquip(registries, slotId, ctx) {
     const refusal = gripRefusal(registries, ctx.loadout, ctx.classId || null, slotId, ctx.setIndex, ctx.itemId);
     if (refusal) return { ok: false, reason: refusal };
   }
+  // THE ATTRIBUTE GATE (plan phase 9), BESIDE THE GRIP'S. equipPiece has
+  // enforced these minima on the mutation for as long as they have existed;
+  // what this adds is the ANSWER, early and in words, to a caller that asks
+  // "may this go here" before acting — the equipment screen's seal, which
+  // could previously only find out by trying. Asked when the caller names
+  // both the candidate and the attributes to judge it by; a bare "may this
+  // slot change" question keeps its old answer, and the mutation's own check
+  // remains the gate of record.
+  if (ctx.itemId && ctx.attributes) {
+    // BOTH HALVES OF THE WARDROBE. equipmentRequirements.csv carries armour
+    // rows (the plate asks Strength, the vestments Wisdom) as well as
+    // armaments, and a gate that searched only the weapons would have left
+    // every armour minimum unenforced while reading as though it enforced
+    // them — worse than no gate, because the table says otherwise.
+    const eq = registries.equipment || {};
+    const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
+      || (eq.armour || []).find((row) => row.id === ctx.itemId);
+    if (piece) {
+      // THE SAME INPUTS THE MUTATION'S OWN CHECK USES. equipPiece has read
+      // these minima since before this gate existed; this one runs FIRST and
+      // short-circuits, so a narrower copy here would overrule the wider one
+      // and refuse an item whose requirement an upgrade had lowered.
+      const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, {
+        itemUpgradeLevels: ctx.itemUpgradeLevels || {},
+        armamentLevels: ctx.armamentLevels || {},
+      });
+      if (!receipt.ok) {
+        const shortOf = receipt.failures[0];
+        const label = (registries.attributes.get(shortOf.attributeId) || {}).shortLabel || shortOf.attributeId;
+        // An absent attribute is UNKNOWN, not zero: a caller that hands in a
+        // partial allocation is not a character with nothing in that stat.
+        const have = shortOf.actual === null ? 'unknown' : shortOf.actual;
+        return { ok: false, reason: `${piece.name || piece.id} requires ${label} ${shortOf.required} (you have ${have})` };
+      }
+    }
+  }
   return { ok: true, reason: '' };
 }
 
@@ -3441,7 +3477,16 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
   // function had just refused into a legal one, so if the check above is ever
   // loosened canEquip's own check is a real second gate rather than an echo.
-  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId });
+  const permission = canEquip(registries, slotId, {
+    inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId,
+    // The attribute gate judges only when the caller hands in what to judge
+    // by, and then by the same levels this function's own check uses.
+    ...(ctx.attributes ? {
+      attributes: ctx.attributes,
+      itemUpgradeLevels: ctx.itemUpgradeLevels,
+      armamentLevels: ctx.armamentLevels,
+    } : {}),
+  });
   if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
