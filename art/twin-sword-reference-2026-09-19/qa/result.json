@@ -1,0 +1,460 @@
+{
+  "rows": [
+    {
+      "classId": "reaver",
+      "armourId": "default",
+      "set": "reaverTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "vigil",
+      "set": "reaver-vigilTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "oathsworn",
+      "set": "reaver-oathswornTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "warden",
+      "set": "reaver-wardenTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "default",
+      "set": "starseerTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "eclipse",
+      "set": "starseer-eclipseTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "starlit",
+      "set": "starseer-starlitTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "astral",
+      "set": "starseer-astralTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "default",
+      "set": "heraldTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "ossuary",
+      "set": "herald-ossuaryTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "emberhabit",
+      "set": "herald-emberhabitTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "pilgrim",
+      "set": "herald-pilgrimTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "default",
+      "set": "rogueTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "nightveil",
+      "set": "rogue-nightveilTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "duelist",
+      "set": "rogue-duelistTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "shadow",
+      "set": "rogue-shadowTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "bastion",
+      "set": "reaver-wardenTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "rimeweave",
+      "set": "starseer-starlitTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "waywatcher",
+      "set": "rogue-nightveilTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "wayfarerPlate",
+      "set": "reaver-wayfarerPlateTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "wayfarerPlate",
+      "set": "starseer-wayfarerPlateTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "wayfarerPlate",
+      "set": "herald-wayfarerPlateTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "wayfarerPlate",
+      "set": "rogue-wayfarerPlateTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "nightweave",
+      "set": "reaver-nightweaveTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "nightweave",
+      "set": "starseer-nightweaveTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "nightweave",
+      "set": "herald-nightweaveTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "nightweave",
+      "set": "rogue-nightweaveTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "riteVestments",
+      "set": "reaver-riteVestmentsTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "riteVestments",
+      "set": "starseer-riteVestmentsTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "riteVestments",
+      "set": "herald-riteVestmentsTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "riteVestments",
+      "set": "rogue-riteVestmentsTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "reaver",
+      "armourId": "gutterLeathers",
+      "set": "reaver-gutterLeathersTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "starseer",
+      "armourId": "gutterLeathers",
+      "set": "starseer-gutterLeathersTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "herald",
+      "armourId": "gutterLeathers",
+      "set": "herald-gutterLeathersTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    },
+    {
+      "classId": "rogue",
+      "armourId": "gutterLeathers",
+      "set": "rogue-gutterLeathersTwinSword",
+      "profile": "twinSword",
+      "authored": {
+        "rightGroup": "sword",
+        "leftGroup": "sword",
+        "rightShape": "straight",
+        "leftShape": "curved"
+      }
+    }
+  ],
+  "appearances": 32,
+  "observed": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "expected": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "timing": {
+    "totalMs": 1080,
+    "impactMs": 480
+  },
+  "poses": {
+    "guard": "DEFEND",
+    "hit": "HURT",
+    "cast": "CAST",
+    "power": "BUFF",
+    "stance": "STANCE-DEFENSIVE"
+  },
+  "portrait": "http://127.0.0.1:54670/assets/animations/twin-sword-outfits/reaver/PORTRAIT.webp",
+  "conversation": "http://127.0.0.1:54670/assets/animations/twin-sword-outfits/reaver/CONVERSATION.webp"
+}

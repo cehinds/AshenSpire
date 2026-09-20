@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1219",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Twin swords now keep every class and armour's appearance through one shared attack",
+    "detail": "Straight Sword in the right hand and Katana in the left select 32 painted suites across all four classes and 35 armour entries. The nine-step attack shares its timing across every outfit, with separate defend, hurt, cast, buff, stance, portrait and conversation poses. Reversed hands retain their existing presentation. The workshop compares outfits and lets you edit pose order, timing and impact before saving a sequence.",
+    "build": "0.7.1.320",
+    "pullRequest": 1219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1219"
+  },
+  {
     "id": "pr-1213",
     "date": "2026-09-19",
     "group": "2026-09-19",
