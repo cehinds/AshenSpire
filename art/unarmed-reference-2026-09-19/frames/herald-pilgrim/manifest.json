@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-pilgrim",
+  "classId": "herald",
+  "armourId": "pilgrim",
+  "effectsBaked": false,
+  "source": "sources/herald-pilgrim.png",
+  "sourceSha256": "c540e977c26d8fcfad4ab8451031d6248ad83483f9c425a32fefbf7372285570",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3003095975232197,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        7,
+        22,
+        285,
+        323
+      ],
+      "core": [
+        19,
+        34,
+        273,
+        311
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        155.5,
+        289
+      ],
+      "offset": [
+        54,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        115,
+        404,
+        492
+      ],
+      "file": "frames/herald-pilgrim/STANCE-READY.webp",
+      "sha256": "6ca482720e9e5e4ea2b8c01593833b7c8f0e19b0b59e997d5f3e4325f384705b"
+    },
+    "ATK-01": {
+      "content": [
+        330,
+        21,
+        603,
+        323
+      ],
+      "core": [
+        342,
+        33,
+        591,
+        311
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        144.5,
+        290
+      ],
+      "offset": [
+        68,
+        103
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        116,
+        411,
+        490
+      ],
+      "file": "frames/herald-pilgrim/ATK-01.webp",
+      "sha256": "7f63e22e0aa0b71086b93fe230310d95ade01b7eeda7af8db6f2d1b52736327a"
+    },
+    "ATK-02": {
+      "content": [
+        632,
+        21,
+        925,
+        323
+      ],
+      "core": [
+        644,
+        33,
+        913,
+        311
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        154.0,
+        290
+      ],
+      "offset": [
+        56,
+        103
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        114,
+        437,
+        492
+      ],
+      "file": "frames/herald-pilgrim/ATK-02.webp",
+      "sha256": "a322a3fd7bcb8102ff32dee8442d5b109c3f63fbf91cf57425946ddf48fd6f7a"
+    },
+    "ATK-03": {
+      "content": [
+        947,
+        20,
+        1243,
+        323
+      ],
+      "core": [
+        959,
+        32,
+        1231,
+        311
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        152.0,
+        291
+      ],
+      "offset": [
+        58,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        114,
+        437,
+        494
+      ],
+      "file": "frames/herald-pilgrim/ATK-03.webp",
+      "sha256": "417db161c3fd442a2a8dc145b836fa9bd5168d62f9243049ec47704ef01ce725"
+    },
+    "ATK-04": {
+      "content": [
+        7,
+        330,
+        292,
+        634
+      ],
+      "core": [
+        19,
+        342,
+        280,
+        622
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        158.5,
+        292
+      ],
+      "offset": [
+        50,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        112,
+        410,
+        486
+      ],
+      "file": "frames/herald-pilgrim/ATK-04.webp",
+      "sha256": "4cb330ead7ab5cc7cffe107b6f027ff0864f8bed1eeff5f7a3264c2f50eeb5f7"
+    },
+    "ATK-05": {
+      "content": [
+        326,
+        335,
+        620,
+        634
+      ],
+      "core": [
+        338,
+        347,
+        608,
+        622
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        143.5,
+        287
+      ],
+      "offset": [
+        69,
+        107
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        81,
+        111,
+        450,
+        487
+      ],
+      "file": "frames/herald-pilgrim/ATK-05.webp",
+      "sha256": "2047637f2ac20712af2fd68946e7969630083b57f5575b4615d7daa0a88efa20"
+    },
+    "ATK-06": {
+      "content": [
+        637,
+        330,
+        920,
+        634
+      ],
+      "core": [
+        649,
+        342,
+        908,
+        622
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        155.5,
+        292
+      ],
+      "offset": [
+        54,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        110,
+        410,
+        487
+      ],
+      "file": "frames/herald-pilgrim/ATK-06.webp",
+      "sha256": "32e08ad88ce2112b98d56a3bd9cfada65cfec9feac8e3138ab874465b7d54874"
+    },
+    "ATK-07": {
+      "content": [
+        949,
+        330,
+        1233,
+        634
+      ],
+      "core": [
+        961,
+        342,
+        1221,
+        622
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        156.5,
+        292
+      ],
+      "offset": [
+        53,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        111,
+        411,
+        487
+      ],
+      "file": "frames/herald-pilgrim/ATK-07.webp",
+      "sha256": "790f10724a6be141c26780b615dbe819929d2c976c92213bab5bd324ad180801"
+    },
+    "DEFEND": {
+      "content": [
+        7,
+        647,
+        296,
+        940
+      ],
+      "core": [
+        19,
+        659,
+        284,
+        928
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        161.5,
+        281
+      ],
+      "offset": [
+        46,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        58,
+        127,
+        413,
+        487
+      ],
+      "file": "frames/herald-pilgrim/DEFEND.webp",
+      "sha256": "b058c41237abd4267feb50575150330c30a39baa2228343e6ade84b4d5715093"
+    },
+    "HURT": {
+      "content": [
+        326,
+        634,
+        609,
+        940
+      ],
+      "core": [
+        338,
+        646,
+        597,
+        928
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        158.5,
+        294
+      ],
+      "offset": [
+        50,
+        98
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        108,
+        418,
+        487
+      ],
+      "file": "frames/herald-pilgrim/HURT.webp",
+      "sha256": "1ca0cd8c5bd5a18b9e6a18400a7aa3afdc541ed791b04b3a6d9b1841681b899d"
+    },
+    "CAST": {
+      "content": [
+        620,
+        646,
+        937,
+        942
+      ],
+      "core": [
+        632,
+        658,
+        925,
+        930
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        165.5,
+        284
+      ],
+      "offset": [
+        41,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        54,
+        111,
+        453,
+        487
+      ],
+      "file": "frames/herald-pilgrim/CAST.webp",
+      "sha256": "8a609c89d537b8c5bd8c3df90272fccdc5fc8723ade6e5c092f63e5fc08fb45c"
+    },
+    "BUFF": {
+      "content": [
+        952,
+        629,
+        1207,
+        942
+      ],
+      "core": [
+        964,
+        641,
+        1195,
+        930
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        139.0,
+        301
+      ],
+      "offset": [
+        75,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        86,
+        102,
+        398,
+        489
+      ],
+      "file": "frames/herald-pilgrim/BUFF.webp",
+      "sha256": "a931a3762698fdfb750299368e9bb07dc855fc73ee7af046698204ec354ef407"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        7,
+        965,
+        308,
+        1231
+      ],
+      "core": [
+        19,
+        977,
+        296,
+        1219
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        167.0,
+        254
+      ],
+      "offset": [
+        39,
+        150
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        52,
+        161,
+        420,
+        487
+      ],
+      "file": "frames/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+      "sha256": "541e3fec0c97f7f816e683e8780770fd897422fe88eac3de2d895e1bfe09f6b6"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        331,
+        963,
+        604,
+        1232
+      ],
+      "core": [
+        343,
+        975,
+        592,
+        1220
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        150.0,
+        257
+      ],
+      "offset": [
+        61,
+        146
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        158,
+        404,
+        486
+      ],
+      "file": "frames/herald-pilgrim/STANCE-DEFENSIVE.webp",
+      "sha256": "fde36c386500791e80262ec5f869974ab25276b0cf497ea5c5523bb643be60ad"
+    },
+    "PORTRAIT": {
+      "content": [
+        628,
+        925,
+        946,
+        1238
+      ],
+      "core": [
+        640,
+        937,
+        934,
+        1226
+      ],
+      "scale": 1.4591194968553458,
+      "sourceFootAnchor": [
+        159.0,
+        301
+      ],
+      "offset": [
+        24,
+        41
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        54,
+        484,
+        498
+      ],
+      "file": "frames/herald-pilgrim/PORTRAIT.webp",
+      "sha256": "6730953db57ab03667e85dd67b4eb456e24f032258ed863b28c046dd0d22ccf4"
+    },
+    "CONVERSATION": {
+      "content": [
+        973,
+        915,
+        1200,
+        1238
+      ],
+      "core": [
+        985,
+        927,
+        1188,
+        1226
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        126.5,
+        311
+      ],
+      "offset": [
+        92,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        96,
+        87,
+        375,
+        488
+      ],
+      "file": "frames/herald-pilgrim/CONVERSATION.webp",
+      "sha256": "e90c27dbb0637b84777b9fd6a49d6675634b17edd7a83e16ca7fa811fd83984d"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

@@ -13,7 +13,7 @@ armour, ordered right/left weapon groups and optional grip. Its model is
 `src/model/equipmentAnimation.js`; authored references live in
 `content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
 Armoury, conversation and portrait views share those references. The visual
-catalog includes greatsword ready stances for all four classes. One shared motion profile serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames.
+catalog includes greatsword, sword/shield and unarmed ready stances. Each family serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames. Unarmed physical attacks and casting have separate references within one shared profile.
 Twin swords add 32 appearances across those 35 entries, sharing one motion profile. Optional per-hand item constraints select only the authored right Straight Sword / left Katana order; reversed hands retain existing art. The [twin-sword workshop](../art/twin-sword-reference-2026-09-19/index.html) compares outfits and edits playback order.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 

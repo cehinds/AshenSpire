@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "starseer-riteVestments",
+  "classId": "starseer",
+  "armourId": "riteVestments",
+  "effectsBaked": false,
+  "source": "sources/starseer-riteVestments.png",
+  "sourceSha256": "78ff25b73c43d599e9e4fdea383d2725fe6b63be02da4c169ed295b2f0460eea",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3333333333333333,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        21,
+        9,
+        295,
+        317
+      ],
+      "core": [
+        33,
+        21,
+        283,
+        305
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        149.0,
+        296
+      ],
+      "offset": [
+        57,
+        85
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        96,
+        417,
+        483
+      ],
+      "file": "frames/starseer-riteVestments/STANCE-READY.webp",
+      "sha256": "c0785c1f2d1f6d7fbdb26dd36b47598c92a7d7d973d379b25e1b4e4a0583a577"
+    },
+    "ATK-01": {
+      "content": [
+        337,
+        13,
+        612,
+        318
+      ],
+      "core": [
+        349,
+        25,
+        600,
+        306
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        146.5,
+        293
+      ],
+      "offset": [
+        61,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        101,
+        424,
+        483
+      ],
+      "file": "frames/starseer-riteVestments/ATK-01.webp",
+      "sha256": "c5e212381cc6d1a0a32d5c0a4f914ed1f14b6c2fde2529b68f78e316a1ed199d"
+    },
+    "ATK-02": {
+      "content": [
+        645,
+        20,
+        941,
+        317
+      ],
+      "core": [
+        657,
+        32,
+        929,
+        305
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        151.5,
+        285
+      ],
+      "offset": [
+        54,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        113,
+        438,
+        485
+      ],
+      "file": "frames/starseer-riteVestments/ATK-02.webp",
+      "sha256": "e9315b6cd8c45492a03fb244e797499d877ddb12340549fbce8884ff0b83100b"
+    },
+    "ATK-03": {
+      "content": [
+        958,
+        21,
+        1254,
+        317
+      ],
+      "core": [
+        970,
+        33,
+        1243,
+        305
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        152.5,
+        284
+      ],
+      "offset": [
+        53,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        113,
+        448,
+        485
+      ],
+      "file": "frames/starseer-riteVestments/ATK-03.webp",
+      "sha256": "42d0e1ae6eda825c8664791044b7502d9e073a748ba610a573166ca3316077ca"
+    },
+    "ATK-04": {
+      "content": [
+        21,
+        322,
+        301,
+        631
+      ],
+      "core": [
+        33,
+        334,
+        289,
+        619
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        150.5,
+        297
+      ],
+      "offset": [
+        55,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        96,
+        415,
+        491
+      ],
+      "file": "frames/starseer-riteVestments/ATK-04.webp",
+      "sha256": "337e393dce1e33ef957ad376d01b04bc5009bd80a99829412b0e4f17b65efc2d"
+    },
+    "ATK-05": {
+      "content": [
+        330,
+        331,
+        645,
+        631
+      ],
+      "core": [
+        342,
+        343,
+        633,
+        619
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        157.0,
+        288
+      ],
+      "offset": [
+        47,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        59,
+        99,
+        462,
+        496
+      ],
+      "file": "frames/starseer-riteVestments/ATK-05.webp",
+      "sha256": "7b3f129ca38980d74161e6a0247388c894b7207fd2ebe4a804b35b71a1d7b8c6"
+    },
+    "ATK-06": {
+      "content": [
+        650,
+        337,
+        932,
+        631
+      ],
+      "core": [
+        662,
+        349,
+        920,
+        619
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        151.0,
+        282
+      ],
+      "offset": [
+        55,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        113,
+        419,
+        491
+      ],
+      "file": "frames/starseer-riteVestments/ATK-06.webp",
+      "sha256": "bf8402192dee84af63b1c9aa1fc0797c407ad4ef7070f178b0310c6169c0dbf1"
+    },
+    "ATK-07": {
+      "content": [
+        962,
+        331,
+        1250,
+        631
+      ],
+      "core": [
+        974,
+        343,
+        1238,
+        619
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        157.0,
+        288
+      ],
+      "offset": [
+        47,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        51,
+        106,
+        419,
+        491
+      ],
+      "file": "frames/starseer-riteVestments/ATK-07.webp",
+      "sha256": "2a8966d2f23bbeea69d445c9380045b57480a3919955f43dae4c7f415eb69c77"
+    },
+    "DEFEND": {
+      "content": [
+        20,
+        641,
+        302,
+        942
+      ],
+      "core": [
+        32,
+        653,
+        290,
+        930
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        153.0,
+        289
+      ],
+      "offset": [
+        52,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        107,
+        415,
+        487
+      ],
+      "file": "frames/starseer-riteVestments/DEFEND.webp",
+      "sha256": "923253fd1c1b11f2c26a5e2239beade8ca641dd75f544ef6f27def9b851dba8f"
+    },
+    "HURT": {
+      "content": [
+        336,
+        645,
+        616,
+        941
+      ],
+      "core": [
+        348,
+        657,
+        604,
+        929
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        155.0,
+        284
+      ],
+      "offset": [
+        49,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        58,
+        113,
+        414,
+        485
+      ],
+      "file": "frames/starseer-riteVestments/HURT.webp",
+      "sha256": "3f78b2e706e1ff848fbacefbaace3d63e864230bfd51fb5c80b7d4d1d06558c9"
+    },
+    "CAST": {
+      "content": [
+        642,
+        642,
+        950,
+        942
+      ],
+      "core": [
+        654,
+        654,
+        938,
+        930
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        156.5,
+        288
+      ],
+      "offset": [
+        47,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        59,
+        108,
+        454,
+        484
+      ],
+      "file": "frames/starseer-riteVestments/CAST.webp",
+      "sha256": "764ca6eada1614398e04fbb62b056da46c9e36e6abfb03e30f0daff474a20918"
+    },
+    "BUFF": {
+      "content": [
+        986,
+        636,
+        1229,
+        941
+      ],
+      "core": [
+        998,
+        648,
+        1217,
+        929
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        137.5,
+        293
+      ],
+      "offset": [
+        73,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        101,
+        388,
+        491
+      ],
+      "file": "frames/starseer-riteVestments/BUFF.webp",
+      "sha256": "c74112bf77e855a06222e7627674416cbf9be77ad41c5790494db093be27938e"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        23,
+        966,
+        312,
+        1231
+      ],
+      "core": [
+        35,
+        978,
+        300,
+        1219
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        153.0,
+        253
+      ],
+      "offset": [
+        52,
+        143
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        155,
+        426,
+        486
+      ],
+      "file": "frames/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+      "sha256": "c37b5e494512aa4f88593df9db27c4d84a9146ddc7d3a851695812ac4b0670cc"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        335,
+        968,
+        615,
+        1231
+      ],
+      "core": [
+        347,
+        980,
+        603,
+        1219
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        151.0,
+        251
+      ],
+      "offset": [
+        55,
+        145
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        158,
+        425,
+        487
+      ],
+      "file": "frames/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+      "sha256": "a415acd09ae7b59b97ca29335f85cdd56977bc403eaf63483b4d124fcfe53dd7"
+    },
+    "PORTRAIT": {
+      "content": [
+        643,
+        933,
+        958,
+        1240
+      ],
+      "core": [
+        655,
+        945,
+        946,
+        1228
+      ],
+      "scale": 1.4730158730158731,
+      "sourceFootAnchor": [
+        157.5,
+        295
+      ],
+      "offset": [
+        24,
+        45
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        28,
+        58,
+        488,
+        494
+      ],
+      "file": "frames/starseer-riteVestments/PORTRAIT.webp",
+      "sha256": "fa0f6ea46f1943fc19f938bec31764edd5eef79dd9913415f53fc440df3e2d71"
+    },
+    "CONVERSATION": {
+      "content": [
+        994,
+        929,
+        1209,
+        1240
+      ],
+      "core": [
+        1006,
+        941,
+        1197,
+        1228
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        126.0,
+        299
+      ],
+      "offset": [
+        88,
+        81
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        92,
+        90,
+        368,
+        491
+      ],
+      "file": "frames/starseer-riteVestments/CONVERSATION.webp",
+      "sha256": "c31665ca69004c923d147e0e0d195d3898a5c5e1dd3c21fd7c50338afcbad85a"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

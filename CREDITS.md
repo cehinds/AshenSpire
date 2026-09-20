@@ -227,3 +227,7 @@ exact prompts, provenance, and extraction instructions are retained under
 ## Twin-sword outfit suites (2026-09-19)
 
 Thirty-two original transparent atlases generated with the built-in image_gen tool from project-owned class and armor references. Exact prompts, provenance, PNG masters, normalization metadata and the interactive review are retained in `art/twin-sword-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and 35 armor entries, with one shared motion and authored right Straight Sword / left Katana hands. No third-party artwork was downloaded and no third-party license is claimed.
+
+## Unarmed physical outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with built-in OpenAI image generation from the project's class/outfit paintings and one shared unarmed pose reference. Exact prompts and PNG masters are retained in `art/unarmed-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 armor entries, including three existing catalog art aliases. Both hands are empty; no effects are baked into these frames. No third-party artwork was downloaded and no third-party license is claimed.
