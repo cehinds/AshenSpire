@@ -1016,6 +1016,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    than a later `*` rule, so the two do not depend on which is written last. */
 .modal-body[data-settings-host]:has(> .set-railed) > :not(.set-railed) { flex: 0 0 auto; }
 .modal-body[data-settings-host] > .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+/* A column flex stretches its items, and this host holds ONE item that is a
+   button rather than a band: Offline play, prepended only on the in-run door.
+   Under the block layout this rule replaces it was 163 px wide; stretched it
+   became 744 px at 900x600 — a control that changed size because the box
+   around it changed type. Named rather than blanket `align-items`, because the
+   header tools and the notice ARE bands and must keep the full width. */
+.modal-body[data-settings-host] > #settings-download { align-self: start; }
 
 [data-settings-host] .set-tabs { overflow-y: auto; }
 [data-settings-host] .set-tabs > * { flex-shrink: 0; }

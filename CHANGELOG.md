@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-20
 
-- **The in-run Settings menu no longer shows two scrollbars side by side** ([#1231](https://github.com/cehinds/AshenSpire/pull/1231), `0.7.1.330`). Opening Settings from the in-run menu drew a second scrollbar ten pixels inside the first, both inside the same border. The list of settings keeps the one scrollbar it needs and the panel around it no longer scrolls; the Controls tab is unchanged. Every other menu was checked for the same fault at six screen shapes and none of them has it.
+- **The in-run Settings menu no longer shows two scrollbars side by side** ([#1231](https://github.com/cehinds/AshenSpire/pull/1231), `0.7.1.332`). Opening Settings from the in-run menu drew a second scrollbar ten pixels inside the first, both inside the same border. The list of settings keeps the one scrollbar it needs and the panel around it no longer scrolls; the Controls tab is unchanged. Every other menu was checked for the same fault at six screen shapes and none of them has it.
 
 - **Your five stats are rebased, and every point you place is felt** ([#1217](https://github.com/cehinds/AshenSpire/pull/1217), `0.7.1.328`). Creation now starts each stat at 5 and hands you ten points to place between 3 and 12, instead of starting at 10 and handing you three. The pools follow: your Mana is your Wisdom and your Stamina is your Constitution, point for point, rather than one per five, and Health is 20 plus four per point of Constitution. Weapons and armour ask for the new numbers too, and picking up something your stats cannot hold is refused where the change happens, with the shortfall named. Runs already under way keep the rules they were created with.
 

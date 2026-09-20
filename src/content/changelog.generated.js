@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "The in-run Settings menu no longer shows two scrollbars side by side",
     "detail": "Opening Settings from the in-run menu drew a second scrollbar ten pixels inside the first, both inside the same border. The list of settings keeps the one scrollbar it needs and the panel around it no longer scrolls; the Controls tab is unchanged. Every other menu was checked for the same fault at six screen shapes and none of them has it.",
-    "build": "0.7.1.330",
+    "build": "0.7.1.332",
     "pullRequest": 1231,
     "url": "https://github.com/cehinds/AshenSpire/pull/1231"
   },

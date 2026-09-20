@@ -56,13 +56,21 @@
 // on the very door the photograph was taken in. If the sweep does not go red
 // against that, nothing it says about the other doors means anything.
 //
-// BOUNDARY. Linux headless Chromium, the shapes listed below, Text M. It reads
-// LAYOUT, so it sees exactly the bars that take room from the content: a
-// platform drawing overlay scrollbars (macOS by default, iOS) hides its bars
-// from this ruler and from the player at rest alike. It sweeps the menus that
-// open without playing the game — the ?shot= doors, the in-run ☰ overlay's two
-// tabs, every Settings category, and the Armoury — and it does not claim the
-// rooms behind a real run (Rewards, the LAN lobby, the post-boss doors).
+// BOUNDARY. Linux headless Chromium, the shapes listed below, Text M, and all
+// six of them driven with `mobile: false` for the reason stated at SHAPES. It
+// reads LAYOUT, so it sees exactly the bars that take room from the content —
+// which is the same thing as saying it CANNOT see an overlay bar. Where the
+// player's platform draws those (iOS, macOS by default, and Chromium's own
+// mobile emulation) this tool is silent, and so, at rest, is the defect: two
+// overlay bars still stack in the same ten px, they simply do not appear until
+// a finger moves. Nothing here rules that out on a real phone. What the phone
+// ROWS prove is the LAYOUT — that the boxes a phone-width door builds do not
+// nest two scrollports — measured through the desktop scrollbar theme.
+//
+// It sweeps the menus that open without playing the game — the ?shot= doors,
+// the in-run ☰ overlay's two tabs, every Settings category, and the Armoury —
+// and it does not claim the rooms behind a real run (Rewards, the LAN lobby,
+// the post-boss doors).
 
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -94,13 +102,25 @@ const browserPath = argOf('--browser') || [
 // door's two bars are widest; 1366x768 is the ordinary laptop in the
 // photograph's band; 844x390 is landscape, the shape with the least height of
 // all; 390x844 and 360x640 are the phones.
+//
+// AND EVERY ONE OF THEM RUNS WITH `mobile: false`, WHICH IS THE ONLY REASON
+// THE PHONE SHAPES MEASURE ANYTHING. Chromium's mobile emulation swaps in the
+// OVERLAY scrollbar theme, and an overlay bar takes NO LAYOUT WIDTH — so the
+// gutter this tool reads is zero on every box, at every phone shape, whatever
+// is nested in what. Measured: 390x844 with `mobile: true` reports "no bars"
+// on all 17 surface states; the identical viewport with `mobile: false`
+// reports bars on 11 of them. `!swept` cannot catch that, because it counts
+// STATES, not bars: the run stays green over three shapes it never looked at,
+// which is this file's own "nothing swept is not a pass" wearing a shape name.
+// The three phone rows keep their device pixel ratios; what they give up is a
+// claim about the phone's own scrollbar theme, and the boundary says so.
 const SHAPES = [
   { tag: '1366x768', w: 1366, h: 768, dsf: 1, mobile: false },
   { tag: '1200x730', w: 1200, h: 730, dsf: 1, mobile: false },
   { tag: '900x600', w: 900, h: 600, dsf: 1, mobile: false },
-  { tag: '844x390', w: 844, h: 390, dsf: 3, mobile: true },
-  { tag: '390x844', w: 390, h: 844, dsf: 3, mobile: true },
-  { tag: '360x640', w: 360, h: 640, dsf: 2, mobile: true },
+  { tag: '844x390', w: 844, h: 390, dsf: 3, mobile: false },
+  { tag: '390x844', w: 390, h: 844, dsf: 3, mobile: false },
+  { tag: '360x640', w: 360, h: 640, dsf: 2, mobile: false },
 ];
 
 // A surface is a ?shot= door plus an optional sequence of presses that opens a
@@ -136,8 +156,12 @@ const SURFACES = [
   // THE DOOR IN THE PHOTOGRAPH. `?shot=map` is the cheapest room that has a ☰.
   { name: 'menu-settings', shot: 'map', ready: `!!document.querySelector('.map-node')`,
     after: overlayTab('settings'), open: `!!document.querySelector('[data-settings-host]')`, categories: true },
+  // `.overlay-body > .controls-pane`, NOT `.overlay-body` — the body is always
+  // there, so the looser selector is satisfied by a Controls tab that rendered
+  // nothing (a thrown listener, the `.ov-dead` blocker path) and the sweep
+  // prints `ok` about an empty box.
   { name: 'menu-controls', shot: 'map', ready: `!!document.querySelector('.map-node')`,
-    after: overlayTab('controls'), open: `!!document.querySelector('.overlay-body .controls-pane, .overlay-body')` },
+    after: overlayTab('controls'), open: `!!document.querySelector('.overlay-body > .controls-pane')` },
   // The Armoury is opened by a press, has no ?shot= of its own, and is the
   // other long list a player manages a run from.
   { name: 'armoury', shot: 'map', ready: `!!document.querySelector('.map-node')`,
@@ -171,6 +195,15 @@ const SCAN = `(() => {
     if (cs.visibility === 'hidden' || cs.display === 'none') continue;
     const box = e.getBoundingClientRect();
     if (box.width < 2 || box.height < 2) continue;
+    // ON SCREEN MEANS ON SCREEN, and this file said so a paragraph above while
+    // testing only that the box had SIZE. A panel parked off the viewport by a
+    // transform, or an inactive tab kept in the tree at a negative left, has a
+    // full-size box and paints nothing a player can see — so it could pair
+    // with an ancestor and fail a run over a bar nobody could ever look at.
+    // Clipped to the visual viewport, and 2 px of it is the floor, the same
+    // floor the size test uses.
+    if (box.right < 2 || box.bottom < 2) continue;
+    if (box.left > innerWidth - 2 || box.top > innerHeight - 2) continue;
     const borderX = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
     const borderY = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
     // The gutter the bar TAKES. An overlay bar takes none and is invisible to
@@ -304,6 +337,18 @@ async function main() {
     }
     throw new Error(`timed out after ${timeoutMs} ms waiting for ${label}`);
   };
+  // A READY PROBE CAN BE ANSWERED BY THE PAGE YOU ARE LEAVING. Four surfaces
+  // here share `?shot=map`, so `!!document.querySelector('.map-node')` is true
+  // of the OLD document for as long as it survives the navigation — and the
+  // `after` press then lands on a page about to be replaced. The old document
+  // is branded before the navigate and the brand is what the wait clears, so
+  // "ready" means ready ON THE NEW DOCUMENT, not ready somewhere.
+  const navigate = async (url, label) => {
+    await ev('window.__doublescrollStale = true').catch(() => {});
+    await cdp.send('Page.navigate', { url }, S);
+    await until('!window.__doublescrollStale && document.readyState !== "loading"',
+      `${label} to become a new document`);
+  };
 
   const findings = [];
   const notOpened = [];
@@ -313,10 +358,12 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride',
       { width: shape.w, height: shape.h, deviceScaleFactor: shape.dsf, mobile: shape.mobile }, S);
     for (const surface of surfaces) {
-      await cdp.send('Page.navigate', { url: `${BASE}?shot=${surface.shot}` }, S);
+      await navigate(`${BASE}?shot=${surface.shot}`, `${shape.tag} ${surface.name}`);
       await until(surface.ready, `${shape.tag} ${surface.name}`);
       if (surface.after) {
-        const opened = await ev(surface.after);
+        // A press that throws is a surface that was not measured, and a throw
+        // here used to end the whole run at exit 2 with one shape left to go.
+        const opened = await ev(surface.after).catch((err) => `press threw — ${err.message}`);
         if (opened !== true) { notOpened.push(`${shape.tag} ${surface.name}: ${opened}`); continue; }
         await until(surface.open, `${shape.tag} ${surface.name} to open`);
       }
@@ -353,11 +400,14 @@ async function main() {
   // a step that passes.
   await dropBrowser(); cdp.close(); server.server.close();
 
+  // THE REASONS COME FIRST, and the order is the point: printing them after
+  // the `!swept` exit meant the run that most needed them — the one that
+  // opened nothing — was the one run that suppressed every reason it had.
+  for (const line of notOpened) console.error(`doublescroll: ${line}`);
   // NOTHING SWEPT IS NOT A PASS. A run that opened no surface prints no
   // findings, and a green bar over zero checks is how this class of defect
   // survived every instrument in tools/ for as long as it did.
   if (!swept) { console.error('doublescroll: swept NOTHING — no surface opened'); process.exit(2); }
-  for (const line of notOpened) console.error(`doublescroll: ${line}`);
   console.log(`\nswept ${swept} surface state${swept === 1 ? '' : 's'} over ${shapes.length} shape${shapes.length === 1 ? '' : 's'}`);
 
   if (mutate) {
@@ -367,7 +417,15 @@ async function main() {
         + '\nThe ruler is broken — every clean verdict it has printed is worthless.');
       process.exit(1);
     }
-    console.log(`doublescroll --mutate: OK — the plant was caught (${findings.length} pair${findings.length === 1 ? '' : 's'}).`);
+    // tools/verdict.mjs's grammar, row "label: OK — N <words>, N caught". A
+    // tool that prints its verdict in prose the door cannot count is SILENT to
+    // CI (exit 3) however loudly it says OK to a human — which is what both of
+    // this PR's steps did before this line existed.
+    // ONE plant, ONE caught — the numbers are the DEFEAT and its detection,
+    // not the pairs it happened to produce (the plant is a single stylesheet;
+    // it shows up in as many categories as have a tall pane). Those pairs are
+    // printed above as the evidence.
+    console.log('doublescroll --mutate: OK — 1 planted, 1 caught.');
     process.exit(0);
   }
 
@@ -378,6 +436,9 @@ async function main() {
   }
   if (notOpened.length) { console.error('\na surface would not open — nothing was measured there'); process.exit(2); }
   console.log('no door paints two bars on one axis.');
+  // tools/verdict.mjs's grammar, row "label: OK — N checks passed". One check
+  // per surface state actually scanned, which is the number `swept` counts.
+  console.log(`doublescroll: OK — ${swept} checks passed.`);
   process.exit(0);
 }
 
