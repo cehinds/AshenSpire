@@ -829,6 +829,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // not because the arithmetic here got smarter. The two halves are one change
   // and neither works alone.
   function centerOnCurrent() {
+    // A hand on ⊙, on the zoom ladder, or a resize: this frame is the newer
+    // instruction, so an in-flight glide stops rather than landing on top of it.
+    // `resetFraming`'s gliding path calls this to SOLVE its target and starts
+    // its own glide immediately afterwards, so nothing is lost there.
+    stopGlide();
     const fs = framingNodes();
     if (!fs.length) { report(null, null); return; }
     // THIS is where the camera becomes a function of the viewport — both axes,
@@ -1046,8 +1051,22 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // canvas: selecting a node threw the map into the right half of the screen
   // instead of centring on it. So the target carries `left` and it is tweened
   // like the other two; omit it and the old meaning (0) stands.
+  //
+  // AND A GLIDE IN FLIGHT OUTRANKED EVERY OTHER HAND ON THE CAMERA. Only
+  // `glideTo` itself and `teardown` ever cancelled the frame, so anything that
+  // wrote the camera DIRECTLY during the 300 ms after a pick was overwritten by
+  // the next tween frame and the glide still landed on the picked node: ⊙ (or
+  // `0`) read as doing nothing at all, `+` / `−` / ctrl-wheel re-centred and
+  // were dragged back to a target solved at the OLD zoom, and a drag fought the
+  // tween for every pixel. That is older than this change — and this change
+  // sharpens it, because the tween now owns the horizontal axis for the whole
+  // glide instead of only slamming it to 0 at the end. So the cancel gets a
+  // name and the two doors that write the camera by hand use it: the computed
+  // frame (`centerOnCurrent`, which is ⊙, the ladder, and a resize) and the
+  // start of a drag. The player's hand is the newer instruction; it wins.
+  function stopGlide() { cancelAnimationFrame(glideFrame); glideFrame = 0; }
   function glideTo(target, ms = 0, onDone = null) {
-    cancelAnimationFrame(glideFrame);
+    stopGlide();
     const toLeft = Number.isFinite(target.left) ? target.left : 0;
     const land = () => {
       aimX = target.aimX;
@@ -1170,6 +1189,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // would take it as evidence the buttons are still in the scrollport.
     if (ev.target.closest('.map-node.reachable')) return;
     activePointerId = ev.pointerId;
+    // The hand beats the tween: without this the glide writes both axes back
+    // under the drag, every frame, until it lands.
+    stopGlide();
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
@@ -1268,7 +1290,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   }
 
   function teardown() {
-    cancelAnimationFrame(glideFrame);
+    stopGlide();
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }

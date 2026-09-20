@@ -103,6 +103,44 @@ try {
     })()`);
     await wait(180);
 
+    // A HAND ON ⊙ BEATS A GLIDE ALREADY IN FLIGHT. The tween owns both axes for
+    // `cameraMs` after a pick (content/config/ui/scenes/w4b-map.json: 150 ms of
+    // open delay, then 300 ms of glide), and until #1229 only `glideTo` and
+    // `teardown` ever cancelled its frame — so anything that wrote the camera by
+    // hand inside that window was overwritten on the next frame and the glide
+    // still landed on the picked node. ⊙ read as doing nothing at all.
+    //
+    // THE SHAPE IS DELIBERATELY ONE-SIDED: a runner so slow that the ⊙ click
+    // lands AFTER the glide finished makes this check vacuous (⊙ from rest is
+    // ⊙ from rest), never red. It can only fail if a glide really did outrank
+    // the player's hand.
+    const restingCamera = `(() => {
+      const port = document.querySelector('.map-scroll');
+      const box = port.querySelector('svg').getAttribute('viewBox').split(/\s+/);
+      return { left: port.scrollLeft, top: port.scrollTop, x0: Number(box[0]) };
+    })()`;
+    await evaluate(`document.querySelector('#zoom-reset').click()`);
+    await wait(600);
+    const rest = await evaluate(restingCamera);
+    await evaluate(`(() => {
+      const lit = [...document.querySelectorAll('.map-node.reachable')];
+      lit[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      return true;
+    })()`);
+    await wait(200);
+    await evaluate(`document.querySelector('#zoom-reset').click()`);
+    await wait(900);
+    const afterReset = await evaluate(restingCamera);
+    // Back to nothing selected: a tap on the map away from the lit nodes closes
+    // the tray (screens/map.js), so the pick below is a FIRST pick again rather
+    // than the repeat that would travel into the room.
+    await evaluate(`(() => {
+      const port = document.querySelector('.map-scroll');
+      port.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      return true;
+    })()`);
+    await wait(700);
+
     // #1168'S OTHER HALF: THE CAMERA MOVING ITSELF. Everything above proves the
     // PLAYER can pan both axes; this proves the board can. Selecting a node
     // opens the tray and asks the camera to bring that node to the middle of
@@ -178,13 +216,16 @@ try {
       touchMovesBothAxes: moves(evidence.touch),
       penMovesBothAxes: moves(evidence.pen),
       reachableNodeRemains: evidence.nodeReachable,
+      resetOutranksAGlide: Math.abs(afterReset.left - rest.left) <= 2
+        && Math.abs(afterReset.top - rest.top) <= 2
+        && Math.abs(afterReset.x0 - rest.x0) <= 2,
       selectionOpensTray: picked.selected && picked.trayOpen,
       selectionTookTheNodePicked: picked.selected && picked.node === pickedNode.id,
       selectionCentersHorizontally: picked.selected && Math.abs(picked.dx) <= 2,
       selectionCentersVertically: picked.selected && Math.abs(picked.dy) <= 2,
     };
     const pass = Object.values(checks).every(Boolean);
-    rows.push({ viewport: viewport.name, pass, checks, evidence: { ...evidence, pickedNode, picked } });
+    rows.push({ viewport: viewport.name, pass, checks, evidence: { ...evidence, rest, afterReset, pickedNode, picked } });
 
     if (WRITE_SHOTS) {
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
