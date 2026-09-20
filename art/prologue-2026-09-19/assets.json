@@ -1,103 +1,173 @@
 {
-  "encoding": "WebP quality 82, method 6; alpha preserved",
-  "beforeBytes": 5345050,
-  "totalBytes": 2555544,
   "assets": [
     {
       "file": "assets/prologue/carry-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 130900
+      "bytes": 130900,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-herald-desktop.webp",
+      "width": 1280,
+      "height": 801,
+      "bytes": 184364,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-herald-mobile.webp",
+      "width": 768,
+      "height": 1365,
+      "bytes": 187604,
+      "alpha": false
     },
     {
       "file": "assets/prologue/carry-mobile.webp",
       "width": 768,
       "height": 1365,
-      "bytes": 185746
+      "bytes": 185746,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-reaver-desktop.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 263174,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-reaver-mobile.webp",
+      "width": 940,
+      "height": 1672,
+      "bytes": 276190,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-rogue-desktop.webp",
+      "width": 1280,
+      "height": 801,
+      "bytes": 206274,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-rogue-mobile.webp",
+      "width": 768,
+      "height": 1365,
+      "bytes": 267636,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-starseer-desktop.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 239842,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/carry-starseer-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 225928,
+      "alpha": false
     },
     {
       "file": "assets/prologue/herald.webp",
       "width": 700,
       "height": 1088,
-      "bytes": 115394
+      "bytes": 115394,
+      "alpha": true
     },
     {
       "file": "assets/prologue/night-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 91314
+      "bytes": 91314,
+      "alpha": false
     },
     {
       "file": "assets/prologue/night-mobile.webp",
       "width": 768,
       "height": 1365,
-      "bytes": 102520
+      "bytes": 102520,
+      "alpha": false
     },
     {
       "file": "assets/prologue/reaver.webp",
       "width": 700,
       "height": 1088,
-      "bytes": 106060
+      "bytes": 106060,
+      "alpha": true
     },
     {
       "file": "assets/prologue/road-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 180314
+      "bytes": 267426,
+      "alpha": false
     },
     {
       "file": "assets/prologue/road-mobile.webp",
       "width": 768,
       "height": 1365,
-      "bytes": 204788
+      "bytes": 296970,
+      "alpha": false
     },
     {
       "file": "assets/prologue/rogue.webp",
       "width": 700,
       "height": 1088,
-      "bytes": 105610
+      "bytes": 105610,
+      "alpha": true
     },
     {
       "file": "assets/prologue/starseer.webp",
       "width": 700,
       "height": 1088,
-      "bytes": 127300
+      "bytes": 127300,
+      "alpha": true
     },
     {
       "file": "assets/prologue/step-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 224420
+      "bytes": 224420,
+      "alpha": false
     },
     {
       "file": "assets/prologue/step-mobile.webp",
       "width": 768,
       "height": 1365,
-      "bytes": 260936
+      "bytes": 260936,
+      "alpha": false
     },
     {
       "file": "assets/prologue/warmth-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 192918
+      "bytes": 192918,
+      "alpha": false
     },
     {
       "file": "assets/prologue/warmth-mobile.webp",
       "width": 767,
       "height": 1365,
-      "bytes": 226356
+      "bytes": 226356,
+      "alpha": false
     },
     {
       "file": "assets/prologue/year-desktop.webp",
       "width": 1280,
       "height": 801,
-      "bytes": 159902
+      "bytes": 201342,
+      "alpha": false
     },
     {
       "file": "assets/prologue/year-mobile.webp",
       "width": 768,
-      "height": 1365,
-      "bytes": 141066
+      "height": 1366,
+      "bytes": 233908,
+      "alpha": false
     }
-  ]
+  ],
+  "totalBytes": 4720132
 }

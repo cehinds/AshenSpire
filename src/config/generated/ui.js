@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 7276540476429eef
+// source content/config/ui/screens/prologue.json 15cfd436b15819b8
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -766,7 +766,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-19-v1",
+          "revision": "2026-09-20-burning-v2",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -803,25 +803,25 @@ export const uiConfig = deepFreeze({
             {
               "id": "warmth",
               "name": "Remembered warmth",
-              "seconds": 9,
+              "seconds": 5,
               "speaker": "Hamlet witness",
               "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
-              "effect": "fade",
+              "effect": "push",
               "character": false
             },
             {
               "id": "year",
-              "name": "The stopped year",
-              "seconds": 11,
+              "name": "The Burning",
+              "seconds": 5,
               "speaker": "Hamlet witness",
-              "text": "The tower bells fell silent.\nOur fields have given us nothing since.",
-              "effect": "push",
+              "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
+              "effect": "fade",
               "character": false
             },
             {
               "id": "night",
               "name": "Last night",
-              "seconds": 14,
+              "seconds": 5,
               "speaker": "Hamlet witness",
               "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
               "effect": "fade",
@@ -829,12 +829,12 @@ export const uiConfig = deepFreeze({
             },
             {
               "id": "carry",
-              "name": "What you carry",
-              "seconds": 10,
+              "name": "What the fire left",
+              "seconds": 5,
               "speaker": "{class}",
               "text": "{classLine}",
               "effect": "fade",
-              "character": true,
+              "character": false,
               "actor": {
                 "desktop": {
                   "x": 33,
@@ -851,7 +851,7 @@ export const uiConfig = deepFreeze({
             {
               "id": "road",
               "name": "The road out",
-              "seconds": 10,
+              "seconds": 5,
               "speaker": "Hamlet witness",
               "text": "Bring us a spring, if the hearths still can.",
               "effect": "push",
@@ -872,7 +872,7 @@ export const uiConfig = deepFreeze({
             {
               "id": "step",
               "name": "The first step",
-              "seconds": 6,
+              "seconds": 5,
               "speaker": "{name}",
               "text": "I will find a road to the hearths.",
               "location": "{location}",
