@@ -1,0 +1,36 @@
+{
+  "scope": "Scene 4 Herald class memory only",
+  "method": "Deterministic programmatic dark grade and ash/ember overlay (grade.cjs); no image generation",
+  "assets": [
+    {
+      "variant": "desktop",
+      "width": 1280,
+      "height": 801,
+      "master": "art/prologue-herald-burning-refinement/masters/carry-herald-desktop.png",
+      "deliverable": "assets/prologue/carry-herald-desktop.webp",
+      "png_bytes": 1584251,
+      "webp_bytes": 81108,
+      "sha256": "a94b307afa4d9eb27fb1b16b3e99d48d1c20b183d75b2303595ad42c1361d69f",
+      "webp_encoding": {
+        "quality": 88,
+        "effort": 6,
+        "smartSubsample": true
+      }
+    },
+    {
+      "variant": "mobile",
+      "width": 768,
+      "height": 1365,
+      "master": "art/prologue-herald-burning-refinement/masters/carry-herald-mobile.png",
+      "deliverable": "assets/prologue/carry-herald-mobile.webp",
+      "png_bytes": 1597044,
+      "webp_bytes": 93644,
+      "sha256": "5f0df6b19df72223057cd3fd02f1aebc2fd3ee000d37dc269a96b8d2ff309d5a",
+      "webp_encoding": {
+        "quality": 88,
+        "effort": 6,
+        "smartSubsample": true
+      }
+    }
+  ]
+}
