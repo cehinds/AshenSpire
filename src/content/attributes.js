@@ -145,7 +145,7 @@ export const attributeRules = {
     // 3–12; attributeContentProblems refuses any that does not, by name.
     tuned2: {
       reaver: { strength: 10, dexterity: 6, constitution: 9, wisdom: 3, intelligence: 7 },
-      starseer: { strength: 5, dexterity: 6, constitution: 7, wisdom: 11, intelligence: 6 },
+      starseer: { strength: 3, dexterity: 6, constitution: 7, wisdom: 11, intelligence: 8 },
       herald: { strength: 6, dexterity: 5, constitution: 7, wisdom: 10, intelligence: 7 },
       rogue: { strength: 7, dexterity: 11, constitution: 7, wisdom: 3, intelligence: 7 },
     },

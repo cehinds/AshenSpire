@@ -6221,7 +6221,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The rebased mode new runs are actually created under (plan phase 9).
     eq(
       classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.tuned2[c.id][a.id]).join('/')).join('|'),
-      '10/6/9/3/7|5/6/7/11/6|7/11/7/3/7|6/5/7/10/7',
+      '10/6/9/3/7|3/6/7/11/8|7/11/7/3/7|6/5/7/10/7',
       'all four tuned2 class presets are exact in the authored attribute order'
     );
 
@@ -6298,7 +6298,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.sourceStat}/${rogueAttack.profileReceipt.points}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/-1/strength/7/6', 'Rogue dagger Strike is stamped from the tuned physical profile');
     eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.sourceStat}/${rogueGuard.profileReceipt.points}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/-1/dexterity/11/10', 'Rogue buckler Defend is stamped from the tuned defense profile');
     const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
-    eq(star.attributes.intelligence, 6, 'the approved Starseer preset keeps INT 6 under the rebase');
+    eq(star.attributes.intelligence, 8, 'the approved Starseer preset keeps the INT 8 its own staff asks for');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
     let alternateRefusal = '';
     try {
@@ -9619,6 +9619,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(playerPoiseThresholdReceipt(REG, tuned).attribute,
       tunedRow.base + Math.floor(tuned.attributes.constitution / tunedRow.pointsPerTier) * tunedRow.gainPerTier,
       'the meter reads the run-owned row, tier size and all');
+
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN KIT. The rebase moved the
+    // attributes and the minima at once and nothing cross-read them, so the
+    // first Starseer preset could not lift its own staff.
+    for (const cls of ['reaver', 'starseer', 'rogue', 'herald']) {
+      const born = createRunState({ seed: 93, classId: cls, registries: REG });
+      for (const [slot, id] of [['rightHand', born.loadout.sets.rightHand[0]], ['leftHand', born.loadout.sets.leftHand[0]], ['armor', born.loadout.sets.armor[0]]]) {
+        if (!id) continue;
+        const seal = canEquip(REG, slot, { inCombat: false, loadout: born.loadout, classId: cls, setIndex: 0, itemId: id, attributes: born.attributes });
+        assert(seal.ok, `${cls} can hold the ${slot} it starts in: ${seal.reason}`);
+      }
+    }
+    const kitBreak = { ...contentBundle, attributeRules: { ...contentBundle.attributeRules,
+      presets: { ...contentBundle.attributeRules.presets, tuned2: { ...contentBundle.attributeRules.presets.tuned2,
+        starseer: { ...contentBundle.attributeRules.presets.tuned2.starseer, intelligence: 6, strength: 5 } } } } };
+    const kitSaid = validateContent(kitBreak).errors.map((e) => `${e.path}: ${e.msg}`);
+    assert(kitSaid.some((e) => /cannot hold the kit it starts in/.test(e)),
+      `and a preset that cannot is refused at the content door, by name: ${kitSaid.slice(0, 2).join(' | ')}`);
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.

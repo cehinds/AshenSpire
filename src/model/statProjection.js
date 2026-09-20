@@ -40,8 +40,9 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
   // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
   // not been written yet; reading it from two places would be the copy Law 1
-  // forbids. A ruleset without the row (4 and earlier) yields no attribute
-  // term, which is what those runs shipped with.
+  // forbids. A run whose own snapshot predates the row falls through to the
+  // live table, which is what a headless fixture and a creation preview need;
+  // a run that HAS the row is priced by its own, below.
   // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
   // fallback for a caller that carries no run (a headless fixture, a
   // creation preview). A run born under an Advanced tier-size override

@@ -269,11 +269,20 @@ export function resolveDerivedStatRules(source, options = {}) {
   };
   for (const [, layer] of layers) {
     if (!layer) continue;
+    // A LAYER PATCHES THE ROWS THE TABLE HAS. Since the row set became a
+    // function of the ruleset version, a table may legally lack a row the id
+    // list carries, and patching it blindly threw an unnamed TypeError —
+    // exactly what the Advanced stat-tier dial hands in (a `defaults` layer).
     if (layer.defaults) {
       Object.assign(replayed.defaults, layer.defaults);
-      for (const id of DERIVED_STAT_IDS) Object.assign(replayed.rules[id], layer.defaults);
+      for (const id of DERIVED_STAT_IDS) if (replayed.rules[id]) Object.assign(replayed.rules[id], layer.defaults);
     }
-    if (layer.rules) for (const [id, patch] of Object.entries(layer.rules)) Object.assign(replayed.rules[id], patch);
+    if (layer.rules) {
+      for (const [id, patch] of Object.entries(layer.rules)) {
+        if (!replayed.rules[id]) throw new Error(`Derived-stat override patches '${id}', which this ruleset ${replayed.rulesetVersion} table does not carry`);
+        Object.assign(replayed.rules[id], patch);
+      }
+    }
   }
   return replayed;
 }

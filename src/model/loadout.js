@@ -3156,13 +3156,14 @@ export function canEquip(registries, slotId, ctx) {
     const refusal = gripRefusal(registries, ctx.loadout, ctx.classId || null, slotId, ctx.setIndex, ctx.itemId);
     if (refusal) return { ok: false, reason: refusal };
   }
-  // THE ATTRIBUTE GATE (plan phase 9), ON THE SAME MUTATION AS THE GRIP. The
-  // minima in equipmentRequirements.csv were read at creation and drawn in the
-  // armoury, but nothing stopped a mid-run hand from picking up a greatsword
-  // its Strength could not hold: a screen that greys a button is not a gate
-  // (the #95 finding, one comment up). Asked only when the caller names both
-  // the candidate and the attributes to judge it by; a bare "may this slot
-  // change" question keeps its old answer.
+  // THE ATTRIBUTE GATE (plan phase 9), BESIDE THE GRIP'S. equipPiece has
+  // enforced these minima on the mutation for as long as they have existed;
+  // what this adds is the ANSWER, early and in words, to a caller that asks
+  // "may this go here" before acting — the equipment screen's seal, which
+  // could previously only find out by trying. Asked when the caller names
+  // both the candidate and the attributes to judge it by; a bare "may this
+  // slot change" question keeps its old answer, and the mutation's own check
+  // remains the gate of record.
   if (ctx.itemId && ctx.attributes) {
     // BOTH HALVES OF THE WARDROBE. equipmentRequirements.csv carries armour
     // rows (the plate asks Strength, the vestments Wisdom) as well as
@@ -3173,7 +3174,14 @@ export function canEquip(registries, slotId, ctx) {
     const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
       || (eq.armour || []).find((row) => row.id === ctx.itemId);
     if (piece) {
-      const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, { itemUpgradeLevels: ctx.itemUpgradeLevels || {} });
+      // THE SAME INPUTS THE MUTATION'S OWN CHECK USES. equipPiece has read
+      // these minima since before this gate existed; this one runs FIRST and
+      // short-circuits, so a narrower copy here would overrule the wider one
+      // and refuse an item whose requirement an upgrade had lowered.
+      const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, {
+        itemUpgradeLevels: ctx.itemUpgradeLevels || {},
+        armamentLevels: ctx.armamentLevels || {},
+      });
       if (!receipt.ok) {
         const shortOf = receipt.failures[0];
         const label = (registries.attributes.get(shortOf.attributeId) || {}).shortLabel || shortOf.attributeId;
@@ -3471,8 +3479,13 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // loosened canEquip's own check is a real second gate rather than an echo.
   const permission = canEquip(registries, slotId, {
     inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId,
-    // The attribute gate judges only when the caller hands in what to judge by.
-    ...(ctx.attributes ? { attributes: ctx.attributes, itemUpgradeLevels: ctx.itemUpgradeLevels } : {}),
+    // The attribute gate judges only when the caller hands in what to judge
+    // by, and then by the same levels this function's own check uses.
+    ...(ctx.attributes ? {
+      attributes: ctx.attributes,
+      itemUpgradeLevels: ctx.itemUpgradeLevels,
+      armamentLevels: ctx.armamentLevels,
+    } : {}),
   });
   if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
