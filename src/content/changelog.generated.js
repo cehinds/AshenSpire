@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "The victory screen shows what the fight did to your character",
     "detail": "Winning a fight has always raised your level and the skills you fought with — but the spoils door listed only the things you pick up, so none of it was visible. Above the claim list there is now a Progression panel: your character level with a bar toward the next one and the experience this fight paid, then the skills it moved — the ones it paid first, the ones you have taken furthest after, up to three, with the rest counted on a line of their own. The numbers are the ones already written when the fight ended, so leaving and coming back to an interrupted spoils door shows the same ones.",
-    "build": "0.7.1.335",
+    "build": "0.7.1.339",
     "pullRequest": 1232,
     "url": "https://github.com/cehinds/AshenSpire/pull/1232"
+  },
+  {
+    "id": "pr-1233",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The merchant shows four cards at once, and a card is no longer a small picture in a big empty box",
+    "detail": "Every shelf at the merchant — cards, armaments, weapon arts, relics, flasks and what he will buy — now lays its stock out four across and wraps below, instead of one or two per row with the rest behind a scroll. An armament for sale is the card itself: the panel that used to stand around it, twice its width and mostly empty, now appears only under the pointer, under keyboard focus, or on the offer being described beside the shelf. The offers column takes the room a shelf of cards needs, and the description column keeps a readable minimum. On a phone the same shelves show two across at the card's full size. Every card on a shelf is the same width, including the last row. The deck list a smith shows when seating a card follows the same rule.",
+    "build": "0.7.1.337",
+    "pullRequest": 1233,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
     "id": "pr-1225",

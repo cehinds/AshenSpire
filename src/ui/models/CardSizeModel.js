@@ -192,6 +192,109 @@ export function cardLevelCssProperties(config) {
 }
 
 /**
+ * A SHELF OF RESTING CARDS: how many stand on one row, and how narrow a card
+ * may be made to keep them whole.
+ *
+ * The merchant photographed at 1328x744 was the case this exists for. Its
+ * armament shelf laid out `width: min(280px, 100%)` tiles — the FOCUS width,
+ * around a card rendered at the GLANCE width of 152px — in an offers column
+ * half the pane wide. Two tiles did not fit, so the shelf wrapped to ONE card
+ * per row and the other two were below the fold, behind a scroll, each sitting
+ * in 128px of empty panel. Five shelves, five different wrappers, and not one
+ * of them had a number that said how many cards a row is meant to hold.
+ *
+ * So a shelf is authored, once, at
+ *
+ *   content/config/ui/components/card.json -> sizing.shelf
+ *
+ * as three numbers and one rule: `maxColumns` cards across, `gapPx` between
+ * them, and never a track narrower than `minTrackPx`. A shelf too narrow for
+ * `maxColumns` at that floor drops a column rather than shaving the cards —
+ * the complaint being answered is cards you cannot see, and a card shaved to
+ * 80px is one of those. `minTrackPx` is therefore a floor on legibility, not a
+ * preferred size: a track wider than the floor is used in full, up to the
+ * resting width, which is the widest a card at rest is ever drawn.
+ *
+ * THE ARITHMETIC HERE MIRRORS ONE CSS RULE and exists so it can be asked a
+ * question from Node. `.card-shelf` in styles/kit.css is a wrapping flex row
+ * whose items take `flex-basis: max(--card-shelf-min, track)`; the browser then
+ * fits `floor((W + gap) / (basis + gap))` of them per row. That is exactly
+ * `cardShelfColumnsAt`, and the two are checked against each other by
+ * tests/card-shelf.test.mjs rather than by eye.
+ */
+export function cardShelf(config = uiConfig.components.card.sizing) {
+  const shelf = config?.shelf;
+  const maxColumns = Number(shelf?.maxColumns);
+  if (!Number.isInteger(maxColumns) || maxColumns < 1) {
+    throw new Error(`card sizing.shelf.maxColumns must be a whole number of columns, got ${JSON.stringify(shelf?.maxColumns)}`);
+  }
+  const gapPx = Number(shelf?.gapPx);
+  if (!Number.isFinite(gapPx) || gapPx < 0) {
+    throw new Error(`card sizing.shelf.gapPx must be zero or more, got ${JSON.stringify(shelf?.gapPx)}`);
+  }
+  const minTrackPx = Number(shelf?.minTrackPx);
+  if (!Number.isFinite(minTrackPx) || minTrackPx <= 0) {
+    throw new Error(`card sizing.shelf.minTrackPx must be a positive number, got ${JSON.stringify(shelf?.minTrackPx)}`);
+  }
+  // THE FLOOR IS A FLOOR ON A RESTING CARD, so it cannot stand above one. A
+  // `minTrackPx` above the glance width would mean every shelf reserved more
+  // room per card than a card at rest is ever drawn at — the empty-panel
+  // defect this replaces, restated as a number.
+  const resting = Number(config?.levels?.glance?.widthPx);
+  if (!(minTrackPx <= resting)) {
+    throw new Error(`card sizing.shelf.minTrackPx (${minTrackPx}px) must not exceed the resting width `
+      + `(sizing.levels.glance.widthPx, ${JSON.stringify(config?.levels?.glance?.widthPx)}px)`);
+  }
+  return Object.freeze({ maxColumns, gapPx, minTrackPx, restingPx: resting });
+}
+
+/** The width a shelf needs to stand `columns` tracks of `trackPx` side by side. */
+export function cardShelfWidthPx(columns, trackPx, config = uiConfig.components.card.sizing) {
+  const { gapPx } = cardShelf(config);
+  const n = Math.max(1, Math.floor(columns));
+  return n * trackPx + (n - 1) * gapPx;
+}
+
+/** How many cards the shelf places on one row at this width — the CSS's own count. */
+export function cardShelfColumnsAt(widthPx, config = uiConfig.components.card.sizing) {
+  const { maxColumns, gapPx, minTrackPx } = cardShelf(config);
+  if (!Number.isFinite(widthPx) || widthPx <= 0) return 1;
+  const fits = Math.floor((widthPx + gapPx) / (minTrackPx + gapPx));
+  return Math.max(1, Math.min(maxColumns, fits));
+}
+
+/** How wide each of those cards is drawn: the track, floored and capped. */
+export function cardShelfTrackPx(widthPx, config = uiConfig.components.card.sizing) {
+  const { gapPx, minTrackPx, restingPx } = cardShelf(config);
+  const columns = cardShelfColumnsAt(widthPx, config);
+  const track = (widthPx - (columns - 1) * gapPx) / columns;
+  return Math.max(minTrackPx, Math.min(restingPx, track));
+}
+
+/**
+ * The properties `.card-shelf` reads. The count and the gap are here rather
+ * than in the stylesheet for the reason every other number in this file is:
+ * a shelf that held a different number of cards from the one the layout maths
+ * assumed would be a second answer to the same question.
+ */
+export function cardShelfCssProperties(config = uiConfig.components.card.sizing, restingPx = null) {
+  const { maxColumns, gapPx, minTrackPx, restingPx: authoredResting } = cardShelf(config);
+  // THE FLOOR FOLLOWS THE RESTING WIDTH WHEN THAT WIDTH MOVES. `cardShelf`
+  // refuses an authored floor above the authored resting width, but the
+  // resting width is TUNABLE and is the phone's own variant below
+  // `compactBelowPx` — either can take it under the floor, and a floor above
+  // the card it floors would stretch every shelf item past its own card. So
+  // the projected floor is clamped to whatever a resting card is actually
+  // being drawn at, and the caller passes that number in.
+  const resting = Number.isFinite(Number(restingPx)) && Number(restingPx) > 0 ? Number(restingPx) : authoredResting;
+  return Object.freeze({
+    '--card-shelf-cols': `${maxColumns}`,
+    '--card-shelf-gap': `${gapPx}px`,
+    '--card-shelf-min': `${Math.min(minTrackPx, resting)}px`,
+  });
+}
+
+/**
  * The readable measure a door's details column needs beside the card.
  *
  * Exported in its own right because the threshold is no longer a fixed sum: the

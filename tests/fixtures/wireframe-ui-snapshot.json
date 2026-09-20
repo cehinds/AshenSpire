@@ -105,6 +105,7 @@
     "railMinRem": 11,
     "railMaxRem": 28,
     "offersFraction": 0.5,
+    "detailMinRem": 22,
     "gapRem": 1,
     "wideMinRem": 60,
     "detailMaxFraction": 0.5

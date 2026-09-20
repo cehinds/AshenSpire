@@ -96,7 +96,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, restingWidthPx } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, cardShelfCssProperties, restingWidthPx } from './ui/models/CardSizeModel.js';
 import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
@@ -329,7 +329,10 @@ document.documentElement.style.setProperty('--selection-glow', selectionGlowFilt
 // ...and what SHAPE it is. The stylesheet used to write the ratio and the four
 // face bands out a second time, so editing card.json moved the hand's geometry
 // maths and left the card's own face untouched. Both halves read this now.
-for (const [name, value] of Object.entries({ ...cardLevelCssProperties(), ...cardShapeCssProperties() })) {
+// ...and how many of them stand on one row. A shelf of resting cards — the
+// merchant's shelves, a mount's deck list, a pile — is four across, and these
+// are the three numbers `.card-shelf` lays them out with.
+for (const [name, value] of Object.entries({ ...cardLevelCssProperties(), ...cardShapeCssProperties(), ...cardShelfCssProperties() })) {
   document.documentElement.style.setProperty(name, value);
 }
 const HUD_PRESENTATION = UI.hudPresentation || {};
@@ -683,7 +686,14 @@ function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  document.documentElement.style.setProperty('--card-w-glance', `${restingWidthPx(window.innerWidth, levels)}px`);
+  const resting = restingWidthPx(window.innerWidth, levels);
+  document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
+  // The shelf floors its tracks at a legible width; that floor cannot stand
+  // above the resting card it floors, so it is re-projected against the width
+  // just chosen rather than left at the authored one.
+  for (const [name, value] of Object.entries(cardShelfCssProperties(undefined, resting))) {
+    document.documentElement.style.setProperty(name, value);
+  }
   // The door's threshold reads `--card-w-inspect`, which has just moved. Its
   // observer only sees the layout's own box change, and the modal layout is
   // 100% x 100% — so a door standing open would keep its old shape until a

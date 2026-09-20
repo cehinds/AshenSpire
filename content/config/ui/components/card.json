@@ -10,6 +10,7 @@
       "focus": { "widthPx": 280 },
       "inspect": { "widthPx": 320 }
     },
+    "shelf": { "maxColumns": 4, "gapPx": 12, "minTrackPx": 120 },
     "doorReadableMinPx": 384,
     "tuning": { "minPx": 64, "maxPx": 640, "slidered": ["mobile"] }
   },
