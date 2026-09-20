@@ -1,3 +1,5 @@
+import { authoredMapTerrainHtml } from './authoredMapArt.js';
+import { mapPoint } from '../../model/mapview.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
@@ -70,7 +72,7 @@ import {
 } from '../../model/mapknowledge.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
-  clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight,
+  clampZoom, framingBox, fitZoom, nodeRadius, svgWidth, svgHeight,
   NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx, resolveMapFreePan,
 } from '../../model/mapview.js';
 
@@ -201,10 +203,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     console.warn(`[mapboard] no \`columns\` on this graph; drawing ${columns} derived from the nodes in use.`);
   }
 
-  const width = svgWidth(columns);
-  const height = svgHeight(maxFloor);
-  const x = (col) => nodeX(col);
-  const y = (floor) => nodeY(floor, height);
+  const width = act.authoredMap?.width || svgWidth(columns);
+  const height = act.authoredMap?.height || svgHeight(maxFloor);
+  const px = n => mapPoint(n, height).x;
+  const py = n => mapPoint(n, height).y;
 
   const reachable = viewer.reachable instanceof Set ? viewer.reachable : new Set(viewer.reachable || []);
   const traveled = viewer.traveled instanceof Set ? viewer.traveled : new Set(viewer.path || []);
@@ -269,19 +271,25 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const to = byId[toId];
       if (!to) continue;
       const ia = path.indexOf(n.id);
-      const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      const isLane = laneEdge.has(`${n.id}>${toId}`);
-      edgeSvg += `<line class="map-route-outline" vector-effect="non-scaling-stroke" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>` ;
-      edgeSvg += `<line vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      const reverseIndex = act.authoredMap ? path.indexOf(toId) : -1;
+      const isTraveled = (ia >= 0 && path[ia + 1] === toId) || (reverseIndex >= 0 && path[reverseIndex + 1] === n.id);
+      const isLane = laneEdge.has(`${n.id}>${toId}`) || (act.authoredMap && laneEdge.has(`${toId}>${n.id}`));
+      const route = act.authoredMap?.routes.find(r => r.a === n.id && r.b === toId || r.b === n.id && r.a === toId);
+      if (route && route.a !== n.id) continue; // undirected authored roads draw once
+      const tag = route ? 'polyline' : 'line';
+      const coords = route ? `points="${route.points.map(p=>p.join(',')).join(' ')}"` : `x1="${px(n)}" y1="${py(n)}" x2="${px(to)}" y2="${py(to)}"`;
+      edgeSvg += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
+      edgeSvg += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+
     }
   }
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
-  const world = worldMapForRun(act);
-  const groundSvg = mapTerrainHtml({
+  const world = act.authoredMap || worldMapForRun(act);
+  const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
-    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: x(n.col), y: y(n.floor) })),
+    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
   });
 
   // The per-act parchment tone rides the SCROLLPORT, not the <g> inside the SVG:
@@ -403,8 +411,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // The per-viewer mark rides LAST so it draws over the node, and it is given
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
-    const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
+    const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
+    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
@@ -1066,8 +1074,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     sizeSvg();
     const visible = Math.max(0, scroll.clientHeight - insetBottom);
     const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
-    const top = Math.min(maxTop, Math.max(0, (y(n.floor) - content.y0) * zoom - visible / 2));
-    glideTo({ aimX: x(n.col), top }, glideMs, () => emitViewState(false));
+    const top = Math.min(maxTop, Math.max(0, (py(n) - content.y0) * zoom - visible / 2));
+    glideTo({ aimX: px(n), top }, glideMs, () => emitViewState(false));
   }
 
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from

@@ -1,0 +1,11 @@
+/* Authored artwork only. The normal map screen owns nodes, tray and controls. */
+.legacy-dungeon{--legacy-mist:#090c09}
+.legacy-dungeon[data-theme=indigo]{--legacy-mist:#0b0b12}
+.legacy-dungeon[data-theme=ember]{--legacy-mist:#130b09}
+.legacy-dungeon .map-scroll{background:#090b09}
+.legacy-dungeon .map-act-title{display:none}
+.legacy-fog{fill:var(--legacy-mist);opacity:.98}
+.legacy-smoke{opacity:.5;mix-blend-mode:screen}
+.legacy-path-haze polyline{fill:none;stroke:#725332;stroke-width:38.4;opacity:.38}
+.legacy-roads polyline{fill:none;stroke:#b1986b;stroke-width:1.6;opacity:.35;stroke-dasharray:5 5}
+.legacy-dungeon polyline.map-edge,.legacy-dungeon polyline.map-route-outline{fill:none}

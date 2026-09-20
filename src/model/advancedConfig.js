@@ -432,7 +432,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   }
   const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
   for (const row of additionalRows) {
-    if (row.cat === 'Advanced' && !['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
+    if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
