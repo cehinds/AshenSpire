@@ -103,8 +103,11 @@ export function mountRewards(app, {
     ),
   });
   // The fight's progression, derived once: the ledgers are already paid and
-  // no choice at this door moves one.
-  const progress = rewardProgress(registries, run, rewards.xpGains || null);
+  // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
+  // panel's whole claim is what this one moved, and a treasure room (or an
+  // offer saved before the receipt existed) moved nothing, so it draws the
+  // spoils alone rather than a heading with no gains under it.
+  const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
   const states = {
     ...(checkpoint?.states || {}),
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
@@ -509,14 +512,18 @@ export function mountRewards(app, {
   // and its aria label is the sentence the numbers mean, because a bar with
   // no text is a picture of progress to a screen reader.
   function progressRow(row, label) {
-    const next = row.capped || !row.xpToNext
-      ? el('span', { class: 'rp-next', text: t('reward.progress.capped') })
-      : el('span', { class: 'rp-next', text: t('reward.progress.next', { level: row.level + 1 }) });
+    // A CAP is the only thing that leaves a row without a next level — the
+    // model drops a track whose curve will not read rather than handing one
+    // here, so `capped` alone decides this and no re-derivation guesses.
+    const next = el('span', {
+      class: 'rp-next',
+      text: row.capped ? t('reward.progress.capped') : t('reward.progress.next', { level: row.level + 1 }),
+    });
     const bar = meter({
       pct: row.fraction * 100,
       skinny: true,
       attrs: { class: 'rp-bar' },
-      ariaLabel: row.capped || !row.xpToNext
+      ariaLabel: row.capped
         ? `${label}: ${tFull('reward.progress.capped')}`
         : `${label}: ${tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 })}`,
     });
@@ -532,14 +539,14 @@ export function mountRewards(app, {
     ]);
     // The exact XP is the tooltip, not the row: the row carries the shape of
     // the climb and the gain; the numbers are for the player who asks.
-    attachTooltip(node, () => `<div class="tt-title">${esc(label)}</div>${esc(row.capped || !row.xpToNext
+    attachTooltip(node, () => `<div class="tt-title">${esc(label)}</div>${esc(row.capped
       ? tFull('reward.progress.capped')
       : tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 }))}`);
     return node;
   }
 
   function progressPanel() {
-    if (!progress.character && !progress.skills.length) return null;
+    if (!progress || (!progress.character && !progress.skills.length)) return null;
     const skills = progress.skills.map((row) => progressRow(
       row,
       row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label,

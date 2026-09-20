@@ -26,6 +26,10 @@
 // whose run has no class, no ledgers and whose registries may carry no curve.
 // A missing table costs the player a bar, never the spoils behind it — so
 // every lookup here is guarded and an unreadable track is simply not a row.
+// NOT A ROW MEANS NOT A ROW: a track whose curve will not read is dropped
+// rather than carried with an empty `xpToNext`, because the only thing a row
+// with no next level can say is "Max" — and a broken table reading as a
+// player's ceiling is a lie, not a degradation (Copilot, #1232).
 
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from './levelup.js';
 import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js';
@@ -49,8 +53,9 @@ const ratio = (xp, next) => (Number.isFinite(next) && next > 0 ? Math.max(0, Mat
 /**
  * characterProgress(registries, run, gained) → the character level's row, or
  * null for a run that has neither a class nor a ledger (a preview scene's
- * stub). `capped` is balance.levelUp.maxLevels reached: the XP stays on the
- * ledger and there is no next level to point at.
+ * stub), and null again when the curve will not read: only a CAP may leave a
+ * row without a next level. `capped` is balance.levelUp.maxLevels reached —
+ * the XP stays on the ledger and there is no next level to point at.
  */
 export function characterProgress(registries, run, gained = 0) {
   if (!run || (!run.class && !run.level)) return null;
@@ -61,6 +66,7 @@ export function characterProgress(registries, run, gained = 0) {
   const capped = Number.isInteger(cap) && level >= cap;
   let next = null;
   try { next = capped ? null : levelXpToNext(registries, level); } catch { next = null; }
+  if (!capped && !(Number.isFinite(next) && next > 0)) return null;
   const xp = Number.isFinite(ledger.xp) ? Math.max(0, Math.floor(ledger.xp)) : 0;
   return Object.freeze({
     kind: 'character',
@@ -97,6 +103,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     if (!gained && !level && !xp) continue; // never touched, never paid — not a row
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
+    if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,

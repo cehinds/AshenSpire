@@ -39,12 +39,26 @@ test('the character row reads the run ledger and the fight\'s own gain', () => {
   assert.equal(character.capped, false);
 });
 
-test('an offer with no receipt still draws the standing ledgers, with no gains', () => {
+test('asked without a receipt, the derivation still reads the standing ledgers', () => {
   const run = climber();
   const progress = rewardProgress(registries, run, null);
   assert.equal(progress.character.gained, 0);
   assert.deepEqual(progress.skills.map((row) => row.gained), [0, 0, 0]);
   assert.equal(progress.gainedXp, 0);
+});
+
+test('a track whose curve will not read is dropped, never shown as capped', () => {
+  // balance.skill.xp is the weapon/armour/focus curve; the class track reads
+  // balance.skill.class.xp, and the character level a third table again.
+  const noSkillCurve = { ...registries, balance: { ...registries.balance, skill: { ...registries.balance.skill, xp: null } } };
+  const progress = rewardProgress(noSkillCurve, climber(), { level: 5, tracks: { 'item:blade': 9 } });
+  assert.deepEqual(progress.skills.map((row) => row.id), ['class:reaver'],
+    'no curve, no row — "Max" would be a broken table reading as a ceiling, even for the track the fight paid');
+  assert.ok(progress.character, 'the character curve is a different table and still reads');
+  const noLevelCurve = { ...registries, balance: { ...registries.balance, level: { xp: {} }, levelUp: { ...registries.balance.levelUp, maxLevels: null } } };
+  assert.ok(rewardProgress(noLevelCurve, climber(), null).character.xpToNext > 0,
+    'an empty curve table falls back to the authored defaults rather than dropping the row');
+  assert.ok(progress.skills.every((row) => row.capped || row.xpToNext > 0));
 });
 
 test('the tracks this fight paid lead, three are shown and the rest are counted', () => {
@@ -112,6 +126,23 @@ test('the door draws the panel beside the claim status, gains and all', () => {
     assert.equal(text(rows[2], 'rp-gain'), undefined);
     assert.ok(rows.every((row) => row.children.some((child) => child.className.includes('as-meter'))), 'every row carries its bar');
     assert.ok(app.querySelector('.reward-side .reward-claim-status'), 'the claim status keeps its column');
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});
+
+test('a door with no fight behind it draws no progression at all', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    // A treasure room's offer, and an offer saved before the receipt existed:
+    // both carry no xpGains, and the ledgers below are not this door's news.
+    mountRewards(app, { registries, run: climber(), onDone() {}, rewards: { relicId: 'forsakenMedallion' } });
+    assert.equal(app.querySelector('.reward-progress'), null);
+    assert.ok(app.querySelector('.reward-claim-status'), 'the spoils themselves are untouched');
   } finally {
     Object.assign(globalThis, saved);
   }
