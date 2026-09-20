@@ -976,6 +976,47 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .settings-modal > .set-body > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
 .settings-modal .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
 .settings-modal .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
+
+/* THE SAME LAW IN THE OTHER DOOR, AND IT IS THE DEFECT IN THE PHOTOGRAPH.
+   `.settings-modal > .set-body` above stopped the TITLE door's shell scrolling
+   under its pane. The in-run ☰ overlay renders the SAME workspace straight
+   into `.overlay-body` — a `.modal-body`, and `.modal-body` is
+   `overflow: auto` (kit.css "Body — the surface's own") — so that shell went
+   on scrolling and the door wore two thumbs.
+
+   WHY THE SHELL OVERFLOWED AT ALL, since `.as-railed` is `height: 100%` and
+   ought to fit exactly: `renderSettings` PREPENDS its header tools (the search
+   toggle and the options menu) into the same container, and on the overlay's
+   door there is no modal head to put them in. Body content is therefore the
+   tools' height PLUS the full height of the workspace, which overflows by
+   exactly the tools — so the shell gained a bar of its own, ten px inboard of
+   the pane's, both inside one gold border. Measured at dev (e506c697) on
+   ?shot=map with the ☰ open at Settings: `.overlay-body` and `#set-panel` both
+   scrolling, bars 13/13 px at 900x600, 10/10 at 1200x730, 9/10 at 1366x768,
+   the pair 10 px apart at every one. Constantine's crop reads 6 px of thumb at
+   x 48..53 and x 58..63 with the border at x 66: the same ten.
+
+   KEYED ON WHAT IS TRUE, NOT ON THE DOOR'S NAME. The condition is "a scrolling
+   modal body that holds a railed settings workspace", so a third host cannot
+   inherit this by being new — which is what happened here, the title door
+   having been fixed alone. (`.settings-surface`, toggled onto `.overlay-modal`
+   by overlay.js selectTab(), is a class with no rule anywhere in this tree;
+   this is the rule it was reaching for, written where it cannot go stale if
+   that toggle is ever dropped.)
+
+   The pane keeps the scroll, exactly as SPEC §7.2 requires of this surface:
+   "the active content pane is the single vertical scroll owner. Ancestors and
+   nested section lists must not create a second vertical scrollport." */
+.modal-body[data-settings-host]:has(> .set-railed) {
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+}
+/* Everything the host prepends beside the workspace — the header tools, the
+   offline-play button, a notice — keeps its own height; only the workspace
+   flexes, and it gives up the kit's `height: 100%` to do it. `:not()` rather
+   than a later `*` rule, so the two do not depend on which is written last. */
+.modal-body[data-settings-host]:has(> .set-railed) > :not(.set-railed) { flex: 0 0 auto; }
+.modal-body[data-settings-host] > .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+
 [data-settings-host] .set-tabs { overflow-y: auto; }
 [data-settings-host] .set-tabs > * { flex-shrink: 0; }
 [data-settings-host] .set-tabs > .set-advanced-head { margin-left: .8rem; padding-left: .6rem; border-left: 1px solid var(--line); }
