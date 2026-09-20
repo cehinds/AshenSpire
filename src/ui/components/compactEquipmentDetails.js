@@ -1,4 +1,5 @@
 import { equipmentDetails } from './equipmentCard.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 
 // A connected element owns the observers and popover, including across stage changes.
 class CreationTagRow extends HTMLElement {
@@ -31,9 +32,12 @@ class CreationTagRow extends HTMLElement {
         this.popup.showPopover();
         const anchor = this.more.getBoundingClientRect();
         const box = this.popup.getBoundingClientRect();
-        const zoom = box.width / this.popup.offsetWidth || 1;
-        this.popup.style.left = `${Math.max(8, Math.min(innerWidth - box.width - 8, anchor.right - box.width)) / zoom}px`;
-        this.popup.style.top = `${Math.max(8, anchor.top - box.height - 8) / zoom}px`;
+        const position = anchorLocalBox(VIEWPORT_ORIGIN, {
+          left: Math.max(8, Math.min(innerWidth - box.width - 8, anchor.right - box.width)),
+          top: Math.max(8, anchor.top - box.height - 8), width: box.width, height: box.height,
+        });
+        this.popup.style.left = `${position.left}px`;
+        this.popup.style.top = `${position.top}px`;
       };
       this.more.addEventListener('click', open);
       this.more.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') open(); });

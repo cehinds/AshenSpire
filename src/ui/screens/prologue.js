@@ -102,6 +102,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   pause.onclick = togglePause;
   next.onclick = () => sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1);
   skip.onclick = () => finish(preview ? 'preview' : 'skipped');
+  if (preview) {
+    const replay = button({label:config.labels.replay});
+    replay.onclick = () => { paused = false; pause.textContent = config.labels.pause; showScene(0); };
+    controls.insertBefore(replay,skip);
+  }
   if (onSettings) {
     const settingsButton = button({label:config.labels.settings});
     settingsButton.onclick = () => { if (!paused) togglePause(); onSettings(); };

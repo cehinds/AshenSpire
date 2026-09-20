@@ -45,7 +45,7 @@ export function prologueRows() {
   }
   for (const [id, cls] of Object.entries(PROLOGUE_DEFAULTS.classes)) add(['classes',id,'line'], `${cls.name} dialogue`, 'Class dialogue', text(5000));
   for (const key of Object.keys(PROLOGUE_DEFAULTS.labels)) add(['labels',key], `${PROLOGUE_DEFAULTS.labels[key]} button text`, 'Button text', text(160));
-  add(['presentation','previewClass'], 'Preview class', 'Preview', choice(Object.keys(PROLOGUE_DEFAULTS.classes)));
+  add(['presentation','previewClass'], 'Preview class', 'Preview', choice(Object.keys(PROLOGUE_DEFAULTS.classes),Object.fromEntries(Object.entries(PROLOGUE_DEFAULTS.classes).map(([id,cls])=>[id,cls.name]))));
   add(['presentation','previewScene'], 'Preview starting scene', 'Preview', choice(PROLOGUE_DEFAULTS.scenes.map(s=>s.id),Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(s=>[s.id,s.name]))));
   rows.push({cat:'Advanced',advancedGroup:'Opening',prologueTopic:'Preview',type:'button',key:'prologuePreview',label:'Preview opening',btn:'Play preview',note:'Uses these settings without creating a run or marking the opening seen.'});
   return rows;
