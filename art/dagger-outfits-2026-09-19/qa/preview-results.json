@@ -1,0 +1,29 @@
+{
+  "url": "http://127.0.0.1:8843/art/dagger-outfits-2026-09-19/index.html",
+  "decoded": 512,
+  "errors": [],
+  "checks": [
+    "page identity",
+    "not blank",
+    "class filter",
+    "appearance switch",
+    "action switch",
+    "frame step",
+    "reorder",
+    "timing",
+    "add/reset",
+    "all frame decodes",
+    "mobile overflow"
+  ],
+  "browserPath": "Browser plugin not available; repository Playwright launcher",
+  "viewports": [
+    [
+      1400,
+      1100
+    ],
+    [
+      390,
+      844
+    ]
+  ]
+}

@@ -626,4 +626,3 @@ equipment animation reference component. It selects only right dagger + left emp
 with one-hand grip. The visual miniature includes Rogue single dagger; the
 [full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
 class/outfit filters, pose order, timing, portrait and conversation references.
-
