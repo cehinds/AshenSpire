@@ -32,7 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-20
 
-- **The Herald's memory now shows the veiled novice at the Observatory's summit hearth** ([#1223](https://github.com/cehinds/AshenSpire/pull/1223), `0.7.1.322`). The Herald scene in the opening's "What the fire left" uses the approved final painting: hood and veil hide the face while the unfinished Burning cracks through the novice, collapsed against the monumental hearth and reaching for the Sovereign Ember. Desktop and phone compositions are separate, and the masters, prompts and checksums are kept with the repository's art records. No other scene, timing or setting changes.
+- **The Herald's memory now shows the veiled novice at the Observatory's summit hearth** ([#1223](https://github.com/cehinds/AshenSpire/pull/1223), `0.7.1.324`). The Herald scene in the opening's "What the fire left" uses the approved final painting: hood and veil hide the face while the unfinished Burning cracks through the novice, collapsed against the monumental hearth and reaching for the Sovereign Ember. It replaces the darkened plates from #1224. Desktop and phone compositions are separate, and the masters, prompts and checksums are kept with the repository's art records. No other scene, timing or setting changes.
+
+- **The Herald's memory burns darker** ([#1224](https://github.com/cehinds/AshenSpire/pull/1224), `0.7.1.323`). The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.
 
 ## 2026-09-19
 
