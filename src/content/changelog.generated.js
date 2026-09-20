@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1229",
+    "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",
-    "summary": "Picking a node on the map brings it to the middle of the screen",
-    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
-    "build": "0.7.1.334",
-    "pullRequest": 1229,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
+    "summary": "Starting stats are tuned in one place, and the opening is five scenes",
+    "detail": "Advanced settings now gather the creation pool and every class's starting attributes, Health and flasks under Progression, so the numbers that decide a new character sit together instead of across two tabs. Assign points is about points: how many you have to place and how many the character carries in total, while stat points per tier moved to General with its own limits. Only the allocation a new run actually offers is presented, and settings saved under the retired ones still load. A value a character could not survive is refused on the row you typed it in, naming the class and the starting kit that set the floor, and the rest of your configuration stays applied instead of silently reverting with it. In the opening, The first step draws its own painting instead of the region map your climb begins on, Last night follows What the fire left, and the forest departure is cut. An opening you had already tuned is carried across: per-scene settings now follow the scene they were written for, and a configuration exported before the change still loads.",
+    "build": "0.7.1.333",
+    "pullRequest": 1225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1225"
   },
   {
     "id": "pr-1226",

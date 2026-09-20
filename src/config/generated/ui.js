@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 15cfd436b15819b8
+// source content/config/ui/screens/prologue.json acb9ab41e1763d33
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -819,15 +819,6 @@ export const uiConfig = deepFreeze({
               "character": false
             },
             {
-              "id": "night",
-              "name": "Last night",
-              "seconds": 5,
-              "speaker": "Hamlet witness",
-              "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
-              "effect": "fade",
-              "character": false
-            },
-            {
               "id": "carry",
               "name": "What the fire left",
               "seconds": 5,
@@ -849,25 +840,13 @@ export const uiConfig = deepFreeze({
               }
             },
             {
-              "id": "road",
-              "name": "The road out",
+              "id": "night",
+              "name": "Last night",
               "seconds": 5,
               "speaker": "Hamlet witness",
-              "text": "Bring us a spring, if the hearths still can.",
-              "effect": "push",
-              "character": true,
-              "actor": {
-                "desktop": {
-                  "x": 25,
-                  "y": 83,
-                  "height": 43
-                },
-                "mobile": {
-                  "x": 29,
-                  "y": 80,
-                  "height": 29
-                }
-              }
+              "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
+              "effect": "fade",
+              "character": false
             },
             {
               "id": "step",
