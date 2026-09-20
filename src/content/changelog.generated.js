@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1232",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The victory screen shows what the fight did to your character",
+    "detail": "Winning a fight has always raised your level and the skills you fought with — but the spoils door listed only the things you pick up, so none of it was visible. Above the claim list there is now a Progression panel: your character level with a bar toward the next one and the experience this fight paid, then the skills it moved — the ones it paid first, the ones you have taken furthest after, up to three, with the rest counted on a line of their own. The numbers are the ones already written when the fight ended, so leaving and coming back to an interrupted spoils door shows the same ones.",
+    "build": "0.7.1.334",
+    "pullRequest": 1232,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1232"
+  },
+  {
     "id": "pr-1226",
     "date": "2026-09-20",
     "group": "2026-09-20",
