@@ -9,7 +9,12 @@ import { selectEquipmentAnimation, animationClip } from './src/model/equipmentAn
 import { resolveActionAnimation } from './src/model/actionAnimation.js';
 import { resolveCombatAnimation } from './src/model/combatAnimation.js';
 import { createPaintedStage } from './src/ui/paintedOutfits.js';
+import { contentBundle } from './src/content/index.js';
+import { createRegistries } from './src/model/registries.js';
+import { tagService } from './src/model/tagService.js';
 const classes=['reaver','starseer','herald','rogue'], entries=[];
+const registries=createRegistries(contentBundle), definition=registries.cards.get('starstonePebble');
+const tags=definition.cardTags?.length?definition.cardTags:tagService(registries).tagsOf('card',definition);
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 for(const classId of classes){
   const animation=selectEquipmentAnimation({classId});
@@ -23,8 +28,8 @@ document.querySelector('#run').onclick=async()=>{
     const results=await Promise.all(entries.map(async({classId,animation,stage})=>{
       assert(animation?.references.cast==='magicChannel',classId+': magic defaults not imported');
       await Promise.all(Object.values(animation.frames).map(async frame=>{const img=new Image();img.src=frame.file;await img.decode();}));
-      const action=resolveActionAnimation({actionId:'magicRuntimeCheck',tags:['starstone'],type:'attack'});
-      const plan=resolveCombatAnimation({id:'magicRuntimeCheck',kindIds:['classification.attack'],tags:['starstone']},[],{animation,action});
+      const action=resolveActionAnimation({actorId:classId,actionId:definition.id,tags,type:definition.type});
+      const plan=resolveCombatAnimation({...definition,cardTags:tags},[],{animation,action});
       assert(plan.technique==='cast',classId+': spell attack must route to cast');
       const observed=[];const observer=new MutationObserver(records=>{for(const record of records)if(record.attributeName==='data-pose')observed.push(stage.el.dataset.pose);});observer.observe(stage.el,{attributes:true});
       const timing=stage.actionTiming(plan.technique);assert(stage.play(plan.technique,timing.totalMs),classId+': playback suppressed');
@@ -39,7 +44,7 @@ document.querySelector('#run').onclick=async()=>{
       await new Promise(done=>setTimeout(done,220));
       assert(stage.play('attack',stage.actionTiming('attack').totalMs),classId+': physical attack did not play');
       assert(!stage.pose.startsWith('MAGIC-'),classId+': ordinary attack became magic');stage.settle();
-      return {classId,set:animation.setId,observed:observed.slice(0,expected.length),timing,buff,settled};
+      return {classId,card:definition.id,set:animation.setId,observed:observed.slice(0,expected.length),timing,buff,settled};
     }));
     document.querySelector('#result').textContent=JSON.stringify(results,null,2);status.textContent='PASS: four classes cast all nine magic steps, buff with MAGIC-BUFF, and retain physical attacks and ready stances.';
   }catch(error){status.textContent='FAIL: '+error.message;console.error(error);}finally{button.disabled=false;}
