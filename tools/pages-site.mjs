@@ -69,7 +69,7 @@ const NO_ROLE = 'no role recorded in git-ownership.json';
 // page — once per branch, per ordinal, byte-proven — so listing them again as
 // "pages" would present the same artifact twice under a worse name. The tool is
 // naming its own subject, not curating what the site may show.
-const BUILD_PATHS = new Set(['AshenSpire.html', 'build', 'dist']);
+const BUILD_PATHS = new Set(['AshenSpire.html', 'AshenSpire-mobile.html', 'build', 'dist']);
 // THE ONE THING STILL TYPED HERE, AND WHY IT HAS TO BE.
 //
 // `tools/palette-probe.html` is a QA harness tools/palette-check.sh drives, and
@@ -183,15 +183,39 @@ function commitUrl(b) { return `${REPO_URL}/commit/${b.sha}`; }
 // The href is the build's own `index.html` (the byte-identical blob written
 // above), not the directory URL, because a directory URL renders the game
 // instead of naming a file to save.
-function downloadName(b) { return `AshenSpire-${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
-function downloadHref(rel, b) { return `${rel}${b.branch}/${b.ordinal}/index.html`; }
-function downloadLink(rel, b, label = 'Download') {
-  return `<a class="play dl" href="${downloadHref(rel, b)}" download="${esc(downloadName(b))}">${esc(label)}</a>`;
+//
+// TWO DOWNLOADS PER BUILD SINCE 2026-09-20 (owner's ask): the FULL single file,
+// and the MOBILE one — the same build with its art shrunk under
+// tools/mobileart-policy.mjs and held under 50 MB. The full file had reached
+// 253 MB, which on a phone is the whole cost of starting. The mobile file is
+// served at `/<branch>/<ordinal>/mobile/` and is offered wherever the full one
+// is; a build that predates the mobile edition simply has no second link,
+// which is said rather than faked.
+const MOBILE_ARTIFACT = 'AshenSpire-mobile.html';
+const EDITIONS = Object.freeze({
+  full: { artifact: 'AshenSpire.html', sub: '', prefix: '', label: 'full' },
+  mobile: { artifact: MOBILE_ARTIFACT, sub: 'mobile/', prefix: 'mobile-', label: 'mobile' },
+});
+function mb(bytes) { return `${(bytes / 1e6).toFixed(1)} MB`; }
+function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
+function downloadHref(rel, b, edition = 'full') { return `${rel}${b.branch}/${b.ordinal}/${EDITIONS[edition].sub}index.html`; }
+function downloadLink(rel, b, label = 'Download', edition = 'full') {
+  return `<a class="play dl" href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(label)}</a>`;
+}
+/** Both download buttons for one build, sized; the mobile one only when the build has it. */
+function downloadButtons(rel, b, suffix) {
+  const full = downloadLink(rel, b, `Download full${suffix} (${mb(b.bytes)})`, 'full');
+  const mobile = b.mobileBytes ? ` ${downloadLink(rel, b, `Download mobile${suffix} (${mb(b.mobileBytes)})`, 'mobile')}` : '';
+  return full + mobile;
+}
+function tableDownload(rel, b, edition) {
+  if (edition === 'mobile' && !b.mobileBytes) return '<span class="meta">— (predates the mobile edition)</span>';
+  return `<a href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(downloadName(b, edition))}</a> <span class="meta">${mb(edition === 'mobile' ? b.mobileBytes : b.bytes)}</span>`;
 }
 
 function rowsTable(builds, rel) {
-  return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
-    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td><a href="${downloadHref(rel, b)}" download="${esc(downloadName(b))}">${esc(downloadName(b))}</a></td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
+  return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Full download</th><th>Mobile download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
+    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -309,14 +333,14 @@ function rootIndex(branchData, generatedAt, otherPages) {
     if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p></section>`;
     return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
-<a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a> ${downloadLink('', b, `Download ${branch} ${b.ordinal}`)} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
+<a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
   const all = branchData.flatMap((d) => d.builds).sort((a, b) => b.ordinal - a.ordinal);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
-<p class="lead">Each build is the exact <code>AshenSpire.html</code> that commit shipped, served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>. The stamp here is the one the game shows on its title screen.</p>
+<p class="lead">Each build is the exact <code>AshenSpire.html</code> that commit shipped, served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>, and its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
 <div class="grid">${cards}</div>
-<div class="note"><strong>Download instead of play:</strong> every build is a single self-contained <code>.html</code> file — the <em>Download</em> link on each card and in the table saves it straight from this site, which is the path that works on phones and tablets where the in-game downloader cannot hold the whole file in memory. Open the saved file in any browser to play offline; use <em>Export saves</em> in the game to carry saves across.</div>
+<div class="note"><strong>Two downloads, one game.</strong> <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to half size and recompressed, held under 50 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '')}
 <h2>Other pages on this site</h2>
@@ -335,8 +359,8 @@ function branchIndex(branch, builds, head, generatedAt) {
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
-${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a> ${downloadLink('../', builds[0], `Download latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a></p>
-<p class="meta">A download is one self-contained HTML file. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
+${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 50 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -357,8 +381,9 @@ function assemble(outDir, keep) {
   execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
   try { execFileSync('tar', ['-xf', archive, '-C', outDir]); }
   finally { rmSync(tmp, { recursive: true, force: true }); }
-  // git archive preserves LFS pointers; hydrate the three downloadable aliases.
-  for (const artifact of ['AshenSpire.html', 'build/AshenSpire.html', 'dist/AshenSpire.html']) {
+  // git archive preserves LFS pointers; hydrate the downloadable aliases of both editions.
+  for (const artifact of ['AshenSpire.html', 'build/AshenSpire.html', 'dist/AshenSpire.html',
+    MOBILE_ARTIFACT, `build/${MOBILE_ARTIFACT}`, `dist/${MOBILE_ARTIFACT}`]) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
@@ -371,9 +396,23 @@ function assemble(outDir, keep) {
     for (const b of builds) {
       const html = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
       b.version = versionIn(html.toString('latin1'));
+      b.bytes = html.length;
       const dir = join(outDir, branch, String(b.ordinal));
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'index.html'), html);
+      // THE MOBILE EDITION, WHERE THE COMMIT HAS ONE. Read by the same door
+      // (readGitArtifact hydrates and verifies the LFS pointer), served beside
+      // the full file, proven the same way below. `mobileBytes` is the fact
+      // every page reads to decide whether to offer the second link.
+      let mobileHtml = null;
+      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`]); mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT); } catch { mobileHtml = null; }
+      if (mobileHtml) {
+        mkdirSync(join(dir, 'mobile'), { recursive: true });
+        writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
+        if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${branch}/${b.ordinal}: written mobile build differs from git blob`);
+        b.mobileBytes = mobileHtml.length;
+        checks++;
+      }
       // Detail belongs to this exact build, not main's potentially older art.
       const detailFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'map-detail']).toString('utf8').trim().split('\n').filter(Boolean);
       for (const file of detailFiles) {
@@ -381,7 +420,7 @@ function assemble(outDir, keep) {
         mkdirSync(dirname(destination), {recursive:true});
         writeFileSync(destination, gitBuf(['show', `${b.sha}:${file}`]));
       }
-      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
+      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
       checks++;
@@ -393,6 +432,8 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
+      const mobile = join(outDir, branch, String(builds[0].ordinal), 'mobile');
+      if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }
     mkdirSync(join(outDir, branch), { recursive: true });
     const idx = branchIndex(branch, builds, head, generatedAt);
@@ -413,10 +454,12 @@ function assemble(outDir, keep) {
   // this page and not present in the tree is worse than no download at all:
   // it is the mobile failure this pass exists to remove, moved one layer out.
   for (const d of branchData) for (const b of d.builds) {
-    const href = downloadHref('', b);
-    if (!root.includes(`href="${href}" download="`)) throw new Error(`root index does not offer a download for ${d.branch}/${b.ordinal}`);
-    if (!existsSync(join(outDir, href))) throw new Error(`download target missing on disk: ${href}`);
-    checks++;
+    for (const edition of b.mobileBytes ? ['full', 'mobile'] : ['full']) {
+      const href = downloadHref('', b, edition);
+      if (!root.includes(`href="${href}" download="`)) throw new Error(`root index does not offer a ${edition} download for ${d.branch}/${b.ordinal}`);
+      if (!existsSync(join(outDir, href))) throw new Error(`${edition} download target missing on disk: ${href}`);
+      checks++;
+    }
   }
   writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
@@ -434,6 +477,14 @@ function check(outDir) {
     } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
     else checks++;
+    if (b.mobileBytes) {
+      const mobileBlob = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
+      const mobileOnDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'mobile', 'index.html'));
+      if (download.mobileBytes !== mobileOnDisk.length) { console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}/mobile: metadata differs from the downloadable file`); process.exitCode = 1; }
+      else checks++;
+      if (Buffer.compare(mobileBlob, mobileOnDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}/mobile: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
+      else checks++;
+    }
   }
   // THE DISCOVERED PAGES GET THE SAME TREATMENT AS THE BUILDS. A list derived
   // from the tree is only better than a typed one if something proves it still
@@ -543,11 +594,13 @@ try {
     if (!victim) throw new Error('selftest needs at least one branch with a build');
     const f = join(dir, victim.branch, String(victim.builds[0].ordinal), 'index.html');
     writeFileSync(f, Buffer.concat([readFileSync(f), Buffer.from('\n<!-- planted -->\n')]));
-    const pages = branchData.reduce((n, d) => n + d.builds.length, 0);
+    // Two checks per served edition: metadata, then bytes. The planted drift
+    // takes the victim's two FULL checks and leaves its mobile pair standing.
+    const pages = branchData.reduce((n, d) => n + d.builds.reduce((m, b) => m + 2 + (b.mobileBytes ? 2 : 0), 0), 0);
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === 2 * (pages - 1) + discovered.length;
+    const caught = process.exitCode === 1 && ok === pages - 2 + discovered.length;
     process.exitCode = before || 0;
     void checks;
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }

@@ -488,6 +488,10 @@ standalone/
 # was committed for it. Verify with:
 #   node tools/launch.mjs --build-only && git status --short dist
 dist/AshenSpire-*.html
+# …except the tracked mobile twin (tools/launch.mjs writes it beside
+# dist/AshenSpire.html; the version-stamped dist/AshenSpire-mobile-<ver>.html
+# stays ignored by the rule above). verify-shipped.mjs allowlists it by name.
+!dist/AshenSpire-mobile.html
 .coop-session.json
 /.vs
 

@@ -97,6 +97,18 @@ export const RUN_PLACEHOLDER = 'UNPLACED';
 export const RUN_PATH_BUNDLE = 'standalone file';
 export const RUN_PATH_SERVE = 'source tree';
 
+/**
+ * The edition's anchors and its two values. Unlike the four above, the source
+ * holds a real value rather than a placeholder — the served tree IS the full
+ * art — so row A checks that the value at rest is `full`, never `mobile`.
+ */
+export const EDITION_MARKER_START = '/* BUILD_EDITION_START */';
+export const EDITION_MARKER_END = '/* BUILD_EDITION_END */';
+export const EDITION_FULL = 'full';
+export const EDITION_MOBILE = 'mobile';
+/** The mobile single file, beside the full one. Both are checked by rows E and E2. */
+export const MOBILE_BUNDLE = 'build/AshenSpire-mobile.html';
+
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
 /**
@@ -141,7 +153,7 @@ export const DIGEST_CHARS = 10;
  * subject arriving through a new door, and rows F and G below are the door's
  * lock. They are not a follow-up; they are why this is allowed to exist.
  */
-export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets']);
+export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile']);
 
 /**
  * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
@@ -154,6 +166,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
+  'tools/mobileart-policy.mjs',
 ]);
 
 /**
@@ -395,7 +408,7 @@ function between(text, start, end, name, line) {
  * NAMED RATHER THAN POSITIONAL: three optional trailing values in a row is how
  * a date lands in an ordinal's slot and ships a plausible wrong string.
  */
-export function stampSource(text, digest, { ordinal = null, built = null, runPath = null } = {}) {
+export function stampSource(text, digest, { ordinal = null, built = null, runPath = null, edition = null } = {}) {
   let out = between(text, MARKER_START, MARKER_END, 'BUILD_SOURCE', `export const SOURCE = '${digest}';`);
   if (ordinal !== null) {
     out = between(out, ORD_MARKER_START, ORD_MARKER_END, 'BUILD_ORDINAL', `export const ORDINAL = '${ordinal}';`);
@@ -405,6 +418,10 @@ export function stampSource(text, digest, { ordinal = null, built = null, runPat
   }
   if (runPath !== null) {
     out = between(out, RUN_MARKER_START, RUN_MARKER_END, 'BUILD_RUNPATH', `export const RUN_PATH = '${runPath}';`);
+  }
+  if (edition !== null) {
+    if (edition !== EDITION_FULL && edition !== EDITION_MOBILE) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_FULL}' or '${EDITION_MOBILE}'`);
+    out = between(out, EDITION_MARKER_START, EDITION_MARKER_END, 'BUILD_EDITION', `export const EDITION = '${edition}';`);
   }
   return out;
 }
@@ -734,11 +751,12 @@ export function check(root = REPO_ROOT) {
       { what: 'ORDINAL', got: slice(ORD_MARKER_START, ORD_MARKER_END), want: /^\s*export const ORDINAL = 'UNBUMPED';\s*$/ },
       { what: 'BUILT', got: slice(DATE_MARKER_START, DATE_MARKER_END), want: /^\s*export const BUILT = 'UNDATED';\s*$/ },
       { what: 'RUN_PATH', got: slice(RUN_MARKER_START, RUN_MARKER_END), want: /^\s*export const RUN_PATH = 'UNPLACED';\s*$/ },
+      { what: 'EDITION', got: slice(EDITION_MARKER_START, EDITION_MARKER_END), want: /^\s*export const EDITION = 'full';\s*$/ },
     ];
     const bad = held.filter((h) => h.got === null || !h.want.test(h.got));
     add(bad.length === 0, 'A ONE HOME',
       bad.length === 0
-        ? `${VERSION_MODULE} holds all four placeholders; the digest, the ordinal, the build date and the run path are injected, never committed`
+        ? `${VERSION_MODULE} holds all four placeholders and rests at edition 'full'; the digest, the ordinal, the build date, the run path and the edition are injected, never committed`
         : `${VERSION_MODULE} does not hold a placeholder — a value typed into source is a version ASSERTED, not derived:`
           + bad.map((h) => `\n      ${h.what}: ${h.got === null ? 'its marker pair is missing' : h.got.trim().slice(0, 100)}`).join(''));
   }
@@ -948,9 +966,39 @@ export function check(root = REPO_ROOT) {
     else if (found[0] !== want) problems.push(`${BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the shipped stamp is not this source`);
     if (places.length !== 1) problems.push(`${BUNDLE} carries ${places.length} RUN_PATH literals, expected exactly 1`);
     else if (places[0] !== RUN_PATH_BUNDLE) problems.push(`${BUNDLE} says it was drawn by '${places[0]}' — a bundle is a '${RUN_PATH_BUNDLE}', and a page that misnames its own run path sends every bug report to the wrong artifact`);
+    const editions = [...bundleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+    if (editions.length !== 1) problems.push(`${BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
+    else if (editions[0] !== EDITION_FULL) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the full single file is '${EDITION_FULL}'`);
     add(problems.length === 0, 'E SHIPPED STAMP',
       problems.length === 0
-        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, and names its run path '${RUN_PATH_BUNDLE}'`
+        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, names its run path '${RUN_PATH_BUNDLE}' and its edition '${EDITION_FULL}'`
+        : problems.join('\n      '));
+  }
+
+  // E2 — THE MOBILE SINGLE FILE IS THE SAME SOURCE, AND SAYS WHICH EDITION IT IS.
+  //      Two files with one stamp is the point of the mobile edition, and it is
+  //      also the way it goes wrong: a mobile file rebuilt from an older tree
+  //      carries an older digest under the same name, and nothing on the site
+  //      would notice. So the mobile bundle is held to the same digest, the same
+  //      run path, and the edition literal that tells the two apart.
+  let mobileText = null;
+  try { mobileText = src(MOBILE_BUNDLE); } catch { /* reported */ }
+  if (mobileText == null) {
+    add(false, 'E2 MOBILE STAMP', `${MOBILE_BUNDLE} is missing — the mobile single file has not been built (node tools/launch.mjs --build-only)`);
+  } else {
+    const want = sourceDigest(root).digest;
+    const found = [...mobileText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
+    const places = [...mobileText.matchAll(/const RUN_PATH = '([^']*)'/g)].map((m) => m[1]);
+    const editions = [...mobileText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+    const problems = [];
+    if (found.length !== 1) problems.push(`${MOBILE_BUNDLE} carries ${found.length} SOURCE literals, expected exactly 1`);
+    else if (found[0] !== want) problems.push(`${MOBILE_BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the mobile file is not this source`);
+    if (places.length !== 1 || places[0] !== RUN_PATH_BUNDLE) problems.push(`${MOBILE_BUNDLE} does not name its run path '${RUN_PATH_BUNDLE}' exactly once`);
+    if (editions.length !== 1) problems.push(`${MOBILE_BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
+    else if (editions[0] !== EDITION_MOBILE) problems.push(`${MOBILE_BUNDLE} calls itself the '${editions[0]}' edition — it must say '${EDITION_MOBILE}', or a phone cannot tell which file it was handed`);
+    add(problems.length === 0, 'E2 MOBILE STAMP',
+      problems.length === 0
+        ? `${MOBILE_BUNDLE} carries the same SOURCE '${want}' and names its edition '${EDITION_MOBILE}'`
         : problems.join('\n      '));
   }
 

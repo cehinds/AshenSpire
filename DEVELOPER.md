@@ -24,8 +24,13 @@ per-fight snapshot from profile settings; legacy snapshots omit it. Run
 for the focused rules, persistence and settings checks. Advanced → Hand & Draw
 Rules provides separate starting-hand, turn-draw, capacity and discard groups.
 
-`node tools/launch.mjs --build-only` produces the standalone aliases and an
-external-art web edition in `build/web/`. Serve the whole web directory for
+`node tools/launch.mjs --build-only` produces the standalone aliases — the full
+single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
+its art from the committed `assets-mobile/` twin tree, held under 50 MB) — and an
+external-art web edition in `build/web/`. Changing anything under `assets/`
+means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
+from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 

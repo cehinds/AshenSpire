@@ -101,6 +101,8 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
+      - name: The mobile art twin tree mirrors assets/ and fits its budget
+        run: node tools/mobile-art.mjs --check
 
       # Same budget as the gates above: a pure read, no execution, no browser,
       # well under a second, on the runner this job already pays for. It walks
@@ -150,6 +152,7 @@ jobs:
           # here — see the two upload steps below for why.
           mkdir -p standalone
           cp AshenSpire.html standalone/AshenSpire.html
+          cp AshenSpire-mobile.html standalone/AshenSpire-mobile.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -195,7 +198,8 @@ jobs:
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the dev-standalone artifact from"
-            echo "this same run — it is ~39 MB rather than all of this."
+            echo "this same run: AshenSpire.html is the full game (~250 MB) and"
+            echo "AshenSpire-mobile.html the same build with its art shrunk under 50 MB."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."
