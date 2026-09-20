@@ -960,21 +960,26 @@ async function browserRoute(entries, {
       if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || 'browser evaluation failed');
       return result.result.value;
     };
-    const until = async (expression, label) => {
-      for (let i = 0; i < 120; i++) {
+    const until = async (expression, label, timeoutMs = 12000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
         if (await evaluate(expression)) return;
         await new Promise((ok) => setTimeout(ok, 100));
       }
       const body = await evaluate('document.body?.innerText?.slice(0, 800) || "<empty body>"');
-      throw new Error(`${label}; body=${JSON.stringify(body)}`);
+      const location = await evaluate('({ href: location.href, readyState: document.readyState })');
+      throw new Error(`${label}; location=${JSON.stringify(location)}; body=${JSON.stringify(body)}`);
     };
     await send('Page.enable'); await send('Runtime.enable'); await send('Accessibility.enable');
     await send('Emulation.setDeviceMetricsOverride', {
       width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
     });
     const entry = `${artifact ? '/build/AshenSpire.html' : '/'}?shot=title`;
-    await send('Page.navigate', { url: `http://127.0.0.1:${port}${entry}` });
-    await until('document.readyState === "complete" && !!document.querySelector("#settings")', 'title Settings control is unreachable');
+    const navigation = await send('Page.navigate', { url: `http://127.0.0.1:${port}${entry}` });
+    if (navigation.errorText) throw new Error(`Settings navigation failed: ${navigation.errorText}`);
+    // The standalone includes its artwork and needs longer to parse on a busy
+    // machine. Keep the shorter interaction deadline after the page has loaded.
+    await until('document.readyState === "complete" && !!document.querySelector("#settings")', 'title Settings control is unreachable', 60000);
     const title = await evaluate(`(() => ({
       settingsCount: document.querySelectorAll('.title-menu #settings').length,
       changelogTopLevel: [...document.querySelectorAll('.title-menu button')].some((button) => /changelog/i.test(button.textContent)),
@@ -984,8 +989,10 @@ async function browserRoute(entries, {
       throw new Error(`title route changed (${JSON.stringify(title)})`);
     }
     await evaluate('document.querySelector("#settings").click()');
-    await until('!!document.querySelector(".settings-modal .set-tab[data-member=\\"About\\"]")', 'Settings modal or About tab is unreachable');
-    await evaluate('document.querySelector(".settings-modal .set-tab[data-member=\\"About\\"]").click()');
+    await until('!!document.querySelector(".settings-modal .set-tab[data-member=\\"Advanced\\"]")', 'Settings modal or Advanced tab is unreachable');
+    await evaluate('document.querySelector(".settings-modal .set-tab[data-member=\\"Advanced\\"]").click()');
+    await until('!!document.querySelector(".settings-modal [data-advanced-group=\\"About\\"]")', 'About section is unreachable');
+    await evaluate('document.querySelector(".settings-modal [data-advanced-group=\\"About\\"]").click()');
     await until('!!document.querySelector(".settings-modal .about-ai")', 'About disclosure did not mount');
     const aboutState = await evaluate(`(() => {
       const host = document.querySelector('.settings-modal');
@@ -996,7 +1003,7 @@ async function browserRoute(entries, {
         source: { href: sourceLink?.href, target: sourceLink?.target, rel: sourceLink?.rel }
       };
     })()`);
-    await evaluate('document.querySelector(".settings-modal .set-tab[data-member=\\"Changelog\\"]").click()');
+    await evaluate('document.querySelector(".settings-modal [data-advanced-group=\\"Changelog\\"]").click()');
     await until('!!document.querySelector(".settings-modal .about-changelog details.about-change summary")', 'Changelog did not mount');
     const initial = await evaluate(`(() => {
       const host = document.querySelector('.settings-modal');
@@ -1078,6 +1085,11 @@ async function browserRoute(entries, {
       await evaluate('document.querySelector("#about-evidence-label")?.remove()');
     }
     await evaluate('document.querySelector("#set-close").click()');
+    await until('!!document.querySelector(".set-export-body") || !document.querySelector(".settings-modal")', 'Done did not return to title');
+    await evaluate(`(() => {
+      const prompt = document.querySelector('.set-export-body')?.closest('[role="dialog"]');
+      [...(prompt?.querySelectorAll('button') || [])].find(button => button.textContent.trim() === 'Not now')?.click();
+    })()`);
     await until('!document.querySelector(".settings-modal") && !!document.querySelector(".title-screen #settings")', 'Done did not return to title');
     socket.close();
   } finally {
@@ -1604,11 +1616,11 @@ async function selftest() {
     },
     {
       name: 'missing About mount', file: 'src/ui/screens/settings.js',
-      find: "About: { mount: 'set-about-mount'", replace: "About: { mount: 'set-about-missing'", expect: 'About disclosure did not mount',
+      find: "if (aboutMount) renderAboutSection(aboutMount);", replace: "if (false) renderAboutSection(aboutMount);", expect: 'About disclosure did not mount',
     },
     {
-      name: 'missing first-level Changelog mount', file: 'src/ui/screens/settings.js',
-      find: "Changelog: { mount: 'set-changelog-mount'", replace: "Changelog: { mount: 'set-changelog-missing'", expect: 'Changelog did not mount',
+      name: 'missing Changelog mount', file: 'src/ui/screens/settings.js',
+      find: "if (changelogMount) renderChangelogSection(changelogMount);", replace: "if (false) renderChangelogSection(changelogMount);", expect: 'Changelog did not mount',
     },
     {
       // The Done control is BUILT here now rather than found in a template —
@@ -1617,8 +1629,8 @@ async function selftest() {
       // `.set-actions` div. Same plant, same assertion: sever Done's click and
       // the door stops returning to the title.
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
-      find: "  done.addEventListener('click', door.close);",
-      replace: "  done.addEventListener('click', () => {});",
+      find: "  done.addEventListener('click', () => {",
+      replace: "  done.addEventListener('click', () => { return;",
       expect: 'Done did not return to title',
     },
     {

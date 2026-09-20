@@ -818,6 +818,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
           break;
+        case 'impactDealt':
+          if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
+          break;
         case 'hpLost':
           if (t) t.hp = Math.max(0, t.hp - e.amount);
           break;
@@ -871,22 +874,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // any other poise source catches up when playback ends.
           if (t && t.poiseMeter && e.poiseDamage > 0) {
             t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.poiseDamage);
-          }
-          break;
-        // M7b: IMPACT MOVES THE BAR ON ITS OWN BEAT. The player's Poise meter
-        // is live (plan phase 8) and every impact says so, but the paced view
-        // had no case for the receipt: a sub-threshold hit left the bar still
-        // until the timeline flushed, and two hits that filled it replayed the
-        // fill against a bar that had never moved (Codex, #1203).
-        case 'impactDealt':
-          // SET, NEVER ADD. The engine deals the Poise damage BEFORE it emits
-          // this, so on a filling blow meterFilled has already emptied the
-          // displayed bar; adding the amount here would show a bar that never
-          // filled and lose both the carry and the widened max. The receipt
-          // carries the meter the engine ended on, and that is what shows.
-          if (t && t.poiseMeter && Number.isFinite(e.meterValue)) {
-            if (Number.isFinite(e.meterMax)) t.poiseMeter.max = e.meterMax;
-            t.poiseMeter.value = Math.max(0, Math.min(t.poiseMeter.max, e.meterValue));
           }
           break;
         case 'meterFilled':

@@ -1,5 +1,7 @@
 // Keep the existing inspection button and its handlers, but paint it in the
 // browser top layer. A z-index alone cannot escape a scrolling ancestor.
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+
 export function mountCreationInfoLayer(root) {
   let control = null, owner = null, frame = 0;
   const close = () => {
@@ -10,8 +12,8 @@ export function mountCreationInfoLayer(root) {
     frame = 0;
     if (!root.isConnected) { dispose(); return; }
     if (document.querySelector('.card-inspection-modal')) { close(); return; }
-    const selected = [...root.querySelectorAll('.cc-card-selectors .inspection-selected')]
-      .find(card => card.getClientRects().length && (card.classList.contains('inspection-info-visible') || card.contains(document.activeElement)));
+    const selected = [...root.querySelectorAll('.cc-card-selectors .inspection-selected, .cc-card-selectors .is-chosen')]
+      .find(card => card.getClientRects().length && (card.classList.contains('inspection-info-visible') || card.classList.contains('is-chosen') || card.contains(document.activeElement)));
     const button = selected?.querySelector('.card-info-button');
     if (button !== control) {
       close();
@@ -27,11 +29,11 @@ export function mountCreationInfoLayer(root) {
     if (box.right <= gallery.left || box.left >= gallery.right || box.bottom <= pane.top || box.top >= pane.bottom || root.inert) { close(); return; }
     if (!control.matches(':popover-open')) control.showPopover();
     const size = control.getBoundingClientRect();
-    const zoom = size.width / control.offsetWidth || 1;
     const left = Math.max(8, Math.min(innerWidth - size.width - 8, box.left + (box.width - size.width) / 2));
     const top = Math.max(8, box.top - size.height - 8);
-    control.style.left = `${left / zoom}px`;
-    control.style.top = `${top / zoom}px`;
+    const position = anchorLocalBox(VIEWPORT_ORIGIN, { left, top, width: size.width, height: size.height });
+    control.style.left = `${position.left}px`;
+    control.style.top = `${position.top}px`;
   };
   const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
   const observer = new MutationObserver(schedule);
