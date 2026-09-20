@@ -233,7 +233,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
-    maxActorAnimationMs: (speed) => reaverAttackTiming(speed).totalMs,
+    maxActorAnimationMs: (speed) => {
+      const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+      return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
+    },
     animateActor: (beat, actorEl, speed) => {
       const played = beat.events.find(event => event.type === 'cardPlayed');
       const moved = beat.events.find(event => event.type === 'enemyMoveStarted');
@@ -256,7 +259,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class));
+        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan });
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
@@ -2121,7 +2124,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const definition = resolveCard(registries, instance);
       const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
-      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class)) }];
+      const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
+      const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action }) }];
     }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
@@ -2591,4 +2596,4 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
   if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
 }
-import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';
+import { equipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';

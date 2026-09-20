@@ -1113,4 +1113,14 @@ try {
   zoomExtra++;
   console.error('FAIL Equipment animation references:', error);
 }
+try {
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const result = spawnSync(process.execPath, ['--test', fileURLToPath(new URL('./unarmed-animation.test.mjs', import.meta.url))], { encoding: 'utf8' });
+  if (result.status !== 0) throw new Error(result.stdout + result.stderr);
+  console.log('PASS Unarmed animation references: ownership, routing, timing and all armor assets');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Unarmed animation references:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

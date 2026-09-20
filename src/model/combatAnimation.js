@@ -9,7 +9,7 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = []) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, action } = {}) {
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
@@ -18,6 +18,12 @@ export function resolveCombatAnimation(card = {}, equipment = []) {
   const parry = equipment.some(item => item.id === 'parryDagger');
   const shieldIntent = tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
   if (kind === 'attack') {
+    // Equipment still selects one empty+empty skin. The resolved action selects
+    // its physical attack or magical cast clip, including attack-kind spells.
+    if (animation?.motionProfile === 'unarmed' && animation.rightGroup === 'empty'
+        && animation.leftGroup === 'empty' && action?.casting) {
+      return { group: 'cast', technique: 'cast', rest: null, family: action.family, motion: action.motion };
+    }
     const bash = shield && card.sourceArmamentId !== 'parryDagger' && (card.id === 'shieldBash' || card.equipmentProfileId === 'shieldAttack' || tags.has('shield'));
     return { group: 'attack', technique: bash ? 'shieldBash' : 'attack', rest: null, family: 'strike', motion: 'impact' };
   }
