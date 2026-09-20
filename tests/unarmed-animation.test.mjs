@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 import { validateUnarmedFragmentCoverage, mergeUnarmedAnimationFragment as merge } from '../tools/unarmed-animation-import.mjs';
 import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, animationClip, animationTiming } from '../src/model/equipmentAnimation.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
+import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../src/content/index.js';
+import { tagService } from '../src/model/tagService.js';
 import { resolveActionAnimation } from '../src/model/actionAnimation.js';
 
 const physical=JSON.parse(readFileSync(new URL('../art/unarmed-reference-2026-09-19/runtime-fragment.json',import.meta.url)));
@@ -90,3 +93,19 @@ test('all live armor entries have complete shipped physical frames',()=>{
   }
 });
 
+
+test('Starblade Phalanx, Star Spark and Blightward Lash use casting across classes',()=>{
+  const registries=createRegistries(contentBundle);
+  for(const id of ['starbladePhalanx','starSpark','blightwardLash']){
+    const card=registries.cards.get(id);
+    const tags=card.cardTags?.length ? card.cardTags : tagService(registries).tagsOf('card',card);
+    for(const actorId of ['reaver','starseer','herald','rogue']){
+      const action=resolveActionAnimation({actorId,actionId:id,tags,type:card.type});
+      assert.equal(action.casting,true,id+'/'+actorId);
+      const plan=resolveCombatAnimation({...card,cardTags:tags},[],{animation:selected(both),action});
+      assert.equal(plan.technique,'cast',id+'/'+actorId);
+      assert.equal(animationClip(selected(both),plan.technique),selected(both).clips.magicChannel);
+      assert.equal(resolveCombatAnimation({...card,cardTags:tags},[],{action}).group,'attack','equipped/default route remains physical');
+    }
+  }
+});

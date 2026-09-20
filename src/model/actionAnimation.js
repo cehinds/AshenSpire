@@ -23,7 +23,8 @@ export function resolveActionAnimation({ actorId, actionId, tags = [], type, int
   const pose = poses.has(definition.pose) ? definition.pose : (poses.has('idle') ? 'idle' : null);
   // Ranged wins the motion tag order, but a ranged spell still has a casting
   // gesture. Use authored presentation tags, never class or damage type.
-  const casting = family === 'spell' || (source === 'tag' && family === 'projectile'
+  const casting = family === 'spell' || (source !== 'override' && ids.has('source:spell'))
+    || (source === 'tag' && family === 'projectile'
     && ACTION_ANIMATION_TAGS.some(([id, value]) => value === 'spell' && ids.has(id)));
   return Object.freeze({ family, source, matchedTag, casting, motion: definition.motion, pose,
     spriteClass: actor?.spriteClass || null, tempo: actor?.tempo || 1, reach: actor?.reach || 1 });
