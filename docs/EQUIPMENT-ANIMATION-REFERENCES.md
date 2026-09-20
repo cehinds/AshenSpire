@@ -37,6 +37,14 @@ Shield defense, hurt, cast, buff, ready/aggressive/defensive stances, conversati
 
 ## Runtime and review boundaries
 
+### Empty-hand magic
+
+The shared `unarmed` profile composes physical and magic art in the same 32 appearance sets for all 35 armor entries. Magic contributes 16 `MAGIC-` frames and 17 named clips per appearance. `cast` defaults to `magicChannel`: Ready → ATK01–07 → Ready, with 160ms per step, 1440ms total and release at 800ms. `buff` defaults to the self-directed `magicBuff` pose. Ordinary attack, defense, hurt, stances, conversation, portrait and equipment-view defaults remain physical. Every magic reference, including its separate ritual Cast pose, remains configurable even when it is not the default.
+
+Both hands must be empty. Resolved casting intent routes attack-kind spells into the cast clip; ordinary attacks remain physical, including a magic-damage attack whose authored presentation explicitly resolves as physical. Powers use the buff reference. Selection never infers choreography from class or damage type alone and changes no spell legality or combat values. Existing effects remain independent of the effect-free body artwork.
+
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) covers all appearances, aliases and 16 poses. [Runtime verification](../art/unarmed-magic-2026-09-19/runtime-check.html) runs the shipped action resolver and painted stage for all four classes. `node --test tests/unarmed-magic.test.mjs` verifies the two actual fragments in either import order and checks every shipped selector and role.
+
 The greatsword suites for all class/armor entries are activated. The catalog currently reports the legacy `one` grip for a lone native greatsword; its two-handed visual does not alter that mechanical rule. Both native and prototype two-handed grips select the suite, while an occupied opposite hand does not. New art and synchronized previews are in `art/greatsword-outfits-2026-09-19/`. The four-class review pack at `art/webp-pack-2026-09-19/` remains available for labeled pose feedback. Its other combinations are not implicitly approved or activated. Starseer ATK-02/ATK-03 have a separate known anatomy/staff-occlusion review.
 
 Unit checks: `node tests/equipment-animation.test.mjs` (also in `tests/run-node.mjs`). Browser checks: serve the repository, set `ART_TEST_URL` if needed, then run `node tools/equipment-animation-browser.mjs` with Playwright available (or `PLAYWRIGHT_MODULE` pointing to an installed module) and `CHROME` if the browser is not detected.

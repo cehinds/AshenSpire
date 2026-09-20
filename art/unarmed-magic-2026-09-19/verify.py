@@ -3,7 +3,6 @@ from pathlib import Path
 from PIL import Image
 import hashlib
 import json
-import math
 
 pack = Path(__file__).resolve().parent
 m = json.loads((pack / 'manifest.json').read_text(encoding='utf-8'))
@@ -12,6 +11,10 @@ assert len(m['groups']) == 32 and len({g['id'] for g in m['groups']}) == 32
 assert set(g['classId'] for g in m['groups']) == {'reaver', 'starseer', 'herald', 'rogue'}
 assert len(m['outfits']) == len(m['aliases']) == 35
 assert set(m['aliases'].values()) == {g['id'] for g in m['groups']}
+provenance = json.loads((pack / 'prompts.json').read_text(encoding='utf-8'))
+assert len(provenance['generations']) == 33
+assert {g['source'] for g in m['groups']} <= {e['source'] for e in provenance['generations']}
+assert all(e['prompt'] and e['references'] and (pack / e['source']).is_file() for e in provenance['generations'])
 total = 0
 for g in m['groups']:
     source = pack / g['source']

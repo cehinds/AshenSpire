@@ -16,6 +16,13 @@ Armoury, conversation and portrait views share those references. The visual
 catalog includes greatsword ready stances for all four classes. One shared motion profile serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
+Empty-hand magic adds 16 addressable poses for each of the 32 appearances,
+covering all 35 armor entries. The shared unarmed profile uses the nine-step
+magic channel/release clip for casting and a self-directed magic buff pose;
+physical references remain the defaults for ordinary attacks and other roles.
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) includes class and
+armor filters, labeled sheets and synchronized playback.
+
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from
 Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
