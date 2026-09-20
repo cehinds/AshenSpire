@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-20
+
+- **The Herald's memory burns darker** ([#1224](https://github.com/cehinds/AshenSpire/pull/1224), `0.7.1.323`). The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.
+
 ## 2026-09-19
 
 - **Twin swords now keep every class and armour's appearance through one shared attack** ([#1219](https://github.com/cehinds/AshenSpire/pull/1219), `0.7.1.320`). Straight Sword in the right hand and Katana in the left select 32 painted suites across all four classes and 35 armour entries. The nine-step attack shares its timing across every outfit, with separate defend, hurt, cast, buff, stance, portrait and conversation poses. Reversed hands retain their existing presentation. The workshop compares outfits and lets you edit pose order, timing and impact before saving a sequence.
