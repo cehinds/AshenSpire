@@ -43,7 +43,8 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
-    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules, ratingAttributeScale: combat.ratingAttributeScale } : {}),
+    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
+    ...(combat.ratingAttributeScale !== undefined ? { ratingAttributeScale: combat.ratingAttributeScale } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
@@ -96,7 +97,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   const combat = {
     registries,
     rng,
-    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules, ratingAttributeScale: saved.ratingAttributeScale || 1 } : {}),
+    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
+    ...(saved.ratingAttributeScale !== undefined ? { ratingAttributeScale: saved.ratingAttributeScale } : {}),
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,

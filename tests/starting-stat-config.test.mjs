@@ -34,3 +34,11 @@ test('pool and conversion settings round trip and reject impossible budgets', ()
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [poolKey]: 2 }), contentBundle));
 });
+
+
+test('stat-driven hand sizes use normalized attributes when auto scaling is enabled', async () => {
+  const { scaledCards } = await import('../src/model/handRules.js');
+  const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
+  assert.equal(scaledCards(rule, { intelligence: 2 }, 0.2), 5);
+  assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
+});

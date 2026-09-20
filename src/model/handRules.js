@@ -79,8 +79,8 @@ export function handRulesSettingsProblems(settings = {}) {
   });
 }
 
-export function scaledCards(rule, attributes = {}) {
-  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) - rule.baseline) / rule.pointsPerCard) : 0;
+export function scaledCards(rule, attributes = {}, statScale = 1) {
+  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) / statScale - rule.baseline) / rule.pointsPerCard) : 0;
   return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
 }
 

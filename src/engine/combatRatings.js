@@ -25,13 +25,13 @@ export function refreshCombatRatings(ctx) {
   }
 }
 
-export function applyRatingImpact(ctx, source, target, carrier) {
+export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null) {
   if (!ctx.ratingsRules || !target?.alive) return;
   const magical = isMagicalAttack(ctx, carrier);
   const meterName = magical ? 'ward' : 'poise';
   const meter = target[meterName + 'Meter'];
   if (!meter || meter.max <= 0) return;
-  const amount = attackImpact(ctx, source, carrier);
+  const amount = explicitAmount === null ? attackImpact(ctx, source, carrier) : Math.max(0, Math.floor(explicitAmount));
   if (amount <= 0) return;
   meter.value += amount;
   const cfg = ctx.ratingsRules.breaks;

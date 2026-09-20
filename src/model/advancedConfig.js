@@ -117,7 +117,7 @@ function explicitRows(bundle) {
       if (!Number.isFinite(def)) continue;
       rows.push({
         cat: 'Advanced', advancedGroup: 'Classes', type: 'number', integer: true, step: 1,
-        min: 1, max: 99, def,
+        min: 1, max: 495, def,
         key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${bundle.attributeRules.defaultMode}.${classDef.id}.${attribute.id}`,
         label: `${classLabel} — ${attribute.label}`,
         note: `Starting ${attribute.label.toLowerCase()} for ${classLabel} in the default ${bundle.attributeRules.defaultMode} mode. Applies to a new run.`,

@@ -49,9 +49,10 @@ export function combatRatingRows(bundle) {
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {
-    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, words(field), words(group), {
+    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || words(field), words(group), {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
       max: field === 'maximum' ? 0.95 : 999,
+      note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
       integer: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn',
       step: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn' ? 1 : 0.01,
     });
@@ -62,7 +63,7 @@ export function combatRatingRows(bundle) {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${id.toUpperCase()} per stack`, 'Status bonuses');
+    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${id.toUpperCase()} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     for (const id of ratingIds) add(`bonuses.${ratingSourceKey(piece)}.${id}`, 0,
@@ -72,12 +73,13 @@ export function combatRatingRows(bundle) {
   }
   for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${id.toUpperCase()}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
+    for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${words(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });
-    for (const [id, move] of Object.entries(enemy.moves)) add(`enemyAttackType.${enemy.id}:${id}`, move.damageSchool && move.damageSchool !== 'physical' ? 'magic' : 'physical',
-      `${enemy.name} — ${words(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['physical', 'magic'],
-        note: 'Selects Poise or Ward for damage resistance and impact. Untyped attacks default to physical.',
+    for (const [id, move] of Object.entries(enemy.moves)) add(`enemyAttackType.${enemy.id}:${id}`, 'auto',
+      `${enemy.name} — ${words(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
+        note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
       });
   }
   for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${card.name} — impact override`, 'Attack overrides', {
@@ -88,9 +90,9 @@ export function combatRatingRows(bundle) {
 
 export function resolveCombatRatings(settings, bundle) {
   const config = structuredClone(combatRatingDefaults);
-  config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {};
+  config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   for (const row of combatRatingRows(bundle)) {
-    const raw = settings[row.key] ?? (row.type === 'choice' ? row.def : undefined);
+    const raw = settings[row.key] ?? (row.type === 'choice' || row.key.includes('.enemyRatings.') ? row.def : undefined);
     if (raw === undefined) continue;
     const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
@@ -119,7 +121,8 @@ export function combatRatingProblems(config) {
   for (const weights of Object.values(config.statuses || {})) if (!weights || ['poise', 'ward'].some(k => !Number.isFinite(weights[k]) || weights[k] < 0 || weights[k] > 1)) problems.push('Invalid status resistance weights');
   for (const bonuses of Object.values(config.bonuses || {})) if (!bonuses || Object.values(bonuses).some(n => !Number.isFinite(n) || n < 0 || n > 999)) problems.push('Invalid rating bonus');
   for (const n of [...Object.values(config.attackImpact || {}), ...Object.values(config.enemyImpact || {})]) if (!Number.isInteger(n) || n < -1 || n > 99) problems.push('Invalid impact override');
-  if (Object.values(config.enemyAttackType || {}).some(v => !['physical', 'magic'].includes(v))) problems.push('Invalid enemy attack type');
+  if (Object.values(config.enemyAttackType || {}).some(v => !['auto', 'physical', 'magic'].includes(v))) problems.push('Invalid enemy attack type');
+  for (const values of Object.values(config.enemyRatings || {})) if (!values || ['poise', 'ward'].some(id => !Number.isInteger(values[id]) || values[id] < 0 || values[id] > 999)) problems.push('Invalid enemy defences');
   return problems;
 }
 

@@ -88,7 +88,7 @@ export function createCombat({
       ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
       : 0);
   const combat = {
-    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules), ratingAttributeScale } : {}),
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules), ratingAttributeScale } : ratingAttributeScale !== 1 ? { ratingAttributeScale } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
@@ -117,7 +117,7 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: handRules ? scaledCards(handRules.capacity, player.attributes) : (bal.handMax != null ? bal.handMax : 10),
+    handMax: handRules ? scaledCards(handRules.capacity, player.attributes, ratingAttributeScale || 1) : (bal.handMax != null ? bal.handMax : 10),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
@@ -195,7 +195,11 @@ export function createCombat({
 
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
-    for (const enemy of combat.enemies) enemy.wardMeter = { value: 0, max: Math.max(1, enemy.poiseMeter?.max || 1), growths: 0 };
+    for (const enemy of combat.enemies) {
+      const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
   }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
@@ -467,7 +471,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
-      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 },
+      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
       source: enemy,
       owner: enemy,
       target: combat.player,
@@ -735,10 +739,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
+  refreshCombatRatings(combat);
   combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
@@ -832,7 +837,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
     stampDeck(combat.registries, run, pile);
   }
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
     loadout: combat.loadout,
     relics: p.relicIds || [],
     class: p.classId,
@@ -1213,7 +1218,10 @@ export function previewIntent(combat, enemyInstanceId) {
   const out = { ...intent };
   if (intent.damage != null) {
     const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], damageSchool ? { damageSchool } : null);
+    const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
+    const effect = move?.effects?.find(e => e.op === 'damage');
+    const carrier = damageSchool && damageSchool !== 'auto' ? { damageSchool } : { damageSchool: effect?.damageSchool || move?.damageSchool, tags: effect?.tags || move?.tags || [] };
+    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], carrier);
     out.hits = intent.hits != null ? intent.hits : 1;
     out.totalDamage = out.damage * out.hits;
   }

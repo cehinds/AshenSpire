@@ -559,6 +559,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  damageSchool: opt(en(...DAMAGE_SCHOOLS)),
   intent: en(...INTENT_KINDS),
   damage: opt(int),
   hits: opt(int),

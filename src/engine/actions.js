@@ -354,6 +354,7 @@ export function staggerPlayer(ctx, player) {
  * meter grows by balance.poise.growthMult either way.
  */
 export function dealPoiseDamage(ctx, entity, amount) {
+  if (ctx.ratingsRules) return applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount);
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
@@ -599,7 +600,8 @@ function runOpcode(ctx, action, eff) {
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags };
           if (ctx.ratingsRules && action.source?.kind === 'enemy') {
-            carrier.damageSchool = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`] || carrier.damageSchool;
+            const attackType = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`];
+            if (attackType && attackType !== 'auto') carrier.damageSchool = attackType;
           }
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;

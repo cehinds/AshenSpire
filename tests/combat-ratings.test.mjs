@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { computeAttackDamage, computeBlockGain, applyAttackDamage } from '../src/engine/actions.js';
+import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
-import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
+import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle, advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 
 const registries = createRegistries(contentBundle);
 function fight(overrides = {}) {
@@ -84,4 +84,71 @@ test('configuration exports include weights and reject invalid weight boundaries
   const settings = { 'gameConfig.combatRatings.statuses.burn.poise': 0.25, 'gameConfig.combatRatings.statuses.burn.ward': 0.75 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.combatRatings.impact.lightMaxWeight': 20 }), contentBundle));
+});
+
+
+test('old run snapshots retain the legacy rules while new runs opt into ratings', () => {
+  assert.equal(configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: {} }).balance.combatRatings.enabled, false);
+  assert.equal(configuredContentBundle(contentBundle, advancedConfigSnapshot({})).balance.combatRatings.enabled, true);
+});
+
+test('enemy defences can differ and explicit magic typing agrees with the intent preview', () => {
+  const c = fight({ 'gameConfig.combatRatings.enemyRatings.wanderingSoldier.poise': 30,
+    'gameConfig.combatRatings.enemyRatings.wanderingSoldier.ward': 5,
+    'gameConfig.combatRatings.enemyAttackType.wanderingSoldier:slash': 'magic' });
+  const e = c.enemies[0];
+  assert.equal(e.poiseMeter.max, 30); assert.equal(e.wardMeter.max, 5);
+  c.player.ratings.poise = 100; c.player.ratings.ward = 0;
+  e.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1 };
+  assert.equal(previewIntent(c, e.id).damage, 7);
+  const hp = c.player.hp;
+  executeAction(c, { effect: { op: 'damage', target: 'player', amount: 7 }, source: e, owner: e, target: c.player, meta: { moveId: 'slash' } });
+  assert.equal(hp - c.player.hp, 7);
+  assert.equal(c.player.wardMeter.value, 1);
+});
+
+test('automatic enemy typing preserves magic authored on an effect', () => {
+  const c = fight(); c.player.ratings.ward = 0; c.player.ratings.poise = 100;
+  const e = c.enemies[0], hp = c.player.hp;
+  executeAction(c, { effect: { op: 'damage', target: 'player', amount: 10, damageSchool: 'magic' }, source: e, owner: e, target: c.player, meta: { moveId: 'slash' } });
+  assert.equal(hp - c.player.hp, 10); assert.equal(c.player.wardMeter.value, 1);
+});
+
+test('a magical power carries PR into its later block trigger', async () => {
+  const { fireOwnerHooks } = await import('../src/engine/triggers.js');
+  const c = fight();
+  const card = { cardId: 'astralArmorCard', type: 'power' };
+  executeAction(c, { effect: { op: 'applyStatus', target: 'self', status: 'astralArmor', stacks: 1 }, source: c.player, owner: c.player, card });
+  const queued = [];
+  c.enqueue = action => queued.push(action);
+  fireOwnerHooks(c, c.player, 'ownerTurnEnd');
+  for (const action of queued) executeAction(c, action);
+  assert.equal(c.player.block, 14);
+});
+
+
+test('explicit Poise damage respects configured break rules without legacy penalties', () => {
+  const c = fight({ 'gameConfig.combatRatings.breaks.poiseActionLoss': 2 });
+  dealPoiseDamage(c, c.player, c.player.poiseMeter.max);
+  assert.equal(c.player.pendingActionLoss, 2);
+  assert.equal(c.player.statuses.weak, undefined);
+  assert.equal(c.player.statuses.vulnerable, undefined);
+});
+
+test('armour, relic and status bonuses are additive and counted once', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { equippedPieces } = await import('../src/model/loadout.js');
+  const { ratingSourceKey } = await import('../src/model/combatRatings.js');
+  const run = createRunState({ seed: 42, classId: 'reaver', registries });
+  run.relics = [contentBundle.relics[0].id];
+  const armor = equippedPieces(registries, run.loadout, 'reaver').find(p => p.kind === 'armor');
+  const rules = resolveCombatRatings({}, contentBundle);
+  const before = ratingReceipt(registries, run, rules).totals;
+  rules.bonuses[ratingSourceKey(armor)] = { ar: 3 };
+  rules.bonuses['relic:' + run.relics[0]] = { ar: 7 };
+  const after = ratingReceipt(registries, run, rules).totals;
+  assert.equal(after.ar - before.ar, 10);
+  const c = fight({ 'gameConfig.combatRatings.bonuses.status:strength.ar': 2 });
+  applyStatus(c, c.player, 'strength', 2, c.player);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
 });
