@@ -57,7 +57,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
     if (notify) onScene(index);
     const plate = el('div',{class:'prologue-plate'});
-    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{destinationArt:scene.id === 'step' ? destination.art : null,classId})});
+    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{classId})});
     const images = [background]; plate.append(background);
     if (scene.character) {
       const source = new Image(); source.src = prologueArtwork(classId);
