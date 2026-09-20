@@ -219,3 +219,7 @@ for AshenSpire. Runtime assets in `assets/environments/legacy/` use optimized
 map WebPs and 24 lossless alpha floor/background plates. Original sources,
 exact prompts, provenance, and extraction instructions are retained under
 `art/webp-maps-2026-09-19/`. No third-party asset license is claimed.
+
+## Twin-sword outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with the built-in image_gen tool from project-owned class and armor references. Exact prompts, provenance, PNG masters, normalization metadata and the interactive review are retained in `art/twin-sword-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and 35 armor entries, with one shared motion and authored right Straight Sword / left Katana hands. No third-party artwork was downloaded and no third-party license is claimed.
