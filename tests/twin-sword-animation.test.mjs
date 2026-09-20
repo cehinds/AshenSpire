@@ -6,9 +6,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { gripOf } from '../src/model/loadout.js';
 
-const pack = new URL('../art/twin-sword-reference-2026-09-19/', import.meta.url);
-const manifest = JSON.parse(readFileSync(new URL('manifest.json', pack), 'utf8'));
-const attack = JSON.parse(readFileSync(new URL('attack-sequence.json', pack), 'utf8'));
+const manifest = JSON.parse(readFileSync(new URL('../art/twin-sword-reference-2026-09-19/manifest.json', import.meta.url), 'utf8'));
+const attack = JSON.parse(readFileSync(new URL('../art/twin-sword-reference-2026-09-19/attack-sequence.json', import.meta.url), 'utf8'));
 assert.equal(manifest.groups.length, 32);
 assert.deepEqual(manifest.coverage.missingAppearances, []);
 const registries = createRegistries(contentBundle);

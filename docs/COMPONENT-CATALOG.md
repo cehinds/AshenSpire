@@ -17,6 +17,13 @@ catalog includes greatsword, sword/shield and unarmed ready stances. Each family
 Twin swords add 32 appearances across those 35 entries, sharing one motion profile. Optional per-hand item constraints select only the authored right Straight Sword / left Katana order; reversed hands retain existing art. The [twin-sword workshop](../art/twin-sword-reference-2026-09-19/index.html) compares outfits and edits playback order.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
+Empty-hand magic adds 16 addressable poses for each of the 32 appearances,
+covering all 35 armor entries. The shared unarmed profile uses the nine-step
+magic channel/release clip for casting and a self-directed magic buff pose;
+physical references remain the defaults for ordinary attacks and other roles.
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) includes class and
+armor filters, labeled sheets and synchronized playback.
+
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from
 Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
@@ -621,6 +628,14 @@ Combatant overhead controls: `combatantOverhead.js` shares Information and enlar
 Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
 
 Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
+
+
+Single-dagger coverage adds 32 skins across all 35 catalog armor entries to the
+equipment animation reference component. It selects only right dagger + left empty
+with one-hand grip. The visual miniature includes Rogue single dagger; the
+[full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
+class/outfit filters, pose order, timing, portrait and conversation references.
+
 ### Hand & Draw Rules
 
 Advanced Settings groups the controls into Starting hand, Turn draws, Hand

@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1217",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Your five stats are rebased, and every point you place is felt",
+    "detail": "Creation now starts each stat at 5 and hands you ten points to place between 3 and 12, instead of starting at 10 and handing you three. The pools follow: your Mana is your Wisdom and your Stamina is your Constitution, point for point, rather than one per five, and Health is 20 plus four per point of Constitution. Weapons and armour ask for the new numbers too, and picking up something your stats cannot hold is refused where the change happens, with the shortfall named. Runs already under way keep the rules they were created with.",
+    "build": "0.7.1.328",
+    "pullRequest": 1217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1217"
+  },
+  {
+    "id": "pr-1223",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The Herald's memory now shows the veiled novice at the Observatory's summit hearth",
+    "detail": "The Herald scene in the opening's \"What the fire left\" uses the approved final painting: hood and veil hide the face while the unfinished Burning cracks through the novice, collapsed against the monumental hearth and reaching for the Sovereign Ember. It replaces the darkened plates from #1224. Desktop and phone compositions are separate, and the masters, prompts and checksums are kept with the repository's art records. No other scene, timing or setting changes.",
+    "build": "0.7.1.324",
+    "pullRequest": 1223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1223"
+  },
+  {
     "id": "pr-1224",
     "date": "2026-09-20",
     "group": "2026-09-20",
