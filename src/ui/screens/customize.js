@@ -46,7 +46,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, viewModeSwitch,
+  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
@@ -255,7 +255,30 @@ export function mountCustomize(app, {
   const equipmentTools = el('div', { id: 'cz-equipment-view-toggle', class: 'cz-head-tool' });
   const headTools = el('div', { class: 'cz-head-tools' }, [classTools, equipmentTools]);
   if (catalog) { close.hidden = true; flow.prepend(headTools); }
-  else { close.before(headTools); close.before(portrait); } // beside the exit, whatever the head wraps it in
+  else {
+    headTools.classList.add('cz-header-menu');
+    headTools.setAttribute('popover', 'auto');
+    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': 'Character menu', 'aria-haspopup': 'true', 'aria-expanded': 'false' });
+    const navigation = el('div', { class: 'cz-menu-navigation' });
+    for (const id of categories) {
+      const item = el('button', { type: 'button', class: 'as-btn', text: t(`creation.category.${id}`) });
+      item.addEventListener('click', () => { activate(id); headTools.hidePopover(); });
+      navigation.append(item);
+    }
+    headTools.prepend(navigation);
+    menu.addEventListener('click', () => {
+      headTools.togglePopover();
+      if (headTools.matches(':popover-open')) {
+        const rect = menu.getBoundingClientRect();
+        const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+        headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;
+        headTools.style.top = `${(rect.bottom + 8) / zoom}px`;
+      }
+    });
+    headTools.addEventListener('toggle', () => menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open'))));
+    close.querySelector('.modal-close-face').textContent = '\u00d7';
+    close.before(portrait, menu, headTools);
+  }
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back' });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
@@ -323,14 +346,16 @@ export function mountCustomize(app, {
   });
 
   function renderViewToggles() {
-    const toggle = catalog ? viewModeToggle : viewModeSwitch;
+    const toggle = viewModeToggle;
     $('#cz-class-view-toggle').replaceChildren(toggle(state.classChoiceView, (mode) => {
       state.classChoiceView = mode;
+      if (!catalog) headTools.hidePopover();
       renderClasses();
       fitStage();
     }, 'Class choice view'));
     $('#cz-equipment-view-toggle').replaceChildren(toggle(state.equipmentChoiceView, (mode) => {
       state.equipmentChoiceView = mode;
+      if (!catalog) headTools.hidePopover();
       // THE TOGGLE REDRAWS THE CHIPS, as the class toggle above already does.
       // Setting `data-view` on the containers was enough while the view was
       // only a CSS arrangement of the same faces; a view now SELECTS a
@@ -462,7 +487,7 @@ export function mountCustomize(app, {
         // Framed, not bare: the chosen sigil rides the figure here as it does
         // everywhere else a figure is drawn. `classic` draws its own sigil
         // inside the silhouette, so it keeps going through classSprite().
-        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'detail'))
+        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'portrait'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 

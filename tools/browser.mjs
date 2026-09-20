@@ -363,6 +363,11 @@ export async function launchBrowser({
 
   const base = awaitEndpoint ? DEFAULT_ARGS : DEFAULT_ARGS.filter((a) => a !== '--remote-debugging-port=0');
   const argv = [headless, ...base, `--user-data-dir=${profile}`, ...args];
+  // Edge's Windows compatibility relaunch detaches the real browser from
+  // these pipes and exits before reporting its debugging endpoint.
+  if (process.platform === 'win32' && /(?:^|[\\/])msedge\.exe$/i.test(bin)) {
+    argv.push('--edge-skip-compat-layer-relaunch');
+  }
   if (urlArg) argv.push(urlArg);
   else if (!argv.some((a) => a === 'about:blank' || /^https?:/.test(a) || /^file:/.test(a))) argv.push('about:blank');
 

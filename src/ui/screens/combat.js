@@ -820,6 +820,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
           break;
+        case 'impactDealt':
+          if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
+          break;
         case 'hpLost':
           if (t) t.hp = Math.max(0, t.hp - e.amount);
           break;
