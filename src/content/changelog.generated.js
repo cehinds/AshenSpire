@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "You can now stage the opening: what plays, in what order, over which painting, in which frame",
     "detail": "Advanced → Opening could change what a scene said; how it was presented was fixed. Each scene now has a switch that keeps it in or leaves it out, a position that decides when it plays, a painting chosen from every one the game ships — including the forest road, whose artwork has been sitting unused since that scene was cut — and an optional title banner across the art. The frame around it all is yours too: the caption under the art as before, or the words over the art, a letterboxed plate, or a panel beside it; the painting's scale, whether it crops or fits, and which part of it stays in frame; and for the text, where it sits, how it lines up, how large it is, whether it has a container behind it, whether that container can be seen, how solid it is, what colour it is, and whether every letter carries an outline — colours picked from the game's palette or from the colour wheel. Export scene configuration writes the opening to a file of its own, and Load scene configuration reads it back; the same settings also travel inside the whole game configuration, so a backup of one is a backup of both. An opening you had already tuned is untouched, and a run paused mid-opening resumes where it stood — on the next scene still in it, if the one it stopped on has been switched off.",
-    "build": "0.7.1.348",
+    "build": "0.7.1.350",
     "pullRequest": 1236,
     "url": "https://github.com/cehinds/AshenSpire/pull/1236"
   },

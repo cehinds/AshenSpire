@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
-import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueSceneArt, prologueScenePreset, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS } from '../src/model/prologue.js';
+import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueScenePreset, prologueBoxBackground, PROLOGUE_PREFIX, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS } from '../src/model/prologue.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
@@ -358,4 +358,55 @@ test('every frame and text position the settings offer is a frame the stylesheet
     assert.ok(screen.includes(`'${property}'`), `${property} is never set`);
     assert.ok(css.includes(`var(${property}`), `${property} is never read`);
   }
+});
+
+test('a run paused on a scene that is no longer in the opening resumes, it does not replay', () => {
+  const ids = config => prologueSequence(config).map(index => config.scenes[index].id);
+  const at = (config, sceneId) => ids(config)[prologueResumePosition(config, config.scenes.findIndex(scene => scene.id === sceneId))];
+  const full = prologueConfig();
+  // A scene still in the opening resumes on itself, wherever it now sits.
+  for (const scene of full.scenes) assert.equal(at(full, scene.id), scene.id);
+  const cut = prologueConfig({'gameConfig.prologue.scenes.carry.enabled': false, 'gameConfig.prologue.scenes.night.enabled': false});
+  assert.deepEqual(ids(cut), ['warmth','year','step']);
+  assert.equal(at(cut, 'carry'), 'step', 'the next scene still in the opening, not the first');
+  assert.equal(at(cut, 'night'), 'step');
+  // Nothing follows the saved scene any more: the LAST scene stands, so the
+  // run is not sent back through scenes it has already watched.
+  const tail = prologueConfig({'gameConfig.prologue.scenes.night.enabled': false, 'gameConfig.prologue.scenes.step.enabled': false});
+  assert.equal(at(tail, 'step'), 'carry');
+  assert.equal(at(tail, 'night'), 'carry');
+  // The question is asked in the STAGING, not in authored numbering: with the
+  // opening reversed, what follows `carry` is what follows it as it now plays.
+  const reversed = prologueConfig(Object.fromEntries([
+    ...PROLOGUE_DEFAULTS.scenes.map((scene, index) => [`${PROLOGUE_PREFIX}scenes.${scene.id}.order`, PROLOGUE_DEFAULTS.scenes.length - index]),
+    [`${PROLOGUE_PREFIX}scenes.carry.enabled`, false],
+  ]));
+  assert.deepEqual(ids(reversed), ['step','night','year','warmth']);
+  assert.equal(at(reversed, 'carry'), 'year', 'the scene after the cut one in the running order');
+});
+
+test('the text container keeps the shipped strip, and takes the colour it is given', () => {
+  // THE DEFAULT IS THE OPENING AS IT SHIPPED. #19150f → #100e0c is the gradient
+  // styles/prologue.css carried before the container was a setting, so a
+  // profile that has never opened these settings sees no change.
+  assert.equal(prologueBoxBackground(prologueConfig().presentation), 'linear-gradient(rgba(25,21,15,1),rgba(16,14,12,1))');
+  assert.equal(prologueBoxBackground({textBoxColor: '#7fa8c9', textBoxOpacity: .5}), 'linear-gradient(rgba(136,175,204,0.5),rgba(127,168,201,0.5))');
+  assert.equal(prologueBoxBackground({textBoxColor: '#ffffff', textBoxOpacity: 1}), 'linear-gradient(rgba(255,255,255,1),rgba(255,255,255,1))', 'the lift never runs past white');
+  // A stored colour the wheel could not have produced falls back rather than
+  // writing a broken background onto the screen.
+  assert.equal(prologueBoxBackground({textBoxColor: 'cornflower', textBoxOpacity: 2}), 'linear-gradient(rgba(25,21,15,1),rgba(16,14,12,1))');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.ok(!/^\.prologue-has-box \.prologue-caption\{[^}]*border-radius/m.test(css), 'the full-width caption strip takes no radius');
+  assert.match(css, /\.prologue-layout-overlay\.prologue-has-box \.prologue-caption[^{]*\{border-radius/, 'a floating plate does');
+});
+
+test('the wash clamp follows the painting, and the scene door takes scenes', () => {
+  // Both are one-line intents that a reader has to be able to see: the clamp
+  // exists for `night`'s dark plate, which any scene may now borrow, and the
+  // scene door must not quietly apply a whole-game file's balance overrides.
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  assert.match(screen, /prologueSceneArt\(scene\) === 'night'/, 'the clamp is keyed to the painting');
+  assert.ok(!/scene\.id === 'night'/.test(screen), 'and not to the scene that used to own it');
+  const settings = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(settings, /openingOnly \? Object\.keys\(changes\)\.filter\(key => !key\.startsWith\(PROLOGUE_PREFIX\)\)/, 'the scene door refuses keys from outside the opening');
 });

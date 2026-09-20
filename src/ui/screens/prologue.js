@@ -3,16 +3,7 @@ import { paintPrologueCharacter, placePrologueCharacter } from '../prologueChara
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
 import { topVeil } from '../components/veil.js';
-import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueSceneArt, PROLOGUE_LAYOUT } from '../../model/prologue.js';
-
-// A colour and an opacity are one CSS value here; the settings keep them apart
-// so the wheel can move without touching how solid the container is.
-function rgba(hex, alpha) {
-  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
-  if (!match) return `rgba(16,14,12,${alpha})`;
-  const [r, g, b] = match.slice(1).map(part => parseInt(part, 16));
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, PROLOGUE_LAYOUT } from '../../model/prologue.js';
 
 // One renderer serves both the real opening and the settings preview. Its only
 // writes are explicit callbacks; previewing cannot create a run or consume RNG.
@@ -45,7 +36,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   root.classList.toggle('prologue-outlined', p.textOutline === true && Number(p.textOutlineWidth) > 0);
   root.style.setProperty('--prologue-text-scale', String(p.textScale ?? 1));
   root.style.setProperty('--prologue-text-align', p.textAlign || 'center');
-  root.style.setProperty('--prologue-box', rgba(p.textBoxColor, p.textBoxOpacity ?? .72));
+  root.style.setProperty('--prologue-box', prologueBoxBackground(p));
   root.style.setProperty('--prologue-outline-color', p.textOutlineColor || '#100e0c');
   root.style.setProperty('--prologue-outline-width', `${Number(p.textOutlineWidth) || 0}px`);
   // Fit, focus and scale go through custom properties rather than inline style
@@ -58,13 +49,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // numbers below stay indices into the authored list, which is what a paused
   // run recorded and what every setting key is named for.
   const order = prologueSequence(config);
-  const positionOf = index => {
-    const at = order.indexOf(index);
-    // A run paused on a scene since switched off resumes on the next scene
-    // still in the opening, rather than on a scene it has already watched.
-    return at >= 0 ? at : Math.max(0, order.findIndex(candidate => candidate >= index));
-  };
-  let position = positionOf(Math.max(0,Math.min(config.scenes.length-1,startScene)));
+  // A run paused on a scene since switched off resumes on the next scene still
+  // in the opening (prologueResumePosition), rather than on one it has watched.
+  let position = prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
   let sceneIndex = order[position], elapsed = 0;
   let stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
   let animations = [], previous = null;
@@ -114,7 +101,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     }
     const wash = el('div',{class:'prologue-wash'});
     wash.style.background = prologueTint(config,settings,run.customization);
-    wash.style.opacity = String(scene.id === 'night' ? Math.min(.06,p.wash) : p.wash);
+    // THE CLAMP BELONGS TO THE PAINTING, NOT THE SCENE. `night`'s plate is
+    // already dark and blue, and a full tint wash over it reads as a stain —
+    // but a scene can now borrow another scene's art, so keying the clamp to
+    // the scene id both washed that plate at full strength under another
+    // scene's name and clamped a bright plate drawn under `night`'s.
+    wash.style.opacity = String(prologueSceneArt(scene) === 'night' ? Math.min(.06,p.wash) : p.wash);
     plate.append(wash);
     if (scene.banner) plate.append(el('div',{class:`prologue-banner banner-${p.bannerPosition === 'bottom' ? 'bottom' : 'top'}`},el('span',{class:'prologue-banner-text',text:copy.title})));
     await Promise.all(images.map(ready));

@@ -214,19 +214,74 @@ export function prologueConfig(settings = {}) {
  * authored order stands in.
  */
 export function prologueSequence(config) {
-  const kept = config.scenes
-    .map((scene, index) => ({ scene, index }))
-    .filter(({ scene }) => scene.enabled !== false);
+  const kept = config.scenes.filter((scene) => scene.enabled !== false);
   // AUTHORED ORDER MEANS AUTHORED ORDER. Falling back through the same sort
   // returned whatever positions had been typed — the shipped opening in a
   // running order nobody chose to watch, since every scene in it is switched
   // off. The stand-in is the sequence as shipped, and it is returned before the
   // order is consulted at all.
   if (!kept.length) return config.scenes.map((scene, index) => index);
-  return kept
-    .map((entry) => ({ ...entry, at: Number.isFinite(entry.scene.order) ? entry.scene.order : entry.index + 1 }))
+  return stagedOrder(config).filter((index) => config.scenes[index].enabled !== false);
+}
+
+/** Every scene, in the order they WOULD play — the staging before inclusion. */
+function stagedOrder(config) {
+  return config.scenes
+    .map((scene, index) => ({ index, at: Number.isFinite(scene.order) ? scene.order : index + 1 }))
     .sort((a, b) => a.at - b.at || a.index - b.index)
     .map((entry) => entry.index);
+}
+
+/**
+ * prologueResumePosition(config, sceneIndex) → where in the sequence to restart.
+ *
+ * A RUN PAUSED ON A SCENE THAT IS NO LONGER IN THE OPENING MUST NOT REPLAY IT
+ * ALL. The first cut of this searched the playing order for an authored index
+ * at or after the saved one and took `Math.max(0, …)` of the answer — so a
+ * missing scene (findIndex → -1) sent the run back to the FIRST scene, which is
+ * the one thing the comment above it promised would not happen, and comparing
+ * authored indices against a resequenced order was not a "what comes next" test
+ * in the first place.
+ *
+ * The question is asked in the staging instead: walk forward from where the
+ * saved scene sits in the full running order to the first scene still switched
+ * on. Past the end, the LAST scene stands — a run parked near the finish is not
+ * sent back through scenes it has already watched.
+ */
+export function prologueResumePosition(config, sceneIndex) {
+  const order = prologueSequence(config);
+  const at = order.indexOf(sceneIndex);
+  if (at >= 0) return at;
+  const staged = stagedOrder(config);
+  const from = staged.indexOf(sceneIndex);
+  if (from < 0) return 0;
+  for (let step = from + 1; step < staged.length; step += 1) {
+    const found = order.indexOf(staged[step]);
+    if (found >= 0) return found;
+  }
+  return Math.max(0, order.length - 1);
+}
+
+/**
+ * prologueBoxBackground(presentation) → the container's CSS background.
+ *
+ * THE SHIPPED STRIP IS A GRADIENT, and a container that replaced it with a flat
+ * colour changed how the opening looks for every profile that had never opened
+ * these settings — while the comment beside it claimed the opposite. The
+ * container keeps the gradient and builds it FROM the chosen colour: the colour
+ * itself at the bottom, lifted by the same amount the authored strip was lifted
+ * by at the top. At the shipped colour and opacity this is exactly the strip
+ * that shipped (#19150f → #100e0c); at any other colour it is that strip's
+ * shape in the owner's colour.
+ */
+const PROLOGUE_BOX_LIFT = [9, 7, 3];
+export function prologueBoxBackground(presentation = {}) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(presentation.textBoxColor || ''));
+  const base = match ? match.slice(1).map((part) => parseInt(part, 16)) : [16, 14, 12];
+  const alpha = Number.isFinite(presentation.textBoxOpacity) ? Math.min(1, Math.max(0, presentation.textBoxOpacity)) : 1;
+  const rgba = (channels) => `rgba(${channels.join(',')},${alpha})`;
+  const lifted = base.map((channel, index) => Math.min(255, channel + PROLOGUE_BOX_LIFT[index]));
+  return `linear-gradient(${rgba(lifted)},${rgba(base)})`;
 }
 
 /** The painting a scene draws on: its own by default, any shipped one by setting. */

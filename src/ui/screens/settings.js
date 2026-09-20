@@ -34,7 +34,7 @@ import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceM
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
-import { prologueScenePreset } from '../../model/prologue.js';
+import { prologueScenePreset, PROLOGUE_PREFIX } from '../../model/prologue.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -867,8 +867,8 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     }).join('');
     return `${rowOpen('set-row-wide set-row-swatches')}${stack()}<span class="r-trail set-swatch-trail">
         <span class="as-swatches" role="group" aria-label="${esc(r.label)}">${chips}</span>
-        <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-expanded="false">Colour wheel</button>
-        <input type="color" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
+        <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-controls="set-wheel-${esc(r.key)}" aria-expanded="false">Colour wheel</button>
+        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
       </span></div>`;
   }
   if (r.type === 'textarea') {
@@ -2077,7 +2077,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // a narrower name (parseAdvancedConfigFile recognises an art-studio preset and
   // turns it into ordinary overrides), so the scene door is this door with a
   // different label — not a second reader that could drift from it.
+  //
+  // THE SCENE DOOR IS STILL NARROWER THAN THE READER. Both exports are .json and
+  // the whole-game one has the likelier filename, so picking the wrong one in
+  // Advanced → Opening is one mis-click — and the reader would have applied
+  // every balance and interface override in it under a notice that said only
+  // "Loaded 412 settings". The door that says scenes takes scenes, and says so
+  // by name when handed something wider.
   for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+    const openingOnly = buttonKey === 'prologueSceneImport';
     const picker = document.createElement('input');
     picker.type = 'file';
     picker.accept = '.json,application/json';
@@ -2094,6 +2102,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
+        if (outside.length) {
+          throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
+        }
         if (!container.isConnected) return;
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
