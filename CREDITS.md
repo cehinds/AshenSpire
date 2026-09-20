@@ -211,6 +211,10 @@ Thirty-one original atlas edits generated with the built-in image_gen tool from 
 
 Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generated with the built-in image_gen tool using the project's class/outfit references. Full prompts, PNG masters and adaptive extraction metadata are retained in `art/sword-shield-outfits-2026-09-19/`, including `prompts-no-aura.json`. The 512 runtime WebPs cover 32 appearances and 35 armor entries. Canonical right-sword/left-shield paintings are shared by reversed hand selectors; no separately painted hand swap is claimed. No third-party artwork was downloaded and no third-party license is claimed.
 
+### Single-dagger class/outfit suite (2026-09-19)
+
+Thirty-two transparent atlases generated with built-in image_gen from the project's approved class/outfit paintings, all following one Rogue single-dagger pose reference. Exact prompts, PNG masters, source/frame hashes and normalization records are in `art/dagger-outfits-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 catalog armor entries. Artwork depicts one right-hand dagger with the left hand empty; no dual-dagger or reversed-hand coverage is claimed. Cast and Buff contain no baked aura or particles. No third-party artwork was downloaded and no third-party license is claimed.
+
 ### Shared armor inventory art (2026-09-19)
 Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
 

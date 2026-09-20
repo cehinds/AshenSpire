@@ -18,7 +18,7 @@ assert.match(animationView(set,'conversation'),/STANCE-READY.webp$/);
 assert.equal(animationClip(set,'power'),animationClip(set,'buff'));
 assert.equal(animationClip(set,'hit'),animationClip(set,'hurt'));
 assert.equal(animationClip(set,'victory'),null,'unprovided roles delegate to existing class art');
-for(const patch of [{classId:'missing'},{rightId:'dagger'},{leftId:'buckler'},{armourId:'missing'},{rightId:'missing'}]) assert.equal(selectEquipmentAnimation({...base,...patch}),null);
+for(const patch of [{classId:'missing'},{rightId:'shortbow'},{leftId:'buckler'},{armourId:'missing'},{rightId:'missing'}]) assert.equal(selectEquipmentAnimation({...base,...patch}),null);
 const data=structuredClone(EQUIPMENT_ANIMATIONS);
 data.bindings=data.bindings.filter(binding=>!(binding.classId==='reaver' && binding.armourId==='default' && ['sword','shield'].includes(binding.rightGroup)));
 data.bindings.push({classId:'reaver',armourId:'default',rightGroup:'sword',leftGroup:'shield',setId:'reaverGreatsword'});
@@ -91,3 +91,4 @@ equip('greatsword','buckler');assert.equal(equipmentAnimationForLoadout(r,run.lo
 equip('shortbow',null);assert.equal(equipmentAnimationForLoadout(r,run.loadout,'reaver'),null,'catalog identity, not dagger art alias, selects group');
 for(const frame of Object.values(set.frames))assert.ok(existsSync(new URL('../'+frame.file,import.meta.url)),frame.file);
 console.log('PASS equipment animation component: ordered groups, equip swaps, references, approved timeline, fallback, validation and asset paths');
+await import('./dagger-animation.test.mjs');

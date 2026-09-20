@@ -17,6 +17,21 @@ Author `content/config/ui/presentation/equipmentAnimations.json`, then run `node
 
 Reference slots: idle, attack, defend, buff, hurt, cast, stanceActivate, stanceDeactivate, aggressiveStance, defensiveStance, conversation, portrait, menu, detail, dodge, victory, defeat, revive. The last four are extension slots where this initial set has no new art; existing presentation remains in charge. A reference does not invent a gameplay event or add a new event dispatcher.
 
+## Single-dagger bindings
+
+All four classes and 35 catalog armor entries select `daggerSingle` only for
+right group `dagger`, left group `empty`, grip `one`. Both Dagger and Parrying
+Dagger belong to this existing animation group. Reversed hands, dual daggers,
+mixed off-hand groups and the Shortbow's old dagger art alias do not select it.
+The 32 skins share Ready → ATK01–ATK07 → Ready at 100ms per step, with impact
+at ATK05 (500ms). Conversation has its own full-body pose; portrait is separate.
+Every character pose is free of baked aura/particles. No equipment rules change.
+
+The [single-dagger gallery](../art/dagger-outfits-2026-09-19/index.html) filters
+by class, switches skins without changing the current pose, compares outfits
+in sync, and lets a reviewer reorder frames and copy proposed timing JSON.
+PNG sources and WebP export/anchor validation remain in that art directory.
+
 ## Greatsword bindings
 
 All four classes and all 35 catalog armor entries select their own greatsword appearance when one hand holds the greatsword group and the other is empty. Either ordered hand combination is supported. The 32 distinct appearances share one motion profile; the three catalog art aliases reuse their matching outfit frames. The default Reaver retains set ID `reaverGreatsword`. The shared approved attack is:

@@ -27,7 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json fafe847869663431
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 83d45de9d5c9fe83
+// source content/config/ui/presentation/equipmentAnimations.json 95e915c9862ff5df
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -4189,6 +4189,286 @@ export const uiConfig = deepFreeze({
             "rightGroup": "shield",
             "leftGroup": "sword",
             "setId": "rogue-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaverDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-vigilDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-oathswornDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-wardenDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseerDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-eclipseDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-starlitDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-astralDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "heraldDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-ossuaryDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-emberhabitDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-pilgrimDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogueDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-nightveilDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-duelistDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-shadowDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-wardenDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-starlitDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-nightveilDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-wayfarerPlateDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-wayfarerPlateDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-wayfarerPlateDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-wayfarerPlateDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-nightweaveDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-nightweaveDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-nightweaveDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-nightweaveDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-riteVestmentsDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-riteVestmentsDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-riteVestmentsDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-riteVestmentsDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "reaver-gutterLeathersDaggerSingle"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "starseer-gutterLeathersDaggerSingle"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "herald-gutterLeathersDaggerSingle"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "dagger",
+            "leftGroup": "empty",
+            "grip": "one",
+            "setId": "rogue-gutterLeathersDaggerSingle"
           }
         ],
         "sets": {
@@ -13567,6 +13847,4902 @@ export const uiConfig = deepFreeze({
                 }
               }
             }
+          },
+          "reaverDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 222,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-01.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 272,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-02.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 248,
+                  "x1": 489,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-03.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 262,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-04.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 248,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 255,
+                  "x1": 595,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-06.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 244,
+                  "x1": 481,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver/ATK-07.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 238,
+                  "x1": 475,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver/DEFEND.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 240,
+                  "x1": 483,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver/HURT.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 255,
+                  "x1": 470,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver/CAST.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 248,
+                  "x1": 524,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 295,
+                  "x1": 497,
+                  "y1": 603
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 250,
+                  "x1": 477,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver/BUFF.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 222,
+                  "x1": 464,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 80,
+                  "x1": 590,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver/CONVERSATION.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 209,
+                  "x1": 477,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "reaver-vigilDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 210,
+                  "x1": 474,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 262,
+                  "x1": 479,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 239,
+                  "x1": 494,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 258,
+                  "x1": 514,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 240,
+                  "x1": 610,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 255,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 238,
+                  "x1": 485,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 222,
+                  "x1": 477,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 236,
+                  "x1": 487,
+                  "y1": 601
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 249,
+                  "x1": 468,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 231,
+                  "x1": 525,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 274,
+                  "x1": 499,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 244,
+                  "x1": 481,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 215,
+                  "x1": 473,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 89,
+                  "x1": 589,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-vigil/CONVERSATION.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 214,
+                  "x1": 475,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "reaver-oathswornDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 212,
+                  "x1": 493,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 264,
+                  "x1": 485,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 242,
+                  "x1": 493,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 262,
+                  "x1": 500,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 234,
+                  "x1": 588,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 259,
+                  "x1": 597,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 241,
+                  "x1": 493,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 239,
+                  "x1": 478,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 241,
+                  "x1": 498,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 251,
+                  "x1": 469,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 232,
+                  "x1": 531,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 278,
+                  "x1": 497,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 246,
+                  "y0": 230,
+                  "x1": 607,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 209,
+                  "x1": 471,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 59,
+                  "x1": 584,
+                  "y1": 611
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-oathsworn/CONVERSATION.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 204,
+                  "x1": 474,
+                  "y1": 614
+                }
+              }
+            }
+          },
+          "reaver-wardenDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 224,
+                  "x1": 475,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 271,
+                  "x1": 485,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 245,
+                  "x1": 501,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 264,
+                  "x1": 515,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 241,
+                  "x1": 607,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 260,
+                  "x1": 613,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 239,
+                  "x1": 501,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 229,
+                  "x1": 477,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 238,
+                  "x1": 495,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 251,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 249,
+                  "x1": 529,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 289,
+                  "x1": 501,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 241,
+                  "x1": 484,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 210,
+                  "x1": 475,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 92,
+                  "x1": 594,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-warden/CONVERSATION.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 205,
+                  "x1": 484,
+                  "y1": 609
+                }
+              }
+            }
+          },
+          "starseerDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 219,
+                  "x1": 475,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 271,
+                  "x1": 488,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 239,
+                  "x1": 491,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 258,
+                  "x1": 511,
+                  "y1": 603
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 256,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 279,
+                  "x1": 594,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 244,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 242,
+                  "x1": 477,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 262,
+                  "x1": 487,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer/HURT.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 268,
+                  "x1": 464,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer/CAST.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 259,
+                  "x1": 534,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 294,
+                  "x1": 495,
+                  "y1": 603
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 249,
+                  "x1": 478,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer/BUFF.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 242,
+                  "x1": 474,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 81,
+                  "x1": 589,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer/CONVERSATION.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 229,
+                  "x1": 478,
+                  "y1": 613
+                }
+              }
+            }
+          },
+          "starseer-eclipseDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 219,
+                  "x1": 471,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 274,
+                  "x1": 470,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 242,
+                  "x1": 491,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 262,
+                  "x1": 510,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 254,
+                  "x1": 605,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 275,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 250,
+                  "x1": 484,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 250,
+                  "x1": 473,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 250,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 259,
+                  "x1": 468,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 250,
+                  "x1": 527,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 298,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 252,
+                  "y0": 249,
+                  "x1": 603,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 219,
+                  "x1": 471,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 72,
+                  "x1": 590,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-eclipse/CONVERSATION.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 226,
+                  "x1": 478,
+                  "y1": 601
+                }
+              }
+            }
+          },
+          "starseer-starlitDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 200,
+                  "x1": 471,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 261,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 236,
+                  "x1": 489,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 241,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 239,
+                  "x1": 607,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 252,
+                  "x1": 599,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 241,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 241,
+                  "x1": 474,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 234,
+                  "x1": 485,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 252,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 235,
+                  "x1": 528,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 270,
+                  "x1": 499,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 236,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 210,
+                  "x1": 474,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 79,
+                  "x1": 594,
+                  "y1": 611
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-starlit/CONVERSATION.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 219,
+                  "x1": 484,
+                  "y1": 608
+                }
+              }
+            }
+          },
+          "starseer-astralDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 215,
+                  "x1": 473,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 262,
+                  "x1": 479,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 246,
+                  "x1": 489,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 261,
+                  "x1": 519,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 238,
+                  "x1": 604,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 258,
+                  "x1": 600,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 241,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 235,
+                  "x1": 479,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 251,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 252,
+                  "x1": 467,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 244,
+                  "x1": 529,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 292,
+                  "x1": 497,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 251,
+                  "x1": 484,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 212,
+                  "x1": 471,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 64,
+                  "x1": 591,
+                  "y1": 603
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-astral/CONVERSATION.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 212,
+                  "x1": 473,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "heraldDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 222,
+                  "x1": 470,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-01.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 279,
+                  "x1": 470,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-02.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 250,
+                  "x1": 491,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-03.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 262,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-04.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 254,
+                  "x1": 605,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 271,
+                  "x1": 599,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 242,
+                  "x1": 479,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald/ATK-07.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 240,
+                  "x1": 471,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 250,
+                  "x1": 484,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald/HURT.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 258,
+                  "x1": 467,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald/CAST.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 240,
+                  "x1": 523,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 295,
+                  "x1": 493,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 249,
+                  "x1": 475,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald/BUFF.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 212,
+                  "x1": 461,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 98,
+                  "x1": 590,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald/CONVERSATION.webp",
+                "box": {
+                  "x0": 160,
+                  "y0": 209,
+                  "x1": 475,
+                  "y1": 601
+                }
+              }
+            }
+          },
+          "herald-ossuaryDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 220,
+                  "x1": 471,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 269,
+                  "x1": 485,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 251,
+                  "x1": 491,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 262,
+                  "x1": 514,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 240,
+                  "x1": 607,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 258,
+                  "x1": 613,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 241,
+                  "x1": 493,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 236,
+                  "x1": 474,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 234,
+                  "x1": 487,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 251,
+                  "x1": 470,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 236,
+                  "x1": 528,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 284,
+                  "x1": 495,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 241,
+                  "y0": 241,
+                  "x1": 593,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 215,
+                  "x1": 470,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 81,
+                  "x1": 590,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-ossuary/CONVERSATION.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 209,
+                  "x1": 473,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "herald-emberhabitDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 208,
+                  "x1": 469,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 275,
+                  "x1": 473,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 255,
+                  "x1": 489,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 268,
+                  "x1": 518,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 248,
+                  "x1": 604,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 254,
+                  "x1": 598,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 238,
+                  "x1": 479,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 226,
+                  "x1": 471,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 240,
+                  "x1": 495,
+                  "y1": 611
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 258,
+                  "x1": 464,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 238,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 278,
+                  "x1": 499,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 246,
+                  "x1": 478,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 212,
+                  "x1": 464,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 89,
+                  "x1": 590,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-emberhabit/CONVERSATION.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 204,
+                  "x1": 479,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-pilgrimDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 225,
+                  "x1": 469,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 275,
+                  "x1": 470,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 254,
+                  "x1": 487,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 264,
+                  "x1": 520,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 252,
+                  "x1": 611,
+                  "y1": 609
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 272,
+                  "x1": 600,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 250,
+                  "x1": 479,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 240,
+                  "x1": 473,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 242,
+                  "x1": 481,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 258,
+                  "x1": 467,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 249,
+                  "x1": 521,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 296,
+                  "x1": 495,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 249,
+                  "x1": 477,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 222,
+                  "x1": 461,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 85,
+                  "x1": 589,
+                  "y1": 611
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-pilgrim/CONVERSATION.webp",
+                "box": {
+                  "x0": 160,
+                  "y0": 222,
+                  "x1": 475,
+                  "y1": 601
+                }
+              }
+            }
+          },
+          "rogueDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 219,
+                  "x1": 469,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 274,
+                  "x1": 471,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 252,
+                  "x1": 489,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 264,
+                  "x1": 519,
+                  "y1": 614
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 246,
+                  "x1": 607,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 270,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 242,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 224,
+                  "x1": 470,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 248,
+                  "x1": 490,
+                  "y1": 605
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 246,
+                  "x1": 463,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue/CAST.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 238,
+                  "x1": 523,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 282,
+                  "x1": 495,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 248,
+                  "x1": 473,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue/BUFF.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 216,
+                  "x1": 461,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 62,
+                  "x1": 593,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue/CONVERSATION.webp",
+                "box": {
+                  "x0": 161,
+                  "y0": 208,
+                  "x1": 474,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-nightveilDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 216,
+                  "x1": 471,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 266,
+                  "x1": 484,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 250,
+                  "x1": 487,
+                  "y1": 611
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 261,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 250,
+                  "x1": 607,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 256,
+                  "x1": 600,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 241,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 224,
+                  "x1": 471,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 238,
+                  "x1": 485,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 246,
+                  "x1": 471,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 238,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 285,
+                  "x1": 498,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 246,
+                  "x1": 481,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 210,
+                  "x1": 468,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 69,
+                  "x1": 590,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-nightveil/CONVERSATION.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 208,
+                  "x1": 479,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "rogue-duelistDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 218,
+                  "x1": 474,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 270,
+                  "x1": 471,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 249,
+                  "x1": 494,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 261,
+                  "x1": 518,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 244,
+                  "x1": 605,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 262,
+                  "x1": 613,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 240,
+                  "x1": 488,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 231,
+                  "x1": 473,
+                  "y1": 601
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 249,
+                  "x1": 484,
+                  "y1": 605
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 255,
+                  "x1": 468,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 245,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 290,
+                  "x1": 497,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 245,
+                  "x1": 490,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 214,
+                  "x1": 467,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 79,
+                  "x1": 591,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-duelist/CONVERSATION.webp",
+                "box": {
+                  "x0": 165,
+                  "y0": 206,
+                  "x1": 477,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-shadowDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 219,
+                  "x1": 473,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 269,
+                  "x1": 471,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 246,
+                  "x1": 491,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 261,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 238,
+                  "x1": 610,
+                  "y1": 609
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 254,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 239,
+                  "x1": 481,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 230,
+                  "x1": 473,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 236,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 242,
+                  "x1": 470,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 235,
+                  "x1": 535,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 279,
+                  "x1": 499,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 248,
+                  "x1": 475,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 216,
+                  "x1": 477,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 72,
+                  "x1": 591,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-shadow/CONVERSATION.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 206,
+                  "x1": 475,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "reaver-wayfarerPlateDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 221,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 260,
+                  "x1": 474,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 251,
+                  "x1": 488,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 262,
+                  "x1": 519,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 249,
+                  "x1": 600,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 255,
+                  "x1": 597,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 244,
+                  "x1": 489,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 236,
+                  "x1": 480,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 251,
+                  "x1": 481,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 251,
+                  "x1": 470,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 251,
+                  "x1": 518,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 295,
+                  "x1": 498,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 254,
+                  "x1": 479,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 229,
+                  "x1": 464,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 109,
+                  "x1": 589,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 229,
+                  "x1": 480,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "starseer-wayfarerPlateDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 218,
+                  "x1": 471,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 264,
+                  "x1": 470,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 240,
+                  "x1": 488,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 256,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 236,
+                  "x1": 607,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 250,
+                  "x1": 610,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 246,
+                  "x1": 483,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 238,
+                  "x1": 474,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 252,
+                  "x1": 495,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 246,
+                  "x1": 468,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 244,
+                  "x1": 531,
+                  "y1": 603
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 286,
+                  "x1": 494,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 259,
+                  "x1": 481,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 230,
+                  "x1": 463,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 89,
+                  "x1": 590,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 224,
+                  "x1": 475,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-wayfarerPlateDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 212,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 264,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 235,
+                  "x1": 488,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 248,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 220,
+                  "x1": 603,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 242,
+                  "x1": 597,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 232,
+                  "x1": 483,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 224,
+                  "x1": 473,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 242,
+                  "x1": 480,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 238,
+                  "x1": 468,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 236,
+                  "x1": 520,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 269,
+                  "x1": 499,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 238,
+                  "x1": 474,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 212,
+                  "x1": 469,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 60,
+                  "x1": 587,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 160,
+                  "y0": 210,
+                  "x1": 470,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-wayfarerPlateDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 219,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 160,
+                  "y0": 266,
+                  "x1": 485,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 249,
+                  "x1": 503,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 261,
+                  "x1": 515,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 239,
+                  "x1": 607,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 254,
+                  "x1": 600,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 230,
+                  "x1": 494,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 236,
+                  "x1": 474,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 244,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 252,
+                  "x1": 467,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 240,
+                  "x1": 523,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 280,
+                  "x1": 495,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 244,
+                  "x1": 480,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 211,
+                  "x1": 474,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 74,
+                  "x1": 590,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 164,
+                  "y0": 205,
+                  "x1": 475,
+                  "y1": 609
+                }
+              }
+            }
+          },
+          "reaver-nightweaveDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 209,
+                  "x1": 470,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 262,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 248,
+                  "x1": 490,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 258,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 241,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 249,
+                  "x1": 600,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 246,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 231,
+                  "x1": 473,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 239,
+                  "x1": 497,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 242,
+                  "x1": 465,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 245,
+                  "x1": 527,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 284,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 249,
+                  "x1": 480,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 210,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 78,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 215,
+                  "x1": 474,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "starseer-nightweaveDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 198,
+                  "x1": 471,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 260,
+                  "x1": 484,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 229,
+                  "x1": 489,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 254,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 232,
+                  "x1": 608,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 248,
+                  "x1": 599,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 236,
+                  "x1": 481,
+                  "y1": 603
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 244,
+                  "x1": 475,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 231,
+                  "x1": 491,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 246,
+                  "x1": 465,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 241,
+                  "x1": 528,
+                  "y1": 607
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 279,
+                  "x1": 498,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 238,
+                  "x1": 493,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 211,
+                  "x1": 465,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 69,
+                  "x1": 591,
+                  "y1": 611
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 205,
+                  "x1": 469,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-nightweaveDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 219,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 272,
+                  "x1": 485,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 251,
+                  "x1": 490,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 265,
+                  "x1": 518,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 251,
+                  "x1": 607,
+                  "y1": 609
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 254,
+                  "x1": 601,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 242,
+                  "x1": 483,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 238,
+                  "x1": 473,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 248,
+                  "x1": 483,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 256,
+                  "x1": 471,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 244,
+                  "x1": 527,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 290,
+                  "x1": 498,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 244,
+                  "x1": 478,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 216,
+                  "x1": 474,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 81,
+                  "x1": 590,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 208,
+                  "x1": 475,
+                  "y1": 601
+                }
+              }
+            }
+          },
+          "rogue-nightweaveDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 215,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 271,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 251,
+                  "x1": 489,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 264,
+                  "x1": 517,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 246,
+                  "x1": 604,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 269,
+                  "x1": 600,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 242,
+                  "x1": 481,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 236,
+                  "x1": 473,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 245,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 252,
+                  "x1": 465,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 242,
+                  "x1": 527,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 280,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 246,
+                  "x1": 490,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 214,
+                  "x1": 473,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 68,
+                  "x1": 605,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 206,
+                  "x1": 479,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "reaver-riteVestmentsDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 221,
+                  "x1": 471,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 275,
+                  "x1": 474,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 255,
+                  "x1": 489,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 268,
+                  "x1": 518,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 244,
+                  "x1": 610,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 276,
+                  "x1": 597,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 242,
+                  "x1": 479,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 251,
+                  "x1": 474,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 255,
+                  "x1": 495,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 255,
+                  "x1": 465,
+                  "y1": 601
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 254,
+                  "x1": 530,
+                  "y1": 603
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 294,
+                  "x1": 498,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 248,
+                  "x1": 473,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 222,
+                  "x1": 464,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 64,
+                  "x1": 590,
+                  "y1": 610
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 164,
+                  "y0": 220,
+                  "x1": 477,
+                  "y1": 607
+                }
+              }
+            }
+          },
+          "starseer-riteVestmentsDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 210,
+                  "x1": 473,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 242,
+                  "x1": 480,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 224,
+                  "x1": 489,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 236,
+                  "x1": 505,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 225,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 240,
+                  "x1": 603,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 231,
+                  "x1": 497,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 234,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 229,
+                  "x1": 491,
+                  "y1": 611
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 248,
+                  "x1": 467,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 232,
+                  "x1": 515,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 248,
+                  "x1": 488,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 252,
+                  "x1": 489,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 224,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 82,
+                  "x1": 599,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 221,
+                  "x1": 475,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-riteVestmentsDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 220,
+                  "x1": 470,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 276,
+                  "x1": 473,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 255,
+                  "x1": 490,
+                  "y1": 611
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 264,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 240,
+                  "x1": 603,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 268,
+                  "x1": 599,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 246,
+                  "x1": 481,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 241,
+                  "x1": 470,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 248,
+                  "x1": 487,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 258,
+                  "x1": 464,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 242,
+                  "x1": 525,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 282,
+                  "x1": 495,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 249,
+                  "x1": 475,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 222,
+                  "x1": 463,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 130,
+                  "x1": 607,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 210,
+                  "x1": 474,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-riteVestmentsDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 220,
+                  "x1": 470,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 266,
+                  "x1": 477,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 249,
+                  "x1": 489,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 260,
+                  "x1": 515,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 241,
+                  "x1": 604,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 266,
+                  "x1": 600,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 244,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 234,
+                  "x1": 477,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 248,
+                  "x1": 484,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 254,
+                  "x1": 468,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 245,
+                  "x1": 527,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 282,
+                  "x1": 498,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 248,
+                  "x1": 475,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 215,
+                  "x1": 468,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 66,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 209,
+                  "x1": 469,
+                  "y1": 601
+                }
+              }
+            }
+          },
+          "reaver-gutterLeathersDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 219,
+                  "x1": 474,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 269,
+                  "x1": 473,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 250,
+                  "x1": 487,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 264,
+                  "x1": 517,
+                  "y1": 603
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 248,
+                  "x1": 605,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 264,
+                  "x1": 600,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 245,
+                  "x1": 484,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 232,
+                  "x1": 470,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 245,
+                  "x1": 487,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 252,
+                  "x1": 473,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 244,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 295,
+                  "x1": 498,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 248,
+                  "y0": 240,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 218,
+                  "x1": 471,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 82,
+                  "x1": 590,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/reaver-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 204,
+                  "x1": 475,
+                  "y1": 607
+                }
+              }
+            }
+          },
+          "starseer-gutterLeathersDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 200,
+                  "x1": 474,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 249,
+                  "x1": 485,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 238,
+                  "x1": 493,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 245,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 220,
+                  "x1": 600,
+                  "y1": 601
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 241,
+                  "x1": 594,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 230,
+                  "x1": 494,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 222,
+                  "x1": 477,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 229,
+                  "x1": 497,
+                  "y1": 611
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 234,
+                  "x1": 477,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 225,
+                  "x1": 525,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 268,
+                  "x1": 494,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 241,
+                  "x1": 479,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 221,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 49,
+                  "y0": 90,
+                  "x1": 594,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/starseer-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 214,
+                  "x1": 477,
+                  "y1": 613
+                }
+              }
+            }
+          },
+          "herald-gutterLeathersDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 165,
+                  "y0": 221,
+                  "x1": 475,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 276,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 251,
+                  "x1": 498,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 270,
+                  "x1": 530,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 244,
+                  "x1": 597,
+                  "y1": 609
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 269,
+                  "x1": 598,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 250,
+                  "x1": 481,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 248,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 249,
+                  "x1": 485,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 254,
+                  "x1": 469,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 252,
+                  "x1": 525,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 291,
+                  "x1": 495,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 268,
+                  "y0": 248,
+                  "x1": 598,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 228,
+                  "x1": 465,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 72,
+                  "x1": 607,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/herald-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 164,
+                  "y0": 225,
+                  "x1": 475,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-gutterLeathersDaggerSingle": {
+            "motionProfile": "daggerSingle",
+            "authoredEquipment": {
+              "rightGroup": "dagger",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 216,
+                  "x1": 471,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 268,
+                  "x1": 484,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 250,
+                  "x1": 489,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 261,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 238,
+                  "x1": 603,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 256,
+                  "x1": 599,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 240,
+                  "x1": 480,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 220,
+                  "x1": 473,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 249,
+                  "x1": 484,
+                  "y1": 603
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 242,
+                  "x1": 469,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 244,
+                  "x1": 538,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 284,
+                  "x1": 495,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 248,
+                  "x1": 478,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 210,
+                  "x1": 464,
+                  "y1": 601
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 70,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/dagger-outfits/rogue-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 204,
+                  "x1": 487,
+                  "y1": 608
+                }
+              }
+            }
           }
         },
         "motionProfiles": {
@@ -13808,6 +18984,148 @@ export const uiConfig = deepFreeze({
               "aggressiveStance": "aggressive",
               "defensiveStance": "defensive",
               "conversation": "ready",
+              "portrait": "portrait",
+              "menu": "ready",
+              "detail": "portrait",
+              "dodge": null,
+              "victory": null,
+              "defeat": null,
+              "revive": null
+            },
+            "poseRoles": {
+              "idle": "idle",
+              "stand": "menu",
+              "attack": "attack",
+              "attack1": "attack",
+              "attack2": "attack",
+              "attack3": "attack",
+              "attack4": "attack",
+              "guard": "defend",
+              "shieldGuard": "defend",
+              "shieldGuard3": "defend",
+              "parry": "defend",
+              "shieldBash": "attack",
+              "hit": "hurt",
+              "power": "buff",
+              "cast": "cast",
+              "gorefire": "aggressiveStance",
+              "bulwark": "defensiveStance",
+              "prepared": "defensiveStance",
+              "starstoneCharge": "defensiveStance",
+              "bloodRite": "buff",
+              "prototypeGuardStance": "defensiveStance",
+              "prototypeFocusStance": "defensiveStance",
+              "defeated": "defeat"
+            }
+          },
+          "daggerSingle": {
+            "normalLungeMs": 260,
+            "clips": {
+              "ready": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defend": {
+                "frames": [
+                  "DEFEND"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "hurt": {
+                "frames": [
+                  "HURT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "cast": {
+                "frames": [
+                  "CAST"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "buff": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "aggressive": {
+                "frames": [
+                  "STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defensive": {
+                "frames": [
+                  "STANCE-DEFENSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "portrait": {
+                "frames": [
+                  "PORTRAIT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "enterStance": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              },
+              "leaveStance": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              },
+              "daggerAttack": {
+                "frames": [
+                  "STANCE-READY",
+                  "ATK-01",
+                  "ATK-02",
+                  "ATK-03",
+                  "ATK-04",
+                  "ATK-05",
+                  "ATK-06",
+                  "ATK-07",
+                  "STANCE-READY"
+                ],
+                "frameMs": 100,
+                "impactIndex": 5
+              },
+              "conversation": {
+                "frames": [
+                  "CONVERSATION"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              }
+            },
+            "references": {
+              "idle": "ready",
+              "attack": "daggerAttack",
+              "defend": "defend",
+              "buff": "buff",
+              "hurt": "hurt",
+              "cast": "cast",
+              "stanceActivate": "enterStance",
+              "stanceDeactivate": "leaveStance",
+              "aggressiveStance": "aggressive",
+              "defensiveStance": "defensive",
+              "conversation": "conversation",
               "portrait": "portrait",
               "menu": "ready",
               "detail": "portrait",
