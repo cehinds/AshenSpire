@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-20
+
+- **The Herald's memory now shows the veiled novice at the Observatory's summit hearth** ([#1223](https://github.com/cehinds/AshenSpire/pull/1223), `0.7.1.322`). The Herald scene in the opening's "What the fire left" uses the approved final painting: hood and veil hide the face while the unfinished Burning cracks through the novice, collapsed against the monumental hearth and reaching for the Sovereign Ember. Desktop and phone compositions are separate, and the masters, prompts and checksums are kept with the repository's art records. No other scene, timing or setting changes.
+
 ## 2026-09-19
 
 - **Twin swords now keep every class and armour's appearance through one shared attack** ([#1219](https://github.com/cehinds/AshenSpire/pull/1219), `0.7.1.320`). Straight Sword in the right hand and Katana in the left select 32 painted suites across all four classes and 35 armour entries. The nine-step attack shares its timing across every outfit, with separate defend, hurt, cast, buff, stance, portrait and conversation poses. Reversed hands retain their existing presentation. The workshop compares outfits and lets you edit pose order, timing and impact before saving a sequence.

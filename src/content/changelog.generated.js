@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1223",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The Herald's memory now shows the veiled novice at the Observatory's summit hearth",
+    "detail": "The Herald scene in the opening's \"What the fire left\" uses the approved final painting: hood and veil hide the face while the unfinished Burning cracks through the novice, collapsed against the monumental hearth and reaching for the Sovereign Ember. Desktop and phone compositions are separate, and the masters, prompts and checksums are kept with the repository's art records. No other scene, timing or setting changes.",
+    "build": "0.7.1.322",
+    "pullRequest": 1223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1223"
+  },
+  {
     "id": "pr-1219",
     "date": "2026-09-19",
     "group": "2026-09-19",

@@ -9,11 +9,11 @@ Scene 4 Herald memory: the fully hooded and veiled novice burns from within, col
 | Desktop | `masters/carry-herald-desktop.png` | `deliverables/carry-herald-desktop.webp` |
 | Mobile | `masters/carry-herald-mobile.png` | `deliverables/carry-herald-mobile.webp` |
 
-Use these WebPs for `assets/prologue/carry-herald-desktop.webp` and `assets/prologue/carry-herald-mobile.webp`. This folder supersedes both `../prologue-herald-conversion/` (small brazier, uncovered face) and `../prologue-herald-refinement/` (incorrect soldier story). No runtime integration, shared config edits, main-checkout edits, PR or merge were performed.
+Use these WebPs for `assets/prologue/carry-herald-desktop.webp` and `assets/prologue/carry-herald-mobile.webp`. This folder supersedes the earlier `prologue-herald-conversion` (small brazier, uncovered face) and `prologue-herald-refinement` (incorrect soldier story) handoffs, which were never merged. No runtime integration, shared config edits, main-checkout edits, PR or merge were performed.
 
 ## Lore and composition
 
-Read `docs/LORE.md` and `docs/LORE-CAST.md`: the Crown Flame and Sovereign Ember belonged to the Observatory; the great flames were at their tower tops. The Herald was a marked Furnace Chapel novice whose Burning began but did not finish, and who feeds the flame from themselves. At the user's direction, this memory is staged at the Observatory's summit hearth during the Burning, while the Ember is still present. The specific ceremony, ornate hearth design and reaching gesture are visual interpretations, not additional canon.
+Read `docs/LORE.md` and `docs/LORE-CAST.md`: the Crown Flame and Sovereign Ember belonged to the Observatory, fed in its crown, while the Furnace Saint keeps the Crown Flame's hearth in the Furnace Chapel at the tower's base. The Herald was a marked Furnace Chapel novice whose Burning began but did not finish, and who feeds the flame from themselves. At the user's direction, this memory is staged at the Observatory's summit hearth during the Burning, while the Ember is still present. The specific ceremony, ornate hearth design and reaching gesture are visual interpretations, not additional canon.
 
 The subject's hood and opaque scorched veil conceal all facial features. Pain and urgency are conveyed by contracted shoulders, collapsed knees, a supporting grip, and a strained reaching hand. Internal chest, neck and arm fissures remain visible. The monumental hearth, large irregular glowing starstone and flame establish the grand Ember's scale. No baked-in text or gratuitous gore.
 
