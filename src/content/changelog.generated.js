@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1217",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your five stats are rebased, and every point you place is felt",
+    "detail": "Creation now starts each stat at 5 and hands you ten points to place between 3 and 12, instead of starting at 10 and handing you three. The pools follow: your Mana is your Wisdom and your Stamina is your Constitution, point for point, rather than one per five, and Health is 20 plus four per point of Constitution. Because the pools can fund them, the four signature arts now ask two Stamina and two Mana. Weapons and armour ask for the new numbers too, and picking up something your stats cannot hold is refused where the change happens, with the shortfall named. Runs already under way keep the rules they were created with.",
+    "build": "0.7.1.306",
+    "pullRequest": 1217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1217"
+  },
+  {
     "id": "pr-1210",
     "date": "2026-09-19",
     "group": "2026-09-19",
