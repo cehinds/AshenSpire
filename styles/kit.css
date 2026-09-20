@@ -1489,6 +1489,50 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
 .reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
 .reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
+/* PROGRESSION, above the claim status (Constantine 2026-09-20): what the fight
+   moved, in the same right-hand column as what is left to take. One row is
+   name · level · meter · the level it fills toward, with the fight's gain on a
+   second line; narrow hosts drop the meter to its own line rather than
+   squeezing four columns into a phone. */
+.reward-door .reward-side { display: grid; gap: 1.2rem; min-width: 0; align-content: start; }
+.reward-door .reward-progress { display: grid; gap: .5rem; min-width: 0; grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto; }
+.reward-door .reward-progress > * { grid-column: 1 / -1; }
+.reward-door .reward-progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+/* `row-gap: 0` and a margin on the gain line, not a gap: the gain row is
+   declared for every row but filled only where the fight paid, and a gap
+   would make a row with no gain a hair taller than one with. */
+.reward-door .reward-progress-row {
+  display: grid; min-width: 0; gap: 0 .6rem; align-items: center;
+  grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+}
+/* THE BARS MUST LINE UP, and a per-row grid cannot promise that: each row sized
+   its own name column, so "Reaver mastery" pushed its meter right of "Blade"'s
+   and the panel read as four unrelated measurements. Subgrid gives the list one
+   set of columns and the rows borrow it; the per-row rule above stays as the
+   fallback for a host without it. */
+@supports (grid-template-columns: subgrid) {
+  /* Both lists borrow the PANEL's columns, so the character level and the
+     skill tracks below it are one ledger read down a single set of bars. */
+  .reward-door .reward-progress-list { grid-template-columns: subgrid; }
+  .reward-door .reward-progress-row { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
+/* The track labels are authored lowercase where they name a weight class
+   ("heavy armour"); a line that starts a row is capitalised on sight, not by
+   re-writing the content table every screen reads. */
+.reward-door .rp-name::first-letter { text-transform: uppercase; }
+.reward-door .rp-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); }
+.reward-door .rp-level { grid-area: level; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
+.reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
+.reward-door .rp-bar { grid-area: bar; min-width: 0; }
+.reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
+:root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+:root[data-layout='narrow'] .reward-door .reward-progress-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+}
+:root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
@@ -1734,6 +1778,18 @@ details.character-info-card > summary > .character-info-head > .as-status {
   white-space: normal; overflow-wrap: anywhere; overflow: visible;
 }
 details.character-info-card > summary:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+/* THE CLIMB. The level bar closes the character summary; the skill track bars
+   stack inside the Skill progression fold. Both are the kit's stacked Meter,
+   so nothing here draws a bar — it only places them. */
+.character-summary > .character-level-meter { margin-top: 0.55rem; }
+.character-level-meter > .m-plate, .character-skill-meter > .m-plate { flex-wrap: wrap; row-gap: 0.15rem; }
+.character-level-meter .character-level-points { flex: 0 0 auto; margin-left: 0.6rem; color: var(--gold); }
+.character-level-meter[data-capped="true"] .m-value { color: var(--gold); }
+/* A point waiting is a thing to go and do, so the bar says so in the accent. */
+.character-level-meter.has-points .m-label { color: var(--gold); }
+.character-skills > .as-meters.character-skill-meters { display: flex; flex-direction: column; gap: 0.7rem; }
+.character-skill-meter.own-class .m-label { color: var(--parchment); }
+.character-skill-meter .character-skill-drafts { flex: 0 0 auto; margin-left: 0.6rem; }
 /* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
 .as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
 .as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
@@ -2242,6 +2298,10 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-meter[data-tone="poise"] { --meter-tone: var(--gold); }
 .as-meter[data-tone="arcane"] { --meter-tone: #8a6fd6; }
 .as-meter[data-tone="danger"] { --meter-tone: var(--danger); }
+/* The two climbs: character XP in gold, a skill track in the cooler steel
+   so a glance separates "the level" from "a track". */
+.as-meter[data-tone="xp"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="skill"] { --meter-tone: #7fa8c9; }
 .as-meter.inset { --meter-h: 13px; }
 .as-meter.inset .m-label { display: none; }
 .as-meter.inset > .m-plate { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 1; }

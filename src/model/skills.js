@@ -95,7 +95,9 @@ export function skillLevel(run, skillId) {
 
 /**
  * awardSkillXp(registries, run, skillId, amount) → { skillId, before, after,
- * levelUps } — writes the ledger and climbs as many steps as the XP buys;
+ * levelUps, gained } — writes the ledger and climbs as many steps as the XP
+ * buys; `gained` is the XP actually paid, the receipt a caller shows the
+ * player (ui/screens/reward.js's progression panel reads it through main.js);
  * each step queues one draft (`pendingDrafts`, which phase 4b spends). A
  * non-positive or non-finite amount writes nothing.
  */
@@ -106,7 +108,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [] };
+  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [], gained: 0 };
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
   while (row.xp >= cost) {
@@ -121,7 +123,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   // are upgraded at the next award. Idempotent, so the cost of re-asking is
   // one pass over the deck.
   const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
-  return { skillId, before, after: row.level, levelUps: row.level - before, upgraded };
+  return { skillId, before, after: row.level, levelUps: row.level - before, upgraded, gained: gain };
 }
 
 // ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------

@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Two downloads of every build: the full game, and a mobile edition under 50 MB",
     "detail": "The single self-contained file had grown to 253 MB, which on a phone is the whole cost of starting. Every build now ships twice. The full file is unchanged. The mobile file, AshenSpire-mobile.html, is the same build with every image shrunk to half size and recompressed, held under 50 MB by a gate that refuses to write or ship a larger one; it plays the same, looks softer, and Settings → About names it the mobile edition. The builds site offers Download full and Download mobile with their sizes on every card and in every table, serves the mobile file at /<branch>/<build>/mobile/, and says plainly when an older build predates the edition instead of faking a link. Saves carry between the two.",
-    "build": "0.7.1.341",
+    "build": "0.7.1.344",
     "pullRequest": 1234,
     "url": "https://github.com/cehinds/AshenSpire/pull/1234"
+  },
+  {
+    "id": "pr-1232",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The victory screen shows what the fight did to your character",
+    "detail": "Winning a fight has always raised your level and the skills you fought with — but the spoils door listed only the things you pick up, so none of it was visible. Above the claim list there is now a Progression panel: your character level with a bar toward the next one and the experience this fight paid, then the skills it moved — the ones it paid first, the ones you have taken furthest after, up to three, with the rest counted on a line of their own. The numbers are the ones already written when the fight ended, so leaving and coming back to an interrupted spoils door shows the same ones.",
+    "build": "0.7.1.341",
+    "pullRequest": 1232,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1232"
   },
   {
     "id": "pr-1229",
@@ -33,6 +43,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
+    "id": "pr-1228",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Your level and every skill you are training now have bars you can watch",
+    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
+    "build": "0.7.1.342",
+    "pullRequest": 1228,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
     "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -51,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.332",
     "pullRequest": 1226,
     "url": "https://github.com/cehinds/AshenSpire/pull/1226"
+  },
+  {
+    "id": "pr-1227",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Combat and combat animation have their own Settings section",
+    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
+    "build": "0.7.1.340",
+    "pullRequest": 1227,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1217",

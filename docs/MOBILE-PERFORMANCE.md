@@ -37,7 +37,8 @@ endings as the bundler.
 
 ## Rendering and input
 
-Settings → Display → Rendering quality offers Auto, Full and Lite. Auto uses
+Settings → General → Combat → Animation & effects → Rendering quality offers
+Auto, Full and Lite. Auto uses
 Lite for a coarse primary pointer and Full otherwise. An explicit choice wins.
 Lite removes expensive sprite filters and cloned target silhouettes, replacing
 the latter with the same relationship color on a ground ring. It disables ambient

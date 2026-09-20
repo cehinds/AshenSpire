@@ -54,7 +54,7 @@ Download **[`AshenSpire.html`](AshenSpire.html)** (full, ~253 MB) or **[`AshenSp
 - **Rewards you open before you collect:** post-fight spoils are a menu; nothing joins your run until you take it. A reward you have no room for says so and is the only row offering Skip. Settings → Advanced → Reward collection decides whether Continue sweeps up the rest.
 - **A merchant who buys back:** five collapsing bars — cards, relics, flasks, remove-a-card, Sell — one open at a time. He buys relics and flasks back at half his cheapest price; the Sell bar can be switched off in Settings.
 - **An in-game changelog:** Settings → Changelog reads the repository changelog as expandable rows, with build stamps linking back to the exact source.
-- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → Display.
+- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → General → Display.
 
 Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, mockups, art direction). Original brief: **[PROMPT.md](PROMPT.md)**.
 

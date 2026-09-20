@@ -822,6 +822,76 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.progress.heading",
+    "extends": "",
+    "short": "Progression",
+    "full": "How far this fight carried you.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.skills",
+    "extends": "",
+    "short": "Skills",
+    "full": "The tracks this fight paid; the deepest ones after.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.character",
+    "extends": "",
+    "short": "Character",
+    "full": "Your character level.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.classTrack",
+    "extends": "",
+    "short": "{class} mastery",
+    "full": "Your class track — its levels are what the class tree drafts.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.level",
+    "extends": "",
+    "short": "Lv {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.next",
+    "extends": "",
+    "short": "Lv. {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.gained",
+    "extends": "",
+    "short": "Gained: {xp} xp",
+    "full": "What this fight paid into this track.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.xp",
+    "extends": "",
+    "short": "{xp} / {next} XP",
+    "full": "{xp} of {next} XP toward level {level}.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.capped",
+    "extends": "",
+    "short": "Max",
+    "full": "This track has reached its ceiling; XP still banks.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.more",
+    "extends": "",
+    "short": "+{count} other skill{plural}",
+    "full": "Tracks the panel does not list.",
+    "tip": ""
+  },
+  {
     "id": "title.save.eyebrow",
     "extends": "",
     "short": "Your climb",
