@@ -39,6 +39,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
   let frame = 0;
   let observer = null;
   let artObserver = null;
+  let sceneChoiceObserver = null;
 
   // Each figure's host sits at the layer's origin; its placement is a
   // translate-then-scale about that origin, in the frame's local px.
@@ -248,6 +249,8 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     observer = null;
     artObserver?.disconnect();
     artObserver = null;
+    sceneChoiceObserver?.disconnect();
+    sceneChoiceObserver = null;
     window.removeEventListener('resize', schedule);
     if (releaseActive === release) releaseActive = null;
   }
@@ -256,6 +259,17 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     observer.observe(root);
     const hud = root.querySelector(':scope > .topbar');
     if (hud) observer.observe(hud);
+  }
+  // The Scenes wireframe choices (Settings → Advanced → Wireframes), which
+  // reach this stage as two words on the root. Nothing else moves when they
+  // change — the frame keeps its size — so without this the conversation on
+  // screen would keep the plate the player just turned off. Combat watches the
+  // same two words on its own layout observer.
+  if (typeof MutationObserver !== 'undefined') {
+    sceneChoiceObserver = new MutationObserver(schedule);
+    sceneChoiceObserver.observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
+    });
   }
   // THE SCREEN REDRAWS ITS PORTRAITS AS THE CONVERSATION MOVES — a new beat
   // swaps who is speaking, and the figure elements are replaced under the

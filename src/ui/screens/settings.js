@@ -675,7 +675,7 @@ const ADVANCED_GROUPS = Object.freeze([
   // surfaces. Separate from Interface because these are not "extra controls":
   // they answer which wireframe a whole family of surfaces draws, and the
   // answer reaches every door, menu and scene at once.
-  { id: 'Wireframes', label: 'Wireframes', tip: 'Which wireframe modal windows, category menus and scenes draw. Every choice starts on the drawn one.' },
+  { id: 'Wireframes', label: 'Wireframes', tip: 'How windows, menus and scenes are laid out. Every choice starts where the game already draws it.' },
   { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },

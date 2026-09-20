@@ -12,7 +12,7 @@ import { childModel, descendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
-import { modalHead } from './modalShell.js';
+import { modalHead, stampModalSize } from './modalShell.js';
 import {
   el, blocker, face, pill, tagChip, artWell, titleS, eyebrow, prose, flavour, kitLine, kitItem, optionCard, options, statusText,
   railItem, categoryNav, modalFooter,
@@ -43,7 +43,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   // `data-surface="armouryView"` / `data-member` / `data-modal-tab` hooks the
   // tools read. A refusal shown in place is the kit's Blocker.
   wrap.innerHTML = `
-    <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-size="xl" data-wireframe="W1" data-wireframe-child="W1e" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-labelledby="armoury-title">
+    <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-wireframe="W1" data-wireframe-child="W1e" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-labelledby="armoury-title">
       <div class="modal-body armoury-shell-body">
         <div class="as-railed armoury-railed">
           <div class="as-pane armoury-pane" id="armoury-pane" role="tabpanel">
@@ -91,6 +91,10 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   close.classList.add('armoury-close');
   wrap.querySelector('.armoury').prepend(head);
   const panel = wrap.querySelector('.armoury');
+  // W1e's rung through the shell's one stamp rather than a literal in the
+  // markup above, so the Armoury answers the modal width choice (Settings →
+  // Advanced → Wireframes → Modals) like every other door.
+  stampModalSize(panel, 'xl');
   // The footer: Back bottom-left, the primary bottom-right; alone, Back spans
   // the foot. `setPrimary` swaps the primary slot when the selection changes.
   const setPrimary = (primaryNode) => {

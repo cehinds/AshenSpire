@@ -101,9 +101,12 @@ const node = (tag, attrs = {}, children = []) => {
  * replanCategoryNavs() → how many attached navigations re-asked the question.
  *
  * Called when a Menus wireframe choice changes. A navigation whose host has
- * left the document releases itself here rather than being re-measured; the
- * rest re-run `plan()`, which is the same call their ResizeObserver makes, so
- * nothing new can happen that a window resize could not already do.
+ * left the document releases itself here rather than being re-measured — the
+ * same sweep `onEscape` runs, and the same contract: a host that is detached
+ * and put back must be `attach`ed again, which is what every door that keeps a
+ * nav already does. The rest re-run `plan()`, which is the call their
+ * ResizeObserver makes, so nothing can happen here that a window resize could
+ * not already do.
  */
 export function replanCategoryNavs() {
   let replanned = 0;
@@ -190,9 +193,11 @@ export function categoryNav({
     }, config);
     // The model answers what FITS; the player answers what they want to look
     // at, and their answer wins — including the case the model never returns,
-    // a rail on a host it has to squeeze into. An unmeasured host keeps its
-    // mode as before, so a chosen mode still waits for a box, and `auto` leaves
-    // the measured answer exactly as it was.
+    // a rail on a host it has to squeeze into. `auto` leaves the measured
+    // answer exactly as it was, and an unmeasured host then keeps its mode
+    // (the plan hands `current` back). A CHOSEN mode does not wait for a box,
+    // because nothing about it needs measuring: the `result.measured ||` arm is
+    // only reached when the choice disagrees with the mode on screen.
     const wanted = resolveCategoryNavMode(result.mode, activeWireframeChoice('wireframeMenuNav', root));
     if ((result.measured || wanted !== result.mode) && wanted !== mode) apply(wanted);
     return mode;

@@ -13,6 +13,9 @@
 // it existed. Each resolver below is asserted against that first.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   AS_DESIGNED, WIREFRAME_CHOICE_GROUPS, WIREFRAME_CHOICES, WIREFRAME_CHOICE_KEYS,
   wireframeChoice, wireframeChoices, wireframeChoiceSpec,
@@ -26,6 +29,17 @@ import { wireframeUi } from '../src/content/wireframeUi.js';
 import { applyWireframeChoices, activeWireframeChoice, activeWireframeChoices } from '../src/ui/wireframeChoices.js';
 import { categoryHandler } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
+import { workspaceFrame, restampWorkspaceFrames } from '../src/ui/components/w1Workspace.js';
+import { smithWorkspaceVars } from '../src/ui/models/SmithWorkspaceModel.js';
+import { uiConfig } from '../src/config/generated/ui.js';
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
+const jsUnder = (dir) => readdirSync(join(ROOT, dir)).flatMap((entry) => {
+  const rel = `${dir}/${entry}`;
+  if (statSync(join(ROOT, rel)).isDirectory()) return jsUnder(rel);
+  return entry.endsWith('.js') ? [rel] : [];
+});
 
 const scene = { id: 'test', box: [0, 0, 1600, 900], floorStart: 0.6 };
 
@@ -172,4 +186,101 @@ test('doors already open take the new answer, from what they asked for, however 
   applyWireframeChoices({}, doc.documentElement);
   restampModalWireframes(doc);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['lg', 'short'], 'as designed restores exactly what the door asked for');
+});
+
+// ---- the findings a review found, kept from coming back ---------------------
+
+test('no door writes its own rung: every modal goes through the one stamp', () => {
+  // Review, 2026-09-20: the width choice moved only the doors openModal built,
+  // so the Armoury, the Smith, the confirmation and every page door disagreed
+  // with the rest of the game. The stamp is now the only writer, and this is
+  // the falsifier for that — a new door that types `data-size` on its panel
+  // fails here rather than quietly opting out of a setting.
+  const allowed = new Set(['src/ui/components/modalShell.js', 'src/ui/components/tooltip.js']);
+  const offenders = [];
+  for (const rel of jsUnder('src/ui')) {
+    if (allowed.has(rel)) continue;
+    const text = read(rel);
+    for (const [line, body] of text.split('\n').entries()) {
+      // A button row's `data-size` is the button ladder, not a modal's rung.
+      if (/\bas-btnrow\b/.test(body)) continue;
+      if (/dataset\.size\s*=/.test(body) || /class="[^"]*\bmodal\b[^"]*"[^>]*data-size=/.test(body)) {
+        offenders.push(`${rel}:${line + 1}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [], 'these write a modal rung without stampModalSize');
+  // And the four doors that used to are on the stamp by name.
+  for (const rel of ['src/ui/components/armouryComponents.js', 'src/ui/components/smithUpgradeModal.js',
+    'src/ui/components/confirmationModal.js', 'src/ui/kit/index.js']) {
+    assert.match(read(rel), /stampModalSize\(/, `${rel} stamps its rung`);
+  }
+});
+
+test('a door keeps its OWN rules when the choice moves it to another rung', () => {
+  // Review, 2026-09-20: `.modal.settings-modal[data-size='lg']` carried the
+  // player's own Window width and height. One step narrower stopped that rule
+  // matching, so two settings in the same tab cancelled each other in silence.
+  // Rules that belong to one door key off the rung it ASKED for; the ladder,
+  // which belongs to the rung, keys off the rung in force and publishes its
+  // width so a door can compose with it instead of re-typing 76rem.
+  const ui = read('styles/ui.css');
+  const kit = read('styles/kit.css');
+  assert.equal(/\.modal\.settings-modal\[data-size=/.test(ui), false, 'the Settings window is on its authored rung');
+  assert.ok(/\.modal\.settings-modal\[data-authored-size='lg'\]/.test(ui));
+  assert.match(ui, /width: min\(var\(--modal-rung-width, 76rem\)/, 'and composes with the rung in force');
+  assert.equal(/\.card-inspection-modal\.modal\[data-size=/.test(kit), false, 'so is the inspection door');
+  for (const rung of ['sm', 'md', 'lg', 'xl']) {
+    assert.match(kit, new RegExp(`\\.modal\\[data-size='${rung}'\\][^{]*\\{[^}]*--modal-rung-width:`),
+      `the ${rung} rung publishes its width`);
+  }
+});
+
+test('a workspace with its own shares keeps them through a restamp', () => {
+  // Review, 2026-09-20: the Smith and the stable paint the generic frame and
+  // then override three of its properties with W1i's own. Re-painting only the
+  // generic half on every settings change halved their candidates column and
+  // left it wrong — with no wireframe choice made at all.
+  const node = {
+    className: '', classList: { add() {} }, style: {
+      props: {},
+      setProperty(name, value) { this.props[name] = value; },
+      getPropertyValue(name) { return this.props[name] ?? ''; },
+    },
+  };
+  const own = smithWorkspaceVars();
+  workspaceFrame(node, own);
+  for (const [prop, value] of Object.entries(own)) assert.equal(node.style.props[prop], value);
+  const doc = { querySelectorAll: () => [node] };
+  assert.equal(restampWorkspaceFrames(doc), 1);
+  for (const [prop, value] of Object.entries(own)) {
+    assert.equal(node.style.props[prop], value, `${prop} survived the restamp`);
+  }
+  assert.equal(node.style.props['--w1-frame-w'], String(wireframeUi.workspace.frameWidth), 'and the frame is the generic one');
+});
+
+test('the words on the root are the attributes the components and the docs name', () => {
+  const attribute = (key) => `data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+  assert.deepEqual(WIREFRAME_CHOICE_KEYS.map(attribute), [
+    'data-wireframe-modal-width', 'data-wireframe-modal-footer',
+    'data-wireframe-menu-nav', 'data-wireframe-menu-frame',
+    'data-wireframe-scene-skyline', 'data-wireframe-scene-floor',
+  ]);
+  // The two scenes words are what a fight and a conversation watch for, so a
+  // rename that missed either stage would leave the choice dead on screen.
+  for (const rel of ['src/ui/components/battlefieldStage.js', 'src/ui/components/dialogueStage.js']) {
+    const text = read(rel);
+    for (const key of ['wireframeSceneSkyline', 'wireframeSceneFloor']) {
+      assert.ok(text.includes(attribute(key)), `${rel} watches ${attribute(key)}`);
+    }
+  }
+});
+
+test('the inset frame is the authored scale, not a number typed in a model', () => {
+  const authored = uiConfig.components.workspace.sizing.insetScale;
+  assert.ok(authored > 0 && authored <= 1, 'content/config owns it and it is a fraction');
+  const inset = resolveWorkspaceSpec(wireframeUi.workspace, 'inset');
+  assert.equal(inset.frameWidth, wireframeUi.workspace.frameWidth * authored);
+  assert.equal(inset.frameHeight, wireframeUi.workspace.frameHeight * authored);
+  assert.doesNotMatch(read('src/ui/models/WireframeChoiceModel.js'), /0\.85/, 'no second copy of it in src');
 });

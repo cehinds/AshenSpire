@@ -19,7 +19,7 @@ import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import {
   el, html, modalHead, modalFooter, pill, button, eyebrow, prose, flavour, artWell, detailCard,
-  statRow, blocker, glyph, railItem, railed, statusText, categoryNav,
+  statRow, blocker, glyph, railItem, railed, statusText, categoryNav, stampModalSize,
 } from '../kit/index.js';
 import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
@@ -71,7 +71,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   veil.className = 'modal-veil smith-modal-veil';
   const modal = document.createElement('section');
   modal.className = 'modal smith-upgrade-modal';
-  modal.dataset.size = 'xl';
+  stampModalSize(modal, 'xl');
   modal.dataset.wireframe = 'W1i';
   modal.setAttribute('role', 'dialog');
   modal.setAttribute('aria-modal', 'true');
@@ -80,8 +80,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
   modal.tabIndex = -1;
   // The W1 frame's shares, then the item column's own (it is W1i's 44 of 90,
   // not a category rail's 21.6).
-  workspaceFrame(modal);
-  for (const [prop, value] of Object.entries(smithWorkspaceVars())) modal.style.setProperty(prop, value);
+  // The door's own three properties go THROUGH the frame, which remembers them:
+  // a later restamp (the Workspace frame choice) re-applies both halves.
+  workspaceFrame(modal, smithWorkspaceVars());
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
   // W1 header: the title top-left and its exit top-right, nothing else.
   const head = modalHead({

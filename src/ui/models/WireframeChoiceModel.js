@@ -43,18 +43,18 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeModalWidth',
         label: 'Modal window width',
-        note: 'W1 doors come in four widths and each one asks for the narrowest that holds its body. This moves every door one rung along that ladder — narrower for more of the screen behind it, wider for fewer wrapped lines. Doors already open change with it.',
+        note: 'A window opens at the narrowest of four widths that holds what is in it. This moves every window one step along that ladder — narrower to see more of the game behind it, wider for fewer wrapped lines. Windows already open change with it, and a window at either end of the ladder stays there.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
-          option('narrow', 'One rung narrower'),
-          option('wide', 'One rung wider'),
+          option('narrow', 'One step narrower'),
+          option('wide', 'One step wider'),
         ]),
       }),
       Object.freeze({
         key: 'wireframeModalFooter',
         label: 'Modal footer buttons',
-        note: 'How far the buttons along the bottom of a window run. Each door picks a step today; this asks every footer for the same one. Full width gives the row the whole footer, which is what a phone already does.',
+        note: 'How far the buttons along the bottom of a window run: Short is about a third of a wide window, Long about two thirds, and Full width gives them the whole footer — which is what a phone already does. Each window picks its own today; this asks every one of them for the same.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -73,7 +73,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeMenuNav',
         label: 'Category navigation',
-        note: 'Every categorized menu — Shop, Armoury, Compendium, Profile, character creation — draws its categories as a rail down the left when they fit and as one [Category ▾] selector above the pane when they do not. Rail and Selector answer for the screen instead. A rail the screen cannot hold is still drawn; that is the point of asking.',
+        note: 'Every menu with categories — Shop, Armoury, Compendium, Profile, character creation — lists them down the left when they fit and folds them into one [Category ▾] button above the page when they do not. Rail and Selector answer for the screen instead, on every menu, including a narrow one that would not have chosen the list itself.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned('Fit to the screen'),
@@ -84,7 +84,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeMenuFrame',
         label: 'Workspace frame',
-        note: 'How much of the screen a W1 workspace takes (Compendium, Profile, the Smith and the stable). Fill the screen removes the margin around it; Inset pulls it in. Menus already open take it when they next open.',
+        note: 'How much of the screen a workspace menu takes — the Compendium, your Profile, the Smith and the stable. Fill the screen removes the margin around it; Inset pulls it in. Menus already open change with it.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -100,8 +100,8 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
     choices: Object.freeze([
       Object.freeze({
         key: 'wireframeSceneSkyline',
-        label: 'Scene skyline',
-        note: 'WGS6, the painted plate behind a fight or a conversation. Off leaves the scene on its plain background, which is the cheapest thing a scene can draw.',
+        label: 'Scene backdrop',
+        note: 'The painted place behind a fight or a conversation (the drawings call it WGS6). Never drawn leaves the scene on its plain background, which is the least a scene can draw. A fight or a conversation on screen takes it at once.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -111,8 +111,8 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       }),
       Object.freeze({
         key: 'wireframeSceneFloor',
-        label: 'Scene floor band',
-        note: 'WGS7, the ground band at the bottom of a scene. Aligned crops the plate so its painted ground line meets that band; Off centres the plate as a plain cover crop instead. Where the fighters stand is set by the formation and does not move either way.',
+        label: 'Scene ground line',
+        note: 'How the painting is cropped to the ground band at the bottom of a scene (the drawings call it WGS7). Aligned puts its painted ground line exactly on that band; the plain crop centres the painting instead. Where the fighters stand is set by the formation and does not move either way.',
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),

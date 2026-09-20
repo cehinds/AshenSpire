@@ -2655,12 +2655,12 @@ are drop downs.
 
 | Topic | Choice (setting key) | Options | Who reads it |
 |---|---|---|---|
-| Modals | Modal window width (`wireframeModalWidth`) | As designed · one rung narrower · one rung wider | `openModal` (`components/modalShell.js`) steps the rung the body asked for along `MODAL_SIZES` |
+| Modals | Modal window width (`wireframeModalWidth`) | As designed · one step narrower · one step wider | `stampModalSize` (`components/modalShell.js`) steps the rung the door asked for along `MODAL_SIZES` |
 | Modals | Modal footer buttons (`wireframeModalFooter`) | As designed · Short · Medium · Long · Full width | `modalFooter`, the `.modal-btnrow` step ladder in `kit.css` |
 | Menus | Category navigation (`wireframeMenuNav`) | Fit to the screen · always the rail · always the selector | `kit/categoryNav.js`, over `CategoryNavModel`'s measured answer |
 | Menus | Workspace frame (`wireframeMenuFrame`) | As designed · fill the screen · inset | `workspaceFrame` (`components/w1Workspace.js`) → `workspaceFrameVars` |
-| Scenes | Scene skyline (`wireframeSceneSkyline`) | As designed · always drawn · never drawn | WGS6 in `fitSceneBackdrop` → `SceneLayerModel` |
-| Scenes | Scene floor band (`wireframeSceneFloor`) | As designed · aligned to the ground line · plain cover crop | WGS7, same pair |
+| Scenes | Scene backdrop (`wireframeSceneSkyline`) | As designed · always drawn · never drawn | WGS6 in `fitSceneBackdrop` → `SceneLayerModel` |
+| Scenes | Scene ground line (`wireframeSceneFloor`) | As designed · aligned to the ground line · plain cover crop | WGS7, same pair |
 
 Rules the implementation keeps:
 
@@ -2677,16 +2677,48 @@ Rules the implementation keeps:
   family or a third option is an edit to the model and nothing else.
 - **One word per choice on the root.** `src/ui/wireframeChoices.js` writes
   `data-wireframe-modal-width` and its five siblings from the settings bag
-  (`applyDisplaySettings`), and the four components read them back — the same
-  shape as `data-card-motif` and `data-hand-layout`.
-- **A door already open takes the answer.** Settings is itself a W1 door, so
-  `restampModalWireframes`, `restampWorkspaceFrames` and `replanCategoryNavs`
-  re-resolve what is on screen from each surface's *authored* value. Re-applying
-  is idempotent: the rung cannot walk off the end of the ladder. Scenes take
-  their words at the next fit.
-- **Rule 11 still holds.** The navigation choice offers rail or selector and
-  nothing else; there is no accordion and no horizontal tab strip to pick.
+  (last in `applyDisplaySettings`, after `applyUiScale` and `applyTapSize`,
+  because the navigation re-measures against the zoom and the tap floor those
+  two write), and the components read them back — the same shape as
+  `data-card-motif` and `data-hand-layout`.
+- **One stamp per rung.** `stampModalSize` is the only writer of a modal's
+  `data-size`; it also records `data-authored-size`, the rung the door asked
+  for. Every door goes through it — `openModal`, the kit's `pageDoor`, the
+  Smith's W1i, the stable's W1j/W1k, the confirmation W2 and the Armoury's W1e
+  — because a choice that moved only one constructor's doors would be a
+  setting that is right about half the game.
+- **A rung is not a style contract.** Rules that belong to ONE DOOR key off
+  `data-authored-size` (the Settings window's own width and height, the card
+  inspection door's auto height); the four-width ladder keys off `data-size`
+  and publishes `--modal-rung-width`, so the Settings window takes the smaller
+  of the rung in force and the player's own Window width instead of the two
+  settings cancelling each other.
+- **A door already open takes the answer.** `restampModalWireframes`,
+  `restampWorkspaceFrames` and `replanCategoryNavs` re-resolve what is on
+  screen from each surface's *authored* value, so re-applying is idempotent.
+  A workspace with its own shares (W1i's 44-of-90 item column) hands them to
+  `workspaceFrame`, which remembers them and re-applies them with the frame —
+  otherwise a restamp would leave the Smith wearing a category rail's 21.6.
+  Combat and the quest dialogue both watch the two scene words, so a fight or
+  a conversation on screen refits at once.
+- **Rule 11 still holds on the SHAPE.** The navigation choice offers rail or
+  selector and nothing else — no accordion, no horizontal tab strip. It does
+  relax rule 11's *when*: "always the rail" draws a rail on a compact host
+  that would not have chosen one. That is the point of the row, and the row
+  says so.
 
-Verification: `tests/wireframe-choices.test.mjs` (10 cases — the catalogue, the
-six resolvers, the generated rows and their topics, the root words, and an open
-door restamped repeatedly). Not yet verified in a browser at any viewport.
+Verification: `tests/wireframe-choices.test.mjs` (15 cases — the catalogue, the
+six resolvers, the generated rows and their topics, the root words, an open
+door restamped repeatedly, and one falsifier each for the review's findings:
+no door writing its own rung, the per-door CSS on the authored rung, a
+workspace keeping its own shares through a restamp, the attribute names both
+stages watch, and the inset scale living in `content/config`).
+
+Browser (headless Chromium over CDP, emulation only): at 1280×800 the tab's
+three topics each show their two drop downs; *one step wider* moved the open
+Settings door lg→xl (813→1027 px) and *As designed* returned it to 813 px; at
+1440×900 the Shop's rail became the `[Category ▾]` selector and back, the
+Smith's frame went 0.95/0.9 → 1/1 (1368×810 → 1421×881 px) → 0.8075/0.765
+(1163×689 px), and combat's plate hid on *never drawn* and re-cropped to
+`cover` on the plain crop. Phone and short-landscape viewports, pad and
+keyboard travel through the rows, and the dialogue scene are not verified.

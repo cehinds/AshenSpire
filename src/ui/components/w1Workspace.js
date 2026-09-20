@@ -14,13 +14,35 @@ import { resolveWorkspaceSpec } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 
-export function workspaceFrame(node) {
+// A SURFACE'S OWN SHARES, KEPT WITH THE SURFACE. W1i (the Smith) and W1j/W1k
+// (the stable) paint the generic frame and then override three of its
+// properties with their own (SmithWorkspaceModel: the item column is 44 of 90,
+// not a category rail's 21.6). `restampWorkspaceFrames` re-paints the frame
+// when the player changes the Workspace frame choice, and re-painting only the
+// generic half would leave those doors wearing a rail they never asked for —
+// measured as exactly that regression in review. So the override is recorded
+// against the node and re-applied with it. A WeakMap rather than an attribute:
+// these are CSS custom properties, and a copy of them in the DOM would be a
+// second home for numbers SmithWorkspaceModel owns.
+const OVERRIDES = new WeakMap();
+
+/**
+ * workspaceFrame(node, extra) → the node, wearing the W1 frame.
+ *
+ * `extra` is a surface's own custom properties, applied after the frame's and
+ * remembered, so a later restamp reproduces the same node. Passing nothing
+ * keeps whatever that node was last given.
+ */
+export function workspaceFrame(node, extra = null) {
   node.classList.add('w1-workspace');
   // The drawn shares, then the player's answer about them (Settings → Advanced
   // → Wireframes → Menus). `auto` hands workspaceFrameVars the same spec it
-  // read for itself, so the frame is unchanged until something else is chosen.
+  // reads for itself, so the frame is unchanged until something else is chosen.
   const spec = resolveWorkspaceSpec(wireframeUi.workspace, activeWireframeChoice('wireframeMenuFrame'));
   for (const [prop, value] of Object.entries(workspaceFrameVars(spec))) node.style.setProperty(prop, value);
+  if (extra) OVERRIDES.set(node, extra);
+  const own = OVERRIDES.get(node);
+  if (own) for (const [prop, value] of Object.entries(own)) node.style.setProperty(prop, value);
   return node;
 }
 

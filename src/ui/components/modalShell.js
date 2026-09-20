@@ -434,6 +434,24 @@ export function modalHead({
 export const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
 
 /**
+ * stampModalSize(panel, size) → the panel, wearing both words.
+ *
+ * THE ONE PLACE A MODAL'S WIDTH RUNG IS WRITTEN. `data-authored-size` is what
+ * the surface asked for and never changes; `data-size` is that rung after the
+ * player's answer (Settings → Advanced → Wireframes → Modals), and it is what
+ * kit.css reads. Every door goes through here — openModal, the kit's pageDoor,
+ * the Smith's W1i, the confirmation W2 and the Armoury's W1e — because a
+ * choice that moved only the doors built by one constructor would be a setting
+ * that is right about half the game.
+ */
+export function stampModalSize(panel, size) {
+  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
+  panel.dataset.authoredSize = size;
+  panel.dataset.size = resolveModalRung(size, activeWireframeChoice('wireframeModalWidth'), MODAL_SIZES);
+  return panel;
+}
+
+/**
  * restampModalWireframes(doc) → how many surfaces were re-resolved.
  *
  * A player changing a Modals choice is, almost always, looking at a modal while
@@ -488,14 +506,11 @@ export function openModal({
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
-  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
   const panel = document.createElement('section');
   panel.className = `modal${className ? ` ${className}` : ''}`;
-  // The rung the body asked for, then the player's answer about it. Both are
-  // written: `data-authored-size` is what the door chose and never changes, so
-  // `restampModalWireframes` can re-resolve an open door when the answer does.
-  panel.dataset.authoredSize = size;
-  panel.dataset.size = resolveModalRung(size, activeWireframeChoice('wireframeModalWidth'), MODAL_SIZES);
+  // The rung the body asked for, then the player's answer about it. Both words
+  // are written by the one stamp above, which also refuses an unknown rung.
+  stampModalSize(panel, size);
   panel.dataset.wireframe = role === 'alertdialog' ? 'W2' : 'W1';
   panel.setAttribute('role', role);
   panel.setAttribute('aria-modal', 'true');
