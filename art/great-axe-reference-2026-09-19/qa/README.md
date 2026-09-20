@@ -1,0 +1,7 @@
+# Verification evidence
+
+The asset validator passes for 32 appearances, 35 catalog entries and 512 RGBA frames. Each source and frame hash matches the manifest; all source silhouettes and frame images clear their outer edges. Full-body opaque foot baselines land between y=479 and y=481 on 512-pixel canvases. Each animated WebP has the nine shared playback steps. Run `python art/great-axe-reference-2026-09-19/validate.py` from the repository root to repeat these checks.
+
+Browser checks used Edge through Playwright and the repository's `tools/browser.mjs` launcher. The Browser plugin was unavailable. The local page was served at `http://127.0.0.1:8794/art/great-axe-reference-2026-09-19/`. Checks covered all 35 cards, complete coverage text, class/outfit filters, individual poses, attack scrub, editable sequence order and timing, invalid-input rejection, reset, preloaded playback, background switch, loaded sprite images and no horizontal overflow at 390 pixels. No page errors were recorded. The saved screenshots show a 1440×1000 desktop, 390×844 phone controls and the phone gallery.
+
+Visual review checked the v3 Reaver sheet, the generated appearance atlases and the full appearance overview for the single bearded axe, class silhouettes, costume palettes and shared choreography. Painted frames still require artistic judgment; the automated gates verify asset integrity and presentation, not rigid-object geometry. The pack remains explicitly unbound from game equipment.

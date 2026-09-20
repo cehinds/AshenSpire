@@ -1,0 +1,10 @@
+{
+  "url": "http://127.0.0.1:8794/art/great-axe-reference-2026-09-19/",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "browser": "Edge via Playwright; Browser plugin not available",
+  "checks": "page identity, loaded sprites, class/outfit filters, pose selection, scrub, shared sequence edit/reset/validation, playback, background, mobile overflow",
+  "errors": []
+}

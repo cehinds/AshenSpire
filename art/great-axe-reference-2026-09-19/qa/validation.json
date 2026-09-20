@@ -1,0 +1,22 @@
+{
+  "appearances": 32,
+  "catalogEntries": 35,
+  "frames": 512,
+  "posesPerAppearance": 16,
+  "missing": [],
+  "bodyFootBottomRange": [
+    479,
+    481
+  ],
+  "runtimeBinding": null,
+  "checks": [
+    "catalog coverage",
+    "source integrity and alpha",
+    "source outer-edge clearance",
+    "frame hashes",
+    "512x512 RGBA",
+    "transparent frame margins",
+    "body foot baseline",
+    "animated preview frame counts"
+  ]
+}
