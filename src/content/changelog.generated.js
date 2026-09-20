@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1213",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Keep your hand and choose how the next turn draws",
+    "detail": "New solo combats start with three configurable cards, retain unplayed cards, and refill to capacity. Advanced → Hand & Draw controls stat scaling, fixed draws, optional discards, capacity, and reshuffling. Existing fights and LAN keep their previous rules. Settings now has a compact, aligned search, options, and close toolbar.",
+    "build": "0.7.1.306",
+    "pullRequest": 1213,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1213"
+  },
+  {
     "id": "pr-1210",
     "date": "2026-09-19",
     "group": "2026-09-19",
