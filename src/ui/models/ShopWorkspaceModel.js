@@ -1,4 +1,5 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
 
 // W1d / W1v: THE MERCHANT AS A WORKSPACE. A category rail beside (or above) one
 // active pane; the pane shows the category's offers with a price and an
@@ -76,25 +77,90 @@ export function shopFooterActions(selected = null) {
 }
 
 /**
+ * THE OFFERS COLUMN IS WIDE ENOUGH FOR A SHELF OF CARDS, not a bare fraction.
+ *
+ * `offersFraction` gave the offers half the pane whatever was standing in it.
+ * Measured at 1328x744: rail 287, pane 1000, offers 490 — and an armament
+ * shelf needs 644px to stand four resting cards side by side, so it wrapped to
+ * ONE card per row with the rest behind a scroll. The authored fraction was
+ * never wrong about what the offers deserve at rest; it simply had no idea
+ * what it was holding.
+ *
+ * So the share is a FLOOR, not the answer: the offers take their authored
+ * fraction, or as much as a full shelf of resting cards needs, whichever is
+ * larger — bounded by what the detail column can spare (`detailMinRem`, this
+ * screen's own authored floor, because the detail here is a short stack of
+ * facts rather than a reading door). Asking for more than a full shelf would
+ * only stretch the gaps: the shelf never draws a card above its resting width.
+ * Below the bound the offers keep the authored fraction and the shelf drops a
+ * column, which is the shelf's own rule, not a second one written here.
+ *
+ * `rem` is the measured root size in CSS px, the same term the rest of this
+ * model's rem numbers are resolved with — the app's root is `font-size: 62.5%`,
+ * so a rem here is about ten pixels, which is the currency `railMinRem: 11`
+ * and `wideMinRem: 60` are already counted in.
+ *
+ * `restingPx` is how wide a resting card is ACTUALLY being drawn: the authored
+ * glance width, or a tuned one, or the phone's own variant. It is passed in
+ * rather than read from the authored table because the table is not the last
+ * word — `applyCardSizeSettings` in main.js lays a player's overrides over it
+ * and projects the result as `--card-w-glance`. Reading the authored 152 here
+ * while the cards on the shelf were drawn at 100 would have reserved 644px for
+ * four of them where 436 was needed, squeezing the detail column to buy room
+ * nothing was going to stand in — the model claiming the offers take what
+ * their shelf needs while taking what a different shelf would have needed.
+ */
+export function shopOffersWidthPx(paneWidth, rem = 16, ui = wireframeUi.shop, restingPx = null) {
+  const share = paneWidth * ui.offersFraction;
+  const shelf = cardShelf();
+  const resting = Number.isFinite(Number(restingPx)) && Number(restingPx) > 0
+    ? Number(restingPx) : shelf.restingPx;
+  const fullShelf = cardShelfWidthPx(shelf.maxColumns, resting);
+  const spare = paneWidth - ui.detailMinRem * (rem > 0 ? rem : 16);
+  const want = Math.max(0, Math.min(fullShelf, spare));
+  return Math.min(paneWidth, Math.max(share, want));
+}
+
+/**
  * Layout for the measured frame. Wide: rail beside the pane, offers and
  * detail side by side. Compact: rail above, detail stacked under the offers
  * and capped so the offers keep the larger share. All numbers come from
  * `wireframeUi.shop`; `rem` is the measured root size in CSS px.
+ *
+ * `restingWidthPx` is how wide a resting card is being drawn right now, which
+ * a tuner or a phone can move under the authored table; see
+ * `shopOffersWidthPx`. `bodyWidth` is the measured width of `.shop-body` — the
+ * grid the two columns actually divide. It is MEASURED rather than derived from `width` because
+ * everything between the two is somebody else's number: the rail's track, the
+ * pane's `--modal-inset` padding, whatever chrome is added next. An earlier
+ * draft subtracted the rail and one gap from the frame and was wrong by the
+ * pane's inset in one direction and by the column gap in the other, which took
+ * the detail column under its own authored floor. With no measurement there is
+ * no derivation: the authored fraction stands.
  */
-export function shopWorkspaceLayout({ width = 0, bodyHeight = 0, rem = 16 } = {}, ui = wireframeUi.shop) {
+export function shopWorkspaceLayout({ width = 0, bodyWidth = 0, bodyHeight = 0, rem = 16, restingWidthPx = null } = {}, ui = wireframeUi.shop) {
   const px = rem > 0 ? rem : 16;
   const wide = width >= ui.wideMinRem * px;
   const railWidth = wide
     ? Math.round(Math.min(Math.max(width * ui.railFraction, ui.railMinRem * px), ui.railMaxRem * px))
     : 0;
+  const gap = Math.round(ui.gapRem * px);
+  // The `fr` tracks divide what is left of the body once the gap between them
+  // is taken; a fraction measured against the body's whole width would hand
+  // each column its share of a gap that is not theirs. Stacked, the offers own
+  // the full width and the fractions are not column tracks at all.
+  const columnsWidth = Math.max(0, bodyWidth - gap);
+  const offersFr = wide && columnsWidth > 0
+    ? shopOffersWidthPx(columnsWidth, px, ui, restingWidthPx) / columnsWidth
+    : ui.offersFraction;
   return Object.freeze({
     mode: wide ? 'wide' : 'compact',
     rail: wide ? 'side' : 'top',
     pane: wide ? 'columns' : 'stacked',
     railWidth,
-    offersFr: ui.offersFraction,
-    detailFr: 1 - ui.offersFraction,
-    gap: Math.round(ui.gapRem * px),
+    offersFr,
+    detailFr: 1 - offersFr,
+    gap,
     detailMax: wide ? null : Math.max(0, Math.floor(bodyHeight * ui.detailMaxFraction)),
   });
 }
