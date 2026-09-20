@@ -3,8 +3,8 @@
 `prologue-screen` composes six text-free WebP paintings, a class item layer,
 motif wash, live narration and playback controls. `src/model/prologue.js`
 projects Advanced → Opening sequence settings; `src/ui/screens/prologue.js`
-is shared by new games and the settings preview. Text, scene holds,
-five-second default transitions, effects and desktop/mobile character placement
+is shared by new games and the settings preview. Text, five-second total scene durations,
+entrance transitions, class memory paintings, effects and desktop/mobile character placement
 are included in configuration exports. Interrupted saves resume at a scene
 boundary; Set forth reveals the first playable map.
 
@@ -148,7 +148,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `relic-slot` | `componentModel` semantic ID | Tray icon (`relicRail.js`) | Every run HUD | One relic: the round Pip the status icons wear; tap explains, a second tap opens its card. |
 | `potion-tray` | `itemTrayModel` | Icon tray (`iconTray.js`) | Rooms, only with `hud.potions.roomRail` (off) | No top HUD draws potions; the combat footer's Potions minis are the same tray. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
+| `battlefield-stage` | `battlefieldStageModel` + `combatFormation` | `battlefieldStage.js` + `combat.js` | Combat | Shared formation presets and uniform labeled grids, up to 3 columns × 6 rows per side. Actor feet and movement use the same anchors. Ground tilt/skew transform tiles while characters stay upright. Small grids expand for encounter capacity. |
+| `formation-layout-editor` | `formationLayoutConfig` + `combatFormation` | `formationSettings.js` | Settings → Advanced → Interface → Formation layout | Live battlefield preview, illustrated named presets, shared dimensions, footprint width/depth/gap, tile outline and ground tilt/skew. Apply saves a draft through the normal settings owner; row A–F scale/layer and front/back offsets live under Character adjustments. Stacks on narrow screens. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
@@ -619,3 +620,19 @@ Combatant overhead controls: `combatantOverhead.js` shares Information and enlar
 Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
 
 Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
+### Hand & Draw Rules
+
+Advanced Settings groups the controls into Starting hand, Turn draws, Hand
+capacity, and Retention & discards. `src/model/handRules.js` owns row metadata,
+stat calculations and the live preview; `settings.js` uses the shared setting
+rows and desktop/compact navigation. In-run previews use the character's current
+attributes; title-screen previews show baseline values.
+
+`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
+read-only card faces and footer buttons into the turn-end discard selector.
+Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
+cancel without changing combat state. `src/engine/handRules.js` validates the
+selection independently before the turn can advance.
+
+### Ratings, Poise and Ward
+The Advanced Settings workspace adds Stats & Defence subgroups for each formula, curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

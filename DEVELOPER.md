@@ -15,6 +15,15 @@ because the full artwork exceeds GitHub's regular-file size limit. Source art
 stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
 CI hydrates these files, and historical build readers verify their content hashes.
 
+
+Hand management lives in `src/content/handRules.js` (defaults),
+`src/model/handRules.js` (settings and stat formula), and
+`src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
+per-fight snapshot from profile settings; legacy snapshots omit it. Run
+`node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
+for the focused rules, persistence and settings checks. Advanced → Hand & Draw
+Rules provides separate starting-hand, turn-draw, capacity and discard groups.
+
 `node tools/launch.mjs --build-only` produces the standalone aliases and an
 external-art web edition in `build/web/`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
@@ -762,3 +771,5 @@ runs snapshot the effective overrides in the existing advanced-config snapshot.
 Old saves bypass the opening. The completion callback persists before revealing
 the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
+### Ratings and starting pools
+Settings → Advanced → Progression controls starting stat pools and resource conversions. Stats & Defence controls rating formulas, physical/magical resistance, status weights, impact categories, breaks and per-source bonuses. Source models: src/model/startingStatConfig.js and src/model/combatRatings.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs.

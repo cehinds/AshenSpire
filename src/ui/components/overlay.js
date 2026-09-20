@@ -41,6 +41,7 @@ let overlayCleanup = [];
 const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
+    previewAttributes: ctx.run?.attributes,
     onChange: ctx.onSettingsChange || (() => {}),
     onOffline: ctx.onOffline,
   }),

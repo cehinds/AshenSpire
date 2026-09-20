@@ -15,6 +15,9 @@ import { formationMovePlan } from '../model/formationMovement.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
+import { scaledCards } from '../model/handRules.js';
+import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -60,7 +63,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {},
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, ratingAttributeScale = 1,
 }) {
   const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -85,6 +88,8 @@ export function createCombat({
       ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
       : 0);
   const combat = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules), ratingAttributeScale } : ratingAttributeScale !== 1 ? { ratingAttributeScale } : {}),
+    ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     equipmentProfileRuleSnapshot,
@@ -112,7 +117,7 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: bal.handMax != null ? bal.handMax : 10,
+    handMax: handRules ? scaledCards(handRules.capacity, player.attributes, ratingAttributeScale || 1) : (bal.handMax != null ? bal.handMax : 10),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
@@ -188,6 +193,14 @@ export function createCombat({
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  if (combat.ratingsRules) {
+    refreshCombatRatings(combat);
+    for (const enemy of combat.enemies) {
+      const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
+  }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
     instanceId: c.instanceId,
@@ -301,9 +314,10 @@ function startPlayerTurn(combat) {
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
   p.pendingActionLoss = 0;
+  recoverRatingMeters(combat, p);
 
   // Draw.
-  A.drawCards(combat, combat.drawPerTurn);
+  A.drawCards(combat, turnDrawCount(combat));
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
@@ -311,7 +325,7 @@ function startPlayerTurn(combat) {
   drainQueue(combat);
 }
 
-function endPlayerTurn(combat) {
+function endPlayerTurn(combat, discardIds = []) {
   const p = combat.player;
 
   // (4) playerTurnEnd triggers first…
@@ -341,11 +355,11 @@ function endPlayerTurn(combat) {
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
   const keep = [];
+  applyDiscardChoice(combat, discardIds);
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
-    const def = resolveCard(combat.registries, card);
-    const fate = combat.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : combat.registries.framework.endTurnFate(def);
+    const fate = endTurnCardFate(combat, card);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
@@ -457,7 +471,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
-      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 },
+      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
       source: enemy,
       owner: enemy,
       target: combat.player,
@@ -584,7 +598,7 @@ export function dispatch(combat, intent) {
         doPlayCard(combat, intent);
         break;
       case 'endTurn':
-        doEndTurn(combat);
+        doEndTurn(combat, intent.discardIds);
         break;
       case 'useFlask':
         doUseFlask(combat, intent);
@@ -725,10 +739,11 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
+  refreshCombatRatings(combat);
   combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
@@ -822,7 +837,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
     stampDeck(combat.registries, run, pile);
   }
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
     loadout: combat.loadout,
     relics: p.relicIds || [],
     class: p.classId,
@@ -830,6 +845,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     attributes: combat.attributes || null,
   }).value);
 
+  refreshCombatRatings(combat);
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);
   combat.emit('equipmentRearmed', {
     slotId, setIndex, pieceId, cost: price.cost, rule: price.ruleId,
@@ -896,6 +912,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // cardTagIs). The card definition and the deck instance never carry them.
   const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
@@ -972,9 +989,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   }
 }
 
-function doEndTurn(combat) {
+function doEndTurn(combat, discardIds = []) {
   if (combat.phase !== 'player') throw new Error('Not the player turn');
-  endPlayerTurn(combat);
+  validateDiscardChoice(combat, discardIds);
+  endPlayerTurn(combat, discardIds);
   if (combat.result) return;
   enemyPhase(combat);
   if (combat.result) return;
@@ -1111,7 +1129,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'block': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary));
+        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
         break;
       }
       case 'applyStatus': {
@@ -1120,6 +1138,8 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'heal':
+        entry.value = evalPreview(combat, action, eff.amount, primary) + cardRatingBonus(combat, p, action.card, 'heal');
+        break;
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
@@ -1197,7 +1217,11 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const out = { ...intent };
   if (intent.damage != null) {
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage);
+    const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
+    const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
+    const effect = move?.effects?.find(e => e.op === 'damage');
+    const carrier = damageSchool && damageSchool !== 'auto' ? { damageSchool } : { damageSchool: effect?.damageSchool || move?.damageSchool, tags: effect?.tags || move?.tags || [] };
+    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], carrier);
     out.hits = intent.hits != null ? intent.hits : 1;
     out.totalDamage = out.damage * out.hits;
   }

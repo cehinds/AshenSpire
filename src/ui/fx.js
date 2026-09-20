@@ -863,6 +863,11 @@ function baseVisualFor(e, beatKind) {
       };
     case 'meterFilled':
       return null; // poise fills speak through enemyStaggered below
+    case 'ratingImpact':
+      return e.breaks ? (ctx) => {
+        banner(ctx.layer, e.label.toUpperCase());
+        flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+      } : null;
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');

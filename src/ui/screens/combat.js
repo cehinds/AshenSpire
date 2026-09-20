@@ -1,3 +1,4 @@
+import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -87,7 +88,10 @@ import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
+import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan } from '../../model/formationMovement.js';
+import { discardChoicePlan } from '../../engine/handRules.js';
+import { openHandDiscard } from '../components/handDiscard.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -147,9 +151,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
-        <div class="formation-grid" aria-hidden="true">
-          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<button type="button" disabled tabindex="-1" aria-label="Position ${row}${column}" class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></button>`)).join('')}
-        </div>
+        ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -651,8 +653,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
+          ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
           { label: 'Block', value: v.block || 0 },
-        ], 'player'),
+        ], 'player', entity),
         skillLabel: 'Active skills & stance',
         abilities,
         skills: abilities,
@@ -682,8 +686,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         { label: 'Block', value: v.block || 0 },
-      ], 'enemy'),
+      ], 'enemy', entity),
       intent: {
         name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
         detail: moveDetail(current, intent),
@@ -784,6 +789,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       statuses,
       stanceId: e.stanceId,
       poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
+      wardMeter: e.wardMeter ? { value: e.wardMeter.value, max: e.wardMeter.max } : null,
       arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
     };
   }
@@ -820,6 +826,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'impactDealt':
           if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
+          break;
+        case 'ratingImpact':
+          if (t) t[e.meter + 'Meter'] = { value: e.value, max: e.max };
           break;
         case 'hpLost':
           if (t) t.hp = Math.max(0, t.hp - e.amount);
@@ -1131,10 +1140,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // implies a live mechanic it does not have is the lie the refusal path
   // exists to prevent. When the player-poise mechanics land, this branch is
   // the sentence that must change with them.
-  function poiseTip(kind) {
+  function poiseTip(kind, entity = null) {
     return (bar) => {
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
+      if (combat.ratingsRules) {
+        const descriptions = { ar: 'Added to physical attack-card damage.', dr: 'Added to physical defensive-skill Block.', pr: 'Added to magical card damage, Block and healing, including power effects.' };
+        if (descriptions[bar.id]) return esc(descriptions[bar.id]);
+        if (bar.id === 'poise' || bar.id === 'ward') {
+          const magical = bar.id === 'ward';
+          const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
+          const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
+          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} fewer Actions next turn` : 'lose the next move'}.`);
+        }
+      }
       if (bar.id !== 'poise') return '';
       if (kind === 'player') {
         return esc(helpText('playerPoise'));
@@ -1158,7 +1177,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind), tooltips });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -2307,26 +2326,32 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dlog('ignored', 'endTurn', why);
       return;
     }
-    selected = null;
-    selectedFlask = null;
-    hideTooltip();
-    disp = takeSnapshot();
-    let out;
-    try {
-      heldTurnHand = [...disp.hand];
-      enemyPlayback = true;
-      out = dispatch(combat, { type: 'endTurn' });
-    } catch (err) {
-      console.warn("[combat] dispatch rejected:", err && err.message);
-      dlog('rejected', 'endTurn', err && err.message);
-      heldTurnHand = null;
-      enemyPlayback = false;
-      disp = null;
-      return;
-    }
-    dlog('dispatch', 'endTurn', { events: out.events.length });
-    busy = true;
-    afterDispatch(out.events);
+    const finish = (discardIds = []) => {
+      if (busy || combat.result || combat.phase !== 'player') return;
+      selected = null;
+      selectedFlask = null;
+      hideTooltip();
+      disp = takeSnapshot();
+      let out;
+      try {
+        heldTurnHand = [...disp.hand];
+        enemyPlayback = true;
+        out = dispatch(combat, { type: 'endTurn', discardIds });
+      } catch (err) {
+        console.warn("[combat] dispatch rejected:", err && err.message);
+        dlog('rejected', 'endTurn', err && err.message);
+        heldTurnHand = null;
+        enemyPlayback = false;
+        disp = null;
+        return;
+      }
+      dlog('dispatch', 'endTurn', { events: out.events.length });
+      busy = true;
+      afterDispatch(out.events);
+    };
+    const plan = discardChoicePlan(combat);
+    if (plan.prompt) openHandDiscard(registries, plan, finish, $('.end-turn'));
+    else finish();
     },
   });
   endTurnBeat.refresh();
@@ -2353,8 +2378,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }))}`);
   }
 
-  function inspectorResources(rows, kind) {
-    return rows.map(row => ({ ...row, tooltipHtml: poiseTip(kind)({ id: ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
+  function inspectorResources(rows, kind, entity) {
+    return rows.map(row => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
   }
   attachTooltip($('.energy-orb'), () => `<div class="tt-title">Actions</div>`
     + `${dv(combat.player).energy ?? combat.player.energy} of ${combat.player.energyMax} left this turn.`
@@ -2365,7 +2390,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   attachTooltip($('.pile.spent'), () => '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.');
   attachTooltip($('.combat-potions'), () => '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.');
   attachTooltip($('.end-turn'), () => `<div class="tt-title">End Turn</div>`
-    + `Hand off to the enemies, then draw a fresh hand.`
+    + (combat.handRules?.retain ? 'Enemies act, then draw while keeping unplayed cards.' : 'Enemies act, then draw a fresh hand.')
     + `<div class="ti-detail">Block expires at the start of your next turn. `
     + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
