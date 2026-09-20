@@ -247,6 +247,12 @@ jobs:
       - name: Music-only parity can fail (11 plants)
         run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs --selftest
 
+      - name: The mobile art twin tree mirrors assets/ at the policy's sizes and fits its budget
+        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --check
+
+      - name: That twin-tree gate catches its own known-bads (9 plants)
+        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --selftest
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
@@ -360,8 +366,8 @@ jobs:
         # identical and always would have been. This is the only place the
         # platform claim is actually tested.
         run: |
-          git --no-pager diff --stat -- AshenSpire.html build dist
-          git diff --exit-code -- AshenSpire.html build dist
+          git --no-pager diff --stat -- AshenSpire.html AshenSpire-mobile.html build dist
+          git diff --exit-code -- AshenSpire.html AshenSpire-mobile.html build dist
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching

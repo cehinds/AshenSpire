@@ -2,7 +2,7 @@
 
 A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no framework, no build step. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**.
 
-**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
+**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[▶ Play the mobile edition](https://cehinds.github.io/AshenSpire/AshenSpire-mobile.html)** (same build, art shrunk under 50 MB) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
 
 > Single-player with optional LAN co-op. Four classes, three acts, 20 regular enemies, three elites, ten bosses. Seeded, resumable runs. Enemy moves and destinations: [enemy roster](docs/ENEMY-ROSTER.md).
 
@@ -22,11 +22,11 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 - **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
 - **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
 - The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
-- **Weight:** one self-contained file, art and all, at **~58 MB** on the `0.6.0` line — down from 93 MB before the sprite sheets were re-encoded as WebP (#908). It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting.
+- **Weight, and two downloads:** every build is offered twice. The **full** file is one self-contained download, art and all — **~253 MB** on the `0.7.1` line, up from 58 MB on `0.6.0` as the painted animation frames landed. The **mobile** file (`AshenSpire-mobile.html`, at `…/<branch>/<ordinal>/mobile/`) is the same build with every image shrunk to half size and recompressed under `tools/mobileart-policy.mjs`, held **under 50 MB** by a gate (`tools/verify-shipped.mjs`); it plays the same and looks softer. It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting, and the mobile file is the one to take there. Saves are compatible between the two.
 
 ### Offline
 
-Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and double-click it — one self-contained file, no installation. It is an alias for [`dist/AshenSpire.html`](dist/AshenSpire.html); both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if either copy differs. External music folders need http — see [dist/README.md](dist/README.md).
+Download **[`AshenSpire.html`](AshenSpire.html)** (full, ~253 MB) or **[`AshenSpire-mobile.html`](AshenSpire-mobile.html)** (mobile, under 50 MB) from the repository root and double-click it — one self-contained file, no installation. Each is an alias for its [`dist/`](dist/) twin; all four are generated from `build/` by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
 
 ## Running it
 

@@ -5,26 +5,34 @@ download button or a hydrated checkout (`git lfs pull`) to obtain the playable
 file; the small LFS pointer shown by raw Git commands is not the game. Once
 downloaded, the complete HTML still plays offline without Git or other tools.
 
-**There are two shapes of this build now, and this directory holds one of them.**
-`tools/bundle.mjs` writes the consolidated single file by default and the
-de-inlined one with `--external-art`:
+**There are three shapes of this build now, and this directory holds two of
+them.** `tools/bundle.mjs` writes the consolidated single file by default, the
+mobile single file with `--mobile`, and the de-inlined one with `--external-art`:
 
 | | size | needs | good for |
 |---|---|---|---|
-| consolidated (this directory, `build/`, the root alias) | **57.6 MB** | nothing — `file://` | double-click, offline, no toolchain |
-| de-inlined (`build/web/`, CI's `preview/`) | **4.9 MB** + art beside it | a server | phones, the hosted site |
+| consolidated, full (`AshenSpire.html` here, in `build/`, and the root alias) | **~253 MB** | nothing — `file://` | double-click, offline, the art as painted |
+| consolidated, mobile (`AshenSpire-mobile.html` here, in `build/`, and the root alias) | **under 50 MB** (gated) | nothing — `file://` | phones, slow connections, the second download on the site |
+| de-inlined (`build/web/`, CI's `preview/`) | **~8 MB** + art beside it | a server | the hosted site's own page |
 
-91.6% of the single file is 1,929 base64 art URIs, which is the whole 12x
-difference. The de-inlined build fetches art per screen and the browser caches
-it, so a second visit re-downloads none of it; the single file is re-read whole
-every time. Neither replaces the other — ES modules cannot load from `file://`,
+Over 95% of the full single file is base64 art. The mobile file carries the
+SAME files under the SAME `assets/…` keys, read from `assets-mobile/` — a
+committed twin tree that `tools/mobile-art.mjs` shrinks from `assets/` (every
+image with a side of 384 px or more halved, all re-encoded lossy; the rule is
+`tools/mobileart-policy.mjs`). It plays identically and looks softer. The
+budget is the owner's number — under 50 MB — and it is a refusal, not a
+warning: `bundle.mjs --mobile` will not write a file over it, and
+`tools/verify-shipped.mjs` fails a committed one. The de-inlined build fetches
+art per screen and the browser caches it; the single files are re-read whole
+every time. None replaces another — ES modules cannot load from `file://`,
 which is why this bundler exists at all, and the de-inlined shape needs http.
 
-Both carry the SAME art: one sweep of `assets/` either inlines each file or
-copies it, so a file good enough to inline is good enough to serve and a file it
-skips is absent from both. `tools/verify-shipped.mjs` proves it for the single
-file (the art is inside it); `tools/verify-external.mjs` and
-`tools/external-play.mjs` prove it for the other, on disk and in a browser.
+All three carry the SAME set of art: one sweep either inlines each file, inlines
+its twin, or copies it, and `--mobile` refuses a twin tree that is not file for
+file the mirror of `assets/`. `tools/verify-shipped.mjs` proves it for both
+single files (the art is inside them); `tools/mobile-art.mjs --check` proves the
+twin tree; `tools/verify-external.mjs` and `tools/external-play.mjs` prove the
+de-inlined one, on disk and in a browser.
 
 `AshenSpire.html` here is the whole game compiled into **one self-contained HTML
 file** (all JS inlined as a classic script, all CSS inlined, all art inlined as
@@ -39,19 +47,25 @@ operation and `tools/verify-shipped.mjs` verifies both against `build/`.
   output living in source control, which is a second copy of the source, and it
   is kept only for that reason. See *Why this is tracked, and when it stops
   being* below.
-- `AshenSpire-<version>.html` — a version-stamped copy the launcher emits
-  (e.g. `AshenSpire-0.2.0-ashen.html`). A build artifact, git-ignored. One of
-  these was committed at `40c5b21` because the ignore rule still read
-  `EldenSpire-*` after the rename; it has been deleted.
+- `AshenSpire-mobile.html` — the mobile single file's dist twin, **tracked in
+  git** (LFS) for the same reader and the same reason, and on
+  `verify-shipped.mjs`'s allowlist by name. The root carries the byte-identical
+  alias `AshenSpire-mobile.html`.
+- `AshenSpire-<version>.html` and `AshenSpire-mobile-<version>.html` — the
+  version-stamped copies the launcher emits (e.g. `AshenSpire-0.7.1.340.html`).
+  Build artifacts, git-ignored. One of these was committed at `40c5b21` because
+  the ignore rule still read `EldenSpire-*` after the rename; it has been deleted.
 
 ## Rebuild
 
 From the project root:
 
 ```
-node tools/launch.mjs --build-only     # rebuild build/ and refresh root + dist/
-node tools/bundle.mjs                  # ONLY the bundler → build/; root + dist/ untouched
-node tools/verify-shipped.mjs          # check root + dist/ ARE that build, and carry art
+node tools/launch.mjs --build-only     # rebuild build/ (full + mobile) and refresh root + dist/
+node tools/bundle.mjs                  # ONLY the bundler → build/AshenSpire.html; root + dist/ untouched
+node tools/bundle.mjs --mobile         # ONLY the mobile bundler → build/AshenSpire-mobile.html
+node tools/verify-shipped.mjs          # check root + dist/ ARE those builds, carry art, and the mobile one fits
+node tools/mobile-art.mjs              # regenerate assets-mobile/ from assets/ (needs cwebp); --check needs no encoder
 
 node tools/bundle.mjs --external-art --out build/web   # the de-inlined build
 node tools/verify-external.mjs                         # its art is present and byte-identical
@@ -83,12 +97,12 @@ root current-build link pointing at nothing — a broken promise to the one
 reader who cannot rebuild.
 
 So it stays, and CI proves it honest instead of trusting that someone remembered
-to rebuild: `.github/workflows/ci.yml` rebuilds from source and fails the run if
-either `AshenSpire.html` or `dist/AshenSpire.html` is not byte-identical to that
-build.
+to rebuild: `.github/workflows/ci.yml` rebuilds from source and fails the run if any of
+`AshenSpire.html`, `AshenSpire-mobile.html` or their `dist/` twins is not
+byte-identical to that build.
 
-**Removal condition:** both tracked player-facing aliases (`AshenSpire.html` and
-`dist/AshenSpire.html`) are deleted — not amended — the day a release workflow
+**Removal condition:** all four tracked player-facing aliases (`AshenSpire.html`,
+`AshenSpire-mobile.html` and their `dist/` twins) are deleted — not amended — the day a release workflow
 attaches the standalone as a release asset and `README.md` links the release
 instead of these paths. At that point each git copy is a second copy with a live
 alternative, which is the defect this section spends three paragraphs excusing.
