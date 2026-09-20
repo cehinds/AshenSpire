@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { settingsNavigationPlan, stepCategory, settingsRowShowsHelp, SETTINGS_NAV_MODES } from '../src/ui/models/SettingsWorkspaceModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
-import { settingsRow, settingsRowHtml, settingsCategories, categoryHandler } from '../src/ui/screens/settings.js';
+import { settingsRow, settingsRowHtml, settingsCategories, categoryHandler, GENERAL_GROUPS } from '../src/ui/screens/settings.js';
 
 // W1a's budget is the shared W1 category-navigation budget (CategoryNavModel).
 const cfg = wireframeUi.categoryNav;
@@ -98,9 +98,15 @@ test('the real rows: a self-evident row draws no hint, a subtle one keeps it', (
   }
 });
 
-test('Accessibility has its own tab while General contains Display and Audio', () => {
+test('Accessibility has its own tab while General contains Display, Combat and Audio', () => {
   assert.deepEqual(settingsCategories(), ['General', 'Accessibility', 'Advanced']);
-  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(['Display', 'Audio']));
+  // COMBAT IS A GROUP, NOT A FOURTH TAB — that is the whole shape of the fix
+  // for "no good section to customize combat, combat animation": the tab strip
+  // is unchanged at three, and the General tab's own picker grew an entry. The
+  // set is read from GENERAL_GROUPS so a fifth group cannot make this line
+  // disagree with the picker a player uses.
+  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(GENERAL_GROUPS));
+  assert.deepEqual(GENERAL_GROUPS, ['Display', 'Combat', 'Audio']);
   assert.ok(categoryHandler('Accessibility').rows.length > 0);
   assert.ok(categoryHandler('Accessibility').rows.every(row => row.cat === 'Accessibility'));
 });

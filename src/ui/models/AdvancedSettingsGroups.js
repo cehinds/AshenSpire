@@ -50,7 +50,7 @@ function topic(row, section) {
   if (section === 'Interface') {
     if (/movement|Activation|selectionColor/.test(key)) return 'Movement';
     if (/row[A-F]|front|back|formation|groundTilt|groundSkew|gridShape|showFormationGrid/.test(key)) return 'Formation layout';
-    if (/Spawn|SpriteScale|useSprites/.test(key)) return 'Characters';
+    if (/Spawn|SpriteScale/.test(key)) return 'Characters';
     if (/Grid|grid/.test(key)) return 'Formation grid';
     if (/map|walked/.test(key)) return 'Map & HUD';
     if (/settings.*Percent|uprightGate/.test(key)) return 'Window';
