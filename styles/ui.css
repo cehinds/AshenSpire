@@ -965,65 +965,21 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
 /* Settings owns one vertical scrollport: the content pane. The old shell and
-   pane both scrolled, producing the paired scrollbars visible in the report. */
+   pane both scrolled, producing the paired scrollbars visible in the report.
+   The host is `[data-settings-host]` — the container renderSettings filled —
+   so BOTH doors get it: the Settings modal's `.set-body` and the in-run
+   overlay's `.overlay-body`. Scoping these to `.settings-modal` gave the
+   overlay a second scrollbar and none of the chrome below. */
 .modal.settings-modal[data-size='lg'] {
   width: min(76rem, calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
   height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
   max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
 }
 :root[data-short='true'] .modal.settings-modal[data-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
-.settings-modal > .set-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
-.settings-modal > .set-body > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
-.settings-modal .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
-.settings-modal .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
-
-/* THE SAME LAW IN THE OTHER DOOR, AND IT IS THE DEFECT IN THE PHOTOGRAPH.
-   `.settings-modal > .set-body` above stopped the TITLE door's shell scrolling
-   under its pane. The in-run ☰ overlay renders the SAME workspace straight
-   into `.overlay-body` — a `.modal-body`, and `.modal-body` is
-   `overflow: auto` (kit.css "Body — the surface's own") — so that shell went
-   on scrolling and the door wore two thumbs.
-
-   WHY THE SHELL OVERFLOWED AT ALL, since `.as-railed` is `height: 100%` and
-   ought to fit exactly: `renderSettings` PREPENDS its header tools (the search
-   toggle and the options menu) into the same container, and on the overlay's
-   door there is no modal head to put them in. Body content is therefore the
-   tools' height PLUS the full height of the workspace, which overflows by
-   exactly the tools — so the shell gained a bar of its own, ten px inboard of
-   the pane's, both inside one gold border. Measured at dev (e506c697) on
-   ?shot=map with the ☰ open at Settings: `.overlay-body` and `#set-panel` both
-   scrolling, bars 13/13 px at 900x600, 10/10 at 1200x730, 9/10 at 1366x768,
-   the pair 10 px apart at every one. Constantine's crop reads 6 px of thumb at
-   x 48..53 and x 58..63 with the border at x 66: the same ten.
-
-   KEYED ON WHAT IS TRUE, NOT ON THE DOOR'S NAME. The condition is "a scrolling
-   modal body that holds a railed settings workspace", so a third host cannot
-   inherit this by being new — which is what happened here, the title door
-   having been fixed alone. (`.settings-surface`, toggled onto `.overlay-modal`
-   by overlay.js selectTab(), is a class with no rule anywhere in this tree;
-   this is the rule it was reaching for, written where it cannot go stale if
-   that toggle is ever dropped.)
-
-   The pane keeps the scroll, exactly as SPEC §7.2 requires of this surface:
-   "the active content pane is the single vertical scroll owner. Ancestors and
-   nested section lists must not create a second vertical scrollport." */
-.modal-body[data-settings-host]:has(> .set-railed) {
-  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
-}
-/* Everything the host prepends beside the workspace — the header tools, the
-   offline-play button, a notice — keeps its own height; only the workspace
-   flexes, and it gives up the kit's `height: 100%` to do it. `:not()` rather
-   than a later `*` rule, so the two do not depend on which is written last. */
-.modal-body[data-settings-host]:has(> .set-railed) > :not(.set-railed) { flex: 0 0 auto; }
-.modal-body[data-settings-host] > .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
-/* A column flex stretches its items, and this host holds ONE item that is a
-   button rather than a band: Offline play, prepended only on the in-run door.
-   Under the block layout this rule replaces it was 163 px wide; stretched it
-   became 744 px at 900x600 — a control that changed size because the box
-   around it changed type. Named rather than blanket `align-items`, because the
-   header tools and the notice ARE bands and must keep the full width. */
-.modal-body[data-settings-host] > #settings-download { align-self: start; }
-
+.modal > [data-settings-host] { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.modal > [data-settings-host] > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
+[data-settings-host] .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+[data-settings-host] .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
 [data-settings-host] .set-tabs { overflow-y: auto; }
 [data-settings-host] .set-tabs > * { flex-shrink: 0; }
 [data-settings-host] .set-tabs > .set-advanced-head { margin-left: .8rem; padding-left: .6rem; border-left: 1px solid var(--line); }
@@ -1031,8 +987,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-tabs .set-subtab { width: 100%; min-width: 0; text-align: left; white-space: normal; font-size: 1.1rem; }
 [data-settings-host] .set-subtab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 [data-settings-host] .set-panel .set-subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
-.settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
-.settings-modal .set-subtabs > button { flex: 1 0 auto; }
+[data-settings-host] .set-subtabs { display: flex; flex-wrap: wrap; }
+[data-settings-host] .set-subtabs > button { flex: 1 0 auto; }
 .set-section-select, .set-topic-select { display: none; }
 /* Settings has a bounded three-row navigation band on every device. */
 :root [data-settings-host] .set-railed.set-railed[data-cat-nav='selector'] > .set-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .25rem .7rem; gap: .4rem; }
@@ -1047,8 +1003,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-header-tools input[hidden] { display: none; }
 /* One quiet toolbar: equal targets, centered icons, and a single close face. */
 .settings-modal .modal-head-actions { align-items: center; align-self: center; }
-.settings-modal .set-search-toggle,
-.settings-modal .set-options > summary,
+:is(.settings-modal, [data-settings-host]) .set-search-toggle,
+:is(.settings-modal, [data-settings-host]) .set-options > summary,
 .settings-modal .modal-close {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--tap-floor); height: var(--tap-floor);
@@ -1057,14 +1013,24 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   border: 1px solid transparent; border-radius: var(--r-2);
   background: transparent; color: var(--parchment); box-shadow: none;
 }
-.settings-modal .set-header-tools svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.settings-modal .set-options > summary svg { fill: currentColor; stroke: none; }
+:is(.settings-modal, [data-settings-host]) .set-header-tools svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+:is(.settings-modal, [data-settings-host]) .set-options > summary svg { fill: currentColor; stroke: none; }
 .settings-modal .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
-.settings-modal .set-search-toggle:is(:hover, :focus-visible, [aria-expanded='true']),
-.settings-modal .set-options > summary:is(:hover, :focus-visible),
-.settings-modal .set-options[open] > summary,
+:is(.settings-modal, [data-settings-host]) .set-search-toggle:is(:hover, :focus-visible, [aria-expanded='true']),
+:is(.settings-modal, [data-settings-host]) .set-options > summary:is(:hover, :focus-visible),
+:is(.settings-modal, [data-settings-host]) .set-options[open] > summary,
 .settings-modal .modal-close:is(:hover, :focus-visible) { background: var(--panel); border-color: var(--line-soft); color: var(--gold); }
-.settings-modal .set-options > summary::-webkit-details-marker { display: none; }
+:is(.settings-modal, [data-settings-host]) .set-options > summary::-webkit-details-marker { display: none; }
+/* The in-run overlay has no head of its own to hang the toolbar in, so the
+   same tools ride one bar at the top of the panel: Download & saves at the
+   left, search and options at the right. Before this they were two loose
+   blocks stacked above the rail, and the icons were unstyled black-on-black. */
+[data-settings-host] > .set-inline-bar {
+  flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem;
+  padding: .5rem var(--modal-inset); border-bottom: 1px solid var(--line-soft);
+}
+[data-settings-host] > .set-inline-bar > .set-header-tools { margin-left: auto; }
+[data-settings-host] > .set-inline-bar > .set-header-tools.search-open { flex: 1 1 18rem; }
 .set-options { position: relative; }
 .set-options > summary { list-style: none; }
 .set-options-menu { position: absolute; top: 100%; right: 0; z-index: 20; width: 20rem; display: grid; gap: .4rem; padding: .6rem; border: 1px solid var(--line); border-radius: var(--r-2); background: #211d17; }
@@ -1105,7 +1071,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-config-actions { flex-wrap: nowrap; gap: .4rem; }
 [data-settings-host] .set-config-search { flex: 1 1 12rem; min-width: 0; }
 [data-settings-host] .set-tabs .set-subtab { min-height: 2.8rem; padding-block: .45rem; }
-.settings-modal .set-tabs { gap: .35rem; }
+[data-settings-host] .set-tabs { gap: .35rem; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .as-catnav-toggle { display: none; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-row: 1; padding: .6rem; gap: .4rem; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
 :root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs > .set-tab { width: 100%; min-width: 0; padding: .5rem .25rem; text-align: center; }
@@ -1122,8 +1088,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
 @media (max-width: 600px) {
   .modal.settings-modal[data-size='lg'] { width: 100%; border-radius: var(--r-3); }
-  .settings-modal .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
-  .settings-modal .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
+  [data-settings-host] .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
+  [data-settings-host] .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
 }
 /* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
    CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
