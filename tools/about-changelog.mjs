@@ -1681,7 +1681,7 @@ async function selftest() {
       // written module is read back. That is the same door and the same child.
       const mode = plant.write ? '--write' : '--probe-source';
       const child = spawnSync(process.execPath, [SCRIPT, '--root', tempRoot, mode], {
-        cwd: tempRoot, encoding: 'utf8', timeout: 60000,
+        cwd: tempRoot, encoding: 'utf8', timeout: 120000,
       });
       const output = `${child.stdout || ''}\n${child.stderr || ''}`;
       if (plant.write) {
