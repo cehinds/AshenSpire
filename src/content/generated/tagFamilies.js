@@ -113,5 +113,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Grant",
     "blurb": "Where a starting card comes from. No collection: like `effect`, this family exists only to declare a vocabulary — the order bound cards are dealt in."
+  },
+  {
+    "family": "location",
+    "source": "",
+    "scopeField": "",
+    "label": "Location",
+    "blurb": "Where a run stops: a classic node type (shrine), the Unknown node's camp, an atlas rest service's type (inn, chapel) or one atlas node by id. No collection — the ids are the map's, checked by model/locations.js. Mounted from arrival to departure (engine/locations.js)."
   }
 ];

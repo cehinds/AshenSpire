@@ -1,8 +1,28 @@
 # Credits & Asset Licenses
 
+## Opening sequence art (2026-09-19)
+
+Twelve original desktop/portrait paintings and four transparent class
+adventurers generated with OpenAI's built-in Image Generation tool using the
+project's intro and Crownfall paintings and the owner's weapon-placement
+annotation as references. Source/provenance: `art/prologue-2026-09-19/prompts.json`.
+Runtime art: `assets/prologue/`, compressed WebP with alpha preserved. Original
+PNG masters remain in the author's local art archive. No third-party game
+assets were used and no third-party asset license is claimed.
+
 Every third-party asset shipped in this repository is listed here with its source and license. **A PR that adds an asset without a row in this file does not merge.**
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
+
+## Painted relic illustrations
+
+The twelve 256px transparent WebPs in `assets/relics/` are project-owned
+AI-generated illustrations created with built-in OpenAI imagegen.
+Sources, exact prompts and export manifests are preserved in
+[relic pack 01](art/relic-icons-pack-01/README.md),
+[relic pack 02](art/relic-icons-pack-02/README.md), and
+[relic pack 03](art/relic-icons-pack-03/README.md).
+No third-party artwork was used and no third-party license is claimed.
 
 ## Painted enemy sprites from the Unity fork
 
@@ -179,8 +199,19 @@ controlled independently from the doorway and sconces.
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
 
+### Greatsword outfit suites (2026-09-19)
+
+Thirty-one original atlas edits generated with the built-in image_gen tool from the project's approved Reaver motion and existing class/outfit references. Full prompts and PNG masters are in `art/greatsword-outfits-2026-09-19/`; WebP exports cover 32 appearances including the unchanged approved Reaver. Three armor aliases reuse catalog-authorized artwork. No third-party downloads or asserted CC license.
+
+## Sword and shield outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generated with the built-in image_gen tool using the project's class/outfit references. Full prompts, PNG masters and adaptive extraction metadata are retained in `art/sword-shield-outfits-2026-09-19/`, including `prompts-no-aura.json`. The 512 runtime WebPs cover 32 appearances and 35 armor entries. Canonical right-sword/left-shield paintings are shared by reversed hand selectors; no separately painted hand swap is claimed. No third-party artwork was downloaded and no third-party license is claimed.
+
 ### Shared armor inventory art (2026-09-19)
-Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed. Equipped appearances reuse the corresponding existing painted outfit sprites.
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
+
+Sixteen class-specific shared-outfit atlases were generated with the same tool from the existing class paintings and approved armor references. Sources, prompts, normalization script and review sheet: art/class-outfit-sprites-2026-09-19/. Runtime exports: assets/painted-outfits/shared-*/. Each atlas contains eight poses; no third-party asset license is claimed.
+
 ## Playable legacy dungeon environments (2026-09-19)
 
 Three maps and twelve original scene paintings generated with OpenAI imagegen

@@ -9,6 +9,12 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+Install Git LFS before cloning, or run `git lfs install` and `git lfs pull`
+in an existing checkout. The three generated standalone HTML aliases use LFS
+because the full artwork exceeds GitHub's regular-file size limit. Source art
+stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
+CI hydrates these files, and historical build readers verify their content hashes.
+
 `node tools/launch.mjs --build-only` produces the standalone aliases and an
 external-art web edition in `build/web/`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
@@ -30,6 +36,13 @@ compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
+`ui-studio/` is a standalone local editor for that JSON (see
+[ui-studio/README.md](ui-studio/README.md)): `node ui-studio/server.mjs` draws
+the approved wireframes at real device sizes on a snapping grid, edits any
+value with its unit and variables, validates the tree with `compileEntries`
+before writing, keeps backups, and opens the live game at the chosen size.
+`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
+`node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
@@ -552,13 +565,13 @@ validation refusals and the dialogue model.
 
 | Set | Where defined | Contents |
 |---|---|---|
-| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage |
-| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat, swapClass |
-| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
-| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
+| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, dodgeRoll, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, restoreMana, restoreStamina, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage, stagger, arcaneBuildup |
+| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, addFlaskCapacity, loseMaxHpPct, startCombat, swapClass, refillFlasks |
+| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
+| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
 | Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
+| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
@@ -736,3 +749,16 @@ Combat cards select before committing. A selected card retains its fan position 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
 Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+
+## Opening sequence
+
+Advanced → Opening sequence configures all six scenes, class lines, captions,
+controls, holds, transitions and tint. The authored data is in
+`content/config/ui/screens/prologue.json`; rebuild with the config compiler.
+`src/model/prologue.js` projects settings without gameplay RNG. The shared
+`mountPrologue` renderer serves new solo games and the settings preview.
+`run.prologue` stores a version, pending/complete status and scene index; new
+runs snapshot the effective overrides in the existing advanced-config snapshot.
+Old saves bypass the opening. The completion callback persists before revealing
+the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
+immutability, class lines, destination, and interrupted save recovery.

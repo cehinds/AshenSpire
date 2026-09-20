@@ -3,6 +3,7 @@
 // settings are projected into a fresh bundle for a new run.
 
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
+import { prologueRows, prologuePresetOverrides } from './prologue.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -43,6 +44,37 @@ function numberDomain(value) {
   };
 }
 
+// A generated row's domain is read off its shipped value (numberDomain), which
+// knows nothing of what validate.js will accept. These paths do: a percent
+// that validation caps at 100, a cap that must be positive. The row says so,
+// so a value the editor accepts is a value a run can start on.
+const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
+const BALANCE_DOMAINS = Object.freeze({
+  'rest.hpSmallPct': PERCENT,
+  'rest.hpPartialPct': PERCENT,
+  'rest.mana.floorPct': PERCENT,
+  'atlas.townsPerActMax': Object.freeze({ min: 1 }),
+});
+
+// A balance path this build renamed keeps its stored override: the old key is
+// read as the new one wherever settings are read (the configured bundle, the
+// snapshot, an imported file), and the new key wins when both are present.
+// `shrine.healPct` became `rest.hpPartialPct` (plan phase 7, SPEC §13.4j).
+const LEGACY_BALANCE_KEYS = Object.freeze({
+  [`${ADVANCED_CONFIG_PREFIX}balance.shrine.healPct`]: `${ADVANCED_CONFIG_PREFIX}balance.rest.hpPartialPct`,
+});
+
+export function currentAdvancedKey(key) {
+  return LEGACY_BALANCE_KEYS[key] ?? key;
+}
+
+function withoutSupersededLegacy(entries) {
+  const present = new Set(entries.map(([key]) => key));
+  return entries
+    .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
+    .map(([key, value]) => [currentAdvancedKey(key), value]);
+}
+
 function balanceGroup(path) {
   if (/^(level|starting|energy$|draw$|handMax$)/.test(path)) return 'Progression';
   if (/^(rewards|shop|smith|equipment|customMods|graceRefill|flask)/.test(path)) return 'Rewards';
@@ -54,7 +86,7 @@ function balanceGroup(path) {
 function leafRows(value, path = [], rows = []) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? numberDomain(value) : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -235,11 +267,11 @@ const LEGACY_BALANCE_PATHS = new Set([
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return [...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
+  return [...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
-  const entries = Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX));
+  const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
   if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
@@ -278,7 +310,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
-  for (const [key, raw] of Object.entries(settings)) {
+  for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
     if (!row?.configPath) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
@@ -400,6 +432,9 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
+  if (file?.kind === 'AshenSpire prologue art') file = {
+    schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION, game: 'Ashen Spire', overrides: prologuePresetOverrides(file),
+  };
   if (!file || file.game !== 'Ashen Spire' || file.schemaVersion !== ADVANCED_CONFIG_SCHEMA_VERSION
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
@@ -411,7 +446,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of Object.entries(file.overrides)) {
+  for (const [key, raw] of withoutSupersededLegacy(Object.entries(file.overrides))) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
@@ -423,7 +458,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
       valid = typeof value === 'number' && Number.isFinite(value)
         && value >= (row.min ?? 0) && value <= (row.max ?? 100)
         && (!row.integer || Number.isInteger(value));
-    } else if (typeof row.def === 'string') valid = typeof value === 'string' && value.length <= 1000;
+    } else if (typeof row.def === 'string') valid = typeof value === 'string' && value.length <= (row.maxLength ?? 1000);
     if (!valid) throw new Error(`Invalid value for ${row.label || key}. Nothing was imported.`);
     changes[row.key] = value;
   }

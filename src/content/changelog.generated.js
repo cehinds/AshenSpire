@@ -3,6 +3,136 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1212",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Sword and shield now share the approved motion across every class and armour",
+    "detail": "All four classes and 35 armour entries select their own appearance from 32 painted suites when equipping a sword and shield. The eleven-step attack uses the aura-free buff pose, holds ATK05, then returns through defensive stance to Ready. Defend, hurt, cast, buff, stances, portrait and conversation remain separately configurable. The labeled gallery shows the same sequence. The complete offline build uses large-file storage to retain the approved artwork without reducing its quality.",
+    "build": "0.7.1.310",
+    "pullRequest": 1212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1212"
+  },
+  {
+    "id": "pr-1211",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your journey now opens with six painted scenes you can rewrite",
+    "detail": "After character creation, see the cold hearths, the unfinished burning at the hut, your class’s reason to leave and the road to your actual starting place. Set forth reveals the first playable map. Advanced → Opening sequence lets you edit every line, scene hold, transition, motif wash, character shadow strength and traveller placement, with separate class dialogue and a preview. Transitions default to five seconds; all changes travel with configuration exports, and earlier art-studio exports can be loaded there too. Portrait artwork keeps the story readable on phones. Each traveller and its ground shadow share one transparent layer, including character and scene WebP downloads. The new paintings and existing environment/animation plates are compressed while preserving dimensions and transparency, keeping the standalone game below the repository’s file limit.",
+    "build": "0.7.1.308",
+    "pullRequest": 1211,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1211"
+  },
+  {
+    "id": "pr-1210",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your Poise bar now fills as the blows land, and a party's receipts name who was hit",
+    "detail": "The Poise meter went live last change, but during the enemy's turn the bar sat still and then reset, because the paced view had no case for an impact; it now follows each blow, including overflow and the larger threshold after a Stagger. Changing equipment or loading an older save preserves earned Poise growth. Equipment and creation popups also stay correctly positioned at different interface zoom levels. Dungeon artwork uses smaller WebP runtime copies while the original paintings are preserved, keeping the standalone build within the hosting limit. In co-op the impact receipts carry the seat that was struck, so a hook meant for the player who was hit no longer fires for their teammates.",
+    "build": "0.7.1.304",
+    "pullRequest": 1210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1210"
+  },
+  {
+    "id": "pr-1203",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Mana is never a card's only price, a focus decides what its break does, and you can be Staggered too",
+    "detail": "Every card that costs Mana also costs an action and stamina — the signature arts now ask a point of stamina beside their Mana, and a few free upgraded powers drop their Mana line instead. Your staff, rod or branch now decides what breaking a foe's Arcane Exposure earns: the plain staves batter the broken foe's Poise, the Blight Rod and the Gorefire Brand build Exposure faster, the Goldbough Branch spreads half the break to every other foe. And your own Poise meter is live: enemy impact fills it, and when it fills you are Staggered — 2 Vulnerable, 2 Weak, and one fewer action next turn.",
+    "build": "0.7.1.295",
+    "pullRequest": 1203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1203"
+  },
+  {
+    "id": "pr-1207",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Only living enemies accept your aim",
+    "detail": "A defeated enemy can no longer catch a click, tap, keyboard focus or potion aim. Its body and name cannot activate an attack or targeted potion, and old target highlights disappear when it falls.",
+    "build": "0.7.1.290",
+    "pullRequest": 1207,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1207"
+  },
+  {
+    "id": "pr-1208",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "One tap readies a combat card for its target",
+    "detail": "Clicking a card title now fully selects it on the first tap, so the next click on a valid target plays it immediately. The card no longer stops at an inspection highlight when its text redraws under the pointer. Press-and-hold and flick-to-play keep working, and cancelled or moved presses do not become selecting taps.",
+    "build": "0.7.1.288",
+    "pullRequest": 1208,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1208"
+  },
+  {
+    "id": "pr-1206",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Four more relics have painted identities, and every relic has a lore-and-size preview",
+    "detail": "Ivory Comb, Blessed Dew, Gravetender's Bell and Wyrm Heart now use their own artwork throughout the shared relic displays. The review gallery includes all 63 relics in four sizes, existing lore and source notes, search, artwork filters and working vertical scrolling. Effects, drop rules and saves are unchanged.",
+    "build": "0.7.1.284",
+    "pullRequest": 1206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1206"
+  },
+  {
+    "id": "pr-1205",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The roads tell the stories of the places they cross",
+    "detail": "The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.",
+    "build": "0.7.1.282",
+    "pullRequest": 1205,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1205"
+  },
+  {
+    "id": "pr-1204",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Every class and armour keeps its own look while using the approved greatsword motion",
+    "detail": "Equipping a greatsword with the other hand empty now selects the nine-step attack and matching defend, hurt, cast, buff, stance and portrait art for all four classes and all 35 current armour entries. Thirty-two distinct appearances share one configurable motion profile, including separate paintings of each shared armour for each class. The original Reaver sequence stays intact. A synchronized gallery shows every outfit with labeled playback steps, source pose references and portraits. Other weapon combinations keep their existing presentation.",
+    "build": "0.7.1.280",
+    "pullRequest": 1204,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1204"
+  },
+  {
+    "id": "pr-1173",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Holding a card now asks where it should go",
+    "detail": "In combat, holding a card that needs a target selects it and shows its legal targets, and the effect lands once when you choose one — the same flow a tap opens, so no hold plays a targeted card on its own. A card with no target still plays from a hold, the hold's fill starts the moment you press instead of after a hidden delay, and tapping, dragging, keyboard and controller play are unchanged.",
+    "build": "0.7.1.278",
+    "pullRequest": 1173,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1173"
+  },
+  {
+    "id": "pr-1198",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "A studio for the game's layout, with the phones and desktops it will be played on",
+    "detail": "Nothing you see changes in play. A new local editor, beside the content editor and the pose studio, draws the combat, map, conversation and shop screens as the wireframes the layout file describes, at the real size of a desktop, an iPad, an iPhone or a Galaxy, and lets the numbers be dragged on a snapping grid rather than typed: how tall the top bar is, where the floor sits, how wide a portrait may be. Every size shows how the game itself will decide to lay out at that screen, the whole set can be compared side by side, and the real game can be opened at that size in the same window. A change is checked by the game's own build rule before it is written, and the file keeps its old bytes wherever it was not touched. Free wireframe sketches, with a different arrangement per screen size, save as their own files.",
+    "build": "0.7.1.275",
+    "pullRequest": 1198,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1198"
+  },
+  {
+    "id": "pr-1195",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Resting is now something a place does, not something the Shrine does",
+    "detail": "Every stop on the road — the Shrine, a rough camp off an Unknown node, a town's inn, its chapel — carries its own set of what it restores: the Shrine heals part of your HP, refills your flasks on arrival and offers the Smith and Level-up; a camp heals less and offers nothing; an inn heals you and your Mana to full. Every rest recovers Mana now, by default to half your maximum or to full if you already stand there. Ember Fragment reads \"Resting heals 15% more\" and works everywhere; the Wyrm Heart still forbids the Shrine's rest but lets you sleep at an inn. Seeded routes hold at most one town per act.",
+    "build": "0.7.1.274",
+    "pullRequest": 1195,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1195"
+  },
+  {
+    "id": "pr-1202",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Eight relics now have painted artwork throughout the game",
+    "detail": "Forsaken Medallion, Starstone Shard, Cutpurse's Coin, Gold Figurine, Golden Sprout, Cracked Lantern, Bloodstained Chalice and Crown of Stitches show their own art in cards, the HUD, character creation and smithing. Relic inspection shows the original lore. Other relics retain their glyphs; effects and drop rules are unchanged.",
+    "build": "0.7.1.235",
+    "pullRequest": 1202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1202"
+  },
+  {
     "id": "pr-1200",
     "date": "2026-09-19",
     "group": "2026-09-19",

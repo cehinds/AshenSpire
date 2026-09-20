@@ -22,6 +22,13 @@ export const balance = {
     siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
     siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
     overchargeBuildupMult: 1.5, // PROVISIONAL — buildup per hit × (wand `overcharge`)
+    // Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
+    staggerBreakPoise: 6, // PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
+    resonanceSpreadPct: 50, // PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
+    // A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
+    // least this on a card that costs Mana): an empty caster still works toward
+    // a break with action-only spells, a Mana spell works faster.
+    buildupPerManaSpell: 5, // PROVISIONAL
   },
   energy: 3,
   draw: 5,
@@ -51,7 +58,29 @@ export const balance = {
   poise: {
     growthMult: 1.25,
     onFill: [{ op: 'applyStatus', target: 'self', status: 'staggered', stacks: 2 }],
+    // THE PLAYER'S VESSEL (plan phase 8, proposal §7.3): its max is Constitution ×
+    // this, plus the worn body armour's poiseThreshold, plus relic
+    // poiseThresholdAdd (model/statProjection.js playerPoiseThresholdReceipt).
+    // A derived-stat row for it waits for phase 9's ruleset, which rewrites
+    // every derived formula at once; until then the coefficient lives here.
+    playerPerConstitution: 1, // PROVISIONAL
+    // OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
+    // blow that draws blood rocks the player by this much; the ruleset's
+    // weapon impact replaces it wherever a ruleset is handed in.
+    playerImpactPerHit: 2, // PROVISIONAL
   },
+
+  // WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter
+  // filling takes this many actions off the NEXT turn and applies these
+  // statuses (ordinary decay). The engine reads the map; it names no status.
+  stagger: {
+    player: { actionLoss: 1, statuses: { vulnerable: 2, weak: 2 } },
+  },
+
+  // MANA IS THE THIRD COST LINE, NEVER THE FIRST (plan phase 8, proposal §7.1):
+  // a card that costs Mana costs at least this much action and stamina too.
+  // validate.js refuses a card under either floor by name.
+  mana: { minActionCost: 1, minStaminaCost: 1 },
 
   // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
   // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
@@ -160,7 +189,27 @@ export const balance = {
     sellFraction: 0.5,
   },
 
-  shrine: { healPct: 35 },
+  // WHAT A REST RESTORES is the location's tag set (plan phase 7): a place
+  // carries restHpSmall / restHpPartial / restHpFull and restMana, and each
+  // tag's rule reads its number here (variableBindings.csv). `mana.mode` is
+  // the default `restMana` behaviour, resolved at the door (engine/locations.js)
+  // to the fixed-mode tag it names:
+  //   flat         restore `flat` points
+  //   floorOrFull  restore TO `floorPct` of max, or to full when already there
+  //   full         restore to max
+  // A location that wants another amount carries restManaFlat / restManaFloor
+  // / restManaFull itself instead of restMana.
+  rest: {
+    hpSmallPct: 25,
+    hpPartialPct: 35,
+    mana: { mode: 'floorOrFull', flat: 3, floorPct: 50 },
+  },
+
+  // The seeded route's town budget (plan phase 7): at most this many towns —
+  // the atlas's start and city nodes — per difficulty act, so attrition
+  // between towns is the run's tension. generateJourney rejects a route over
+  // it and rolls again.
+  atlas: { townsPerActMax: 1 },
 
   // Smithing promotes the owned armament, not one card copy. The model owns
   // the transaction; balance owns the tier ceiling, price, and reward faucet.

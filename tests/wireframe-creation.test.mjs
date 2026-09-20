@@ -86,6 +86,25 @@ test('every --creation-* property the CSS reads comes from config, and a bad val
   assert.throws(() => creationCssProperties(broken), /choiceCompactGapRem must be > 0/);
 });
 
+test('the class preview mode and the unfolded card geometry are config', async () => {
+  const { creationClassPreview, creationUnfoldGeometry, creationCssProperties } = await import('../src/ui/models/CreationWorkspaceModel.js');
+  const config = uiConfig.screens.creation;
+  assert.equal(creationClassPreview(), config.behavior.classPreview);
+  assert.equal(creationClassPreview({ behavior: {} }), 'column', 'unset, the preview keeps its column');
+  assert.throws(() => creationClassPreview({ behavior: { classPreview: 'drawer' } }), /must be one of/);
+  const geometry = creationUnfoldGeometry();
+  assert.equal(geometry.portraitShare + geometry.summaryShare, 100);
+  assert.ok(geometry.heightVh > 0);
+  assert.throws(() => creationUnfoldGeometry({ sizing: { unfoldPortraitShare: 40, unfoldSummaryShare: 70, unfoldHeightVh: 30, unfoldMinRem: 17 } }), /must be 100/);
+  assert.ok(geometry.minRem > 0);
+  assert.throws(() => creationUnfoldGeometry({ sizing: { unfoldPortraitShare: '30', unfoldSummaryShare: 70, unfoldHeightVh: 30, unfoldMinRem: 17 } }), /must be a number/);
+  const properties = creationCssProperties();
+  if (config.behavior.classPreview === 'unfold') {
+    assert.equal(properties['--creation-unfold-portrait'], `${config.sizing.unfoldPortraitShare}fr`);
+    assert.equal(properties['--creation-unfold-height'], `${config.sizing.unfoldHeightVh}vh`);
+  }
+});
+
 test('choice descriptions clip to the config lines and the fit rule is data', async () => {
   const { creationChoiceLines, creationFitsChoices } = await import('../src/ui/models/CreationWorkspaceModel.js');
   assert.equal(creationChoiceLines(), uiConfig.screens.creation.sizing.choiceDescriptionLines);

@@ -27,7 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json fafe847869663431
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 4b57264c7bf70caf
+// source content/config/ui/presentation/equipmentAnimations.json 83d45de9d5c9fe83
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -35,7 +35,7 @@
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
-// source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
+// source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
@@ -43,7 +43,8 @@
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
-// source content/config/ui/screens/creation.json c02af0486359061f
+// source content/config/ui/screens/creation.json 4b01329f1c288b81
+// source content/config/ui/screens/prologue.json 7276540476429eef
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -728,7 +729,7 @@ export const uiConfig = deepFreeze({
     "creation": {
       "sizing": {
         "headPortraitRem": 3.5,
-        "attributeColumnsWide": 2,
+        "attributeColumnsWide": 1,
         "attributeColumnsNarrow": 1,
         "attributeNarrowBelowRem": 64,
         "choiceDescriptionLines": 2,
@@ -743,7 +744,11 @@ export const uiConfig = deepFreeze({
         "choiceCompactPadRem": 0.4,
         "choiceCompactGapRem": 0.4,
         "choiceBarePadRem": 0.3,
-        "choiceBareGapRem": 0.3
+        "choiceBareGapRem": 0.3,
+        "unfoldPortraitShare": 30,
+        "unfoldSummaryShare": 70,
+        "unfoldHeightVh": 30,
+        "unfoldMinRem": 17
       },
       "behavior": {
         "categories": [
@@ -752,7 +757,179 @@ export const uiConfig = deepFreeze({
           "equipment",
           "review"
         ],
-        "fitChoicesToPane": true
+        "fitChoicesToPane": true,
+        "classPreview": "unfold"
+      }
+    },
+    "prologue": {
+      "components": {
+        "sequence": {
+          "schemaVersion": 1,
+          "kind": "AshenSpire prologue art",
+          "revision": "2026-09-19-v1",
+          "labels": {
+            "continue": "Continue",
+            "setForth": "Set forth",
+            "pause": "Pause",
+            "resume": "Resume",
+            "replay": "Replay",
+            "skip": "Skip opening",
+            "settings": "Settings",
+            "close": "Return to settings"
+          },
+          "classes": {
+            "reaver": {
+              "name": "Reaver",
+              "item": "Sword",
+              "line": "The Fell Courtyard gate fell. My watch never ended."
+            },
+            "starseer": {
+              "name": "Starseer",
+              "item": "Staff",
+              "line": "I took his charts. I still owe him an answer."
+            },
+            "rogue": {
+              "name": "Rogue",
+              "item": "Dagger",
+              "line": "The Court Surgeon kept my sister. I kept his trail."
+            },
+            "herald": {
+              "name": "Herald",
+              "item": "Holy book",
+              "line": "The fire stopped on me. The Chapel still owes an answer."
+            }
+          },
+          "scenes": [
+            {
+              "id": "warmth",
+              "name": "Remembered warmth",
+              "seconds": 9,
+              "speaker": "Hamlet witness",
+              "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
+              "effect": "fade",
+              "character": false
+            },
+            {
+              "id": "year",
+              "name": "The stopped year",
+              "seconds": 11,
+              "speaker": "Hamlet witness",
+              "text": "The tower bells fell silent.\nOur fields have given us nothing since.",
+              "effect": "push",
+              "character": false
+            },
+            {
+              "id": "night",
+              "name": "Last night",
+              "seconds": 14,
+              "speaker": "Hamlet witness",
+              "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
+              "effect": "fade",
+              "character": false
+            },
+            {
+              "id": "carry",
+              "name": "What you carry",
+              "seconds": 10,
+              "speaker": "{class}",
+              "text": "{classLine}",
+              "effect": "fade",
+              "character": true,
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42
+                }
+              }
+            },
+            {
+              "id": "road",
+              "name": "The road out",
+              "seconds": 10,
+              "speaker": "Hamlet witness",
+              "text": "Bring us a spring, if the hearths still can.",
+              "effect": "push",
+              "character": true,
+              "actor": {
+                "desktop": {
+                  "x": 25,
+                  "y": 83,
+                  "height": 43
+                },
+                "mobile": {
+                  "x": 29,
+                  "y": 80,
+                  "height": 29
+                }
+              }
+            },
+            {
+              "id": "step",
+              "name": "The first step",
+              "seconds": 6,
+              "speaker": "{name}",
+              "text": "I will find a road to the hearths.",
+              "location": "{location}",
+              "effect": "fade",
+              "character": true,
+              "actor": {
+                "desktop": {
+                  "x": 30,
+                  "y": 84,
+                  "height": 40
+                },
+                "mobile": {
+                  "x": 31,
+                  "y": 81,
+                  "height": 28
+                }
+              }
+            }
+          ],
+          "presentation": {
+            "transitionSeconds": 5,
+            "speed": 1,
+            "tintSource": "accent",
+            "accent": "gold",
+            "characterTint": "gold",
+            "wash": 0.14,
+            "reduceMotion": false,
+            "playback": "every",
+            "autoAdvance": true,
+            "customTint": "#c9a227",
+            "previewClass": "reaver",
+            "previewScene": "warmth",
+            "shadowStrength": 0.7
+          },
+          "palettes": {
+            "accent": {
+              "gold": "#c9a227",
+              "crimson": "#c1453a",
+              "frost": "#7fa8c9",
+              "verdant": "#8bae54",
+              "violet": "#a06cc8"
+            },
+            "character": {
+              "gold": "#c9a227",
+              "ember": "#c9502e",
+              "frost": "#7fa8c9",
+              "rot": "#b5541c",
+              "grace": "#9fc3e8"
+            }
+          }
+        }
+      },
+      "sizing": {
+        "mobileBreakpoint": 760
+      },
+      "motion": {
+        "zoom": 1.035
       }
     },
     "shop": {
@@ -3039,14 +3216,996 @@ export const uiConfig = deepFreeze({
             "rightGroup": "greatsword",
             "leftGroup": "empty",
             "setId": "reaverGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaverGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-vigilGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-vigilGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-oathswornGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-oathswornGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-wardenGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseerGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseerGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-eclipseGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-eclipseGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-starlitGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-astralGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-astralGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "heraldGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "heraldGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-ossuaryGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-ossuaryGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-emberhabitGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-emberhabitGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-pilgrimGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-pilgrimGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogueGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogueGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-nightveilGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-duelistGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-duelistGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-shadowGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-shadowGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-wardenGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-starlitGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-nightveilGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-wayfarerPlateGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-nightweaveGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-nightweaveGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-nightweaveGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-nightweaveGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-nightweaveGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-nightweaveGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-nightweaveGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-nightweaveGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-riteVestmentsGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaver-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "reaver-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "starseer-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "starseer-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "herald-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "herald-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "rogue-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "greatsword",
+            "setId": "rogue-gutterLeathersGreatsword"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaverSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaverSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-vigilSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-vigilSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-oathswornSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-oathswornSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-wardenSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-wardenSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseerSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseerSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-eclipseSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-eclipseSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-starlitSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-starlitSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-astralSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-astralSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "heraldSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "heraldSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-ossuarySwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-ossuarySwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-emberhabitSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-emberhabitSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-pilgrimSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-pilgrimSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogueSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogueSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-nightveilSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-nightveilSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-duelistSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-duelistSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-shadowSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-shadowSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-wardenSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-wardenSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-starlitSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-starlitSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-nightveilSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-nightveilSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-wayfarerPlateSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-nightweaveSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-nightweaveSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-nightweaveSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-nightweaveSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-nightweaveSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-nightweaveSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-nightweaveSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-nightweaveSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-riteVestmentsSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "reaver-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "reaver-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "starseer-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "starseer-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "herald-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "herald-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "sword",
+            "leftGroup": "shield",
+            "setId": "rogue-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "shield",
+            "leftGroup": "sword",
+            "setId": "rogue-gutterLeathersSwordShield"
           }
         ],
         "sets": {
           "reaverGreatsword": {
-            "normalLungeMs": 260,
+            "motionProfile": "greatswordTwoHand",
             "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 140,
+                  "x1": 543,
+                  "y1": 599
+                }
+              },
               "ATK-01": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-01.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-01.webp",
                 "box": {
                   "x0": 52,
                   "y0": 261,
@@ -3055,7 +4214,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-02": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-02.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-02.webp",
                 "box": {
                   "x0": 95,
                   "y0": 146,
@@ -3064,7 +4223,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-03": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-03.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-03.webp",
                 "box": {
                   "x0": 60,
                   "y0": 104,
@@ -3073,7 +4232,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-04": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-04.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-04.webp",
                 "box": {
                   "x0": 99,
                   "y0": 120,
@@ -3082,7 +4241,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-05": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-05.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-05.webp",
                 "box": {
                   "x0": 34,
                   "y0": 251,
@@ -3091,7 +4250,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-06": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-06.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-06.webp",
                 "box": {
                   "x0": 28,
                   "y0": 286,
@@ -3100,7 +4259,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "ATK-07": {
-                "file": "assets/animations/reaver/greatsword-v2/ATK-07.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/ATK-07.webp",
                 "box": {
                   "x0": 104,
                   "y0": 118,
@@ -3108,26 +4267,8 @@ export const uiConfig = deepFreeze({
                   "y1": 599
                 }
               },
-              "BUFF": {
-                "file": "assets/animations/reaver/greatsword-v2/BUFF.webp",
-                "box": {
-                  "x0": 159,
-                  "y0": 302,
-                  "x1": 480,
-                  "y1": 599
-                }
-              },
-              "CAST": {
-                "file": "assets/animations/reaver/greatsword-v2/CAST.webp",
-                "box": {
-                  "x0": 98,
-                  "y0": 159,
-                  "x1": 525,
-                  "y1": 599
-                }
-              },
               "DEFEND": {
-                "file": "assets/animations/reaver/greatsword-v2/DEFEND.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/DEFEND.webp",
                 "box": {
                   "x0": 95,
                   "y0": 146,
@@ -3136,7 +4277,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "HURT": {
-                "file": "assets/animations/reaver/greatsword-v2/HURT.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/HURT.webp",
                 "box": {
                   "x0": 85,
                   "y0": 159,
@@ -3144,17 +4285,17 @@ export const uiConfig = deepFreeze({
                   "y1": 599
                 }
               },
-              "PORTRAIT": {
-                "file": "assets/animations/reaver/greatsword-v2/PORTRAIT.webp",
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver/CAST.webp",
                 "box": {
-                  "x0": 0,
-                  "y0": 10,
-                  "x1": 629,
-                  "y1": 639
+                  "x0": 98,
+                  "y0": 159,
+                  "x1": 525,
+                  "y1": 599
                 }
               },
               "STANCE-AGGRESSIVE": {
-                "file": "assets/animations/reaver/greatsword-v2/STANCE-AGGRESSIVE.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/STANCE-AGGRESSIVE.webp",
                 "box": {
                   "x0": 76,
                   "y0": 250,
@@ -3163,7 +4304,7 @@ export const uiConfig = deepFreeze({
                 }
               },
               "STANCE-DEFENSIVE": {
-                "file": "assets/animations/reaver/greatsword-v2/STANCE-DEFENSIVE.webp",
+                "file": "assets/animations/greatsword-outfits/reaver/STANCE-DEFENSIVE.webp",
                 "box": {
                   "x0": 148,
                   "y0": 219,
@@ -3171,16 +4312,9266 @@ export const uiConfig = deepFreeze({
                   "y1": 599
                 }
               },
-              "STANCE-READY": {
-                "file": "assets/animations/reaver/greatsword-v2/STANCE-READY.webp",
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver/BUFF.webp",
                 "box": {
-                  "x0": 125,
-                  "y0": 140,
-                  "x1": 543,
+                  "x0": 159,
+                  "y0": 302,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 0,
+                  "y0": 10,
+                  "x1": 629,
+                  "y1": 639
+                }
+              }
+            }
+          },
+          "reaver-vigilGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 104,
+                  "x1": 545,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 129,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 164,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 104,
+                  "x1": 540,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 84,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 99,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 121,
+                  "x1": 561,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 89,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 66,
+                  "x1": 537,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 64,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 64,
+                  "x1": 605,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 54,
+                  "x1": 608,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 128,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 50,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
                   "y1": 599
                 }
               }
+            }
+          },
+          "reaver-oathswornGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 131,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 120,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 89,
+                  "x1": 557,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 85,
+                  "x1": 529,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 50,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 84,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 50,
+                  "x1": 574,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 50,
+                  "x1": 610,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 51,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 66,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 50,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 50,
+                  "x1": 580,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 106,
+                  "x1": 495,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 105,
+                  "x1": 515,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-wardenGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 64,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 110,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 155,
+                  "x1": 623,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 134,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 164,
+                  "x1": 538,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 96,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 108,
+                  "x1": 554,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 122,
+                  "x1": 477,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 59,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 71,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 62,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 84,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 72,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 94,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseerGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 92,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 62,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 149,
+                  "x1": 625,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 28,
+                  "y0": 145,
+                  "x1": 481,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 92,
+                  "x1": 523,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 92,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 92,
+                  "x1": 571,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 152,
+                  "x1": 484,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 161,
+                  "x1": 548,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer/HURT.webp",
+                "box": {
+                  "x0": 174,
+                  "y0": 60,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer/CAST.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 84,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 59,
+                  "x1": 559,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 154,
+                  "x1": 445,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer/BUFF.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 98,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 0,
+                  "x1": 615,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-eclipseGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 149,
+                  "x1": 523,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 59,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 141,
+                  "x1": 611,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 116,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 54,
+                  "x1": 487,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 60,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 54,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 50,
+                  "x1": 527,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 102,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 72,
+                  "x1": 540,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 76,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 59,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 228,
+                  "x1": 545,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 68,
+                  "x1": 501,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-starlitGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 86,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 160,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 115,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 76,
+                  "x1": 523,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 49,
+                  "y0": 92,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 80,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 51,
+                  "x1": 567,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 76,
+                  "x1": 580,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 54,
+                  "x1": 530,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 54,
+                  "x1": 571,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 75,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 72,
+                  "x1": 618,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-astralGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 96,
+                  "x1": 540,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 99,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 92,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 120,
+                  "x1": 493,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 114,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 101,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 108,
+                  "x1": 547,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 105,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 71,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 110,
+                  "x1": 597,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 50,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 75,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 105,
+                  "x1": 559,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 26,
+                  "y0": 0,
+                  "x1": 614,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "heraldGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 101,
+                  "x1": 605,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-01.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 189,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-02.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 136,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-03.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 80,
+                  "x1": 535,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-04.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 90,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-05.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 118,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-06.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 98,
+                  "x1": 574,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 60,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald/DEFEND.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 92,
+                  "x1": 477,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald/HURT.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 55,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald/CAST.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 75,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 50,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 71,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald/BUFF.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 55,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-ossuaryGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 54,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 129,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 95,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 84,
+                  "x1": 533,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 76,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 94,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 72,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 66,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 62,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 58,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 59,
+                  "y0": 92,
+                  "x1": 604,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 60,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 101,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 50,
+                  "x1": 547,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 26,
+                  "y0": 0,
+                  "x1": 614,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-emberhabitGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 98,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 160,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 119,
+                  "x1": 621,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 134,
+                  "x1": 527,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 92,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 90,
+                  "x1": 571,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 101,
+                  "x1": 563,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 76,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 150,
+                  "x1": 600,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 60,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 58,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 60,
+                  "x1": 624,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 71,
+                  "x1": 535,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 0,
+                  "x1": 615,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-pilgrimGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 84,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 55,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 86,
+                  "x1": 625,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 85,
+                  "x1": 541,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 51,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 26,
+                  "y0": 51,
+                  "x1": 571,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 51,
+                  "x1": 600,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 51,
+                  "x1": 617,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 51,
+                  "x1": 601,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 51,
+                  "x1": 625,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 50,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogueGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 114,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 54,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 128,
+                  "x1": 611,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 138,
+                  "x1": 477,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 85,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 49,
+                  "y0": 106,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 85,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 58,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 94,
+                  "x1": 567,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue/HURT.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 64,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue/CAST.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 84,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 66,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 76,
+                  "x1": 605,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue/BUFF.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 69,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 0,
+                  "x1": 598,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-nightveilGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 132,
+                  "x1": 529,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 66,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 164,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 125,
+                  "x1": 518,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 51,
+                  "x1": 599,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 51,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 51,
+                  "x1": 567,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 51,
+                  "x1": 494,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 51,
+                  "x1": 611,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 51,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 51,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 51,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 50,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 71,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-duelistGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 160,
+                  "y0": 174,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 84,
+                  "x1": 597,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 150,
+                  "x1": 581,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 139,
+                  "x1": 543,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 150,
+                  "x1": 505,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 101,
+                  "x1": 581,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 76,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 72,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 54,
+                  "x1": 581,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 60,
+                  "x1": 530,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 58,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 58,
+                  "x1": 621,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 85,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 76,
+                  "x1": 571,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 26,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-shadowGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 129,
+                  "x1": 599,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 85,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 105,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 138,
+                  "x1": 487,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 96,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 99,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 102,
+                  "x1": 561,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 75,
+                  "x1": 549,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 90,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 85,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 59,
+                  "x1": 605,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 55,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 161,
+                  "y0": 76,
+                  "x1": 627,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 85,
+                  "x1": 597,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-wayfarerPlateGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 84,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 101,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 138,
+                  "x1": 600,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 84,
+                  "x1": 510,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 51,
+                  "x1": 494,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 51,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 19,
+                  "y0": 51,
+                  "x1": 567,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 51,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 51,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 60,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 51,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 51,
+                  "x1": 615,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 101,
+                  "x1": 575,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 124,
+                  "x1": 550,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 30,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-wayfarerPlateGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 16,
+                  "y0": 119,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 78,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 120,
+                  "x1": 548,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 14,
+                  "y0": 85,
+                  "x1": 489,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 50,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 50,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 11,
+                  "y0": 50,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 50,
+                  "x1": 573,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 50,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 62,
+                  "x1": 559,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 50,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 50,
+                  "x1": 608,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 80,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 72,
+                  "x1": 559,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-wayfarerPlateGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 50,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 192,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 104,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 111,
+                  "x1": 531,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 51,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 51,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 51,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 51,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 51,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 51,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 51,
+                  "x1": 615,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 51,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 50,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 537,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-wayfarerPlateGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 84,
+                  "x1": 614,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 80,
+                  "x1": 618,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 132,
+                  "x1": 608,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 18,
+                  "y0": 129,
+                  "x1": 527,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 62,
+                  "x1": 611,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 62,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 19,
+                  "y0": 62,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 51,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 16,
+                  "y0": 81,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 59,
+                  "y0": 119,
+                  "x1": 557,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 71,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 59,
+                  "y0": 58,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 104,
+                  "x1": 605,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 130,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 32,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-nightweaveGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 55,
+                  "x1": 610,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 128,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 155,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 134,
+                  "x1": 528,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 154,
+                  "x1": 529,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 119,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 119,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 64,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 84,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 180,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 59,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 81,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 75,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 119,
+                  "x1": 611,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-nightweaveGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 88,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 94,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 138,
+                  "x1": 561,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 135,
+                  "x1": 518,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 100,
+                  "x1": 477,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 12,
+                  "y0": 85,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 84,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 121,
+                  "x1": 529,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 101,
+                  "x1": 557,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 61,
+                  "x1": 538,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 66,
+                  "x1": 615,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 50,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 80,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 72,
+                  "x1": 550,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 0,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-nightweaveGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 121,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 228,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 129,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 111,
+                  "x1": 503,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 72,
+                  "x1": 599,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 80,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 112,
+                  "x1": 574,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 55,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 51,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 16,
+                  "y0": 51,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 51,
+                  "x1": 597,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 81,
+                  "x1": 614,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 555,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-nightweaveGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 159,
+                  "x1": 557,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 286,
+                  "x1": 617,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 159,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 86,
+                  "x1": 535,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 51,
+                  "x1": 617,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 51,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 19,
+                  "y0": 51,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 51,
+                  "x1": 575,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 64,
+                  "x1": 535,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 75,
+                  "x1": 538,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 51,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 51,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 111,
+                  "x1": 554,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 19,
+                  "y0": 138,
+                  "x1": 555,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 0,
+                  "x1": 615,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-riteVestmentsGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 112,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 192,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 90,
+                  "x1": 604,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 86,
+                  "x1": 493,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 51,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 11,
+                  "y0": 51,
+                  "x1": 559,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 51,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 51,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 51,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 51,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 54,
+                  "x1": 597,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 51,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 81,
+                  "x1": 508,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 520,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 31,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-riteVestmentsGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 170,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 89,
+                  "x1": 549,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 152,
+                  "x1": 523,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 99,
+                  "x1": 510,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 96,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 64,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 102,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 68,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 149,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 166,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 84,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 69,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 111,
+                  "x1": 560,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 75,
+                  "x1": 555,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 0,
+                  "x1": 598,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-riteVestmentsGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 138,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 134,
+                  "x1": 601,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 92,
+                  "x1": 557,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 116,
+                  "x1": 485,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 99,
+                  "x1": 533,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 111,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 89,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 85,
+                  "x1": 525,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 108,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 194,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 84,
+                  "x1": 595,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 55,
+                  "x1": 554,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 206,
+                  "y0": 71,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 101,
+                  "x1": 545,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 0,
+                  "x1": 604,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-riteVestmentsGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 159,
+                  "x1": 593,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 129,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 159,
+                  "x1": 613,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 125,
+                  "x1": 510,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 110,
+                  "x1": 603,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 106,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 28,
+                  "y0": 94,
+                  "x1": 563,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 81,
+                  "x1": 581,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 189,
+                  "y0": 60,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 84,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 59,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 62,
+                  "x1": 551,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 236,
+                  "y0": 50,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 111,
+                  "x1": 531,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 15,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-gutterLeathersGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 136,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 150,
+                  "x1": 627,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 136,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 49,
+                  "y0": 121,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 51,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 51,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 98,
+                  "x1": 601,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 110,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 59,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 68,
+                  "x1": 607,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 99,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 50,
+                  "x1": 547,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 50,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-gutterLeathersGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 171,
+                  "x1": 524,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 66,
+                  "x1": 585,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 129,
+                  "x1": 545,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 142,
+                  "x1": 473,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 80,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 81,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 72,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 80,
+                  "x1": 561,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 128,
+                  "x1": 549,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 168,
+                  "x1": 561,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 85,
+                  "x1": 619,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 81,
+                  "x1": 604,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 116,
+                  "x1": 443,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 10,
+                  "y0": 106,
+                  "x1": 543,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 32,
+                  "y0": 0,
+                  "x1": 607,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-gutterLeathersGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 50,
+                  "x1": 615,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 186,
+                  "x1": 590,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 132,
+                  "x1": 569,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 108,
+                  "x1": 514,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 51,
+                  "x1": 613,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 51,
+                  "x1": 574,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 51,
+                  "x1": 601,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 51,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 59,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 51,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 55,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 181,
+                  "y0": 81,
+                  "x1": 565,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 148,
+                  "x1": 551,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 21,
+                  "x1": 619,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-gutterLeathersGreatsword": {
+            "motionProfile": "greatswordTwoHand",
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 171,
+                  "x1": 598,
+                  "y1": 599
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 125,
+                  "x1": 613,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 142,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 125,
+                  "x1": 511,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 51,
+                  "x1": 591,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 51,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 19,
+                  "y0": 51,
+                  "x1": 564,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 51,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 51,
+                  "x1": 609,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 22,
+                  "y0": 51,
+                  "x1": 570,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 51,
+                  "x1": 589,
+                  "y1": 599
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 51,
+                  "x1": 614,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 54,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 75,
+                  "x1": 553,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/greatsword-outfits/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 0,
+                  "x1": 618,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaverSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
             },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 230,
+                  "x1": 503,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-01.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 202,
+                  "x1": 498,
+                  "y1": 619
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-02.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 201,
+                  "x1": 503,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-03.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 105,
+                  "x1": 485,
+                  "y1": 619
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-04.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 225,
+                  "x1": 559,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-05.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 261,
+                  "x1": 611,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-06.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 286,
+                  "x1": 567,
+                  "y1": 619
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver/ATK-07.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 171,
+                  "x1": 483,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 175,
+                  "x1": 499,
+                  "y1": 604
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 254,
+                  "x1": 488,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver/CAST.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 85,
+                  "x1": 487,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 241,
+                  "x1": 584,
+                  "y1": 604
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 248,
+                  "x1": 505,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver/BUFF.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 120,
+                  "x1": 525,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 94,
+                  "x1": 615,
+                  "y1": 607
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 171,
+                  "x1": 463,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-vigilSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 222,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 202,
+                  "x1": 498,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 205,
+                  "x1": 490,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 116,
+                  "x1": 494,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 226,
+                  "x1": 539,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 259,
+                  "x1": 591,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 291,
+                  "x1": 615,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 186,
+                  "x1": 485,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 191,
+                  "x1": 490,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 250,
+                  "x1": 497,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 104,
+                  "x1": 500,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 252,
+                  "x1": 561,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 249,
+                  "x1": 514,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 141,
+                  "x1": 524,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 126,
+                  "x1": 609,
+                  "y1": 615
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-vigil/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 190,
+                  "x1": 467,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-oathswornSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 201,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 172,
+                  "x1": 501,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 194,
+                  "x1": 505,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 119,
+                  "x1": 494,
+                  "y1": 619
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 214,
+                  "x1": 568,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 246,
+                  "x1": 600,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 276,
+                  "x1": 573,
+                  "y1": 619
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 179,
+                  "x1": 484,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 166,
+                  "x1": 510,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 251,
+                  "x1": 504,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 76,
+                  "x1": 498,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 239,
+                  "x1": 577,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 246,
+                  "x1": 507,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 112,
+                  "x1": 521,
+                  "y1": 617
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 86,
+                  "x1": 604,
+                  "y1": 605
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-oathsworn/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 154,
+                  "x1": 463,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-wardenSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 221,
+                  "x1": 513,
+                  "y1": 617
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 180,
+                  "x1": 515,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 192,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 101,
+                  "x1": 494,
+                  "y1": 617
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 230,
+                  "x1": 561,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 268,
+                  "x1": 591,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 294,
+                  "x1": 567,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 178,
+                  "x1": 494,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 190,
+                  "x1": 497,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 246,
+                  "x1": 493,
+                  "y1": 617
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 84,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 255,
+                  "x1": 585,
+                  "y1": 617
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 262,
+                  "x1": 504,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 91,
+                  "x1": 538,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 88,
+                  "x1": 604,
+                  "y1": 608
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-warden/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 140,
+                  "x1": 478,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseerSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 200,
+                  "x1": 500,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 172,
+                  "x1": 503,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 189,
+                  "x1": 493,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 82,
+                  "x1": 490,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 231,
+                  "x1": 561,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 241,
+                  "x1": 578,
+                  "y1": 617
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 276,
+                  "x1": 618,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 185,
+                  "x1": 493,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 184,
+                  "x1": 499,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer/HURT.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 234,
+                  "x1": 507,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer/CAST.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 88,
+                  "x1": 491,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 244,
+                  "x1": 580,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 252,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer/BUFF.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 118,
+                  "x1": 537,
+                  "y1": 615
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 91,
+                  "x1": 604,
+                  "y1": 620
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 162,
+                  "x1": 475,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-eclipseSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 190,
+                  "x1": 501,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 190,
+                  "x1": 511,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 186,
+                  "x1": 495,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 105,
+                  "x1": 494,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 224,
+                  "x1": 551,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 244,
+                  "x1": 587,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 274,
+                  "x1": 617,
+                  "y1": 614
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 181,
+                  "x1": 487,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 186,
+                  "x1": 485,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 229,
+                  "x1": 500,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 76,
+                  "x1": 494,
+                  "y1": 607
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 225,
+                  "x1": 577,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 238,
+                  "x1": 505,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 104,
+                  "x1": 538,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 54,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-eclipse/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 152,
+                  "x1": 470,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-starlitSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 208,
+                  "x1": 498,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 206,
+                  "x1": 510,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 205,
+                  "x1": 499,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 122,
+                  "x1": 495,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 225,
+                  "x1": 541,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 242,
+                  "x1": 574,
+                  "y1": 617
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 274,
+                  "x1": 567,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 174,
+                  "x1": 491,
+                  "y1": 617
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 184,
+                  "x1": 491,
+                  "y1": 607
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 246,
+                  "x1": 505,
+                  "y1": 614
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 115,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 229,
+                  "x1": 561,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 245,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 146,
+                  "x1": 539,
+                  "y1": 617
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 58,
+                  "x1": 603,
+                  "y1": 621
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-starlit/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 195,
+                  "x1": 474,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-astralSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 186,
+                  "x1": 491,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 191,
+                  "x1": 501,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 191,
+                  "x1": 500,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 115,
+                  "x1": 494,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 225,
+                  "x1": 554,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 249,
+                  "x1": 590,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 279,
+                  "x1": 620,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 188,
+                  "x1": 488,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 186,
+                  "x1": 498,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 246,
+                  "x1": 498,
+                  "y1": 615
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 99,
+                  "x1": 491,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 241,
+                  "x1": 569,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 214,
+                  "x1": 501,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 122,
+                  "x1": 534,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 76,
+                  "x1": 609,
+                  "y1": 620
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-astral/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 174,
+                  "x1": 465,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "heraldSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 175,
+                  "x1": 531,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-01.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 190,
+                  "x1": 518,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-02.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 174,
+                  "x1": 493,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 101,
+                  "x1": 501,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-04.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 211,
+                  "x1": 573,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 229,
+                  "x1": 611,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-06.webp",
+                "box": {
+                  "x0": 49,
+                  "y0": 260,
+                  "x1": 581,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald/ATK-07.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 169,
+                  "x1": 493,
+                  "y1": 617
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald/DEFEND.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 162,
+                  "x1": 505,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald/HURT.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 238,
+                  "x1": 504,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald/CAST.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 81,
+                  "x1": 504,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 221,
+                  "x1": 601,
+                  "y1": 617
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 229,
+                  "x1": 517,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald/BUFF.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 91,
+                  "x1": 545,
+                  "y1": 619
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 28,
+                  "y0": 40,
+                  "x1": 595,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 144,
+                  "x1": 477,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-ossuarySwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 170,
+                  "x1": 508,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 182,
+                  "x1": 511,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 166,
+                  "x1": 503,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 102,
+                  "x1": 493,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 204,
+                  "x1": 563,
+                  "y1": 618
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 234,
+                  "x1": 599,
+                  "y1": 618
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 270,
+                  "x1": 619,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 182,
+                  "x1": 497,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 185,
+                  "x1": 487,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 235,
+                  "x1": 489,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 81,
+                  "x1": 499,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 212,
+                  "x1": 574,
+                  "y1": 617
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 210,
+                  "x1": 515,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 115,
+                  "x1": 521,
+                  "y1": 615
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 86,
+                  "x1": 619,
+                  "y1": 620
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-ossuary/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 160,
+                  "x1": 474,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-emberhabitSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 185,
+                  "x1": 499,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 160,
+                  "x1": 507,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 144,
+                  "x1": 505,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 91,
+                  "x1": 498,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 210,
+                  "x1": 575,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 234,
+                  "x1": 559,
+                  "y1": 615
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 40,
+                  "y0": 266,
+                  "x1": 580,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 165,
+                  "x1": 495,
+                  "y1": 617
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 196,
+                  "x1": 501,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 242,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 89,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 216,
+                  "x1": 565,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 206,
+                  "x1": 534,
+                  "y1": 619
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 111,
+                  "x1": 540,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 71,
+                  "x1": 619,
+                  "y1": 620
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-emberhabit/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 152,
+                  "x1": 468,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-pilgrimSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 180,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 201,
+                  "x1": 501,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 196,
+                  "x1": 490,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 102,
+                  "x1": 488,
+                  "y1": 614
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 229,
+                  "x1": 565,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 245,
+                  "x1": 588,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 278,
+                  "x1": 618,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 175,
+                  "x1": 497,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 178,
+                  "x1": 500,
+                  "y1": 605
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 256,
+                  "x1": 488,
+                  "y1": 617
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 100,
+                  "x1": 488,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 231,
+                  "x1": 575,
+                  "y1": 604
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 241,
+                  "x1": 508,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 114,
+                  "x1": 528,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 68,
+                  "x1": 614,
+                  "y1": 603
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-pilgrim/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 159,
+                  "x1": 465,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogueSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 219,
+                  "x1": 507,
+                  "y1": 617
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 201,
+                  "x1": 501,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 198,
+                  "x1": 488,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 98,
+                  "x1": 491,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 232,
+                  "x1": 569,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 256,
+                  "x1": 543,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 282,
+                  "x1": 618,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 175,
+                  "x1": 489,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 181,
+                  "x1": 487,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue/HURT.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 255,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue/CAST.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 75,
+                  "x1": 501,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 252,
+                  "x1": 590,
+                  "y1": 617
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 249,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 111,
+                  "x1": 547,
+                  "y1": 619
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 130,
+                  "x1": 605,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 161,
+                  "x1": 481,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-nightveilSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 215,
+                  "x1": 504,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 184,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 180,
+                  "x1": 493,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 100,
+                  "x1": 498,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 241,
+                  "x1": 565,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 265,
+                  "x1": 591,
+                  "y1": 617
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 285,
+                  "x1": 558,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 186,
+                  "x1": 493,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 185,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 232,
+                  "x1": 508,
+                  "y1": 617
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 76,
+                  "x1": 495,
+                  "y1": 618
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 238,
+                  "x1": 577,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 256,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 119,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 26,
+                  "y0": 132,
+                  "x1": 604,
+                  "y1": 605
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightveil/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 164,
+                  "x1": 478,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-duelistSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 232,
+                  "x1": 508,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 204,
+                  "x1": 497,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 196,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 108,
+                  "x1": 490,
+                  "y1": 617
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 250,
+                  "x1": 570,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 258,
+                  "x1": 601,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 290,
+                  "x1": 565,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 185,
+                  "x1": 490,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 181,
+                  "x1": 490,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 252,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 75,
+                  "x1": 491,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 266,
+                  "x1": 583,
+                  "y1": 619
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 259,
+                  "x1": 505,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 120,
+                  "x1": 518,
+                  "y1": 617
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 98,
+                  "x1": 609,
+                  "y1": 619
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-duelist/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 171,
+                  "y0": 165,
+                  "x1": 477,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-shadowSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 232,
+                  "x1": 507,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 205,
+                  "x1": 514,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 205,
+                  "x1": 503,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 110,
+                  "x1": 499,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 241,
+                  "x1": 558,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 260,
+                  "x1": 595,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 288,
+                  "x1": 617,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 194,
+                  "x1": 488,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 180,
+                  "x1": 491,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 260,
+                  "x1": 499,
+                  "y1": 617
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 91,
+                  "x1": 500,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 254,
+                  "x1": 584,
+                  "y1": 604
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 252,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 92,
+                  "x1": 531,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 95,
+                  "x1": 605,
+                  "y1": 607
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-shadow/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 142,
+                  "x1": 493,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-wayfarerPlateSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 221,
+                  "x1": 503,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 205,
+                  "x1": 501,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 205,
+                  "x1": 488,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 108,
+                  "x1": 490,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 229,
+                  "x1": 554,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 261,
+                  "x1": 590,
+                  "y1": 603
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 282,
+                  "x1": 620,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 179,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 180,
+                  "x1": 498,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 234,
+                  "x1": 500,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 75,
+                  "x1": 497,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 242,
+                  "x1": 579,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 236,
+                  "x1": 504,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 94,
+                  "x1": 537,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 90,
+                  "x1": 610,
+                  "y1": 603
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-wayfarerPlate/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 140,
+                  "x1": 473,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-wayfarerPlateSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 181,
+                  "x1": 508,
+                  "y1": 619
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 196,
+                  "x1": 503,
+                  "y1": 614
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 182,
+                  "x1": 507,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 101,
+                  "x1": 488,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 218,
+                  "x1": 559,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 244,
+                  "x1": 601,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 272,
+                  "x1": 571,
+                  "y1": 619
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 186,
+                  "x1": 487,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 185,
+                  "x1": 498,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 239,
+                  "x1": 501,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 74,
+                  "x1": 490,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 236,
+                  "x1": 584,
+                  "y1": 604
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 214,
+                  "x1": 508,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 102,
+                  "x1": 543,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 74,
+                  "x1": 603,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-wayfarerPlate/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 155,
+                  "x1": 463,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-wayfarerPlateSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 166,
+                  "x1": 513,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 171,
+                  "x1": 507,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 175,
+                  "x1": 508,
+                  "y1": 611
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 74,
+                  "x1": 499,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 214,
+                  "x1": 578,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 238,
+                  "x1": 601,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 270,
+                  "x1": 573,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 171,
+                  "x1": 497,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 184,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 241,
+                  "x1": 510,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 81,
+                  "x1": 493,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 219,
+                  "x1": 577,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 242,
+                  "x1": 527,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 104,
+                  "x1": 541,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 24,
+                  "x1": 619,
+                  "y1": 619
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-wayfarerPlate/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 146,
+                  "x1": 475,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-wayfarerPlateSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 226,
+                  "x1": 509,
+                  "y1": 618
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 194,
+                  "x1": 500,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 200,
+                  "x1": 490,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 95,
+                  "x1": 487,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 232,
+                  "x1": 561,
+                  "y1": 605
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 241,
+                  "x1": 595,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 278,
+                  "x1": 618,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 168,
+                  "x1": 493,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 170,
+                  "x1": 507,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 254,
+                  "x1": 501,
+                  "y1": 614
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 75,
+                  "x1": 499,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 246,
+                  "x1": 584,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 250,
+                  "x1": 507,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 109,
+                  "x1": 531,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 29,
+                  "y0": 79,
+                  "x1": 605,
+                  "y1": 614
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-wayfarerPlate/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 160,
+                  "x1": 465,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-nightweaveSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 216,
+                  "x1": 503,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 199,
+                  "x1": 503,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 200,
+                  "x1": 495,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 109,
+                  "x1": 494,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 231,
+                  "x1": 559,
+                  "y1": 618
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 256,
+                  "x1": 594,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 296,
+                  "x1": 567,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 180,
+                  "x1": 494,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 184,
+                  "x1": 499,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 244,
+                  "x1": 501,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 102,
+                  "x1": 494,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 246,
+                  "x1": 578,
+                  "y1": 617
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 254,
+                  "x1": 534,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 109,
+                  "x1": 523,
+                  "y1": 614
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 119,
+                  "x1": 618,
+                  "y1": 618
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-nightweave/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 148,
+                  "x1": 473,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-nightweaveSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 191,
+                  "x1": 501,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 196,
+                  "x1": 514,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 176,
+                  "x1": 518,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 112,
+                  "x1": 499,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 221,
+                  "x1": 558,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 255,
+                  "x1": 589,
+                  "y1": 618
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 276,
+                  "x1": 617,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 185,
+                  "x1": 489,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 195,
+                  "x1": 485,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 251,
+                  "x1": 500,
+                  "y1": 617
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 126,
+                  "x1": 485,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 244,
+                  "x1": 573,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 254,
+                  "x1": 523,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 125,
+                  "x1": 549,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 40,
+                  "x1": 619,
+                  "y1": 621
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-nightweave/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 175,
+                  "x1": 478,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-nightweaveSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 168,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 189,
+                  "x1": 528,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 182,
+                  "x1": 503,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 68,
+                  "x1": 498,
+                  "y1": 603
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 215,
+                  "x1": 545,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 232,
+                  "x1": 581,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 265,
+                  "x1": 623,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 170,
+                  "x1": 494,
+                  "y1": 617
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 182,
+                  "x1": 497,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 226,
+                  "x1": 494,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 95,
+                  "x1": 490,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 231,
+                  "x1": 575,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 238,
+                  "x1": 508,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 114,
+                  "x1": 544,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 24,
+                  "y0": 45,
+                  "x1": 608,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-nightweave/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 152,
+                  "x1": 484,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-nightweaveSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 225,
+                  "x1": 503,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 198,
+                  "x1": 505,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 189,
+                  "x1": 495,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 86,
+                  "x1": 490,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 248,
+                  "x1": 548,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 256,
+                  "x1": 607,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 296,
+                  "x1": 614,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 186,
+                  "x1": 485,
+                  "y1": 617
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 185,
+                  "x1": 480,
+                  "y1": 610
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 245,
+                  "x1": 495,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 108,
+                  "x1": 485,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 262,
+                  "x1": 558,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 254,
+                  "x1": 491,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 122,
+                  "x1": 529,
+                  "y1": 617
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 85,
+                  "x1": 618,
+                  "y1": 613
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-nightweave/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 175,
+                  "x1": 461,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-riteVestmentsSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 222,
+                  "x1": 507,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 202,
+                  "x1": 504,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 196,
+                  "x1": 488,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 109,
+                  "x1": 488,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 238,
+                  "x1": 553,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 266,
+                  "x1": 590,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 282,
+                  "x1": 621,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 182,
+                  "x1": 494,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 179,
+                  "x1": 490,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 242,
+                  "x1": 495,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 96,
+                  "x1": 485,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 249,
+                  "x1": 573,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 248,
+                  "x1": 499,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 115,
+                  "x1": 525,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 26,
+                  "y0": 98,
+                  "x1": 604,
+                  "y1": 604
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-riteVestments/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 161,
+                  "x1": 465,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-riteVestmentsSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 162,
+                  "x1": 515,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 179,
+                  "x1": 514,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 174,
+                  "x1": 511,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 82,
+                  "x1": 504,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 192,
+                  "x1": 573,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 222,
+                  "x1": 618,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 250,
+                  "x1": 574,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 170,
+                  "x1": 498,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 170,
+                  "x1": 497,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 232,
+                  "x1": 509,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 72,
+                  "x1": 501,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 221,
+                  "x1": 591,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 200,
+                  "x1": 534,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 94,
+                  "x1": 560,
+                  "y1": 615
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 25,
+                  "y0": 80,
+                  "x1": 619,
+                  "y1": 608
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-riteVestments/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 148,
+                  "x1": 478,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-riteVestmentsSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 169,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 184,
+                  "x1": 517,
+                  "y1": 614
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 185,
+                  "x1": 495,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 82,
+                  "x1": 507,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 204,
+                  "x1": 571,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 222,
+                  "x1": 607,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 259,
+                  "x1": 621,
+                  "y1": 619
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 179,
+                  "x1": 498,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 172,
+                  "x1": 494,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 222,
+                  "x1": 497,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 79,
+                  "x1": 493,
+                  "y1": 608
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 208,
+                  "x1": 593,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 204,
+                  "x1": 515,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 95,
+                  "x1": 539,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 29,
+                  "x1": 603,
+                  "y1": 607
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-riteVestments/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 148,
+                  "x1": 479,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-riteVestmentsSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 190,
+                  "x1": 521,
+                  "y1": 619
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 179,
+                  "x1": 508,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 179,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 90,
+                  "x1": 497,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 225,
+                  "x1": 570,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 258,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 272,
+                  "x1": 615,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 166,
+                  "x1": 487,
+                  "y1": 619
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 188,
+                  "x1": 505,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 256,
+                  "x1": 503,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 80,
+                  "x1": 491,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 240,
+                  "x1": 563,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 219,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 108,
+                  "x1": 545,
+                  "y1": 619
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 78,
+                  "x1": 619,
+                  "y1": 605
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-riteVestments/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 156,
+                  "x1": 473,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "reaver-gutterLeathersSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 209,
+                  "x1": 503,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 182,
+                  "x1": 501,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 182,
+                  "x1": 497,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 96,
+                  "x1": 490,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 222,
+                  "x1": 568,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 240,
+                  "x1": 611,
+                  "y1": 618
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 295,
+                  "x1": 615,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 181,
+                  "x1": 489,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 180,
+                  "x1": 495,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 259,
+                  "x1": 488,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 90,
+                  "x1": 491,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 249,
+                  "x1": 575,
+                  "y1": 610
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 259,
+                  "x1": 534,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 128,
+                  "x1": 533,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 90,
+                  "x1": 615,
+                  "y1": 607
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/reaver-gutterLeathers/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 174,
+                  "x1": 463,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "starseer-gutterLeathersSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 186,
+                  "x1": 507,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 179,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 182,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 80,
+                  "x1": 501,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 220,
+                  "x1": 567,
+                  "y1": 618
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 224,
+                  "x1": 599,
+                  "y1": 618
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 239,
+                  "x1": 627,
+                  "y1": 619
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 164,
+                  "x1": 498,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 169,
+                  "x1": 501,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 239,
+                  "x1": 504,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 81,
+                  "x1": 489,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 221,
+                  "x1": 574,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 229,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 94,
+                  "x1": 558,
+                  "y1": 619
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 74,
+                  "x1": 608,
+                  "y1": 609
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/starseer-gutterLeathers/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 146,
+                  "x1": 479,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "herald-gutterLeathersSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 168,
+                  "x1": 509,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 188,
+                  "x1": 521,
+                  "y1": 617
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 158,
+                  "x1": 511,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 68,
+                  "x1": 501,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 199,
+                  "x1": 544,
+                  "y1": 617
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 234,
+                  "x1": 574,
+                  "y1": 609
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 48,
+                  "y0": 251,
+                  "x1": 588,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 154,
+                  "x1": 494,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 178,
+                  "x1": 505,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 206,
+                  "x1": 503,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 79,
+                  "x1": 494,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 208,
+                  "x1": 587,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 235,
+                  "x1": 525,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 121,
+                  "x1": 533,
+                  "y1": 617
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 20,
+                  "y0": 78,
+                  "x1": 610,
+                  "y1": 615
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/herald-gutterLeathers/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 158,
+                  "x1": 485,
+                  "y1": 599
+                }
+              }
+            }
+          },
+          "rogue-gutterLeathersSwordShield": {
+            "motionProfile": "swordShield",
+            "authoredEquipment": {
+              "rightGroup": "sword",
+              "leftGroup": "shield"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 202,
+                  "x1": 514,
+                  "y1": 611
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 182,
+                  "x1": 514,
+                  "y1": 614
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 169,
+                  "x1": 505,
+                  "y1": 617
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 80,
+                  "x1": 500,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 221,
+                  "x1": 560,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 244,
+                  "x1": 618,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 274,
+                  "x1": 621,
+                  "y1": 618
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 172,
+                  "x1": 491,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 168,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 234,
+                  "x1": 495,
+                  "y1": 618
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 74,
+                  "x1": 490,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 236,
+                  "x1": 594,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 252,
+                  "x1": 519,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 88,
+                  "x1": 543,
+                  "y1": 619
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 21,
+                  "y0": 131,
+                  "x1": 615,
+                  "y1": 608
+                }
+              },
+              "BUFF-NO-AURA": {
+                "file": "assets/animations/sword-shield-outfits/rogue-gutterLeathers/BUFF-NO-AURA.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 142,
+                  "x1": 479,
+                  "y1": 599
+                }
+              }
+            }
+          }
+        },
+        "motionProfiles": {
+          "greatswordTwoHand": {
+            "normalLungeMs": 260,
             "clips": {
               "ready": {
                 "frames": [
@@ -3271,6 +13662,143 @@ export const uiConfig = deepFreeze({
             "references": {
               "idle": "ready",
               "attack": "greatswordAttack",
+              "defend": "defend",
+              "buff": "buff",
+              "hurt": "hurt",
+              "cast": "cast",
+              "stanceActivate": "enterStance",
+              "stanceDeactivate": "leaveStance",
+              "aggressiveStance": "aggressive",
+              "defensiveStance": "defensive",
+              "conversation": "ready",
+              "portrait": "portrait",
+              "menu": "ready",
+              "detail": "portrait",
+              "dodge": null,
+              "victory": null,
+              "defeat": null,
+              "revive": null
+            },
+            "poseRoles": {
+              "idle": "idle",
+              "stand": "menu",
+              "attack": "attack",
+              "attack1": "attack",
+              "attack2": "attack",
+              "attack3": "attack",
+              "attack4": "attack",
+              "guard": "defend",
+              "shieldGuard": "defend",
+              "shieldGuard3": "defend",
+              "parry": "defend",
+              "shieldBash": "attack",
+              "hit": "hurt",
+              "power": "buff",
+              "cast": "cast",
+              "gorefire": "aggressiveStance",
+              "bulwark": "defensiveStance",
+              "prepared": "defensiveStance",
+              "starstoneCharge": "defensiveStance",
+              "bloodRite": "buff",
+              "prototypeGuardStance": "defensiveStance",
+              "prototypeFocusStance": "defensiveStance",
+              "defeated": "defeat"
+            }
+          },
+          "swordShield": {
+            "normalLungeMs": 260,
+            "clips": {
+              "ready": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defend": {
+                "frames": [
+                  "DEFEND"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "hurt": {
+                "frames": [
+                  "HURT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "cast": {
+                "frames": [
+                  "CAST"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "buff": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "aggressive": {
+                "frames": [
+                  "STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defensive": {
+                "frames": [
+                  "STANCE-DEFENSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "portrait": {
+                "frames": [
+                  "PORTRAIT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "swordShieldAttack": {
+                "frames": [
+                  "STANCE-READY",
+                  "DEFEND",
+                  "ATK-07",
+                  "BUFF-NO-AURA",
+                  "ATK-02",
+                  "ATK-03",
+                  "ATK-04",
+                  "ATK-05",
+                  "ATK-05",
+                  "STANCE-DEFENSIVE",
+                  "STANCE-READY"
+                ],
+                "frameMs": 100,
+                "impactIndex": 7
+              },
+              "enterStance": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              },
+              "leaveStance": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              }
+            },
+            "references": {
+              "idle": "ready",
+              "attack": "swordShieldAttack",
               "defend": "defend",
               "buff": "buff",
               "hurt": "hurt",
@@ -3864,7 +14392,7 @@ export const uiConfig = deepFreeze({
             "stamina": "Stamina pays physical skill and Dodge costs.",
             "recovery": " Recovers {amount} per turn.",
             "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
-            "playerPoise": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.",
+            "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",
             "enemyPoise": "Fill it to Stagger. {effect}",
             "cost": "{amount} required to play {card}.",
             "costAll": "Spend all remaining {resource} to play {card}.",

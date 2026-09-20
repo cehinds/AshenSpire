@@ -23,6 +23,16 @@ export const nodeVariables = [
     "role": "exposureBuildupMult"
   },
   {
+    "nodeId": "staggerBreak",
+    "variable": "poiseDamage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "resonance",
+    "variable": "spreadPct",
+    "role": "pct"
+  },
+  {
     "nodeId": "forsakenMedallion",
     "variable": "poiseDamage",
     "role": "amount"
@@ -481,5 +491,25 @@ export const nodeVariables = [
     "nodeId": "shadow",
     "variable": "block",
     "role": "amount"
+  },
+  {
+    "nodeId": "restHpSmall",
+    "variable": "pct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "restHpPartial",
+    "variable": "pct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "restManaFlat",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "restManaFloor",
+    "variable": "floorPct",
+    "role": "toFloorPct"
   }
 ];

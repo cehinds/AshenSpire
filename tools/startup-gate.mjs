@@ -260,8 +260,8 @@ if (args.includes('--selftest')) {
         // still lands on top and still closes on its own Escape.
         name: 'Settings stops owning Escape above the expanded title',
         file: 'src/ui/screens/settings.js',
-        find: "  done.addEventListener('click', door.close);",
-        replace: "  done.addEventListener('click', door.close);\n  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant",
+        find: "  done.addEventListener('click', () => {",
+        replace: "  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant\n  done.addEventListener('click', () => {",
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
       },
     ],

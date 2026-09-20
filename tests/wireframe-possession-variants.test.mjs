@@ -52,12 +52,12 @@ test('WC2a1 weapon: hand / requirements, then the granted card package with its 
   }
 });
 
-test('WC2a2 armour: authored Poise stays the defense row; weight and resistance are noted absent', () => {
+test('WC2a2 armour: defense bonuses move to facts; other modifiers remain and missing data is noted', () => {
   const outfit = r.equipment.armour.find((p) => p.mods.length);
   const variant = equipment(outfit);
   assert.deepEqual([...variant.families], ['WC2', 'WC2a', 'WC2a2']);
   assert.equal(variant.heading, 'Granted modifiers');
-  assert.equal(variant.entries.length, outfit.mods.length);
+  assert.equal(variant.entries.length, outfit.mods.filter(raw => !/^defend\.block=[+-]/.test(raw)).length);
   assert.equal(variant.requirement, null, 'the class-outfit requirement is kept from the card model');
   assert.deepEqual(variant.omitted.filter((o) => o.id.startsWith('WC2a2')).map((o) => o.part).sort(), ['resistance', 'weight']);
   const plain = equipment(r.equipment.armour.find((p) => !p.mods.length));

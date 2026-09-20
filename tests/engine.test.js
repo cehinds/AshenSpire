@@ -34,11 +34,15 @@ import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun, syncZones } from '../src/model/state.js';
+import { stampPlayerPoiseMax } from '../src/model/state.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
+import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
+import { generateJourney } from '../src/model/worldAtlas.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -49,7 +53,6 @@ import {
   rollRelicReward,
   buildShopStock,
   resolveUnknownNode,
-  shrineHealAmount,
   rollArmamentDrop,
 } from '../src/engine/encounters.js';
 import {
@@ -155,6 +158,8 @@ const TEST_CARDS = [
   { id: 'tBigDraw', name: 'T Big Draw', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'draw', amount: 10 }], textTemplate: 'Draw {draw} cards.' },
   { id: 'tKeep', name: 'T Keep', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['retain'], effects: [], textTemplate: 'Retain.' },
   { id: 'tPoise', name: 'T Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'enemy', amount: 10 }], textTemplate: '{poiseDamage} Poise damage.' },
+  // Plan phase 8: the player's own meter, filled by a self-aimed pour.
+  { id: 'tSelfPoise', name: 'T Self Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'self', amount: 5 }], textTemplate: '{poiseDamage} Poise damage to you.' },
   { id: 'tCharge', name: 'T Charge', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'applyStatus', target: 'self', status: 'testCharge', stacks: 3 }], textTemplate: 'Gain {testCharge} Charge.' },
   // #61 fixtures: proc appliers + a tagged hit for the vulnerability lane.
   { id: 'tFrost10', name: 'T Frost', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {frost} Frost.' },
@@ -457,7 +462,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (Constantine, "let rune pick the threshold against the sim") — the
     // contract under test is the mechanism, not the current pick.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3); // sub-threshold build-up
     eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed accumulated, no decay');
@@ -480,7 +485,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(e1.statuses.bleed.meter.max, T, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
     eq(e1.poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
 
-    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'], stamina: 6 });
     S.applyStatus(g, getEntity(g, 'e1'), 'bleed', T - 3);
     playFromHand(g, 'gorefireSlash'); // → T → proc on the giant
     const gb = logOf(g, 'procBurst').filter((e) => e.targetId === 'e1').pop();
@@ -489,7 +494,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Overflow is DROPPED at proc (reset-to-zero, his words) — (T-1) + 3
     // procs once and leaves 0, not 2. This is the anti-stranding delta the
     // #61 falsifier measures.
-    const o = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const o = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     S.applyStatus(o, getEntity(o, 'e1'), 'bleed', T - 1);
     playFromHand(o, 'gorefireSlash'); // T-1+3 = T+2 ≥ T → proc
     eq(logOf(o, 'procBurst').filter((e) => e.targetId === 'e1').length, 1, 'single proc');
@@ -534,7 +539,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // inside a dispatch (card play) so the enqueued resistance drains.
     // Threshold-derived like test 7 — the knob is provisional.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'] });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'], stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3);
     playFromHand(c, 'gorefireSlash'); // +3 → T → proc
@@ -606,7 +611,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // `tags` field, so green here proves the real card door derives the hit's
   // identity rather than preserving the old test-only tagged-effect fixture.
   test('7e2. Frost-Exposed changes a real Starstone hit through tagging.csv', () => {
-    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
+    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'], stamina: 2 });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('starstonePebble');
     assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Starstone Pebble damage does not hand-copy CSV tags');
@@ -1524,12 +1529,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
     eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
     eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
-
-    const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
-    rn4.relics.push('emberFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -1562,7 +1561,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.classes.ids().join(','), 'reaver,starseer,rogue,herald', 'the four registered classes include Rogue in authored order');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3, stamina: 6 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
@@ -1580,7 +1579,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const spellDeck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `sm${i}`, cardId: 'starstonePebble', upgraded: false }));
     const soloMagic = createCombat({
       registries: REG, rng: createRng(0x57a2),
-      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
         energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
         relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
       enemyIds: ['tGiant'],
@@ -1595,7 +1594,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
       players: [
-        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
           energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
           relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
         { id: 'p2', classId: 'reaver', maxHp: 96, hp: 96, maxMana: 2, mana: 2, energyMax: 3, drawPerTurn: 5,
@@ -1610,7 +1609,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'co-op live magic damage uses the same host-stamped +1');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
-    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'] });
+    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
     playFromHand(s, 'starstonePebble');
     eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
 
@@ -1624,7 +1623,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(p.piles.hand.length, handBefore, 'drew 1 (played 1, drew 1)');
 
     // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
-    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'] });
+    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'], stamina: 2 });
     playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
     eq(g.player.block, 2, 'overheal converted to Block');
     dispatch(g, { type: 'endTurn' }); // tRegen heals itself
@@ -1703,7 +1702,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2 });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
@@ -1711,7 +1710,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spend.player.mana, 1, 'signature starter spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2 });
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2, stamina: 2 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -3654,6 +3653,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const energyBefore = combat.player.energy;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
+    // The swap re-stamps the Poise vessel from the loadout it just changed, and
+    // it re-derives the WHOLE receipt: a re-stamp that forgets the attributes
+    // collapses the player's threshold to equipment + relics, silently, mid
+    // fight. changeEquipment is asserted below; this is the other door.
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'a mid-fight swap re-stamps the exact live Poise threshold, Constitution included');
+    assert(combat.player.poiseMeter.max > playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels,
+    }).value, 'the attribute term is really in the stamp: drop it and the threshold is lower');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
 
@@ -3682,8 +3693,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
     eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
       loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
-      itemUpgradeLevels: combat.itemUpgradeLevels,
-    }).value, 'changing armour immediately stamps the exact live Poise threshold');
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'changing armour immediately stamps the exact live Poise threshold (Constitution included)');
     assert(combat.player.poiseMeter.max !== poiseBeforeArmour,
       'changing from Oathsworn armour to Wayfarer Plate visibly changes the Poise vessel');
     assert(armourChanged.events.some((event) => event.type === 'equipmentChanged'),
@@ -9199,6 +9210,315 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(bal({ xp: { ...contentBundle.balance.xp, kill: { normal: 10, elite: 30 } } })).some((e) => /balance\.xp\.kill\.boss/.test(e)), 'a missing kill rate is refused by name');
     assert(said(bal({ levelUp: { ...contentBundle.balance.levelUp, firstCost: 50 } })).some((e) => /balance\.levelUp\.firstCost/.test(e)), 'the cinder ladder is refused by name');
     assert(said(validateContent({ ...testBundle(), derivedStatRules: { ...contentBundle.derivedStatRules, rules: { ...contentBundle.derivedStatRules.rules, hp: { ...contentBundle.derivedStatRules.rules.hp, perLevel: { every: 0, gain: 5 } } } } })).some((e) => /perLevel\.every/.test(e)), 'a zero cadence is refused by name');
+  });
+
+  // ---- 91. Recovery as location properties (plan phase 7) ----------------------------------
+  test('91. recovery as location properties: a place restores exactly its tag set, the mode resolves, a relic denies by tag (plan phase 7)', () => {
+    const rest = contentBundle.balance.rest;
+    const fresh = (classId = 'herald') => {
+      const run = createRunState({ seed: 4, classId, registries: REG });
+      run.hp = 10;
+      run.mana = 0;
+      run.fullHpCharges = run.flaskCharges.hpCurrent;
+      run.flaskCharges.hpCurrent = 0;
+      return run;
+    };
+    const visitTo = (run, id, opts) => createLocationVisit({ run, registries: REG, rng: createRng(1) }, id, opts);
+    const refuses = (fn, re, why) => {
+      let said = null;
+      try { fn(); } catch (e) { said = e.message; }
+      assert(said !== null && re.test(said), `${why}${said === null ? ' (did not throw)' : ` (got: ${said})`}`);
+    };
+
+    // THE TAG SETS ARE CONTENT, AND THE DOOR RESOLVES THE MODE.
+    eq(locationTags(REG, 'shrine').join(','), 'restHpPartial,restMana,restFlasks,smith,levelUp', 'the shrine carries the proposal\'s set');
+    eq(locationTags(REG, 'camp').join(','), 'restHpSmall,restMana', 'the field camp: a small rest and Mana, no services');
+    eq(locationTags(REG, 'inn').join(','), 'restHpFull,restManaFull,restFlasks,levelUp', 'the town\'s inn restores everything');
+    eq(resolveLocationId(REG, { nodeId: 'crownfall/inn', serviceTypeId: 'inn' }), 'inn', 'an untagged point falls back to its service type');
+    eq(resolveLocationId(REG, { nodeId: 'nowhere', serviceTypeId: 'shop' }), null, 'a point of no location kind resolves to nothing');
+    refuses(() => visitTo(fresh(), 'merchant'), /carries no tags/, 'an untagged id is refused by name');
+
+    // THE SHRINE: partial heal, Mana by the default mode (floorOrFull), the
+    // flasks refilled on arrival, the smith and the level-up offered.
+    const shrineRun = fresh();
+    const shrine = visitTo(shrineRun, 'shrine');
+    eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp', 'restMana resolves to the mode\'s own tag at the carrier');
+    eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true }), 'the services read off the set');
+    assert(shrine.ctx.propertyMounts.player['location:shrine'], 'the place is mounted under its owner');
+    const arrival = arriveAt(shrine);
+    assert(arrival.events.some((e) => e.type === 'arrived' && e.locationId === 'shrine'), '`arrived` is emitted with the place');
+    eq(shrineRun.flaskCharges.hpCurrent, shrineRun.fullHpCharges, 'the restFlasks rule refilled the charges on arrival');
+    eq(shrineRun.hp, 10, 'arriving heals nothing');
+    const countersBefore = JSON.stringify(shrine.ctx.rng.getCounters());
+    const preview = previewRest(shrine);
+    eq(JSON.stringify(shrine.ctx.rng.getCounters()), countersBefore, 'the preview rolls on a copy of the streams');
+    const floor = Math.floor((shrineRun.maxMana * rest.mana.floorPct) / 100);
+    eq(preview.heal, Math.floor((shrineRun.maxHp * rest.hpPartialPct) / 100), 'the preview reads the partial rest\'s row');
+    eq(preview.manaAfter, floor, 'the preview reads the floor');
+    eq(shrineRun.hp, 10, 'the preview writes nothing');
+    const rested = restAt(shrine);
+    assert(rested.events.some((e) => e.type === 'rested'), '`rested` is emitted');
+    eq(shrineRun.hp, 10 + preview.heal, 'the shrine heals exactly its tag\'s share');
+    eq(shrineRun.mana, floor, 'Mana rises to the floor when below it');
+    shrineRun.mana = floor;
+    restAt(shrine);
+    eq(shrineRun.mana, shrineRun.maxMana, 'Mana at the floor fills to full');
+    assert(leaveLocation(shrine), 'leaving unmounts');
+
+    // A REBUILT VISIT (a saved session restored at the place) arrives no
+    // second time: nothing pours, nothing fires, and arriveAt is a no-op.
+    const restoredRun = fresh();
+    const restored = visitTo(restoredRun, 'shrine', { arrived: true });
+    eq(restoredRun.flaskCharges.hpCurrent, 0, 'rebuilding a visit as arrived pours nothing');
+    eq(arriveAt(restored).events.length, 0, 'and arriving at it again fires nothing');
+    eq(restored.refill, null, 'a rebuilt visit reports no refill receipt');
+    leaveLocation(restored);
+
+    // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
+    // stream seeded from the run instead of throwing (the atlas inspection).
+    // The runtime reads a tag's rule off `propertyRules` (content-build's
+    // balance-resolved row), so a test that changes a rule changes that row.
+    const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
+    const rollingReg = createRegistries(withRule('restHpPartial', (r) => { r.triggers[0].if = { p: 'random', pct: 100 }; return r; }));
+    const rollingRun = createRunState({ seed: 4, classId: 'herald', registries: rollingReg });
+    rollingRun.hp = 10;
+    const rolling = createLocationVisit({ run: rollingRun, registries: rollingReg, rng: null }, 'shrine');
+    eq(previewRest(rolling).heal, Math.floor((rollingRun.maxHp * rest.hpPartialPct) / 100), 'a preview with no live stream still rolls the rule');
+    eq(rollingRun.hp, 10, 'and writes nothing');
+    leaveLocation(rolling);
+    assert(!shrine.ctx.propertyMounts.player, 'nothing stays mounted after the visit');
+
+    // THE CAMP: a small rest, the same Mana mode, no refill and no services.
+    const campRun = fresh();
+    const camp = visitTo(campRun, 'camp');
+    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false }), 'the camp offers nothing');
+    eq(arriveAt(camp).refill, null, 'no refill rule, no receipt');
+    eq(campRun.flaskCharges.hpCurrent, 0, 'the camp refills no flask');
+    restAt(camp);
+    eq(campRun.hp, 10 + Math.floor((campRun.maxHp * rest.hpSmallPct) / 100), 'the camp heals its small share');
+    eq(campRun.mana, floor, 'the camp restores Mana by the default mode');
+
+    // THE TOWN: everything, and Mana to full.
+    const innRun = fresh();
+    const inn = visitTo(innRun, 'inn');
+    arriveAt(inn);
+    restAt(inn);
+    eq(innRun.hp, innRun.maxHp, 'the inn heals to full');
+    eq(innRun.mana, innRun.maxMana, 'the inn restores Mana to full');
+    eq(innRun.flaskCharges.hpCurrent, innRun.fullHpCharges, 'the inn refills the flasks');
+
+    // THE FIXED MODES: a flat rest and the full rest override the default.
+    const flatReg = createRegistries({ ...testBundle(), balance: { ...contentBundle.balance, rest: { ...rest, mana: { ...rest.mana, mode: 'flat' } } } });
+    const flatRun = createRunState({ seed: 4, classId: 'herald', registries: flatReg });
+    flatRun.hp = 10; flatRun.mana = 0;
+    const flat = createLocationVisit({ run: flatRun, registries: flatReg, rng: createRng(1) }, 'camp');
+    eq(flat.tags.join(','), 'restHpSmall,restManaFlat', 'the flat mode resolves to its tag');
+    restAt(flat);
+    eq(flatRun.mana, Math.min(flatRun.maxMana, rest.mana.flat), 'the flat rest restores its row');
+
+    // THE MULTIPLIERS: the custom mod scales the heal, the relic passive
+    // multiplies it, and neither touches Mana.
+    const emberRun = fresh();
+    emberRun.relics.push('emberFragment');
+    const ember = visitTo(emberRun, 'shrine', { healMult: 0.5 });
+    restAt(ember);
+    eq(emberRun.hp, 10 + Math.floor(((emberRun.maxHp * rest.hpPartialPct) / 100) * 0.5 * 1.15), 'Ember Fragment ×1.15 and the mod ×0.5 scale the heal, floored once after them');
+    eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
+
+    // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
+    // shrine and the chapel — and leaves the town's bed and the camp open.
+    const wyrmRun = fresh();
+    wyrmRun.relics.push('wyrmHeart');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
+    const wyrmShrine = visitTo(wyrmRun, 'shrine');
+    eq(wyrmShrine.restDenied, 'wyrmHeart', 'the visit names the relic');
+    refuses(() => restAt(wyrmShrine), /denied by relic 'wyrmHeart'/, 'resting there is refused by name');
+    const wyrmInn = visitTo(wyrmRun, 'inn');
+    restAt(wyrmInn);
+    eq(wyrmRun.hp, wyrmRun.maxHp, 'the town rest still heals a Wyrm Heart holder');
+
+    // THE DENIAL IS READ AS THE RUN STANDS: an arrival rule that hands the
+    // run the Wyrm Heart denies the Rest at the same place, after arrival.
+    const grantingReg = createRegistries(withRule('restFlasks', (r) => { r.triggers[0].do.push({ op: 'addRelic', id: 'wyrmHeart' }); return r; }));
+    const grantedRun = createRunState({ seed: 4, classId: 'herald', registries: grantingReg });
+    const granted = createLocationVisit({ run: grantedRun, registries: grantingReg, rng: createRng(1) }, 'shrine');
+    eq(granted.restDenied, null, 'before arrival nothing denies the Rest');
+    arriveAt(granted);
+    assert(grantedRun.relics.includes('wyrmHeart'), 'the arrival rule handed the run the relic');
+    eq(granted.restDenied, 'wyrmHeart', 'and the visit re-read the denial off the run');
+    refuses(() => restAt(granted), /denied by relic 'wyrmHeart'/, 'so the Rest is refused by name');
+    leaveLocation(granted);
+
+    // RULES COMPOSE THROUGH THEIR OWN EVENTS: a rule on `healed` mounted by the
+    // place hears the rest's heal, as a combat property would.
+    const composingReg = createRegistries(withRule('restHpSmall', (r) => { r.triggers.push({ on: 'healed', do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }); return r; }));
+    const composingRun = createRunState({ seed: 4, classId: 'herald', registries: composingReg });
+    composingRun.hp = 10; composingRun.mana = 0;
+    const composing = createLocationVisit({ run: composingRun, registries: composingReg, rng: createRng(1) }, 'camp');
+    const composed = restAt(composing);
+    assert(composed.events.some((e) => e.type === 'healed'), 'the heal\'s own event rides the bus');
+    eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
+    leaveLocation(composing);
+
+    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
+    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
+    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
+    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
+    const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
+    eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
+
+    // THE VISIT RE-READS THE RUN: a door between arrival and rest (a level
+    // point's re-derived maximum) is not overwritten by a stale facade.
+    const lateRun = fresh();
+    const late = visitTo(lateRun, 'inn');
+    arriveAt(late);
+    lateRun.maxHp += 10;
+    lateRun.hp = 20;
+    restAt(late);
+    eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
+
+    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
+    // a cap the map cannot meet is refused by name.
+    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
+    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
+
+    // THE REFUSALS: an unknown location id, a restoreMana with neither or
+    // both selectors, a bad rest mode, a restDenied naming no carried tag.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
+    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
+    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
+    assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
+    assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
+    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
+    const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'camp', tagId: 'restManaFlat' }])).some((e) => /tagging\.location\.camp.*one rule/.test(e)), 'restMana beside a fixed-mode tag is refused by name');
+    const overrideReg = createRegistries({ ...testBundle(), tagging: contentBundle.tagging.map((r) => (r.family === 'location' && r.objectId === 'camp' && r.tagId === 'restMana' ? { ...r, tagId: 'restManaFlat' } : r)) });
+    const overrideRun = createRunState({ seed: 4, classId: 'herald', registries: overrideReg });
+    overrideRun.hp = 10; overrideRun.mana = 0;
+    const override = createLocationVisit({ run: overrideRun, registries: overrideReg, rng: createRng(1) }, 'camp');
+    eq(override.tags.join(','), 'restHpSmall,restManaFlat', 'a fixed-mode tag overrides the default outright');
+    restAt(override);
+    eq(overrideRun.mana, Math.min(overrideRun.maxMana, rest.mana.flat), 'and the place restores Mana by that one rule');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/market', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/market/.test(e)), 'a point offering no rest is not a location');
+    const withCard = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzMana', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Rest.' }] });
+    assert(said(withCard([{ op: 'restoreMana', target: 'self' }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with neither selector is refused');
+    assert(said(withCard([{ op: 'restoreMana', target: 'self', amount: 2, toFloorPct: 50 }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with both is refused');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restSauna'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming a tag no location carries is refused by name');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restMana'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming the unresolved restMana is refused: a visit never holds it');
+    assert(validateContent({ ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restManaFloor'] } } : r)) }).ok, 'a filter naming the resolved mode tag is a location\'s effective tag');
+    assert(said(validateContent({ ...testBundle(), statuses: contentBundle.statuses.map((st, i) => (i === 0 ? { ...st, hooks: [...(st.hooks || []), { on: 'rested', do: [] }] } : st)) })).some((e) => /statuses\..*hooks\[\d+\]\.on/.test(e)), 'a status hooked on a run-level event is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'boss', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.boss/.test(e)), 'a node type the door never visits is not a location');
+    for (const id of ['shrine', 'camp']) {
+      const without = validateContent({ ...testBundle(), tagging: contentBundle.tagging.filter((r) => !(r.family === 'location' && r.objectId === id)) });
+      assert(said(without).some((e) => new RegExp(`tagging\\.location\\.${id}: carries no tags`).test(e)), `a bundle without a row for '${id}' — a place the classic map opens unconditionally — is refused by name, not at the door`);
+    }
+    const twice = visitTo(fresh(), 'shrine');
+    const first = arriveAt(twice);
+    const again = arriveAt(twice);
+    eq(again.events.length, 0, 'a second arrival fires nothing');
+    eq(again.refill, first.refill, 'and answers with the first receipt');
+    assert(validateContent(contentBundle).ok, 'the shipped bundle stays green');
+  });
+
+  // ---- 92. Plan phase 8: Mana costing, focus breaks, the player's Poise ----
+  test('92. Mana is the third cost line, and the player has a Poise meter that Staggers (plan phase 8)', () => {
+    const bal = contentBundle.balance;
+    const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
+    // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c))).some((e) => /cards\.gorefireSlash\.staminaCost: .*at least 1 stamina/.test(e)), 'a Mana card with no stamina line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
+    assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
+    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships, and passes: X is at least one action');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { minActionCost: -1, minStaminaCost: 1 } } })).some((e) => /balance\.mana\.minActionCost/.test(e)), 'a negative floor is refused by name');
+    const { mana: _noMana, ...sansMana } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
+    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
+    const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
+    eq(REG.cards.get('gorefireSlash').staminaCost, 1, 'the signature art costs stamina beside its Mana');
+
+    // THE PLAYER'S METER: a fill applies the row's statuses and takes one
+    // action off the next turn, once; the meter grows as an enemy's does.
+    const c = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 50, hp: 50, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'sp1', cardId: 'tSelfPoise', upgraded: false }], relicIds: [], flasks: [], poiseMax: 5 },
+      enemyIds: ['tDummy'],
+    });
+    eq(c.player.poiseMeter.max, 5, 'the stamped max is the vessel');
+    playFromHand(c, 'tSelfPoise');
+    const stagger = bal.stagger.player;
+    for (const [status, stacks] of Object.entries(stagger.statuses)) eq(S.getStacks(c.player, status), stacks, `the fill applies ${stacks} ${status}`);
+    const told = logOf(c, 'playerStaggered');
+    eq(told.length, 1, 'one playerStaggered receipt');
+    eq(told[0].actionLoss, stagger.actionLoss, 'which names the action it took');
+    assert(logOf(c, 'meterFilled').some((e) => e.targetId === 'player' && e.meter === 'poise'), 'the fill is a meterFilled on the player');
+    eq(c.player.poiseMeter.max, Math.ceil(5 * bal.poise.growthMult), 'the meter grows as an enemy\'s does');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax - stagger.actionLoss, 'the next turn opens one action short');
+    eq(c.player.pendingActionLoss, 0, 'and the debt is paid once');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax, 'the turn after is whole');
+
+    // THE SHIPPED FIGHT HAS NO RULESET: an enemy blow that draws blood rocks
+    // the player by balance.poise.playerImpactPerHit, and two blows fill a
+    // meter of twice that — the player is Staggered by ordinary enemy hits.
+    const perHit = bal.poise.playerImpactPerHit;
+    const hit = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 90, hp: 90, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `hk${i}`, cardId: 'tKeep', upgraded: false })), relicIds: [], flasks: [], poiseMax: perHit * 2 },
+      enemyIds: ['tHitter'],
+    });
+    assert(!hit.foundation, 'the fixture, like main.js, hands in no ruleset');
+    dispatch(hit, { type: 'endTurn' });
+    eq(hit.player.poiseMeter.value, perHit, 'the first enemy hit rocks the player by the row');
+    assert(logOf(hit, 'impactDealt').some((e) => e.targetId === 'player' && e.amount === perHit), 'and says so');
+    dispatch(hit, { type: 'endTurn' });
+    eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
+    // AND THE RECEIPT CARRIES THE METER THE ENGINE ENDED ON. The Poise damage
+    // lands before the receipt is emitted, so a paced view that added the
+    // amount would draw a bar that never filled; the reader SETS from these.
+    const filling = logOf(hit, 'impactDealt').filter((e) => e.targetId === 'player').pop();
+    eq(filling.poiseMeter.value, hit.player.poiseMeter.value, 'the impact names the meter value the engine ended on');
+    eq(filling.poiseMeter.max, hit.player.poiseMeter.max, 'and the max, which the fill widened');
+    eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
+    // AND THE WIDENED VESSEL SURVIVES A RESTAMP. A fill grows the max by
+    // balance.poise.growthMult; the receipt only knows the base, so an
+    // armament swap or a restored fight must rebuild the grown vessel.
+    const grownMax = hit.player.poiseMeter.max;
+    assert(grownMax > perHit * 2, 'the fill widened the vessel');
+    stampPlayerPoiseMax(hit.player, perHit * 2);
+    eq(hit.player.poiseMeter.max, grownMax, 'a restamp from the base receipt keeps the growth a Stagger paid for');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerImpactPerHit: -1 } } })).some((e) => /balance\.poise\.playerImpactPerHit/.test(e)), 'a negative impact row is refused by name');
+    const { poise: _noPoise, ...sansPoise } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansPoise })).some((e) => /^balance\.poise:/.test(e)), 'a bundle without the poise block is refused by name');
+
+    // THE VESSEL'S MAX: Constitution × the row, the body armour, the relics.
+    const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
+    const receipt = playerPoiseThresholdReceipt(REG, run);
+    eq(receipt.attribute, run.attributes.constitution * bal.poise.playerPerConstitution, 'Constitution × balance.poise.playerPerConstitution');
+    assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id === 'constitution'), 'and the receipt names it');
+    assert(receipt.sources.filter((s) => s.kind === 'equipment').every((s) => s.classId), 'only the body armour counts among the equipment — a weapon\'s poiseThreshold is its weight');
+    eq(receipt.value, receipt.attribute + receipt.equipment + receipt.relic, 'the three sum to the max');
+    assert(receipt.active, 'and the receipt is live: the combat entity stamps it and impact fills it');
+    const born = createCombat({ registries: REG, rng: createRng(7), player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: 0, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout }, enemyIds: ['tDummy'] });
+    eq(born.player.poiseMeter.max, receipt.value, 'createCombat stamps the receipt as the meter\'s max');
   });
 
   const passed = results.filter((r) => r.ok).length;

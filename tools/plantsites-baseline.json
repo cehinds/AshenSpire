@@ -126,7 +126,7 @@
   "sites": {
     "tools/about-changelog.mjs": {
       "count": 52,
-      "digest": "2b16dd47741b60e8"
+      "digest": "f94acefec937c4a5"
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
@@ -246,7 +246,7 @@
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
-      "digest": "ee565a3b0c8f6206"
+      "digest": "ae1e17d1dbb3e533"
     },
     "tools/profile-durability-probe.mjs": {
       "count": 2,
@@ -298,7 +298,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "a3803ac419d0b8b8"
+      "digest": "6a9e39a11d46196c"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,

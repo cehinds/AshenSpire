@@ -80,11 +80,11 @@ let zoomExtra = 0;
 {
   const { spawnSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
-  const files = ['hud-visibility.test.mjs', 'wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'wireframe-map-tray.test.mjs', 'wireframe-atlas-selection.test.mjs', 'combat-formation.test.mjs', 'formation-layout.test.mjs', 'formation-movement.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-hud-fold.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'wireframe-save-flow.test.mjs', 'wireframe-creation.test.mjs', 'property-mount.test.mjs', 'ui-config.test.mjs', 'config-migration.test.mjs',
+  const files = ['survey-quest-lore.test.mjs', 'hud-visibility.test.mjs', 'wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'wireframe-map-tray.test.mjs', 'wireframe-atlas-selection.test.mjs', 'combat-formation.test.mjs', 'formation-layout.test.mjs', 'formation-movement.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-hud-fold.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'wireframe-save-flow.test.mjs', 'wireframe-creation.test.mjs', 'property-mount.test.mjs', 'poise-restamp.test.mjs', 'ui-config.test.mjs', 'config-migration.test.mjs',
     // The property system's snapshots: every relic sentence byte-identical to
     // its pre-move fixture (phase 2a), and everything the tag tree derives
     // row-identical to the three pre-tree fixtures (phase T).
-    'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'advanced-config.test.mjs',
+    'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'advanced-config.test.mjs', 'prologue.test.mjs',
     'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs'];
   const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
@@ -1046,6 +1046,12 @@ try {
 } catch (error) {
   zoomExtra++;
   console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
+  await import('./combat-card-hold-targeting.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Combat-card holds arm the existing targeting flow:', error);
 }
 try {
   await import('./creation-continue-stacking.test.mjs');

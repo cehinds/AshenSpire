@@ -461,6 +461,37 @@ Acceptance: shrine restores exactly its tag set; town restores everything and
 mana to full; camp with `restMana` at default restores to 50% or full; a
 `restDenied` relic filtered to `restHpPartial` still allows town rest.
 
+**7 AS BUILT (2026-09-19):** the `location` family (no collection; ids are
+the map's — a classic node type, `camp`, an atlas service type, an atlas
+node — checked by `model/locations.js`) carries the property subtree;
+`engine/locations.js` is the window (`createLocationVisit` mounts on the
+run-level context `actions.js createRunContext`, now the one facade for
+events, flasks and visits; `arriveAt` / `restAt` emit the two new events and
+write the pools back; `previewRest` on a clone; `leaveLocation` unmounts).
+Rules: `restHpSmall/Partial/Full`, `restManaFlat/Floor/Full` (the
+`restoreMana` opcode gains `toFloorPct`; `missingMana` joins the formula
+ops), `restFlasks` (a new run opcode `refillFlasks` wrapping
+`applyGraceRefill`), and `smith` / `levelUp` as service markers. `restMana`
+is the default, resolved at the carrier to `balance.rest.mana.mode`'s tag
+(shipped `floorOrFull` at 50%) — NOT a mode read inside the rule, because a
+variable binds to a number and the mode is a word. Shipped sets: shrine,
+camp (the Unknown node's rest outcome, `enterNode`), inn and chapel (the
+atlas rest services, one row per type; a node row would override). Not
+shipped from §7.4: `restAzureOne` (no Azure charge kind exists),
+`restCleanse` (nothing lingers between fights), `ambushRisk` (a seeded
+encounter roll is its own feature), `merchant` / `questBoard` markers (no
+carrier today; 10b's board may add one). The passives are `restHealMult`
+and `restDenied` (true | tag list; the Wyrm Heart carries
+`['restHpPartial']`). The heal multipliers ride `ctx.healMult`, never the
+rule. `generateJourney` takes `{ townsPerActMax }` and counts city nodes
+per act (the start is not a stop; every shipped city is act 1 and a route
+holds one hub, so the shipped cap of 1 changes no seeded route). Note the
+retunes this design carries: the shrine's Rest used to restore Mana to
+full; under the default mode it restores to 50% or full. The Unknown
+node's rest outcome used to open the Shrine (35%, refill, smith,
+level-up); it opens the camp now (25%, Mana, nothing else). SPEC §13.4j;
+engine test 91, local-map and world-atlas tests.
+
 ## Phase 8 — Mana costing and Exposure properties (1 PR, can run beside 4)
 
 | Change | Where |
@@ -474,6 +505,26 @@ mana to full; camp with `restMana` at default restores to 50% or full; a
 Acceptance: validation refuses a 0-stamina mana card by name; four focus
 properties behave per row; a staggered player loses one action and shows 2
 Vulnerable and 2 Weak.
+
+**8 AS BUILT (2026-09-19):** `balance.mana { minActionCost 1, minStaminaCost 1 }`
+and the card rule (base and upgrade); `balance.exposure.buildupPerManaSpell`
+5 with its floor on `cardExposure.csv`; `staggerBreak` and `resonance` rules,
+the new opcode `arcaneBuildup` and target `otherEnemies`, carriers by item
+(every focus is a `staff` kind: the plain staves break harder, the rod and
+the brand overcharge, the branch rings out); the player's poise meter via
+`dealPoiseDamage` and `staggerPlayer`, `balance.stagger.player { actionLoss,
+statuses }` (a status map, so the engine names no status), the receipt's
+Constitution term as `balance.poise.playerPerConstitution`; outside the
+foundation ruleset (the shipped fight has none) an enemy blow that draws
+blood rocks the player by `balance.poise.playerImpactPerHit`. Two deviations,
+both deferred to phase 9 on purpose: the signature arts cost 1 stamina / 1
+Mana, not 2 / 2 — under the current tiers the Reaver and the Rogue start
+with a one-point Mana pool and the Starseer and the Herald with one stamina,
+so 2 / 2 would strand two signature cards until Mana equals Wisdom; and the
+Poise derived-stat row, since phase 9 rewrites the ruleset and every save
+snapshots it. Also re-costed under the rule: Comet Fragment costs an action;
+seven Mana powers' upgrades drop the Mana line instead of the action line.
+SPEC §13.4k; engine test 92; property-mount tests.
 
 ## Phase 9 — Attribute rebase (1 PR, last)
 

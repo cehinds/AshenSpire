@@ -11,7 +11,7 @@ test('every canonical equipment item has complete card facts, bonuses and availa
   for (const p of [...r.equipment.armaments, ...r.equipment.armour]) {
     const m = equipmentCardModel(r, p);
     assert.equal(m.name, p.name);
-    assert.equal(m.bonuses.length, p.mods.length);
+    assert.equal(m.bonuses.length, p.mods.filter(raw => !(p.kind === 'armor' && /^defend\.block=[+-]/.test(raw))).length);
     assert.equal(m.tags.length, p.tags.length);
     assert.ok(m.facts.every(f => Number.isFinite(f.value) && f.explanation));
     assert.ok(m.bonuses.every(b => b.explanation && !b.label.includes('undefined')));
@@ -25,7 +25,7 @@ test('modifier copy preserves assignment versus signed changes and authored mech
   assert.match(m.bonuses[1].label,/-2 Damage/);
   assert.match(m.bonuses[2].label,/\+1 starting Strength/);
   assert.match(m.bonuses[3].explanation,/Every number on the card/);
-  assert.match(equipmentCardModel(r,r.equipment.armour[0]).facts[0].explanation,/displayed only/);
+  assert.match(equipmentCardModel(r,r.equipment.armour[0]).facts.find(f => f.label === 'Poise').explanation,/displayed only/);
 });
 test('requirements and hybrid item types retain authored identity', () => {
   const m=equipmentCardModel(r,r.equipment.armaments.find(p=>p.id==='greatsword'));
@@ -69,4 +69,12 @@ test('the inspect door pins its own level, whatever a caller forwards through op
   assert.ok(spreadAt >= 0 && levelAt >= 0, 'the door still spreads options and sets its own level');
   assert.ok(levelAt > spreadAt,
     "level: 'inspect' must come AFTER ...options so a forwarded level cannot override the reading door");
+});
+
+test('armor DR shows additive defense bonuses once and preserves other effects', () => {
+ const m = equipmentCardModel(r, {...r.equipment.armour[0], mods:['defend.block=+2','self.maxHp=+4']});
+ assert.equal(m.facts[0].label, 'DR');
+ assert.equal(m.facts[0].value, 2);
+ assert.equal(m.bonuses.length, 1);
+ assert.match(m.bonuses[0].label, /4/);
 });

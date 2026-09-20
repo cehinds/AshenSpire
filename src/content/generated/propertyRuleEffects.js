@@ -70,6 +70,43 @@ export const propertyRuleEffects = {
       }
     }
   },
+  "staggerBreak": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "poiseDamage",
+            "amount": {
+              "balance": "exposure.staggerBreakPoise"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "resonance": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "arcaneBuildup",
+            "target": "otherEnemies",
+            "pct": {
+              "balance": "exposure.resonanceSpreadPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "forsakenMedallion": {
     "triggers": [
       {
@@ -1231,6 +1268,124 @@ export const propertyRuleEffects = {
             "amount": {
               "balance": "classTree.grimHarvest.heal"
             }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpSmall": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "percentMaxHp",
+              "of": "owner",
+              "pct": {
+                "balance": "rest.hpSmallPct"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpPartial": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "percentMaxHp",
+              "of": "owner",
+              "pct": {
+                "balance": "rest.hpPartialPct"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpFull": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "missingHp",
+              "of": "owner"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFlat": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": {
+              "balance": "rest.mana.flat"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFloor": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "toFloorPct": {
+              "balance": "rest.mana.floorPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFull": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": {
+              "f": "missingMana",
+              "of": "owner"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restFlasks": {
+    "triggers": [
+      {
+        "on": "arrived",
+        "do": [
+          {
+            "op": "refillFlasks"
           }
         ]
       }

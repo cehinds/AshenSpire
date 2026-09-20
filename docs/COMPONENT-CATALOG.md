@@ -1,11 +1,19 @@
 # AshenSpire component catalog
 
+`prologue-screen` composes six text-free WebP paintings, a class item layer,
+motif wash, live narration and playback controls. `src/model/prologue.js`
+projects Advanced → Opening sequence settings; `src/ui/screens/prologue.js`
+is shared by new games and the settings preview. Text, scene holds,
+five-second default transitions, effects and desktop/mobile character placement
+are included in configuration exports. Interrupted saves resume at a scene
+boundary; Set forth reveals the first playable map.
+
 `equipment-animation-reference` derives the active presentation from class,
 armour, ordered right/left weapon groups and optional grip. Its model is
 `src/model/equipmentAnimation.js`; authored references live in
 `content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
 Armoury, conversation and portrait views share those references. The visual
-catalog includes the approved Reaver greatsword ready stance and portrait.
+catalog includes greatsword ready stances for all four classes. One shared motion profile serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from

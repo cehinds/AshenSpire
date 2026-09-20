@@ -79,7 +79,7 @@
         "stamina": "Stamina pays physical skill and Dodge costs.",
         "recovery": " Recovers {amount} per turn.",
         "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
-        "playerPoise": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.",
+        "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",
         "enemyPoise": "Fill it to Stagger. {effect}",
         "cost": "{amount} required to play {card}.",
         "costAll": "Spend all remaining {resource} to play {card}.",

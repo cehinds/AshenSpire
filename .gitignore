@@ -526,3 +526,7 @@ artifacts/combat-test/
 build/pose-studio-app/
 build/pose-studio-app.zip
 
+
+# UI Studio (ui-studio/) keeps its config backups here
+ui-studio/.state/
+ui-studio/workspace/settings.json

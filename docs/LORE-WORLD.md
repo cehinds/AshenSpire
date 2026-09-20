@@ -248,7 +248,7 @@ the ring can smell it.
 | **The Wardens' last** | the Fell Warden; the Bell Keeper | hold the gate; ring the hour | stand; ring | the weald taking the Bastion back |
 | **The Starwatch** | the Hollow Astronomer; the Oracle | send the Ember out of the world before the Spire lights | call the heavens down; keep the fourth question | every climber carrying a cinder toward the coast |
 | **The Feral Ember** | the Blight-Priest | make the burning a gift; finish everyone gladly | the shrine; the reliquary; recruitment | the Chapel's ledger, the Forsaken's refusal |
-| **The Sleep** | the Wyrm Lord | keep the dragon under | consecrate the caldera; have nothing left to consecrate with | the climber who takes the Ashheart's cinder |
+| **The Sleep** | the Wyrm Lord | keep the dragon under | consecrate the caldera; have nothing left to consecrate with | any climber who wakes or kills the native dragon; it has no cinder to take |
 | **The Tidebound Abbey** | the salt-priests | keep the Spire dark | watch; four words | the Ember, the Astronomer's apprentices, the climber |
 | **The merchant** | himself; Old Harrow | keep three people warm | buy names at half | the Merchant's Ghost; anyone who asks which three |
 | **The Ashland column** | an Ashland King's second son | take a hearth, light it with coal, rule the ring | march up the Basalt Stair | the reach's corrupted; then everyone |

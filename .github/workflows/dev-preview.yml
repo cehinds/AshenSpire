@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +34,9 @@ jobs:
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
+
+      - name: Relic artwork resolves to shipped assets
+        run: node --test tests/relic-art.test.mjs
 
       - name: Mobile rendering and bounded pose preloads
         run: node --test tests/mobile-performance.test.mjs
@@ -291,6 +296,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
