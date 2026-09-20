@@ -5014,3 +5014,25 @@ button[data-button-size] {
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { padding-top:70px; row-gap:12px; }
 }
+
+/* Creation header: stable menu and a single, plain close control. */
+.customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
+.customize .cz-head-tools.cz-header-menu { display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
+.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; }
+.customize .cz-menu-navigation { display: grid; gap: 6px; }
+.customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
+.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; font: 28px/1 Arial, sans-serif; }
+
+/* Keep all three creation header controls on the same square footprint. */
+.customize .modal-head :is(.figure.cz-portrait, .cz-menu-button, .modal-close) {
+  box-sizing: border-box;
+  flex: 0 0 var(--tap-floor);
+  width: var(--tap-floor) !important;
+  height: var(--tap-floor) !important;
+  min-width: var(--tap-floor) !important;
+  min-height: var(--tap-floor) !important;
+  max-width: var(--tap-floor);
+  max-height: var(--tap-floor);
+  padding: 0;
+  align-self: center;
+}
