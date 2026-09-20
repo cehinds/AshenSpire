@@ -7,12 +7,12 @@ const own = (object, key) => Object.hasOwn(object, key) ? object[key] : undefine
  * Precedence: actor/action override, authored tag order, intent, type, neutral.
  */
 export function resolveActionAnimation({ actorId, actionId, tags = [], type, intent, availablePoses = [] } = {}) {
+  const ids = new Set((Array.isArray(tags) ? tags : []).map(tag => typeof tag === 'string' ? tag : tag?.id));
   const actor = own(ACTION_ANIMATION_ACTORS, actorId);
   let family = actor && own(actor.actions, actionId);
   let source = 'override';
   let matchedTag = null;
   if (!family) {
-    const ids = new Set((Array.isArray(tags) ? tags : []).map(tag => typeof tag === 'string' ? tag : tag?.id));
     const row = ACTION_ANIMATION_TAGS.find(([id]) => ids.has(id));
     if (row) { [matchedTag, family] = row; source = 'tag'; }
   }
@@ -21,6 +21,10 @@ export function resolveActionAnimation({ actorId, actionId, tags = [], type, int
   const definition = ACTION_ANIMATION_FAMILIES[family];
   const poses = new Set(Array.isArray(availablePoses) ? availablePoses : []);
   const pose = poses.has(definition.pose) ? definition.pose : (poses.has('idle') ? 'idle' : null);
-  return Object.freeze({ family, source, matchedTag, motion: definition.motion, pose,
+  // Ranged wins the motion tag order, but a ranged spell still has a casting
+  // gesture. Use authored presentation tags, never class or damage type.
+  const casting = family === 'spell' || (source === 'tag' && family === 'projectile'
+    && ACTION_ANIMATION_TAGS.some(([id, value]) => value === 'spell' && ids.has(id)));
+  return Object.freeze({ family, source, matchedTag, casting, motion: definition.motion, pose,
     spriteClass: actor?.spriteClass || null, tempo: actor?.tempo || 1, reach: actor?.reach || 1 });
 }

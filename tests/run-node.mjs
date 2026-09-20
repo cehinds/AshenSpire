@@ -1113,4 +1113,10 @@ try {
   zoomExtra++;
   console.error('FAIL Equipment animation references:', error);
 }
+try {
+  await import('./unarmed-animation.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Unarmed animation references:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

@@ -35,6 +35,16 @@ The separate `swordShield` profile uses `STANCE-READY → DEFEND → ATK-07 → 
 
 Shield defense, hurt, cast, buff, ready/aggressive/defensive stances, conversation and portrait have references. The gallery and exporter live at `art/sword-shield-outfits-2026-09-19/`; `attack-sequence.json` supplies the attack order, frame duration and impact index when exporting. Other weapon families and non-attack sword/shield references are preserved. Greatsword order and timing remain independent.
 
+## Unarmed bindings
+
+Both hands empty selects the shared `unarmed` profile across all 35 armor entries and 32 appearances. The physical attack uses Ready, ATK-01 through ATK-07, then Ready, at 140ms per frame (1260ms total). Its primary impact is ATK-05 at 700ms. All skins share this choreography, with one scale per body suite and the same foot anchor. Normal gauntlets remain part of armor; weapons, labels and baked effects are absent.
+
+The physical fragment owns idle, attack, defense, hurt, stances and noncombat views. Cast and buff initially use its empty-hand stills. A separate magic fragment can replace only cast/buff and append `MAGIC-` frames to those same sets. `tools/unarmed-animation-import.mjs` composes either import order, validates live catalog coverage, and preserves unrelated profiles and settings. Spell-tagged attack cards choose cast when unarmed; Ranged plus a spell tag keeps projectile movement while using the casting gesture. Physical attacks retain punches, powers use buff, and explicit action animation overrides retain precedence.
+
+Solo and co-op derive the selected clip before dispatch and use its duration for stage playback. Solo's presentation timeline uses the selected impact time; co-op retains its existing authoritative receipt handling. Combat speed scales clip duration and impact together. This presentation routing changes no engine damage, card behavior, equipment or save data.
+
+Source masters, labeled sheets, editable synchronized preview, provenance and export scripts are in `art/unarmed-reference-2026-09-19/`. Run `node --test tests/unarmed-animation.test.mjs` for importer ownership, routing, timing and complete runtime asset coverage.
+
 ## Runtime and review boundaries
 
 ### Empty-hand magic

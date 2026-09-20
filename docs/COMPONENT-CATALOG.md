@@ -13,7 +13,7 @@ armour, ordered right/left weapon groups and optional grip. Its model is
 `src/model/equipmentAnimation.js`; authored references live in
 `content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
 Armoury, conversation and portrait views share those references. The visual
-catalog includes greatsword ready stances for all four classes. One shared motion profile serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames.
+catalog includes greatsword, sword/shield and unarmed ready stances. Each family serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames. Unarmed physical attacks and casting have separate references within one shared profile.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
 Empty-hand magic adds 16 addressable poses for each of the 32 appearances,
