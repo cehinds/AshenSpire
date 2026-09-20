@@ -1,0 +1,4983 @@
+{
+  "source": "Original bytes remain at parent commit 20de21a8; no resampling or alpha changes",
+  "encoding": "WebP quality 75; environments method 6, animations method 4; smaller encodes only",
+  "assets": [
+    {
+      "path": "assets/environments/ashen-crown-combat.webp",
+      "before": 430278,
+      "after": 365384,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/ashen-crown-map.webp",
+      "before": 54618,
+      "after": 53542,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/cinder-reach-combat.webp",
+      "before": 320914,
+      "after": 265878,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/cinder-reach-map.webp",
+      "before": 54508,
+      "after": 53210,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/crownfall-landmark.webp",
+      "before": 316678,
+      "after": 254710,
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "assets/environments/drowned-coast-combat.webp",
+      "before": 326216,
+      "after": 275348,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/drowned-coast-map.webp",
+      "before": 56726,
+      "after": 55718,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/fractured-realm-square.webp",
+      "before": 97868,
+      "after": 96064,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/hollow-weald-combat.webp",
+      "before": 381386,
+      "after": 324652,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/hollow-weald-map.webp",
+      "before": 50486,
+      "after": 49458,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/pale-marches-combat.webp",
+      "before": 345528,
+      "after": 297488,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/pale-marches-map.webp",
+      "before": 60356,
+      "after": 59486,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/the-fivefold-frontier-world.webp",
+      "before": 57360,
+      "after": 56198,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/the-fractured-realm-world.webp",
+      "before": 54528,
+      "after": 53270,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/the-shattered-gulf-world.webp",
+      "before": 55272,
+      "after": 54530,
+      "size": [
+        341,
+        512
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-01-background.webp",
+      "before": 1477358,
+      "after": 201870,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-01-floor.webp",
+      "before": 1119076,
+      "after": 139464,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-02-background.webp",
+      "before": 1420540,
+      "after": 200168,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-02-floor.webp",
+      "before": 1158742,
+      "after": 138626,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-03-background.webp",
+      "before": 1588628,
+      "after": 215444,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-03-floor.webp",
+      "before": 973910,
+      "after": 121884,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-04-background.webp",
+      "before": 1483812,
+      "after": 191448,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/BS-ENV-04-floor.webp",
+      "before": 1114800,
+      "after": 141014,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-01-background.webp",
+      "before": 1533034,
+      "after": 181344,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-01-floor.webp",
+      "before": 955148,
+      "after": 112960,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-02-background.webp",
+      "before": 1439912,
+      "after": 173514,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-02-floor.webp",
+      "before": 1080416,
+      "after": 127218,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-03-background.webp",
+      "before": 1453862,
+      "after": 164876,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-03-floor.webp",
+      "before": 974610,
+      "after": 107788,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-04-background.webp",
+      "before": 1391734,
+      "after": 164538,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/FC-ENV-04-floor.webp",
+      "before": 1049178,
+      "after": 107146,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-01-background.webp",
+      "before": 1485826,
+      "after": 196536,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-01-floor.webp",
+      "before": 1079198,
+      "after": 137562,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-02-background.webp",
+      "before": 1439740,
+      "after": 199284,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-02-floor.webp",
+      "before": 1218040,
+      "after": 164788,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-03-background.webp",
+      "before": 1541504,
+      "after": 210180,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-03-floor.webp",
+      "before": 1048904,
+      "after": 138960,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-04-background.webp",
+      "before": 1415678,
+      "after": 185566,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/HM-ENV-04-floor.webp",
+      "before": 1049290,
+      "after": 119130,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/MAP-01-briar-sanctum.webp",
+      "before": 658660,
+      "after": 393330,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/MAP-02-hall-of-mirrors.webp",
+      "before": 646472,
+      "after": 401558,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/environments/legacy/MAP-03-furnace-chapel.webp",
+      "before": 574648,
+      "after": 327294,
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-01.webp",
+      "before": 28752,
+      "after": 20768,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-02.webp",
+      "before": 33262,
+      "after": 24370,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-03.webp",
+      "before": 38836,
+      "after": 28064,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-04.webp",
+      "before": 34960,
+      "after": 25454,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-05.webp",
+      "before": 34150,
+      "after": 24616,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-06.webp",
+      "before": 33890,
+      "after": 24576,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/ATK-07.webp",
+      "before": 33660,
+      "after": 24472,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/BUFF.webp",
+      "before": 41668,
+      "after": 29928,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/CAST.webp",
+      "before": 43732,
+      "after": 31094,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/DEFEND.webp",
+      "before": 32864,
+      "after": 23748,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/HURT.webp",
+      "before": 35290,
+      "after": 25864,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/PORTRAIT.webp",
+      "before": 64994,
+      "after": 43324,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/STANCE-AGGRESSIVE.webp",
+      "before": 32584,
+      "after": 23862,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/STANCE-DEFENSIVE.webp",
+      "before": 23950,
+      "after": 17464,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald/STANCE-READY.webp",
+      "before": 34270,
+      "after": 25030,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-01.webp",
+      "before": 34096,
+      "after": 24252,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-02.webp",
+      "before": 40112,
+      "after": 28130,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-03.webp",
+      "before": 47520,
+      "after": 33756,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-04.webp",
+      "before": 42480,
+      "after": 29568,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-05.webp",
+      "before": 42562,
+      "after": 29724,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-06.webp",
+      "before": 39380,
+      "after": 27694,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/ATK-07.webp",
+      "before": 42644,
+      "after": 29222,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/BUFF.webp",
+      "before": 42058,
+      "after": 30242,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/CAST.webp",
+      "before": 48968,
+      "after": 34194,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/DEFEND.webp",
+      "before": 40476,
+      "after": 28160,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/HURT.webp",
+      "before": 40742,
+      "after": 28988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/PORTRAIT.webp",
+      "before": 80536,
+      "after": 53248,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+      "before": 39546,
+      "after": 28408,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-DEFENSIVE.webp",
+      "before": 33672,
+      "after": 23974,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-emberhabit/STANCE-READY.webp",
+      "before": 41350,
+      "after": 29502,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-01.webp",
+      "before": 30670,
+      "after": 22354,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-02.webp",
+      "before": 35340,
+      "after": 25976,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-03.webp",
+      "before": 39692,
+      "after": 28888,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-04.webp",
+      "before": 37118,
+      "after": 27142,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-05.webp",
+      "before": 35134,
+      "after": 25954,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-06.webp",
+      "before": 34796,
+      "after": 25878,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/ATK-07.webp",
+      "before": 39384,
+      "after": 28656,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/BUFF.webp",
+      "before": 55928,
+      "after": 39318,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/CAST.webp",
+      "before": 53740,
+      "after": 38284,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/DEFEND.webp",
+      "before": 35996,
+      "after": 26358,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/HURT.webp",
+      "before": 36486,
+      "after": 26540,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/PORTRAIT.webp",
+      "before": 59834,
+      "after": 39506,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "before": 35460,
+      "after": 26620,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "before": 27994,
+      "after": 20334,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-gutterLeathers/STANCE-READY.webp",
+      "before": 36088,
+      "after": 26398,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-01.webp",
+      "before": 37026,
+      "after": 27526,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-02.webp",
+      "before": 42776,
+      "after": 32438,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-03.webp",
+      "before": 47248,
+      "after": 34984,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-04.webp",
+      "before": 45540,
+      "after": 33342,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-05.webp",
+      "before": 44020,
+      "after": 32004,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-06.webp",
+      "before": 41476,
+      "after": 30320,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/ATK-07.webp",
+      "before": 41700,
+      "after": 30882,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/BUFF.webp",
+      "before": 58602,
+      "after": 42018,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/CAST.webp",
+      "before": 59276,
+      "after": 42840,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/DEFEND.webp",
+      "before": 39068,
+      "after": 29022,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/HURT.webp",
+      "before": 43576,
+      "after": 31870,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/PORTRAIT.webp",
+      "before": 67320,
+      "after": 45306,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-AGGRESSIVE.webp",
+      "before": 40328,
+      "after": 30348,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-DEFENSIVE.webp",
+      "before": 39752,
+      "after": 29340,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-nightweave/STANCE-READY.webp",
+      "before": 43992,
+      "after": 32812,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-01.webp",
+      "before": 34938,
+      "after": 25846,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-02.webp",
+      "before": 39622,
+      "after": 29192,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-03.webp",
+      "before": 43832,
+      "after": 32528,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-04.webp",
+      "before": 41044,
+      "after": 29988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-05.webp",
+      "before": 40472,
+      "after": 29506,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-06.webp",
+      "before": 38304,
+      "after": 28324,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/ATK-07.webp",
+      "before": 37822,
+      "after": 28014,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/BUFF.webp",
+      "before": 43284,
+      "after": 31254,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/CAST.webp",
+      "before": 58750,
+      "after": 42106,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/DEFEND.webp",
+      "before": 38610,
+      "after": 28516,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/HURT.webp",
+      "before": 39640,
+      "after": 29272,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/PORTRAIT.webp",
+      "before": 73976,
+      "after": 50492,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-AGGRESSIVE.webp",
+      "before": 40536,
+      "after": 30420,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-DEFENSIVE.webp",
+      "before": 30946,
+      "after": 22878,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-ossuary/STANCE-READY.webp",
+      "before": 41090,
+      "after": 30252,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-01.webp",
+      "before": 37874,
+      "after": 27662,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-02.webp",
+      "before": 44044,
+      "after": 32244,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-03.webp",
+      "before": 53974,
+      "after": 38930,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-04.webp",
+      "before": 46174,
+      "after": 33384,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-05.webp",
+      "before": 45448,
+      "after": 32950,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-06.webp",
+      "before": 41816,
+      "after": 30552,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/ATK-07.webp",
+      "before": 43734,
+      "after": 31488,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/BUFF.webp",
+      "before": 43430,
+      "after": 31606,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/CAST.webp",
+      "before": 55398,
+      "after": 39614,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/DEFEND.webp",
+      "before": 44770,
+      "after": 31854,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/HURT.webp",
+      "before": 45004,
+      "after": 32284,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/PORTRAIT.webp",
+      "before": 76116,
+      "after": 51202,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+      "before": 43546,
+      "after": 32500,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-DEFENSIVE.webp",
+      "before": 32946,
+      "after": 23774,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-pilgrim/STANCE-READY.webp",
+      "before": 44968,
+      "after": 32402,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-01.webp",
+      "before": 30576,
+      "after": 22132,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-02.webp",
+      "before": 35034,
+      "after": 25536,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-03.webp",
+      "before": 41036,
+      "after": 29374,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-04.webp",
+      "before": 37066,
+      "after": 26596,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-05.webp",
+      "before": 35428,
+      "after": 25494,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-06.webp",
+      "before": 31250,
+      "after": 22810,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/ATK-07.webp",
+      "before": 35712,
+      "after": 25904,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/BUFF.webp",
+      "before": 42858,
+      "after": 30822,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/CAST.webp",
+      "before": 48702,
+      "after": 35032,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/DEFEND.webp",
+      "before": 35856,
+      "after": 25264,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/HURT.webp",
+      "before": 37062,
+      "after": 26558,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/PORTRAIT.webp",
+      "before": 61814,
+      "after": 41374,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+      "before": 33846,
+      "after": 24846,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-DEFENSIVE.webp",
+      "before": 30232,
+      "after": 21378,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-riteVestments/STANCE-READY.webp",
+      "before": 37666,
+      "after": 26958,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-01.webp",
+      "before": 33688,
+      "after": 23940,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-02.webp",
+      "before": 38676,
+      "after": 27792,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-03.webp",
+      "before": 40414,
+      "after": 28740,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-04.webp",
+      "before": 39996,
+      "after": 28522,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-05.webp",
+      "before": 41156,
+      "after": 29714,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-06.webp",
+      "before": 39634,
+      "after": 27942,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/ATK-07.webp",
+      "before": 41320,
+      "after": 29508,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/BUFF.webp",
+      "before": 39480,
+      "after": 28610,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/CAST.webp",
+      "before": 48042,
+      "after": 34158,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/DEFEND.webp",
+      "before": 38654,
+      "after": 27568,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/HURT.webp",
+      "before": 40768,
+      "after": 29354,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/PORTRAIT.webp",
+      "before": 68672,
+      "after": 44740,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "before": 38958,
+      "after": 28216,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "before": 30158,
+      "after": 21404,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/herald-wayfarerPlate/STANCE-READY.webp",
+      "before": 38352,
+      "after": 27622,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-01.webp",
+      "before": 31878,
+      "after": 23804,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-02.webp",
+      "before": 38460,
+      "after": 29002,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-03.webp",
+      "before": 44912,
+      "after": 34090,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-04.webp",
+      "before": 42238,
+      "after": 31886,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-05.webp",
+      "before": 38202,
+      "after": 28884,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-06.webp",
+      "before": 35704,
+      "after": 27098,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/ATK-07.webp",
+      "before": 37920,
+      "after": 28590,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/BUFF.webp",
+      "before": 37626,
+      "after": 27528,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/CAST.webp",
+      "before": 43570,
+      "after": 32876,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/DEFEND.webp",
+      "before": 38184,
+      "after": 28396,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/HURT.webp",
+      "before": 38916,
+      "after": 29342,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/PORTRAIT.webp",
+      "before": 103542,
+      "after": 57394,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/STANCE-AGGRESSIVE.webp",
+      "before": 36568,
+      "after": 26522,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/STANCE-DEFENSIVE.webp",
+      "before": 26742,
+      "after": 19240,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver/STANCE-READY.webp",
+      "before": 36030,
+      "after": 27808,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-01.webp",
+      "before": 31310,
+      "after": 22744,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-02.webp",
+      "before": 35896,
+      "after": 26714,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-03.webp",
+      "before": 41774,
+      "after": 30630,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-04.webp",
+      "before": 39346,
+      "after": 28856,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-05.webp",
+      "before": 39282,
+      "after": 28846,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-06.webp",
+      "before": 35426,
+      "after": 26386,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/ATK-07.webp",
+      "before": 37790,
+      "after": 27522,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/BUFF.webp",
+      "before": 40446,
+      "after": 28620,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/CAST.webp",
+      "before": 46198,
+      "after": 33518,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/DEFEND.webp",
+      "before": 35694,
+      "after": 25788,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/HURT.webp",
+      "before": 39228,
+      "after": 28790,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/PORTRAIT.webp",
+      "before": 52560,
+      "after": 33626,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "before": 37872,
+      "after": 27922,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "before": 27660,
+      "after": 19826,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-gutterLeathers/STANCE-READY.webp",
+      "before": 35040,
+      "after": 25800,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-01.webp",
+      "before": 29786,
+      "after": 22006,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-02.webp",
+      "before": 36934,
+      "after": 27196,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-03.webp",
+      "before": 40572,
+      "after": 29668,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-04.webp",
+      "before": 37382,
+      "after": 27492,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-05.webp",
+      "before": 37070,
+      "after": 26868,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-06.webp",
+      "before": 35952,
+      "after": 25968,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/ATK-07.webp",
+      "before": 35794,
+      "after": 26098,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/BUFF.webp",
+      "before": 50174,
+      "after": 35584,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/CAST.webp",
+      "before": 54304,
+      "after": 39890,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/DEFEND.webp",
+      "before": 36400,
+      "after": 26298,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/HURT.webp",
+      "before": 38586,
+      "after": 28154,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/PORTRAIT.webp",
+      "before": 64634,
+      "after": 40786,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+      "before": 35382,
+      "after": 26148,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-DEFENSIVE.webp",
+      "before": 30054,
+      "after": 21834,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-nightweave/STANCE-READY.webp",
+      "before": 36002,
+      "after": 26508,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-01.webp",
+      "before": 34708,
+      "after": 24740,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-02.webp",
+      "before": 42628,
+      "after": 30842,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-03.webp",
+      "before": 48524,
+      "after": 34918,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-04.webp",
+      "before": 46008,
+      "after": 32928,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-05.webp",
+      "before": 43582,
+      "after": 30800,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-06.webp",
+      "before": 41794,
+      "after": 29628,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/ATK-07.webp",
+      "before": 43074,
+      "after": 30542,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/BUFF.webp",
+      "before": 43150,
+      "after": 30430,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/CAST.webp",
+      "before": 52960,
+      "after": 38252,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/DEFEND.webp",
+      "before": 41036,
+      "after": 28730,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/HURT.webp",
+      "before": 43870,
+      "after": 31654,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/PORTRAIT.webp",
+      "before": 77328,
+      "after": 48352,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+      "before": 39556,
+      "after": 28760,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+      "before": 33614,
+      "after": 23774,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-oathsworn/STANCE-READY.webp",
+      "before": 40634,
+      "after": 29224,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-01.webp",
+      "before": 33454,
+      "after": 23634,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-02.webp",
+      "before": 41912,
+      "after": 30192,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-03.webp",
+      "before": 45982,
+      "after": 32840,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-04.webp",
+      "before": 45804,
+      "after": 33136,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-05.webp",
+      "before": 43980,
+      "after": 31414,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-06.webp",
+      "before": 40870,
+      "after": 28948,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/ATK-07.webp",
+      "before": 43986,
+      "after": 31324,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/BUFF.webp",
+      "before": 61454,
+      "after": 41922,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/CAST.webp",
+      "before": 65382,
+      "after": 45598,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/DEFEND.webp",
+      "before": 41228,
+      "after": 29328,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/HURT.webp",
+      "before": 45322,
+      "after": 32524,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/PORTRAIT.webp",
+      "before": 55860,
+      "after": 35282,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+      "before": 42914,
+      "after": 31114,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+      "before": 35346,
+      "after": 25034,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-riteVestments/STANCE-READY.webp",
+      "before": 39538,
+      "after": 28436,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-01.webp",
+      "before": 30432,
+      "after": 22846,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-02.webp",
+      "before": 36886,
+      "after": 27824,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-03.webp",
+      "before": 42420,
+      "after": 31820,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-04.webp",
+      "before": 38222,
+      "after": 28822,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-05.webp",
+      "before": 36996,
+      "after": 28018,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-06.webp",
+      "before": 34414,
+      "after": 26038,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/ATK-07.webp",
+      "before": 36046,
+      "after": 26986,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/BUFF.webp",
+      "before": 33178,
+      "after": 23726,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/CAST.webp",
+      "before": 47040,
+      "after": 34666,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/DEFEND.webp",
+      "before": 36928,
+      "after": 27248,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/HURT.webp",
+      "before": 35502,
+      "after": 26492,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/PORTRAIT.webp",
+      "before": 66622,
+      "after": 43870,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-AGGRESSIVE.webp",
+      "before": 36334,
+      "after": 27758,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-DEFENSIVE.webp",
+      "before": 28378,
+      "after": 21358,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-vigil/STANCE-READY.webp",
+      "before": 35116,
+      "after": 26700,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-01.webp",
+      "before": 30452,
+      "after": 22474,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-02.webp",
+      "before": 38670,
+      "after": 28672,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-03.webp",
+      "before": 43828,
+      "after": 32372,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-04.webp",
+      "before": 40198,
+      "after": 29632,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-05.webp",
+      "before": 38986,
+      "after": 28658,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-06.webp",
+      "before": 38006,
+      "after": 27842,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/ATK-07.webp",
+      "before": 36722,
+      "after": 27160,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/BUFF.webp",
+      "before": 46244,
+      "after": 33152,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/CAST.webp",
+      "before": 51318,
+      "after": 37166,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/DEFEND.webp",
+      "before": 38134,
+      "after": 28024,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/HURT.webp",
+      "before": 39384,
+      "after": 28930,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/PORTRAIT.webp",
+      "before": 75872,
+      "after": 49230,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/STANCE-AGGRESSIVE.webp",
+      "before": 37162,
+      "after": 27838,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/STANCE-DEFENSIVE.webp",
+      "before": 32110,
+      "after": 23694,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-warden/STANCE-READY.webp",
+      "before": 36444,
+      "after": 27002,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-01.webp",
+      "before": 33362,
+      "after": 24104,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-02.webp",
+      "before": 38518,
+      "after": 27948,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-03.webp",
+      "before": 46214,
+      "after": 33372,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-04.webp",
+      "before": 43382,
+      "after": 31584,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-05.webp",
+      "before": 41952,
+      "after": 30398,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-06.webp",
+      "before": 36872,
+      "after": 27116,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/ATK-07.webp",
+      "before": 41796,
+      "after": 30190,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/BUFF.webp",
+      "before": 47390,
+      "after": 33930,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/CAST.webp",
+      "before": 56598,
+      "after": 41016,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/DEFEND.webp",
+      "before": 41308,
+      "after": 29266,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/HURT.webp",
+      "before": 41314,
+      "after": 30066,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/PORTRAIT.webp",
+      "before": 58928,
+      "after": 37176,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "before": 38600,
+      "after": 28322,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "before": 33808,
+      "after": 24262,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/reaver-wayfarerPlate/STANCE-READY.webp",
+      "before": 38324,
+      "after": 27856,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-01.webp",
+      "before": 27980,
+      "after": 21368,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-02.webp",
+      "before": 32686,
+      "after": 24886,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-03.webp",
+      "before": 36442,
+      "after": 27766,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-04.webp",
+      "before": 32248,
+      "after": 24780,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-05.webp",
+      "before": 32080,
+      "after": 24696,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-06.webp",
+      "before": 29632,
+      "after": 22340,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/ATK-07.webp",
+      "before": 31350,
+      "after": 23772,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/BUFF.webp",
+      "before": 37638,
+      "after": 27722,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/CAST.webp",
+      "before": 43492,
+      "after": 32152,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/DEFEND.webp",
+      "before": 31472,
+      "after": 23706,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/HURT.webp",
+      "before": 34670,
+      "after": 26092,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/PORTRAIT.webp",
+      "before": 57350,
+      "after": 38612,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/STANCE-AGGRESSIVE.webp",
+      "before": 29808,
+      "after": 22988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/STANCE-DEFENSIVE.webp",
+      "before": 25266,
+      "after": 19286,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue/STANCE-READY.webp",
+      "before": 31592,
+      "after": 24346,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-01.webp",
+      "before": 24086,
+      "after": 18858,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-02.webp",
+      "before": 30108,
+      "after": 23614,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-03.webp",
+      "before": 34372,
+      "after": 26686,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-04.webp",
+      "before": 31470,
+      "after": 24622,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-05.webp",
+      "before": 29986,
+      "after": 23278,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-06.webp",
+      "before": 30660,
+      "after": 24220,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/ATK-07.webp",
+      "before": 29982,
+      "after": 23356,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/BUFF.webp",
+      "before": 35092,
+      "after": 26272,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/CAST.webp",
+      "before": 40552,
+      "after": 31060,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/DEFEND.webp",
+      "before": 30438,
+      "after": 23646,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/HURT.webp",
+      "before": 32242,
+      "after": 25072,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/PORTRAIT.webp",
+      "before": 47476,
+      "after": 32318,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-AGGRESSIVE.webp",
+      "before": 29612,
+      "after": 23244,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-DEFENSIVE.webp",
+      "before": 23068,
+      "after": 17632,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-duelist/STANCE-READY.webp",
+      "before": 29712,
+      "after": 23430,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-01.webp",
+      "before": 28160,
+      "after": 20994,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-02.webp",
+      "before": 34886,
+      "after": 26168,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-03.webp",
+      "before": 40144,
+      "after": 29910,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-04.webp",
+      "before": 36784,
+      "after": 27134,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-05.webp",
+      "before": 36320,
+      "after": 26428,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-06.webp",
+      "before": 31778,
+      "after": 22994,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/ATK-07.webp",
+      "before": 34816,
+      "after": 25268,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/BUFF.webp",
+      "before": 43904,
+      "after": 31712,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/CAST.webp",
+      "before": 50790,
+      "after": 36660,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/DEFEND.webp",
+      "before": 35172,
+      "after": 25812,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/HURT.webp",
+      "before": 36190,
+      "after": 26818,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/PORTRAIT.webp",
+      "before": 55110,
+      "after": 35430,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "before": 34870,
+      "after": 26064,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "before": 26752,
+      "after": 19434,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-gutterLeathers/STANCE-READY.webp",
+      "before": 32504,
+      "after": 24274,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-01.webp",
+      "before": 29630,
+      "after": 22576,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-02.webp",
+      "before": 35618,
+      "after": 26740,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-03.webp",
+      "before": 41324,
+      "after": 31134,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-04.webp",
+      "before": 37512,
+      "after": 28386,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-05.webp",
+      "before": 35722,
+      "after": 27042,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-06.webp",
+      "before": 35294,
+      "after": 26662,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/ATK-07.webp",
+      "before": 36630,
+      "after": 27408,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/BUFF.webp",
+      "before": 48902,
+      "after": 35038,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/CAST.webp",
+      "before": 49714,
+      "after": 37164,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/DEFEND.webp",
+      "before": 37288,
+      "after": 27804,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/HURT.webp",
+      "before": 38762,
+      "after": 29164,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/PORTRAIT.webp",
+      "before": 53064,
+      "after": 37280,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+      "before": 34514,
+      "after": 26620,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-DEFENSIVE.webp",
+      "before": 32372,
+      "after": 24546,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightveil/STANCE-READY.webp",
+      "before": 34814,
+      "after": 26000,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-01.webp",
+      "before": 34524,
+      "after": 25680,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-02.webp",
+      "before": 40630,
+      "after": 30244,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-03.webp",
+      "before": 48782,
+      "after": 36134,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-04.webp",
+      "before": 45918,
+      "after": 34606,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-05.webp",
+      "before": 45822,
+      "after": 33796,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-06.webp",
+      "before": 39296,
+      "after": 28962,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/ATK-07.webp",
+      "before": 46690,
+      "after": 34638,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/BUFF.webp",
+      "before": 58532,
+      "after": 41858,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/CAST.webp",
+      "before": 56526,
+      "after": 41054,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/DEFEND.webp",
+      "before": 42560,
+      "after": 31180,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/HURT.webp",
+      "before": 43998,
+      "after": 32652,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/PORTRAIT.webp",
+      "before": 67700,
+      "after": 44382,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+      "before": 43354,
+      "after": 32712,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-DEFENSIVE.webp",
+      "before": 36506,
+      "after": 26638,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-nightweave/STANCE-READY.webp",
+      "before": 40720,
+      "after": 30766,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-01.webp",
+      "before": 28982,
+      "after": 20990,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-02.webp",
+      "before": 35480,
+      "after": 26120,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-03.webp",
+      "before": 38122,
+      "after": 27772,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-04.webp",
+      "before": 37304,
+      "after": 26702,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-05.webp",
+      "before": 35872,
+      "after": 25910,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-06.webp",
+      "before": 33660,
+      "after": 24844,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/ATK-07.webp",
+      "before": 37222,
+      "after": 27014,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/BUFF.webp",
+      "before": 39548,
+      "after": 28020,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/CAST.webp",
+      "before": 46282,
+      "after": 32602,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/DEFEND.webp",
+      "before": 34930,
+      "after": 24940,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/HURT.webp",
+      "before": 38158,
+      "after": 27452,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/PORTRAIT.webp",
+      "before": 57388,
+      "after": 35660,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+      "before": 35452,
+      "after": 26124,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+      "before": 28070,
+      "after": 20116,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-riteVestments/STANCE-READY.webp",
+      "before": 34840,
+      "after": 25474,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-01.webp",
+      "before": 30796,
+      "after": 22864,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-02.webp",
+      "before": 38014,
+      "after": 28566,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-03.webp",
+      "before": 42996,
+      "after": 32046,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-04.webp",
+      "before": 39724,
+      "after": 29800,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-05.webp",
+      "before": 39000,
+      "after": 29298,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-06.webp",
+      "before": 34912,
+      "after": 26450,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/ATK-07.webp",
+      "before": 35298,
+      "after": 26172,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/BUFF.webp",
+      "before": 38886,
+      "after": 28156,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/CAST.webp",
+      "before": 47124,
+      "after": 34586,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/DEFEND.webp",
+      "before": 33904,
+      "after": 25038,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/HURT.webp",
+      "before": 36940,
+      "after": 27584,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/PORTRAIT.webp",
+      "before": 67732,
+      "after": 45310,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-AGGRESSIVE.webp",
+      "before": 34912,
+      "after": 26446,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-DEFENSIVE.webp",
+      "before": 27256,
+      "after": 20284,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-shadow/STANCE-READY.webp",
+      "before": 38244,
+      "after": 28770,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-01.webp",
+      "before": 33074,
+      "after": 24498,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-02.webp",
+      "before": 39076,
+      "after": 29012,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-03.webp",
+      "before": 44466,
+      "after": 32976,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-04.webp",
+      "before": 42614,
+      "after": 31722,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-05.webp",
+      "before": 40392,
+      "after": 29990,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-06.webp",
+      "before": 36170,
+      "after": 27368,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/ATK-07.webp",
+      "before": 42098,
+      "after": 31156,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/BUFF.webp",
+      "before": 38962,
+      "after": 27946,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/CAST.webp",
+      "before": 50864,
+      "after": 37292,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/DEFEND.webp",
+      "before": 37620,
+      "after": 27972,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/HURT.webp",
+      "before": 40768,
+      "after": 30062,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/PORTRAIT.webp",
+      "before": 59186,
+      "after": 38626,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "before": 38614,
+      "after": 28880,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "before": 29218,
+      "after": 21256,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/rogue-wayfarerPlate/STANCE-READY.webp",
+      "before": 37270,
+      "after": 27392,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-01.webp",
+      "before": 29684,
+      "after": 22742,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-02.webp",
+      "before": 33328,
+      "after": 26010,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-03.webp",
+      "before": 37894,
+      "after": 28988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-04.webp",
+      "before": 34368,
+      "after": 25982,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-05.webp",
+      "before": 34386,
+      "after": 26330,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-06.webp",
+      "before": 31418,
+      "after": 24638,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/ATK-07.webp",
+      "before": 34004,
+      "after": 25544,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/BUFF.webp",
+      "before": 47608,
+      "after": 35026,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/CAST.webp",
+      "before": 48602,
+      "after": 36282,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/DEFEND.webp",
+      "before": 32636,
+      "after": 24516,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/HURT.webp",
+      "before": 35626,
+      "after": 27200,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/PORTRAIT.webp",
+      "before": 56438,
+      "after": 38296,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/STANCE-AGGRESSIVE.webp",
+      "before": 32336,
+      "after": 25052,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/STANCE-DEFENSIVE.webp",
+      "before": 28380,
+      "after": 21744,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer/STANCE-READY.webp",
+      "before": 34074,
+      "after": 26118,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-01.webp",
+      "before": 35502,
+      "after": 26036,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-02.webp",
+      "before": 41564,
+      "after": 30762,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-03.webp",
+      "before": 47572,
+      "after": 35002,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-04.webp",
+      "before": 45768,
+      "after": 33322,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-05.webp",
+      "before": 42606,
+      "after": 31100,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-06.webp",
+      "before": 39706,
+      "after": 29116,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/ATK-07.webp",
+      "before": 41284,
+      "after": 30352,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/BUFF.webp",
+      "before": 55886,
+      "after": 38732,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/CAST.webp",
+      "before": 72176,
+      "after": 52984,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/DEFEND.webp",
+      "before": 41698,
+      "after": 30522,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/HURT.webp",
+      "before": 44634,
+      "after": 32748,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/PORTRAIT.webp",
+      "before": 81382,
+      "after": 52106,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/STANCE-AGGRESSIVE.webp",
+      "before": 42892,
+      "after": 31988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/STANCE-DEFENSIVE.webp",
+      "before": 32360,
+      "after": 23676,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-astral/STANCE-READY.webp",
+      "before": 41940,
+      "after": 30950,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-01.webp",
+      "before": 34152,
+      "after": 25350,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-02.webp",
+      "before": 39288,
+      "after": 29640,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-03.webp",
+      "before": 46656,
+      "after": 35230,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-04.webp",
+      "before": 39626,
+      "after": 30048,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-05.webp",
+      "before": 39542,
+      "after": 29734,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-06.webp",
+      "before": 38144,
+      "after": 28136,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/ATK-07.webp",
+      "before": 38300,
+      "after": 28778,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/BUFF.webp",
+      "before": 45572,
+      "after": 32744,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/CAST.webp",
+      "before": 53756,
+      "after": 39530,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/DEFEND.webp",
+      "before": 37146,
+      "after": 27586,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/HURT.webp",
+      "before": 39770,
+      "after": 30008,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/PORTRAIT.webp",
+      "before": 65766,
+      "after": 42708,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+      "before": 39320,
+      "after": 29824,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-DEFENSIVE.webp",
+      "before": 30656,
+      "after": 23024,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-eclipse/STANCE-READY.webp",
+      "before": 40272,
+      "after": 30192,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-01.webp",
+      "before": 30256,
+      "after": 22604,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-02.webp",
+      "before": 34968,
+      "after": 26856,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-03.webp",
+      "before": 39308,
+      "after": 29608,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-04.webp",
+      "before": 36110,
+      "after": 26984,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-05.webp",
+      "before": 35156,
+      "after": 26108,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-06.webp",
+      "before": 34532,
+      "after": 25954,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/ATK-07.webp",
+      "before": 35984,
+      "after": 27122,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/BUFF.webp",
+      "before": 39088,
+      "after": 28868,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/CAST.webp",
+      "before": 45136,
+      "after": 33502,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/DEFEND.webp",
+      "before": 35534,
+      "after": 26248,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/HURT.webp",
+      "before": 37712,
+      "after": 27980,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/PORTRAIT.webp",
+      "before": 55782,
+      "after": 38576,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "before": 35808,
+      "after": 26762,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "before": 27466,
+      "after": 20692,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-gutterLeathers/STANCE-READY.webp",
+      "before": 35796,
+      "after": 26970,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-01.webp",
+      "before": 30420,
+      "after": 23014,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-02.webp",
+      "before": 38584,
+      "after": 28954,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-03.webp",
+      "before": 41910,
+      "after": 31232,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-04.webp",
+      "before": 38190,
+      "after": 28940,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-05.webp",
+      "before": 40884,
+      "after": 30064,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-06.webp",
+      "before": 34854,
+      "after": 26498,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/ATK-07.webp",
+      "before": 36882,
+      "after": 27386,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/BUFF.webp",
+      "before": 42352,
+      "after": 30866,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/CAST.webp",
+      "before": 54034,
+      "after": 39638,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/DEFEND.webp",
+      "before": 38096,
+      "after": 28498,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/HURT.webp",
+      "before": 39762,
+      "after": 29812,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/PORTRAIT.webp",
+      "before": 66108,
+      "after": 45040,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+      "before": 36400,
+      "after": 27624,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-DEFENSIVE.webp",
+      "before": 31192,
+      "after": 23530,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-nightweave/STANCE-READY.webp",
+      "before": 38460,
+      "after": 28944,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-01.webp",
+      "before": 29230,
+      "after": 21492,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-02.webp",
+      "before": 34752,
+      "after": 25606,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-03.webp",
+      "before": 41754,
+      "after": 30796,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-04.webp",
+      "before": 37984,
+      "after": 28004,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-05.webp",
+      "before": 36182,
+      "after": 26310,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-06.webp",
+      "before": 35598,
+      "after": 25988,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/ATK-07.webp",
+      "before": 35824,
+      "after": 26248,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/BUFF.webp",
+      "before": 47168,
+      "after": 33740,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/CAST.webp",
+      "before": 53980,
+      "after": 39366,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/DEFEND.webp",
+      "before": 35228,
+      "after": 26026,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/HURT.webp",
+      "before": 37530,
+      "after": 27650,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/PORTRAIT.webp",
+      "before": 51448,
+      "after": 35990,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+      "before": 35178,
+      "after": 26218,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+      "before": 29614,
+      "after": 21996,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-riteVestments/STANCE-READY.webp",
+      "before": 35786,
+      "after": 26490,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-01.webp",
+      "before": 38536,
+      "after": 28468,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-02.webp",
+      "before": 44178,
+      "after": 32242,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-03.webp",
+      "before": 54300,
+      "after": 39668,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-04.webp",
+      "before": 46634,
+      "after": 33956,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-05.webp",
+      "before": 45260,
+      "after": 33110,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-06.webp",
+      "before": 42892,
+      "after": 31370,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/ATK-07.webp",
+      "before": 47104,
+      "after": 34020,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/BUFF.webp",
+      "before": 51358,
+      "after": 37290,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/CAST.webp",
+      "before": 59348,
+      "after": 43454,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/DEFEND.webp",
+      "before": 47060,
+      "after": 34270,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/HURT.webp",
+      "before": 44140,
+      "after": 32938,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/PORTRAIT.webp",
+      "before": 75144,
+      "after": 48750,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-AGGRESSIVE.webp",
+      "before": 42598,
+      "after": 31456,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-DEFENSIVE.webp",
+      "before": 38062,
+      "after": 27764,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-starlit/STANCE-READY.webp",
+      "before": 45388,
+      "after": 33516,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-01.webp",
+      "before": 34466,
+      "after": 25614,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-02.webp",
+      "before": 41876,
+      "after": 31236,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-03.webp",
+      "before": 47036,
+      "after": 34892,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-04.webp",
+      "before": 46558,
+      "after": 35168,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-05.webp",
+      "before": 45874,
+      "after": 34346,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-06.webp",
+      "before": 40418,
+      "after": 30414,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/ATK-07.webp",
+      "before": 44626,
+      "after": 33446,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/BUFF.webp",
+      "before": 51032,
+      "after": 36956,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/CAST.webp",
+      "before": 60080,
+      "after": 44206,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/DEFEND.webp",
+      "before": 42202,
+      "after": 31452,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/HURT.webp",
+      "before": 42768,
+      "after": 31908,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/PORTRAIT.webp",
+      "before": 69170,
+      "after": 45808,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "before": 40658,
+      "after": 30866,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "before": 35488,
+      "after": 26692,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/greatsword-outfits/starseer-wayfarerPlate/STANCE-READY.webp",
+      "before": 40648,
+      "after": 30570,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-01.webp",
+      "before": 31878,
+      "after": 23804,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-02.webp",
+      "before": 38460,
+      "after": 29002,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-03.webp",
+      "before": 44912,
+      "after": 34090,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-04.webp",
+      "before": 42238,
+      "after": 31886,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-05.webp",
+      "before": 38202,
+      "after": 28884,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-06.webp",
+      "before": 35704,
+      "after": 27098,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/ATK-07.webp",
+      "before": 37920,
+      "after": 28590,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/BUFF.webp",
+      "before": 37626,
+      "after": 27528,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/CAST.webp",
+      "before": 43570,
+      "after": 32876,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/DEFEND.webp",
+      "before": 38184,
+      "after": 28396,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/HURT.webp",
+      "before": 38916,
+      "after": 29342,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/PORTRAIT.webp",
+      "before": 103542,
+      "after": 57394,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/STANCE-AGGRESSIVE.webp",
+      "before": 36568,
+      "after": 26522,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/STANCE-DEFENSIVE.webp",
+      "before": 26742,
+      "after": 19240,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/greatsword-v2/STANCE-READY.webp",
+      "before": 36030,
+      "after": 27808,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F02.webp",
+      "before": 78950,
+      "after": 16218,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F03.webp",
+      "before": 85508,
+      "after": 19886,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F04.webp",
+      "before": 71994,
+      "after": 14724,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F05.webp",
+      "before": 82618,
+      "after": 17734,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F06.webp",
+      "before": 74666,
+      "after": 15634,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F08.webp",
+      "before": 62176,
+      "after": 13292,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F09.webp",
+      "before": 97132,
+      "after": 22052,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F10.webp",
+      "before": 76228,
+      "after": 18744,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F11.webp",
+      "before": 63934,
+      "after": 14218,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F12.webp",
+      "before": 82978,
+      "after": 19256,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F13.webp",
+      "before": 70696,
+      "after": 14420,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F14.webp",
+      "before": 109732,
+      "after": 25344,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F15.webp",
+      "before": 65598,
+      "after": 14520,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F16.webp",
+      "before": 83352,
+      "after": 18402,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F17.webp",
+      "before": 63652,
+      "after": 13154,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "path": "assets/animations/reaver/default-greatsword/right/F18.webp",
+      "before": 64026,
+      "after": 14788,
+      "size": [
+        512,
+        512
+      ]
+    }
+  ]
+}

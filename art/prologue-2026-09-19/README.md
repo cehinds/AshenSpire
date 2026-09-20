@@ -34,3 +34,7 @@ The hamlet/road paintings show the Hollow Weald departure. The final arrival use
 `content/config/ui/screens/prologue.json` is the authored game sequence; `node tools/config-build.mjs` produces the generated configuration. `src/model/prologue.js` supplies validated settings, tokens and destinations. `src/ui/screens/prologue.js` renders both new games and Settings preview. The studio retains `sequence.json` as its standalone initial script.
 
 Focused verification: `node --test tests/prologue.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs tests/ui-config.test.mjs art/prologue-2026-09-19/model.test.mjs`. Browser checks cover multiline edits, preview, phone art/controls, class item loading, final-map arrival, and reduced motion. Only solo new games show the opening; LAN startup is unchanged.
+
+## Combined build packaging
+
+Rebuilding all current dev artwork initially produced a 143.85 MB standalone, above GitHub’s per-file limit. An additional 553 existing environment/animation WebPs were recompressed at quality 75, retaining their dimensions and byte-identical alpha channels; only smaller encodes were kept. This removes 34,269,522 bytes from runtime assets. `build-compression.json` records every before/after size and the original Git revision. Original bytes remain in Git history. The complete rebuilt standalone is about 98.2 MB.
