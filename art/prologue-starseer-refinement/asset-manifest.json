@@ -1,0 +1,32 @@
+[
+  {
+    "variant": "desktop",
+    "width": 1586,
+    "height": 992,
+    "master": "art/prologue-starseer-refinement/masters/carry-starseer-desktop.png",
+    "deliverable": "assets/prologue/carry-starseer-desktop.webp",
+    "png_bytes": 2372240,
+    "webp_bytes": 239842,
+    "reduction_percent": 89.89,
+    "sha256": "3f6f597418241d8a130aee6e744ca75614e90165e030f3310f7621450b3b706d",
+    "webp_encoding": {
+      "quality": 88,
+      "effort": 6
+    }
+  },
+  {
+    "variant": "mobile",
+    "width": 941,
+    "height": 1672,
+    "master": "art/prologue-starseer-refinement/masters/carry-starseer-mobile.png",
+    "deliverable": "assets/prologue/carry-starseer-mobile.webp",
+    "png_bytes": 2253437,
+    "webp_bytes": 225928,
+    "reduction_percent": 89.97,
+    "sha256": "f4491f5a7abf9c018bcc48509c9a8ca890e6e1a7a96ea0de285a5a60e4571130",
+    "webp_encoding": {
+      "quality": 88,
+      "effort": 6
+    }
+  }
+]
