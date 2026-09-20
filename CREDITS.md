@@ -1,5 +1,9 @@
 # Credits & Asset Licenses
 
+## Empty-hand magic animation suites (2026-09-19)
+
+Original artwork generated for AshenSpire with OpenAI's built-in image generation, using the project's approved class and armor references. Transparent PNG masters and exact prompts: `art/unarmed-magic-2026-09-19/`. Runtime WebP frames: `assets/animations/unarmed-magic/`. All four classes and 35 armor catalog entries share one choreography across 32 distinct appearances; no external artwork was downloaded and no third-party asset license is claimed. The existing `src/ui/assets.js` painted-stage and asset-map path resolves the configured frames.
+
 ## Opening sequence art (2026-09-19)
 
 Twelve original desktop/portrait paintings and four transparent class
