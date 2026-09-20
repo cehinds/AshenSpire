@@ -16,6 +16,16 @@
     "gapRamp": {
       "narrowPx": 375,
       "widePx": 1200
+    },
+    "grid": {
+      "slantFraction": 0.19,
+      "cellFraction": 0.78,
+      "previewDepthFraction": 0.82,
+      "fieldDepthFraction": 0.49,
+      "bottomClearanceFraction": 0.12,
+      "tileWidthFraction": 0.62,
+      "tileRowFraction": 0.5,
+      "legacyTileRowFraction": 0.7
     }
   },
   "positioning": {

@@ -6,10 +6,12 @@ import { prologueRows, prologuePresetOverrides } from './prologue.js';
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import { startingStatRows, applyStartingStatConfig } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
+import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
 const PRESENTATION_DEFAULTS = Object.freeze({
+  ...FORMATION_DEFAULTS,
   playerSpriteScale: 0.9,
   enemySpriteScale: 0.9,
   playerSpawnRow: 'C',
@@ -19,10 +21,10 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   showFormationGrid: false,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
-  rowAScale: 1, rowBScale: 1, rowCScale: 1,
+  rowAScale: 1, rowBScale: 1, rowCScale: 1, rowDScale: 1, rowEScale: 1, rowFScale: 1,
   frontOffsetX: 0, frontOffsetY: 0, backOffsetX: 0, backOffsetY: 0,
   frontLayer: 0, backLayer: 200,
-  rowALayer: 0, rowBLayer: 0, rowCLayer: 0,
+  rowALayer: 0, rowBLayer: 0, rowCLayer: 0, rowDLayer: 0, rowELayer: 0, rowFLayer: 0,
   gridShape: 'wide-rhombus', gridLayer: 'behind',
   playerGridColor: '#d5cc63', enemyGridColor: '#e1a679',
   settingsWidthPercent: 100,
@@ -148,7 +150,8 @@ function explicitRows(bundle) {
 }
 
 const PRESENTATION_ROWS = Object.freeze([
-  ...['A', 'B', 'C'].flatMap(row => [
+  ...FORMATION_FIELDS.map(field => ({ ...field, note: 'Preview and apply in Formation layout. Grid dimensions are shared by both sides.' })),
+  ...[...FORMATION_ROWS].flatMap(row => [
     { key: `row${row}Scale`, label: `Row ${row} character scale multiplier`, min: 0.25, max: 3, step: 0.05, integer: false, note: 'Multiplies the character size for this row. Feet remain anchored to their tile.' },
     { key: `row${row}Layer`, label: `Row ${row} layer adjustment`, min: -500, max: 500, step: 1, integer: true, note: 'Added to the front/back character layer. Higher numbers draw above lower numbers.' },
   ]),
@@ -165,6 +168,11 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    { cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.formationPreset`, presentationKey: 'formationPreset',
+      def: FORMATION_DEFAULTS.formationPreset, choices: FORMATION_PRESETS.map(p => p.value),
+      choiceLabels: Object.fromEntries(FORMATION_PRESETS.map(p => [p.value, p.label])),
+      label: 'Formation preset', note: 'Straight ranks, parallel slants or the classic V. Changes positions without changing combat range rules.' },
     ...[
       ['movementEnabled', 'Enable formation movement', 'Make empty player-side tiles interactive in combat.'],
       ['movementNeedsSelection', 'Select a tile before moving', 'In tap mode, select a destination, then use Move. When off, tapping moves immediately. Hold mode always moves on completion or opens Move / Cancel on early release.'],
@@ -201,7 +209,7 @@ function presentationRows() {
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
       presentationKey: 'showFormationGrid', def: false,
       label: 'Show formation grid',
-      note: 'Overlay A1–C4 reference cells in combat to check visible positions. Columns 1–2 are your side; 3–4 are the enemy side.',
+      note: 'Show labeled positions for the selected grid, up to A1–F6. The left half belongs to your team; the right half to enemies.',
     },
     ...PRESENTATION_ROWS.map((row) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'number',
@@ -212,28 +220,25 @@ function presentationRows() {
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnRow`,
-      presentationKey: `${side}SpawnRow`, def: 'C', choices: ['A', 'B', 'C'],
-      choiceLabels: { A: 'A · top', B: 'B · middle', C: 'C · bottom' },
+      presentationKey: `${side}SpawnRow`, def: 'C', choices: [...FORMATION_ROWS],
+      choiceLabels: Object.fromEntries([...FORMATION_ROWS].map(row => [row, `Row ${row}`])),
       legacyChoices: side === 'player'
         ? { front: 'A', middle: 'B', back: 'C' }
         : { front: 'C', middle: 'B', back: 'A' },
-      label: `${word(side)} default row (A–C)`,
-      note: `First character's row: A is top, B is middle, C is bottom. Additional characters fill the other column, then earlier rows. Updates the current battle immediately; combat range rules are unchanged.`,
+      label: `${word(side)} preferred row (A–F)`,
+      note: 'A is the top row. A row outside the chosen grid uses its last row. Additional characters fill available columns, then earlier rows.',
     })),
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnColumn`,
       presentationKey: `${side}SpawnColumn`,
       def: side === 'player' ? '2' : '3',
-      choices: side === 'player' ? ['1', '2'] : ['3', '4'],
-      choiceLabels: side === 'player'
-        ? { 1: '1 · back', 2: '2 · front' }
-        : { 3: '3 · front', 4: '4 · back' },
+      choices: side === 'player' ? ['1', '2', '3'] : ['2', '3', '4', '5', '6'],
       legacyChoices: side === 'player'
         ? { left: '1', center: '2', right: '2' }
         : { left: '3', center: '3', right: '4' },
-      label: `${word(side)} default column (${side === 'player' ? '1–2' : '3–4'})`,
-      note: `${word(side)} side uses only columns ${side === 'player' ? '1–2' : '3–4'}; front is nearer the arena center and back is nearer the outer edge.`,
+      label: `${word(side)} preferred column`,
+      note: 'Numbered left to right across the battlefield. A column outside this team’s grid uses the nearest valid column. Front is nearer the center.',
     })),
   ];
 }
@@ -426,7 +431,7 @@ export function presentationConfig(settings = {}) {
       values[row.presentationKey] = raw === true;
     } else {
       const number = Number(raw);
-      if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, number));
+      if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, row.integer ? Math.round(number) : number));
     }
   }
   return values;

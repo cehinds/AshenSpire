@@ -12,6 +12,80 @@
   --ui-tray-expanded-panel-max: 34%;
 }
 
+/* Formation editor: a shared live grid beside a compact inspector. */
+.modal:has([data-advanced-panel='Interface']:not([hidden]) [data-topic-panel='Formation layout']:not([hidden])) {
+  width: min(120rem, calc(94vw / var(--ui-zoom, 1))); max-width: calc(94vw / var(--ui-zoom, 1));
+}
+.formation-editor { container-type: inline-size; width: 100%; min-width: 0; font-size: max(1.3rem, calc(14px / var(--ui-zoom, 1))); }
+.formation-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .62fr); gap: 1.4rem; align-items: start; padding: .8rem .2rem; }
+.formation-preview-panel, .formation-inspector { min-width: 0; }
+.formation-preview-panel { border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 1rem; }
+.formation-inspector { border-left: 1px solid var(--line); padding-left: 1.3rem; }
+.formation-editor h3 { margin: 0 0 .8rem; font: 600 max(1.6rem, calc(18px / var(--ui-zoom, 1))) var(--font-ui, sans-serif); color: var(--parchment); }
+.formation-editor h4 { margin: 0 0 .5rem; font: 600 max(1.3rem, calc(14px / var(--ui-zoom, 1))) var(--font-ui, sans-serif); color: var(--parchment); }
+.formation-team-labels { display: grid; grid-template-columns: 1fr 1fr; text-align: center; gap: 1.5rem; margin: 1rem 0 .25rem; }
+.formation-team-labels small { display: block; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); color: var(--parchment); opacity: .75; margin-top: .2rem; }
+.formation-editor .formation-preview { display: block; position: relative; inset: auto; width: 100%; height: calc(42dvh / var(--ui-zoom, 1)); min-height: 260px; max-height: 480px; z-index: 0; }
+.formation-preview .formation-grid-cell { transform: translate(-50%, -50%); pointer-events: none; }
+.formation-preview .formation-grid-cell::after { display: none; }
+.formation-preview .formation-grid-cell span { background: var(--bg-raise); color: var(--parchment); font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); font-weight: 400; padding: .1rem .2rem; }
+.formation-preview .formation-grid-outline > * { fill-opacity: .1; stroke-width: 1.3; }
+.formation-dimensions { text-align: center; font-weight: 600; margin: 1rem 0 .5rem; }
+.formation-preview-note, .formation-help { color: var(--parchment); opacity: .76; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); line-height: 1.45; margin: .5rem 0 .8rem; }
+.formation-preview-note { text-align: center; }
+[data-settings-host] .formation-editor .set-row { padding: .3rem 0; border: 0; min-width: 0; }
+.formation-preset-field { display: grid; gap: .4rem; }
+.formation-preset-field select { width: 100%; }
+.formation-editor select, .formation-editor input { min-width: 0; max-width: 100%; font: inherit; color: var(--parchment); accent-color: var(--gold); }
+.formation-editor select, .formation-editor input[type='number'] { background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-2); min-height: var(--tap-floor, 44px); padding: .4rem .6rem; }
+.formation-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; margin: .5rem 0 .8rem; }
+.formation-presets button { display: flex; flex-direction: column; align-items: center; gap: .2rem; min-width: 0; min-height: 64px; padding: .35rem .15rem; font-size: max(1rem, calc(11px / var(--ui-zoom, 1))); background: var(--bg); border: 1px solid var(--line-soft); }
+.formation-presets button[aria-pressed='true'] { border-color: var(--gold); background: var(--panel); color: var(--parchment); }
+.formation-preset-diagram { width: 56px; max-width: 100%; height: 40px; fill: var(--gold); }
+.formation-dimension-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+.formation-dimension-controls .formation-control { display: flex; flex-direction: column; align-items: stretch; gap: .4rem; }
+.formation-control { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); align-items: center; gap: .7rem; }
+.formation-control label { font-size: inherit; }
+.formation-inputs { display: flex; gap: .4rem; align-items: center; min-width: 0; }
+.formation-inputs input[type='range'] { width: 100%; min-width: 30px; flex: 1; }
+.formation-inputs input[type='number'] { width: 5.8rem; flex-shrink: 0; text-align: center; }
+.formation-inputs > span { font-size: inherit; }
+.formation-dimension-controls .formation-inputs input { width: 100%; }
+.formation-control-section { border-top: 1px solid var(--line); padding-top: .9rem; margin-top: .8rem; }
+.formation-visibility { display: flex; align-items: center; gap: .6rem; min-height: 44px; margin: .6rem 0; }
+.formation-visibility input { width: 1.15rem; height: 1.15rem; }
+.formation-adjustments { border: 1px solid var(--line-soft); border-radius: var(--r-2); margin-top: .7rem; }
+.formation-adjustments summary { padding: .8rem; cursor: pointer; color: var(--parchment); }
+.formation-adjustments summary span { display: inline-block; vertical-align: middle; }
+.formation-adjustments summary small { display: block; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); opacity: .76; margin-top: .3rem; }
+.formation-adjustment-fields { padding: 0 .8rem .7rem; }
+.formation-adjustment-fields .formation-control { grid-template-columns: minmax(0, 1fr) auto; padding-block: .5rem; }
+.formation-adjustment-fields .formation-control label { line-height: 1.35; }
+.formation-apply-status { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); color: var(--parchment); line-height: 1.4; margin: .8rem 0; }
+.formation-editor .formation-apply { width: 100%; background: var(--gold); color: var(--bg); min-height: 48px; font-weight: 700; }
+.formation-editor .formation-apply:is(:hover, :focus-visible, :active) { background: var(--gold); color: var(--bg); border-color: var(--parchment); }
+@container (max-width: 650px) {
+  .formation-workspace { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .formation-inspector { border-left: 0; padding-left: 0; }
+  .formation-editor .formation-preview { height: 300px; min-height: 290px; }
+}
+@container (min-width: 651px) {
+  .formation-preview-panel { position: sticky; top: 1rem; }
+}
+@container (max-width: 370px) {
+  .formation-preview-panel { padding: .6rem .3rem; }
+  .formation-team-labels small { display: none; }
+  .formation-control { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .formation-editor .formation-preview { min-height: 340px; }
+}
+/* UI zoom can make a narrow viewport report a wide logical container. */
+@media (max-width: 760px) {
+  .formation-workspace { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .formation-preview-panel { position: static; }
+  .formation-inspector { border-left: 0; padding-left: 0; }
+  .formation-editor .formation-preview { height: calc(300px / var(--ui-zoom, 1)); min-height: calc(300px / var(--ui-zoom, 1)); }
+}
+
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
 /* Two independent axes, both player-chosen:
      class  → --card-tint, set per card from the class def's cardTint (data, so
