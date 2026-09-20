@@ -43,6 +43,9 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
+    ...(combat.ratingAttributeScale !== undefined ? { ratingAttributeScale: combat.ratingAttributeScale } : {}),
+    ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -94,6 +97,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   const combat = {
     registries,
     rng,
+    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
+    ...(saved.ratingAttributeScale !== undefined ? { ratingAttributeScale: saved.ratingAttributeScale } : {}),
+    ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
@@ -150,7 +156,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —
   // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
-  if (combat.player && combat.loadout) {
+  if (!combat.ratingsRules && combat.player && combat.loadout) {
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,

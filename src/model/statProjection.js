@@ -5,6 +5,7 @@ import { deriveStat } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
+import { ratingReceipt } from './combatRatings.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -31,6 +32,14 @@ function presentationRows(registries) {
  */
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
+  if (registries.balance?.combatRatings?.enabled) {
+    const receipt = ratingReceipt(registries, run, registries.balance.combatRatings);
+    return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
+      raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
+      equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
+      ratings: receipt.totals, ratingSources: receipt.sources,
+      note: 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
+  }
   const levels = run.itemUpgradeLevels || {};
   // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): the derived
   // Poise row read against Constitution, the worn BODY ARMOUR's threshold (a
@@ -201,7 +210,7 @@ export function statProjection(registries, run) {
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Hand & Draw Rules.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

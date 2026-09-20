@@ -205,8 +205,10 @@ function maybeFire(ctx, key, trigger, owner, event) {
   if (!foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
+  const ratingCard = ctx.ratingsRules && key.startsWith('status:')
+    ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   return true;
 }

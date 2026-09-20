@@ -652,6 +652,25 @@ scope and verification.
 
 ### 4.1 Turn loop
 
+**Configurable hand rules (2026-09-19):** Solo gameplay snapshots Advanced →
+Hand & Draw Rules at the start of each new combat. The default opening draw is
+3 + floor(max(0, INT − 10) / 10), bounded by starting-draw limits and hand
+capacity. Unplayed cards are retained by default; later turns fill to current
+capacity. Fixed-draw mode defaults to 2 instead. Opening draw, fixed turn draw,
+and capacity independently configure base, stat enablement/source/baseline,
+points per additional card, and minimum/maximum. Opening stats are evaluated
+at combat start; subsequent draw and capacity values at turn start.
+
+Optional discards are selected when ending a turn; cancel leaves the turn
+untouched. Turn-end effects resolve before eligible selected cards move to
+discard and normal cleanup runs. Ethereal/explicit lifecycle rules still apply.
+Optional replacement draws add to the next fixed draw, capped by capacity.
+Overflow either preserves existing cards or requires selection of excess cards
+at turn end. Draw effects stop at capacity without consuming the draw pile;
+reshuffling can be disabled. Rules and pending replacement draws survive saves.
+Settings changes apply next combat. Existing saved fights and LAN combat retain
+their previous rules; the numbered legacy sequence below describes those rules.
+
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
 3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size **10** — excess drawn cards go to discard with a "hand full" toast (StS behavior).
@@ -1959,3 +1978,36 @@ current/previous nodes, visited/resolved sets, cleared state and pending choice.
 Old saves without this field retain their original behavior. A saved combat
 inside a dungeon resumes the dungeon encounter, including in World Journey.
 Scene draw order is floor, background, actors, then interface.
+
+
+## New-game opening presentation (2026-09-19)
+
+Solo new games may show a configurable six-scene prologue after creation and
+starting draft, after map generation but before map mounting. Its text and
+presentation overrides are included in the existing advanced configuration
+snapshot/export. Optional `run.prologue` is `{version:1,status:'pending'|'complete',scene:0..5,reason?:'completed'|'skipped'}`.
+Pending saves resume at the saved scene boundary; absent or completed state does
+not replay. Preview does not write this state. `settings.prologueSeen` is a
+profile playback preference, never part of gameplay RNG. Skip and Set forth
+complete presentation exactly once without selecting/resolving a node. The
+five-second default transition and per-scene holds are independent; final
+arrival waits for the player. Settings and hidden pages suspend playback.
+## Configurable stat pools, ratings, Poise and Ward
+
+New runs snapshot the rating rules. Existing configuration snapshots without ratingsVersion 1 keep legacy combat arithmetic. New Settings values apply at new-run creation, not retroactively to a saved character. New combat snapshots persist ratings, both impact meters, break growth and fractional status-resistance remainders.
+
+Advanced → Progression → Starting values exposes the total starting attribute pool for every creation mode (including its baseline). Whole-number allocations, floors, ceilings and class presets scale to the chosen total. Automatic conversion scaling is enabled by default; disabling it keeps manually configured conversion thresholds. Automatic scaling preserves the original unit scale, with unavoidable differences from rounding whole attribute allocations. HP and resource base, gain and points per increase are separately configurable. Stat-driven hand sizes use the same normalization in automatic mode.
+
+Advanced → Stats & Defence owns AR, DR, PR, Poise and Ward formulas, item and relic bonuses, status bonuses and resistance weights, diminishing-return constants and caps, impact categories, attack overrides and break penalties. Default formulas: AR=floor(STR/2), DR=floor(DEX/2), PR=floor((INT+WIS)/2), Poise=floor(CON+STR/2), Ward=floor(WIS+INT/2). Every formula exposes a base, attribute weights, points per increase and gain. Equipped weapons and armour, relics, mounted properties and active status bonuses contribute additively. Physical weapon Attack Rating contributes AR; magical weapon Attack Rating contributes PR; item Defense Rating contributes DR; body-armour Poise contributes Poise. Additional per-item bonuses are configurable. Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
+
+Card damage is base plus AR for physical attacks or PR for magical attacks. Physical defensive skill Block receives DR; magical Block and healing receive PR. Magical power hooks retain their originating card so their damage, Block and healing receive PR. Resource generation, buff duration, card draw and action costs do not receive PR. Profile-level attribute scaling is disabled for these new runs to avoid adding the same attribute bonus twice. Existing authored card-specific modifiers remain applicable.
+
+After additive bonuses, percentage modifiers apply. Physical damage is reduced by Poise/(Poise+K); magical damage by Ward/(Ward+K). K defaults to 100, with a configurable 80% maximum reduction. Resistance uses the rating, not accumulated impact. Enemy Poise and Ward are independently configurable and default to the enemy’s authored Poise threshold. Lower starting pools in automatic mode normalize attributes to their original unit scale, so K must not be scaled again.
+
+An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. Magic defaults to 1. Physical weapon weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Unarmed physical impact defaults to 1; untyped enemy physical impact defaults to 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
+
+Poise break is Stagger; Ward break is Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move. The meter keeps overflow and grows its threshold by 25%, rounded upward. Breaks do not additionally apply Weak or Vulnerable under the new rules. Meter recovery defaults to 0 and is configurable per player turn.
+
+Status resistance reduces hostile buildup or incoming stacks, not duration or proc severity: effective rating = Poise*physicalWeight + Ward*magicalWeight. Applied amount = base*K/(K+effective rating), subject to the resistance cap. Fractional applications carry forward per target/status rather than making repeated small applications immune. Default profiles: Bleed and Venom 100% Poise; Insanity and Madness 100% Ward; Frost and Crimson Blight 50/50; Burn 25% Poise and 75% Ward. Other effects are unresisted until configured. Both weights may be positive and need not sum to one. Self-applied beneficial effects are unaffected.
+
+The shipped solo combat path adopts these rules. The independent foundation/combat-workshop and LAN paths retain their existing rules until explicitly supplied a compatible rating context.

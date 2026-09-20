@@ -3,14 +3,74 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1217",
+    "id": "pr-1224",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The Herald's memory burns darker",
+    "detail": "The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.",
+    "build": "0.7.1.323",
+    "pullRequest": 1224,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1224"
+  },
+  {
+    "id": "pr-1219",
     "date": "2026-09-19",
     "group": "2026-09-19",
-    "summary": "Your five stats are rebased, and every point you place is felt",
-    "detail": "Creation now starts each stat at 5 and hands you ten points to place between 3 and 12, instead of starting at 10 and handing you three. The pools follow: your Mana is your Wisdom and your Stamina is your Constitution, point for point, rather than one per five, and Health is 20 plus four per point of Constitution. Weapons and armour ask for the new numbers too, and picking up something your stats cannot hold is refused where the change happens, with the shortfall named. Runs already under way keep the rules they were created with.",
-    "build": "0.7.1.316",
-    "pullRequest": 1217,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1217"
+    "summary": "Twin swords now keep every class and armour's appearance through one shared attack",
+    "detail": "Straight Sword in the right hand and Katana in the left select 32 painted suites across all four classes and 35 armour entries. The nine-step attack shares its timing across every outfit, with separate defend, hurt, cast, buff, stance, portrait and conversation poses. Reversed hands retain their existing presentation. The workshop compares outfits and lets you edit pose order, timing and impact before saving a sequence.",
+    "build": "0.7.1.320",
+    "pullRequest": 1219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1219"
+  },
+  {
+    "id": "pr-1213",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Tune starting stats, card draws, Poise and Ward in Advanced settings",
+    "detail": "Set the total starting stat pool, automatically scale conversions or tune them manually, and configure additive AR, DR and PR from attributes, equipment, relics and buffs. Poise resists physical attacks and Ward resists magic, with separate impact meters, break penalties and per-status resistance weights—including mixed Burn resistance. Enemy defences, weapon impact classes and individual attacks are configurable. New solo fights start with three configurable cards, retain unplayed cards and refill to capacity, with fixed-draw and optional-discard alternatives. Older runs and LAN retain their rules. The settings toolbar is compact and aligned.",
+    "build": "0.7.1.317",
+    "pullRequest": 1213,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1213"
+  },
+  {
+    "id": "pr-1216",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The opening moves at your pace and remembers your class",
+    "detail": "Each scene now defaults to five seconds total, including its fade, and its duration remains editable in Advanced → Opening sequence. The original first painting slowly draws closer; the Burning comes second. Distinct class memories and a new forest departure have desktop and phone artwork, including the approved cinder soldier and hooded Astrologer. Captions wait for their matching artwork, and text, timing, motif and shadow controls remain exportable.",
+    "build": "0.7.1.315",
+    "pullRequest": 1216,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1216"
+  },
+  {
+    "id": "pr-1215",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Choose and shape your battlefield formation visually",
+    "detail": "Interface settings now open a live preview with illustrated straight, forward-slant, back-slant and V presets. Choose up to three columns and six rows per side, with uniform position labels, footprint width and depth, team spacing, tile outlines, tilt and skew. Character size, offsets and draw order sit in a collapsed submenu. Apply saves the layout for real battles, and Done and Save also keeps pending edits. The preview and battlefield share positions and movement boundaries; smaller grids retain enough positions for the encounter.",
+    "build": "0.7.1.312",
+    "pullRequest": 1215,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1215"
+  },
+  {
+    "id": "pr-1212",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Sword and shield now share the approved motion across every class and armour",
+    "detail": "All four classes and 35 armour entries select their own appearance from 32 painted suites when equipping a sword and shield. The eleven-step attack uses the aura-free buff pose, holds ATK05, then returns through defensive stance to Ready. Defend, hurt, cast, buff, stances, portrait and conversation remain separately configurable. The labeled gallery shows the same sequence. The complete offline build uses large-file storage to retain the approved artwork without reducing its quality.",
+    "build": "0.7.1.310",
+    "pullRequest": 1212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1212"
+  },
+  {
+    "id": "pr-1211",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your journey now opens with six painted scenes you can rewrite",
+    "detail": "After character creation, see the cold hearths, the unfinished burning at the hut, your class’s reason to leave and the road to your actual starting place. Set forth reveals the first playable map. Advanced → Opening sequence lets you edit every line, scene hold, transition, motif wash, character shadow strength and traveller placement, with separate class dialogue and a preview. Transitions default to five seconds; all changes travel with configuration exports, and earlier art-studio exports can be loaded there too. Portrait artwork keeps the story readable on phones. Each traveller and its ground shadow share one transparent layer, including character and scene WebP downloads. The new paintings and existing environment/animation plates are compressed while preserving dimensions and transparency, keeping the standalone game below the repository’s file limit.",
+    "build": "0.7.1.308",
+    "pullRequest": 1211,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1211"
   },
   {
     "id": "pr-1210",

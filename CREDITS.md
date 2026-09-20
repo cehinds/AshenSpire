@@ -1,5 +1,19 @@
 # Credits & Asset Licenses
 
+## Burning and class-memory opening revision (2026-09-19)
+
+Twelve new desktop/portrait paintings generated with OpenAI's built-in Image Generation tool: the inward Burning, forest departure, and four class memories. Compressed WebPs are in `assets/prologue/`; exact prompts and source image names are in `art/prologue-2026-09-19/revision-prompts.json`. PNG masters remain in the owner's local `masters-burning-v2/` folder. The original opening relief is unchanged. No third-party artwork or license is claimed.
+
+## Opening sequence art (2026-09-19)
+
+Twelve original desktop/portrait paintings and four transparent class
+adventurers generated with OpenAI's built-in Image Generation tool using the
+project's intro and Crownfall paintings and the owner's weapon-placement
+annotation as references. Source/provenance: `art/prologue-2026-09-19/prompts.json`.
+Runtime art: `assets/prologue/`, compressed WebP with alpha preserved. Original
+PNG masters remain in the author's local art archive. No third-party game
+assets were used and no third-party asset license is claimed.
+
 Every third-party asset shipped in this repository is listed here with its source and license. **A PR that adds an asset without a row in this file does not merge.**
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
@@ -193,6 +207,10 @@ to WebP at quality 90 for the menu's separate background layer.
 
 Thirty-one original atlas edits generated with the built-in image_gen tool from the project's approved Reaver motion and existing class/outfit references. Full prompts and PNG masters are in `art/greatsword-outfits-2026-09-19/`; WebP exports cover 32 appearances including the unchanged approved Reaver. Three armor aliases reuse catalog-authorized artwork. No third-party downloads or asserted CC license.
 
+## Sword and shield outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generated with the built-in image_gen tool using the project's class/outfit references. Full prompts, PNG masters and adaptive extraction metadata are retained in `art/sword-shield-outfits-2026-09-19/`, including `prompts-no-aura.json`. The 512 runtime WebPs cover 32 appearances and 35 armor entries. Canonical right-sword/left-shield paintings are shared by reversed hand selectors; no separately painted hand swap is claimed. No third-party artwork was downloaded and no third-party license is claimed.
+
 ### Shared armor inventory art (2026-09-19)
 Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
 
@@ -205,3 +223,11 @@ for AshenSpire. Runtime assets in `assets/environments/legacy/` use optimized
 map WebPs and 24 lossless alpha floor/background plates. Original sources,
 exact prompts, provenance, and extraction instructions are retained under
 `art/webp-maps-2026-09-19/`. No third-party asset license is claimed.
+
+## Twin-sword outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with the built-in image_gen tool from project-owned class and armor references. Exact prompts, provenance, PNG masters, normalization metadata and the interactive review are retained in `art/twin-sword-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and 35 armor entries, with one shared motion and authored right Straight Sword / left Katana hands. No third-party artwork was downloaded and no third-party license is claimed.
+
+## Unarmed physical outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with built-in OpenAI image generation from the project's class/outfit paintings and one shared unarmed pose reference. Exact prompts and PNG masters are retained in `art/unarmed-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 armor entries, including three existing catalog art aliases. Both hands are empty; no effects are baked into these frames. No third-party artwork was downloaded and no third-party license is claimed.

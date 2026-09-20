@@ -23,6 +23,12 @@ export function validateEquipmentAnimations(data) {
   for (const [id, authored] of Object.entries(data.sets)) {
     if (authored.motionProfile && !Object.hasOwn(data.motionProfiles || {}, authored.motionProfile)) fail('unknown motion profile ' + authored.motionProfile);
     const set = resolvedAnimationSet(data, authored);
+    if (set.supportedHandItems) {
+      for (const hand of ['right', 'left']) {
+        const allowed = set.supportedHandItems[hand];
+        if (!Array.isArray(allowed) || !allowed.length || allowed.some(item => !items.has(item)) || new Set(allowed).size !== allowed.length) fail(id + ': invalid supported hand items ' + hand);
+      }
+    }
     if (!set.frames || !set.clips || !set.references || !Number.isFinite(set.normalLungeMs) || set.normalLungeMs <= 0) fail('incomplete set ' + id);
     for (const [name, frame] of Object.entries(set.frames)) {
       if (!/^assets\/[a-zA-Z0-9_./-]+\.webp$/.test(frame.file) || frame.file.includes('..')) fail(id + ': invalid asset ' + name);
@@ -56,7 +62,13 @@ export function selectEquipmentAnimation({ classId, armourId = 'default', rightI
   const rightGroup = group(rightId), leftGroup = group(leftId);
   // Unknown items must not silently become empty hands or inherit an unrelated set.
   if (!rightGroup || !leftGroup) return null;
-  const matches = data.bindings.filter(b => b.classId === classId && b.armourId === armourId && b.rightGroup === rightGroup && b.leftGroup === leftGroup && (!b.grip || b.grip === grip));
+  const matches = data.bindings.filter(b => {
+    if (b.classId !== classId || b.armourId !== armourId || b.rightGroup !== rightGroup || b.leftGroup !== leftGroup || (b.grip && b.grip !== grip)) return false;
+    // A painted family can cover only some ordered shapes within its groups.
+    // Keep the existing presentation for an unauthored hand order.
+    const allowed = resolvedAnimationSet(data, data.sets[b.setId]).supportedHandItems;
+    return !allowed || (allowed.right.includes(rightId) && allowed.left.includes(leftId));
+  });
   const binding = matches.find(b => b.grip === grip) || matches[0];
   if (!binding) return null;
   return { setId: binding.setId, classId, armourId, rightGroup, leftGroup, grip, ...resolvedAnimationSet(data, data.sets[binding.setId]) };

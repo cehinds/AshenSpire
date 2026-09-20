@@ -52,7 +52,7 @@ test('uiConfig mirrors the folders, holds only resolved values, and is deep-froz
   for (const name of ['card', 'selection', 'inspect', 'identity', 'possession', 'buttons', 'tooltip', 'hud', 'categoryNav', 'workspace', 'choiceBody', 'inspector']) {
     assert.ok(uiConfig.components[name], `components.${name}`);
   }
-  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'shop', 'smith']);
+  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'prologue', 'shop', 'smith']);
   assertDeepFrozen(uiConfig, 'uiConfig');
   assert.doesNotMatch(JSON.stringify(uiConfig), /"\$|numerator|"vars"/, 'no variable, fraction or vars block survives compilation');
 });

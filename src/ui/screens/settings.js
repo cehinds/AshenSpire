@@ -1,3 +1,4 @@
+import { previewPrologue } from './prologue.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -8,6 +9,8 @@
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
+import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
+import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -30,7 +33,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblems, advancedConfigRows, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblems, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -578,6 +581,9 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
+  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
+  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
   { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
@@ -765,6 +771,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
   }
+  if (r.type === 'textarea') {
+    const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
+    return `${rowOpen('set-row-wide set-row-prologue')}${stack()}<span class="r-trail"><textarea class="set-prologue-text" data-key="${esc(r.key)}" maxlength="${r.maxLength}" aria-label="${esc(r.label)}">${esc(val)}</textarea></span></div>`;
+  }
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `${rowOpen('set-row-wide')}
@@ -809,7 +819,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'choice') {
     const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
     const cur = r.choices.includes(stored) ? stored : r.def;
-    if (r.choices.length > 3) {
+    if (r.dropdown || r.choices.length > 3) {
       const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
       return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
     }
@@ -1003,6 +1013,10 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
+  if (settings?.[row.key] === undefined && row.key.startsWith('gameConfig.attributeRules.presets.')) {
+    const path = row.key.slice('gameConfig.'.length).split('.');
+    return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
+  }
   const raw = (settings || {})[row.key];
   // The rule itself lives in CardSizeModel so the card-size model and this row
   // cannot disagree about what a stored number means — they did, by a floor
@@ -1349,7 +1363,7 @@ function categoryHtml(cat, settings, saves) {
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Classes' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          + sub.rows.map(row => {
+          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
             const compact = { ...row };
             if (group.id === 'Classes' && !['General', 'Assign points'].includes(sub.id)) {
               compact.label = row.label.replace(/^.*? — /, '');
@@ -1359,7 +1373,7 @@ function categoryHtml(cat, settings, saves) {
               compact.note = 'Applies to a new run.';
             }
             return settingsRowHtml(settings, compact);
-          }).join('') + '</div>').join('') + '</section>';
+          }).join('')) + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
       + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
@@ -1392,7 +1406,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null }) {
   panelSettings = settings;
   let html = '';
   let cats = [];
@@ -1493,6 +1507,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     else container.querySelector('.set-panel')?.prepend(sections);
   };
   const wire = () => {
+  mountFormationSettings(container, settings, onChange,
+    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -1505,13 +1521,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : ['Display', 'Audio'].includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display'}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -1528,6 +1544,35 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     [...container.querySelectorAll('.set-subtab')].find(tab => tab.dataset.advancedGroup === event.target.value)?.click();
   });
   const reportAdvancedProblems = () => {
+    for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
+      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
+    }
+    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    if (section) {
+      let summary = section.querySelector('[data-hand-summary]');
+      if (!summary) {
+        summary = document.createElement('p');
+        summary.dataset.handSummary = '';
+        summary.className = 'set-group-summary';
+        summary.setAttribute('aria-live', 'polite');
+        section.querySelector('.set-group-summary').after(summary);
+      }
+      summary.textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {}) + ' Stat bonuses use whole intervals above the baseline.';
+      for (const row of handRulesRows(contentBundle.attributes)) {
+        const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
+        const read = path => path.split('.').reduce((v, k) => v[k], rules);
+        const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
+          || (row.fixedOnly && rules.drawMode !== 'fixed')
+          || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
+        controls.forEach(control => { control.disabled = !!disabled; control.setAttribute('aria-disabled', String(!!disabled)); });
+        controls.forEach(control => {
+          const wrapper = control.closest('.set-row');
+          wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
+          if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
+        });
+      }
+    }
     const problems = advancedConfigProblems(contentBundle, settings);
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
     else clearSettingsNotice('game-config');
@@ -1597,7 +1642,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       total += 1;
       const match = !query || row.textContent.toLocaleLowerCase().includes(query)
         || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
-      row.hidden = !match;
+      row.hidden = !match || row.dataset.handHidden === 'true';
       if (match) shown += 1;
     });
     if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
@@ -1661,10 +1706,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
       onChange(changed);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
     };
   });
 
+  container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
+    btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('.set-prologue-text').forEach(input => {
+    input.addEventListener('input', () => {
+      settings[input.dataset.key] = input.value;
+      onChange({[input.dataset.key]:input.value});
+    });
+  });
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
@@ -1777,7 +1831,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2201,8 +2255,8 @@ function settingsHeaderTools() {
   const tools = document.createElement('div');
   tools.className = 'set-header-tools';
   tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
-    + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false">⌕</button>'
-    + '<details class="set-options"><summary class="as-btn" aria-label="Settings options">⋮</summary><div class="set-options-menu">'
+    + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
+    + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
     + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
     + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
   tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
@@ -2212,7 +2266,7 @@ function settingsHeaderTools() {
   return tools;
 }
 
-export function openSettings({ meta, onChange, saves = null, onOffline = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -2229,7 +2283,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, headerTools }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, headerTools, previewAttributes }); },
     secondary: [load],
     primary: done,
     footSize: 'short',
@@ -2247,11 +2301,12 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, headerTools });
+      rendered = renderSettings(door.body, { settings, onChange, saves, headerTools, previewAttributes });
       showSettingsNotice('Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {
+    if (!applyPendingFormationSettings(door.body)) return;
     if (settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });

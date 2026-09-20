@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "rogue-riteVestments",
+  "classId": "rogue",
+  "armourId": "riteVestments",
+  "effectsBaked": false,
+  "source": "sources/rogue-riteVestments.png",
+  "sourceSha256": "21e07863b62009effddf72c7449a1c79bd9e9f1d632ef65dd14f0aaefd5b6fee",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3043478260869565,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        16,
+        21,
+        287,
+        316
+      ],
+      "core": [
+        28,
+        33,
+        275,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        283
+      ],
+      "offset": [
+        63,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        124,
+        403,
+        484
+      ],
+      "file": "frames/rogue-riteVestments/STANCE-READY.webp",
+      "sha256": "d68fe6028d7bcf02e4e77f512448fb937fce498e43fd47c2bc65bcffaa16a4d3"
+    },
+    "ATK-01": {
+      "content": [
+        325,
+        23,
+        601,
+        316
+      ],
+      "core": [
+        337,
+        35,
+        589,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        281
+      ],
+      "offset": [
+        63,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        72,
+        124,
+        414,
+        483
+      ],
+      "file": "frames/rogue-riteVestments/ATK-01.webp",
+      "sha256": "bcc42b50640412d07ae20e8b9da1db732c4c9325368981522b123eb81c0e395b"
+    },
+    "ATK-02": {
+      "content": [
+        631,
+        27,
+        925,
+        316
+      ],
+      "core": [
+        643,
+        39,
+        913,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        155.0,
+        277
+      ],
+      "offset": [
+        54,
+        119
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        132,
+        427,
+        486
+      ],
+      "file": "frames/rogue-riteVestments/ATK-02.webp",
+      "sha256": "ab163cf3864fb874b0266f63db5aa975cccdb70621a95325c71a12c9d12267b9"
+    },
+    "ATK-03": {
+      "content": [
+        954,
+        24,
+        1254,
+        316
+      ],
+      "core": [
+        966,
+        36,
+        1246,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        146.5,
+        280
+      ],
+      "offset": [
+        65,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        127,
+        456,
+        486
+      ],
+      "file": "frames/rogue-riteVestments/ATK-03.webp",
+      "sha256": "195091d09980fce49c7dd86bda3080bacf40758f6c04ce0f8af913307b1c9fd7"
+    },
+    "ATK-04": {
+      "content": [
+        17,
+        334,
+        289,
+        628
+      ],
+      "core": [
+        29,
+        346,
+        277,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        282
+      ],
+      "offset": [
+        63,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        123,
+        408,
+        491
+      ],
+      "file": "frames/rogue-riteVestments/ATK-04.webp",
+      "sha256": "064bbc0eba6167b49399b167ee3ecb6a0b9bd589b6ac87f70f2e3ee0bdcb0f6f"
+    },
+    "ATK-05": {
+      "content": [
+        314,
+        333,
+        636,
+        628
+      ],
+      "core": [
+        326,
+        345,
+        624,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        154.5,
+        283
+      ],
+      "offset": [
+        54,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        111,
+        464,
+        492
+      ],
+      "file": "frames/rogue-riteVestments/ATK-05.webp",
+      "sha256": "54a6888d04fe416fb8190650970b2217de35c706e451320126c74e8cf4c19019"
+    },
+    "ATK-06": {
+      "content": [
+        639,
+        333,
+        918,
+        628
+      ],
+      "core": [
+        651,
+        345,
+        906,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        149.5,
+        283
+      ],
+      "offset": [
+        61,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        124,
+        412,
+        489
+      ],
+      "file": "frames/rogue-riteVestments/ATK-06.webp",
+      "sha256": "f18e6235806f36f3c0fbc5ecc69c6012020f36e4ec1fcae0d911b8e014835a85"
+    },
+    "ATK-07": {
+      "content": [
+        955,
+        334,
+        1231,
+        627
+      ],
+      "core": [
+        967,
+        346,
+        1219,
+        615
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        150.5,
+        281
+      ],
+      "offset": [
+        60,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        124,
+        409,
+        495
+      ],
+      "file": "frames/rogue-riteVestments/ATK-07.webp",
+      "sha256": "5b6ff1b18664badeacf0a4ed1d194a0da653151b9f1f5756a03dc4afbc863df4"
+    },
+    "DEFEND": {
+      "content": [
+        17,
+        654,
+        293,
+        936
+      ],
+      "core": [
+        29,
+        666,
+        281,
+        924
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        151.0,
+        270
+      ],
+      "offset": [
+        59,
+        128
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        138,
+        408,
+        496
+      ],
+      "file": "frames/rogue-riteVestments/DEFEND.webp",
+      "sha256": "d5662745509ccaa94bdad00c39dc88fa43517a5a9cd7f829b1b8fc11487f4761"
+    },
+    "HURT": {
+      "content": [
+        320,
+        646,
+        608,
+        936
+      ],
+      "core": [
+        332,
+        658,
+        596,
+        924
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        164.5,
+        278
+      ],
+      "offset": [
+        41,
+        117
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        49,
+        130,
+        416,
+        491
+      ],
+      "file": "frames/rogue-riteVestments/HURT.webp",
+      "sha256": "68283a369d3d3fac2f0fcf9cae694bfc4db2b1ba31e1551f4fd3b887f56ca8cc"
+    },
+    "CAST": {
+      "content": [
+        625,
+        646,
+        944,
+        938
+      ],
+      "core": [
+        637,
+        658,
+        932,
+        926
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        165.0,
+        280
+      ],
+      "offset": [
+        41,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        42,
+        115,
+        444,
+        492
+      ],
+      "file": "frames/rogue-riteVestments/CAST.webp",
+      "sha256": "a112ca8b3f5dc21f18015d9e9fb31c67223655e87fdf215a0a0b39eea9367776"
+    },
+    "BUFF": {
+      "content": [
+        974,
+        632,
+        1200,
+        939
+      ],
+      "core": [
+        986,
+        644,
+        1188,
+        927
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        131.0,
+        295
+      ],
+      "offset": [
+        85,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        94,
+        108,
+        371,
+        490
+      ],
+      "file": "frames/rogue-riteVestments/BUFF.webp",
+      "sha256": "a081dff1b0915dc465f1948be3a1383ab8b10cdc5fb0809f6b227f01922454b6"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        21,
+        972,
+        310,
+        1222
+      ],
+      "core": [
+        33,
+        984,
+        298,
+        1210
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        152.5,
+        238
+      ],
+      "offset": [
+        57,
+        170
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        180,
+        426,
+        486
+      ],
+      "file": "frames/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+      "sha256": "ba8f39575d42a58e5f4c4f059dc0115d81883bfc04f88d2c8c01cff605a65f4b"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        336,
+        961,
+        606,
+        1227
+      ],
+      "core": [
+        348,
+        973,
+        594,
+        1215
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        145.0,
+        254
+      ],
+      "offset": [
+        67,
+        149
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        160,
+        408,
+        487
+      ],
+      "file": "frames/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+      "sha256": "aa5b8f7c9b00d6c85cce69075d5ecfaa9b934f9b995c9e5231067692988d395d"
+    },
+    "PORTRAIT": {
+      "content": [
+        628,
+        945,
+        950,
+        1238
+      ],
+      "core": [
+        640,
+        957,
+        938,
+        1226
+      ],
+      "scale": 1.4409937888198758,
+      "sourceFootAnchor": [
+        161.0,
+        281
+      ],
+      "offset": [
+        24,
+        75
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        88,
+        475,
+        494
+      ],
+      "file": "frames/rogue-riteVestments/PORTRAIT.webp",
+      "sha256": "f336f44e96804ab61adda1a72c4b96c0f4d8f20e782489ee54dce913460f7624"
+    },
+    "CONVERSATION": {
+      "content": [
+        979,
+        927,
+        1193,
+        1235
+      ],
+      "core": [
+        991,
+        939,
+        1181,
+        1223
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        127.0,
+        296
+      ],
+      "offset": [
+        90,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        99,
+        102,
+        359,
+        484
+      ],
+      "file": "frames/rogue-riteVestments/CONVERSATION.webp",
+      "sha256": "b931657041b3e35e9c3714e342dc13fdc2e721289f4b50374fa37b16c4488237"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

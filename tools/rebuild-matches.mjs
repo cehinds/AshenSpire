@@ -33,6 +33,7 @@
 // Printed by the tool itself, not only here, because a suite that prints only
 // PASS is "green wasn't clearance" shipped as infrastructure.
 
+import { readGitArtifact } from './git-artifact.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, statSync } from 'node:fs';
@@ -75,9 +76,9 @@ const shortHead = head.slice(0, 7);
 
 let committed;
 try {
-  committed = execFileSync('git', ['-C', ROOT, 'show', `HEAD:${TRACKED}`], { maxBuffer: 1 << 30 });
-} catch {
-  unknown(`HEAD does not track ${TRACKED}`, `at ${head} — there is no committed build to reproduce`);
+  committed = readGitArtifact(ROOT, 'HEAD', TRACKED);
+} catch (error) {
+  unknown(`cannot read the committed ${TRACKED}`, `at ${head} — ${error.message}`);
 }
 if (!committed.length) unknown(`the committed ${TRACKED} is empty`, `at ${head}`);
 
