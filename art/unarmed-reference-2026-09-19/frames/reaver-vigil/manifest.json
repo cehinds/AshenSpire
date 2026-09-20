@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "reaver-vigil",
+  "classId": "reaver",
+  "armourId": "vigil",
+  "effectsBaked": false,
+  "source": "sources/reaver-vigil.png",
+  "sourceSha256": "2838e44eb919a232fab951ed35f0c322ae1c83000856179fc8e536368a54aa08",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3043478260869565,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        17,
+        21,
+        290,
+        316
+      ],
+      "core": [
+        29,
+        33,
+        278,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.5,
+        283
+      ],
+      "offset": [
+        62,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        124,
+        409,
+        486
+      ],
+      "file": "frames/reaver-vigil/STANCE-READY.webp",
+      "sha256": "e241eaeb4636e19388f76b2d34bc181e92622c0c3be167e5ca15ee8aadbca7bd"
+    },
+    "ATK-01": {
+      "content": [
+        329,
+        23,
+        604,
+        316
+      ],
+      "core": [
+        341,
+        35,
+        592,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        146.5,
+        281
+      ],
+      "offset": [
+        65,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        125,
+        412,
+        485
+      ],
+      "file": "frames/reaver-vigil/ATK-01.webp",
+      "sha256": "b92aecc06e122b7377cd8b380d7ce7e1fe010bdaa6f2e03ba70e0620913dd944"
+    },
+    "ATK-02": {
+      "content": [
+        634,
+        27,
+        925,
+        316
+      ],
+      "core": [
+        646,
+        39,
+        913,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        151.5,
+        277
+      ],
+      "offset": [
+        58,
+        119
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        127,
+        434,
+        486
+      ],
+      "file": "frames/reaver-vigil/ATK-02.webp",
+      "sha256": "686a4515f6f8d3c521f1f2c0aac98a2eb8f636639893316541d7eeaf236ac989"
+    },
+    "ATK-03": {
+      "content": [
+        947,
+        26,
+        1246,
+        316
+      ],
+      "core": [
+        959,
+        38,
+        1234,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        149.0,
+        278
+      ],
+      "offset": [
+        62,
+        117
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        126,
+        442,
+        485
+      ],
+      "file": "frames/reaver-vigil/ATK-03.webp",
+      "sha256": "7062c314b9f3c61c6af8781f4ea4fef05d8d9c9c4827534cdf5e8be234ca6755"
+    },
+    "ATK-04": {
+      "content": [
+        17,
+        332,
+        291,
+        628
+      ],
+      "core": [
+        29,
+        344,
+        279,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        284
+      ],
+      "offset": [
+        63,
+        110
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        119,
+        411,
+        490
+      ],
+      "file": "frames/reaver-vigil/ATK-04.webp",
+      "sha256": "0213b703595c714156b955dac6ebeb56ce6492da1b7272a9e350ee9c979fe8a8"
+    },
+    "ATK-05": {
+      "content": [
+        316,
+        334,
+        626,
+        628
+      ],
+      "core": [
+        328,
+        346,
+        614,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        152.0,
+        282
+      ],
+      "offset": [
+        58,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        118,
+        450,
+        486
+      ],
+      "file": "frames/reaver-vigil/ATK-05.webp",
+      "sha256": "11bf635f0cff5789408c86ad63abc7043fdc96f13d41c5722716ab927474758d"
+    },
+    "ATK-06": {
+      "content": [
+        639,
+        333,
+        920,
+        628
+      ],
+      "core": [
+        651,
+        345,
+        908,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        152.0,
+        283
+      ],
+      "offset": [
+        58,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        113,
+        419,
+        487
+      ],
+      "file": "frames/reaver-vigil/ATK-06.webp",
+      "sha256": "e5905fe38e06460343486a715c89e45c27ca3accfdc28eb226710448f68c7f62"
+    },
+    "ATK-07": {
+      "content": [
+        955,
+        333,
+        1234,
+        628
+      ],
+      "core": [
+        967,
+        345,
+        1222,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        153.0,
+        283
+      ],
+      "offset": [
+        56,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        56,
+        121,
+        407,
+        487
+      ],
+      "file": "frames/reaver-vigil/ATK-07.webp",
+      "sha256": "5536a24242ebaa66b7fad0f178dfe25b3e36d54c3056e19653d56002741e3a3f"
+    },
+    "DEFEND": {
+      "content": [
+        17,
+        654,
+        296,
+        939
+      ],
+      "core": [
+        29,
+        666,
+        284,
+        927
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        152.5,
+        273
+      ],
+      "offset": [
+        57,
+        124
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        132,
+        412,
+        488
+      ],
+      "file": "frames/reaver-vigil/DEFEND.webp",
+      "sha256": "87b2dc1d2917fab45f14bacc2edb4413427618324c7490963a5436792c336240"
+    },
+    "HURT": {
+      "content": [
+        319,
+        645,
+        609,
+        939
+      ],
+      "core": [
+        331,
+        657,
+        597,
+        927
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        165.5,
+        282
+      ],
+      "offset": [
+        40,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        44,
+        121,
+        418,
+        490
+      ],
+      "file": "frames/reaver-vigil/HURT.webp",
+      "sha256": "31a9f86a4ac02c2ff13e1da2aa11c4fba1591a244d46e778db88ce067eeee23c"
+    },
+    "CAST": {
+      "content": [
+        626,
+        645,
+        948,
+        940
+      ],
+      "core": [
+        638,
+        657,
+        936,
+        928
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        164.0,
+        283
+      ],
+      "offset": [
+        42,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        42,
+        112,
+        459,
+        489
+      ],
+      "file": "frames/reaver-vigil/CAST.webp",
+      "sha256": "5f3dcba74b186cd7aba05a49dd8c0257491389b657df1b983ae6c4bc2d9151c9"
+    },
+    "BUFF": {
+      "content": [
+        957,
+        632,
+        1202,
+        940
+      ],
+      "core": [
+        969,
+        644,
+        1190,
+        928
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        147.0,
+        296
+      ],
+      "offset": [
+        64,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        76,
+        106,
+        376,
+        489
+      ],
+      "file": "frames/reaver-vigil/BUFF.webp",
+      "sha256": "1b85fa775af0d867714fedac1f0809b39a5370f7c12b4bba2f290944f15bc5fc"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        22,
+        967,
+        312,
+        1222
+      ],
+      "core": [
+        34,
+        979,
+        300,
+        1210
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        152.5,
+        243
+      ],
+      "offset": [
+        57,
+        163
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        175,
+        425,
+        486
+      ],
+      "file": "frames/reaver-vigil/STANCE-AGGRESSIVE.webp",
+      "sha256": "d0505317ef5b56fa2dfccbc73290ed6bf641849c94f5d70799a9d645d7f0dd4c"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        335,
+        960,
+        609,
+        1226
+      ],
+      "core": [
+        347,
+        972,
+        597,
+        1214
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        147.5,
+        254
+      ],
+      "offset": [
+        64,
+        149
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        154,
+        408,
+        488
+      ],
+      "file": "frames/reaver-vigil/STANCE-DEFENSIVE.webp",
+      "sha256": "6a06bdcf433c864c8c878da68203a3876a972ba86db26eea9a1e36b5652a9c88"
+    },
+    "PORTRAIT": {
+      "content": [
+        622,
+        942,
+        951,
+        1236
+      ],
+      "core": [
+        634,
+        954,
+        939,
+        1224
+      ],
+      "scale": 1.4103343465045592,
+      "sourceFootAnchor": [
+        164.5,
+        282
+      ],
+      "offset": [
+        24,
+        82
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        89,
+        487,
+        494
+      ],
+      "file": "frames/reaver-vigil/PORTRAIT.webp",
+      "sha256": "511af0fd2a034f90069c9e794cfa196680109d721e5497b0c2616ebf89fbc675"
+    },
+    "CONVERSATION": {
+      "content": [
+        964,
+        920,
+        1194,
+        1236
+      ],
+      "core": [
+        976,
+        932,
+        1182,
+        1224
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        141.5,
+        304
+      ],
+      "offset": [
+        71,
+        83
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        94,
+        363,
+        487
+      ],
+      "file": "frames/reaver-vigil/CONVERSATION.webp",
+      "sha256": "32bafbc274e1d58dd9020dce1529f93b2f31fdb45a4ad9df509f4bb7879bca53"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

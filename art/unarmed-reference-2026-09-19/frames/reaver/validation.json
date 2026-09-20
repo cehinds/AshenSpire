@@ -1,0 +1,14 @@
+{
+  "frames": 16,
+  "rgba": true,
+  "decodedAlphaExact": true,
+  "bodyScaleShared": true,
+  "bodyClipping": false,
+  "anchor": [
+    256,
+    480
+  ],
+  "catalogEntries": 35,
+  "uniqueAppearances": 32,
+  "visualInspection": "complete; shared choreography uses painted pose approximations"
+}
