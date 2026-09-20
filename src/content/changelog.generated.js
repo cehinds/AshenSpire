@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Your level and every skill you are training now have bars you can watch",
     "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.336",
+    "build": "0.7.1.335",
     "pullRequest": 1228,
     "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
+    "id": "pr-1225",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Starting stats are tuned in one place, and the opening is five scenes",
+    "detail": "Advanced settings now gather the creation pool and every class's starting attributes, Health and flasks under Progression, so the numbers that decide a new character sit together instead of across two tabs. Assign points is about points: how many you have to place and how many the character carries in total, while stat points per tier moved to General with its own limits. Only the allocation a new run actually offers is presented, and settings saved under the retired ones still load. A value a character could not survive is refused on the row you typed it in, naming the class and the starting kit that set the floor, and the rest of your configuration stays applied instead of silently reverting with it. In the opening, The first step draws its own painting instead of the region map your climb begins on, Last night follows What the fire left, and the forest departure is cut. An opening you had already tuned is carried across: per-scene settings now follow the scene they were written for, and a configuration exported before the change still loads.",
+    "build": "0.7.1.333",
+    "pullRequest": 1225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1225"
   },
   {
     "id": "pr-1226",

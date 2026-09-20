@@ -125,7 +125,7 @@ async function main() {
     }
     for (const shape of [
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
-      { name: 'desktop-classes', width: 1440, height: 900, group: 'Classes', mobile: false },
+      { name: 'desktop-class-defaults', width: 1440, height: 900, group: 'Progression', search: 'Reaver', mobile: false },
       { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
       { name: 'desktop-placement', width: 1440, height: 900, group: 'Interface', search: 'default', mobile: false },
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },

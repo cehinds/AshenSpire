@@ -1,10 +1,13 @@
-import { prologueRows, prologuePresetOverrides } from './prologue.js';
+import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
-import { startingStatRows, applyStartingStatConfig } from './startingStatConfig.js';
+import {
+  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
+  startingStatPoolProblems,
+} from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -68,14 +71,18 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
 });
 
 export function currentAdvancedKey(key) {
-  return LEGACY_BALANCE_KEYS[key] ?? key;
+  return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
 
 function withoutSupersededLegacy(entries) {
   const present = new Set(entries.map(([key]) => key));
-  return entries
+  // The opening's per-scene keys used to be POSITIONAL, and the scenes moved.
+  // They are translated by scene id before anything looks a row up, so an
+  // exported file written before the reorder still imports, and lands on the
+  // scene it was written for. See migratePrologueEntries.
+  return migratePrologueEntries(entries
     .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
-    .map(([key, value]) => [currentAdvancedKey(key), value]);
+    .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
 
 function balanceGroup(path) {
@@ -109,26 +116,51 @@ function leafRows(value, path = [], rows = []) {
   return rows;
 }
 
+// CLASS DEFAULTS LIVE UNDER PROGRESSION (owner, 2026-09-20: "class defaults
+// should be in Progression"). They are the other half of the one starting-stat
+// driver — the pool says how many points a character carries, these say where
+// each class puts them — and a tab of their own put one idea in two menus.
 function explicitRows(bundle) {
   const rows = [];
-  const tuned = bundle.attributeRules?.presets?.[bundle.attributeRules?.defaultMode || 'tuned'] || {};
+  const modeId = bundle.attributeRules?.defaultMode || 'tuned';
+  const tuned = bundle.attributeRules?.presets?.[modeId] || {};
+  const needs = kitAttributeMinimums(bundle);
   for (const classDef of bundle.classes || []) {
     const classLabel = classDef.name || word(classDef.id);
     for (const attribute of bundle.attributes || []) {
       const def = tuned[classDef.id]?.[attribute.id];
       if (!Number.isFinite(def)) continue;
+      // THE ROW STATES THE FLOOR VALIDATION WILL INSIST ON. validate.js refuses
+      // a preset that cannot hold the kit its class starts in; a row whose
+      // domain started at 1 let him type a number that failed at boot and took
+      // the whole configuration down with it.
+      const need = needs[classDef.id]?.[attribute.id];
       rows.push({
-        cat: 'Advanced', advancedGroup: 'Classes', type: 'number', integer: true, step: 1,
-        min: 1, max: 495, def,
-        key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${bundle.attributeRules.defaultMode}.${classDef.id}.${attribute.id}`,
+        cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
+        type: 'number', integer: true, step: 1,
+        min: Math.max(1, need?.minimum || 0), max: 495, def,
+        // The floor MOVED UP after schema version 1 shipped, so a configuration
+        // exported before it holds values this row no longer accepts. Refusing
+        // them is right; refusing his whole file over them is not.
+        floorGroup: `attributeRules.presets.${modeId}.${classDef.id}`,
+        raisedFloor: need ? { group: `attributeRules.presets.${modeId}.${classDef.id}` } : undefined,
+        key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classDef.id}.${attribute.id}`,
         label: `${classLabel} — ${attribute.label}`,
-        note: `Starting ${attribute.label.toLowerCase()} for ${classLabel} in the default ${bundle.attributeRules.defaultMode} mode. Applies to a new run.`,
-        configPath: ['attributeRules', 'presets', bundle.attributeRules.defaultMode, classDef.id, attribute.id],
+        // The floor sentence is its OWN field as well as part of the note: the
+        // class topics compact a row's note away (the label already names the
+        // class), and compacting it away took the only explanation of where the
+        // floor comes from with it.
+        floorNote: need ? `It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '',
+        note: `Starting ${attribute.label.toLowerCase()} for ${classLabel}. The class's attributes must total the character's points, set under Assign points.`
+          + (need ? ` It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '')
+          + ' Applies to a new run.',
+        configPath: ['attributeRules', 'presets', modeId, classDef.id, attribute.id],
         searchPath: `class ${classDef.id} starting ${attribute.id}`,
       });
     }
     rows.push({
-      cat: 'Advanced', advancedGroup: 'Classes', type: 'number', integer: true, step: 1,
+      cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
+      type: 'number', integer: true, step: 1,
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
       label: `${classLabel} — base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
@@ -138,7 +170,8 @@ function explicitRows(bundle) {
       const def = classDef.startingFlaskAllocation?.[kind];
       if (!Number.isFinite(def)) continue;
       rows.push({
-        cat: 'Advanced', advancedGroup: 'Classes', type: 'number', integer: true, step: 1,
+        cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
+        type: 'number', integer: true, step: 1,
         min: 0, max: 20, def,
         key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.startingFlaskAllocation.${kind}`,
         label: `${classLabel} — ${kind.toUpperCase()} flasks`, note: `Starting ${kind.toUpperCase()} flask allocation for ${classLabel}. Applies to a new run.`,
@@ -346,12 +379,20 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
+    // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was
+    // captured after the pool was applied, so the fallback is the pool-scaled
+    // default and not the authored 35-point table — and the kit floor is
+    // checked HERE because validateContent checks it in main.js, where a
+    // failure discarded every configured value the owner had set.
+    const needs = kitAttributeMinimums(bundle);
     const expected = mode.baseline * configured.attributes.length + mode.bonusPool;
     const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
     for (const classDef of configured.classes) {
       const preset = configured.attributeRules.presets[mode.id]?.[classDef.id];
       const values = configured.attributes.map((attribute) => preset?.[attribute.id]);
-      const valid = values.every((value) => Number.isInteger(value) && value >= floor && value <= mode.maximum)
+      const valid = values.every((value, index) => Number.isInteger(value)
+        && value >= Math.max(floor, kitMinimum(needs, classDef.id, configured.attributes[index].id))
+        && value <= mode.maximum)
         && values.reduce((sum, value) => sum + value, 0) === expected;
       if (!valid) configured.attributeRules.presets[mode.id][classDef.id] = structuredClone(defaultPresets[mode.id][classDef.id]);
     }
@@ -369,26 +410,73 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   return configured;
 }
 
-export function advancedConfigProblems(bundle, settings = {}) {
-  const problems = [];
+// A cross-field problem names its own path ("balance.rewards.cinders.normal
+// must keep its first value at or below its second"), and that path IS the row
+// key once `gameConfig.` is put back on the front. A two-value range is two
+// rows, so both ends are addressed. Anything that is not a balance path — the
+// hand rules, the combat ratings — keeps the banner alone.
+function structuralKeys(message) {
+  const path = /^(balance\.[A-Za-z0-9_.]+)/.exec(message)?.[1];
+  if (!path) return [];
+  const base = `${ADVANCED_CONFIG_PREFIX}${path}`;
+  return [base, `${base}.0`, `${base}.1`];
+}
+
+/**
+ * advancedConfigProblemRows(bundle, settings) → [{ keys, message }]
+ *
+ * THE SAME SENTENCES, NOW ADDRESSED. They used to reach the screen as one
+ * notice at the top of Settings — true, but not attached to the row that
+ * caused it, so "which number is it refusing?" was a guess. Each entry now
+ * carries the keys of the rows it is about; `advancedConfigProblems` keeps the
+ * old string list for callers that only want the first sentence.
+ */
+export function advancedConfigProblemRows(bundle, settings = {}) {
+  const problems = [...startingStatPoolProblems(bundle, settings)];
   const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
   if (!mode) return problems;
+  const needs = kitAttributeMinimums(bundle);
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
+  const cellKey = (classId, attributeId) => `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classId}.${attributeId}`;
   for (const classDef of bundle.classes) {
     const values = bundle.attributes.map((attribute) => {
-      const key = `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classDef.id}.${attribute.id}`;
-      return Number(settings[key] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
+      return Number(settings[cellKey(classDef.id, attribute.id)] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
     });
-    const badCell = values.some((value) => !Number.isInteger(value) || value < floor || value > mode.maximum);
+    const outside = bundle.attributes.filter((attribute, index) => !Number.isInteger(values[index])
+      || values[index] < floor || values[index] > mode.maximum);
     const total = values.reduce((sum, value) => sum + value, 0);
-    if (badCell || total !== expected) {
-      problems.push(`${classDef.name}: starting attributes must each be ${floor}–${mode.maximum} and total ${expected}; current total ${total}. Authored defaults stay active until the set is valid.`);
+    if (outside.length || total !== expected) {
+      // Name the cells, not just the rule. "must each be 3-12" over twenty
+      // rows is a rule; "Wisdom 16 is outside it" is the row he has to move.
+      const named = outside.length
+        ? ` ${outside.map((attribute) => `${attribute.label} ${values[bundle.attributes.indexOf(attribute)]}`).join(', ')} ${outside.length === 1 ? 'is' : 'are'} outside that range.`
+        : '';
+      problems.push({
+        keys: bundle.attributes.map((attribute) => cellKey(classDef.id, attribute.id)),
+        message: `${classDef.name}: starting attributes must each be ${floor}–${mode.maximum} and total ${expected}; current total ${total}.${named} Authored defaults stay active until the set is valid.`,
+      });
     }
+    // The kit floor, said per cell, because that is the row he has to move.
+    bundle.attributes.forEach((attribute, index) => {
+      const need = needs[classDef.id]?.[attribute.id];
+      if (!need || !(values[index] < need.minimum)) return;
+      problems.push({
+        keys: [cellKey(classDef.id, attribute.id)],
+        message: `${classDef.name}: ${attribute.label} ${values[index]} is below the ${need.minimum} the ${need.kit} kit ('${need.itemId}') this class starts in asks for. ${classDef.name} keeps its authored attributes until it can hold its own kit; every other setting you changed is still applied.`,
+      });
+    });
   }
-  return [...problems, ...advancedConfigStructuralProblems(bundle, settings)];
+  return [...problems, ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];
+}
+
+export function advancedConfigProblems(bundle, settings = {}) {
+  const seen = new Set();
+  return advancedConfigProblemRows(bundle, settings)
+    .map((problem) => problem.message)
+    .filter((message) => !seen.has(message) && seen.add(message));
 }
 
 export function advancedConfigStructuralProblems(bundle, settings = {}) {
@@ -446,7 +534,45 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
   }, null, 2) + '\n';
 }
 
-export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = []) {
+/**
+ * A ROW'S FLOOR MOVED, AND HIS FILE PREDATES IT.
+ *
+ * `parseAdvancedConfigFile` is all-or-nothing on purpose: a file that half
+ * applies is worse than one that does not. But two floors were raised while the
+ * schema version stayed at 1 — the character's total points (the attribute
+ * count → the kit floor) and each class's attribute cells (1 → the kit
+ * minimum) — so values that imported last week now abort the entire file and
+ * take every unrelated setting with them.
+ *
+ * Refusing the value is still right. This decides what refusing it COSTS:
+ *   · the total is CLAMPED to the floor, because the class tables rescale to
+ *     whatever total stands and a clamped total is a working one;
+ *   · a class's attribute cells are SKIPPED AS A SET, because raising one cell
+ *     to its kit floor would break the set's total and fail validation anyway —
+ *     that class keeps its authored table, and every other class still imports.
+ * Both say so by name in `warnings`, which the import door shows.
+ */
+function tolerateRaisedFloors(entries, rows, warnings) {
+  const skippedGroups = new Set();
+  const kept = [];
+  for (const [key, raw] of entries) {
+    const row = rows.get(key);
+    const floor = row?.raisedFloor;
+    if (!floor || typeof raw !== 'number' || !Number.isFinite(raw) || raw >= row.min) { kept.push([key, raw]); continue; }
+    if (floor.clamp) {
+      warnings.push(`${row.label}: ${raw} is below the ${row.min} this version requires and was raised to ${row.min}. Everything else in the file was imported.`);
+      kept.push([key, row.min]);
+    } else {
+      skippedGroups.add(floor.group);
+      warnings.push(`${row.label}: ${raw} is below the ${row.min} this class's starting kit asks for, so its attribute table was left as authored. Everything else in the file was imported.`);
+    }
+  }
+  // A skipped class is skipped WHOLE: one cell below its kit floor invalidates
+  // the set's total, so leaving its siblings in would fail validation anyway.
+  return kept.filter(([key]) => !skippedGroups.has(rows.get(key)?.floorGroup));
+}
+
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = []) {
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
@@ -462,7 +588,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of withoutSupersededLegacy(Object.entries(file.overrides))) {
+  for (const [key, raw] of tolerateRaisedFloors(withoutSupersededLegacy(Object.entries(file.overrides)), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;

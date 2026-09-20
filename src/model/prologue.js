@@ -1,6 +1,5 @@
 import { uiConfig } from '../config/generated/ui.js';
 import { SEATS } from '../content/seats.js';
-import { ENVIRONMENTS } from '../content/environments.js';
 import { ATLAS } from './worldAtlas.js';
 
 export const PROLOGUE_DEFAULTS = uiConfig.screens.prologue.components.sequence;
@@ -12,11 +11,75 @@ function put(object, path, value) {
   parent[path.at(-1)] = value;
 }
 
+/** The version-1 scene order, kept verbatim so a saved index can be read. */
+export const PROLOGUE_V1_SCENE_IDS = ['warmth', 'year', 'night', 'carry', 'road', 'step'];
+
+/** The scene that was cut, and the one that followed it. */
+export const PROLOGUE_CUT_SCENE_ID = 'road';
+export const PROLOGUE_CUT_SCENE_HEIR = 'step';
+
+/**
+ * migratePrologueSettingKey(key) → the current name of a stored opening key.
+ *
+ * `gameConfig.prologue.scenes.<n>.<field>` is a version-1 key: `<n>` indexes the
+ * SIX-scene order. It is unambiguous because current keys name their scene
+ * (`scenes.carry.text`), never a number, so a digit there can only be old.
+ */
+export function migratePrologueSettingKey(key) {
+  const match = new RegExp(`^${PROLOGUE_PREFIX.replace(/\./g, '\\.')}scenes\\.(\\d+)\\.(.+)$`).exec(key);
+  if (!match) return key;
+  const id = PROLOGUE_V1_SCENE_IDS[Number(match[1])];
+  if (!id) return key;
+  return `${PROLOGUE_PREFIX}scenes.${id === PROLOGUE_CUT_SCENE_ID ? PROLOGUE_CUT_SCENE_HEIR : id}.${match[2]}`;
+}
+
+/** The version-1 key a current one came from, or null when there is none. */
+export function legacyPrologueSettingKey(key) {
+  const match = new RegExp(`^${PROLOGUE_PREFIX.replace(/\./g, '\\.')}scenes\\.([a-z]+)\\.(.+)$`).exec(key);
+  const index = match ? PROLOGUE_V1_SCENE_IDS.indexOf(match[1]) : -1;
+  return index < 0 ? null : `${PROLOGUE_PREFIX}scenes.${index}.${match[2]}`;
+}
+
+const CUT_SCENE_PREFIX = `${PROLOGUE_PREFIX}scenes.${PROLOGUE_V1_SCENE_IDS.indexOf(PROLOGUE_CUT_SCENE_ID)}.`;
+
+/**
+ * migratePrologueEntries(entries) → the same [key, value] pairs under current
+ * names, with the cut scene yielding to the scene that inherited its keys.
+ *
+ * `road` and `step` both land on `step`, so a file carrying both would have one
+ * silently overwrite the other. `step`'s own value wins: it is the scene that
+ * still exists, and the owner wrote that line against the scene it names.
+ */
+export function migratePrologueEntries(entries) {
+  const claimed = new Set(entries.filter(([key]) => !key.startsWith(CUT_SCENE_PREFIX))
+    .map(([key]) => migratePrologueSettingKey(key)));
+  return entries
+    .filter(([key]) => !key.startsWith(CUT_SCENE_PREFIX) || !claimed.has(migratePrologueSettingKey(key)))
+    .map(([key, value]) => [migratePrologueSettingKey(key), value]);
+}
+
+/**
+ * A scene setting is NAMED BY ITS SCENE, not by where the scene happens to sit.
+ *
+ * These keys live in the owner's exported configuration file and in his saved
+ * profile, and they outlive any particular running order. `scenes.2.text` meant
+ * `night` before the reorder and means `carry` after it, so a positional key
+ * silently REATTACHES his writing to a different scene — and `scenes.5.text`,
+ * whose scene was cut, stops resolving at all and takes the whole all-or-nothing
+ * import down with it. The path into the config object stays positional (it
+ * indexes an array); only the NAME is stable.
+ */
+export function prologueSettingKey(path) {
+  if (path[0] !== 'scenes') return PROLOGUE_PREFIX + path.join('.');
+  const id = PROLOGUE_DEFAULTS.scenes[Number(path[1])]?.id ?? path[1];
+  return `${PROLOGUE_PREFIX}scenes.${id}.${path.slice(2).join('.')}`;
+}
+
 export function prologueRows() {
   const rows = [];
   const add = (path, label, topic, options = {}) => rows.push({
     cat: 'Advanced', advancedGroup: 'Opening', prologueTopic: topic,
-    key: PROLOGUE_PREFIX + path.join('.'), prologuePath: path,
+    key: prologueSettingKey(path), prologuePath: path,
     def: get(PROLOGUE_DEFAULTS, path), label,
     note: 'Saved with your configuration. Applies to previews and new openings.', ...options,
   });
@@ -47,7 +110,9 @@ export function prologueRows() {
   for (const [id, cls] of Object.entries(PROLOGUE_DEFAULTS.classes)) add(['classes',id,'line'], `${cls.name} dialogue`, 'Class dialogue', text(5000));
   for (const key of Object.keys(PROLOGUE_DEFAULTS.labels)) add(['labels',key], `${PROLOGUE_DEFAULTS.labels[key]} button text`, 'Button text', text(160));
   add(['presentation','previewClass'], 'Preview class', 'Preview', choice(Object.keys(PROLOGUE_DEFAULTS.classes),Object.fromEntries(Object.entries(PROLOGUE_DEFAULTS.classes).map(([id,cls])=>[id,cls.name]))));
-  add(['presentation','previewScene'], 'Preview starting scene', 'Preview', choice(PROLOGUE_DEFAULTS.scenes.map(s=>s.id),Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(s=>[s.id,s.name]))));
+  // `road` was cut. A configuration that points the preview at it opens on the
+  // scene that followed it rather than refusing the entire file.
+  add(['presentation','previewScene'], 'Preview starting scene', 'Preview', {...choice(PROLOGUE_DEFAULTS.scenes.map(s=>s.id),Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(s=>[s.id,s.name]))), legacyChoices:{[PROLOGUE_CUT_SCENE_ID]:PROLOGUE_CUT_SCENE_HEIR}});
   rows.push({cat:'Advanced',advancedGroup:'Opening',prologueTopic:'Preview',type:'button',key:'prologuePreview',label:'Preview opening',btn:'Play preview',note:'Uses these settings without creating a run or marking the opening seen.'});
   return rows;
 }
@@ -55,7 +120,10 @@ export function prologueRows() {
 export function prologueConfig(settings = {}) {
   const config = structuredClone(PROLOGUE_DEFAULTS);
   for (const row of prologueRows()) {
-    const value = settings[row.key];
+    // A profile written before the reorder still holds positional keys; read
+    // them under the name they meant then (see migratePrologueSettingKey).
+    const legacy = legacyPrologueSettingKey(row.key);
+    const value = settings[row.key] ?? (legacy === null ? undefined : settings[legacy]);
     if (value === undefined || !row.prologuePath) continue;
     const valid = row.type === 'choice' ? row.choices.includes(value)
       : row.type === 'color' ? typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
@@ -98,16 +166,16 @@ export function prologueTint(config, settings = {}, customization = {}) {
   return accent;
 }
 
-// Resolve the real destination without drawing gameplay RNG or assigning a class a region.
+// Resolve the real destination NAME without drawing gameplay RNG or assigning a
+// class a region. It used to resolve a painting too; the final scene no longer
+// swaps its artwork for the destination's, and nothing in src/ read `art` — the
+// only thing keeping it alive was a test asserting it. A branch whose sole
+// consumer is its own test is not a feature, it is a claim about behaviour that
+// does not happen.
 export function prologueDestination(run = {}) {
   const start = run.journey?.anchors?.start;
-  if (start) {
-    const node = ATLAS.nodes[start];
-    return {name:node?.displayName || start, art:start === 'crownfall' ? null : ATLAS.assets[node?.landmarkAssetId]?.uri};
-  }
-  const seat = SEATS.find(s=>s.id===run.seatOrder?.[0]);
-  const region = ENVIRONMENTS.find(r=>r.id===seat?.regionId);
-  return {name:seat?.name || 'Crownfall', art:region?.map || null};
+  if (start) return {name: ATLAS.nodes[start]?.displayName || start};
+  return {name: SEATS.find(s=>s.id===run.seatOrder?.[0])?.name || 'Crownfall'};
 }
 
 export function shouldPlayPrologue(settings = {}, seen = false) {
@@ -115,8 +183,45 @@ export function shouldPlayPrologue(settings = {}, seen = false) {
   return mode === 'every' || (mode === 'once' && !seen);
 }
 
+/**
+ * The stored shape of `run.prologue`. Version 1 held an index into the SIX-scene
+ * opening; version 2 holds an index into whatever `PROLOGUE_DEFAULTS.scenes` is
+ * now. The number is only meaningful next to the order it was written against,
+ * so the order it was written against has to be recorded.
+ */
+export const PROLOGUE_STATE_VERSION = 2;
+
+/**
+ * migratePrologueState(run) → the same run, with a version-1 opening state
+ * rewritten to version 2. Idempotent, and silent for runs with no opening.
+ *
+ * BY SCENE ID, NOT BY ARITHMETIC. `night` and `carry` swapped places and `road`
+ * was cut, so no offset describes the move: 2 → 3, 3 → 2, 5 → 4. A save parked
+ * on the old final scene (5) failed the bounds check of the five-scene sequence,
+ * `pendingPrologueScene` answered null, and the loader fell through to the map —
+ * the opening skipped on every load while `status` stayed 'pending' forever.
+ *
+ * `road` no longer exists. A run stopped there had not yet seen what followed
+ * it, so it resumes at the scene that DID follow it ('step'), rather than being
+ * sent back through scenes it has already watched.
+ */
+export function migratePrologueState(run) {
+  const state = run?.prologue;
+  if (!state || state.version !== 1) return run;
+  const position = id => PROLOGUE_DEFAULTS.scenes.findIndex(scene => scene.id === id);
+  const from = Number.isInteger(state.scene) ? state.scene : 0;
+  let scene = -1;
+  // Walk forward from the recorded scene: the first old scene still in the
+  // sequence is the earliest one this run has not finished.
+  for (let index = Math.max(0, Math.min(from, PROLOGUE_V1_SCENE_IDS.length - 1)); index < PROLOGUE_V1_SCENE_IDS.length && scene < 0; index += 1) {
+    scene = position(PROLOGUE_V1_SCENE_IDS[index]);
+  }
+  run.prologue = { ...state, version: PROLOGUE_STATE_VERSION, scene: scene < 0 ? PROLOGUE_DEFAULTS.scenes.length - 1 : scene };
+  return run;
+}
+
 export function pendingPrologueScene(run) {
   const state = run?.prologue;
-  return state?.version === 1 && state.status === 'pending' && Number.isInteger(state.scene)
+  return state?.version === PROLOGUE_STATE_VERSION && state.status === 'pending' && Number.isInteger(state.scene)
     && state.scene >= 0 && state.scene < PROLOGUE_DEFAULTS.scenes.length ? state.scene : null;
 }
