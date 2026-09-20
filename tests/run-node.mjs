@@ -85,7 +85,7 @@ let zoomExtra = 0;
     // its pre-move fixture (phase 2a), and everything the tag tree derives
     // row-identical to the three pre-tree fixtures (phase T).
     'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'advanced-config.test.mjs', 'hand-rules.test.mjs', 'starting-stat-config.test.mjs', 'combat-ratings.test.mjs', 'prologue.test.mjs',
-    'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs'];
+    'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs', 'character-progression.test.mjs'];
   const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
   console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);

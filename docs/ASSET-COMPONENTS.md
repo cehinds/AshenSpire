@@ -27,6 +27,10 @@ single place that constructs it.
 | `armoury.attributesCard` | Foldable Attributes group with summary values | `.character-info-card.attributesCard` | `src/ui/screens/equipment.js` |
 | `armoury.attributeCard` | Expandable attribute card | `.character-attributes .disc-face` | `src/ui/components/disclosure.js` |
 | `armoury.relicsCard` | Foldable Relics group with count and name summary | `.character-info-card.relicsCard` | `src/ui/screens/equipment.js` |
+| `armoury.levelProgress` | Character level Meter with XP toward the next step | `.character-level-meter` | `src/ui/screens/equipment.js` + `src/model/progression.js` |
+| `armoury.skillsCard` | Foldable Skill progression group with trained-track summary | `.character-info-card.skillsCard` | `src/ui/screens/equipment.js` |
+| `armoury.skillProgressGroup` | Vertical stack of skill-track Meters | `.character-skills` | `src/ui/screens/equipment.js` |
+| `armoury.skillTrack` | One skill track's level, XP and waiting drafts | `.character-skill-meter` | `src/ui/screens/equipment.js` + `src/model/progression.js` |
 | `armoury.equipmentPane` | Vertical armaments pane (left in Inventory, right in Hybrid) | `.armoury-equipment` | `src/ui/screens/equipment.js` |
 | `armoury.armamentsHeader` | Shared Folding Tray header for Armaments and item count | `.armoury-equipment-head` | `src/ui/screens/equipment.js` + `src/ui/components/trayComponents.js` |
 | `armoury.armamentsFoldButton` | Armaments fold/unfold control | `.armoury-equipment-head [data-fold="armaments"]` | `src/ui/screens/equipment.js` |

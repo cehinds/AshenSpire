@@ -1,4 +1,5 @@
 import { characterLevel } from '../../model/levelup.js';
+import { levelProgress, skillProgressRows, skillProgressSummary } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
@@ -74,7 +75,7 @@ import {
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl, meter, meters,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -1656,6 +1657,60 @@ export function mountEquipment(host, {
     });
   }
 
+  /**
+   * THE LEVEL BAR. The Armoury named the level and never said how far the next
+   * one was, so the one ledger that always moves was the one thing the screen
+   * would not show. The kit's Meter, stacked: the level on the plate, the XP
+   * beside it, the climb as the fill. Every number is levelProgress's, which
+   * is levelUpPlan's — the shrine and this bar read the same step.
+   */
+  function characterLevelMeter() {
+    const progress = levelProgress(registries, run);
+    const node = meter({
+      stack: true, tone: 'xp',
+      label: progress.label,
+      value: progress.value,
+      pct: progress.pct,
+      cur: progress.xp, max: progress.xpToNext,
+      ariaLabel: progress.sense,
+      attrs: {
+        class: `character-level-meter${progress.points ? ' has-points' : ''}`,
+        dataset: { component: 'armoury.levelProgress', level: String(progress.level), capped: progress.capped ? 'true' : 'false' },
+      },
+    });
+    attachTooltip(node, () => `<div class="tt-title">${esc(progress.label)}</div><p>${esc(progress.sense)}</p>`);
+    // The waiting points belong beside the LEVEL, not past the XP: a stacked
+    // plate spreads its children, and appending would have put the reason to
+    // visit a shrine on the far side of the number it explains.
+    if (progress.points) {
+      const plate = node.querySelector('.m-plate');
+      plate?.insertBefore(statusText(`${progress.points} point${progress.points === 1 ? '' : 's'} to assign`, { class: 'character-level-points' }), plate.querySelector('.m-value'));
+    }
+    return node;
+  }
+
+  /** One skill track as a Meter: its name and level on the plate, its XP as the fill. */
+  function skillProgressMeter(rowModel) {
+    const node = meter({
+      stack: true, tone: 'skill',
+      label: `${rowModel.label} ${rowModel.level}`,
+      value: rowModel.value,
+      pct: rowModel.pct,
+      cur: rowModel.xp, max: rowModel.xpToNext,
+      ariaLabel: rowModel.sense,
+      attrs: {
+        class: `character-skill-meter${rowModel.own ? ' own-class' : ''}`,
+        dataset: { component: 'armoury.skillTrack', skill: rowModel.id, kind: rowModel.kind, level: String(rowModel.level) },
+      },
+    });
+    if (rowModel.pendingDrafts) {
+      const plate = node.querySelector('.m-plate');
+      plate?.insertBefore(pill({ label: `${rowModel.pendingDrafts} draft${rowModel.pendingDrafts === 1 ? '' : 's'}`, attrs: { class: 'character-skill-drafts' } }), plate.querySelector('.m-value'));
+    }
+    attachTooltip(node, () => `<div class="tt-title">${esc(rowModel.label)}</div><p>${esc(rowModel.sense)}</p>`);
+    return node;
+  }
+
   function characterStatsPanel() {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
@@ -1775,6 +1830,18 @@ export function mountEquipment(host, {
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
     }));
+    const skillRows = skillProgressRows(registries, run);
+    const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
+      skillRows.length
+        ? meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' })
+        : flavour('No track has been trained yet. Swinging a weapon, wearing armour and winning fights train their own tracks.', { class: 'ep-hint' }),
+    ]);
+    box.appendChild(informationCard({
+      id: 'skillsCard',
+      label: 'Skill progression',
+      summary: skillProgressSummary(skillRows),
+      body: skills,
+    }));
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',
       label: 'Equipment cards',
@@ -1791,6 +1858,7 @@ export function mountEquipment(host, {
       eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
       titleS(cls.name, { tag: 'h3' }),
       subtitle(cls.description || ''),
+      characterLevelMeter(),
     ]);
   }
 

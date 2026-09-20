@@ -552,6 +552,10 @@ const RENDERED_ARMOURY_COMPONENTS = [
  ["armoury.attributesCard",".character-info-card.attributesCard","Character and Hybrid views","foldable Attributes group card with summary values","armouryStatsPanel"],
  ["armoury.attributeCard",".character-attributes .disc-face","Character and Hybrid views","one expandable attribute","armouryStatsPanel"],
  ["armoury.relicsCard",".character-info-card.relicsCard","Character and Hybrid views","foldable Relics group card with count and name summary","armouryStatsPanel"],
+ ["armoury.levelProgress",".character-level-meter","Character and Hybrid views","character level Meter: level, XP toward the next step, and any point waiting to be assigned","armouryStatsPanel"],
+ ["armoury.skillsCard",".character-info-card.skillsCard","Character and Hybrid views","foldable Skill progression group card summarising the trained tracks","armouryStatsPanel"],
+ ["armoury.skillProgressGroup",".character-skills","Character and Hybrid views","vertical stack of skill-track Meters","armouryStatsPanel"],
+ ["armoury.skillTrack",".character-skill-meter","Character and Hybrid views","one skill track: its level, XP toward the next, and any waiting draft","armouryStatsPanel"],
  ["armoury.equipmentPane",".armoury-equipment","Inventory and Hybrid Armaments","vertical armaments pane; left in Inventory and right in Hybrid","equipmentSlot"],
  ["armoury.armamentsCard",".armoury-equipment[data-component='armoury.armamentsCard']","Inventory and Hybrid Armaments","non-resizable Armaments member of the shared Folding Tray family, with configurable outer border","equipmentSlot"],
  ["armoury.armamentsHeader",".armoury-equipment-head","Inventory and Hybrid Armaments","shared Tray header for Armaments with fold state, item count, and expanded-only view control","equipmentSlot"],
@@ -631,7 +635,7 @@ const COMPOSITION = Object.freeze({
   ,'stat-allocation-row':['primary-stat-card','current value','decrement/increment controls','full-width disclosure reveal']
   ,'smith-upgrade-modal':['smith-candidate-card × eligible deck cards','smith-upgrade-preview','Back to Shrine / Escape','Confirm selected card']
   ,'armoury.shell':['armoury.viewSwitcher','armoury.characterView','armoury.inventoryView','armoury.hybridView']
-  ,'armoury.characterView':['armoury.characterPane','armoury.spritePane','armoury.characterSummary','armoury.combatPowerCard','armoury.attributesCard','armoury.relicsCard']
+  ,'armoury.characterView':['armoury.characterPane','armoury.spritePane','armoury.characterSummary','armoury.levelProgress','armoury.combatPowerCard','armoury.attributesCard','armoury.relicsCard','armoury.skillsCard']
   ,'armoury.inventoryView':['armoury.armamentsCard','armoury.inventoryCard','armoury.cardsCard','armoury.statsTray']
   ,'armoury.hybridView':['armoury.characterPane','armoury.hybridPaneSplitter','armoury.armamentsCard']
   ,'armoury.armamentsCard':['armoury.armamentsHeader','armoury.equipmentPositionCard × N','armoury.armamentGridDetails','non-resizable']
