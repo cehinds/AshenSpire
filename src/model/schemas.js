@@ -59,6 +59,9 @@ export const COMBAT_OPCODES = Object.freeze([
   'enterStance',
   'poiseDamage',
   'stagger',
+  // Arcane Exposure buildup dealt directly, not by a hit (plan phase 8): a
+  // focus property spreads a break to the other foes (`resonance`).
+  'arcaneBuildup',
 ]);
 
 export const RUN_OPCODES = Object.freeze([
@@ -91,6 +94,9 @@ export const TARGETS = Object.freeze([
   'player',
   'owner',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
+  // Every living enemy EXCEPT the one the firing event names (and the action's
+  // own target): a break's ripple reaches the others, never the broken one.
+  'otherEnemies',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
@@ -121,6 +127,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
+  // statuses } — what balance.stagger.player took from them.
+  'playerStaggered',
   // Threshold-proc vocabulary (#61 direction): the burst is ITS OWN event in
   // the damage record — never folded into the triggering hit (checkable
   // invariant). procResisted is the refusal receipt: applying points into an
@@ -486,6 +495,9 @@ export const EFFECT_SPECS = Object.freeze({
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
+  // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
+  // validate.js refuses neither or both. The school is the firing event's.
+  arcaneBuildup: { allowed: ['amount', 'pct'], required: [], refs: {} },
   // Direct stagger (insanity's proc): breaks the target's next move outright,
   // bypassing the poise bar. Enemy targets only — validated in validate.js.
   stagger: { allowed: [], required: [], refs: {} },

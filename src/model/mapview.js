@@ -261,6 +261,12 @@ export function nodeY(floor, height) {
   return height - floor * ROW_H;
 }
 
+// Authored maps supply geographic positions; generated maps keep their grid.
+// Painting, camera framing and selection all resolve through this same door.
+export function mapPoint(node, height) {
+  return node.mapPosition || { x: nodeX(node.col), y: nodeY(node.floor, height) };
+}
+
 /** Keep a zoom inside the ladder's own range. One home for the bounds. */
 export function clampZoom(z) {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
@@ -282,8 +288,7 @@ export function framingBox(nodes, height) {
   let y1 = -Infinity;
   for (const n of nodes) {
     const r = nodeRadius(n.type);
-    const cx = nodeX(n.col);
-    const cy = nodeY(n.floor, height);
+    const { x: cx, y: cy } = mapPoint(n, height);
     if (cx - r < x0) x0 = cx - r;
     if (cx + r > x1) x1 = cx + r;
     if (cy - r < y0) y0 = cy - r;

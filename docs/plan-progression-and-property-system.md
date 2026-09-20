@@ -506,6 +506,26 @@ Acceptance: validation refuses a 0-stamina mana card by name; four focus
 properties behave per row; a staggered player loses one action and shows 2
 Vulnerable and 2 Weak.
 
+**8 AS BUILT (2026-09-19):** `balance.mana { minActionCost 1, minStaminaCost 1 }`
+and the card rule (base and upgrade); `balance.exposure.buildupPerManaSpell`
+5 with its floor on `cardExposure.csv`; `staggerBreak` and `resonance` rules,
+the new opcode `arcaneBuildup` and target `otherEnemies`, carriers by item
+(every focus is a `staff` kind: the plain staves break harder, the rod and
+the brand overcharge, the branch rings out); the player's poise meter via
+`dealPoiseDamage` and `staggerPlayer`, `balance.stagger.player { actionLoss,
+statuses }` (a status map, so the engine names no status), the receipt's
+Constitution term as `balance.poise.playerPerConstitution`; outside the
+foundation ruleset (the shipped fight has none) an enemy blow that draws
+blood rocks the player by `balance.poise.playerImpactPerHit`. Two deviations,
+both deferred to phase 9 on purpose: the signature arts cost 1 stamina / 1
+Mana, not 2 / 2 — under the current tiers the Reaver and the Rogue start
+with a one-point Mana pool and the Starseer and the Herald with one stamina,
+so 2 / 2 would strand two signature cards until Mana equals Wisdom; and the
+Poise derived-stat row, since phase 9 rewrites the ruleset and every save
+snapshots it. Also re-costed under the rule: Comet Fragment costs an action;
+seven Mana powers' upgrades drop the Mana line instead of the action line.
+SPEC §13.4k; engine test 92; property-mount tests.
+
 ## Phase 9 — Attribute rebase (1 PR, last)
 
 | Change | Where |

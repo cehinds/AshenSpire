@@ -259,6 +259,16 @@ armament,,emberlightSceptre,oath
 # Property tags never join a piece's chips — they stamp onto `propertyTags`.
 armament,,boneSceptre,siphon
 armament,,emberlightSceptre,siphon
+# Plan phase 8: the other three focus properties find carriers. Every focus is
+# a `staff` kind, so the proposal's staff/wand/orb reading is by item: the
+# plain staves break harder, the rod and the brand overcharge, the branch
+# rings out.
+armament,,ashStaff,staggerBreak
+armament,,starstoneStaff,staggerBreak
+armament,,wyrmhornStaff,staggerBreak
+armament,,blightRod,overcharge
+armament,,gorefireBrand,overcharge
+armament,,goldboughBranch,resonance
 armament,,goldboughBranch,item:magic-focus
 armament,,goldboughBranch,ritual
 armament,,goldboughBranch,oath

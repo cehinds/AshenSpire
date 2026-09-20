@@ -201,3 +201,11 @@ Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generat
 Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
 
 Sixteen class-specific shared-outfit atlases were generated with the same tool from the existing class paintings and approved armor references. Sources, prompts, normalization script and review sheet: art/class-outfit-sprites-2026-09-19/. Runtime exports: assets/painted-outfits/shared-*/. Each atlas contains eight poses; no third-party asset license is claimed.
+
+## Playable legacy dungeon environments (2026-09-19)
+
+Three maps and twelve original scene paintings generated with OpenAI imagegen
+for AshenSpire. Runtime assets in `assets/environments/legacy/` use optimized
+map WebPs and 24 lossless alpha floor/background plates. Original sources,
+exact prompts, provenance, and extraction instructions are retained under
+`art/webp-maps-2026-09-19/`. No third-party asset license is claimed.

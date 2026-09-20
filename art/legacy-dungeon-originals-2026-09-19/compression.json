@@ -1,0 +1,250 @@
+{
+  "quality": 72,
+  "alphaQuality": 100,
+  "effort": 6,
+  "images": [
+    {
+      "name": "BS-ENV-01-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1477358,
+      "after": 196006,
+      "originalSha256": "518c2b32894435b92d13e535e5c4e96a126bd5a3e0cb5ab7b3cc0d16f5781a7b"
+    },
+    {
+      "name": "BS-ENV-01-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1119076,
+      "after": 134502,
+      "originalSha256": "b3aca0b2e2916b2681d3b3d63675a8fbf7c53b8a28308909537acfda8ae4517a"
+    },
+    {
+      "name": "BS-ENV-02-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1420540,
+      "after": 192766,
+      "originalSha256": "e5354e950af6c8b5d4a39eb80cef3f0dd34811429d79d5d785e6cdd94a3a993c"
+    },
+    {
+      "name": "BS-ENV-02-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1158742,
+      "after": 134654,
+      "originalSha256": "3f6133f9a7ccab279bff33bcc8f00dcdc4c759ae15949b34d32662ff821b7ecf"
+    },
+    {
+      "name": "BS-ENV-03-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1588628,
+      "after": 206510,
+      "originalSha256": "0c1bdb7976c5340049a48fc599f96623d7d2c512813bdfae8e050288299352ba"
+    },
+    {
+      "name": "BS-ENV-03-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 973910,
+      "after": 116728,
+      "originalSha256": "d82b827d9e4124dc47d48ce3f4c56c34c16846eb7aa0fe32f18938a4d7b407af"
+    },
+    {
+      "name": "BS-ENV-04-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1483812,
+      "after": 185214,
+      "originalSha256": "c0a1eef51af153f21ca61c823c0fa9c4b0d67d7e44336e45ef95fb8d599a4519"
+    },
+    {
+      "name": "BS-ENV-04-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1114800,
+      "after": 136432,
+      "originalSha256": "aa20938c83baad3bb59794bba6027b0bf54628cae4a1f9c21f4b2271d93aaa5c"
+    },
+    {
+      "name": "FC-ENV-01-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1533034,
+      "after": 174666,
+      "originalSha256": "0e66a782bfe339e0ab8893d06cc56f70f134eff0dc96bb4d5f78112d2b2ecf10"
+    },
+    {
+      "name": "FC-ENV-01-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 955148,
+      "after": 108260,
+      "originalSha256": "43533438c2df5e24e5cdaa921c31ef67a014ab88a81f24b83a18490f92328632"
+    },
+    {
+      "name": "FC-ENV-02-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1439912,
+      "after": 167164,
+      "originalSha256": "293d5a90f896641eb0c6e3180ed9b8a58a9b44a5f60ee97b530038261818505f"
+    },
+    {
+      "name": "FC-ENV-02-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1080416,
+      "after": 122376,
+      "originalSha256": "e9aea54de9006a492b73ac7472ca9e5f9ff4868b798ccb0c133ed36f241c9032"
+    },
+    {
+      "name": "FC-ENV-03-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1453862,
+      "after": 157174,
+      "originalSha256": "381a5f178b984a5869258d709e6f64ef52183e01b574011ef8539cb614055a92"
+    },
+    {
+      "name": "FC-ENV-03-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 974610,
+      "after": 103662,
+      "originalSha256": "7cdccfbd7e0a9f2f7c38f6910d043320c2ea1b56548cdc5d2adf527b98bb5f98"
+    },
+    {
+      "name": "FC-ENV-04-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1391734,
+      "after": 157178,
+      "originalSha256": "fa44a431d5ec691c59817625f68f38ac6b42327d7cb05bacdc1583ae26e03066"
+    },
+    {
+      "name": "FC-ENV-04-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1049178,
+      "after": 103424,
+      "originalSha256": "1ce7ea86252e90413e0e2b14c5b070e3483a30727923a6295275471bc2fd015d"
+    },
+    {
+      "name": "HM-ENV-01-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1485826,
+      "after": 192600,
+      "originalSha256": "b4f4c5a963a38667cf69c38aa55311d59727de11a405694fdef4e418d3de60ad"
+    },
+    {
+      "name": "HM-ENV-01-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1079198,
+      "after": 133158,
+      "originalSha256": "3a5cbc45ce9d4e65e14f735b746d2cbb511cc688f0086bc87bc445cfd7d28606"
+    },
+    {
+      "name": "HM-ENV-02-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1439740,
+      "after": 193628,
+      "originalSha256": "31c9a824f60f1441c8337378d11871444e13ff13d29c800d7fd5b4ed2f8178bd"
+    },
+    {
+      "name": "HM-ENV-02-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1218040,
+      "after": 159260,
+      "originalSha256": "5a442a506ad76ccb99855f296a1dbce5947eae60124e2e15886feb2a6c54256a"
+    },
+    {
+      "name": "HM-ENV-03-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1541504,
+      "after": 202604,
+      "originalSha256": "eaa2cccad6c3e5246eef3cbaf15db2960775564e598920f645298f56ca53ddfe"
+    },
+    {
+      "name": "HM-ENV-03-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1048904,
+      "after": 133798,
+      "originalSha256": "6a62fdb175ed7775e2aa556c775305f65c08fb5ab214c9d0d6978dd2243c057f"
+    },
+    {
+      "name": "HM-ENV-04-background.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1415678,
+      "after": 178216,
+      "originalSha256": "edd41ec7a854009a72abf46bdaa71213afc8c21b1d4b311b0c278aa7ae03ad9e"
+    },
+    {
+      "name": "HM-ENV-04-floor.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "before": 1049290,
+      "after": 114392,
+      "originalSha256": "ffcab303fc757b48fd22fff209050b7156718cdfd1e5eff151e7ae14e3f5ed42"
+    },
+    {
+      "name": "MAP-01-briar-sanctum.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": false,
+      "before": 658660,
+      "after": 375572,
+      "originalSha256": "730edc11bc73e80fb0ee9927a9469f8bccd4a2d54d0301f764dfbfef1a59c8c7"
+    },
+    {
+      "name": "MAP-02-hall-of-mirrors.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": false,
+      "before": 646472,
+      "after": 389650,
+      "originalSha256": "902e6565210938a7adcc956e5acd1b9fcc229d65086efbda7a2dd6c6be63d42e"
+    },
+    {
+      "name": "MAP-03-furnace-chapel.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": false,
+      "before": 574648,
+      "after": 315074,
+      "originalSha256": "2c00f0690f4c37fd921a073a48b544dc763583a69bd0df33b0a0f063cba2c16c"
+    }
+  ]
+}

@@ -33,6 +33,20 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "staggerBreak",
+    "variable": "poiseDamage",
+    "balancePath": "exposure.staggerBreakPoise"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "resonance",
+    "variable": "spreadPct",
+    "balancePath": "exposure.resonanceSpreadPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "forsakenMedallion",
     "variable": "poiseDamage",
     "balancePath": "powers.forsakenMedallion.poiseDamage"

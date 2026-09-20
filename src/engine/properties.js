@@ -206,11 +206,18 @@ export function syncRelicProperties(combat, entity) {
  * Called at createCombat, after both equipment doors (swapArmament and
  * changeEquipment) and when a combat snapshot is restored.
  */
-export function syncLoadoutProperties(combat) {
-  if (!combat || !combat.player) return;
-  const ownerKey = triggerOwnerKey(combat, combat.player);
-  const wanted = combat.loadout
-    ? loadoutCarriers(combat.registries, combat.loadout, combat.player.classId, ownerKey, combat.itemUpgradeLevels || {})
+export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels) {
+  // A CO-OP SEAT CARRIES ITS OWN KIT. Solo reads the one loadout off the
+  // combat; a party's seats each hand in theirs, under their own owner key,
+  // for the reason the relic sync states — mounted under whichever seat is
+  // active, a second seat's staff confers nothing (Codex, #1203).
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner) return;
+  const kit = loadout !== undefined ? loadout : combat.loadout;
+  const tiers = itemUpgradeLevels !== undefined ? itemUpgradeLevels : combat.itemUpgradeLevels;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  const wanted = kit
+    ? loadoutCarriers(combat.registries, kit, owner.classId, ownerKey, tiers || {})
     : [];
   const wantedKeys = new Set(wanted.map(propertySourceKey));
   const current = (combat.propertyMounts && combat.propertyMounts[ownerKey]) || {};

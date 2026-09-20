@@ -9,8 +9,9 @@
 // model owns every number; this only writes the result.
 import { sceneLayers, sceneWindowLayers } from '../models/SceneLayerModel.js';
 import { ENVIRONMENTS } from '../../content/environments.js';
+import { LEGACY_SCENES } from '../../model/legacyDungeon.js';
 
-const sceneById = (id) => ENVIRONMENTS.flatMap(region => region.scenes).find(scene => scene.id === id) || null;
+const sceneById = (id) => [...LEGACY_SCENES, ...ENVIRONMENTS.flatMap(region => region.scenes)].find(scene => scene.id === id) || null;
 
 /**
  * fitSceneBackdrop(backdrop, { width, height, zoom, windowTop, windowHeight, config })

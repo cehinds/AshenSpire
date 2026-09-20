@@ -52,8 +52,8 @@ export function mountDialogue(app, options) {
     registries, run, meta, rng, eventId, onDone, hud = null, dialogueState = null,
     entrancePlayed = false, layers: layerOverrides = {},
   } = options;
-  const def = registries.events.get(eventId);
-  const speaker = registries.speakers.get(registries.eventSpeakers[eventId]);
+  const def = options.definition || registries.events.get(eventId);
+  const speaker = options.speaker || registries.speakers.get(registries.eventSpeakers[eventId]);
   // Art exists for the key when a shipped enemy answers to it; otherwise the
   // model hands back the name plate, never a blank.
   const portraitAvailable = !!speaker.portraitKey && registries.enemies.has(speaker.portraitKey);
@@ -69,7 +69,7 @@ export function mountDialogue(app, options) {
   let entranceTimer = 0;
   let state = dialogueState || createDialogueState();
 
-  const responses = () => availableEventChoices(eventChoicesWithHistory(def), run).map(({ choice }) => ({
+  const responses = () => availableEventChoices(options.definition ? def.choices : eventChoicesWithHistory(def), run).map(({ choice }) => ({
     choiceId: choice.id,
     label: choice.label,
     affordable: choiceAffordable(choice, run),
@@ -201,7 +201,7 @@ export function mountDialogue(app, options) {
       return;
     }
     if (step.command) {
-      const receipt = commitEventChoice({ run, registries, rng }, step.command);
+      const receipt = options.commitChoice ? options.commitChoice(step.command) : commitEventChoice({ run, registries, rng }, step.command);
       state = dialogueStep(view(), state, { type: 'resolved', choiceId: receipt.choice.id, resultText: receipt.choice.resultText }).state;
     }
     render();

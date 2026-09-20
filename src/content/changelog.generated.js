@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1210",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your Poise bar now fills as the blows land, and a party's receipts name who was hit",
+    "detail": "The Poise meter went live last change, but during the enemy's turn the bar sat still and then reset, because the paced view had no case for an impact; it now follows each blow, including overflow and the larger threshold after a Stagger. Changing equipment or loading an older save preserves earned Poise growth. Equipment and creation popups also stay correctly positioned at different interface zoom levels. Dungeon artwork uses smaller WebP runtime copies while the original paintings are preserved, keeping the standalone build within the hosting limit. In co-op the impact receipts carry the seat that was struck, so a hook meant for the player who was hit no longer fires for their teammates.",
+    "build": "0.7.1.304",
+    "pullRequest": 1210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1210"
+  },
+  {
+    "id": "pr-1203",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Mana is never a card's only price, a focus decides what its break does, and you can be Staggered too",
+    "detail": "Every card that costs Mana also costs an action and stamina — the signature arts now ask a point of stamina beside their Mana, and a few free upgraded powers drop their Mana line instead. Your staff, rod or branch now decides what breaking a foe's Arcane Exposure earns: the plain staves batter the broken foe's Poise, the Blight Rod and the Gorefire Brand build Exposure faster, the Goldbough Branch spreads half the break to every other foe. And your own Poise meter is live: enemy impact fills it, and when it fills you are Staggered — 2 Vulnerable, 2 Weak, and one fewer action next turn.",
+    "build": "0.7.1.295",
+    "pullRequest": 1203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1203"
+  },
+  {
+    "id": "pr-1207",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Only living enemies accept your aim",
+    "detail": "A defeated enemy can no longer catch a click, tap, keyboard focus or potion aim. Its body and name cannot activate an attack or targeted potion, and old target highlights disappear when it falls.",
+    "build": "0.7.1.290",
+    "pullRequest": 1207,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1207"
+  },
+  {
     "id": "pr-1208",
     "date": "2026-09-19",
     "group": "2026-09-19",
