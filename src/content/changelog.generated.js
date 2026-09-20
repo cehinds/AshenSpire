@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "The victory screen shows what the fight did to your character",
     "detail": "Winning a fight has always raised your level and the skills you fought with — but the spoils door listed only the things you pick up, so none of it was visible. Above the claim list there is now a Progression panel: your character level with a bar toward the next one and the experience this fight paid, then the skills it moved — the ones it paid first, the ones you have taken furthest after, up to three, with the rest counted on a line of their own. The numbers are the ones already written when the fight ended, so leaving and coming back to an interrupted spoils door shows the same ones.",
-    "build": "0.7.1.339",
+    "build": "0.7.1.341",
     "pullRequest": 1232,
     "url": "https://github.com/cehinds/AshenSpire/pull/1232"
+  },
+  {
+    "id": "pr-1229",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Picking a node on the map brings it to the middle of the screen",
+    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
+    "build": "0.7.1.339",
+    "pullRequest": 1229,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
   },
   {
     "id": "pr-1233",
