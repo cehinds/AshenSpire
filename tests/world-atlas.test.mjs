@@ -144,6 +144,21 @@ test("impossible pins, budgets and excluded regions fail with named errors", () 
     /no eligible start/,
   );
 });
+test("the town budget (plan phase 7): the shipped cap replays every route, a cap the map cannot meet is named", () => {
+  for (let i = 0; i < 20; i++)
+    assert.deepEqual(
+      generateJourney("ATLAS" + i, "wanderer", ATLAS, { townsPerActMax: 1 }),
+      generateJourney("ATLAS" + i),
+    );
+  assert.throws(
+    () => generateJourney("BAD", "wanderer", ATLAS, { townsPerActMax: 0 }),
+    /more than 0 town/,
+  );
+  assert.throws(
+    () => generateJourney("BAD", "wanderer", ATLAS, { townsPerActMax: 1.5 }),
+    /townsPerActMax/,
+  );
+});
 test("pinned anchors and exclusions are respected", () => {
   const d = structuredClone(worldAtlas);
   d.profile_anchor_pins.push(

@@ -82,7 +82,7 @@ export function createCombat({
   const poiseMax = Number.isInteger(player.poiseMax)
     ? player.poiseMax
     : (player.loadout
-      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {} }).value
+      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
       : 0);
   const combat = {
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -297,8 +297,10 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
 
-  // Set energy to base (relics that add energy hook playerTurnStart).
-  p.energy = p.energyMax;
+  // Set energy to base (relics that add energy hook playerTurnStart) — less
+  // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
+  p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  p.pendingActionLoss = 0;
 
   // Draw.
   A.drawCards(combat, combat.drawPerTurn);
@@ -723,7 +725,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {} }).value);
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -825,6 +827,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     relics: p.relicIds || [],
     class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    attributes: combat.attributes || null,
   }).value);
 
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);

@@ -61,7 +61,7 @@ export const reaverCards = [
     // upgrade opcode never lists a composed instance (see actions.js).
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Keep your blade raised until the bell releases you. — Warden's field-book",
     keywords: [], icon: '🗡',
     effects: [

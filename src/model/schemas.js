@@ -59,6 +59,9 @@ export const COMBAT_OPCODES = Object.freeze([
   'enterStance',
   'poiseDamage',
   'stagger',
+  // Arcane Exposure buildup dealt directly, not by a hit (plan phase 8): a
+  // focus property spreads a break to the other foes (`resonance`).
+  'arcaneBuildup',
 ]);
 
 export const RUN_OPCODES = Object.freeze([
@@ -73,6 +76,10 @@ export const RUN_OPCODES = Object.freeze([
   'startCombat',
   // Plan phase 5c: the class swap — an event or a boss's gift, never a menu.
   'swapClass',
+  // Plan phase 7: the grace refill as a rule's effect — the `restFlasks`
+  // location tag fires it on `arrived`. Idempotent (a top-up), so a re-entry
+  // cannot double-pour.
+  'refillFlasks',
 ]);
 
 export const OPCODES = Object.freeze([...COMBAT_OPCODES, ...RUN_OPCODES]);
@@ -87,6 +94,9 @@ export const TARGETS = Object.freeze([
   'player',
   'owner',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
+  // Every living enemy EXCEPT the one the firing event names (and the action's
+  // own target): a break's ripple reaches the others, never the broken one.
+  'otherEnemies',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
@@ -117,6 +127,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
+  // statuses } — what balance.stagger.player took from them.
+  'playerStaggered',
   // Threshold-proc vocabulary (#61 direction): the burst is ITS OWN event in
   // the damage record — never folded into the triggering hit (checkable
   // invariant). procResisted is the refusal receipt: applying points into an
@@ -137,9 +150,22 @@ export const EVENTS = Object.freeze([
   // the quest door (engine/quests.js completeQuest), for an event chain's
   // completing choice and an atlas quest's claimed reward alike.
   'questCompleted',
+  // Plan phase 7: a location is a property carrier, mounted from arrival to
+  // departure (engine/locations.js). `arrived` fires when the run reaches it,
+  // `rested` when the player takes its Rest; what the place restores is the
+  // sum of its tags' rules on these two events. Run-level only: no fight
+  // emits either.
+  'arrived',
+  'rested',
   'flaskUsed',
   'relicTriggered',
 ]);
+
+// The events only the run-level door emits (engine/locations.js): a status,
+// stance or enemy-phase hook naming one could never fire, so validate.js
+// refuses it by name. A property rule may name them — that is how a location
+// confers what it does.
+export const RUN_LEVEL_EVENTS = Object.freeze(['arrived', 'rested']);
 
 // Names a trigger's `on` may use (SPEC §3.6): every bus event, the owner-
 // relative turn hooks, and the enemy-phase threshold trigger.
@@ -255,8 +281,12 @@ export const PASSIVE_TYPES = Object.freeze({
   eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
   flaskPowerMult: 'num', // flask effect amounts ×
   revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
-  shrineHealMult: 'num', // shrine rest healing ×
-  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  restHealMult: 'num', // rest healing × (every location's Rest; was shrineHealMult)
+  // Rest refused: `true` denies every location's Rest; a list of location
+  // tags (restHpPartial, …) denies only a place whose tag set holds one of
+  // them, so a relic can forbid the shrine's rest and still allow the town's
+  // (plan phase 7; was shrineNoRest, which had no filter).
+  restDenied: 'boolOrTags',
   powerCostReduction: 'num', // Power cards cost N less (min 0)
   // Inert character-sheet projection only. Player state and combat deliberately
   // have no poise meter; enemy poise remains a separate engine system.
@@ -282,7 +312,10 @@ export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
 // every schema that carries passives (a relic, a property rule), so there is
 // one home for what a passive may be and no second hand-typed copy to drift.
 const passiveFields = Object.freeze(Object.fromEntries(
-  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, {
+    ...(t === 'bool' ? { k: 'bool' } : t === 'boolOrTags' ? { k: 'union', anyOf: [{ k: 'bool' }, { k: 'arr', of: { k: 'str' } }] } : { k: 'num' }),
+    opt: true,
+  }])
 ));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
@@ -452,12 +485,19 @@ export const EFFECT_SPECS = Object.freeze({
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
   restoreStamina: { allowed: [], required: ['amount'], refs: {} },
-  restoreMana: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` restores that much; `toFloorPct` (plan phase 7, the rest's
+  // floorOrFull mode) restores TO that percent of max, or to full when the
+  // pool already stands at or above the floor. Exactly one of the two —
+  // validate.js refuses neither and both.
+  restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
+  // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
+  // validate.js refuses neither or both. The school is the firing event's.
+  arcaneBuildup: { allowed: ['amount', 'pct'], required: [], refs: {} },
   // Direct stagger (insanity's proc): breaks the target's next move outright,
   // bypassing the poise bar. Enemy targets only — validated in validate.js.
   stagger: { allowed: [], required: [], refs: {} },
@@ -472,6 +512,7 @@ export const EFFECT_SPECS = Object.freeze({
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
   // `classId` names the class; `random: true` picks any class but the run's own.
   swapClass: { allowed: ['classId', 'random'], required: [], refs: { classId: 'classes' } },
+  refillFlasks: { allowed: [], required: [], refs: {} },
 });
 
 // ---------------------------------------------------------------------------

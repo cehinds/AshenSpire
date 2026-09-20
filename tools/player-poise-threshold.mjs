@@ -8,15 +8,16 @@
 // forbidden-file scan, exactly the two clauses the vessel legitimately
 // crosses).
 //
-// THE INVARIANT NOW: player Poise is a truthful equipment receipt with a
-// DISPLAY consumer and nothing else. The combat entity stamps the receipt's
-// value as its poiseMeter max (the HUD vessel — real-but-empty, value 0);
-// NO COMBAT RULE consumes it and NO WRITER moves the value: dealPoiseDamage
-// still refuses non-enemies, the stagger/damage vocabulary (engine/actions.js,
-// engine/statuses.js) stays threshold-free, and no save/session authority is
-// introduced. The stagger mechanics, resistance rules and armour weights are
-// combat design dealt elsewhere — the day they land, the checks below that
-// assert emptiness must MOVE with them, not be relaxed.
+// THE INVARIANT NOW (plan phase 8, 2026-09-19, SPEC §13.4k): player Poise
+// is a truthful receipt — Constitution × balance.poise.playerPerConstitution
+// + the worn body armour's threshold + relic poiseThresholdAdd — that the
+// combat entity stamps as its poiseMeter max, AND A WRITER MOVES IT:
+// dealPoiseDamage takes the player as it takes an enemy, and a fill Staggers
+// per balance.stagger.player (statuses applied, actions owed to the next
+// turn). The stagger/damage vocabulary (engine/actions.js, engine/statuses.js)
+// still never reads the threshold WORD — the max reaches combat as a stamped
+// number, never as a rule reading equipment. The checks that once asserted
+// emptiness moved with the mechanics, as the old header said they must.
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -52,12 +53,20 @@ if (process.argv.includes('--selftest')) {
         // dealPoiseDamage IS that door — it is the funnel every poiseDamage
         // opcode drains into, so a real stagger slice landing would flip
         // exactly this predicate.
-        name: 'WAKE: the no-writer premise dies — dealPoiseDamage stops refusing a player entity',
+        name: 'WAKE: the writer at the funnel is removed — dealPoiseDamage refuses the player again',
         file: 'src/engine/actions.js',
-        find: "  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;",
-        replace: "  if (!enemy || !enemy.alive) return; // planted: the kind gate is gone, a writer has arrived",
+        find: "  if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;",
+        replace: "  if (!entity || !entity.alive || entity.kind !== 'enemy') return; // planted: the player is refused again",
+        expectRed: /FAIL\s+the value HAS a writer/,
+      },
+      {
+        name: 'the receipt is flipped inert while the writer stands',
+        file: 'src/model/statProjection.js',
+        find: 'active: true',
+        replace: 'active: false',
+        all: true,
         all: true, // the gate guards two functions in this file; half a plant leaves the real funnel closed
-        expectRed: /FAIL\s+WAKE RED.*THE PREMISE DIED AND A REFUSAL STILL STANDS/,
+        expectRed: /FAIL\s+WAKE RED.*THE MECHANICS LANDED AND A REFUSAL STILL STANDS/,
       },
       {
         name: 'a stagger rule learns the player threshold word (mechanics by the back door)',
@@ -71,14 +80,6 @@ if (process.argv.includes('--selftest')) {
         find: 'poiseThreshold',
         replace: 'plantedColumn',
         expectRed: /FAIL\s+source spreadsheets author one poiseThreshold column/,
-      },
-      {
-        name: 'the receipt is flipped active while nothing writes the value',
-        file: 'src/model/statProjection.js',
-        find: 'active: false',
-        replace: 'active: true',
-        all: true,
-        expectRed: /FAIL\s+WAKE RED.*a refusal artifact already dropped/,
       },
       {
         name: 'the threshold-0 refusal is dropped — an empty vessel is stamped instead of absent',
@@ -241,14 +242,14 @@ check('one pure playerPoiseThresholdReceipt reader owns the projection', () => {
   equal(JSON.stringify(run), before, 'receipt reader mutated the run');
   assert(receipt && Array.isArray(receipt.sources), 'receipt.sources is absent');
   assert(Number.isFinite(receipt.equipment) && Number.isFinite(receipt.relic), 'receipt subtotals are not finite');
-  equal(receipt.raw, receipt.equipment + receipt.relic, 'receipt raw subtotal');
-  equal(receipt.value, receipt.raw, 'inert receipt value');
+  equal(receipt.raw, receipt.attribute + receipt.equipment + receipt.relic, 'receipt raw subtotal');
+  equal(receipt.value, receipt.raw, 'receipt value is its raw');
+  equal(receipt.attribute, run.attributes.constitution * registries.balance.poise.playerPerConstitution, 'Constitution × balance.poise.playerPerConstitution');
   equal(receipt.relic, 2, 'Cured Hide contribution is counted once');
   assert(!receipt.sources.some((source) => source.id === 'greatsword'), 'inactive right-hand set contributed');
-  equal(receipt.sources.filter((source) => source.kind === 'equipment').length, 3, 'one active right hand, left hand, and armour source');
-  equal(receipt.active, false, 'receipt must stay combat-inert (active flips only when a combat rule consumes it)');
-  assert(/display consumer only/i.test(receipt.note || ''), 'receipt does not disclose its display consumer');
-  assert(/no combat consumer/i.test(receipt.note || ''), 'receipt does not disclose that combat still ignores it');
+  equal(receipt.sources.filter((source) => source.kind === 'equipment').length, 1, 'the body armour is the one equipment source — a weapon\'s poiseThreshold is its weight (SPEC §13.4k)');
+  equal(receipt.active, true, 'the receipt is live: the combat entity stamps it and impact fills it');
+  assert(/meter's max/i.test(receipt.note || ''), 'receipt does not disclose that it is the meter\'s max');
 });
 
 check('the combat-rule vocabulary stays threshold-free (the display stamp is the ONLY consumer)', () => {
@@ -285,27 +286,28 @@ check('re-stamping preserves the accumulated value and clamps it; 0 removes the 
   assert(!('poiseMeter' in entity), 'threshold 0 must remove the vessel');
 });
 
-check('the value has NO writer: dealPoiseDamage refuses a player entity that carries a vessel', () => {
+check('the value HAS a writer: dealPoiseDamage fills the player\'s vessel and a fill Staggers per balance.stagger.player', () => {
   // Door note: dealPoiseDamage is the one function every poiseDamage opcode
   // funnels into (engine/statuses.js enqueues it; the queue calls it) — the
   // real entry is one stage above, and this check states that rather than
-  // claiming the whole pipeline. Known-bad: relax the kind gate in a scratch
-  // edit and this goes red (observed 2026-08-14, reverted).
+  // claiming the whole pipeline. Plan phase 8's writer (SPEC §13.4k).
   const player = createPlayerCombatEntity({ classId: 'reaver', maxHp: 80, energyMax: 3, drawPerTurn: 5, poiseMax: 8 });
   const events = [];
   const ctx = {
-    registries: { balance: { poise: { growthMult: 1 } }, statuses: { all: () => [] } },
+    registries: { balance: { poise: { growthMult: 1 }, stagger: { player: { actionLoss: 1, statuses: {} } } }, statuses: { all: () => [] } },
     emit: (type, payload) => events.push({ type, ...payload }),
-    enqueue: () => { throw new Error('a player vessel must never enqueue onFill effects'); },
+    enqueue: () => { throw new Error('a player vessel enqueues no enemy onFill effects'); },
     combatants: () => [player],
   };
-  dealPoiseDamage(ctx, player, 9); // above the max — would stagger an enemy
-  equal(player.poiseMeter.value, 0, 'player vessel value moved — a writer arrived without its mechanics');
-  equal(player.poiseMeter.max, 8, 'player vessel max moved under poise damage');
-  assert(events.length === 0, `player poise damage emitted ${JSON.stringify(events)}`);
+  dealPoiseDamage(ctx, player, 9); // above the max — a fill
+  equal(player.poiseMeter.value, 1, 'the vessel fills and carries the overflow');
+  equal(player.poiseMeter.max, 8, 'growthMult 1: the max stands');
+  assert(events.some((event) => event.type === 'meterFilled' && event.targetId === player.id), 'the fill is a meterFilled on the player');
+  assert(events.some((event) => event.type === 'playerStaggered' && event.actionLoss === 1), 'the fill Staggers the player, naming the action it took');
+  equal(player.pendingActionLoss, 1, 'the action is owed to the next turn');
 });
 
-check('WAKE RED — the no-writer premise is probed, and the display refusals must die with it', () => {
+check('WAKE RED — the writer premise is probed, and no display refusal may stand beside it', () => {
   // THE WAKE CONDITION (commons/development.md, *The wake condition*, Freja
   // 2026-08-14). This contract's refusals — the absent-at-0 vessel, the combat
   // tooltip's denial sentence, the receipt's active:false — are all claims
@@ -340,24 +342,25 @@ check('WAKE RED — the no-writer premise is probed, and the display refusals mu
     dealPoiseDamage(probeCtx([]), bare, 3);
     if ('poiseMeter' in bare) { wrote = true; how = how || 'a meter appeared on the threshold-0 player'; }
   } catch (error) { wrote = true; how = how || `a writer reached the ABSENT vessel and crashed on it: ${error.message}`; }
-  // The refusal artifacts, read at their homes. The denial is read from
-  // combat.js SOURCE, not from a rendered tooltip — that string's one home —
-  // and the boundary is stated here rather than smoothed: no pixel rendered.
-  const denial = /Nothing deals Poise damage to you yet/.test(readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8'));
+  // The refusal artifact, read at its one home. The denial sentence is TOOLTIP
+  // COPY: it lives in content/config/ui/presentation/tooltipHelp.json, which is
+  // where combat.js reads it from via helpText('playerPoise'). Grepping
+  // combat.js for it went on passing after the copy moved — a probe that cannot
+  // fail is not a probe. The boundary is stated rather than smoothed: source
+  // read, no pixel rendered.
+  const denial = /deals Poise damage to you yet/.test(readFileSync(resolve(ROOT, 'content/config/ui/presentation/tooltipHelp.json'), 'utf8'));
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0x5015e, classId: 'reaver', registries });
   const receipt = projectionModel.playerPoiseThresholdReceipt(registries, run);
-  if (wrote) {
-    assert(!denial && receipt.active === true,
-      `THE PREMISE DIED AND A REFUSAL STILL STANDS — a writer moved player poise through dealPoiseDamage (${how}) `
-      + `while denial=${denial} (combat.js "Nothing deals Poise damage to you yet"), receipt.active=${receipt.active}. `
-      + `Retire the denial sentence and flip the receipt WITH the mechanics, not after them.`);
-    return `premise dead (${how}) and every display refusal died with it`;
-  }
-  assert(denial && receipt.active === false,
-    `the premise still holds (no writer) but a refusal artifact already dropped: denial=${denial}, receipt.active=${receipt.active} `
-    + `— the display now claims mechanics that do not exist`);
-  return 'no writer at the funnel (vesseled and threshold-0 probes both silent); the denial sentence and the inert receipt stand with the premise';
+  // Plan phase 8: the writer IS the premise now. A silent funnel is the
+  // mechanics gone missing; a standing refusal beside a live writer is the
+  // display lying about them.
+  assert(wrote, 'THE WRITER IS GONE — dealPoiseDamage moved nothing on a vesseled player (SPEC §13.4k says impact fills it)');
+  assert(!denial && receipt.active === true,
+    `THE MECHANICS LANDED AND A REFUSAL STILL STANDS — a writer moved player poise through dealPoiseDamage (${how}) `
+    + `while denial=${denial} (tooltipHelp.json playerPoise still says Poise damage reaches nobody), receipt.active=${receipt.active}. `
+    + `Retire the denial sentence and flip the receipt WITH the mechanics, not after them.`);
+  return `writer present (${how}) and every display refusal is gone`;
 });
 
 check('enemy poiseMeter behavior remains the existing independent system', () => {
@@ -383,8 +386,8 @@ console.log(`\n${failures ? `PLAYER POISE RED — ${failures}/${checks} contract
 console.log('DOOR: content by the real bundle import; dealPoiseDamage driven at the funnel every');
 console.log('      poiseDamage opcode drains into; the CSV headers and the denial sentence by');
 console.log('      readFileSync of the real files. `--selftest` re-observes five known-bads planted');
-console.log('      as bytes in a copy of those same files — including the WAKE premise-death at the');
-console.log('      writer funnel, red in BOTH directions (observed 2026-08-15, re-runnable). The');
-console.log('      header\'s 2026-08-14 scratch-edit observation is superseded: it was one-off and');
-console.log('      had drifted to `unknown` under SOP 2. NOT covered: any rendered pixel.');
+console.log('      as bytes in a copy of those same files — including the writer removed at the');
+console.log('      funnel and the receipt flipped inert beside a live writer (plan phase 8, 2026-09-19;');
+console.log('      the 2026-08-15 no-writer premise is retired with the mechanics). NOT covered: any');
+console.log('      rendered pixel.');
 if (failures) process.exit(1);

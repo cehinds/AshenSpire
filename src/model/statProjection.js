@@ -32,11 +32,19 @@ function presentationRows(registries) {
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   const levels = run.itemUpgradeLevels || {};
-  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
+  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): Constitution ×
+  // balance.poise.playerPerConstitution, the worn BODY ARMOUR's threshold (a
+  // weapon's poiseThreshold is its weight, not the wearer's footing), and the
+  // relics' poiseThresholdAdd. A run handed without attributes (a headless
+  // fixture) has no attribute term.
+  const perCon = Number.isInteger(registries.balance?.poise?.playerPerConstitution) ? registries.balance.poise.playerPerConstitution : 0;
+  const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
+  const attribute = perCon * con;
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
     id: piece.id,
-    classId: piece.kind === 'armor' ? piece.classId : null,
+    classId: piece.classId,
     value: piece.poiseThreshold,
   }));
   const relicSources = (run.relics || [])
@@ -45,17 +53,21 @@ export function playerPoiseThresholdReceipt(registries, run) {
     .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
   const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
   const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd', levels);
-  const raw = equipment + relic;
+  const raw = attribute + equipment + relic;
   return {
     id: 'poiseThreshold',
     label: 'Poise threshold',
-    sources: [...pieceSources, ...relicSources],
+    sources: [
+      ...(perCon > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      ...pieceSources, ...relicSources,
+    ],
+    attribute,
     equipment,
     relic,
     raw,
     value: raw,
-    active: false,
-    note: 'Display consumer only: the combat entity stamps this as the HUD vessel\'s max. No combat consumer — Poise damage is not dealt to players. Player Poise is not the enemy Poise meter.',
+    active: true,
+    note: 'The combat entity stamps this as the player Poise meter\'s max; impact fills it and a fill Staggers the player (SPEC §13.4k). Player Poise is not the enemy Poise meter.',
   };
 }
 

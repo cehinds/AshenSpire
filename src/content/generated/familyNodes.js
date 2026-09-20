@@ -357,5 +357,9 @@ export const familyNodes = [
   {
     "family": "unlock",
     "nodeId": "property"
+  },
+  {
+    "family": "location",
+    "nodeId": "property"
   }
 ];

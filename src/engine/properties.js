@@ -2,7 +2,8 @@
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
 // A property tag confers behaviour only while a CARRIER holds it: the equipped
-// weapon, the worn armour — later a relic, the class card, a location. This
+// weapon, the worn armour, a held relic, the class card, the place the run
+// stands at (engine/locations.js). This
 // file is the single door. mountProperties installs a carrier's rules into
 // ctx.propertyMounts[ownerKey][sourceKey]; unmountProperties removes them; and
 // the fourth scan in triggers.js plus the passive readers in model/registries.js
@@ -41,10 +42,11 @@ import { triggerOwnerKey } from './triggers.js';
 const LOADOUT_KINDS = new Set(['armament', 'armour']);
 
 // The holders this path can mount, and why the list is short: a mount needs a
-// WINDOW — the span over which the holder is held — and these four are the
-// holders whose window the engine knows (worn, worn, owned, chosen). A kind
+// WINDOW — the span over which the holder is held — and these five are the
+// holders whose window the engine knows (worn, worn, owned, chosen, and a
+// location's arrival-to-departure — engine/locations.js, plan phase 7). A kind
 // gains a mount by gaining a window here, never by a content row.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class']);
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -204,11 +206,18 @@ export function syncRelicProperties(combat, entity) {
  * Called at createCombat, after both equipment doors (swapArmament and
  * changeEquipment) and when a combat snapshot is restored.
  */
-export function syncLoadoutProperties(combat) {
-  if (!combat || !combat.player) return;
-  const ownerKey = triggerOwnerKey(combat, combat.player);
-  const wanted = combat.loadout
-    ? loadoutCarriers(combat.registries, combat.loadout, combat.player.classId, ownerKey, combat.itemUpgradeLevels || {})
+export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels) {
+  // A CO-OP SEAT CARRIES ITS OWN KIT. Solo reads the one loadout off the
+  // combat; a party's seats each hand in theirs, under their own owner key,
+  // for the reason the relic sync states — mounted under whichever seat is
+  // active, a second seat's staff confers nothing (Codex, #1203).
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner) return;
+  const kit = loadout !== undefined ? loadout : combat.loadout;
+  const tiers = itemUpgradeLevels !== undefined ? itemUpgradeLevels : combat.itemUpgradeLevels;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  const wanted = kit
+    ? loadoutCarriers(combat.registries, kit, owner.classId, ownerKey, tiers || {})
     : [];
   const wantedKeys = new Set(wanted.map(propertySourceKey));
   const current = (combat.propertyMounts && combat.propertyMounts[ownerKey]) || {};

@@ -21,6 +21,7 @@ import {
   SCHEMAS,
   OPCODES,
   EFFECT_SPECS,
+  RUN_LEVEL_EVENTS,
   TARGETS,
   TRIGGER_EVENTS,
   PREDICATES,
@@ -40,6 +41,7 @@ import {
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
+import { REST_MANA_MODES, locationTaggingProblems } from './locations.js';
 import { wornZoneOf, handZoneOf } from './zones.js';
 import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
@@ -495,6 +497,21 @@ function collectContentProblems(bundle, errors = []) {
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
     }
+    // MANA IS THE THIRD COST LINE (plan phase 8, proposal §7.1): a card that
+    // costs Mana costs at least balance.mana.minActionCost action and
+    // minStaminaCost stamina — base and upgrade alike, each field inheriting
+    // the base's when the upgrade leaves it unsaid. Refused BY NAME.
+    const manaFloor = b.balance && b.balance.mana;
+    if (card && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
+      const faces = [['', card], ['.upgrade', card.upgrade ? { cost: card.cost, manaCost: card.manaCost, staminaCost: card.staminaCost, ...card.upgrade } : null]];
+      for (const [suffix, face] of faces) {
+        if (!face || !(Number.isInteger(face.manaCost) && face.manaCost > 0)) continue;
+        const action = face.cost === 'X' ? Infinity : face.cost;
+        const stamina = Number.isInteger(face.staminaCost) ? face.staminaCost : 0;
+        if (!(Number.isFinite(action) ? action >= manaFloor.minActionCost : true)) err(`cards.${card.id || '?'}${suffix}.cost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minActionCost} action (balance.mana.minActionCost); it costs ${face.cost}`);
+        if (stamina < manaFloor.minStaminaCost) err(`cards.${card.id || '?'}${suffix}.staminaCost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minStaminaCost} stamina (balance.mana.minStaminaCost); it costs ${stamina}`);
+      }
+    }
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
@@ -512,6 +529,82 @@ function collectContentProblems(bundle, errors = []) {
   // types a fraction or a negative is refused by name, never clamped.
   // The character level (plan phase 6): the curve, the awards and what a
   // level grants — each a closed set, each number refused by name.
+  // What a rest restores (plan phase 7): the location rules read these rows
+  // through their variable bindings, the door reads the mode. A retune that
+  // names an unknown mode or a percent off the scale is refused by name.
+  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
+  // journey door reads balance.atlas at run start, so a bundle without them
+  // would pass here and throw there.
+  if (b.balance) {
+    const rest = b.balance.rest;
+    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
+    else {
+      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      for (const key of ['hpSmallPct', 'hpPartialPct']) {
+        if (!(Number.isInteger(rest[key]) && rest[key] >= 0 && rest[key] <= 100)) err(`balance.rest.${key}`, `must be an integer percent 0–100, got ${JSON.stringify(rest[key])}`);
+      }
+      const mana = rest.mana;
+      if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.rest.mana', 'must be an object { mode, flat, floorPct }');
+      else {
+        for (const key of Object.keys(mana)) if (!['mode', 'flat', 'floorPct'].includes(key)) err(`balance.rest.mana.${key}`, 'Unknown field');
+        if (!REST_MANA_MODES.includes(mana.mode)) err('balance.rest.mana.mode', `must be one of ${REST_MANA_MODES.join(', ')}, got ${JSON.stringify(mana.mode)}`);
+        if (!(Number.isInteger(mana.flat) && mana.flat >= 0)) err('balance.rest.mana.flat', `must be a non-negative integer, got ${JSON.stringify(mana.flat)}`);
+        if (!(Number.isInteger(mana.floorPct) && mana.floorPct >= 0 && mana.floorPct <= 100)) err('balance.rest.mana.floorPct', `must be an integer percent 0–100, got ${JSON.stringify(mana.floorPct)}`);
+      }
+    }
+  }
+  if (b.balance) {
+    const atlas = b.balance.atlas;
+    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
+    else {
+      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
+      // Positive: every seeded route stops at its hub city, so a cap of 0
+      // would refuse every journey at run start rather than here.
+      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
+    }
+  }
+  // Plan phase 8: the Mana cost floor, the player stagger's payload and the
+  // player poise coefficient — each required, each number refused by name.
+  if (b.balance) {
+    const mana = b.balance.mana;
+    if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
+    else {
+      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of ['minActionCost', 'minStaminaCost']) {
+        if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
+      }
+    }
+    const stagger = b.balance.stagger;
+    const player = stagger && typeof stagger === 'object' && !Array.isArray(stagger) ? stagger.player : undefined;
+    if (!stagger || typeof stagger !== 'object' || Array.isArray(stagger)) err('balance.stagger', 'must be an object { player } — the player poise meter reads it (plan phase 8)');
+    else {
+      for (const key of Object.keys(stagger)) if (!['player'].includes(key)) err(`balance.stagger.${key}`, 'Unknown field');
+      if (!player || typeof player !== 'object' || Array.isArray(player)) err('balance.stagger.player', 'must be an object { actionLoss, statuses }');
+      else {
+        for (const key of Object.keys(player)) if (!['actionLoss', 'statuses'].includes(key)) err(`balance.stagger.player.${key}`, 'Unknown field');
+        if (!(Number.isInteger(player.actionLoss) && player.actionLoss >= 0)) err('balance.stagger.player.actionLoss', `must be a non-negative integer, got ${JSON.stringify(player.actionLoss)}`);
+        if (!player.statuses || typeof player.statuses !== 'object' || Array.isArray(player.statuses)) err('balance.stagger.player.statuses', 'must be an object { <statusId>: stacks }');
+        else {
+          const statusIds = new Set((Array.isArray(b.statuses) ? b.statuses : []).map((s) => s && s.id));
+          for (const [status, stacks] of Object.entries(player.statuses)) {
+            if (!statusIds.has(status)) err(`balance.stagger.player.statuses.${status}`, `unknown status '${status}'`);
+            if (!(Number.isInteger(stacks) && stacks > 0)) err(`balance.stagger.player.statuses.${status}`, `must be a positive integer, got ${JSON.stringify(stacks)}`);
+          }
+        }
+      }
+    }
+    const poise = b.balance.poise;
+    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerPerConstitution, playerImpactPerHit } — the poise meters read it (plan phase 8)');
+    else {
+      if (!(Number.isInteger(poise.playerPerConstitution) && poise.playerPerConstitution >= 0)) err('balance.poise.playerPerConstitution', `must be a non-negative integer, got ${JSON.stringify(poise.playerPerConstitution)}`);
+      if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
+    }
+    const exposure = b.balance.exposure;
+    if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
+      if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
+      if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
+    }
+  }
   if (b.balance?.rewards?.rarityWeightsByClass !== undefined) {
     const overrides = b.balance.rewards.rarityWeightsByClass;
     const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -860,6 +953,18 @@ function collectContentProblems(bundle, errors = []) {
         if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
         if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
         if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+        // A Mana spell works toward a break faster than an action-only one
+        // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
+        const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
+        const schoolMult = ((b.balance || {}).arcaneExposure || {}).schoolBuildupMultipliers || {};
+        // EITHER FACE COSTING MANA BINDS THE ROW. An upgrade that adds a Mana
+        // line was slipping past the floor while its buildup stayed at the
+        // base's (Codex, #1203); the row is one per card, so one face is enough.
+        const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
+        const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
+        if (row && Number.isInteger(floor) && costsMana && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
+          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${row.exposureBuildupPerHit}`);
+        }
       }
     }
   }
@@ -1056,7 +1161,19 @@ function collectContentProblems(bundle, errors = []) {
   // The tree the tag tables and the property rules are derived from: parents,
   // cycles, edges, families, variables against bindings, kinds against
   // collections (model/tree.js says what each refusal is).
+  // A combat source hooked on a run-level event (arrived, rested) would never
+  // fire: only the location visit emits them, outside any fight.
+  for (const [collection, field] of [['statuses', 'hooks'], ['stances', 'hooks'], ['enemies', 'phases']]) {
+    for (const def of Array.isArray(b[collection]) ? b[collection] : []) {
+      (def && Array.isArray(def[field]) ? def[field] : []).forEach((hook, i) => {
+        if (hook && RUN_LEVEL_EVENTS.includes(hook.on)) err(`${collection}.${def.id}.${field}[${i}].on`, `'${hook.on}' is a run-level event (the location visit's) that no ${collection.slice(0, -1)} hook can hear`);
+      });
+    }
+  }
   for (const p of treeProblems(b)) err(p.path, p.message);
+  // Locations (plan phase 7): a `location` tagging row names a map id, every
+  // rest-mana mode has its rule, and a restDenied filter names a carried tag.
+  for (const p of locationTaggingProblems(b)) err(p.path, p.message);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -2081,7 +2198,21 @@ export function validateEffects(effects, path, vctx) {
       if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
       else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
     }
-    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat']) {
+    // restoreMana restores BY an amount or TO a floor (plan phase 7) — one
+    // selector, never neither (nothing to restore) nor both (one ignored).
+    if (eff.op === 'restoreMana') {
+      const by = eff.amount !== undefined;
+      const to = eff.toFloorPct !== undefined;
+      if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
+    }
+    // arcaneBuildup pours BY an amount or a percent OF the target's threshold
+    // (plan phase 8) — one selector, never neither nor both.
+    if (eff.op === 'arcaneBuildup') {
+      const by = eff.amount !== undefined;
+      const pct = eff.pct !== undefined;
+      if (by === pct) err(p, `Opcode 'arcaneBuildup' takes exactly one of 'amount' or 'pct'`);
+    }
+    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }
     if (eff.if !== undefined) validatePredicate(eff.if, `${p}.if`, vctx);
@@ -2262,6 +2393,7 @@ const FORMULA_FIELDS = {
   mul: ['args'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
+  missingMana: ['of', 'min', 'max'],
   stacks: ['status', 'of', 'per', 'min', 'max'],
   energySpent: ['per', 'min', 'max'],
   blockOf: ['of', 'min', 'max'],
@@ -2300,7 +2432,7 @@ export function validateFormula(value, path, vctx) {
     }
     if (value.of === undefined) err(`${path}.of`, "'stacks' requires 'of'");
   }
-  if (['percentMaxHp', 'missingHp', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
+  if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {

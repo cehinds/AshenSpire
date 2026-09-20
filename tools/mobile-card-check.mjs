@@ -110,6 +110,17 @@ try {
   await tap(enemy.x+enemy.width/2,enemy.y+enemy.height/2);
   await until("document.querySelectorAll('.hand .card').length===6",'tap enemy confirms attack');checks++;
   await load();
+  const heldAttack=await box('.hand .card:first-child');
+  const heldAttackId=await evaluate("document.querySelector('.hand .card:first-child').dataset.instanceId");
+  const heldAttackMs=await evaluate("Number(document.querySelector('.hand .card:first-child').dataset.holdMs)");
+  await touch('touchStart',heldAttack.x+12,heldAttack.y+70);await wait(heldAttackMs+120);
+  await touch('touchEnd',heldAttack.x+12,heldAttack.y+70);await wait(150);
+  check(await evaluate(`document.querySelectorAll('.hand .card').length===7 && document.querySelector('.hand .card.selected')?.dataset.instanceId===${JSON.stringify(heldAttackId)} && document.querySelectorAll('.enemy.targetable').length===__combat.enemies.filter(e=>e.alive).length`),'hold selects an attack and exposes its legal targets without playing');
+  await screenshot('hold-target-selected-1440');
+  const heldEnemy=await box('.combatant.enemy .sprite');
+  await tap(heldEnemy.x+heldEnemy.width/2,heldEnemy.y+heldEnemy.height/2);
+  await until("document.querySelectorAll('.hand .card').length===6",'target after hold confirms attack');checks++;
+  await load();
   const invalid=await box('.hand .card:nth-child(4)');
   await touch('touchStart',invalid.x+12,invalid.y+70);
   await touch('touchMove',700,880);await touch('touchEnd',700,880);await wait(200);

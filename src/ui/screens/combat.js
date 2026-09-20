@@ -68,7 +68,7 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
-import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
@@ -345,6 +345,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
   function selectCombatant(id) {
+    if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
   }
@@ -482,7 +483,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     if (selectedFlask != null) {
       const el = $('.combatant.enemy.hover-target') || $('.combatant.enemy.gp-focus');
-      return el ? [{ el, kind: 'enemy' }] : [];
+      return el && getEntity(combat, el.dataset.eid)?.alive ? [{ el, kind: 'enemy' }] : [];
     }
     return [];
   }
@@ -1392,12 +1393,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The name is the way into the full read on touch, where there is no `I`.
       // It stops the frame's own click so tapping the name never plays a card
       // or retargets — the door is a reading, not a move.
-      nm.classList.add('nm-inspect');
-      nm.setAttribute('role', 'button');
-      nm.tabIndex = 0;
-      nm.setAttribute('aria-label', `${def.name} — the full read`);
+      if (enemy.alive) {
+        nm.classList.add('nm-inspect');
+        nm.setAttribute('role', 'button');
+        nm.tabIndex = 0;
+        nm.setAttribute('aria-label', `${def.name} — the full read`);
+      }
       const openThisRead = (event) => {
         event.stopPropagation();
+        if (!getEntity(combat, enemy.id)?.alive) return;
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
         else openCombatantDoor(combatantSubject('enemy', enemy));
@@ -1422,22 +1426,35 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
       stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
       box.dataset.stature = statureFor(registries, def.id);
-      if (enemy.alive && !record) {
+      if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
         box.addEventListener('click', (event) => {
           event.stopPropagation();
+          if (!getEntity(combat, enemy.id)?.alive) return;
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
           else {
             selectCombatant(enemy.id);
           }
         });
-        box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
+        box.addEventListener('pointerenter', () => getEntity(combat, enemy.id)?.alive && (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
       box.setAttribute('aria-pressed', String(selectedCombatantId === enemy.id));
-      if (!enemy.alive) { delete box.dataset.focusable; box.removeAttribute('tabindex'); box.setAttribute('aria-disabled', 'true'); }
-      else box.removeAttribute('aria-disabled');
+      // Frames and their listeners survive death for the defeat animation.
+      // Disable descendants too: nameplates/tooltips can opt back into pointer
+      // events even when the frame's .dead style disables its own hit area.
+      box.inert = !enemy.alive;
+      if (!enemy.alive) {
+        delete box.dataset.focusable;
+        box.removeAttribute('tabindex');
+        box.setAttribute('aria-disabled', 'true');
+        box.classList.remove('hover-target', 'gp-focus', 'aiming', 'aim-enemy');
+        box.querySelectorAll('.aim-silho').forEach(node => node.remove());
+      } else {
+        refreshCombatantContext(box, combatantSubject('enemy', enemy));
+        box.removeAttribute('aria-disabled');
+      }
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
@@ -1633,7 +1650,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let ghostWidth = 0;
     let ghostHeight = 0;
     let lastConfirmTap = 0;
-    let selectedThisPress = false;
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
@@ -1875,7 +1891,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
-      if (selectedThisPress) { selectedThisPress = false; return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       const now = performance.now();
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
@@ -1887,13 +1902,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     el.appendChild(holdProgress);
     return armHold(el, {
       ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
-      // A hand card is dragged to play it, so the press must prove it is not a
-      // drag before it shows a fill. Without this the first 12 px of every
-      // drag-to-play flashed a hold that then died under the thumb.
-      settleMs: HOLD_DRAG_SETTLE_MS,
-      onHoldStart: () => { selectedThisPress = selected !== inst.instanceId && selfArm !== inst.instanceId; if (!busy && affordable && selectedThisPress) select(); el.dispatchEvent(new CustomEvent('cardholdstart')); },
-      onTap: tap, tapOnEarlyRelease: true,
-      onConfirm: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0 ? confirm() : tap(),
+      // A card hold is an alternate input for the same selection flow as a tap,
+      // not a delayed second route that silently commits before the player has
+      // chosen a target. Paint from pointer-down; crossing the shared movement
+      // slop still cancels the hold and lets the drag path below continue.
+      onHoldStart: () => { el.dispatchEvent(new CustomEvent('cardholdstart')); },
+      onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
+      onConfirm: () => {
+        if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
+        if (busy || !affordable || dragging) return;
+        // Only a card that asks for ONE enemy waits for the choice. A card
+        // that sweeps every enemy has nothing to choose (previewCard reports
+        // needsTarget false for it), so a completed hold plays it, as the tap
+        // path's confirm always has.
+        if (pv.needsTarget) {
+          select();
+          focusTargeting();
+          return;
+        }
+        playCard(inst.instanceId, null);
+      },
     });
   }
 
@@ -2036,6 +2064,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function useFlask(slot, targetId, chargeKind = null) {
+    if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
       return;
@@ -2228,6 +2257,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function playCard(instanceId, targetId) {
+    if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] playCard ignored:', JSON.stringify(why));

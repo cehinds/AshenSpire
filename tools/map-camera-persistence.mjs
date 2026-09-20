@@ -511,7 +511,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       await press('.cz-class');
       await openFace('character');
       await openFace('primary');
-      await press('#cz-statedit .se-mode[data-creation-mode="standard"]');
+      await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'standard'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
       await openFace('keepsake');
       await press('#cz-keepsakes [data-keepsake-id]');
       await openFace('equipment');

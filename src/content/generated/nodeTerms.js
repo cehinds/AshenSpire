@@ -297,6 +297,18 @@ export const nodeTerms = [
     "template": "Your hits build Arcane Exposure faster."
   },
   {
+    "nodeId": "staggerBreak",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Breaking a foe's Arcane Exposure deals {poiseDamage} Poise damage to it."
+  },
+  {
+    "nodeId": "resonance",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Breaking a foe's Arcane Exposure builds {spreadPct}% of its threshold on every other foe."
+  },
+  {
     "nodeId": "ironFooting",
     "playerTermId": "",
     "tooltipTermId": "",
@@ -439,5 +451,47 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "nodeId": "restHpSmall",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "nodeId": "restHpPartial",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "nodeId": "restHpFull",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores your HP to full."
+  },
+  {
+    "nodeId": "restManaFlat",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {restoreMana} Mana."
+  },
+  {
+    "nodeId": "restManaFloor",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores Mana to {floorPct}% of max, or to full if already there."
+  },
+  {
+    "nodeId": "restManaFull",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores your Mana to full."
+  },
+  {
+    "nodeId": "restFlasks",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Arriving refills your flask charges."
   }
 ];

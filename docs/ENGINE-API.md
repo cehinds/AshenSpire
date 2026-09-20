@@ -70,6 +70,11 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | `handMax` (10) | hand limit; overflow draws go to discard |
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
+| `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
+| `poise.playerPerConstitution` (1) | the player's poise max per point of Constitution, beside body armour and relic `poiseThresholdAdd` (SPEC §13.4k) |
+| `stagger.player` | `{ actionLoss, statuses: { <statusId>: stacks } }` — what a player Stagger takes: actions off the next turn and the statuses applied |
+| `mana.minActionCost` / `minStaminaCost` (1 / 1) | a card that costs Mana costs at least these (validation) |
+| `exposure.staggerBreakPoise` / `resonanceSpreadPct` / `buildupPerManaSpell` (6 / 50 / 5) | the focus properties' numbers and the Mana spell's buildup floor |
 | `poise.onFill` ([]) | effects enqueued when a poise meter fills, `owner`/`self` = the Staggered enemy. **This is where content applies its "staggered" status** (e.g. `damageTakenMult: 1.5` + a `playerTurnEnd` hook that removes itself). The engine never names that status. |
 | `startingRunes` (0) | initial cinders in `createRunState` |
 
@@ -254,7 +259,8 @@ enemy-sourced effect it resolves to the player.
 | `shuffleDiscardIntoDraw` | — | → `deckShuffled` |
 | `enterStance` | `stance` | no-op if already in that stance (StS); else exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
 | `dodgeRoll` | — (player only; ignored for any other source) | rolls `1..framework.dodgeDie()` on stream `misc`; the framework `dodgeRoll` rule (`src/framework/weight.js`, `mechanics.json`) turns roll + the player's Dexterity + the live Weight Class (`playerWeightClass`) into `{ check, difficulty, success, temporaryGuard }`; on success the guard lands as Block through `gainBlock` (→ `blockGained`) → `dodgeRolled { sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }`. A PURE dodge (a card whose every effect is `dodgeRoll`) is priced by the class: `costProfile(def, { weightClass })` returns the class's dodge Action/Stamina cost |
-| `poiseDamage` | `amount` | feeds the enemy's poise meter; on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
+| `poiseDamage` | `amount` | feeds the target's poise meter (an enemy's, or the player's since plan phase 8); on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
+| `arcaneBuildup` | `amount` \| `pct` (exactly one) | pours Arcane Exposure directly: `pct` of each target's own threshold or `amount` points, school = the firing event's (else arcane); immune/locked targets → `arcaneExposureRefused`; a fill → `arcaneBreak` (SPEC §13.4k) |
 
 Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
 `upgradeCard {card?|random?}`, `addRelic {id?|random?}`, `addFlask
@@ -489,6 +495,7 @@ current dispatch's `events`.
 | `enemySpawned` | `{ targetId, enemyId }` |
 | `enemyDied` | `{ targetId, enemyId }` |
 | `enemyStaggered` | `{ targetId, enemyId, cancelledMove: moveId\|null }` |
+| `playerStaggered` | `{ targetId, actionLoss, statuses }` — the player's poise meter filled (SPEC §13.4k) |
 | `energyGained` / `energySpent` | `{ amount }` |
 | `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` (co-op adds `playerId`) when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
 | `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |

@@ -67,6 +67,43 @@
       }
     }
   },
+  "staggerBreak": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "poiseDamage",
+            "amount": {
+              "variable": "poiseDamage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "resonance": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "arcaneBuildup",
+            "target": "otherEnemies",
+            "pct": {
+              "variable": "spreadPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "forsakenMedallion": {
     "triggers": [
       {
@@ -1637,6 +1674,124 @@
             "amount": {
               "variable": "block"
             }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpSmall": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "percentMaxHp",
+              "of": "owner",
+              "pct": {
+                "variable": "pct"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpPartial": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "percentMaxHp",
+              "of": "owner",
+              "pct": {
+                "variable": "pct"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restHpFull": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "missingHp",
+              "of": "owner"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFlat": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": {
+              "variable": "restoreMana"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFloor": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "toFloorPct": {
+              "variable": "floorPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restManaFull": {
+    "triggers": [
+      {
+        "on": "rested",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": {
+              "f": "missingMana",
+              "of": "owner"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restFlasks": {
+    "triggers": [
+      {
+        "on": "arrived",
+        "do": [
+          {
+            "op": "refillFlasks"
           }
         ]
       }

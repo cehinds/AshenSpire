@@ -42,6 +42,37 @@ function numberDomain(value) {
   };
 }
 
+// A generated row's domain is read off its shipped value (numberDomain), which
+// knows nothing of what validate.js will accept. These paths do: a percent
+// that validation caps at 100, a cap that must be positive. The row says so,
+// so a value the editor accepts is a value a run can start on.
+const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
+const BALANCE_DOMAINS = Object.freeze({
+  'rest.hpSmallPct': PERCENT,
+  'rest.hpPartialPct': PERCENT,
+  'rest.mana.floorPct': PERCENT,
+  'atlas.townsPerActMax': Object.freeze({ min: 1 }),
+});
+
+// A balance path this build renamed keeps its stored override: the old key is
+// read as the new one wherever settings are read (the configured bundle, the
+// snapshot, an imported file), and the new key wins when both are present.
+// `shrine.healPct` became `rest.hpPartialPct` (plan phase 7, SPEC §13.4j).
+const LEGACY_BALANCE_KEYS = Object.freeze({
+  [`${ADVANCED_CONFIG_PREFIX}balance.shrine.healPct`]: `${ADVANCED_CONFIG_PREFIX}balance.rest.hpPartialPct`,
+});
+
+export function currentAdvancedKey(key) {
+  return LEGACY_BALANCE_KEYS[key] ?? key;
+}
+
+function withoutSupersededLegacy(entries) {
+  const present = new Set(entries.map(([key]) => key));
+  return entries
+    .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
+    .map(([key, value]) => [currentAdvancedKey(key), value]);
+}
+
 function balanceGroup(path) {
   if (/^(level|starting|energy$|draw$|handMax$)/.test(path)) return 'Progression';
   if (/^(rewards|shop|smith|equipment|customMods|graceRefill|flask)/.test(path)) return 'Rewards';
@@ -53,7 +84,7 @@ function balanceGroup(path) {
 function leafRows(value, path = [], rows = []) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? numberDomain(value) : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -235,7 +266,7 @@ export function advancedConfigRows(bundle) {
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
-  const entries = Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX));
+  const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
   if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
@@ -274,7 +305,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
-  for (const [key, raw] of Object.entries(settings)) {
+  for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
     if (!row?.configPath) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
@@ -407,7 +438,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of Object.entries(file.overrides)) {
+  for (const [key, raw] of withoutSupersededLegacy(Object.entries(file.overrides))) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
