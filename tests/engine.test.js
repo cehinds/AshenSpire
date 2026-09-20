@@ -9593,6 +9593,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Asked without attributes, the question keeps its old answer.
     assert(canEquip(REG, 'rightHand', { inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0, itemId: 'greatsword' }).ok,
       'a caller that names no attributes is not judged by them');
+    // A RUN KEEPS THE RULES IT WAS BORN UNDER, on both doors. The live
+    // presentation table grew a Poise row; a snapshot that predates it is
+    // projected without one rather than asked for a receipt it cannot give,
+    // and the meter's coefficient is read from the run's own snapshot so an
+    // Advanced tier-size override is not quietly overruled by the table.
+    const legacy = preE6RunSave ? deserializeRun(preE6RunSave) : null;
+    if (legacy) {
+      assert(legacy.derivedStatRuleSnapshot.rulesetVersion < REG.derivedStatRules.rulesetVersion, 'the fixture predates the Poise row');
+      const rows = statProjection(REG, legacy).derived.map((row) => row.id);
+      assert(!rows.includes('poise') && rows.includes('hp'), `a pre-Poise run projects its own rows: ${rows.join(',')}`);
+    }
+    const tuned = createRunState({
+      seed: 93, classId: 'reaver', registries: REG,
+      derivedStatOptions: { modeModifiers: { defaults: { pointsPerTier: 2 } } },
+    });
+    const tunedRow = tuned.derivedStatRuleSnapshot.rules.rules.poise;
+    eq(playerPoiseThresholdReceipt(REG, tuned).attribute,
+      tunedRow.base + Math.floor(tuned.attributes.constitution / tunedRow.pointsPerTier) * tunedRow.gainPerTier,
+      'the meter reads the run-owned row, tier size and all');
+
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.
     const plate = canEquip(REG, 'armor', {

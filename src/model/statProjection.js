@@ -42,7 +42,14 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // not been written yet; reading it from two places would be the copy Law 1
   // forbids. A ruleset without the row (4 and earlier) yields no attribute
   // term, which is what those runs shipped with.
-  const poiseRule = registries.derivedStatRules?.rules?.poise;
+  // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
+  // fallback for a caller that carries no run (a headless fixture, a
+  // creation preview). A run born under an Advanced tier-size override
+  // records that override in its snapshot, and reading the authored row
+  // instead would price its meter by numbers that run never agreed to
+  // (Codex, #1217).
+  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
+    || registries.derivedStatRules?.rules?.poise;
   const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
     : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
   const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
@@ -160,7 +167,16 @@ export function statProjection(registries, run) {
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = presentationRows(registries).map((presentation) => {
+  // A ROW THE RUN'S SNAPSHOT NEVER HAD IS NOT PROJECTED. The presentation
+  // table is the LIVE one and grows with the content — Poise joined it in
+  // ruleset 5 (plan phase 9) — while a run keeps the rules it was born
+  // under. Asking a version-3 snapshot for a Poise receipt threw by name and
+  // took every stat surface down with it (Codex, #1217). The pairing the
+  // content door enforces is between the live table's halves; across a
+  // version boundary the snapshot decides.
+  const derived = presentationRows(registries).filter((presentation) => (
+    snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
+  )).map((presentation) => {
     const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
