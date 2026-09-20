@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1215",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Choose and shape your battlefield formation visually",
+    "detail": "Interface settings now open a live preview with illustrated straight, forward-slant, back-slant and V presets. Choose up to three columns and six rows per side, with uniform position labels, footprint width and depth, team spacing, tile outlines, tilt and skew. Character size, offsets and draw order sit in a collapsed submenu. Apply saves the layout for real battles, and Done and Save also keeps pending edits. The preview and battlefield share positions and movement boundaries; smaller grids retain enough positions for the encounter.",
+    "build": "0.7.1.312",
+    "pullRequest": 1215,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1215"
+  },
+  {
     "id": "pr-1212",
     "date": "2026-09-19",
     "group": "2026-09-19",
