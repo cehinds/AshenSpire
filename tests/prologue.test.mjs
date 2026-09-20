@@ -258,8 +258,14 @@ test('the opening plays in the configured order, over the configured subset', ()
   assert.deepEqual(ids(shortened), ['warmth','carry','step'], 'the number of scenes is the number switched on');
   // Switching every scene off would leave a screen with no scene and no way
   // out of it, so the authored order stands in.
-  const none = prologueConfig(Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(scene => [`gameConfig.prologue.scenes.${scene.id}.enabled`, false])));
-  assert.equal(prologueSequence(none).length, PROLOGUE_DEFAULTS.scenes.length);
+  // And it is the AUTHORED order, not the typed one: every scene in it is
+  // switched off, so no running order in that file was chosen to be watched.
+  const none = prologueConfig(Object.fromEntries([
+    ...PROLOGUE_DEFAULTS.scenes.map(scene => [`gameConfig.prologue.scenes.${scene.id}.enabled`, false]),
+    ['gameConfig.prologue.scenes.step.order', 1],
+    ['gameConfig.prologue.scenes.warmth.order', 5],
+  ]));
+  assert.deepEqual(ids(none), PROLOGUE_DEFAULTS.scenes.map(scene => scene.id));
   // Ties keep authored order, so a half-numbered sequence is still stable:
   // `night` sharing position 1 with `warmth` sits behind it, not in front.
   assert.deepEqual(ids(prologueConfig({'gameConfig.prologue.scenes.night.order': 1})), ['warmth','night','year','carry','step']);
@@ -333,6 +339,13 @@ test('every frame and text position the settings offer is a frame the stylesheet
   for (const id of Object.keys(PROLOGUE_LAYOUTS)) {
     if (id === 'caption') continue;  // the shipped frame is the base rule set
     assert.ok(css.includes(`.prologue-layout-${id}`), `${id} has no stylesheet`);
+  }
+  // A wireframe that states its own geometry must restate it inside the
+  // short-landscape rule as well, or the generic art-plus-side-panel rule
+  // silently replaces the frame the owner chose.
+  const landscape = css.slice(css.lastIndexOf('@media(max-height:500px)'));
+  for (const id of ['overlay', 'letterbox']) {
+    assert.ok(landscape.includes(`.prologue-layout-${id}{grid-template-columns:1fr`), `${id} inherits the side panel on a short landscape screen`);
   }
   for (const position of PROLOGUE_TEXT_POSITIONS) {
     const [band, side] = position.split('-');

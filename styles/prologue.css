@@ -73,3 +73,14 @@
 .set-row-swatches .as-swatches{gap:.45rem}
 .set-row-swatches .set-swatch::before{width:2rem;height:2rem}
 .set-swatch-trail .set-wheel{width:3.2rem;height:2.4rem;padding:0;border:1px solid var(--line-soft);border-radius:4px;background:transparent}
+/* The short-landscape rule near the top of this file turns the screen into art
+   plus a side panel. That is right for the caption frame, which has nowhere
+   else to put the words on a 500px-tall screen, and wrong for the two frames
+   that state their own geometry: overlay puts the words ON the art, letterbox
+   puts them under a letterboxed plate. Neither inherits a panel it did not ask
+   for — the wireframe the owner chose is the wireframe that is drawn. The two
+   panel frames already restate their columns above, so they are unaffected. */
+@media(max-height:500px) and (orientation:landscape){
+  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr}
+  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+}

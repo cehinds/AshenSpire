@@ -214,9 +214,16 @@ export function prologueConfig(settings = {}) {
  * authored order stands in.
  */
 export function prologueSequence(config) {
-  const all = config.scenes.map((scene, index) => ({ scene, index }));
-  const kept = all.filter(({ scene }) => scene.enabled !== false);
-  return (kept.length ? kept : all)
+  const kept = config.scenes
+    .map((scene, index) => ({ scene, index }))
+    .filter(({ scene }) => scene.enabled !== false);
+  // AUTHORED ORDER MEANS AUTHORED ORDER. Falling back through the same sort
+  // returned whatever positions had been typed — the shipped opening in a
+  // running order nobody chose to watch, since every scene in it is switched
+  // off. The stand-in is the sequence as shipped, and it is returned before the
+  // order is consulted at all.
+  if (!kept.length) return config.scenes.map((scene, index) => index);
+  return kept
     .map((entry) => ({ ...entry, at: Number.isFinite(entry.scene.order) ? entry.scene.order : entry.index + 1 }))
     .sort((a, b) => a.at - b.at || a.index - b.index)
     .map((entry) => entry.index);
