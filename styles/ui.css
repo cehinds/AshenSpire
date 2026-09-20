@@ -997,7 +997,26 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-header-tools.search-open { flex: 1; }
 .set-header-tools input[type='search'] { width: 100%; min-width: 0; min-height: var(--tap-floor); background: #201c15; color: #eee5d4; border: 1px solid var(--line); border-radius: var(--r-2); padding: .4rem .7rem; }
 .set-header-tools input[hidden] { display: none; }
-.set-header-tools .set-search-toggle, .set-header-tools .set-options > summary { min-width: var(--tap-floor); min-height: var(--tap-floor); padding: .25rem; text-align: center; font-size: 2rem; }
+/* One quiet toolbar: equal targets, centered icons, and a single close face. */
+.settings-modal .modal-head-actions { align-items: center; align-self: center; }
+.settings-modal .set-search-toggle,
+.settings-modal .set-options > summary,
+.settings-modal .modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  flex: 0 0 auto; padding: 0; margin: 0;
+  border: 1px solid transparent; border-radius: var(--r-2);
+  background: transparent; color: var(--parchment); box-shadow: none;
+}
+.settings-modal .set-header-tools svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.settings-modal .set-options > summary svg { fill: currentColor; stroke: none; }
+.settings-modal .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
+.settings-modal .set-search-toggle:is(:hover, :focus-visible, [aria-expanded='true']),
+.settings-modal .set-options > summary:is(:hover, :focus-visible),
+.settings-modal .set-options[open] > summary,
+.settings-modal .modal-close:is(:hover, :focus-visible) { background: var(--panel); border-color: var(--line-soft); color: var(--gold); }
+.settings-modal .set-options > summary::-webkit-details-marker { display: none; }
 .set-options { position: relative; }
 .set-options > summary { list-style: none; }
 .set-options-menu { position: absolute; top: 100%; right: 0; z-index: 20; width: 20rem; display: grid; gap: .4rem; padding: .6rem; border: 1px solid var(--line); border-radius: var(--r-2); background: #211d17; }
@@ -1144,3 +1163,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }
 .flick-practice[data-ready='true'] { border-style:solid; box-shadow:inset 0 0 12px #c9a84c55; }
 .flick-practice output { min-height:3em; font-size:14px; }
+/* Hand rule labels stay readable in the compact settings pane. */
+[data-advanced-panel="Hand & Draw"] .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
+[data-advanced-panel="Hand & Draw"] [aria-disabled="true"] { opacity: .5; }
+.modal.hand-discard-modal { background: var(--bg-raise); }
+.hand-discard-modal .modal-head h2 { white-space: normal; }
+.hand-discard-item { display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(100%, calc(220px / var(--ui-zoom, 1))); }
+.hand-discard-item label { cursor: pointer; min-height: 44px; }
+.hand-discard-item input { width: 20px; height: 20px; accent-color: #c5a32b; }

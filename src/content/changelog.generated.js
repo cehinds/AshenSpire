@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1213",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Tune starting stats, card draws, Poise and Ward in Advanced settings",
+    "detail": "Set the total starting stat pool, automatically scale conversions or tune them manually, and configure additive AR, DR and PR from attributes, equipment, relics and buffs. Poise resists physical attacks and Ward resists magic, with separate impact meters, break penalties and per-status resistance weights—including mixed Burn resistance. Enemy defences, weapon impact classes and individual attacks are configurable. New solo fights start with three configurable cards, retain unplayed cards and refill to capacity, with fixed-draw and optional-discard alternatives. Older runs and LAN retain their rules. The settings toolbar is compact and aligned.",
+    "build": "0.7.1.317",
+    "pullRequest": 1213,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1213"
+  },
+  {
     "id": "pr-1216",
     "date": "2026-09-19",
     "group": "2026-09-19",
