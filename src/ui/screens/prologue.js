@@ -1,3 +1,4 @@
+import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTiming.js';
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
@@ -31,7 +32,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const reduced = () => p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
   const ownerVeil = root.closest('.modal-veil');
   const blocked = () => document.hidden || (topVeil() && topVeil() !== ownerVeil);
-  const transitionMs = scene => reduced() || scene.effect === 'still' ? 0 : p.transitionSeconds*1000;
+  const transitionMs = scene => prologueTransitionMs(scene,p,reduced());
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
@@ -51,16 +52,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     finally { clearTimeout(timeout); }
   }
   async function showScene(index,{resumeAt = 0,notify = true} = {}) {
-    const token = ++serial; loading = true; sceneIndex = index; elapsed = resumeAt; last = 0;
+    const token = ++serial; loading = true; next.disabled = true; sceneIndex = index; elapsed = resumeAt; last = 0;
     const scene = config.scenes[index], layout = portrait.matches ? 'mobile' : 'desktop';
     const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
-    title.textContent = copy.title; speaker.textContent = copy.speaker; dialogue.textContent = copy.text;
-    location.textContent = copy.location; location.hidden = !copy.location;
-    next.textContent = index === config.scenes.length-1 ? config.labels.setForth : config.labels.continue;
-    progress.textContent = `${index+1} / ${config.scenes.length}`;
     if (notify) onScene(index);
     const plate = el('div',{class:'prologue-plate'});
-    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{destinationArt:scene.id === 'step' ? destination.art : null})});
+    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{destinationArt:scene.id === 'step' ? destination.art : null,classId})});
     const images = [background]; plate.append(background);
     if (scene.character) {
       const source = new Image(); source.src = prologueArtwork(classId);
@@ -82,6 +79,10 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     animations.forEach(a=>a.cancel()); animations=[];
     for (const child of [...stage.children]) if (child !== previous) child.remove();
     if (previous) previous.style.opacity = '1';
+    title.textContent = copy.title; speaker.textContent = copy.speaker; dialogue.textContent = copy.text;
+    location.textContent = copy.location; location.hidden = !copy.location;
+    next.textContent = index === config.scenes.length-1 ? config.labels.setForth : config.labels.continue;
+    progress.textContent = `${index+1} / ${config.scenes.length}`;
     stage.append(plate);
     const duration = transitionMs(scene);
     if (duration) {
@@ -89,10 +90,10 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
         : scene.effect === 'dip' ? [{opacity:0,offset:0},{opacity:0,offset:.5},{opacity:1,offset:1}] : [{opacity:0},{opacity:1}];
       animations.push(plate.animate(frames,{duration,fill:'both',easing:'ease-in-out'}));
       if (previous && scene.effect === 'dip') animations.push(previous.animate([{opacity:1},{opacity:0}],{duration:duration/2,fill:'both'}));
-      if (scene.effect === 'push') animations.push(plate.animate([{transform:'scale(1)'},{transform:`scale(${PROLOGUE_LAYOUT.motion.zoom})`}],{duration:duration+scene.seconds*1000,fill:'both',easing:'linear'}));
     }
+    if (!reduced() && scene.effect === 'push') animations.push(plate.animate([{transform:'scale(1)'},{transform:`scale(${PROLOGUE_LAYOUT.motion.zoom})`}],{duration:prologueSceneMs(scene),fill:'both',easing:'linear'}));
     animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
-    previous = plate; loading = false; last = 0;
+    previous = plate; loading = false; next.disabled = false; last = 0;
   }
   function tick(now) {
     if (stopped || !root.isConnected) { cleanup(); return; }
@@ -101,12 +102,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       if (reduced()) animations.forEach(a=>a.finish());
       else animations.forEach(a=>{a.currentTime=elapsed;});
       const scene = config.scenes[sceneIndex];
-      if (p.autoAdvance && elapsed >= transitionMs(scene)+scene.seconds*1000 && sceneIndex < config.scenes.length-1) showScene(sceneIndex+1);
+      if (p.autoAdvance && elapsed >= prologueSceneMs(scene) && sceneIndex < config.scenes.length-1) showScene(sceneIndex+1);
     }
     last = now; raf = requestAnimationFrame(tick);
   }
   pause.onclick = togglePause;
-  next.onclick = () => sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1);
+  next.onclick = () => { if (!loading) sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1); };
   skip.onclick = () => finish(preview ? 'preview' : 'skipped');
   if (preview) {
     const replay = button({label:config.labels.replay});
