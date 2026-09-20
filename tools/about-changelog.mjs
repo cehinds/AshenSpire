@@ -1078,6 +1078,8 @@ async function browserRoute(entries, {
       await evaluate('document.querySelector("#about-evidence-label")?.remove()');
     }
     await evaluate('document.querySelector("#set-close").click()');
+    // Done now offers a configuration export before closing Settings.
+    await evaluate('[...document.querySelectorAll("button")].find(button => button.textContent.trim() === "Not now")?.click()');
     await until('!document.querySelector(".settings-modal") && !!document.querySelector(".title-screen #settings")', 'Done did not return to title');
     socket.close();
   } finally {
@@ -1617,8 +1619,8 @@ async function selftest() {
       // `.set-actions` div. Same plant, same assertion: sever Done's click and
       // the door stops returning to the title.
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
-      find: "  done.addEventListener('click', door.close);",
-      replace: "  done.addEventListener('click', () => {});",
+      find: "  done.addEventListener('click', () => {",
+      replace: "  done.addEventListener('disabled-click', () => {",
       expect: 'Done did not return to title',
     },
     {
