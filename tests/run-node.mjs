@@ -88,7 +88,7 @@ let zoomExtra = 0;
     // The opening's art studio shares the game's scene model; its test lives
     // beside the studio and would otherwise run nowhere CI can see.
     '../art/prologue-2026-09-19/model.test.mjs',
-    'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs'];
+    'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs', 'character-progression.test.mjs'];
   const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
   console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);

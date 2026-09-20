@@ -33,6 +33,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
+    "id": "pr-1228",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Your level and every skill you are training now have bars you can watch",
+    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
+    "build": "0.7.1.342",
+    "pullRequest": 1228,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
     "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",

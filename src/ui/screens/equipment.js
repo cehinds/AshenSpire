@@ -1,4 +1,5 @@
 import { characterLevel } from '../../model/levelup.js';
+import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
@@ -74,7 +75,7 @@ import {
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl, meter, meters,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -1656,6 +1657,75 @@ export function mountEquipment(host, {
     });
   }
 
+  /**
+   * Put a badge on a Meter's plate, before the value. NOT `plate?.insert…`:
+   * a kit Meter that stopped emitting `.m-plate` would have taken the reason
+   * to visit a shrine, and the draft waiting at the next reward, off the
+   * screen with no error at all. A missing plate is a broken atom, so it says
+   * so by name.
+   */
+  function badgePlate(node, badge, what) {
+    const plate = node.querySelector('.m-plate');
+    if (!plate) throw new Error(`armoury: the kit Meter has no .m-plate to place ${what} beside`);
+    plate.insertBefore(badge, plate.querySelector('.m-value'));
+  }
+
+  /**
+   * THE LEVEL BAR. The Armoury named the level and never said how far the next
+   * one was, so the one ledger that always moves was the one thing the screen
+   * would not show. The kit's Meter, stacked: the level on the plate, the XP
+   * beside it, the climb as the fill. Every number is levelProgress's, which
+   * is levelUpPlan's — the shrine and this bar read the same step.
+   */
+  function characterLevelMeter() {
+    const progress = levelProgress(registries, run);
+    const node = meter({
+      stack: true, tone: 'xp',
+      label: progress.label,
+      value: progress.value,
+      pct: progress.pct,
+      // The kit's contract is that an instrument reads data-cur/data-max and
+      // never the label, so a capped run — which has no next step — offers
+      // neither rather than a pair the full bar contradicts.
+      cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext,
+      ariaLabel: progress.sense,
+      attrs: {
+        class: `character-level-meter${progress.points ? ' has-points' : ''}`,
+        dataset: { component: 'armoury.levelProgress', level: String(progress.level), capped: progress.capped ? 'true' : 'false' },
+      },
+    });
+    attachTooltip(node, () => `<div class="tt-title">${esc(progress.label)}</div><p>${esc(progress.sense)}</p>`);
+    // The waiting points belong beside the LEVEL, not past the XP: a stacked
+    // plate spreads its children, and appending would have put the reason to
+    // visit a shrine on the far side of the number it explains. The sentence
+    // is the model's, spelled once there; the plate is only where it lands.
+    if (progress.pointsLabel) {
+      badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
+    }
+    return node;
+  }
+
+  /** One skill track as a Meter: its name and level on the plate, its XP as the fill. */
+  function skillProgressMeter(rowModel) {
+    const node = meter({
+      stack: true, tone: 'skill',
+      label: `${rowModel.label} ${rowModel.level}`,
+      value: rowModel.value,
+      pct: rowModel.pct,
+      cur: rowModel.xp, max: rowModel.xpToNext,
+      ariaLabel: rowModel.sense,
+      attrs: {
+        class: `character-skill-meter${rowModel.own ? ' own-class' : ''}`,
+        dataset: { component: 'armoury.skillTrack', skill: rowModel.id, kind: rowModel.kind, level: String(rowModel.level) },
+      },
+    });
+    if (rowModel.draftsLabel) {
+      badgePlate(node, pill({ label: rowModel.draftsLabel, attrs: { class: 'character-skill-drafts' } }), `the drafts waiting on ${rowModel.label}`);
+    }
+    attachTooltip(node, () => `<div class="tt-title">${esc(rowModel.label)}</div><p>${esc(rowModel.sense)}</p>`);
+    return node;
+  }
+
   function characterStatsPanel() {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
@@ -1775,6 +1845,28 @@ export function mountEquipment(host, {
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
     }));
+    // A run always has its own class ladder (skillProgressRows refuses a class
+    // the registry does not know, rather than returning a list without it), so
+    // there is no empty case to draw here and none is pretended.
+    const skillRows = skillProgressRows(registries, run);
+    // A ledger row whose track the content no longer declares cannot become a
+    // bar — it has no label — but it may be holding drafts, so it is SAID
+    // rather than dropped, the way a saved view the table no longer declares
+    // is said above. One line, once per draw.
+    const stale = staleSkillTracks(registries, run);
+    if (stale.length) {
+      console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
+        + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
+    }
+    const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
+      meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
+    ]);
+    box.appendChild(informationCard({
+      id: 'skillsCard',
+      label: 'Skill progression',
+      summary: skillProgressSummary(skillRows),
+      body: skills,
+    }));
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',
       label: 'Equipment cards',
@@ -1791,6 +1883,7 @@ export function mountEquipment(host, {
       eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
       titleS(cls.name, { tag: 'h3' }),
       subtitle(cls.description || ''),
+      characterLevelMeter(),
     ]);
   }
 
