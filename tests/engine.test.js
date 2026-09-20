@@ -9448,6 +9448,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
     const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
     assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
@@ -9490,6 +9491,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(logOf(hit, 'impactDealt').some((e) => e.targetId === 'player' && e.amount === perHit), 'and says so');
     dispatch(hit, { type: 'endTurn' });
     eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
+    // AND THE RECEIPT CARRIES THE METER THE ENGINE ENDED ON. The Poise damage
+    // lands before the receipt is emitted, so a paced view that added the
+    // amount would draw a bar that never filled; the reader SETS from these.
+    const filling = logOf(hit, 'impactDealt').filter((e) => e.targetId === 'player').pop();
+    eq(filling.poiseMeter.value, hit.player.poiseMeter.value, 'the impact names the meter value the engine ended on');
+    eq(filling.poiseMeter.max, hit.player.poiseMeter.max, 'and the max, which the fill widened');
     eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
     // AND THE WIDENED VESSEL SURVIVES A RESTAMP. A fill grows the max by
     // balance.poise.growthMult; the receipt only knows the base, so an
