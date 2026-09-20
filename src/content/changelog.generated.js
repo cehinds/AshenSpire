@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1234",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Two downloads of every build: the full game, and a mobile edition under 50 MB",
+    "detail": "The single self-contained file had grown to 253 MB, which on a phone is the whole cost of starting. Every build now ships twice. The full file is unchanged. The mobile file, AshenSpire-mobile.html, is the same build with every image shrunk to half size and recompressed, held under 50 MB by a gate that refuses to write or ship a larger one; it plays the same, looks softer, and Settings → About names it the mobile edition. The builds site offers Download full and Download mobile with their sizes on every card and in every table, serves the mobile file at /<branch>/<build>/mobile/, and says plainly when an older build predates the edition instead of faking a link. Saves carry between the two.",
+    "build": "0.7.1.341",
+    "pullRequest": 1234,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1234"
+  },
+  {
     "id": "pr-1229",
     "date": "2026-09-20",
     "group": "2026-09-20",

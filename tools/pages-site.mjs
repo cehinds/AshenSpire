@@ -405,7 +405,9 @@ function assemble(outDir, keep) {
       // the full file, proven the same way below. `mobileBytes` is the fact
       // every page reads to decide whether to offer the second link.
       let mobileHtml = null;
-      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`]); mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT); } catch { mobileHtml = null; }
+      // stderr is dropped on purpose: a build that predates the edition is the
+      // expected case, not a message to print.
+      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT); } catch { mobileHtml = null; }
       if (mobileHtml) {
         mkdirSync(join(dir, 'mobile'), { recursive: true });
         writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
