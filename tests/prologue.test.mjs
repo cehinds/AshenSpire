@@ -7,6 +7,8 @@ import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle 
 import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRegistries } from '../src/model/registries.js';
+import { prologueSceneMs, prologueTransitionMs } from '../src/model/prologueTiming.js';
+import { prologueArtwork } from '../src/ui/assets.js';
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
   const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.2.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.4.actor.mobile.height':36};
@@ -26,7 +28,42 @@ test('invalid imports are atomic and timing defaults to five seconds',()=>{
   for (const bad of [-1,31,'5',null]) assert.throws(()=>parseAdvancedConfigFile(advancedConfigExport({'gameConfig.prologue.presentation.transitionSeconds':bad}),contentBundle,current));
   assert.equal(current['gameConfig.prologue.scenes.0.text'],'Keep me');
   assert.equal(prologueConfig().presentation.transitionSeconds,5);
+  assert.ok(prologueConfig().scenes.every(scene=>scene.seconds===5));
   assert.throws(()=>parseAdvancedConfigFile(advancedConfigExport({'gameConfig.prologue.scenes.0.text':'a'.repeat(5001)}),contentBundle));
+});
+
+test('scene duration includes the fade and remains editable through export/import',()=>{
+  const config=prologueConfig();
+  assert.equal(config.scenes[0].effect,'push');
+  assert.equal(config.scenes[1].name,'The Burning');
+  assert.equal(prologueSceneMs(config.scenes[0]),5000);
+  assert.equal(prologueTransitionMs(config.scenes[0],config.presentation),1250);
+  assert.equal(prologueTransitionMs(config.scenes[0],config.presentation,true),0);
+  assert.equal(prologueTransitionMs({...config.scenes[0],effect:'still'},config.presentation),0);
+  assert.equal(prologueTransitionMs(config.scenes[0],{transitionSeconds:.2}),200);
+  const edits={'gameConfig.prologue.scenes.0.seconds':8,'gameConfig.prologue.scenes.4.seconds':2};
+  const restored=prologueConfig(parseAdvancedConfigFile(advancedConfigExport(edits),contentBundle));
+  assert.equal(prologueSceneMs(restored.scenes[0]),8000);
+  assert.equal(prologueTransitionMs(restored.scenes[4],restored.presentation),500);
+});
+
+test('each class memory resolves to a distinct shipped desktop and mobile painting',()=>{
+  const config=prologueConfig();
+  assert.equal(config.scenes.find(scene=>scene.id==='carry').character,false);
+  for(const layout of ['desktop','mobile']) {
+    const paintings=[];
+    for(const classId of Object.keys(config.classes)) {
+      const path=prologueArtwork('carry',layout,{classId});
+      assert.ok(path.endsWith(`assets/prologue/carry-${classId}-${layout}.webp`));
+      const bytes=readFileSync(new URL(`../assets/prologue/carry-${classId}-${layout}.webp`,import.meta.url));
+      assert.equal(bytes.subarray(0,4).toString(),'RIFF');
+      assert.equal(bytes.subarray(8,12).toString(),'WEBP');
+      paintings.push(bytes.toString('base64'));
+    }
+    assert.equal(new Set(paintings).size,4);
+    assert.notDeepEqual(readFileSync(new URL(`../assets/prologue/road-${layout}.webp`,import.meta.url)),readFileSync(new URL(`../assets/prologue/step-${layout}.webp`,import.meta.url)));
+  }
+  assert.equal(prologueArtwork('carry','desktop',{classId:'unknown'}),prologueArtwork('carry','desktop',{classId:'reaver'}));
 });
 
 test('existing art-studio exports import into the game without accepting art URLs',()=>{

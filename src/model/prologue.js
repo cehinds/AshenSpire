@@ -25,7 +25,7 @@ export function prologueRows() {
   const text = (maxLength = 1000) => ({ type: 'textarea', maxLength });
   add(['presentation', 'playback'], 'Show opening', 'Playback', choice(['every','once','off'], {every:'Every new game',once:'First time per profile',off:'Off'}));
   add(['presentation', 'autoAdvance'], 'Advance scenes automatically', 'Playback');
-  add(['presentation', 'transitionSeconds'], 'Transition time (seconds)', 'Playback', number(0,30));
+  add(['presentation', 'transitionSeconds'], 'Transition time (seconds)', 'Playback', {...number(0,30),note:'Maximum fade length. Fits inside the scene duration, capped at one quarter so the artwork stays readable.'});
   add(['presentation', 'speed'], 'Playback speed', 'Playback', number(.25,3,.25));
   add(['presentation', 'reduceMotion'], 'Still artwork', 'Playback', {note:'Disables fades and camera movement. The accessibility Reduced motion setting is also respected.'});
   add(['presentation', 'tintSource'], 'Artwork tint follows', 'Motif', choice(['accent','character','custom'], {accent:'Interface accent',character:'Character tint',custom:'Custom colour'}));
@@ -37,7 +37,7 @@ export function prologueRows() {
     add([...path,'name'], 'Scene title', scene.name, text(160));
     add([...path,'speaker'], 'Speaker', scene.name, {...text(160),note:'Use {name} for the player or {class} for their class.'});
     add([...path,'text'], 'Dialogue', scene.name, {...text(5000),note:'Editable narration; line breaks are preserved. {classLine} uses the selected class’s line.'});
-    add([...path,'seconds'], 'Hold time (seconds)', scene.name, number(1,180));
+    add([...path,'seconds'], 'Scene duration (seconds)', scene.name, {...number(1,180),note:'Total scene time, including its transition. Default: 5 seconds. The final scene waits for Set forth.'});
     add([...path,'effect'], 'Transition effect', scene.name, choice(['fade','dip','push','ash','still'], {fade:'Crossfade',dip:'Fade through black',push:'Slow push',ash:'Ash reveal',still:'Still'}));
     if ('location' in scene) add([...path,'location'], 'Location caption', scene.name, {...text(160),note:'Use {location} to show the actual starting destination.'});
     if (scene.actor) for (const layout of ['desktop','mobile']) for (const axis of ['x','y','height']) {

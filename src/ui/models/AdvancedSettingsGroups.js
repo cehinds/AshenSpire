@@ -7,7 +7,9 @@ export function advancedSection(row) {
 }
 
 function topic(row, section) {
+  if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
+  if (row.handTopic) return row.handTopic;
   const key = row.key;
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   if (section === 'Classes') {
@@ -23,7 +25,7 @@ function topic(row, section) {
   }
   if (section === 'Interface') {
     if (/movement|Activation|selectionColor/.test(key)) return 'Movement';
-    if (/row[A-C]|front|back/.test(key)) return 'Formation layout';
+    if (/row[A-F]|front|back|formation|groundTilt|groundSkew|gridShape|showFormationGrid/.test(key)) return 'Formation layout';
     if (/Spawn|SpriteScale|useSprites/.test(key)) return 'Characters';
     if (/Grid|grid/.test(key)) return 'Formation grid';
     if (/map|walked/.test(key)) return 'Map & HUD';
@@ -85,6 +87,11 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
+  if (section === 'Hand & Draw') {
+    const order = ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards'];
+    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }
+  if (section === 'Interface') result.sort((a, b) => Number(b.id === 'Formation layout') - Number(a.id === 'Formation layout'));
   if (section === 'Classes') {
     const order = ['General', 'Assign points', 'Reaver', 'Starseer', 'Rogue', 'Herald'];
     result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));

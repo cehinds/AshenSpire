@@ -1,6 +1,8 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
+import { formationTileGeometry } from '../models/FormationGridModel.js';
+import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
@@ -41,7 +43,8 @@ export function wireBattlefieldStage(field, model) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
-    if (/^[ABC][12]$/.test(field.dataset.playerCell || '')) {
+    const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
+    if (isFormationCell(field.dataset.playerCell, dimensions)) {
       presentation.playerSpawnRow = field.dataset.playerCell[0];
       presentation.playerSpawnColumn = field.dataset.playerCell[1];
     }
@@ -59,24 +62,27 @@ export function wireBattlefieldStage(field, model) {
       grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
       // Offsets and edge clamping must not resize the reference tiles.
-      const tileHeight = Math.max(1, plan.rowSpacing * .7);
+      const activeCells = new Set(plan.cells.map(cell => cell.cell));
+      for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
       for (const cell of plan.cells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
-        const compact = ['square', 'rhombus', 'circle'].includes(presentation.gridShape);
-        const tileWidth = compact ? Math.min(cell.width, tileHeight) : cell.width;
+        const geometry = formationTileGeometry(cell, plan, presentation);
         const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
-          left: cell.x - tileWidth / 2, top: cell.ground,
-          width: tileWidth, height: compact ? tileWidth : tileHeight,
+          left: cell.x - geometry.width / 2, top: cell.ground,
+          width: geometry.width, height: geometry.height,
         });
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
         tile.style.height = `${localTile.height}px`;
+        tile.style.setProperty('--tile-transform', geometry.transform);
+        tile.dataset.side = cell.side || (Number(cell.cell[1]) <= plan.columns ? 'player' : 'enemy');
         tile.dataset.occupied = String(occupied.has(cell.cell));
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
+      field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
     // measuring it forced one synchronous layout per combatant. One batch of
@@ -109,8 +115,8 @@ export function wireBattlefieldStage(field, model) {
       if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       if (!fitted) continue;
-      const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
-      const multiplier = presentation[`row${'ABC'[slot.row]}Scale`] * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale);
+      const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, slot.row)] : 1;
+      const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale);
       const scale = fitted.scale * wireframeUi.formation.displayScale * growth * multiplier;
       const x = fitted.x;
       const visibleHeight = fitted.visibleHeight * wireframeUi.formation.displayScale * growth * multiplier;

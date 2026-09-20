@@ -36,6 +36,8 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
+import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 
@@ -49,7 +51,7 @@ import { applyGraceRefill } from './encounters.js';
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (ctx.foundation) return F.foundationDamage(ctx, source, target, base, carrier, attackTags || []).amount;
-  let dmg = base;
+  let dmg = base + cardRatingBonus(ctx, source, carrier, 'damage');
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
     dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
@@ -59,6 +61,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
+  if (target) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply
@@ -159,6 +162,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     isAttack: true,
   });
   if (hpLoss > 0) {
+    if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
     ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack' });
     applyArcaneExposure(ctx, source, target, carrier);
   }
@@ -221,8 +225,8 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  * base + per-stack 'blockAdd' modifiers, × 'blockGainedMult' modifiers,
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
-export function computeBlockGain(ctx, entity, base) {
-  let amt = base + statuses.getAdd(ctx, entity, 'blockAdd');
+export function computeBlockGain(ctx, entity, base, card = null) {
+  let amt = base + cardRatingBonus(ctx, entity, card, 'block') + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
@@ -231,7 +235,7 @@ export function computeBlockGain(ctx, entity, base) {
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
-  let amt = computeBlockGain(ctx, entity, base);
+  let amt = computeBlockGain(ctx, entity, base, card);
   const cap = statuses.getCap(ctx, entity, 'blockCap');
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
@@ -350,6 +354,7 @@ export function staggerPlayer(ctx, player) {
  * meter grows by balance.poise.growthMult either way.
  */
 export function dealPoiseDamage(ctx, entity, amount) {
+  if (ctx.ratingsRules) return applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount);
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
@@ -397,7 +402,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
  */
 export function drawCards(ctx, n) {
   for (let i = 0; i < n; i++) {
+    if (ctx.handRules && ctx.piles.hand.length >= ctx.handMax) return;
     if (ctx.piles.draw.length === 0) {
+      if (ctx.handRules?.reshuffle === false) return;
       if (ctx.piles.discard.length === 0) return;
       reshuffleDiscardIntoDraw(ctx);
     }
@@ -589,7 +596,13 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          const carrier = eff.attack ? { ...action.card, attack: eff.attack } : action.card;
+          const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
+            damageSchool: eff.damageSchool || action.card?.damageSchool,
+            tags: action.card?.tags || attackTags };
+          if (ctx.ratingsRules && action.source?.kind === 'enemy') {
+            const attackType = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`];
+            if (attackType && attackType !== 'auto') carrier.damageSchool = attackType;
+          }
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
@@ -598,7 +611,7 @@ function runOpcode(ctx, action, eff) {
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
           // below replaces it wherever a ruleset is handed in.
-          if (!ctx.foundation && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+          if (!ctx.ratingsRules && !ctx.foundation && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
@@ -651,6 +664,9 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const stacks = evalNum(ctx, action, eff.stacks, 1, t);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        if (ctx.ratingsRules && t.id === action.source?.id && action.card && isMagicalAttack(ctx, action.card) && t.statuses[eff.status]) {
+          t.statuses[eff.status].ratingCard = structuredClone(action.card);
+        }
       }
       break;
     }
@@ -750,7 +766,7 @@ function runOpcode(ctx, action, eff) {
         const amount = mult === 1
           ? evalNum(ctx, action, eff.amount, 0, t)
           : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
-        applyHeal(ctx, t, amount);
+        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal'));
       }
       break;
     }

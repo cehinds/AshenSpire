@@ -1,5 +1,9 @@
 # Credits & Asset Licenses
 
+## Burning and class-memory opening revision (2026-09-19)
+
+Twelve new desktop/portrait paintings generated with OpenAI's built-in Image Generation tool: the inward Burning, forest departure, and four class memories. Compressed WebPs are in `assets/prologue/`; exact prompts and source image names are in `art/prologue-2026-09-19/revision-prompts.json`. PNG masters remain in the owner's local `masters-burning-v2/` folder. The original opening relief is unchanged. No third-party artwork or license is claimed.
+
 ## Opening sequence art (2026-09-19)
 
 Twelve original desktop/portrait paintings and four transparent class
