@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1212",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Sword and shield now share the approved motion across every class and armour",
+    "detail": "All four classes and 35 armour entries select their own appearance from 32 painted suites when equipping a sword and shield. The eleven-step attack uses the aura-free buff pose, holds ATK05, then returns through defensive stance to Ready. Defend, hurt, cast, buff, stances, portrait and conversation remain separately configurable. The labeled gallery shows the same sequence. The complete offline build uses large-file storage to retain the approved artwork without reducing its quality.",
+    "build": "0.7.1.310",
+    "pullRequest": 1212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1212"
+  },
+  {
+    "id": "pr-1211",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your journey now opens with six painted scenes you can rewrite",
+    "detail": "After character creation, see the cold hearths, the unfinished burning at the hut, your class’s reason to leave and the road to your actual starting place. Set forth reveals the first playable map. Advanced → Opening sequence lets you edit every line, scene hold, transition, motif wash, character shadow strength and traveller placement, with separate class dialogue and a preview. Transitions default to five seconds; all changes travel with configuration exports, and earlier art-studio exports can be loaded there too. Portrait artwork keeps the story readable on phones. Each traveller and its ground shadow share one transparent layer, including character and scene WebP downloads. The new paintings and existing environment/animation plates are compressed while preserving dimensions and transparency, keeping the standalone game below the repository’s file limit.",
+    "build": "0.7.1.308",
+    "pullRequest": 1211,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1211"
+  },
+  {
     "id": "pr-1210",
     "date": "2026-09-19",
     "group": "2026-09-19",

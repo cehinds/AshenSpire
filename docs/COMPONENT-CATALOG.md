@@ -1,5 +1,13 @@
 # AshenSpire component catalog
 
+`prologue-screen` composes six text-free WebP paintings, a class item layer,
+motif wash, live narration and playback controls. `src/model/prologue.js`
+projects Advanced → Opening sequence settings; `src/ui/screens/prologue.js`
+is shared by new games and the settings preview. Text, scene holds,
+five-second default transitions, effects and desktop/mobile character placement
+are included in configuration exports. Interrupted saves resume at a scene
+boundary; Set forth reveals the first playable map.
+
 `equipment-animation-reference` derives the active presentation from class,
 armour, ordered right/left weapon groups and optional grip. Its model is
 `src/model/equipmentAnimation.js`; authored references live in
