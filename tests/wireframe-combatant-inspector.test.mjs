@@ -52,7 +52,8 @@ test('preview meters are HP, MP, Poise in that order, only the pools the combata
   // The meters carry the live values through unchanged.
   const mp = previewMeters(caster).find((r) => r.label === 'MP');
   assert.deepEqual([mp.value, mp.max], [3, 5]);
-  assert.deepEqual(INSPECTOR_PREVIEW_METERS, ['HP', 'MP', 'Poise']);
+  assert.deepEqual(INSPECTOR_PREVIEW_METERS, ['HP', 'MP', 'Poise', 'Ward']);
+  assert.deepEqual(labels([...caster, { label: 'Ward', value: 0, max: 9 }]), ['HP', 'MP', 'Poise', 'Ward']);
 });
 
 test('current state lists active pools and effects; previous actions are newest first', () => {

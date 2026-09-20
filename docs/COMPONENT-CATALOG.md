@@ -621,8 +621,26 @@ Ready primary actions lift by 2px and scale to 1.015 without shifting surroundin
 
 Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
 
+
 Single-dagger coverage adds 32 skins across all 35 catalog armor entries to the
 equipment animation reference component. It selects only right dagger + left empty
 with one-hand grip. The visual miniature includes Rogue single dagger; the
 [full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
 class/outfit filters, pose order, timing, portrait and conversation references.
+
+### Hand & Draw Rules
+
+Advanced Settings groups the controls into Starting hand, Turn draws, Hand
+capacity, and Retention & discards. `src/model/handRules.js` owns row metadata,
+stat calculations and the live preview; `settings.js` uses the shared setting
+rows and desktop/compact navigation. In-run previews use the character's current
+attributes; title-screen previews show baseline values.
+
+`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
+read-only card faces and footer buttons into the turn-end discard selector.
+Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
+cancel without changing combat state. `src/engine/handRules.js` validates the
+selection independently before the turn can advance.
+
+### Ratings, Poise and Ward
+The Advanced Settings workspace adds Stats & Defence subgroups for each formula, curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

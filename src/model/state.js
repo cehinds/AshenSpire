@@ -283,9 +283,17 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  const modeModifiers = modeProfiles
+  let modeModifiers = modeProfiles
     ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
     : derivedStatOptions.modeModifiers;
+  const scale = run.attributeModeSnapshot?.statConversionScale;
+  if (Number.isFinite(scale) && scale > 0 && scale !== 1) {
+    const resolved = resolveDerivedStatRules(registries.derivedStatRules, derivedOptions(registries, { ...derivedStatOptions, modeModifiers }));
+    modeModifiers = { ...modeModifiers, rules: { ...modeModifiers?.rules } };
+    for (const [id, rule] of Object.entries(resolved.rules)) {
+      modeModifiers.rules[id] = { ...modeModifiers.rules[id], pointsPerTier: rule.pointsPerTier * scale };
+    }
+  }
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);

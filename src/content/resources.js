@@ -100,6 +100,9 @@ export const resources = [
     domainMax: HUD_REFERENCE_MAX.hp,
   },
   {
+    id: 'ward', name: 'WARD', glyph: '✧', tint: '#779fe0', weight: 'skinny', order: 91, surfaces: ['model'], source: 'ward',
+  },
+  {
     id: 'poise',
     name: 'POISE',
     glyph: '◈',

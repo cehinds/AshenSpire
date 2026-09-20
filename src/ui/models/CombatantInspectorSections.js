@@ -11,7 +11,7 @@ export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'histo
 // The side preview's meters, in stack order (owner follow-up: restore the
 // HP/MP/Poise meters the tray lost). HP is shown whenever the subject has it;
 // MP and Poise only when the combatant actually has that pool (max > 0).
-export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'MP', 'Poise']);
+export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'MP', 'Poise', 'Ward']);
 
 export function previewMeters(resources = []) {
   return INSPECTOR_PREVIEW_METERS
