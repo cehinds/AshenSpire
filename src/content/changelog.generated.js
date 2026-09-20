@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1229",
+    "id": "pr-1226",
     "date": "2026-09-20",
     "group": "2026-09-20",
-    "summary": "Picking a node on the map brings it to the middle of the screen",
-    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
+    "summary": "The in-run Settings panel gets its toolbar back, and a status weight you tuned stops calling itself invalid",
+    "detail": "Opening Settings from the map or a fight showed two empty boxes where the search and options buttons belong, Download & saves stranded on a row of its own, and a second scrollbar down the shell — all of it styling the Settings door from the title screen had and this one did not. The two doors share one panel now: the buttons carry their icons, the download button and the toolbar ride one row, and the panel is the only thing that scrolls. Separately, tuning the Poise or Ward weight of any status outside the seven the defaults name left the other half of the pair unwritten, so Advanced reported \"Invalid status resistance weights\" from then on and quietly kept the authored numbers. The side you did not touch now keeps its authored weight, or none at all, and the warning clears the next time you open Settings. Values outside 0–1 are still refused.",
     "build": "0.7.1.332",
-    "pullRequest": 1229,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
+    "pullRequest": 1226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1226"
   },
   {
     "id": "pr-1217",
