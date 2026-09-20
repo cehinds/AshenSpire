@@ -21,6 +21,19 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   const progressGroup = el('div', { hidden: true }, [progress, progressText]);
   const download = button({ label: offlinePlay.downloadLabel, id: 'offline-download' });
   download.disabled = true;
+  // THE PLAIN LINK, AND WHY IT SITS NEXT TO THE BUTTON.
+  //
+  // The button above fetches the build, keeps it in a Blob and clicks a
+  // synthetic anchor. That is what gives progress and a save-location dialog on
+  // a desktop — and it is exactly what fails on a phone: a multi-megabyte Blob
+  // in a memory-tight tab, and a save that has to happen inside a user-
+  // activation window the network wait already spent. This anchor points
+  // straight at the same static file on the published site, so the browser
+  // downloads it itself with no script running and nothing buffered in the
+  // page. It is hidden until a manifest names a real file — a download link
+  // that goes nowhere is worse than none.
+  const direct = el('a', { class: 'set-note offline-direct', id: 'offline-direct', hidden: true,
+    text: offlinePlay.directLabel });
   const check = button({ label: 'Check for updates', id: 'offline-check' });
   const exportSave = button({ label: 'Export saves', id: 'offline-export' });
   const importSave = button({ label: 'Import saves', id: 'offline-import' });
@@ -40,7 +53,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       host.append(el('p', { text: `Your game: ${BUILD_VERSION}` }),
         el('ul', {}, offlinePlay.instructions.map(text => el('li', { text }))),
         el('label', { for: 'offline-branch', text: 'Build branch' }), branch, release,
-        el('div', { class: 'offline-actions' }, [check, download]), progressGroup,
+        el('div', { class: 'offline-actions' }, [check, download]), progressGroup, direct,
         el('p', { class: 'set-note', text: typeof window.showSaveFilePicker === 'function'
           ? 'Download opens a save-location dialog, then saves the game there.'
           : 'Your browser controls the save location. Enable “Ask where to save” in its download settings to choose a folder.' }),
@@ -56,12 +69,13 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   };
   const refreshRelease = async () => {
     if (busy) return; busy = true; check.disabled = true; download.disabled = true; branch.disabled = true;
-    manifest = null; progressGroup.hidden = true;
+    manifest = null; progressGroup.hidden = true; direct.hidden = true; direct.removeAttribute('href');
     prepared = null; download.textContent = offlinePlay.downloadLabel;
     try {
       const selected = offlinePlay.branches.find(item => item.id === branch.value);
       const data = releasedDownload(await (await request(selected.manifestUrl)).json(), selected.manifestUrl, selected.id);
       manifest = data;
+      direct.href = data.url; direct.download = data.filename; direct.hidden = false;
       showRelease(data);
       download.disabled = false; status.textContent = '';
     } catch (error) { release.textContent = 'Could not check the release. Connect to the internet and try Check for updates.'; status.textContent = error.message; }
