@@ -47,3 +47,50 @@
 - P3: none in the compared state.
 
 final result: passed
+
+# Formation layout editor — design QA (2026-09-19)
+
+## Evidence and comparison state
+
+- Approved visual: `C:/Users/suprbludude/.codex/generated_images/01a0bc53-5cf2-7422-84f6-055b325f0cfb/exec-3938e19f-5de1-430f-b1df-66ac1692ed67.png` (1487×1058).
+- Rendered evidence directory: `C:/Users/suprbludude/.codex/visualizations/2026/09/20/01a0bc53-5cf2-7422-84f6-055b325f0cfb/formation-qa/`.
+- `desktop.png` and `desktop-controls.png`: 1440×1024 pixels at a 1440×1024 CSS viewport, density 1; straight ranks, 3 columns × 6 rows per side, rectangle outlines, tilt 35°, skew 15°.
+- `phone.png` and `phone-controls.png`: 390×844 pixels at a 390×844 CSS viewport, density 1. The first shows forward slant; the second shows the reachable ground controls and saved status.
+- `combat.png`: 1440×1024; the actual battlefield with 36 positions and the player moved to F3.
+- Source, desktop, desktop controls and phone captures were opened together in one comparison input. Comparison used the editor regions rather than treating the existing Settings navigation as part of the source mock. The mock is a concept rather than an exact CSS-sized frame; no pixel-perfect alignment is claimed.
+
+## Findings and corrections
+
+- Fixed: desktop controls stacked too early and inherited overly small text. The editor now has a wider modal, a container-based breakpoint and physical font-size floors.
+- Fixed: the global minimum button height caused grid outlines to overlap. Battlefield cells now use the calculated grid dimensions.
+- Fixed: valid typed dimensions did not immediately redraw the preview. Number and slider inputs now update together; out-of-range values clamp on commit.
+- Fixed: Apply lost contrast in its focused state. `desktop-controls.png` and `phone-controls.png` confirm the corrected gold action and readable label after clicking.
+- Fixed: Done and Save could leave a draft unapplied. It now commits pending formation edits through the same save handler.
+- Remaining P0/P1/P2 findings: none in the compared states.
+
+## Required fidelity surfaces
+
+- Typography: keeps the game's existing font family and Settings heading treatment; editor headings, labels, values and helper text have distinct readable sizes. Position labels remain upright.
+- Layout: desktop keeps preview and controls side by side, with a sticky preview while the inspector scrolls. Phone stacks these regions; the existing settings footer remains reachable. Existing Settings tabs and navigation are intentionally retained, so the lower controls require scrolling compared with the standalone concept.
+- Colors: uses the existing dark brown/gold settings palette and configured allied/enemy grid colors. Selected presets, focus states and the Apply action remain visible.
+- Imagery: the grid and preset miniatures are functional diagrams generated from the actual formation geometry, not decorative replacement art. Uniform tile sizes and live tilt/skew take precedence over the mock's illustrative perspective. Both slant presets use parallel ranks as requested; Classic V mirrors the two sides.
+- Copy: named presets, per-side limits, total battlefield dimensions, a concise ground-shape explanation and explicit preview/saved statuses are present. The old row scale, offset and draw-order fields are grouped under Character adjustments.
+
+## Functional verification
+
+- Verified preset buttons and dropdown synchronization, 3×6 limits, clamping, all 36 labels, tilt editing, Apply, close/reopen retention, and Done and Save with a pending draft.
+- Verified Character adjustments exposes row F controls.
+- Verified the applied layout updates combat and movement to F3 consumes the expected action. Enemy positions remain unavailable for player movement.
+- Browser checks returned no warning/error console entries. Desktop and phone controls were inspected.
+- 421/421 UI/configuration test-group checks pass; the focused 86-check formation, movement, scaling, configuration and migration run also passes.
+- Build succeeds; all six shipped-artifact verification checks pass. The initial broader suite ran before two migration issues were corrected; the affected complete 421-check group was rerun successfully afterward. A fully fresh end-to-end suite run is not claimed.
+
+## Implementation checklist
+
+- [x] Illustrated preset picker and live preview.
+- [x] Uniform labeled grid, dimensions, footprint and ground projection.
+- [x] Collapsed character adjustments and saved settings integration.
+- [x] Shared preview/combat geometry and movement boundaries.
+- [x] Desktop/phone visual review, regression checks and refreshed game bundles.
+
+final result: passed

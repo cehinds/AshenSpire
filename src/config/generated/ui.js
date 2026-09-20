@@ -24,7 +24,7 @@
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
 // source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
-// source content/config/ui/presentation/combatFormationModel.json 81e83684b1160d5d
+// source content/config/ui/presentation/combatFormationModel.json fafe847869663431
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 4b57264c7bf70caf
@@ -2557,6 +2557,16 @@ export const uiConfig = deepFreeze({
         "gapRamp": {
           "narrowPx": 375,
           "widePx": 1200
+        },
+        "grid": {
+          "slantFraction": 0.19,
+          "cellFraction": 0.78,
+          "previewDepthFraction": 0.82,
+          "fieldDepthFraction": 0.49,
+          "bottomClearanceFraction": 0.12,
+          "tileWidthFraction": 0.62,
+          "tileRowFraction": 0.5,
+          "legacyTileRowFraction": 0.7
         }
       },
       "positioning": {
