@@ -17,6 +17,13 @@ catalog includes greatsword, sword/shield and unarmed ready stances. Each family
 Twin swords add 32 appearances across those 35 entries, sharing one motion profile. Optional per-hand item constraints select only the authored right Straight Sword / left Katana order; reversed hands retain existing art. The [twin-sword workshop](../art/twin-sword-reference-2026-09-19/index.html) compares outfits and edits playback order.
 See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
 
+Empty-hand magic adds 16 addressable poses for each of the 32 appearances,
+covering all 35 armor entries. The shared unarmed profile uses the nine-step
+magic channel/release clip for casting and a self-directed magic buff pose;
+physical references remain the defaults for ordinary attacks and other roles.
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) includes class and
+armor filters, labeled sheets and synchronized playback.
+
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from
 Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
