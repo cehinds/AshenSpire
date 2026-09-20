@@ -27,7 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json 81e83684b1160d5d
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 83d45de9d5c9fe83
+// source content/config/ui/presentation/equipmentAnimations.json 9923f3ea4aaea62b
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -4179,6 +4179,251 @@ export const uiConfig = deepFreeze({
             "rightGroup": "shield",
             "leftGroup": "sword",
             "setId": "rogue-gutterLeathersSwordShield"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaverUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-vigilUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-oathswornUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseerUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-eclipseUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-astralUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "heraldUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-ossuaryUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-emberhabitUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-pilgrimUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogueUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-duelistUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-shadowUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-wayfarerPlateUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-wayfarerPlateUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-wayfarerPlateUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-wayfarerPlateUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-nightweaveUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-nightweaveUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-nightweaveUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-nightweaveUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-riteVestmentsUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-riteVestmentsUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-riteVestmentsUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-riteVestmentsUnarmed"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "reaver-gutterLeathersUnarmed"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "starseer-gutterLeathersUnarmed"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "herald-gutterLeathersUnarmed"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "empty",
+            "setId": "rogue-gutterLeathersUnarmed"
           }
         ],
         "sets": {
@@ -13557,6 +13802,4902 @@ export const uiConfig = deepFreeze({
                 }
               }
             }
+          },
+          "reaverUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 145,
+                  "x1": 523,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 152,
+                  "x1": 531,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 533,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver/ATK-03.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 154,
+                  "x1": 558,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver/ATK-04.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 138,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 128,
+                  "x1": 575,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 128,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver/ATK-07.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 138,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 159,
+                  "x1": 517,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver/HURT.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 150,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver/CAST.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 135,
+                  "x1": 577,
+                  "y1": 619
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver/BUFF.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 126,
+                  "x1": 465,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 216,
+                  "x1": 540,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 525,
+                  "y1": 615
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 96,
+                  "x1": 609,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver/CONVERSATION.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 112,
+                  "x1": 441,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "reaver-vigilUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 155,
+                  "x1": 510,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 156,
+                  "x1": 514,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 159,
+                  "x1": 541,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 158,
+                  "x1": 551,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 149,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 148,
+                  "x1": 561,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 151,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 165,
+                  "x1": 514,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 151,
+                  "x1": 521,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 140,
+                  "x1": 573,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 132,
+                  "x1": 469,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 219,
+                  "x1": 530,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 192,
+                  "x1": 509,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 111,
+                  "x1": 608,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-vigil/CONVERSATION.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 118,
+                  "x1": 453,
+                  "y1": 608
+                }
+              }
+            }
+          },
+          "reaver-oathswornUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 138,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 145,
+                  "x1": 533,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 146,
+                  "x1": 543,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 134,
+                  "x1": 565,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 135,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 126,
+                  "x1": 585,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 141,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 141,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 151,
+                  "x1": 525,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 130,
+                  "x1": 567,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 118,
+                  "x1": 485,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 195,
+                  "x1": 547,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 180,
+                  "x1": 527,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 122,
+                  "x1": 609,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/CONVERSATION.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 115,
+                  "x1": 479,
+                  "y1": 618
+                }
+              }
+            }
+          },
+          "reaver-wardenUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 159,
+                  "x1": 503,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 164,
+                  "x1": 518,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 161,
+                  "x1": 530,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 162,
+                  "x1": 550,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 151,
+                  "x1": 505,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 151,
+                  "x1": 567,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 152,
+                  "x1": 513,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 151,
+                  "x1": 509,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 169,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 159,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 150,
+                  "x1": 559,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 136,
+                  "x1": 470,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 221,
+                  "x1": 539,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 189,
+                  "x1": 508,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 105,
+                  "x1": 609,
+                  "y1": 620
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-warden/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 124,
+                  "x1": 447,
+                  "y1": 619
+                }
+              }
+            }
+          },
+          "starseerUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 136,
+                  "x1": 520,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 139,
+                  "x1": 521,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 139,
+                  "x1": 541,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 139,
+                  "x1": 557,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 116,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 124,
+                  "x1": 580,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 129,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 131,
+                  "x1": 514,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 145,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer/HURT.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 142,
+                  "x1": 510,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer/CAST.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 128,
+                  "x1": 568,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 124,
+                  "x1": 475,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 192,
+                  "x1": 543,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 180,
+                  "x1": 513,
+                  "y1": 610
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 96,
+                  "x1": 595,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 110,
+                  "x1": 460,
+                  "y1": 614
+                }
+              }
+            }
+          },
+          "starseer-eclipseUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 124,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 129,
+                  "x1": 531,
+                  "y1": 601
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 121,
+                  "x1": 527,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 115,
+                  "x1": 551,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 111,
+                  "x1": 519,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 115,
+                  "x1": 575,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 131,
+                  "x1": 533,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 116,
+                  "x1": 515,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 132,
+                  "x1": 521,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 132,
+                  "x1": 519,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 111,
+                  "x1": 555,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 120,
+                  "x1": 471,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 180,
+                  "x1": 535,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 164,
+                  "x1": 521,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 70,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-eclipse/CONVERSATION.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 118,
+                  "x1": 450,
+                  "y1": 614
+                }
+              }
+            }
+          },
+          "starseer-starlitUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 142,
+                  "x1": 520,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 148,
+                  "x1": 527,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 151,
+                  "x1": 525,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 150,
+                  "x1": 537,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 128,
+                  "x1": 520,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 128,
+                  "x1": 558,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 151,
+                  "x1": 520,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 146,
+                  "x1": 518,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 159,
+                  "x1": 533,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 156,
+                  "x1": 514,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 145,
+                  "x1": 563,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 125,
+                  "x1": 489,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 196,
+                  "x1": 533,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 196,
+                  "x1": 537,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 84,
+                  "x1": 598,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-starlit/CONVERSATION.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 135,
+                  "x1": 471,
+                  "y1": 617
+                }
+              }
+            }
+          },
+          "starseer-astralUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 132,
+                  "x1": 517,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 131,
+                  "x1": 530,
+                  "y1": 619
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 132,
+                  "x1": 529,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 130,
+                  "x1": 553,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 114,
+                  "x1": 524,
+                  "y1": 601
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 129,
+                  "x1": 577,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 126,
+                  "x1": 528,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 122,
+                  "x1": 527,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 130,
+                  "x1": 519,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 136,
+                  "x1": 521,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 125,
+                  "x1": 577,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 109,
+                  "x1": 470,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 182,
+                  "x1": 535,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 160,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 91,
+                  "x1": 594,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-astral/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 111,
+                  "x1": 469,
+                  "y1": 618
+                }
+              }
+            }
+          },
+          "heraldUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 155,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 152,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald/ATK-02.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 155,
+                  "x1": 543,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald/ATK-03.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 155,
+                  "x1": 554,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald/ATK-04.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 140,
+                  "x1": 514,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 139,
+                  "x1": 575,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 139,
+                  "x1": 525,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald/ATK-07.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 135,
+                  "x1": 519,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald/DEFEND.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 160,
+                  "x1": 519,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 145,
+                  "x1": 514,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 135,
+                  "x1": 585,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 129,
+                  "x1": 485,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 188,
+                  "x1": 535,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 174,
+                  "x1": 514,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 64,
+                  "x1": 609,
+                  "y1": 618
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald/CONVERSATION.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 110,
+                  "x1": 445,
+                  "y1": 608
+                }
+              }
+            }
+          },
+          "herald-ossuaryUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 128,
+                  "x1": 519,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 124,
+                  "x1": 521,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 129,
+                  "x1": 533,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 131,
+                  "x1": 565,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 114,
+                  "x1": 517,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 547,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 120,
+                  "x1": 534,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 112,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 132,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 125,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 115,
+                  "x1": 578,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 106,
+                  "x1": 467,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 185,
+                  "x1": 535,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 156,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 62,
+                  "x1": 609,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-ossuary/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 111,
+                  "x1": 445,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-emberhabitUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 126,
+                  "x1": 521,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 135,
+                  "x1": 524,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 140,
+                  "x1": 543,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 135,
+                  "x1": 547,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 131,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 131,
+                  "x1": 564,
+                  "y1": 615
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 131,
+                  "x1": 513,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 116,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 124,
+                  "x1": 509,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 155,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 121,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 101,
+                  "x1": 464,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 176,
+                  "x1": 524,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 189,
+                  "x1": 510,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 81,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-emberhabit/CONVERSATION.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 120,
+                  "x1": 438,
+                  "y1": 608
+                }
+              }
+            }
+          },
+          "herald-pilgrimUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 144,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 145,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 142,
+                  "x1": 545,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 142,
+                  "x1": 545,
+                  "y1": 617
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 140,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 139,
+                  "x1": 561,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 138,
+                  "x1": 511,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 139,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 159,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 135,
+                  "x1": 521,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 139,
+                  "x1": 565,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 128,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 201,
+                  "x1": 524,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 198,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 68,
+                  "x1": 604,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-pilgrim/CONVERSATION.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 109,
+                  "x1": 468,
+                  "y1": 609
+                }
+              }
+            }
+          },
+          "rogueUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 138,
+                  "x1": 513,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 139,
+                  "x1": 525,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 141,
+                  "x1": 541,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 144,
+                  "x1": 559,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 129,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 139,
+                  "x1": 555,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 135,
+                  "x1": 519,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 144,
+                  "x1": 517,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 150,
+                  "x1": 515,
+                  "y1": 610
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue/HURT.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 139,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue/CAST.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 138,
+                  "x1": 570,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 125,
+                  "x1": 477,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 199,
+                  "x1": 540,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 178,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 100,
+                  "x1": 609,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 114,
+                  "x1": 461,
+                  "y1": 614
+                }
+              }
+            }
+          },
+          "rogue-nightveilUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 146,
+                  "x1": 527,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 145,
+                  "x1": 561,
+                  "y1": 603
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 128,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 131,
+                  "x1": 569,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 142,
+                  "x1": 521,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 145,
+                  "x1": 519,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 166,
+                  "x1": 527,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 150,
+                  "x1": 507,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 148,
+                  "x1": 570,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 121,
+                  "x1": 468,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 214,
+                  "x1": 538,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 196,
+                  "x1": 530,
+                  "y1": 614
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 112,
+                  "x1": 601,
+                  "y1": 609
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-nightveil/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 128,
+                  "x1": 467,
+                  "y1": 607
+                }
+              }
+            }
+          },
+          "rogue-duelistUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 139,
+                  "x1": 515,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 148,
+                  "x1": 523,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 152,
+                  "x1": 525,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 149,
+                  "x1": 563,
+                  "y1": 619
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 122,
+                  "x1": 531,
+                  "y1": 620
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 134,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 138,
+                  "x1": 521,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 142,
+                  "x1": 515,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 151,
+                  "x1": 523,
+                  "y1": 610
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 135,
+                  "x1": 513,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 124,
+                  "x1": 565,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 100,
+                  "x1": 470,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 195,
+                  "x1": 538,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 166,
+                  "x1": 530,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 90,
+                  "x1": 609,
+                  "y1": 609
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-duelist/CONVERSATION.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 104,
+                  "x1": 455,
+                  "y1": 610
+                }
+              }
+            }
+          },
+          "rogue-shadowUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 161,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 160,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 164,
+                  "x1": 550,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 148,
+                  "x1": 548,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 142,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 144,
+                  "x1": 574,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 159,
+                  "x1": 518,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 158,
+                  "x1": 504,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 168,
+                  "x1": 513,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 148,
+                  "x1": 514,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 154,
+                  "x1": 561,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 131,
+                  "x1": 470,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 216,
+                  "x1": 531,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 208,
+                  "x1": 505,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 98,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-shadow/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 129,
+                  "x1": 444,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "reaver-wayfarerPlateUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 152,
+                  "x1": 520,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 151,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 152,
+                  "x1": 554,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 141,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 144,
+                  "x1": 581,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 142,
+                  "x1": 517,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 142,
+                  "x1": 509,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 166,
+                  "x1": 515,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 155,
+                  "x1": 519,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 138,
+                  "x1": 579,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 132,
+                  "x1": 477,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 199,
+                  "x1": 537,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 179,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 104,
+                  "x1": 605,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 118,
+                  "x1": 457,
+                  "y1": 605
+                }
+              }
+            }
+          },
+          "starseer-wayfarerPlateUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 125,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 126,
+                  "x1": 520,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 136,
+                  "x1": 534,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 131,
+                  "x1": 551,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 115,
+                  "x1": 513,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 119,
+                  "x1": 577,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 116,
+                  "x1": 534,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 119,
+                  "x1": 511,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 132,
+                  "x1": 520,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 138,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 124,
+                  "x1": 569,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 110,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 179,
+                  "x1": 538,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 156,
+                  "x1": 530,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 112,
+                  "x1": 597,
+                  "y1": 613
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 112,
+                  "x1": 450,
+                  "y1": 615
+                }
+              }
+            }
+          },
+          "herald-wayfarerPlateUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 128,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 126,
+                  "x1": 527,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 128,
+                  "x1": 528,
+                  "y1": 603
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 130,
+                  "x1": 548,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 119,
+                  "x1": 520,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 115,
+                  "x1": 553,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 129,
+                  "x1": 520,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 125,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 134,
+                  "x1": 520,
+                  "y1": 605
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 116,
+                  "x1": 531,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 112,
+                  "x1": 564,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 120,
+                  "x1": 471,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 169,
+                  "x1": 529,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 144,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 85,
+                  "x1": 601,
+                  "y1": 603
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 166,
+                  "y0": 106,
+                  "x1": 449,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "rogue-wayfarerPlateUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 150,
+                  "x1": 519,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 155,
+                  "x1": 515,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 154,
+                  "x1": 524,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 151,
+                  "x1": 547,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 148,
+                  "x1": 515,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 151,
+                  "x1": 559,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 151,
+                  "x1": 527,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 145,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 164,
+                  "x1": 513,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 150,
+                  "x1": 504,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 151,
+                  "x1": 577,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 126,
+                  "x1": 470,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 200,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 175,
+                  "x1": 508,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 112,
+                  "x1": 607,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 119,
+                  "x1": 450,
+                  "y1": 609
+                }
+              }
+            }
+          },
+          "reaver-nightweaveUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 160,
+                  "x1": 501,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 164,
+                  "x1": 511,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 165,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 165,
+                  "x1": 550,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 156,
+                  "x1": 501,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 148,
+                  "x1": 545,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 160,
+                  "x1": 510,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 160,
+                  "x1": 504,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 181,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 172,
+                  "x1": 501,
+                  "y1": 607
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 170,
+                  "x1": 579,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 149,
+                  "x1": 458,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 232,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 202,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 110,
+                  "x1": 601,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 139,
+                  "x1": 445,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "starseer-nightweaveUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 136,
+                  "x1": 510,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 135,
+                  "x1": 530,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 139,
+                  "x1": 545,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 139,
+                  "x1": 544,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 124,
+                  "x1": 528,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 125,
+                  "x1": 569,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 126,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 128,
+                  "x1": 521,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 132,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 134,
+                  "x1": 513,
+                  "y1": 615
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 120,
+                  "x1": 575,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 134,
+                  "x1": 479,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 192,
+                  "x1": 525,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 180,
+                  "x1": 528,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 119,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 145,
+                  "x1": 447,
+                  "y1": 611
+                }
+              }
+            }
+          },
+          "herald-nightweaveUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 508,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 136,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 141,
+                  "x1": 540,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 142,
+                  "x1": 555,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 136,
+                  "x1": 508,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 136,
+                  "x1": 557,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 140,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 139,
+                  "x1": 509,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 145,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 146,
+                  "x1": 507,
+                  "y1": 614
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 136,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 125,
+                  "x1": 468,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 182,
+                  "x1": 529,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 511,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 60,
+                  "x1": 609,
+                  "y1": 610
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 105,
+                  "x1": 457,
+                  "y1": 608
+                }
+              }
+            }
+          },
+          "rogue-nightweaveUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 144,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 149,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 151,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 152,
+                  "x1": 554,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 131,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 132,
+                  "x1": 578,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 142,
+                  "x1": 525,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 145,
+                  "x1": 509,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 175,
+                  "x1": 518,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 155,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 141,
+                  "x1": 575,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 124,
+                  "x1": 463,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 215,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 525,
+                  "y1": 614
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 101,
+                  "x1": 607,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 116,
+                  "x1": 449,
+                  "y1": 619
+                }
+              }
+            }
+          },
+          "reaver-riteVestmentsUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 152,
+                  "x1": 505,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 154,
+                  "x1": 518,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 156,
+                  "x1": 529,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 154,
+                  "x1": 545,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 148,
+                  "x1": 514,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 579,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 150,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 510,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 168,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 158,
+                  "x1": 504,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 151,
+                  "x1": 577,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 126,
+                  "x1": 461,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 221,
+                  "x1": 533,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 192,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 106,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 121,
+                  "x1": 449,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "starseer-riteVestmentsUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 120,
+                  "x1": 520,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 126,
+                  "x1": 529,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 141,
+                  "x1": 547,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 141,
+                  "x1": 559,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 120,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 124,
+                  "x1": 577,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 132,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 134,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 141,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 135,
+                  "x1": 567,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 484,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 194,
+                  "x1": 531,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 198,
+                  "x1": 530,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 72,
+                  "x1": 609,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 112,
+                  "x1": 459,
+                  "y1": 613
+                }
+              }
+            }
+          },
+          "herald-riteVestmentsUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 134,
+                  "x1": 505,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 141,
+                  "x1": 527,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 149,
+                  "x1": 531,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 154,
+                  "x1": 549,
+                  "y1": 614
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 128,
+                  "x1": 514,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 134,
+                  "x1": 564,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 136,
+                  "x1": 520,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 135,
+                  "x1": 511,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 158,
+                  "x1": 520,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 129,
+                  "x1": 524,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 139,
+                  "x1": 560,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 106,
+                  "x1": 468,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 209,
+                  "x1": 527,
+                  "y1": 619
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 181,
+                  "x1": 510,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 96,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 116,
+                  "x1": 448,
+                  "y1": 607
+                }
+              }
+            }
+          },
+          "rogue-riteVestmentsUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 155,
+                  "x1": 503,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 155,
+                  "x1": 517,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 165,
+                  "x1": 533,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 159,
+                  "x1": 569,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 154,
+                  "x1": 509,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 139,
+                  "x1": 579,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 155,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 155,
+                  "x1": 510,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 172,
+                  "x1": 509,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 162,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 144,
+                  "x1": 554,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 135,
+                  "x1": 463,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 225,
+                  "x1": 531,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 200,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 110,
+                  "x1": 593,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 128,
+                  "x1": 448,
+                  "y1": 604
+                }
+              }
+            }
+          },
+          "reaver-gutterLeathersUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 136,
+                  "x1": 509,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 144,
+                  "x1": 524,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 144,
+                  "x1": 540,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 145,
+                  "x1": 559,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 132,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 131,
+                  "x1": 580,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 121,
+                  "x1": 530,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 132,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 154,
+                  "x1": 519,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 145,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 148,
+                  "x1": 573,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 124,
+                  "x1": 465,
+                  "y1": 618
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 210,
+                  "x1": 537,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 189,
+                  "x1": 529,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 114,
+                  "x1": 609,
+                  "y1": 613
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 118,
+                  "x1": 450,
+                  "y1": 605
+                }
+              }
+            }
+          },
+          "starseer-gutterLeathersUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 114,
+                  "x1": 517,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 119,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 115,
+                  "x1": 541,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 120,
+                  "x1": 554,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 112,
+                  "x1": 525,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 116,
+                  "x1": 557,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 102,
+                  "x1": 527,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 109,
+                  "x1": 517,
+                  "y1": 620
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 120,
+                  "x1": 541,
+                  "y1": 620
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 119,
+                  "x1": 511,
+                  "y1": 615
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 115,
+                  "x1": 564,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 112,
+                  "x1": 493,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 171,
+                  "x1": 535,
+                  "y1": 603
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 181,
+                  "x1": 517,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 81,
+                  "x1": 590,
+                  "y1": 615
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 112,
+                  "x1": 461,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "herald-gutterLeathersUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 132,
+                  "x1": 508,
+                  "y1": 617
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 132,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 140,
+                  "x1": 515,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 139,
+                  "x1": 574,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 132,
+                  "x1": 505,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 135,
+                  "x1": 561,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 134,
+                  "x1": 513,
+                  "y1": 603
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 135,
+                  "x1": 511,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 154,
+                  "x1": 518,
+                  "y1": 607
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 136,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 135,
+                  "x1": 557,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 115,
+                  "x1": 468,
+                  "y1": 607
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 189,
+                  "x1": 527,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 179,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 75,
+                  "x1": 609,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 178,
+                  "y0": 108,
+                  "x1": 457,
+                  "y1": 603
+                }
+              }
+            }
+          },
+          "rogue-gutterLeathersUnarmed": {
+            "motionProfile": "unarmed",
+            "authoredEquipment": {
+              "rightGroup": "empty",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 142,
+                  "x1": 528,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 155,
+                  "x1": 530,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 149,
+                  "x1": 539,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 158,
+                  "x1": 545,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 131,
+                  "x1": 523,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 148,
+                  "x1": 574,
+                  "y1": 609
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 146,
+                  "x1": 521,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 150,
+                  "x1": 514,
+                  "y1": 619
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 155,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 152,
+                  "x1": 518,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 139,
+                  "x1": 575,
+                  "y1": 619
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 129,
+                  "x1": 478,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 202,
+                  "x1": 535,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 189,
+                  "x1": 527,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 96,
+                  "x1": 609,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 126,
+                  "x1": 450,
+                  "y1": 608
+                }
+              }
+            }
           }
         },
         "motionProfiles": {
@@ -13830,6 +18971,148 @@ export const uiConfig = deepFreeze({
               "prototypeGuardStance": "defensiveStance",
               "prototypeFocusStance": "defensiveStance",
               "defeated": "defeat"
+            }
+          },
+          "unarmed": {
+            "normalLungeMs": 260,
+            "poseRoles": {
+              "idle": "idle",
+              "stand": "menu",
+              "attack": "attack",
+              "attack1": "attack",
+              "attack2": "attack",
+              "attack3": "attack",
+              "attack4": "attack",
+              "guard": "defend",
+              "shieldGuard": "defend",
+              "shieldGuard3": "defend",
+              "parry": "defend",
+              "shieldBash": "attack",
+              "hit": "hurt",
+              "power": "buff",
+              "cast": "cast",
+              "gorefire": "aggressiveStance",
+              "bulwark": "defensiveStance",
+              "prepared": "defensiveStance",
+              "starstoneCharge": "defensiveStance",
+              "bloodRite": "buff",
+              "prototypeGuardStance": "defensiveStance",
+              "prototypeFocusStance": "defensiveStance",
+              "defeated": "defeat"
+            },
+            "clips": {
+              "physicalReady": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalAttack": {
+                "frames": [
+                  "STANCE-READY",
+                  "ATK-01",
+                  "ATK-02",
+                  "ATK-03",
+                  "ATK-04",
+                  "ATK-05",
+                  "ATK-06",
+                  "ATK-07",
+                  "STANCE-READY"
+                ],
+                "frameMs": 140,
+                "impactIndex": 5
+              },
+              "physicalDefend": {
+                "frames": [
+                  "DEFEND"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalHurt": {
+                "frames": [
+                  "HURT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalCast": {
+                "frames": [
+                  "CAST"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalBuff": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalEnterStance": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalLeaveStance": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalAggressive": {
+                "frames": [
+                  "STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalDefensive": {
+                "frames": [
+                  "STANCE-DEFENSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalPortrait": {
+                "frames": [
+                  "PORTRAIT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalConversation": {
+                "frames": [
+                  "CONVERSATION"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              }
+            },
+            "references": {
+              "idle": "physicalReady",
+              "attack": "physicalAttack",
+              "defend": "physicalDefend",
+              "hurt": "physicalHurt",
+              "stanceActivate": "physicalEnterStance",
+              "stanceDeactivate": "physicalLeaveStance",
+              "aggressiveStance": "physicalAggressive",
+              "defensiveStance": "physicalDefensive",
+              "conversation": "physicalConversation",
+              "portrait": "physicalPortrait",
+              "menu": "physicalReady",
+              "detail": "physicalPortrait",
+              "dodge": null,
+              "victory": null,
+              "defeat": null,
+              "revive": null,
+              "cast": "physicalCast",
+              "buff": "physicalBuff"
             }
           }
         }

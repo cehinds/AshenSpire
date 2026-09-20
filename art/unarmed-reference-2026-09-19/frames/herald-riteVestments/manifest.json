@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-riteVestments",
+  "classId": "herald",
+  "armourId": "riteVestments",
+  "effectsBaked": false,
+  "source": "sources/herald-riteVestments.png",
+  "sourceSha256": "fa7a8190c22a2e90b20dbae31942c324ffec1f1d911498a67ea6b332d8d67b3b",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3249211356466877,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        18,
+        11,
+        288,
+        312
+      ],
+      "core": [
+        30,
+        23,
+        276,
+        300
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        148.5,
+        289
+      ],
+      "offset": [
+        59,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        107,
+        405,
+        488
+      ],
+      "file": "frames/herald-riteVestments/STANCE-READY.webp",
+      "sha256": "b3009a0b5f8be8f1440d75f542b5bff1b44d0dc817515d1e53bf4bb3a7317b53"
+    },
+    "ATK-01": {
+      "content": [
+        333,
+        14,
+        601,
+        312
+      ],
+      "core": [
+        345,
+        26,
+        589,
+        300
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        143.0,
+        286
+      ],
+      "offset": [
+        67,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        113,
+        422,
+        491
+      ],
+      "file": "frames/herald-riteVestments/ATK-01.webp",
+      "sha256": "68b0ef719fca935cdb132ce91ff531d4af3bc43e2050a8971ed77317f7bcd4e9"
+    },
+    "ATK-02": {
+      "content": [
+        636,
+        17,
+        923,
+        311
+      ],
+      "core": [
+        648,
+        29,
+        911,
+        299
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        151.5,
+        282
+      ],
+      "offset": [
+        55,
+        106
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        119,
+        426,
+        496
+      ],
+      "file": "frames/herald-riteVestments/ATK-02.webp",
+      "sha256": "13ad4fc61b64d7d0e5133bd17bdeb4bf172b7c7b934bef882aac060f5cfc236a"
+    },
+    "ATK-03": {
+      "content": [
+        951,
+        20,
+        1243,
+        311
+      ],
+      "core": [
+        963,
+        32,
+        1231,
+        299
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        147.0,
+        279
+      ],
+      "offset": [
+        61,
+        110
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        123,
+        440,
+        492
+      ],
+      "file": "frames/herald-riteVestments/ATK-03.webp",
+      "sha256": "3771f52601d3c2a6b1e2f2ea01faedf808347cf2ad5522f759d685122e78ad46"
+    },
+    "ATK-04": {
+      "content": [
+        21,
+        322,
+        293,
+        623
+      ],
+      "core": [
+        33,
+        334,
+        281,
+        611
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        147.0,
+        289
+      ],
+      "offset": [
+        61,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        102,
+        412,
+        483
+      ],
+      "file": "frames/herald-riteVestments/ATK-04.webp",
+      "sha256": "7d5d0122cd4a4a9d554745a06d3437e396f38b85fd67d32203bd06f5e8f8c93b"
+    },
+    "ATK-05": {
+      "content": [
+        325,
+        323,
+        622,
+        623
+      ],
+      "core": [
+        337,
+        335,
+        610,
+        611
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        149.0,
+        288
+      ],
+      "offset": [
+        59,
+        98
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        107,
+        452,
+        484
+      ],
+      "file": "frames/herald-riteVestments/ATK-05.webp",
+      "sha256": "fe8347d0217df202c3b318b62b3ad38b04682b46bd5fff88af11d99ec2e80389"
+    },
+    "ATK-06": {
+      "content": [
+        642,
+        322,
+        918,
+        624
+      ],
+      "core": [
+        654,
+        334,
+        906,
+        612
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        148.0,
+        290
+      ],
+      "offset": [
+        60,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        109,
+        417,
+        484
+      ],
+      "file": "frames/herald-riteVestments/ATK-06.webp",
+      "sha256": "75e7273f84501ea5656239954ff615e4374cc32da2ff637e75898f5a97e96a14"
+    },
+    "ATK-07": {
+      "content": [
+        961,
+        323,
+        1235,
+        624
+      ],
+      "core": [
+        973,
+        335,
+        1223,
+        612
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        149.5,
+        289
+      ],
+      "offset": [
+        58,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        108,
+        410,
+        484
+      ],
+      "file": "frames/herald-riteVestments/ATK-07.webp",
+      "sha256": "8ef3fa7fe8540c30bbb5b75c389a7d872ebe8dc0c8d18a023661b8546b847597"
+    },
+    "DEFEND": {
+      "content": [
+        20,
+        647,
+        292,
+        936
+      ],
+      "core": [
+        32,
+        659,
+        280,
+        924
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        147.5,
+        277
+      ],
+      "offset": [
+        61,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        126,
+        417,
+        492
+      ],
+      "file": "frames/herald-riteVestments/DEFEND.webp",
+      "sha256": "7f00d93b45a1819f01f1788bd19a2d8572500026094204875adfc7aaa205fabf"
+    },
+    "HURT": {
+      "content": [
+        326,
+        632,
+        607,
+        938
+      ],
+      "core": [
+        338,
+        644,
+        595,
+        926
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        157.0,
+        294
+      ],
+      "offset": [
+        48,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        103,
+        420,
+        488
+      ],
+      "file": "frames/herald-riteVestments/HURT.webp",
+      "sha256": "0b30aa60d1cea1c729f25a3fbc96689f673bd5e426472125b1d34b208768eeed"
+    },
+    "CAST": {
+      "content": [
+        633,
+        641,
+        944,
+        937
+      ],
+      "core": [
+        645,
+        653,
+        932,
+        925
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        156.0,
+        284
+      ],
+      "offset": [
+        49,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        50,
+        111,
+        449,
+        491
+      ],
+      "file": "frames/herald-riteVestments/CAST.webp",
+      "sha256": "aeca1e192c911d59e3206af18d5bcbeda6f10314a85b3b513649b8dfd8b780a9"
+    },
+    "BUFF": {
+      "content": [
+        971,
+        621,
+        1204,
+        938
+      ],
+      "core": [
+        983,
+        633,
+        1192,
+        926
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        134.0,
+        305
+      ],
+      "offset": [
+        78,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        91,
+        85,
+        375,
+        493
+      ],
+      "file": "frames/herald-riteVestments/BUFF.webp",
+      "sha256": "1e5ef021792f64abc49d7919f97950bf90cf4a9ed5de8a8f51102026b7b765c5"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        28,
+        966,
+        304,
+        1223
+      ],
+      "core": [
+        40,
+        978,
+        292,
+        1211
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        143.0,
+        245
+      ],
+      "offset": [
+        67,
+        155
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        167,
+        422,
+        496
+      ],
+      "file": "frames/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+      "sha256": "df906e7b892ead366628334041ccd74a48eac2bca02621ef925777de8d2867b1"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        341,
+        955,
+        608,
+        1229
+      ],
+      "core": [
+        353,
+        967,
+        596,
+        1217
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        143.0,
+        262
+      ],
+      "offset": [
+        67,
+        133
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        145,
+        409,
+        490
+      ],
+      "file": "frames/herald-riteVestments/STANCE-DEFENSIVE.webp",
+      "sha256": "e11335f11ca90d460e58988da4d86a65e725da2fe0cfd515707a1c50a81943ae"
+    },
+    "PORTRAIT": {
+      "content": [
+        636,
+        935,
+        954,
+        1233
+      ],
+      "core": [
+        648,
+        947,
+        942,
+        1221
+      ],
+      "scale": 1.4591194968553458,
+      "sourceFootAnchor": [
+        159.0,
+        286
+      ],
+      "offset": [
+        24,
+        63
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        30,
+        77,
+        487,
+        485
+      ],
+      "file": "frames/herald-riteVestments/PORTRAIT.webp",
+      "sha256": "7cf13543d767d24f7db1e343ff836978e45295dfb98ec2fd3c7f2c8fedcaaccf"
+    },
+    "CONVERSATION": {
+      "content": [
+        984,
+        922,
+        1201,
+        1234
+      ],
+      "core": [
+        996,
+        934,
+        1189,
+        1222
+      ],
+      "scale": 1.3249211356466877,
+      "sourceFootAnchor": [
+        129.5,
+        300
+      ],
+      "offset": [
+        84,
+        83
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        94,
+        93,
+        359,
+        486
+      ],
+      "file": "frames/herald-riteVestments/CONVERSATION.webp",
+      "sha256": "a260f09895b27d38b178faad666cb7abc75b8af59cd5a5398fd3b325bd923418"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}
