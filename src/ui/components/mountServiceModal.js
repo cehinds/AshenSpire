@@ -351,14 +351,14 @@ export function mountMountServiceModal(host, initialModel, {
   // list takes Escape first (w1Workspace.js listens a step earlier).
   back.addEventListener('click', shell.close);
   // The deck list is a `.card-shelf`; the wire keeps its last row the same
-  // width as the rows above it (components/cardShelf.js). `draw` replaces the
-  // list's contents but not the list, so one wire covers every redraw.
+  // width as the rows above it (components/cardShelf.js). `draw` REPLACES the
+  // preview, list and all, so the wire is asked to look again after each one.
   draw(initialModel);
   shelves = wireCardShelf(modal);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
 
   return {
-    update(model) { draw(model); },
+    update(model) { draw(model); shelves?.apply(); },
     close() {
       leaving = 'screen';
       shell.close();

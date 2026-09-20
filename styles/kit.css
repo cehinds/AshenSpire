@@ -1208,13 +1208,21 @@ input[type="range"] { min-height: var(--tap-floor); }
 /* A line of prose on a shelf is not a card: an empty shelf's "nothing for sale
    on this visit" would otherwise be squeezed into one 152px column. */
 .card-shelf > :is(.as-status, p, h3, .shop-offer-avail) { flex-basis: 100%; max-width: none; }
+/* NOR IS AN OFFER WITH NO CARD IN IT. The merchant's SELL shelf is mixed: an
+   armament he will buy is a card, a relic or flask is an OptionCard with a
+   name, a description and a price and no face at all. Capping THAT at a card's
+   width ellipsised the name and stood the description in a 152px strip, so a
+   tile that holds no card keeps the kit's own measure (`.class-pick`, kit
+   above) and takes a row of its own. `.shop-collectible-offer` is the tile
+   that DOES hold a face and is deliberately not exempt. */
+.card-shelf > .shop-text-offer { flex: 1 1 26rem; max-width: 40rem; }
 /* THE PLAYING CARD IS A FIXED BOX and `flex-shrink: 0`, so on a shelf it would
    have overflowed its track rather than fitting in it. `--card-w` is the box's
    one width input and the height is computed from its landmarks, not from the
    width — so a narrower card is the same card with its text clamped by the
    budget that already clamps it (`.ctext` line-clamp, and the chevron that
    says so), never a cut-off one. */
-.card-shelf .card { --card-w: 100%; width: 100%; max-width: 100%; flex-shrink: 1; }
+.card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
 /* `[data-small]` scales the card by transform: on a shelf the TRACK is what
    makes it small, and a transform on top of that only opens a gap. Hover and
    focus keep their lift. */

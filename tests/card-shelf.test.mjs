@@ -148,6 +148,10 @@ test('D — the merchant\'s offers column is sized for a shelf, bounded by the d
   // everything else — and that is MORE than the authored fraction would give.
   const roomy = fullShelf + detailFloor + 200;
   assert.equal(shopOffersWidthPx(roomy, 16), fullShelf);
+  // The same question in the root size the app runs at (`font-size: 62.5%`),
+  // where the floor is 220px rather than 352.
+  const atTen = fullShelf + ui.detailMinRem * 10 + 200;
+  assert.equal(shopOffersWidthPx(atTen, 10), fullShelf);
   assert.ok(fullShelf > roomy * ui.offersFraction);
 
   // A pane too narrow for both: the detail keeps its floor and the shelf takes
@@ -175,24 +179,57 @@ test('D — the merchant\'s offers column is sized for a shelf, bounded by the d
 });
 
 test('D — at the photographed shape the merchant shows four cards, where it showed one', () => {
-  // 1328x744, the owner's window. The frame is the workspace minus the screen's
-  // own inset; the numbers below are the model's, not a stylesheet's.
-  const layout = shopWorkspaceLayout({ width: 1300, bodyHeight: 520, rem: 16 });
+  // 1328x744, the owner's window, in the numbers the page reports there:
+  // `.shop-frame` 1235, `.shop-body` 917, root font-size 10px (the app's own
+  // `font-size: 62.5%`). Measured in headless Chromium, not estimated — the
+  // rail's track and the pane's inset stand between the frame and the body and
+  // are not this model's to restate.
+  const ui = wireframeUi.shop;
+  const layout = shopWorkspaceLayout({ width: 1235, bodyWidth: 917, bodyHeight: 520, rem: 10 });
   assert.equal(layout.mode, 'wide');
-  const pane = 1300 - layout.railWidth - layout.gap;
-  const offers = layout.offersFr * pane;
+  const columns = 917 - layout.gap;
+  const offers = layout.offersFr * columns;
   assert.equal(cardShelfColumnsAt(offers), 4);
-  // The old rule: half the pane, in 280px tracks. Two tracks, and the shelf in
-  // the photograph held three armaments.
-  const wasOffers = pane * wireframeUi.shop.offersFraction;
+  // The old rule: half the columns, in 280px tracks. Two tracks — and the
+  // shelf in the photograph held three armaments, so one went below the fold.
+  const wasOffers = columns * ui.offersFraction;
   assert.ok(Math.floor((wasOffers + 16) / (280 + 16)) < 4);
-  // The fractions still divide one pane between two columns.
+  // The fractions still divide one body between two columns, and the detail
+  // keeps its floor IN THE ROOT SIZE THE APP ACTUALLY USES. Resolving the
+  // floor against a 16px rem while the page runs at 10px was how a 220px
+  // minimum became 140 on the way to the screen.
   assert.ok(Math.abs(layout.offersFr + layout.detailFr - 1) < 1e-12);
-  assert.ok(layout.detailFr * pane >= wireframeUi.shop.detailMinRem * 16 - 1e-9);
+  assert.ok(layout.detailFr * columns >= ui.detailMinRem * 10 - 1e-9);
 });
 
-test('a stacked pane keeps the authored fraction: there are no columns to size', () => {
-  const phone = shopWorkspaceLayout({ width: 356, bodyHeight: 400, rem: 16 });
+test('D — the detail floor binds before the shelf does, at every width and root size', () => {
+  const ui = wireframeUi.shop;
+  for (const rem of [10, 12, 16]) {
+    const gap = Math.round(ui.gapRem * rem);
+    for (let body = 40; body <= 2400; body += 3) {
+      const layout = shopWorkspaceLayout({ width: 4000, bodyWidth: body, bodyHeight: 400, rem });
+      const columns = Math.max(0, body - gap);
+      if (!(columns > 0)) continue;
+      const detail = layout.detailFr * columns;
+      const offers = layout.offersFr * columns;
+      assert.ok(offers >= 0 && detail >= 0, `body ${body} rem ${rem}`);
+      assert.ok(Math.abs(offers + detail - columns) < 1e-9, `body ${body} rem ${rem}`);
+      // Either the detail keeps its authored floor, or the offers never took
+      // more than the authored share — never both broken at once.
+      const floor = ui.detailMinRem * rem;
+      assert.ok(detail >= floor - 1e-9 || offers <= columns * ui.offersFraction + 1e-9,
+        `body ${body} rem ${rem}: detail ${detail} < floor ${floor} with offers above its share`);
+    }
+  }
+});
+
+test('with nothing measured there is no derivation: the authored fraction stands', () => {
+  // A caller that has not measured the body — and the stacked pane, where the
+  // fractions are not column tracks at all — keep the number card.json's
+  // neighbour authored rather than a number invented from a zero.
+  const unmeasured = shopWorkspaceLayout({ width: 1235, bodyHeight: 520, rem: 10 });
+  assert.equal(unmeasured.offersFr, wireframeUi.shop.offersFraction);
+  const phone = shopWorkspaceLayout({ width: 356, bodyWidth: 340, bodyHeight: 400, rem: 10 });
   assert.equal(phone.pane, 'stacked');
   assert.equal(phone.offersFr, wireframeUi.shop.offersFraction);
   assert.equal(phone.detailFr, 1 - wireframeUi.shop.offersFraction);

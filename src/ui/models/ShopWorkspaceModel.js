@@ -96,7 +96,9 @@ export function shopFooterActions(selected = null) {
  * column, which is the shelf's own rule, not a second one written here.
  *
  * `rem` is the measured root size in CSS px, the same term the rest of this
- * model's rem numbers are resolved with.
+ * model's rem numbers are resolved with — the app's root is `font-size: 62.5%`,
+ * so a rem here is about ten pixels, which is the currency `railMinRem: 11`
+ * and `wideMinRem: 60` are already counted in.
  */
 export function shopOffersWidthPx(paneWidth, rem = 16, ui = wireframeUi.shop) {
   const share = paneWidth * ui.offersFraction;
@@ -112,19 +114,29 @@ export function shopOffersWidthPx(paneWidth, rem = 16, ui = wireframeUi.shop) {
  * detail side by side. Compact: rail above, detail stacked under the offers
  * and capped so the offers keep the larger share. All numbers come from
  * `wireframeUi.shop`; `rem` is the measured root size in CSS px.
+ *
+ * `bodyWidth` is the measured width of `.shop-body` — the grid the two columns
+ * actually divide. It is MEASURED rather than derived from `width` because
+ * everything between the two is somebody else's number: the rail's track, the
+ * pane's `--modal-inset` padding, whatever chrome is added next. An earlier
+ * draft subtracted the rail and one gap from the frame and was wrong by the
+ * pane's inset in one direction and by the column gap in the other, which took
+ * the detail column under its own authored floor. With no measurement there is
+ * no derivation: the authored fraction stands.
  */
-export function shopWorkspaceLayout({ width = 0, bodyHeight = 0, rem = 16 } = {}, ui = wireframeUi.shop) {
+export function shopWorkspaceLayout({ width = 0, bodyWidth = 0, bodyHeight = 0, rem = 16 } = {}, ui = wireframeUi.shop) {
   const px = rem > 0 ? rem : 16;
   const wide = width >= ui.wideMinRem * px;
   const railWidth = wide
     ? Math.round(Math.min(Math.max(width * ui.railFraction, ui.railMinRem * px), ui.railMaxRem * px))
     : 0;
   const gap = Math.round(ui.gapRem * px);
-  // The pane is what is left for the two columns once the rail and the gap
-  // between them are taken. Stacked, the offers own the full width and the
-  // fractions are not column tracks at all, so the authored share stands.
-  const paneWidth = Math.max(0, width - railWidth - gap);
-  const offersFr = wide && paneWidth > 0 ? shopOffersWidthPx(paneWidth, px, ui) / paneWidth : ui.offersFraction;
+  // The `fr` tracks divide what is left of the body once the gap between them
+  // is taken; a fraction measured against the body's whole width would hand
+  // each column its share of a gap that is not theirs. Stacked, the offers own
+  // the full width and the fractions are not column tracks at all.
+  const columnsWidth = Math.max(0, bodyWidth - gap);
+  const offersFr = wide && columnsWidth > 0 ? shopOffersWidthPx(columnsWidth, px, ui) / columnsWidth : ui.offersFraction;
   return Object.freeze({
     mode: wide ? 'wide' : 'compact',
     rail: wide ? 'side' : 'top',

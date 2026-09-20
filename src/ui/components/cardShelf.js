@@ -29,10 +29,19 @@ import { cardShelfColumnsAt } from '../models/CardSizeModel.js';
  * layout, and a custom property written there invalidates the box that is
  * being laid out. `wireShopLayout` in screens/shop.js keeps the same shape for
  * the same reason.
+ *
+ * EVERY PASS RE-FINDS THE SHELVES, and that is the correctness of the thing
+ * rather than a tidiness. A caller that redraws — the mount service modal
+ * replaces its whole preview, list and all, on every `update` — leaves the
+ * wire holding a detached node; the new list is then never measured and falls
+ * back to the root's authored maximum, in a modal whose own box never resizes,
+ * so nothing ever comes along to correct it. So `apply` re-queries and observes
+ * whatever it has not seen, and a caller that redraws only has to call it.
  */
 export function wireCardShelf(host) {
   let pending = 0;
   let observer = null;
+  const watched = new WeakSet();
   const shelves = () => {
     const found = host && host.querySelectorAll ? [...host.querySelectorAll('.card-shelf')] : [];
     return host && host.classList && host.classList.contains('card-shelf') ? [host, ...found] : found;
@@ -41,6 +50,7 @@ export function wireCardShelf(host) {
     pending = 0;
     if (host && host.isConnected === false) { release(); return; }
     for (const shelf of shelves()) {
+      if (observer && !watched.has(shelf)) { watched.add(shelf); observer.observe(shelf); }
       // A hidden shelf measures 0 and would be told it holds one card; it is
       // left alone and measured again when the pane shows it. The merchant
       // keeps every shelf mounted and hides all but one, so this is the
@@ -62,7 +72,6 @@ export function wireCardShelf(host) {
   }
   if (typeof ResizeObserver !== 'undefined' && host) {
     observer = new ResizeObserver(schedule);
-    for (const shelf of shelves()) observer.observe(shelf);
     // The shelves live inside a pane that resizes without them: a hidden shelf
     // has no box to report and would never be measured after it was shown.
     if (host.nodeType === 1) observer.observe(host);

@@ -45,7 +45,7 @@
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
 // source content/config/ui/screens/prologue.json 15cfd436b15819b8
-// source content/config/ui/screens/shop.json 180b05bb21e6ee9f
+// source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
 
@@ -943,7 +943,7 @@ export const uiConfig = deepFreeze({
         "railMinRem": 11,
         "railMaxRem": 28,
         "offersFraction": 0.5,
-        "detailMinRem": 14,
+        "detailMinRem": 22,
         "wideMinRem": 60,
         "detailMaxFraction": 0.5
       },

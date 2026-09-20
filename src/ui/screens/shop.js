@@ -766,6 +766,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     el.setAttribute('aria-pressed', 'false');
     el.innerHTML = `<div class="cp-body"><h3>${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${avail.available ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span></div>`;
     const itemName = el.querySelector('h3')?.textContent?.trim() || 'this item';
+    // A tile with no face is not a card on the shelf: the SELL shelf holds both
+    // kinds, and only one of them wants a card's width (styles/kit.css).
+    if (!card) el.classList.add('shop-text-offer');
     if (card) {
       el.classList.add('shop-collectible-offer');
       el.querySelector('h3').remove();
@@ -804,7 +807,7 @@ function wireShopLayout(root) {
     pending = 0;
     if (!root.isConnected) { release(); return; }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    const plan = shopWorkspaceLayout({ width: frame.clientWidth, bodyHeight: body.clientHeight, rem });
+    const plan = shopWorkspaceLayout({ width: frame.clientWidth, bodyWidth: body.clientWidth, bodyHeight: body.clientHeight, rem });
     // Rail or selector is the kit categoryNav's decision (it writes
     // data-shop-rail); this plan sizes the rail when there is one and lays
     // out the pane.
