@@ -223,3 +223,13 @@ for AshenSpire. Runtime assets in `assets/environments/legacy/` use optimized
 map WebPs and 24 lossless alpha floor/background plates. Original sources,
 exact prompts, provenance, and extraction instructions are retained under
 `art/webp-maps-2026-09-19/`. No third-party asset license is claimed.
+
+### Great-axe outfit art (2026-09-19)
+
+Original transparent atlases generated with OpenAI built-in image generation
+from the project's Reaver and approved class/outfit references. PNG masters,
+exact prompts, revision history and export provenance are retained under
+`art/great-axe-reference-2026-09-19/`. This authored preview family covers the
+catalog's 32 appearances and 35 armor entries with a shared pose sequence;
+it has no gameplay binding because a distinct legal great-axe group is absent.
+No third-party artwork was downloaded and no third-party license is claimed.
