@@ -497,6 +497,14 @@ jobs:
       - name: The mobile visual reach gate can fail (8 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
+      # No menu paints two scrollbars on one axis. Kept to the shape
+      # the pairs actually live at — a door that fits has no bars to nest.
+      - name: One scrollbar per axis in every menu
+        run: node tools/verdict.mjs -- node tools/doublescroll.mjs --only 900x600
+
+      - name: The double-scrollbar gate can fail (the defect, replanted)
+        run: node tools/verdict.mjs -- node tools/doublescroll.mjs --mutate
+
       # -----------------------------------------------------------------------
       # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.
       #
