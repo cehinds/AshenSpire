@@ -22,9 +22,11 @@ unchanged. Dimensions are unchanged (desktop 1280 x 801, mobile 768 x 1365).
 ## Method and provenance
 
 No image generation was available in this session, so the pass is a deterministic
-programmatic grade: `grade.cjs` (Sharp, seeded pseudo-random overlay). Running it again
-from the "before" masters reproduces the deliverables byte for byte apart from encoder
-version differences.
+programmatic grade: `grade.cjs` (Sharp, seeded pseudo-random overlay). It reads
+`masters/carry-herald-*-before.png` and rewrites the graded masters and runtime WebPs, so
+running `node art/prologue-herald-burning-refinement/grade.cjs` from any checkout with
+Sharp on the module path reproduces the deliverables apart from encoder version
+differences.
 
 - `masters/carry-herald-*-before.png`: the #1216 plates decoded losslessly.
 - `masters/carry-herald-*.png`: graded PNG masters.

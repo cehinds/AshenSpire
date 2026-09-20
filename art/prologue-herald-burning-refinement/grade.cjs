@@ -1,8 +1,8 @@
 // Herald dark grade + ash/ember overlay. Deterministic (seeded PRNG).
 const sharp = require('sharp');
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
-const root = '/home/user/AshenSpire';
-const out = path.join(root, 'art/prologue-herald-burning-refinement');
+const out = __dirname;
+const root = path.resolve(out, '../..');
 function rng(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
 function overlaySvg(w,h,seed,variant){
   const r=rng(seed); let el='';
@@ -47,11 +47,11 @@ function overlaySvg(w,h,seed,variant){
   fs.mkdirSync(path.join(out,'masters'),{recursive:true}); fs.mkdirSync(path.join(out,'inspection'),{recursive:true});
   const manifest=[];
   for(const variant of ['desktop','mobile']){
-    const src=path.join(root,'assets/prologue',`carry-herald-${variant}.webp`);
-    const {width:w,height:h}=await sharp(src).metadata();
-    // 1. keep source as "before" master
+    // 1. input is the "before" master (the #1216 plate); first run seeds it from the runtime WebP
     const before=path.join(out,'masters',`carry-herald-${variant}-before.png`);
-    await sharp(src).png().toFile(before);
+    if(!fs.existsSync(before)) await sharp(path.join(root,'assets/prologue',`carry-herald-${variant}.webp`)).png().toFile(before);
+    const src=before;
+    const {width:w,height:h}=await sharp(src).metadata();
     // 2. exposure down ~2/3 stop, contrast up, muted umber grade, slight desaturation
     const graded=await sharp(src)
       .linear([0.66,0.62,0.58],[0,0,-4])           // darker, cool channel pushed further down -> umber cast
