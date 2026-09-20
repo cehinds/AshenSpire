@@ -51,15 +51,6 @@
       "character": false
     },
     {
-      "id": "night",
-      "name": "Last night",
-      "seconds": 5,
-      "speaker": "Hamlet witness",
-      "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
-      "effect": "fade",
-      "character": false
-    },
-    {
       "id": "carry",
       "name": "What the fire left",
       "seconds": 5,
@@ -81,25 +72,13 @@
       }
     },
     {
-      "id": "road",
-      "name": "The road out",
+      "id": "night",
+      "name": "Last night",
       "seconds": 5,
       "speaker": "Hamlet witness",
-      "text": "Bring us a spring, if the hearths still can.",
-      "effect": "push",
-      "character": true,
-      "actor": {
-        "desktop": {
-          "x": 25,
-          "y": 83,
-          "height": 43
-        },
-        "mobile": {
-          "x": 29,
-          "y": 80,
-          "height": 29
-        }
-      }
+      "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
+      "effect": "fade",
+      "character": false
     },
     {
       "id": "step",

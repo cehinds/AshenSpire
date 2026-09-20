@@ -11,15 +11,15 @@ import { prologueSceneMs, prologueTransitionMs } from '../src/model/prologueTimi
 import { prologueArtwork } from '../src/ui/assets.js';
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
-  const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.2.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.4.actor.mobile.height':36};
+  const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.3.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.2.actor.mobile.height':36};
   const imported = parseAdvancedConfigFile(advancedConfigExport(edits),contentBundle);
   assert.deepEqual(imported,edits);
   const config=prologueConfig(imported);
   assert.equal(config.presentation.transitionSeconds,12.5);
   assert.equal(config.presentation.shadowStrength,.4);
-  assert.equal(config.scenes[2].text,edits['gameConfig.prologue.scenes.2.text']);
-  assert.equal(prologueCopy(config.scenes[3],config,{classId:'herald'}).text,'My words.');
-  assert.equal(prologueCopy(config.scenes[3],config,{classId:'reaver'}).text,config.classes.reaver.line);
+  assert.equal(config.scenes[3].text,edits['gameConfig.prologue.scenes.3.text']);
+  assert.equal(prologueCopy(config.scenes[2],config,{classId:'herald'}).text,'My words.');
+  assert.equal(prologueCopy(config.scenes[2],config,{classId:'reaver'}).text,config.classes.reaver.line);
   assert.deepEqual(configuredContentBundle(contentBundle,edits),configuredContentBundle(contentBundle,{}));
 });
 
@@ -41,10 +41,10 @@ test('scene duration includes the fade and remains editable through export/impor
   assert.equal(prologueTransitionMs(config.scenes[0],config.presentation,true),0);
   assert.equal(prologueTransitionMs({...config.scenes[0],effect:'still'},config.presentation),0);
   assert.equal(prologueTransitionMs(config.scenes[0],{transitionSeconds:.2}),200);
-  const edits={'gameConfig.prologue.scenes.0.seconds':8,'gameConfig.prologue.scenes.4.seconds':2};
+  const edits={'gameConfig.prologue.scenes.0.seconds':8,'gameConfig.prologue.scenes.3.seconds':2};
   const restored=prologueConfig(parseAdvancedConfigFile(advancedConfigExport(edits),contentBundle));
   assert.equal(prologueSceneMs(restored.scenes[0]),8000);
-  assert.equal(prologueTransitionMs(restored.scenes[4],restored.presentation),500);
+  assert.equal(prologueTransitionMs(restored.scenes[3],restored.presentation),500);
 });
 
 test('each class memory resolves to a distinct shipped desktop and mobile painting',()=>{
@@ -81,7 +81,7 @@ test('all editable scene, class, and timing fields are grouped and reachable',()
   const rows=prologueRows();
   const groups=advancedSubgroups(rows,'Opening');
   assert.equal(groups.flatMap(g=>g.rows).length,rows.length);
-  assert.equal(groups.filter(g=>prologueConfig().scenes.some(s=>s.name===g.label)).length,6);
+  assert.equal(groups.filter(g=>prologueConfig().scenes.some(s=>s.name===g.label)).length,5);
   assert.equal(rows.filter(r=>r.prologueTopic==='Class dialogue').length,4);
 });
 
