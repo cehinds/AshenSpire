@@ -82,7 +82,7 @@ import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
-import { shouldPlayPrologue, pendingPrologueScene } from './model/prologue.js';
+import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -1035,7 +1035,7 @@ function startClimb() {
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
   if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
-    run.prologue = { version: 1, status: 'pending', scene: 0 };
+    run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
   if (pendingPrologueScene(run) !== null) return showPrologue();
@@ -1131,6 +1131,14 @@ function resumeRun(slot = 1) {
   if (!run) return showTitle();
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
+  // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
+  // `scene` indexes the six-scene order; `onScene` below writes the NEW order
+  // back into the same field, so a state left marked version 1 would be read
+  // one way and written another. Migrate before anything reads it, and persist
+  // so the rewrite outlives this load — AFTER `rng`, because `persist` writes
+  // this run's stream counters and the previous run's rng is still standing
+  // until the line above.
+  if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
     mountPendingReward();

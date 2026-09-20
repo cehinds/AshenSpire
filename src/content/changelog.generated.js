@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "The victory screen shows what the fight did to your character",
     "detail": "Winning a fight has always raised your level and the skills you fought with — but the spoils door listed only the things you pick up, so none of it was visible. Above the claim list there is now a Progression panel: your character level with a bar toward the next one and the experience this fight paid, then the skills it moved — the ones it paid first, the ones you have taken furthest after, up to three, with the rest counted on a line of their own. The numbers are the ones already written when the fight ended, so leaving and coming back to an interrupted spoils door shows the same ones.",
-    "build": "0.7.1.338",
+    "build": "0.7.1.335",
     "pullRequest": 1232,
     "url": "https://github.com/cehinds/AshenSpire/pull/1232"
+  },
+  {
+    "id": "pr-1225",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Starting stats are tuned in one place, and the opening is five scenes",
+    "detail": "Advanced settings now gather the creation pool and every class's starting attributes, Health and flasks under Progression, so the numbers that decide a new character sit together instead of across two tabs. Assign points is about points: how many you have to place and how many the character carries in total, while stat points per tier moved to General with its own limits. Only the allocation a new run actually offers is presented, and settings saved under the retired ones still load. A value a character could not survive is refused on the row you typed it in, naming the class and the starting kit that set the floor, and the rest of your configuration stays applied instead of silently reverting with it. In the opening, The first step draws its own painting instead of the region map your climb begins on, Last night follows What the fire left, and the forest departure is cut. An opening you had already tuned is carried across: per-scene settings now follow the scene they were written for, and a configuration exported before the change still loads.",
+    "build": "0.7.1.333",
+    "pullRequest": 1225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1225"
   },
   {
     "id": "pr-1226",
