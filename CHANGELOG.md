@@ -30,7 +30,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-20
+
+- **The Herald's memory burns darker** ([#1224](https://github.com/cehinds/AshenSpire/pull/1224), `0.7.1.323`). The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.
+
 ## 2026-09-19
+
+- **Twin swords now keep every class and armour's appearance through one shared attack** ([#1219](https://github.com/cehinds/AshenSpire/pull/1219), `0.7.1.320`). Straight Sword in the right hand and Katana in the left select 32 painted suites across all four classes and 35 armour entries. The nine-step attack shares its timing across every outfit, with separate defend, hurt, cast, buff, stance, portrait and conversation poses. Reversed hands retain their existing presentation. The workshop compares outfits and lets you edit pose order, timing and impact before saving a sequence.
 
 - **Tune starting stats, card draws, Poise and Ward in Advanced settings** ([#1213](https://github.com/cehinds/AshenSpire/pull/1213), `0.7.1.317`). Set the total starting stat pool, automatically scale conversions or tune them manually, and configure additive AR, DR and PR from attributes, equipment, relics and buffs. Poise resists physical attacks and Ward resists magic, with separate impact meters, break penalties and per-status resistance weights—including mixed Burn resistance. Enemy defences, weapon impact classes and individual attacks are configurable. New solo fights start with three configurable cards, retain unplayed cards and refill to capacity, with fixed-draw and optional-discard alternatives. Older runs and LAN retain their rules. The settings toolbar is compact and aligned.
 

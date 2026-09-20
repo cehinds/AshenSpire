@@ -1,0 +1,226 @@
+[
+  {
+    "id": "reaver",
+    "classId": "reaver",
+    "armourId": "default",
+    "name": "Wayfarer Plate",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver.png"
+  },
+  {
+    "id": "reaver-vigil",
+    "classId": "reaver",
+    "armourId": "vigil",
+    "name": "Ashen Vigil",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-vigil.png"
+  },
+  {
+    "id": "reaver-oathsworn",
+    "classId": "reaver",
+    "armourId": "oathsworn",
+    "name": "Gilded Oathsworn",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-oathsworn.png"
+  },
+  {
+    "id": "reaver-warden",
+    "classId": "reaver",
+    "armourId": "warden",
+    "name": "Warden Mail",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-warden.png"
+  },
+  {
+    "id": "starseer",
+    "classId": "starseer",
+    "armourId": "default",
+    "name": "Nightweave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer.png"
+  },
+  {
+    "id": "starseer-eclipse",
+    "classId": "starseer",
+    "armourId": "eclipse",
+    "name": "Eclipse Habit",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-eclipse.png"
+  },
+  {
+    "id": "starseer-starlit",
+    "classId": "starseer",
+    "armourId": "starlit",
+    "name": "Starlit Silks",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-starlit.png"
+  },
+  {
+    "id": "starseer-astral",
+    "classId": "starseer",
+    "armourId": "astral",
+    "name": "Astral Vestment",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-astral.png"
+  },
+  {
+    "id": "herald",
+    "classId": "herald",
+    "armourId": "default",
+    "name": "Rite Vestments",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald.png"
+  },
+  {
+    "id": "herald-ossuary",
+    "classId": "herald",
+    "armourId": "ossuary",
+    "name": "Ossuary Weave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-ossuary.png"
+  },
+  {
+    "id": "herald-emberhabit",
+    "classId": "herald",
+    "armourId": "emberhabit",
+    "name": "Emberlight Habit",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-emberhabit.png"
+  },
+  {
+    "id": "herald-pilgrim",
+    "classId": "herald",
+    "armourId": "pilgrim",
+    "name": "Pilgrim Wrap",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-pilgrim.png"
+  },
+  {
+    "id": "rogue",
+    "classId": "rogue",
+    "armourId": "default",
+    "name": "Gutter Leathers",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue.png"
+  },
+  {
+    "id": "rogue-nightveil",
+    "classId": "rogue",
+    "armourId": "nightveil",
+    "name": "Nightveil Coat",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-nightveil.png"
+  },
+  {
+    "id": "rogue-duelist",
+    "classId": "rogue",
+    "armourId": "duelist",
+    "name": "Duelist Jerkin",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-duelist.png"
+  },
+  {
+    "id": "rogue-shadow",
+    "classId": "rogue",
+    "armourId": "shadow",
+    "name": "Shadow Mantle",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-shadow.png"
+  },
+  {
+    "id": "reaver-wayfarerPlate",
+    "classId": "reaver",
+    "armourId": "wayfarerPlate",
+    "name": "Wayfarer Plate",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-wayfarerPlate.png"
+  },
+  {
+    "id": "starseer-wayfarerPlate",
+    "classId": "starseer",
+    "armourId": "wayfarerPlate",
+    "name": "Wayfarer Plate",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-wayfarerPlate.png"
+  },
+  {
+    "id": "herald-wayfarerPlate",
+    "classId": "herald",
+    "armourId": "wayfarerPlate",
+    "name": "Wayfarer Plate",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-wayfarerPlate.png"
+  },
+  {
+    "id": "rogue-wayfarerPlate",
+    "classId": "rogue",
+    "armourId": "wayfarerPlate",
+    "name": "Wayfarer Plate",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-wayfarerPlate.png"
+  },
+  {
+    "id": "reaver-nightweave",
+    "classId": "reaver",
+    "armourId": "nightweave",
+    "name": "Nightweave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-nightweave.png"
+  },
+  {
+    "id": "starseer-nightweave",
+    "classId": "starseer",
+    "armourId": "nightweave",
+    "name": "Nightweave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-nightweave.png"
+  },
+  {
+    "id": "herald-nightweave",
+    "classId": "herald",
+    "armourId": "nightweave",
+    "name": "Nightweave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-nightweave.png"
+  },
+  {
+    "id": "rogue-nightweave",
+    "classId": "rogue",
+    "armourId": "nightweave",
+    "name": "Nightweave",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-nightweave.png"
+  },
+  {
+    "id": "reaver-riteVestments",
+    "classId": "reaver",
+    "armourId": "riteVestments",
+    "name": "Rite Vestments",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-riteVestments.png"
+  },
+  {
+    "id": "starseer-riteVestments",
+    "classId": "starseer",
+    "armourId": "riteVestments",
+    "name": "Rite Vestments",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-riteVestments.png"
+  },
+  {
+    "id": "herald-riteVestments",
+    "classId": "herald",
+    "armourId": "riteVestments",
+    "name": "Rite Vestments",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-riteVestments.png"
+  },
+  {
+    "id": "rogue-riteVestments",
+    "classId": "rogue",
+    "armourId": "riteVestments",
+    "name": "Rite Vestments",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-riteVestments.png"
+  },
+  {
+    "id": "reaver-gutterLeathers",
+    "classId": "reaver",
+    "armourId": "gutterLeathers",
+    "name": "Gutter Leathers",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/reaver-gutterLeathers.png"
+  },
+  {
+    "id": "starseer-gutterLeathers",
+    "classId": "starseer",
+    "armourId": "gutterLeathers",
+    "name": "Gutter Leathers",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/starseer-gutterLeathers.png"
+  },
+  {
+    "id": "herald-gutterLeathers",
+    "classId": "herald",
+    "armourId": "gutterLeathers",
+    "name": "Gutter Leathers",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/herald-gutterLeathers.png"
+  },
+  {
+    "id": "rogue-gutterLeathers",
+    "classId": "rogue",
+    "armourId": "gutterLeathers",
+    "name": "Gutter Leathers",
+    "reference": "art/sword-shield-outfits-2026-09-19/sources/rogue-gutterLeathers.png"
+  }
+]
