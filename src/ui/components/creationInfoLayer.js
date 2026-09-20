@@ -31,7 +31,7 @@ export function mountCreationInfoLayer(root) {
     const size = control.getBoundingClientRect();
     const left = Math.max(8, Math.min(innerWidth - size.width - 8, box.left + (box.width - size.width) / 2));
     const top = Math.max(8, box.top - size.height - 8);
-    const position = anchorLocalBox(VIEWPORT_ORIGIN, {left,top,width:size.width,height:size.height});
+    const position = anchorLocalBox(VIEWPORT_ORIGIN, { left, top, width: size.width, height: size.height });
     control.style.left = `${position.left}px`;
     control.style.top = `${position.top}px`;
   };

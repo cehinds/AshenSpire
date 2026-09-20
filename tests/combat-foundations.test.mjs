@@ -270,6 +270,9 @@ test('co-op commits seat-local Evade and resource costs without corrupting anoth
   assert.equal(c.players.get('p1').entity.stamina, 3);
   assert.equal(c.players.get('p2').entity.stamina, 5);
   assert(c.eventLog.some((e) => e.type === 'attackEvaded' && e.targetPlayerId === 'p1'));
+  const impacts = c.eventLog.filter((e) => e.type === 'impactDealt' && e.targetId === 'player');
+  assert(impacts.length > 0, 'the undefended second seat receives impact');
+  assert(impacts.every((e) => e.targetPlayerId === 'p2'), 'only the struck seat owns foundation impact receipts');
 });
 
 test('grouped resistance does not multiply equivalent sources; logs conserve typed HP damage', () => {
