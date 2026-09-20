@@ -148,6 +148,17 @@ reward.claim.heading,,Claim status,What each reward is waiting on.,
 reward.state.available,,Available,Still here to collect.,Available
 reward.claim.required,,Required choice,A decision is still waiting before this reward can be taken.,
 reward.claim.blocked,,Full,There is no room for this one.,
+# the progression panel — what the fight moved before the door opened
+reward.progress.heading,,Progression,How far this fight carried you.,
+reward.progress.skills,,Skills,The tracks this fight paid; the deepest ones after.,
+reward.progress.character,,Character,Your character level.,
+reward.progress.classTrack,,{class} mastery,Your class track — its levels are what the class tree drafts.,
+reward.progress.level,,Lv {level},,
+reward.progress.next,,Lv. {level},,
+reward.progress.gained,,Gained: {xp} xp,What this fight paid into this track.,
+reward.progress.xp,,{xp} / {next} XP,{xp} of {next} XP toward level {level}.,
+reward.progress.capped,,Max,This track has reached its ceiling; XP still banks.,
+reward.progress.more,,+{count} other skill{plural},Tracks the panel does not list.,
 # ---- the title screen -----------------------------------------------------
 title.save.eyebrow,,Your climb,The saved run Continue resumes.,
 title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,

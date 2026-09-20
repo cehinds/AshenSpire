@@ -94,7 +94,7 @@ export function questLevelXp(registries) {
 
 /**
  * awardLevelXp(registries, run, amount, { pointsPerLevel }) → { before,
- * after, levelUps, points, thresholds } — writes the ledger and climbs as
+ * after, levelUps, points, thresholds, gained } — writes the ledger and climbs as
  * many steps as the XP buys, each step granting `pointsPerLevel` points to
  * `unspentPoints` (the caller resolves the player's dial; omitted, the
  * content default). A step that crosses a `perLevel` threshold re-derives
@@ -108,7 +108,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } 
   const row = run.level;
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0 };
+  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0 };
   const t = grantTable(registries);
   const authored = Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1;
   const perLevel = Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored;
@@ -136,7 +136,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } 
       why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)`,
     });
   }
-  return { before, after: row.level, levelUps, points, thresholds };
+  return { before, after: row.level, levelUps, points, thresholds, gained: gain };
 }
 
 /**

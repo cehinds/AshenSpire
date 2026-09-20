@@ -41,6 +41,7 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { awardLevelXp, combatLevelXp } from './model/levelup.js';
+import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -2245,17 +2246,26 @@ async function onCombatEnd(result, combat, enc) {
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
-  applySkillXp(registries, run, skillXpReceipt(combat));
+  const trackReceipt = skillXpReceipt(combat);
+  applySkillXp(registries, run, trackReceipt);
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
+  const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
   // THE CHARACTER LEVEL (plan phase 6), paid by the run's owner too: a won
   // fight and every kill by the door's pool. His level-value dial is read at
   // the moment the level is reached — the points it grants wait on the
   // ledger for the shrine.
-  awardLevelXp(registries, run, combatLevelXp(registries, {
+  const levelAward = awardLevelXp(registries, run, combatLevelXp(registries, {
     victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
   }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
+  // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
+  // above moved before the door opens, so the screen cannot re-derive what
+  // this fight paid — it is handed the amounts, on the offer, where the
+  // pending-reward checkpoint persists them and a reload resumes the same
+  // sentence. Ledger state is read live from the run; only the GAIN is kept,
+  // and it is the amount each award SAYS it paid, never a second reading of
+  // the same numbers beside it.
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2322,6 +2332,7 @@ async function onCombatEnd(result, combat, enc) {
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
+      xpGains,
     };
     return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
@@ -2344,6 +2355,7 @@ async function onCombatEnd(result, combat, enc) {
     // no-op there rather than a hidden 0%).
     armamentId: rollDrop(enc.pool),
     smithingStoneReceipt,
+    xpGains,
   };
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
 }
@@ -3215,6 +3227,21 @@ if (shotState === 'combat-test') {
     // phase 4b): the ledger is given the queued draft the row spends, so the
     // take runs the real door, and the cards are the pool's first three of
     // the track's schools — authored order, no roll.
+    // THE PROGRESSION PANEL WANTS LEDGERS TO DRAW (2026-09-20): the pose gives
+    // the run an authored character level and three touched tracks, so the
+    // bars, the levels and the gain lines photograph identically every run —
+    // the same reason the offer's ids are authored rather than rolled. The
+    // draft pose's own ledger write below still wins for its track.
+    if (pose !== 'empty') {
+      run.level = { xp: 40, level: 3, unspentPoints: 0 };
+      run.skills = {
+        'item:blade': { xp: 18, level: 2, pendingDrafts: 0 },
+        'armour:heavy': { xp: 6, level: 1, pendingDrafts: 0 },
+        [`class:${run.class}`]: { xp: 20, level: 1, pendingDrafts: 0 },
+        'item:shield': { xp: 4, level: 0, pendingDrafts: 0 },
+        ...(run.skills || {}),
+      };
+    }
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
@@ -3230,6 +3257,8 @@ if (shotState === 'combat-test') {
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
       smithingStoneReceipt,
+      // What the fight paid, authored like the rest of the pose.
+      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
     };
     if (pose === 'pending') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
