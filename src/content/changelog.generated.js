@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Your level and every skill you are training now have bars you can watch",
     "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.341",
+    "build": "0.7.1.342",
     "pullRequest": 1228,
     "url": "https://github.com/cehinds/AshenSpire/pull/1228"
   },
@@ -51,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.332",
     "pullRequest": 1226,
     "url": "https://github.com/cehinds/AshenSpire/pull/1226"
+  },
+  {
+    "id": "pr-1227",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Combat and combat animation have their own Settings section",
+    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
+    "build": "0.7.1.340",
+    "pullRequest": 1227,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1217",
