@@ -79,6 +79,8 @@ import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { mountPrologue } from './ui/screens/prologue.js';
+import { shouldPlayPrologue, pendingPrologueScene } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -1030,8 +1032,28 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 function startClimb() {
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
+  if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+    run.prologue = { version: 1, status: 'pending', scene: 0 };
+  }
   persist();
+  if (pendingPrologueScene(run) !== null) return showPrologue();
   showMap();
+}
+
+function showPrologue() {
+  const openingRun = run;
+  const settings = { ...saves.loadMeta().settings, ...run.advancedConfigSnapshot?.overrides };
+  audio.music('map');
+  mountPrologue(app, {
+    settings, run, startScene: pendingPrologueScene(run) ?? 0, onSettings: showSettings,
+    onScene: scene => { if (run === openingRun) { run.prologue.scene = scene; persist(); } },
+    onFinish: reason => {
+      if (run !== openingRun || run.prologue.status !== 'pending') return;
+      run.prologue = { ...run.prologue, status: 'complete', reason };
+      persistSettingsChange({prologueSeen:true});
+      persist(); showMap();
+    },
+  });
 }
 
 // Sealed: keep a small basic core, fill the rest with random pool cards.
@@ -1107,6 +1129,7 @@ function resumeRun(slot = 1) {
   if (!run) return showTitle();
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
+  if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
     mountPendingReward();
   } else if (run.combatEntered && run.combatEntered.encounterId) {
@@ -3345,6 +3368,8 @@ if (shotState === 'combat-test') {
   }
   showTitle();
   showSettings();
+} else if (shotState === 'prologue') {
+  newRun({classId:shotParams.get('class') || 'reaver', customization:{name:'Forsaken',tint:'gold'}, seedString:'SHOWCASE'});
 } else if (shotState === 'settings') {
   // Advanced configuration, through the same modal and profile settings path a
   // player uses. shotSettings may choose a subsection or tune a row.

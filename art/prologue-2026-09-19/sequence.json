@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "kind": "AshenSpire prologue art",
+  "revision": "2026-09-19-v1",
+  "labels": {
+    "continue": "Continue",
+    "setForth": "Set forth",
+    "pause": "Pause",
+    "resume": "Resume",
+    "replay": "Replay"
+  },
+  "classes": {
+    "reaver": {
+      "name": "Reaver",
+      "item": "Sword",
+      "line": "The Fell Courtyard gate fell. My watch never ended."
+    },
+    "starseer": {
+      "name": "Starseer",
+      "item": "Staff",
+      "line": "I took his charts. I still owe him an answer."
+    },
+    "rogue": {
+      "name": "Rogue",
+      "item": "Dagger",
+      "line": "The Court Surgeon kept my sister. I kept his trail."
+    },
+    "herald": {
+      "name": "Herald",
+      "item": "Holy book",
+      "line": "The fire stopped on me. The Chapel still owes an answer."
+    }
+  },
+  "scenes": [
+    {
+      "id": "warmth",
+      "name": "Remembered warmth",
+      "seconds": 9,
+      "speaker": "Hamlet witness",
+      "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
+      "effect": "fade",
+      "character": false
+    },
+    {
+      "id": "year",
+      "name": "The stopped year",
+      "seconds": 11,
+      "speaker": "Hamlet witness",
+      "text": "The tower bells fell silent.\nOur fields have given us nothing since.",
+      "effect": "push",
+      "character": false
+    },
+    {
+      "id": "night",
+      "name": "Last night",
+      "seconds": 14,
+      "speaker": "Hamlet witness",
+      "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
+      "effect": "fade",
+      "character": false
+    },
+    {
+      "id": "carry",
+      "name": "What you carry",
+      "seconds": 10,
+      "speaker": "{class}",
+      "text": "{classLine}",
+      "effect": "fade",
+      "character": true,
+      "actor": {
+        "desktop": {
+          "x": 33,
+          "y": 81,
+          "height": 58
+        },
+        "mobile": {
+          "x": 34,
+          "y": 79,
+          "height": 42
+        }
+      }
+    },
+    {
+      "id": "road",
+      "name": "The road out",
+      "seconds": 10,
+      "speaker": "Hamlet witness",
+      "text": "Bring us a spring, if the hearths still can.",
+      "effect": "push",
+      "character": true,
+      "actor": {
+        "desktop": {
+          "x": 25,
+          "y": 83,
+          "height": 43
+        },
+        "mobile": {
+          "x": 29,
+          "y": 80,
+          "height": 29
+        }
+      }
+    },
+    {
+      "id": "step",
+      "name": "The first step",
+      "seconds": 6,
+      "speaker": "{name}",
+      "text": "I will find a road to the hearths.",
+      "location": "Crownfall",
+      "effect": "fade",
+      "character": true,
+      "actor": {
+        "desktop": {
+          "x": 30,
+          "y": 84,
+          "height": 40
+        },
+        "mobile": {
+          "x": 31,
+          "y": 81,
+          "height": 28
+        }
+      }
+    }
+  ],
+  "presentation": {
+    "transitionSeconds": 5,
+    "speed": 1,
+    "tintSource": "accent",
+    "accent": "gold",
+    "characterTint": "gold",
+    "wash": 0.14,
+    "reduceMotion": false,
+    "shadowStrength": 0.7
+  },
+  "palettes": {
+    "accent": {
+      "gold": "#c9a227",
+      "crimson": "#c1453a",
+      "frost": "#7fa8c9",
+      "verdant": "#8bae54",
+      "violet": "#a06cc8"
+    },
+    "character": {
+      "gold": "#c9a227",
+      "ember": "#c9502e",
+      "frost": "#7fa8c9",
+      "rot": "#b5541c",
+      "grace": "#9fc3e8"
+    }
+  }
+}
