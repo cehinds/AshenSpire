@@ -8,7 +8,7 @@ import { previewPrologue } from './prologue.js';
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
@@ -33,7 +33,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblems, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -85,7 +85,14 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // value the engine actually resolves rows against, so the row that turns it
 // reads it from there and a copy cannot drift.
 const DERIVED_DEFAULTS = derivedStatRules.defaults;
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle);
+// `retired: true` is a row that keeps its KEY so an exported configuration
+// still imports and still applies, and stays off the screen because nothing a
+// player can reach depends on it — today, the creation pools of the modes
+// `characterCreation.visibleModeIds` does not offer. The screen showed three
+// near-identical "starting stat pool" rows for one reachable pool; this is the
+// line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
+// directly, so import is unaffected.
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -584,8 +591,16 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
   { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
   { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
-  { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
+  // ONE TAB FOR ONE IDEA (owner, 2026-09-20). "Class defaults" was its own tab
+  // and held the class tables and the tier size while the creation pool sat
+  // here — one concept, two menus, and the two disagreed. Class defaults are
+  // now topics under Progression. The id is GONE rather than emptied because an
+  // emptied one draws a blank panel in silence: advanced group ids are not a
+  // declared surface (src/ui/surfaces.js declares overlayTab, settingsCategory,
+  // armouryView, armourySubject and menuAct — not these), so `assertSurfaces`
+  // would not catch it. A stored id that is gone is resolved by
+  // `activeAdvancedGroup`, which both the painter and the reset button read.
+  { id: 'Progression', label: 'Progression', tip: 'The points a new character starts with: the creation pool, each class’s defaults, level-up and stat conversions.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
   { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
@@ -603,6 +618,23 @@ const ADVANCED_GROUPS = Object.freeze([
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
+
+/**
+ * activeAdvancedGroup(settings) → the Advanced group actually on screen.
+ *
+ * ONE RESOLUTION, READ BY BOTH DOORS. The painter fell back to the first group
+ * when the stored id no longer existed and never wrote the fallback back, so
+ * "Class defaults" — a tab this change retired — stayed in the profile. The
+ * reset button then read the RAW stored value, asked for the subgroups of a
+ * group that is gone, got none, reset zero keys and said nothing. Anyone whose
+ * last-open tab was that one met it on first launch of the new build.
+ */
+export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
+
+export function activeAdvancedGroup(settings) {
+  const stored = settings?.[ADVANCED_CAT_KEY];
+  return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+}
 
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 
@@ -1031,6 +1063,51 @@ export function resolveNumberRow(settings, row) {
 }
 
 /**
+ * typedNumberRefusal(row, raw) → the sentence for a number HE TYPED that the
+ * row's domain will not take, or null.
+ *
+ * THE CLAMP IS NOT A REFUSAL HE CAN SEE. `resolveNumberRow` is the one gate and
+ * it clamps: type 8 into a row whose floor is 12 and 12 is what gets stored,
+ * displayed, and handed to `advancedConfigProblemRows` — which then finds a
+ * perfectly legal number and says nothing. The refusal naming the Starseer's
+ * kit was reachable only by injecting a bad value past the field.
+ *
+ * AND IT CANNOT BORROW THE EXISTING SENTENCE. `startingStatPoolProblems` ends
+ * "The value in use is 35" — true when the bad value was STORED and the
+ * authored default stood, and a lie here, where the clamp means 12 is in use.
+ * So this says what the clamp actually did: what was typed, the bound, why the
+ * bound is there (the row's own `boundsNote`, which names the class and kit),
+ * and the number the game is now using.
+ *
+ * Null the moment the typed value is legal — the message must LEAVE, which is
+ * the same rule `numberAppliedHtml` and `paintConfigProblems` live by.
+ */
+export function typedNumberRefusal(row, raw) {
+  if (!row || row.type !== 'number') return null;
+  const text = String(raw ?? '').trim();
+  if (text === '') return null;                        // an empty field is not a zero
+  const typed = Number(text);
+  if (!Number.isFinite(typed)) return null;            // unreadable is unset, as everywhere else
+  const wanted = row.integer !== false ? Math.floor(typed) : typed;
+  if (wanted >= row.min && wanted <= row.max) return null;
+  const used = resolveNumberRow({ [row.key]: raw }, row);
+  return `${row.label}: ${JSON.stringify(typed)} is outside ${row.min}\u2013${row.max} and was refused.`
+    + `${row.boundsNote ? ` ${row.boundsNote}` : ''}`
+    + ` The value in use is ${used}; every other setting you changed is still applied.`;
+}
+
+/**
+ * commitNumberRow(settings, row, raw) → { value, refusal }
+ *
+ * WHAT A TYPED NUMBER BECOMES, as one answer. The handler below wires it to the
+ * field and the slider; this holds the decision, so the node suite can drive the
+ * SAME code the screen runs instead of a second copy of its rules.
+ */
+export function commitNumberRow(settings, row, raw) {
+  return { value: resolveNumberRow({ [row.key]: raw }, row), refusal: typedNumberRefusal(row, raw) };
+}
+
+/**
  * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
  * than its value. Exported so a test asserts against the row the screen actually
  * renders instead of a second copy of its bounds.
@@ -1208,6 +1285,59 @@ function refreshApplied(container, settings) {
 }
 
 /**
+ * paintConfigProblems(container, settings) → the problem sentences, deduped.
+ *
+ * A REFUSAL IS ADDRESSED TO A ROW (owner, 2026-09-20 — "the new game assign
+ * and standard loadout don't seem to change on a new game despite having the
+ * values change in the settings"). The game was refusing his creation pool and
+ * saying so in one line at the top of Settings, four screens away from the
+ * twenty class cells and the pool row it was about; from where he sat the dial
+ * simply did nothing.
+ *
+ * Same seam as `refreshApplied` above: this reads the rows the panel actually
+ * drew and asks the model which keys are in trouble, so a new row costs
+ * nothing here. The line is REMOVED when the row is fine — a warning that is
+ * always on is decoration with a worried face (Sunna, and `numberAppliedHtml`
+ * lives by the same rule).
+ */
+export function paintConfigProblems(container, settings, extra = []) {
+  // `extra` carries the refusals the MODEL cannot see, because the value never
+  // reached it: a typed number the field clamped on its way in (see
+  // `typedNumberRefusal`). Same shape, same painting, same dedupe.
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...extra];
+  const byKey = new Map();
+  for (const entry of entries) {
+    for (const key of entry.keys || []) {
+      if (!byKey.has(key)) byKey.set(key, []);
+      const messages = byKey.get(key);
+      if (!messages.includes(entry.message)) messages.push(entry.message);
+    }
+  }
+  const painted = new Set();
+  container.querySelectorAll('.set-row [data-key]').forEach((control) => {
+    const row = control.closest('.set-row');
+    if (!row || painted.has(row)) return;
+    painted.add(row);
+    const stack = row.querySelector('.as-labelstack') || row;
+    const existing = stack.querySelector('[data-row-problem]');
+    const messages = byKey.get(control.dataset.key) || [];
+    if (!messages.length) {
+      existing?.remove();
+      delete row.dataset.refused;
+      return;
+    }
+    const slot = existing || stack.appendChild(container.ownerDocument.createElement('p'));
+    slot.className = 'set-note set-applied limited';
+    slot.dataset.rowProblem = '';
+    slot.setAttribute('role', 'status');
+    slot.textContent = messages.join(' ');
+    row.dataset.refused = '';
+  });
+  const seen = new Set();
+  return entries.map((entry) => entry.message).filter((message) => !seen.has(message) && seen.add(message));
+}
+
+/**
  * anchorPressed(container, btn, wasAt) — keep the pressed control where the
  * finger left it.
  *
@@ -1343,8 +1473,7 @@ function categoryHtml(cat, settings, saves) {
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
-    const stored = settings[ADVANCED_CAT_KEY];
-    const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+    const active = activeAdvancedGroup(settings);
     const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
@@ -1361,13 +1490,17 @@ function categoryHtml(cat, settings, saves) {
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
       const picker = '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Classes' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
             const compact = { ...row };
-            if (group.id === 'Classes' && !['General', 'Assign points'].includes(sub.id)) {
+            if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
               compact.label = row.label.replace(/^.*? — /, '');
-              compact.note = '';
+              // The class's own topic already says which class this is, so the
+              // note goes — EXCEPT the sentence naming the kit floor, which is
+              // the only place the row's minimum explains itself. Dropping it
+              // left the floor a number from nowhere.
+              compact.note = row.floorNote || '';
             } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
               compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
               compact.note = 'Applies to a new run.';
@@ -1461,18 +1594,27 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     headerTools = settingsHeaderTools();
     headerTools.dataset.inlineSettings = 'true';
   }
-  if (headerTools.dataset.inlineSettings) container.prepend(headerTools);
   container.setAttribute('data-settings-host', '');
+  // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
+  // in-run overlay has no head to hang them in, so they used to be prepended
+  // one after the other and landed as two stacked rows above the rail — the
+  // download button on its own line, the icon pair floating at the right of the
+  // next. Both ride one row now, and the CSS that styles them keys off
+  // `[data-settings-host]` so the overlay gets the same faces as the modal.
+  const inlineBar = document.createElement('div');
+  inlineBar.className = 'set-inline-bar';
+  if (onOffline) {
+    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
+    offline.addEventListener('click', onOffline);
+    inlineBar.append(offline);
+  }
+  if (headerTools.dataset.inlineSettings) inlineBar.append(headerTools);
+  if (inlineBar.childElementCount) container.prepend(inlineBar);
   // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
   // belongs to this render, so clearing Settings for Deck disconnects it and
   // releases listeners even while the shared container remains on the page.
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
-  if (onOffline) {
-    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
-    offline.addEventListener('click', onOffline);
-    container.prepend(offline);
-  }
 
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
@@ -1543,6 +1685,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('.set-section-select')?.addEventListener('change', event => {
     [...container.querySelectorAll('.set-subtab')].find(tab => tab.dataset.advancedGroup === event.target.value)?.click();
   });
+  // A typed value the field clamped is refused HERE and nowhere else: it never
+  // reaches `settings`, so the model has nothing to report. Keyed by row, so a
+  // legal re-entry clears exactly the message it replaced.
+  const typedRefusals = new Map();
   const reportAdvancedProblems = () => {
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
@@ -1573,7 +1719,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         });
       }
     }
-    const problems = advancedConfigProblems(contentBundle, settings);
+    // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
+    //
+    // This used to be one notice at the top of Settings carrying `problems[0]`
+    // and nothing else. It was TRUE and it was UNADDRESSED: with twenty class
+    // cells and a creation pool on screen, "which number is it refusing?" was
+    // a guess, and the owner's read was that the dial did nothing. Each row
+    // now says, under its own label, what was refused, why, and what the game
+    // is using instead. The banner stays for the problems that belong to no
+    // row (cross-field ranges), and as the thing you see from the other tab.
+    const problems = paintConfigProblems(container, settings, [...typedRefusals.entries()].map(([key, message]) => ({ keys: [key], message })));
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
     else clearSettingsNotice('game-config');
   };
@@ -1688,7 +1843,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
-      const currentGroup = settings[ADVANCED_CAT_KEY] || ADVANCED_GROUPS[0].id;
+      const currentGroup = activeAdvancedGroup(settings);
       const groups = advancedSubgroups(ROWS, currentGroup);
       const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
       const rows = button.dataset.resetConfig === 'all' ? ROWS
@@ -1761,10 +1916,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       for (const input of wrap.querySelectorAll('input')) input.value = String(val);
     };
     const commit = (raw) => {
-      const val = resolveNumberRow({ [key]: raw }, row);
+      // THE CLAMP SAYS SO. `val` is always legal, so the model will never
+      // report what he typed; the row does, and stops the moment he types a
+      // number the row can take.
+      const { value: val, refusal } = commitNumberRow(settings, row, raw);
       mirror(val);
       settings[key] = val;
       onChange({ [key]: val });
+      if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
@@ -1826,13 +1985,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       btn.disabled = true;
       try {
         if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
-        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
+        // A raised floor is reported, not thrown: the rest of the file lands.
+        const warnings = [];
+        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
         if (!container.isConnected) return;
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
-        showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.`);
+        showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
       } finally { btn.disabled = false; }
@@ -2266,6 +2427,12 @@ function settingsHeaderTools() {
   return tools;
 }
 
+// `onOffline` was destructured here and then dropped: both renderSettings calls
+// below left it out, so main.js handed this door `showOfflinePlay` and the
+// title screen's Settings never grew the button it opens. The changelog for
+// #1213 promises Download & saves "from Title or Settings", and only one of
+// those two was telling the truth. It is forwarded now, and lands in the same
+// one-row bar the in-run overlay uses.
 export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
@@ -2283,7 +2450,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, headerTools, previewAttributes }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
     secondary: [load],
     primary: done,
     footSize: 'short',
@@ -2298,11 +2465,12 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     if (!file) return;
     try {
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
-      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
+      const warnings = [];
+      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, headerTools, previewAttributes });
-      showSettingsNotice('Settings loaded.');
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
+      showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {

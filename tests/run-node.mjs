@@ -84,7 +84,10 @@ let zoomExtra = 0;
     // The property system's snapshots: every relic sentence byte-identical to
     // its pre-move fixture (phase 2a), and everything the tag tree derives
     // row-identical to the three pre-tree fixtures (phase T).
-    'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'card-shelf.test.mjs', 'advanced-config.test.mjs', 'hand-rules.test.mjs', 'starting-stat-config.test.mjs', 'combat-ratings.test.mjs', 'prologue.test.mjs',
+    'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'card-shelf.test.mjs', 'advanced-config.test.mjs', 'advanced-settings-groups.test.mjs', 'hand-rules.test.mjs', 'starting-stat-config.test.mjs', 'combat-ratings.test.mjs', 'settings-inline-chrome.test.mjs', 'prologue.test.mjs',
+    // The opening's art studio shares the game's scene model; its test lives
+    // beside the studio and would otherwise run nowhere CI can see.
+    '../art/prologue-2026-09-19/model.test.mjs',
     'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs'];
   const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
