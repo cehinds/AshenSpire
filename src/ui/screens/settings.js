@@ -1461,18 +1461,27 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     headerTools = settingsHeaderTools();
     headerTools.dataset.inlineSettings = 'true';
   }
-  if (headerTools.dataset.inlineSettings) container.prepend(headerTools);
   container.setAttribute('data-settings-host', '');
+  // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
+  // in-run overlay has no head to hang them in, so they used to be prepended
+  // one after the other and landed as two stacked rows above the rail — the
+  // download button on its own line, the icon pair floating at the right of the
+  // next. Both ride one row now, and the CSS that styles them keys off
+  // `[data-settings-host]` so the overlay gets the same faces as the modal.
+  const inlineBar = document.createElement('div');
+  inlineBar.className = 'set-inline-bar';
+  if (onOffline) {
+    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
+    offline.addEventListener('click', onOffline);
+    inlineBar.append(offline);
+  }
+  if (headerTools.dataset.inlineSettings) inlineBar.append(headerTools);
+  if (inlineBar.childElementCount) container.prepend(inlineBar);
   // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
   // belongs to this render, so clearing Settings for Deck disconnects it and
   // releases listeners even while the shared container remains on the page.
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
-  if (onOffline) {
-    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
-    offline.addEventListener('click', onOffline);
-    container.prepend(offline);
-  }
 
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
@@ -2266,6 +2275,12 @@ function settingsHeaderTools() {
   return tools;
 }
 
+// `onOffline` was destructured here and then dropped: both renderSettings calls
+// below left it out, so main.js handed this door `showOfflinePlay` and the
+// title screen's Settings never grew the button it opens. The changelog for
+// #1213 promises Download & saves "from Title or Settings", and only one of
+// those two was telling the truth. It is forwarded now, and lands in the same
+// one-row bar the in-run overlay uses.
 export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
@@ -2283,7 +2298,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, headerTools, previewAttributes }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
     secondary: [load],
     primary: done,
     footSize: 'short',
@@ -2301,7 +2316,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, headerTools, previewAttributes });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
       showSettingsNotice('Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
