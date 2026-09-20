@@ -1,10 +1,19 @@
 // Presentation only: every setting keeps its existing key and value semantics.
 const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./g, ' ').replace(/^./, c => c.toUpperCase());
 
+// ONE MENU DRIVES STARTING STATS (owner, 2026-09-20). "Class defaults should
+// be in Progression"; "changing class defaults and starting stats seem to be
+// in multiple menus instead of having just one driver". So the Classes tab is
+// gone and everything that decides the points a new character opens with —
+// the creation pool, each class's table, level-up, the tier size — is filed
+// under Progression, in that reading order.
 export function advancedSection(row) {
-  if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Classes';
+  if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
   return row.advancedGroup || 'Gameplay';
 }
+
+// The class topics, in the order the creation screen lists its classes.
+export const CLASS_TOPICS = Object.freeze(['Reaver', 'Starseer', 'Rogue', 'Herald']);
 
 function topic(row, section) {
   if (row.statTopic) return row.statTopic;
@@ -12,14 +21,18 @@ function topic(row, section) {
   if (row.handTopic) return row.handTopic;
   const key = row.key;
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
-  if (section === 'Classes') {
-    if (key === 'creationAutoAdvance') return 'General';
-    if (key === 'statTierSize') return 'Assign points';
-    return words(key.match(/\.(reaver|starseer|rogue|herald)\./)?.[1] || 'General');
-  }
   if (section === 'Progression') {
+    if (row.classTopic) return row.classTopic;
+    // His words, verbatim: "the assign points should be about how many points
+    // should be available and the total amount of points on a character, not
+    // how many stat points per tier. That should be under General."
+    if (['statTierSize', 'creationAutoAdvance'].includes(key)) return 'General';
     if (/enemyScaling/.test(key)) return 'Enemy scaling';
-    if (/levelUp|statTier/.test(key)) return 'Level-up';
+    // The tier size's own bounds go where the tier size went. Leaving them
+    // under Level-up would put one dial and its limits in two tabs, which is
+    // the complaint this whole change answers.
+    if (/tierSize/.test(key)) return 'General';
+    if (/levelUp/.test(key)) return 'Level-up';
     if (/xp|Multiplier/.test(key)) return 'Experience & rewards';
     return 'Starting values';
   }
@@ -92,9 +105,13 @@ export function advancedSubgroups(rows, section) {
     result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }
   if (section === 'Interface') result.sort((a, b) => Number(b.id === 'Formation layout') - Number(a.id === 'Formation layout'));
-  if (section === 'Classes') {
-    const order = ['General', 'Assign points', 'Reaver', 'Starseer', 'Rogue', 'Herald'];
-    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  if (section === 'Progression') {
+    // Assign points first: it is the driver, and every class table under it is
+    // rescaled by it. A topic not named here keeps its discovered order, after
+    // the named ones.
+    const order = ['Assign points', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
+    const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
+    result.sort((a, b) => rank(a.id) - rank(b.id));
   }
   return result;
 }

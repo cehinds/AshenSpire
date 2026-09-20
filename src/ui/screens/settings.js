@@ -8,7 +8,7 @@ import { previewPrologue } from './prologue.js';
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
@@ -33,7 +33,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblems, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -85,7 +85,14 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // value the engine actually resolves rows against, so the row that turns it
 // reads it from there and a copy cannot drift.
 const DERIVED_DEFAULTS = derivedStatRules.defaults;
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle);
+// `retired: true` is a row that keeps its KEY so an exported configuration
+// still imports and still applies, and stays off the screen because nothing a
+// player can reach depends on it — today, the creation pools of the modes
+// `characterCreation.visibleModeIds` does not offer. The screen showed three
+// near-identical "starting stat pool" rows for one reachable pool; this is the
+// line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
+// directly, so import is unaffected.
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -584,8 +591,12 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
   { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
   { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
-  { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
+  // ONE TAB FOR ONE IDEA (owner, 2026-09-20). "Class defaults" was its own tab
+  // and held the class tables and the tier size while the creation pool sat
+  // here — one concept, two menus, and the two disagreed. Class defaults are
+  // now topics under Progression. A group id with nothing filed under it is a
+  // named boot failure (assertSurfaces), so the id is gone, not emptied.
+  { id: 'Progression', label: 'Progression', tip: 'The points a new character starts with: the creation pool, each class’s defaults, level-up and stat conversions.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
   { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
@@ -1208,6 +1219,56 @@ function refreshApplied(container, settings) {
 }
 
 /**
+ * paintConfigProblems(container, settings) → the problem sentences, deduped.
+ *
+ * A REFUSAL IS ADDRESSED TO A ROW (owner, 2026-09-20 — "the new game assign
+ * and standard loadout don't seem to change on a new game despite having the
+ * values change in the settings"). The game was refusing his creation pool and
+ * saying so in one line at the top of Settings, four screens away from the
+ * twenty class cells and the pool row it was about; from where he sat the dial
+ * simply did nothing.
+ *
+ * Same seam as `refreshApplied` above: this reads the rows the panel actually
+ * drew and asks the model which keys are in trouble, so a new row costs
+ * nothing here. The line is REMOVED when the row is fine — a warning that is
+ * always on is decoration with a worried face (Sunna, and `numberAppliedHtml`
+ * lives by the same rule).
+ */
+export function paintConfigProblems(container, settings) {
+  const entries = advancedConfigProblemRows(contentBundle, settings);
+  const byKey = new Map();
+  for (const entry of entries) {
+    for (const key of entry.keys || []) {
+      if (!byKey.has(key)) byKey.set(key, []);
+      const messages = byKey.get(key);
+      if (!messages.includes(entry.message)) messages.push(entry.message);
+    }
+  }
+  const painted = new Set();
+  container.querySelectorAll('.set-row [data-key]').forEach((control) => {
+    const row = control.closest('.set-row');
+    if (!row || painted.has(row)) return;
+    painted.add(row);
+    const stack = row.querySelector('.as-labelstack') || row;
+    const existing = stack.querySelector('[data-row-problem]');
+    const messages = byKey.get(control.dataset.key) || [];
+    if (!messages.length) {
+      existing?.remove();
+      delete row.dataset.refused;
+      return;
+    }
+    const slot = existing || stack.appendChild(container.ownerDocument.createElement('p'));
+    slot.className = 'set-note set-applied limited';
+    slot.dataset.rowProblem = '';
+    slot.setAttribute('role', 'status');
+    slot.textContent = messages.join(' ');
+    row.dataset.refused = '';
+  });
+  const seen = new Set();
+  return entries.map((entry) => entry.message).filter((message) => !seen.has(message) && seen.add(message));
+}
+
+/**
  * anchorPressed(container, btn, wasAt) — keep the pressed control where the
  * finger left it.
  *
@@ -1361,11 +1422,11 @@ function categoryHtml(cat, settings, saves) {
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
       const picker = '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Classes' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
             const compact = { ...row };
-            if (group.id === 'Classes' && !['General', 'Assign points'].includes(sub.id)) {
+            if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
               compact.label = row.label.replace(/^.*? — /, '');
               compact.note = '';
             } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
@@ -1573,7 +1634,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         });
       }
     }
-    const problems = advancedConfigProblems(contentBundle, settings);
+    // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
+    //
+    // This used to be one notice at the top of Settings carrying `problems[0]`
+    // and nothing else. It was TRUE and it was UNADDRESSED: with twenty class
+    // cells and a creation pool on screen, "which number is it refusing?" was
+    // a guess, and the owner's read was that the dial did nothing. Each row
+    // now says, under its own label, what was refused, why, and what the game
+    // is using instead. The banner stays for the problems that belong to no
+    // row (cross-field ranges), and as the thing you see from the other tab.
+    const problems = paintConfigProblems(container, settings);
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
     else clearSettingsNotice('game-config');
   };
