@@ -52,7 +52,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     finally { clearTimeout(timeout); }
   }
   async function showScene(index,{resumeAt = 0,notify = true} = {}) {
-    const token = ++serial; loading = true; sceneIndex = index; elapsed = resumeAt; last = 0;
+    const token = ++serial; loading = true; next.disabled = true; sceneIndex = index; elapsed = resumeAt; last = 0;
     const scene = config.scenes[index], layout = portrait.matches ? 'mobile' : 'desktop';
     const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
     if (notify) onScene(index);
@@ -93,7 +93,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     }
     if (!reduced() && scene.effect === 'push') animations.push(plate.animate([{transform:'scale(1)'},{transform:`scale(${PROLOGUE_LAYOUT.motion.zoom})`}],{duration:prologueSceneMs(scene),fill:'both',easing:'linear'}));
     animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
-    previous = plate; loading = false; last = 0;
+    previous = plate; loading = false; next.disabled = false; last = 0;
   }
   function tick(now) {
     if (stopped || !root.isConnected) { cleanup(); return; }
@@ -107,7 +107,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     last = now; raf = requestAnimationFrame(tick);
   }
   pause.onclick = togglePause;
-  next.onclick = () => sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1);
+  next.onclick = () => { if (!loading) sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1); };
   skip.onclick = () => finish(preview ? 'preview' : 'skipped');
   if (preview) {
     const replay = button({label:config.labels.replay});

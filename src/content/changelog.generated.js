@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1216",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The opening moves at your pace and remembers your class",
+    "detail": "Each scene now defaults to five seconds total, including its fade, and its duration remains editable in Advanced → Opening sequence. The original first painting slowly draws closer; the Burning comes second. Distinct class memories and a new forest departure have desktop and phone artwork, including the approved cinder soldier and hooded Astrologer. Captions wait for their matching artwork, and text, timing, motif and shadow controls remain exportable.",
+    "build": "0.7.1.314",
+    "pullRequest": 1216,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1216"
+  },
+  {
     "id": "pr-1212",
     "date": "2026-09-19",
     "group": "2026-09-19",
