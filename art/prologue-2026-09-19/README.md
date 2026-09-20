@@ -1,57 +1,36 @@
-# AshenSpire opening art pack
+# AshenSpire opening sequence
 
-Six scenes, desktop and mobile paintings, and four transparent class layers. Original art generated with the built-in Image Generation tool on 2026-09-19 using this repository's intro art and the owner's annotated back/belt placement reference. Exact prompts: `prompts.json`. No third-party game artwork was used.
+The six-scene opening now runs after solo character creation and any starting draft, before the first playable map. Desktop and mobile share text, timing and state; mobile uses separate portrait paintings. Existing saves without an opening state go straight to play. Interrupted openings resume at their last scene boundary, using the run’s captured configuration.
 
-## Open the editor
+## Edit in the game
 
-On this Windows computer, double-click **Open Studio.cmd** to start the local editor and open it in your browser. When using the ZIP, extract the entire folder structure first so its art paths remain intact.
+Open **Settings → Advanced → Opening sequence**. Choose a group:
 
-The local preview is served at http://127.0.0.1:8770/art/prologue-2026-09-19/ while the task's server is running. To reopen later, run `python art/prologue-2026-09-19/serve.py` from the repository using an installed Python interpreter, then open that address. The bundled Python interpreter can also run `serve.py`. The server listens only on this computer.
+- **Playback:** every new game / first time per profile / off, automatic or manual advance, transition time (default **5 seconds**, range 0–30), speed, and still artwork.
+- **Motif:** follow the interface accent, character tint, or custom colour; adjust the wash strength. Accessibility Reduced motion is always respected.
+- **Each scene:** title, speaker, multiline dialogue, hold time and effect. Traveller scenes also expose desktop/mobile size and placement. The last scene has an editable location caption.
+- **Class dialogue:** separate Reaver, Starseer, Rogue and Herald lines.
+- **Button text:** Continue, Set forth, Pause, Resume, Skip and the other opening labels.
+- **Preview:** choose a class and starting scene, then Play preview. It creates no run and never marks the opening seen.
 
-Choose a scene thumbnail. Edit **Speaker** and **Dialogue** on the right (below the preview on a phone). Edits appear immediately and save in this browser. For **What you carry**, switch the Class menu to edit each class's own line. The text is never baked into an image. Scene titles, location caption, and player-facing button labels are also editable.
+Text saves as you type. Use `{name}`, `{class}`, `{classLine}` and `{location}` in narrative fields. Empty lines and line breaks are preserved; text is never baked into art. Use the settings menu to reset the selected group or export your configuration. **Load settings** accepts both normal game configuration and this studio’s original Export edits files. The game follows the active profile/character colour instead of the studio’s sample palette selection. Invalid values are refused before anything is applied.
 
-Under **Timing and button text**, **Transition (seconds)** controls the art transition duration for desktop and mobile. It defaults to **5 seconds** and is adjustable from 0 to 5 seconds. Scene hold times are edited separately. Timing changes save in this browser and are included in exported presets.
+In-game transitions run before the scene’s hold interval; speed scales the full timeline. The final scene always waits for **Set forth**. Pause and opening Settings stop the timeline; hidden tabs do not consume scene time. Skip and Set forth share one completion path and do not resolve a map node.
 
-**Export edits** saves every scene, all four class lines, button text, timing/effects, and motif preferences in a portable JSON preset. **Import edits** validates and restores a preset without touching gameplay or saves. Keep an exported backup if you clear browser storage or switch devices.
+## Art studio
 
-**Download scene WebP** saves the current composition with the selected character and colour wash, without text. This produces all class/layout combinations without repeatedly generating the scenery. No artwork is sent to a remote service by the editor.
+Double-click **Open Studio.cmd** to launch the original desktop/mobile composition editor. It retains its separate browser draft and Export edits format. Import that export through the game’s **Load settings** to use your work in new openings. The in-game preview is the reference for game timing and playback behavior. Download scene WebP exports art without text.
 
-## Files
+## Runtime art and compression
 
-- `../../assets/prologue/`: 12 text-free backdrop WebPs and 4 transparent adventurer WebPs, about 5.1 MiB total.
-- `masters/`: all 16 PNG masters, retaining RGBA transparency for class layers.
-- `sequence.json`: canonical editable starting script and presentation defaults.
-- `index.html`, `studio.mjs`, `studio.css`, `model.mjs`: the working art/text authoring preview.
-- `prompts.json`: complete generation prompts and reference provenance.
-- `generated-originals/`: unmodified tool output copies, including earlier mockups. Three zero-byte failed outputs were left in this archive for provenance; the masters and delivered WebPs are complete and verified.
+`../../assets/prologue/` contains twelve background WebPs and four alpha-preserving class WebPs. The runtime set is **2,555,544 bytes**, down from 5,345,050 (**52.2% smaller**). Desktop plates are at most 1280 pixels wide, portrait plates 768, and class layers 700. Encoded from PNG masters at WebP quality 82, method 6; all 16 decode and preserve the class alpha channels. `assets.json` records sizes and dimensions. No PNG masters or duplicate ZIPs are required by the game build.
 
-| Scene | Desktop and mobile background stem | Foreground |
-| --- | --- | --- |
-| Remembered warmth | warmth | None |
-| The stopped year | year | None |
-| Last night | night | Neighbour painted into scene; this is not the player |
-| What you carry | carry | Selected class |
-| The road out | road | Selected class |
-| The first step | step | Selected class |
+Reaver carries a sword across the back; Starseer a staff; Rogue a dagger at the rear belt; Herald a holy book at the hip. These identify class and do not grant equipment. Original PNG masters and the full source archive remain in the owner’s local art folder. `prompts.json` retains generation provenance.
 
-Background filenames end in `-desktop.webp` or `-mobile.webp`. Foregrounds are `reaver.webp` (longsword across back), `starseer.webp` (staff across back), `rogue.webp` (short dagger across rear belt), and `herald.webp` (holy book at rear hip). All class items sit outside the cloak. They identify class visually and do not grant gameplay equipment.
+The hamlet/road paintings show the Hollow Weald departure. The final arrival uses Crownfall’s dedicated painting for atlas starts there, or existing destination/region art for other starts. Class never determines geography. The neighbour’s burning is unfinished; the player is not universally transformed. Custom body/armour appearances are not represented by the four class layers.
 
-## Motif and colour
+## Sources and checks
 
-The preview supports the actual interface accent palette from `src/content/balance.js` and character tint palette from `styles/base.css`/`src/ui/assets.js`. The wash is applied dynamically to art only. Subtitles remain ivory. The Last night scene caps the wash at 6% to preserve the ember's visual meaning. Default intensity is 14%; it can be set to zero. Gold character tint resolves to the active interface accent, matching the game's variable palette.
+`content/config/ui/screens/prologue.json` is the authored game sequence; `node tools/config-build.mjs` produces the generated configuration. `src/model/prologue.js` supplies validated settings, tokens and destinations. `src/ui/screens/prologue.js` renders both new games and Settings preview. The studio retains `sequence.json` as its standalone initial script.
 
-For game integration, resolve the palette from `run.customization.tint` or `settings.accent` according to the configured source; do not infer class from colour. The studio lets the author select the same values manually and does not read or modify the game's profile.
-
-## Scope and lore
-
-This is an art pack and working authoring preview, not a change to the new-game flow or the game's Advanced Settings. The earlier plan in `docs/design/new-game-prologue.md` remains the integration plan. Exported studio presets use their own schema and must not be imported into the game's existing general-configuration importer until an adapter is added.
-
-Road/field art depicts the Hollow Weald route. Arrival follows the current atlas start, Crownfall, using the existing Crownfall map as architectural reference. Other classic starting seats require their own mapped destination art before full new-game integration. No claim is made that those region variants already exist in this pack.
-
-The past is represented by a carved three-hearth relief. Present-day city lights are extinguished. The hut neighbour's burning is unfinished. The player's cloaked face remains obscured; arbitrary character body/armor customization is not yet represented by these four class layers.
-
-## Verification
-
-All 16 WebP files decode. The four class masters and WebPs retain transparency. Three focused model tests verify text/colour/timing export round trips, independent class lines, Unicode/empty text, and refusal of malformed presets without mutating current data. Browser checks cover live dialogue editing, persistence, class selection, tint and portrait layouts. These checks apply to the authoring tool, not unimplemented game integration.
-
-The image tool exhausted C: while saving three foregrounds. This task's generated-image directory was moved to `generated-originals/` on D: and the old path replaced by a junction pointing here, so prior generated-image paths still work. The affected class images were regenerated and saved successfully; no unrelated files were removed.
+Focused verification: `node --test tests/prologue.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs tests/ui-config.test.mjs art/prologue-2026-09-19/model.test.mjs`. Browser checks cover multiline edits, preview, phone art/controls, class item loading, final-map arrival, and reduced motion. Only solo new games show the opening; LAN startup is unchanged.

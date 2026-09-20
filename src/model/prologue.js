@@ -66,6 +66,22 @@ export function prologueConfig(settings = {}) {
   return config;
 }
 
+/** Bridge the original art-studio exports into ordinary game settings. */
+export function prologuePresetOverrides(preset) {
+  if (preset?.schemaVersion !== 1 || preset.kind !== 'AshenSpire prologue art'
+    || !Array.isArray(preset.scenes) || preset.scenes.length !== PROLOGUE_DEFAULTS.scenes.length
+    || new Set(preset.scenes.map(s=>s?.id)).size !== preset.scenes.length) throw new Error('Invalid opening preset. Nothing was imported.');
+  const source = {...preset, scenes:PROLOGUE_DEFAULTS.scenes.map(scene=>preset.scenes.find(s=>s?.id===scene.id))};
+  if (source.scenes.some(s=>!s)) throw new Error('Opening preset has an unknown scene. Nothing was imported.');
+  const changes = {};
+  for (const row of prologueRows()) {
+    if (!row.prologuePath) continue;
+    const value = get(source,row.prologuePath);
+    if (value !== undefined) changes[row.key] = value;
+  }
+  return changes;
+}
+
 export function prologueCopy(scene, config, {classId = 'reaver', name = 'Forsaken', location = 'Crownfall'} = {}) {
   const cls = config.classes[classId] || config.classes.reaver;
   const tokens = {name,location,class:cls.name,classLine:cls.line};

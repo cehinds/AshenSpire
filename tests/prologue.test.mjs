@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, shouldPlayPrologue, pendingPrologueScene } from '../src/model/prologue.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle } from '../src/model/advancedConfig.js';
@@ -25,6 +26,17 @@ test('invalid imports are atomic and timing defaults to five seconds',()=>{
   assert.equal(current['gameConfig.prologue.scenes.0.text'],'Keep me');
   assert.equal(prologueConfig().presentation.transitionSeconds,5);
   assert.throws(()=>parseAdvancedConfigFile(advancedConfigExport({'gameConfig.prologue.scenes.0.text':'a'.repeat(5001)}),contentBundle));
+});
+
+test('existing art-studio exports import into the game without accepting art URLs',()=>{
+  const preset=JSON.parse(readFileSync(new URL('../art/prologue-2026-09-19/sequence.json',import.meta.url),'utf8'));
+  preset.scenes[0].text='My opening';
+  preset.scenes[0].url='https://untrusted.example/image';
+  const changes=parseAdvancedConfigFile(JSON.stringify(preset),contentBundle);
+  assert.equal(prologueConfig(changes).scenes[0].text,'My opening');
+  assert.ok(!JSON.stringify(changes).includes('untrusted.example'));
+  preset.scenes[1].id=preset.scenes[0].id;
+  assert.throws(()=>parseAdvancedConfigFile(JSON.stringify(preset),contentBundle));
 });
 
 test('all editable scene, class, and timing fields are grouped and reachable',()=>{
