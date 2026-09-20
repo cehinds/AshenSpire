@@ -19,6 +19,8 @@ Every scene defaults to **5 seconds total, including its entrance transition**. 
 
 The original **Remembered warmth** painting opens with a slow zoom. **The Burning** is second: cities burn inward toward their towers, following the lore. **Last night** retains the hut scene. **What the fire left** selects a separate memory painting for each class: the fallen gate soldier, stitched knights, the Astronomer's note, or the Herald tending an ember. **The road out** uses a new forest departure painting. The last scene uses the actual starting destination. All new paintings have separate mobile compositions.
 
+The final Herald memory uses the approved summit composition: the novice's face is fully hidden beneath hood and veil while the unfinished Burning cracks through them. They collapse against the monumental hearth and reach toward the Sovereign Ember. Its masters and complete generation record live in `../prologue-herald-summit/`.
+
 ## Art studio
 
 Double-click **Open Studio.cmd** to launch the original desktop/mobile composition editor. It retains its separate browser draft and Export edits format. Import that export through the game’s **Load settings** to use your work in new openings. The in-game preview is the reference for game timing and playback behavior. Download scene WebP exports art without text.
