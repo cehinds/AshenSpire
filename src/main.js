@@ -3,6 +3,10 @@ import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, d
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
+import { applyWireframeChoices } from './ui/wireframeChoices.js';
+import { restampModalWireframes } from './ui/components/modalShell.js';
+import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
+import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -773,6 +777,17 @@ function applyDisplaySettings(settings) {
     console.warn(msg);
   }
   document.documentElement.dataset.handLayout = handLayout;
+  // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
+  // choice on the root, read by the modal shell, the kit's category navigation,
+  // the W1 workspace frame and the scene fitter — the same shape as cardMotif
+  // above. Then the three surfaces that can be ON SCREEN while the answer
+  // changes are re-resolved in place: Settings is itself a W1 door, and an
+  // answer a player cannot see land is an answer they cannot judge. Everything
+  // else takes its word the next time it draws.
+  applyWireframeChoices(settings);
+  restampModalWireframes(document);
+  restampWorkspaceFrames(document);
+  replanCategoryNavs();
   document.documentElement.dataset.armamentsPresentation = resolveArmamentsPresentation(settings);
   document.documentElement.dataset.armamentsPhonePlacement = resolveArmamentsPhonePlacement(settings);
   const strengths = UI.cardMotifStrength;

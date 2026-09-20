@@ -10,11 +10,31 @@
 
 import { landControl } from '../kit/index.js';
 import { workspaceFrameVars } from '../models/WorkspaceModel.js';
+import { resolveWorkspaceSpec } from '../models/WireframeChoiceModel.js';
+import { activeWireframeChoice } from '../wireframeChoices.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 
 export function workspaceFrame(node) {
   node.classList.add('w1-workspace');
-  for (const [prop, value] of Object.entries(workspaceFrameVars())) node.style.setProperty(prop, value);
+  // The drawn shares, then the player's answer about them (Settings → Advanced
+  // → Wireframes → Menus). `auto` hands workspaceFrameVars the same spec it
+  // read for itself, so the frame is unchanged until something else is chosen.
+  const spec = resolveWorkspaceSpec(wireframeUi.workspace, activeWireframeChoice('wireframeMenuFrame'));
+  for (const [prop, value] of Object.entries(workspaceFrameVars(spec))) node.style.setProperty(prop, value);
   return node;
+}
+
+/**
+ * restampWorkspaceFrames(doc) → how many open workspaces took the new shares.
+ *
+ * The frame is seven custom properties, so a changed answer is re-paintable
+ * without rebuilding a door — and the Smith or the stable can be open behind
+ * the Settings window while the answer changes.
+ */
+export function restampWorkspaceFrames(doc = typeof document === 'undefined' ? null : document) {
+  let restamped = 0;
+  for (const node of doc?.querySelectorAll('.w1-workspace') || []) { workspaceFrame(node); restamped += 1; }
+  return restamped;
 }
 
 /** land(control) — put the unified cursor and DOM focus on one control. */

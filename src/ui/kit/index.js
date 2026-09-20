@@ -448,8 +448,8 @@ export const railed = (railNode, paneNode, attrs = {}) => {
   const host = el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [nav ? nav.rail : railNode, paneNode]);
   return nav ? nav.attach(host) : host;
 };
-import { categoryNav, landControl } from './categoryNav.js';
-export { categoryNav, landControl };
+import { categoryNav, landControl, replanCategoryNavs } from './categoryNav.js';
+export { categoryNav, landControl, replanCategoryNavs };
 /** popover({ caption, groups: [[row, …], …], attrs }) — Eyebrow cap + hairline-grouped rows. */
 export function popover({ caption = '', groups = [], attrs = {}, className = '' } = {}) {
   return el('div', { ...attrs, class: cls('as-pop', className) }, [

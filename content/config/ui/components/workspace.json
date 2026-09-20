@@ -4,7 +4,8 @@
     "frameHeight": 0.9,
     "railWidth": 0.216,
     "railMinRem": "$w1RailMinRem",
-    "railMaxRem": 24
+    "railMaxRem": 24,
+    "insetScale": 0.85
   },
   "positioning": { "columnGap": 0.02, "rowGap": 0.02 }
 }

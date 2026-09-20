@@ -9,6 +9,7 @@ import { previewPrologue } from './prologue.js';
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
 import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
@@ -93,6 +94,37 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+
+// ---- the Wireframes tab: DERIVED from the choice catalogue ------------------
+//
+// "I want to customize the wireframe choices for modals and menus and scenes"
+// (owner, 2026-09-20), as one Advanced group whose topics are the three
+// families and whose rows are dropdowns. Not one row typed per choice: the
+// catalogue (models/WireframeChoiceModel.js) already has to name every option
+// for the components that read them, and a second copy here is the drift this
+// screen has learned to refuse everywhere else (see graceRefillRows above). A
+// fourth family, or a third option on an existing one, is an edit to the model
+// and NOTHING here.
+//
+// `dropdown: true` on every row although two of them have three options: the
+// chip strip is the default under four, and the owner asked for drop downs.
+// `wireframeTopic` is what files a row under Modals, Menus or Scenes
+// (models/AdvancedSettingsGroups.js).
+function wireframeChoiceRows() {
+  return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
+    cat: 'Advanced',
+    advancedGroup: 'Wireframes',
+    wireframeTopic: group.label,
+    key: choice.key,
+    type: 'choice',
+    dropdown: true,
+    def: choice.def,
+    choices: choice.options.map((entry) => entry.id),
+    choiceLabels: Object.fromEntries(choice.options.map((entry) => [entry.id, entry.label])),
+    label: choice.label,
+    note: choice.note,
+  })));
+}
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -578,6 +610,7 @@ const ROWS = [
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
   ...graceRefillRows(),
+  ...wireframeChoiceRows(),
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
@@ -638,6 +671,11 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
   { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  // The wireframe decisions the drawings leave open, one topic per family of
+  // surfaces. Separate from Interface because these are not "extra controls":
+  // they answer which wireframe a whole family of surfaces draws, and the
+  // answer reaches every door, menu and scene at once.
+  { id: 'Wireframes', label: 'Wireframes', tip: 'Which wireframe modal windows, category menus and scenes draw. Every choice starts on the drawn one.' },
   { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },

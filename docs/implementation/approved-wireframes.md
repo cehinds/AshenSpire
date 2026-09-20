@@ -2641,3 +2641,52 @@ Unfold (owner, 2026-09-19, "why not do this"):
 - Seen on the way: at ~600 px wide the categoryNav still chooses the rail and
   the rail squeezes to ~55 px with clipped labels. That is the shared
   categoryNav threshold, not this screen's; owed a look.
+
+## The player chooses the wireframe: Settings → Advanced → Wireframes
+
+Owner, 2026-09-20: *"I want to customize the wireframe choices for modals and
+menus and scenes in the settings with sub setting using drop down options for
+each menu group … as one of the advanced settings with subsettings."*
+
+Several of the drawings above leave a decision open, and the build has always
+answered each of them one way. That answer is now the player's, per family of
+surfaces, in one Advanced group whose topics are the families and whose rows
+are drop downs.
+
+| Topic | Choice (setting key) | Options | Who reads it |
+|---|---|---|---|
+| Modals | Modal window width (`wireframeModalWidth`) | As designed · one rung narrower · one rung wider | `openModal` (`components/modalShell.js`) steps the rung the body asked for along `MODAL_SIZES` |
+| Modals | Modal footer buttons (`wireframeModalFooter`) | As designed · Short · Medium · Long · Full width | `modalFooter`, the `.modal-btnrow` step ladder in `kit.css` |
+| Menus | Category navigation (`wireframeMenuNav`) | Fit to the screen · always the rail · always the selector | `kit/categoryNav.js`, over `CategoryNavModel`'s measured answer |
+| Menus | Workspace frame (`wireframeMenuFrame`) | As designed · fill the screen · inset | `workspaceFrame` (`components/w1Workspace.js`) → `workspaceFrameVars` |
+| Scenes | Scene skyline (`wireframeSceneSkyline`) | As designed · always drawn · never drawn | WGS6 in `fitSceneBackdrop` → `SceneLayerModel` |
+| Scenes | Scene floor band (`wireframeSceneFloor`) | As designed · aligned to the ground line · plain cover crop | WGS7, same pair |
+
+Rules the implementation keeps:
+
+- **`auto` is the shipped build.** Every choice starts on *As designed*, and
+  every resolver returns its authored argument unchanged while that is in
+  force, so nothing in the drawings above moves until a player asks. The
+  resolvers take the authored value as their first argument for the same
+  reason: a choice shifts a decision the surface already made rather than
+  taking it away.
+- **One catalogue.** `src/ui/models/WireframeChoiceModel.js` names the groups,
+  the choices, their options and their prose. The settings rows are generated
+  from it (`wireframeChoiceRows` in `screens/settings.js`) and
+  `AdvancedSettingsGroups` files each row under its group's label, so a fourth
+  family or a third option is an edit to the model and nothing else.
+- **One word per choice on the root.** `src/ui/wireframeChoices.js` writes
+  `data-wireframe-modal-width` and its five siblings from the settings bag
+  (`applyDisplaySettings`), and the four components read them back — the same
+  shape as `data-card-motif` and `data-hand-layout`.
+- **A door already open takes the answer.** Settings is itself a W1 door, so
+  `restampModalWireframes`, `restampWorkspaceFrames` and `replanCategoryNavs`
+  re-resolve what is on screen from each surface's *authored* value. Re-applying
+  is idempotent: the rung cannot walk off the end of the ladder. Scenes take
+  their words at the next fit.
+- **Rule 11 still holds.** The navigation choice offers rail or selector and
+  nothing else; there is no accordion and no horizontal tab strip to pick.
+
+Verification: `tests/wireframe-choices.test.mjs` (10 cases — the catalogue, the
+six resolvers, the generated rows and their topics, the root words, and an open
+door restamped repeatedly). Not yet verified in a browser at any viewport.

@@ -35,6 +35,8 @@
 
 import { esc } from './tooltip.js';
 import { planButtonGroup } from '../models/ButtonSizeModel.js';
+import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
+import { activeWireframeChoice } from '../wireframeChoices.js';
 
 /** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
 export const MODAL_CLOSE_GLYPH = '✕';
@@ -82,6 +84,12 @@ export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' 
  */
 export function modalFooter({ note = '', secondary = [], primary = null, className = '', size = 'medium' } = {}) {
   if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown footer size '${size}'`);
+  // THE CALLER'S STEP IS THE AUTHORED ONE, and the player's answer (Settings →
+  // Advanced → Wireframes → Modals) moves it. `auto` is the caller's own word,
+  // so a footer with no choice in force is byte-identical to the one before
+  // this line existed. The authored step is kept on the row so the same answer
+  // can be re-applied to an OPEN door without knowing what it asked for.
+  const step = resolveFooterSize(size, activeWireframeChoice('wireframeModalFooter'), BUTTON_ROW_SIZES);
   const footer = document.createElement('footer');
   footer.className = `modal-foot${className ? ` ${className}` : ''}`;
   if (note) {
@@ -103,7 +111,8 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
   // and `stretch` (ui.css) gives them one height.
   const actions = document.createElement('div');
   actions.className = 'modal-foot-actions modal-btnrow';
-  actions.dataset.size = size;
+  actions.dataset.authoredSize = size;
+  actions.dataset.size = step;
   const visibleSecondary = secondary.filter(button => button && !button.hidden);
   const visiblePrimary = primary && !primary.hidden ? primary : null;
   actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
@@ -424,6 +433,32 @@ export function modalHead({
  */
 export const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
 
+/**
+ * restampModalWireframes(doc) → how many surfaces were re-resolved.
+ *
+ * A player changing a Modals choice is, almost always, looking at a modal while
+ * they do it: Settings is a W1 door. So the answer is re-applied to everything
+ * already on the page rather than only to the next door opened. Nothing is
+ * re-rendered — the rung and the footer step are two data attributes, and
+ * kit.css owns what they mean — and the AUTHORED value each surface asked for
+ * is the one that is re-resolved, so this is idempotent and never compounds.
+ */
+export function restampModalWireframes(doc = typeof document === 'undefined' ? null : document) {
+  if (!doc) return 0;
+  const width = activeWireframeChoice('wireframeModalWidth', doc.documentElement);
+  const footer = activeWireframeChoice('wireframeModalFooter', doc.documentElement);
+  let restamped = 0;
+  for (const panel of doc.querySelectorAll('.modal[data-authored-size]')) {
+    panel.dataset.size = resolveModalRung(panel.dataset.authoredSize, width, MODAL_SIZES);
+    restamped += 1;
+  }
+  for (const row of doc.querySelectorAll('.modal-foot-actions[data-authored-size]')) {
+    row.dataset.size = resolveFooterSize(row.dataset.authoredSize, footer, BUTTON_ROW_SIZES);
+    restamped += 1;
+  }
+  return restamped;
+}
+
 export function openModal({
   size = 'md',
   className = '',
@@ -456,7 +491,11 @@ export function openModal({
   if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
   const panel = document.createElement('section');
   panel.className = `modal${className ? ` ${className}` : ''}`;
-  panel.dataset.size = size;
+  // The rung the body asked for, then the player's answer about it. Both are
+  // written: `data-authored-size` is what the door chose and never changes, so
+  // `restampModalWireframes` can re-resolve an open door when the answer does.
+  panel.dataset.authoredSize = size;
+  panel.dataset.size = resolveModalRung(size, activeWireframeChoice('wireframeModalWidth'), MODAL_SIZES);
   panel.dataset.wireframe = role === 'alertdialog' ? 'W2' : 'W1';
   panel.setAttribute('role', role);
   panel.setAttribute('aria-modal', 'true');

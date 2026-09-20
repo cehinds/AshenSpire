@@ -15,7 +15,7 @@
 // source content/config/ui/components/possession.json 1b9472fa00beb86e
 // source content/config/ui/components/selection.json 0ffebfc692d8cbf9
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
-// source content/config/ui/components/workspace.json e0cd44e04fa02f5b
+// source content/config/ui/components/workspace.json 0cf6a3c4756f2b16
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
 // source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
 // source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
@@ -716,7 +716,8 @@ export const uiConfig = deepFreeze({
         "frameHeight": 0.9,
         "railWidth": 0.216,
         "railMinRem": 11,
-        "railMaxRem": 24
+        "railMaxRem": 24,
+        "insetScale": 0.85
       },
       "positioning": {
         "columnGap": 0.02,
