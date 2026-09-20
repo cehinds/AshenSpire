@@ -1,4 +1,5 @@
 import { bindCardInspection } from '../components/cardInspection.js';
+import { wireCardShelf } from '../components/cardShelf.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
 // through the W1d workspace: a category rail beside (or above) one W1v pane of
 // offers, the selected offer's detail, and a footer whose right-hand action is
@@ -106,6 +107,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   const picks = {};
   let primaryDisarm = null;
   let layout = null;
+  let shelves = null;
 
   function releaseFooter() {
     const disarm = primaryDisarm;
@@ -116,6 +118,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   function render() {
     releaseFooter();
     if (layout) layout.release();
+    if (shelves) shelves.release();
     const categories = shopCategories({ sellOn: sellOn() });
     if (!categories.includes(activeCategory)) activeCategory = 'cards';
     // THE PURSE IS THE BAND'S. This screen used to print its own "Cinders N ·
@@ -138,11 +141,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
               <div class="as-pane-head shop-pane-head"></div>
               <div class="shop-body">
                 <div class="shop-offers">
-                  <div class="reward-row shop-shelf" id="shop-cards" data-shop-shelf="cards"></div>
-                  <div class="reward-row shop-shelf" id="shop-armaments" data-shop-shelf="armaments"></div>
-                  <div class="reward-row shop-shelf" id="shop-weapon-arts" data-shop-shelf="weaponArts"></div>
-                  <div class="class-row shop-shelf" id="shop-relics" data-shop-shelf="relics"></div>
-                  <div class="class-row shop-shelf" id="shop-flasks" data-shop-shelf="flasks"></div>
+                  <div class="card-shelf shop-shelf" id="shop-cards" data-shop-shelf="cards"></div>
+                  <div class="card-shelf shop-shelf" id="shop-armaments" data-shop-shelf="armaments"></div>
+                  <div class="card-shelf shop-shelf" id="shop-weapon-arts" data-shop-shelf="weaponArts"></div>
+                  <div class="card-shelf shop-shelf" id="shop-relics" data-shop-shelf="relics"></div>
+                  <div class="card-shelf shop-shelf" id="shop-flasks" data-shop-shelf="flasks"></div>
                   <div class="shop-shelf shop-services" data-shop-shelf="services">
                     <div id="shop-remove">
                       <div class="class-row">
@@ -150,11 +153,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
                           <div class="glyph">✂</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
                         </div>
                       </div>
-                      <div id="remove-grid" class="deck-strip" style="display:none"></div>
+                      <div id="remove-grid" class="deck-strip card-shelf" style="display:none"></div>
                     </div>
                     <div class="class-row" id="shop-smith"></div>
                   </div>
-                  ${sellOn() ? '<div class="class-row shop-shelf" id="shop-sell" data-shop-shelf="sell"></div>' : ''}
+                  ${sellOn() ? '<div class="card-shelf shop-shelf" id="shop-sell" data-shop-shelf="sell"></div>' : ''}
                 </div>
                 <section class="shop-detail" aria-label="${esc(t('shop.detail.aria'))}" aria-live="polite"></section>
               </div>
@@ -337,10 +340,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const grid = app.querySelector('#remove-grid');
       if (grid.style.display !== 'none') return;
       gridOpen = true;
+      // The grid is a `.card-shelf`: it wraps, centres and sizes its own
+      // tracks. Only the reveal is written here — an inline `gap` would have
+      // been a second, louder answer to how far apart the cards stand.
       grid.style.display = 'flex';
-      grid.style.flexWrap = 'wrap';
-      grid.style.gap = '14px';
-      grid.style.justifyContent = 'center';
       // THE BURN IS TWO BEATS AND THREE DOORS (Constantine, 2026-09-12).
       // The first tap on a card HIGHLIGHTS it and reveals its `i`; nothing
       // is armed and nothing is spent. The second beat is the burn, and it
@@ -635,6 +638,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
       }
       for (const shelf of offersBox.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
+      // The shelf that just appeared had no box to measure while it was
+      // hidden, so it is measured now rather than on its first resize.
+      shelves?.apply();
       root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);
       paneHead.replaceChildren(statusText(statusOf(activeCategory), { class: 'shop-pane-status', role: 'status' }));
 
@@ -686,6 +692,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
     paint();
     layout = wireShopLayout(root);
+    // Every shelf in the pane is a `.card-shelf`; this tells each one how many
+    // cards its measured width holds, so a last row of two is not drawn wider
+    // than the four above it (components/cardShelf.js).
+    shelves = wireCardShelf(offersBox);
   }
 
   function buyItem(kind, name, cost, onConfirm) {

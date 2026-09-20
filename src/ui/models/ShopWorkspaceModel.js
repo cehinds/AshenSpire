@@ -1,4 +1,5 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
 
 // W1d / W1v: THE MERCHANT AS A WORKSPACE. A category rail beside (or above) one
 // active pane; the pane shows the category's offers with a price and an
@@ -76,6 +77,37 @@ export function shopFooterActions(selected = null) {
 }
 
 /**
+ * THE OFFERS COLUMN IS WIDE ENOUGH FOR A SHELF OF CARDS, not a bare fraction.
+ *
+ * `offersFraction` gave the offers half the pane whatever was standing in it.
+ * Measured at 1328x744: rail 287, pane 1000, offers 490 — and an armament
+ * shelf needs 644px to stand four resting cards side by side, so it wrapped to
+ * ONE card per row with the rest behind a scroll. The authored fraction was
+ * never wrong about what the offers deserve at rest; it simply had no idea
+ * what it was holding.
+ *
+ * So the share is a FLOOR, not the answer: the offers take their authored
+ * fraction, or as much as a full shelf of resting cards needs, whichever is
+ * larger — bounded by what the detail column can spare (`detailMinRem`, this
+ * screen's own authored floor, because the detail here is a short stack of
+ * facts rather than a reading door). Asking for more than a full shelf would
+ * only stretch the gaps: the shelf never draws a card above its resting width.
+ * Below the bound the offers keep the authored fraction and the shelf drops a
+ * column, which is the shelf's own rule, not a second one written here.
+ *
+ * `rem` is the measured root size in CSS px, the same term the rest of this
+ * model's rem numbers are resolved with.
+ */
+export function shopOffersWidthPx(paneWidth, rem = 16, ui = wireframeUi.shop) {
+  const share = paneWidth * ui.offersFraction;
+  const { maxColumns, restingPx } = cardShelf();
+  const fullShelf = cardShelfWidthPx(maxColumns, restingPx);
+  const spare = paneWidth - ui.detailMinRem * (rem > 0 ? rem : 16);
+  const want = Math.max(0, Math.min(fullShelf, spare));
+  return Math.min(paneWidth, Math.max(share, want));
+}
+
+/**
  * Layout for the measured frame. Wide: rail beside the pane, offers and
  * detail side by side. Compact: rail above, detail stacked under the offers
  * and capped so the offers keep the larger share. All numbers come from
@@ -87,14 +119,20 @@ export function shopWorkspaceLayout({ width = 0, bodyHeight = 0, rem = 16 } = {}
   const railWidth = wide
     ? Math.round(Math.min(Math.max(width * ui.railFraction, ui.railMinRem * px), ui.railMaxRem * px))
     : 0;
+  const gap = Math.round(ui.gapRem * px);
+  // The pane is what is left for the two columns once the rail and the gap
+  // between them are taken. Stacked, the offers own the full width and the
+  // fractions are not column tracks at all, so the authored share stands.
+  const paneWidth = Math.max(0, width - railWidth - gap);
+  const offersFr = wide && paneWidth > 0 ? shopOffersWidthPx(paneWidth, px, ui) / paneWidth : ui.offersFraction;
   return Object.freeze({
     mode: wide ? 'wide' : 'compact',
     rail: wide ? 'side' : 'top',
     pane: wide ? 'columns' : 'stacked',
     railWidth,
-    offersFr: ui.offersFraction,
-    detailFr: 1 - ui.offersFraction,
-    gap: Math.round(ui.gapRem * px),
+    offersFr,
+    detailFr: 1 - offersFr,
+    gap,
     detailMax: wide ? null : Math.max(0, Math.floor(bodyHeight * ui.detailMaxFraction)),
   });
 }
