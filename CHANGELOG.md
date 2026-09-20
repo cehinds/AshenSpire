@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-20
 
-- **The Herald's memory burns darker** ([#1224](https://github.com/cehinds/AshenSpire/pull/1224), `0.7.1.324`). The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.
+- **The Herald's memory burns darker** ([#1224](https://github.com/cehinds/AshenSpire/pull/1224), `0.7.1.323`). The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.
 
 ## 2026-09-19
 

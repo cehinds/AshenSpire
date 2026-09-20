@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "The Herald's memory burns darker",
     "detail": "The Herald class memory in the opening now sits in near darkness with drifting ash, sparks around the hearth and a furnace glow beneath the novice's robe, matching the Burning. Desktop and phone plates both; the scene's composition is unchanged.",
-    "build": "0.7.1.324",
+    "build": "0.7.1.323",
     "pullRequest": 1224,
     "url": "https://github.com/cehinds/AshenSpire/pull/1224"
   },
