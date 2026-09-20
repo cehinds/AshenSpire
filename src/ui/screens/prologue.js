@@ -3,7 +3,7 @@ import { paintPrologueCharacter, placePrologueCharacter } from '../prologueChara
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
 import { topVeil } from '../components/veil.js';
-import { prologueConfig, prologueCopy, prologueTint, prologueDestination, PROLOGUE_LAYOUT } from '../../model/prologue.js';
+import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, PROLOGUE_LAYOUT } from '../../model/prologue.js';
 
 // One renderer serves both the real opening and the settings preview. Its only
 // writes are explicit callbacks; previewing cannot create a run or consume RNG.
@@ -13,7 +13,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const destination = prologueDestination(run);
   const portrait = matchMedia(`(max-width: ${PROLOGUE_LAYOUT.sizing.mobileBreakpoint}px) and (orientation: portrait)`);
   const prefersStill = matchMedia('(prefers-reduced-motion: reduce)');
-  const root = el('section',{class:'prologue-screen', 'aria-label':'Opening sequence'});
+  const root = el('section',{class:`prologue-screen prologue-layout-${config.presentation.layout || 'caption'}`, 'aria-label':'Opening sequence'});
   const stage = el('div',{class:'prologue-stage','aria-hidden':'true'});
   const title = el('h1',{class:'prologue-title'});
   const speaker = el('p',{class:'prologue-speaker'});
@@ -26,7 +26,33 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const controls = el('div',{class:'prologue-controls'},[pause,skip,next]);
   const caption = el('div',{class:'prologue-caption'},[title,speaker,dialogue,location,progress,controls]);
   root.append(stage,caption); host.replaceChildren(root);
-  let sceneIndex = Math.max(0,Math.min(config.scenes.length-1,startScene)), elapsed = 0;
+  // THE PRESENTATION IS SET ONCE, AS CSS CUSTOM PROPERTIES, because every one
+  // of these is a value the stylesheet already wants (a colour, a length, an
+  // alignment) and none of them changes between scenes. The classes say which
+  // wireframe is standing; the properties fill it in.
+  caption.dataset.position = String(p.textPosition || 'bottom-center');
+  root.classList.toggle('prologue-has-box', p.textBox !== false);
+  root.classList.toggle('prologue-box-hidden', p.textBox !== false && p.textBoxVisible === false);
+  root.classList.toggle('prologue-outlined', p.textOutline === true && Number(p.textOutlineWidth) > 0);
+  root.style.setProperty('--prologue-text-scale', String(p.textScale ?? 1));
+  root.style.setProperty('--prologue-text-align', p.textAlign || 'center');
+  root.style.setProperty('--prologue-box', prologueBoxBackground(p));
+  root.style.setProperty('--prologue-outline-color', p.textOutlineColor || '#100e0c');
+  root.style.setProperty('--prologue-outline-width', `${Number(p.textOutlineWidth) || 0}px`);
+  // Fit, focus and scale go through custom properties rather than inline style
+  // on the image, so a wireframe that must letterbox (which is a fact about the
+  // frame, not about this setting) can still override the fit in CSS.
+  root.style.setProperty('--prologue-fit', p.imageFit || 'cover');
+  root.style.setProperty('--prologue-focus', `${p.imageFocusX ?? 50}% ${p.imageFocusY ?? 50}%`);
+  root.style.setProperty('--prologue-scale', String(Number(p.imageScale) || 1));
+  // The scenes play in the configured ORDER, over the configured SUBSET; the
+  // numbers below stay indices into the authored list, which is what a paused
+  // run recorded and what every setting key is named for.
+  const order = prologueSequence(config);
+  // A run paused on a scene since switched off resumes on the next scene still
+  // in the opening (prologueResumePosition), rather than on one it has watched.
+  let position = prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
+  let sceneIndex = order[position], elapsed = 0;
   let stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
   let animations = [], previous = null;
   const reduced = () => p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
@@ -43,7 +69,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   function finish(reason) { if (stopped) return; cleanup(); onFinish(reason); }
   function togglePause() { paused = !paused; last = 0; pause.textContent = paused ? config.labels.resume : config.labels.pause; }
   function visibility() { last = 0; }
-  function rotate() { showScene(sceneIndex,{resumeAt:elapsed,notify:false}); }
+  function rotate() { showScene(position,{resumeAt:elapsed,notify:false}); }
   async function ready(image) {
     // Missing art must not strand a new run. Keep readable text and controls.
     let timeout;
@@ -51,13 +77,16 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     catch { image.hidden = true; }
     finally { clearTimeout(timeout); }
   }
-  async function showScene(index,{resumeAt = 0,notify = true} = {}) {
-    const token = ++serial; loading = true; next.disabled = true; sceneIndex = index; elapsed = resumeAt; last = 0;
-    const scene = config.scenes[index], layout = portrait.matches ? 'mobile' : 'desktop';
+  async function showScene(at,{resumeAt = 0,notify = true} = {}) {
+    const token = ++serial; loading = true; next.disabled = true;
+    position = Math.max(0,Math.min(order.length-1,at)); sceneIndex = order[position]; elapsed = resumeAt; last = 0;
+    const scene = config.scenes[sceneIndex], layout = portrait.matches ? 'mobile' : 'desktop';
     const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
-    if (notify) onScene(index);
+    if (notify) onScene(sceneIndex);
     const plate = el('div',{class:'prologue-plate'});
-    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(scene.id,layout,{classId})});
+    // The painting is the scene's CHOICE, not its name (prologueSceneArt), so
+    // a resequenced opening can keep a scene's words over another's artwork.
+    const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(prologueSceneArt(scene),layout,{classId})});
     const images = [background]; plate.append(background);
     if (scene.character) {
       const source = new Image(); source.src = prologueArtwork(classId);
@@ -72,8 +101,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     }
     const wash = el('div',{class:'prologue-wash'});
     wash.style.background = prologueTint(config,settings,run.customization);
-    wash.style.opacity = String(scene.id === 'night' ? Math.min(.06,p.wash) : p.wash);
+    // THE CLAMP BELONGS TO THE PAINTING, NOT THE SCENE. `night`'s plate is
+    // already dark and blue, and a full tint wash over it reads as a stain —
+    // but a scene can now borrow another scene's art, so keying the clamp to
+    // the scene id both washed that plate at full strength under another
+    // scene's name and clamped a bright plate drawn under `night`'s.
+    wash.style.opacity = String(prologueSceneArt(scene) === 'night' ? Math.min(.06,p.wash) : p.wash);
     plate.append(wash);
+    if (scene.banner) plate.append(el('div',{class:`prologue-banner banner-${p.bannerPosition === 'bottom' ? 'bottom' : 'top'}`},el('span',{class:'prologue-banner-text',text:copy.title})));
     await Promise.all(images.map(ready));
     if (stopped || token !== serial) return;
     animations.forEach(a=>a.cancel()); animations=[];
@@ -81,8 +116,8 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (previous) previous.style.opacity = '1';
     title.textContent = copy.title; speaker.textContent = copy.speaker; dialogue.textContent = copy.text;
     location.textContent = copy.location; location.hidden = !copy.location;
-    next.textContent = index === config.scenes.length-1 ? config.labels.setForth : config.labels.continue;
-    progress.textContent = `${index+1} / ${config.scenes.length}`;
+    next.textContent = position === order.length-1 ? config.labels.setForth : config.labels.continue;
+    progress.textContent = `${position+1} / ${order.length}`;
     stage.append(plate);
     const duration = transitionMs(scene);
     if (duration) {
@@ -102,12 +137,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       if (reduced()) animations.forEach(a=>a.finish());
       else animations.forEach(a=>{a.currentTime=elapsed;});
       const scene = config.scenes[sceneIndex];
-      if (p.autoAdvance && elapsed >= prologueSceneMs(scene) && sceneIndex < config.scenes.length-1) showScene(sceneIndex+1);
+      if (p.autoAdvance && elapsed >= prologueSceneMs(scene) && position < order.length-1) showScene(position+1);
     }
     last = now; raf = requestAnimationFrame(tick);
   }
   pause.onclick = togglePause;
-  next.onclick = () => { if (!loading) sceneIndex === config.scenes.length-1 ? finish('completed') : showScene(sceneIndex+1); };
+  next.onclick = () => { if (!loading) position === order.length-1 ? finish('completed') : showScene(position+1); };
   skip.onclick = () => finish(preview ? 'preview' : 'skipped');
   if (preview) {
     const replay = button({label:config.labels.replay});
@@ -121,7 +156,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);
-  showScene(sceneIndex); raf = requestAnimationFrame(tick); next.focus({preventScroll:true});
+  showScene(position); raf = requestAnimationFrame(tick); next.focus({preventScroll:true});
   return cleanup;
 }
 

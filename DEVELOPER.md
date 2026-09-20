@@ -770,9 +770,20 @@ Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed tou
 
 ## Opening sequence
 
-Advanced → Opening sequence configures all six scenes, class lines, captions,
-controls, holds, transitions and tint. The authored data is in
-`content/config/ui/screens/prologue.json`; rebuild with the config compiler.
+Advanced → Opening configures every scene, class line, caption, control, hold,
+transition and tint, and the staging around them: which painting a scene draws
+on (`art`, any shipped opening painting, not only its own), whether it plays
+(`enabled`), where it plays (`order`), whether it carries a title banner, plus
+the wireframe, artwork scale/fit/focus, text position, alignment, size,
+container (present / visible / opacity / colour) and outline. `prologueSequence`
+turns order and inclusion into the playing order; the indices it returns stay
+indices into the AUTHORED `config.scenes`, which is what `run.prologue.scene`
+and every `gameConfig.prologue.scenes.<id>.*` key are named for. The authored
+data is in `content/config/ui/screens/prologue.json`; rebuild with the config
+compiler. Scene file: `prologueScenePreset` exports the opening alone in the
+art-studio preset shape that `parseAdvancedConfigFile` already imports, so the
+scene file and the whole-game configuration carry the same keys and one
+importer reads both.
 `src/model/prologue.js` projects settings without gameplay RNG. The shared
 `mountPrologue` renderer serves new solo games and the settings preview.
 `run.prologue` stores a version, pending/complete status and scene index; new

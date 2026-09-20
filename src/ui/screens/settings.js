@@ -33,7 +33,8 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { prologueScenePreset, PROLOGUE_PREFIX } from '../../model/prologue.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -848,6 +849,27 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
+  // ---- 'colorSwatch': BOTH WAYS OF NAMING A COLOUR, ONE OF THEM FOLDED -----
+  //
+  // The swatches are the palette this game already paints with, so the common
+  // answer is one tap. The wheel is every other colour, and it is DISCLOSED
+  // rather than always open: a permanently mounted system colour input made a
+  // one-line setting two lines tall on a phone, times every colour row the
+  // opening now has. Both write the same key, and the swatch row shows which
+  // one the stored value matches — including "none of them", which is itself
+  // the answer to "did I pick this from the wheel?".
+  if (r.type === 'colorSwatch') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    const chips = (r.swatches || []).map((color) => {
+      const on = String(color).toLowerCase() === String(value).toLowerCase();
+      return `<button type="button" class="as-swatch set-swatch${on ? ' on' : ''}" style="--swatch:${esc(color)}" data-key="${esc(r.key)}" data-color="${esc(color)}" aria-pressed="${on}" aria-label="${esc(color)}" title="${esc(color)}"></button>`;
+    }).join('');
+    return `${rowOpen('set-row-wide set-row-swatches')}${stack()}<span class="r-trail set-swatch-trail">
+        <span class="as-swatches" role="group" aria-label="${esc(r.label)}">${chips}</span>
+        <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-controls="set-wheel-${esc(r.key)}" aria-expanded="false">Colour wheel</button>
+        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
+      </span></div>`;
   }
   if (r.type === 'textarea') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
@@ -1942,10 +1964,33 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     input.addEventListener('blur', commit);
   });
 
+  const commitColor = (key, value) => {
+    settings[key] = value;
+    onChange({ [key]: value });
+    // The swatch row is the readout as well as the control: a colour picked on
+    // the wheel lights its swatch if it happens to be one, and lights none if
+    // it is not.
+    container.querySelectorAll(`.set-swatch[data-key="${CSS.escape(key)}"]`).forEach(chip => {
+      const on = chip.dataset.color.toLowerCase() === value.toLowerCase();
+      chip.classList.toggle('on', on);
+      chip.setAttribute('aria-pressed', String(on));
+    });
+    const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(key)}"]`);
+    if (wheel && wheel.value.toLowerCase() !== value.toLowerCase()) wheel.value = value;
+  };
   container.querySelectorAll('.set-color').forEach(input => {
-    input.addEventListener('input', () => {
-      settings[input.dataset.key] = input.value;
-      onChange({ [input.dataset.key]: input.value });
+    input.addEventListener('input', () => commitColor(input.dataset.key, input.value));
+  });
+  container.querySelectorAll('.set-swatch').forEach(chip => {
+    chip.addEventListener('click', () => commitColor(chip.dataset.key, chip.dataset.color));
+  });
+  container.querySelectorAll('.set-wheel-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(toggle.dataset.wheelToggle)}"]`);
+      if (!wheel) return;
+      wheel.hidden = !wheel.hidden;
+      toggle.setAttribute('aria-expanded', String(!wheel.hidden));
+      if (!wheel.hidden) wheel.focus({ preventScroll: true });
     });
   });
 
@@ -2028,7 +2073,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('[data-btn="gameConfigImport"]').forEach(btn => {
+  // ONE IMPORTER, TWO DOORS. The opening's scene file is the same format under
+  // a narrower name (parseAdvancedConfigFile recognises an art-studio preset and
+  // turns it into ordinary overrides), so the scene door is this door with a
+  // different label — not a second reader that could drift from it.
+  //
+  // THE SCENE DOOR IS STILL NARROWER THAN THE READER. Both exports are .json and
+  // the whole-game one has the likelier filename, so picking the wrong one in
+  // Advanced → Opening is one mis-click — and the reader would have applied
+  // every balance and interface override in it under a notice that said only
+  // "Loaded 412 settings". The door that says scenes takes scenes, and says so
+  // by name when handed something wider.
+  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+    const openingOnly = buttonKey === 'prologueSceneImport';
     const picker = document.createElement('input');
     picker.type = 'file';
     picker.accept = '.json,application/json';
@@ -2045,6 +2102,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
+        if (outside.length) {
+          throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
+        }
         if (!container.isConnected) return;
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
@@ -2054,6 +2115,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
       } finally { btn.disabled = false; }
+    });
+  });
+
+  container.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      const result = await saveJsonFile(prologueScenePreset(panelSettings || settings), {
+        filename: 'ashen-spire-opening.json',
+        description: 'Ashen Spire opening scenes',
+      });
+      btn.disabled = false;
+      btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
+      showSettingsNotice(result.ok
+        ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'} The same settings also travel in the whole game configuration.`
+        : 'This browser could not create a local configuration file.');
+      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
     });
   });
 

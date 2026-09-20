@@ -49,7 +49,7 @@ export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 export function prologueArtwork(id, layout = 'desktop', {classId = 'reaver'} = {}) {
   const classes = ['reaver','starseer','rogue','herald'];
   if (id === 'carry') return assetUrl(`assets/prologue/carry-${classes.includes(classId) ? classId : 'reaver'}-${layout === 'mobile' ? 'mobile' : 'desktop'}.webp`);
-  const scenes = ['warmth','year','carry','night','step'];
+  const scenes = ['warmth','year','carry','night','step','road'];
   if (!classes.includes(id) && !scenes.includes(id)) throw new Error(`Unknown opening art: ${id}`);
   return assetUrl(`assets/prologue/${id}${classes.includes(id) ? '' : `-${layout === 'mobile' ? 'mobile' : 'desktop'}`}.webp`);
 }
