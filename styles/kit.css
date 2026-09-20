@@ -1418,6 +1418,48 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
 .reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
 .reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
+/* PROGRESSION, above the claim status (Constantine 2026-09-20): what the fight
+   moved, in the same right-hand column as what is left to take. One row is
+   name · level · meter · the level it fills toward, with the fight's gain on a
+   second line; narrow hosts drop the meter to its own line rather than
+   squeezing four columns into a phone. */
+.reward-door .reward-side { display: grid; gap: 1.2rem; min-width: 0; align-content: start; }
+.reward-door .reward-progress { display: grid; gap: .5rem; min-width: 0; grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto; }
+.reward-door .reward-progress > * { grid-column: 1 / -1; }
+.reward-door .reward-progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.reward-door .reward-progress-row {
+  display: grid; min-width: 0; gap: .15rem .6rem; align-items: center;
+  grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+}
+/* THE BARS MUST LINE UP, and a per-row grid cannot promise that: each row sized
+   its own name column, so "Reaver mastery" pushed its meter right of "Blade"'s
+   and the panel read as four unrelated measurements. Subgrid gives the list one
+   set of columns and the rows borrow it; the per-row rule above stays as the
+   fallback for a host without it. */
+@supports (grid-template-columns: subgrid) {
+  /* Both lists borrow the PANEL's columns, so the character level and the
+     skill tracks below it are one ledger read down a single set of bars. */
+  .reward-door .reward-progress-list { grid-template-columns: subgrid; }
+  .reward-door .reward-progress-row { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
+/* The track labels are authored lowercase where they name a weight class
+   ("heavy armour"); a line that starts a row is capitalised on sight, not by
+   re-writing the content table every screen reads. */
+.reward-door .rp-name::first-letter { text-transform: uppercase; }
+.reward-door .rp-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); }
+.reward-door .rp-level { grid-area: level; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
+.reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.reward-door .rp-gain { grid-area: gain; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
+.reward-door .reward-progress-row[data-gained='0'] .rp-gain { display: none; }
+.reward-door .rp-bar { grid-area: bar; --meter-tone: var(--gold); min-width: 0; }
+.reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
+:root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+:root[data-layout='narrow'] .reward-door .reward-progress-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+}
+:root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */

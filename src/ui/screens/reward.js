@@ -37,6 +37,16 @@
 // do not write `meta.seen` yet, so a thing first met elsewhere can still read
 // NEW here once — the marker errs toward showing.
 //
+// PROGRESSION, BESIDE THE CLAIM (Constantine, 2026-09-20: "why don't I see
+// level progression, xp gained, skill progression in here either"). The fight
+// pays the character level and every skill track it touched at combat
+// resolution — BEFORE this door opens — so the door used to show only the
+// half you pick up. model/rewardprogress.js derives the other half: the
+// ledgers as they stand now, plus what this fight paid into them, handed in
+// on the offer as `rewards.xpGains` (main.js keeps it on the pending-reward
+// checkpoint, so a reload resumes the same numbers). Derived once at mount:
+// nothing a player does at this door moves a level.
+//
 // `saves` and `rng` are optional: co-op stubs and old callers get the dial's
 // default and a deterministic first-card pick, never a crash and never
 // Math.random — a UI pick that desyncs a seeded run is a defect.
@@ -52,12 +62,13 @@ import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds } from '../../model/rewardplan.js';
+import { rewardProgress } from '../../model/rewardprogress.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { nodeTokens } from '../../model/tree.js';
-import { el, modalHead, modalFooter, button } from '../kit/index.js';
+import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
@@ -91,6 +102,9 @@ export function mountRewards(app, {
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
+  // The fight's progression, derived once: the ledgers are already paid and
+  // no choice at this door moves one.
+  const progress = rewardProgress(registries, run, rewards.xpGains || null);
   const states = {
     ...(checkpoint?.states || {}),
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
@@ -410,7 +424,7 @@ export function mountRewards(app, {
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
       body: el('div', { class: 'reward-claim-layout' }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml }),
-        plan.rows.length ? claimStatusPanel(claim) : null,
+        sideColumn(claim),
       ]),
       foot,
     });
@@ -482,6 +496,67 @@ export function mountRewards(app, {
 
   // The W1t claim-status column: every row's state, then the one choice still
   // waiting. That optional slot collapses when nothing waits.
+  // The right-hand column: what the fight moved, then what is left to claim.
+  // One column so the two read as one ledger; null when it would be empty
+  // (a preview scene's stub run with no offer and no ledgers).
+  function sideColumn(claim) {
+    const children = [progressPanel(), plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
+    return children.length ? el('div', { class: 'reward-side' }, children) : null;
+  }
+
+  // ONE ROW OF THE PANEL: name · level · the bar · the level it fills toward ·
+  // what this fight paid. The bar is the kit meter (one meter in the tree),
+  // and its aria label is the sentence the numbers mean, because a bar with
+  // no text is a picture of progress to a screen reader.
+  function progressRow(row, label) {
+    const next = row.capped || !row.xpToNext
+      ? el('span', { class: 'rp-next', text: t('reward.progress.capped') })
+      : el('span', { class: 'rp-next', text: t('reward.progress.next', { level: row.level + 1 }) });
+    const bar = meter({
+      pct: row.fraction * 100,
+      skinny: true,
+      attrs: { class: 'rp-bar' },
+      ariaLabel: row.capped || !row.xpToNext
+        ? `${label}: ${tFull('reward.progress.capped')}`
+        : `${label}: ${tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 })}`,
+    });
+    const node = el('li', {
+      class: 'reward-progress-row',
+      dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
+    }, [
+      el('span', { class: 'rp-name', text: label }),
+      el('span', { class: 'rp-level', text: t('reward.progress.level', { level: row.level }) }),
+      bar,
+      next,
+      row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
+    ]);
+    // The exact XP is the tooltip, not the row: the row carries the shape of
+    // the climb and the gain; the numbers are for the player who asks.
+    attachTooltip(node, () => `<div class="tt-title">${esc(label)}</div>${esc(row.capped || !row.xpToNext
+      ? tFull('reward.progress.capped')
+      : tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 }))}`);
+    return node;
+  }
+
+  function progressPanel() {
+    if (!progress.character && !progress.skills.length) return null;
+    const skills = progress.skills.map((row) => progressRow(
+      row,
+      row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label,
+    ));
+    return el('section', { class: 'reward-progress', 'aria-label': t('reward.progress.heading') }, [
+      el('h3', { class: 'as-eyebrow', text: t('reward.progress.heading') }),
+      progress.character
+        ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'))])
+        : null,
+      skills.length ? el('h3', { class: 'as-eyebrow', text: t('reward.progress.skills') }) : null,
+      skills.length ? el('ul', { class: 'reward-progress-list' }, skills) : null,
+      progress.hidden
+        ? el('p', { class: 'reward-progress-more', text: t('reward.progress.more', { count: progress.hidden, plural: progress.hidden === 1 ? '' : 's' }) })
+        : null,
+    ]);
+  }
+
   function claimStatusPanel(claim) {
     const lines = claim.rows.map((entry) => el('li', { class: 'reward-claim-row', dataset: { kind: entry.kind, key: entry.key, state: entry.state } }, [
       el('span', { class: 'reward-claim-name', text: rowBody(plan.rows.find((row) => row.key === entry.key)).title }),
