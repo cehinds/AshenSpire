@@ -1,5 +1,5 @@
 import { characterLevel } from '../../model/levelup.js';
-import { levelProgress, skillProgressRows, skillProgressSummary } from '../../model/progression.js';
+import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
@@ -1658,6 +1658,19 @@ export function mountEquipment(host, {
   }
 
   /**
+   * Put a badge on a Meter's plate, before the value. NOT `plate?.insert…`:
+   * a kit Meter that stopped emitting `.m-plate` would have taken the reason
+   * to visit a shrine, and the draft waiting at the next reward, off the
+   * screen with no error at all. A missing plate is a broken atom, so it says
+   * so by name.
+   */
+  function badgePlate(node, badge, what) {
+    const plate = node.querySelector('.m-plate');
+    if (!plate) throw new Error(`armoury: the kit Meter has no .m-plate to place ${what} beside`);
+    plate.insertBefore(badge, plate.querySelector('.m-value'));
+  }
+
+  /**
    * THE LEVEL BAR. The Armoury named the level and never said how far the next
    * one was, so the one ledger that always moves was the one thing the screen
    * would not show. The kit's Meter, stacked: the level on the plate, the XP
@@ -1671,7 +1684,10 @@ export function mountEquipment(host, {
       label: progress.label,
       value: progress.value,
       pct: progress.pct,
-      cur: progress.xp, max: progress.xpToNext,
+      // The kit's contract is that an instrument reads data-cur/data-max and
+      // never the label, so a capped run — which has no next step — offers
+      // neither rather than a pair the full bar contradicts.
+      cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext,
       ariaLabel: progress.sense,
       attrs: {
         class: `character-level-meter${progress.points ? ' has-points' : ''}`,
@@ -1681,10 +1697,10 @@ export function mountEquipment(host, {
     attachTooltip(node, () => `<div class="tt-title">${esc(progress.label)}</div><p>${esc(progress.sense)}</p>`);
     // The waiting points belong beside the LEVEL, not past the XP: a stacked
     // plate spreads its children, and appending would have put the reason to
-    // visit a shrine on the far side of the number it explains.
-    if (progress.points) {
-      const plate = node.querySelector('.m-plate');
-      plate?.insertBefore(statusText(`${progress.points} point${progress.points === 1 ? '' : 's'} to assign`, { class: 'character-level-points' }), plate.querySelector('.m-value'));
+    // visit a shrine on the far side of the number it explains. The sentence
+    // is the model's, spelled once there; the plate is only where it lands.
+    if (progress.pointsLabel) {
+      badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
     }
     return node;
   }
@@ -1703,9 +1719,8 @@ export function mountEquipment(host, {
         dataset: { component: 'armoury.skillTrack', skill: rowModel.id, kind: rowModel.kind, level: String(rowModel.level) },
       },
     });
-    if (rowModel.pendingDrafts) {
-      const plate = node.querySelector('.m-plate');
-      plate?.insertBefore(pill({ label: `${rowModel.pendingDrafts} draft${rowModel.pendingDrafts === 1 ? '' : 's'}`, attrs: { class: 'character-skill-drafts' } }), plate.querySelector('.m-value'));
+    if (rowModel.draftsLabel) {
+      badgePlate(node, pill({ label: rowModel.draftsLabel, attrs: { class: 'character-skill-drafts' } }), `the drafts waiting on ${rowModel.label}`);
     }
     attachTooltip(node, () => `<div class="tt-title">${esc(rowModel.label)}</div><p>${esc(rowModel.sense)}</p>`);
     return node;
@@ -1830,11 +1845,21 @@ export function mountEquipment(host, {
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
     }));
+    // A run always has its own class ladder (skillProgressRows refuses a class
+    // the registry does not know, rather than returning a list without it), so
+    // there is no empty case to draw here and none is pretended.
     const skillRows = skillProgressRows(registries, run);
+    // A ledger row whose track the content no longer declares cannot become a
+    // bar — it has no label — but it may be holding drafts, so it is SAID
+    // rather than dropped, the way a saved view the table no longer declares
+    // is said above. One line, once per draw.
+    const stale = staleSkillTracks(registries, run);
+    if (stale.length) {
+      console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
+        + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
+    }
     const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
-      skillRows.length
-        ? meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' })
-        : flavour('No track has been trained yet. Swinging a weapon, wearing armour and winning fights train their own tracks.', { class: 'ep-hint' }),
+      meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
     ]);
     box.appendChild(informationCard({
       id: 'skillsCard',

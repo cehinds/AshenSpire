@@ -21,13 +21,13 @@ single place that constructs it.
 | `armoury.characterPane` | Full Character surface or vertical left Hybrid pane | `.armoury-character` | `src/ui/screens/equipment.js` |
 | `armoury.spritePane` | Shrink-to-fit sprite pane | `.armoury-sprite-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.characterSummary` | Name, class, level | `.character-summary` | `src/ui/screens/equipment.js` |
+| `armoury.levelProgress` | Character level Meter with XP toward the next step | `.character-level-meter` | `src/ui/screens/equipment.js` + `src/model/progression.js` |
 | `armoury.combatPowerCard` | Foldable Combat Power group with summary values | `.character-info-card.combatPowerCard` | `src/ui/screens/equipment.js` |
 | `armoury.combatPowerGroup` | Vertical Strike / Magic / Defense detail group | `.character-power-cards` | `src/ui/screens/equipment.js` |
 | `armoury.combatPowerMetric` | One Strike / Magic / Defense detail card | `.character-power-cards .disc-face` | `src/ui/components/disclosure.js` |
 | `armoury.attributesCard` | Foldable Attributes group with summary values | `.character-info-card.attributesCard` | `src/ui/screens/equipment.js` |
 | `armoury.attributeCard` | Expandable attribute card | `.character-attributes .disc-face` | `src/ui/components/disclosure.js` |
 | `armoury.relicsCard` | Foldable Relics group with count and name summary | `.character-info-card.relicsCard` | `src/ui/screens/equipment.js` |
-| `armoury.levelProgress` | Character level Meter with XP toward the next step | `.character-level-meter` | `src/ui/screens/equipment.js` + `src/model/progression.js` |
 | `armoury.skillsCard` | Foldable Skill progression group with trained-track summary | `.character-info-card.skillsCard` | `src/ui/screens/equipment.js` |
 | `armoury.skillProgressGroup` | Vertical stack of skill-track Meters | `.character-skills` | `src/ui/screens/equipment.js` |
 | `armoury.skillTrack` | One skill track's level, XP and waiting drafts | `.character-skill-meter` | `src/ui/screens/equipment.js` + `src/model/progression.js` |
