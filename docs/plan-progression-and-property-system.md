@@ -539,6 +539,27 @@ Acceptance: `derivedStatPresentationProblems` clean; every class preset sums
 to the mode total; the simulator's win-rate band is re-measured and recorded
 in `docs/BALANCE.md`.
 
+**9 AS BUILT (2026-09-20):** `tuned2` (baseline 5, pool 10, floor 3, ceiling
+12, total 35) is `attributeRules.defaultMode` and the only mode
+`characterCreation.visibleModeIds` offers; `tuned`, `standard` and `pointbuy`
+stay in the table for the saves admitted against them. Ruleset 5 ships the
+five formulas above; Mana and Stamina lose their five-point tier, so the two
+deviations phase 8 deferred both land here — the four signature arts cost 2
+stamina / 2 Mana, and Poise is a derived row (`rules.poise`) whose coefficient
+left `balance.poise`. The required row set is now a function of the ruleset
+version (`derivedStatIdsFor`), so a version-4 snapshot is not asked for a Poise
+row it never had. `tuned2` carries its own `equipmentProfiles` at `baseValue`
+-1: Defend scales off Dexterity, the stat the rebase compressed hardest, and
+at -3 the simulator read a collapsed tier-1 boss band. `equipmentRequirements.csv`
+is rebased onto the 3–12 scale (10 → 5, 11 → 6, 12 → 8) and `canEquip` now
+refuses a named item the attributes cannot hold, naming the shortfall. Two
+class presets moved for the same reason the profiles did: the Rogue needs the
+Strength its own dagger asks for, and the Starseer the Constitution to survive
+a tier-1 boss. `docs/BALANCE.md` is regenerated: the boss band moved UP for the
+Reaver (78/80/72 → 95/98/92) and the Rogue sits at 100 with under ten HP lost,
+which is the M3 pass's to settle rather than this phase's. SPEC §13.4l; engine
+test 93.
+
 ## Phase 10 — Quests: completion, board, and dialogue (2 PRs)
 
 Proposal §7.5. Both halves ship: a quest completes through one door, and every

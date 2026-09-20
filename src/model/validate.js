@@ -594,10 +594,10 @@ function collectContentProblems(bundle, errors = []) {
       }
     }
     const poise = b.balance.poise;
-    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerPerConstitution, playerImpactPerHit } — the poise meters read it (plan phase 8)');
+    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
     else {
-      if (!(Number.isInteger(poise.playerPerConstitution) && poise.playerPerConstitution >= 0)) err('balance.poise.playerPerConstitution', `must be a non-negative integer, got ${JSON.stringify(poise.playerPerConstitution)}`);
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
+      if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {

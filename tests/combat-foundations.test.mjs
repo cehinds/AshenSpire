@@ -36,10 +36,15 @@ test('equipment projections derive load separately from armor without changing i
 
 test('native two-handed grip requires ceil(1.5x STR) only when one-handed', () => {
   const { equipment } = gear('heavy', { grip: 'oneHand' });
-  assert.equal(deriveGear(equipment).equipmentReceipt.items[0].requirements.strength, 18);
-  equipment.attributes.strength = 17;
+  // The rule is the multiplier, not the number: the authored minimum is read
+  // off the two-handed projection so a content rebase (plan phase 9 moved
+  // every requirement onto the 3–12 scale) cannot quietly retire this check.
+  const authored = deriveGear(gear('heavy', { grip: 'twoHand' }).equipment).equipmentReceipt.items[0].requirements.strength;
+  const oneHanded = Math.ceil(authored * 1.5);
+  assert.equal(deriveGear(equipment).equipmentReceipt.items[0].requirements.strength, oneHanded);
+  equipment.attributes.strength = oneHanded - 1;
   const before = JSON.stringify(equipment);
-  assert.throws(() => deriveGear(equipment), /requires 18 strength/);
+  assert.throws(() => deriveGear(equipment), new RegExp(`requires ${oneHanded} strength`));
   assert.equal(JSON.stringify(equipment), before);
   equipment.hands.mainHand.grip = 'twoHand'; equipment.attributes.strength = 12;
   assert.equal(deriveGear(equipment).sources.mainHand.grip, 'twoHand');

@@ -32,14 +32,23 @@ function presentationRows(registries) {
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   const levels = run.itemUpgradeLevels || {};
-  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): Constitution ×
-  // balance.poise.playerPerConstitution, the worn BODY ARMOUR's threshold (a
+  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): the derived
+  // Poise row read against Constitution, the worn BODY ARMOUR's threshold (a
   // weapon's poiseThreshold is its weight, not the wearer's footing), and the
   // relics' poiseThresholdAdd. A run handed without attributes (a headless
   // fixture) has no attribute term.
-  const perCon = Number.isInteger(registries.balance?.poise?.playerPerConstitution) ? registries.balance.poise.playerPerConstitution : 0;
+  // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
+  // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
+  // not been written yet; reading it from two places would be the copy Law 1
+  // forbids. A ruleset without the row (4 and earlier) yields no attribute
+  // term, which is what those runs shipped with.
+  const poiseRule = registries.derivedStatRules?.rules?.poise;
+  const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
+    : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
+  const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
+  const poiseBase = Number.isFinite(poiseRule?.base) ? poiseRule.base : 0;
   const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
-  const attribute = perCon * con;
+  const attribute = poiseRule ? poiseBase + Math.floor(con / (perTier || 1)) * gain : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
@@ -58,7 +67,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
     id: 'poiseThreshold',
     label: 'Poise threshold',
     sources: [
-      ...(perCon > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      ...(attribute > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
       ...pieceSources, ...relicSources,
     ],
     attribute,

@@ -3156,6 +3156,24 @@ export function canEquip(registries, slotId, ctx) {
     const refusal = gripRefusal(registries, ctx.loadout, ctx.classId || null, slotId, ctx.setIndex, ctx.itemId);
     if (refusal) return { ok: false, reason: refusal };
   }
+  // THE ATTRIBUTE GATE (plan phase 9), ON THE SAME MUTATION AS THE GRIP. The
+  // minima in equipmentRequirements.csv were read at creation and drawn in the
+  // armoury, but nothing stopped a mid-run hand from picking up a greatsword
+  // its Strength could not hold: a screen that greys a button is not a gate
+  // (the #95 finding, one comment up). Asked only when the caller names both
+  // the candidate and the attributes to judge it by; a bare "may this slot
+  // change" question keeps its old answer.
+  if (ctx.itemId && ctx.attributes) {
+    const piece = ((registries.equipment || {}).armaments || []).find((row) => row.id === ctx.itemId);
+    if (piece) {
+      const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, { itemUpgradeLevels: ctx.itemUpgradeLevels || {} });
+      if (!receipt.ok) {
+        const shortOf = receipt.failures[0];
+        const label = (registries.attributes.get(shortOf.attributeId) || {}).shortLabel || shortOf.attributeId;
+        return { ok: false, reason: `${piece.name || piece.id} requires ${label} ${shortOf.required} (you have ${shortOf.actual === null ? 0 : shortOf.actual})` };
+      }
+    }
+  }
   return { ok: true, reason: '' };
 }
 
@@ -3441,7 +3459,11 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
   // function had just refused into a legal one, so if the check above is ever
   // loosened canEquip's own check is a real second gate rather than an echo.
-  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId });
+  const permission = canEquip(registries, slotId, {
+    inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId,
+    // The attribute gate judges only when the caller hands in what to judge by.
+    ...(ctx.attributes ? { attributes: ctx.attributes, itemUpgradeLevels: ctx.itemUpgradeLevels } : {}),
+  });
   if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);

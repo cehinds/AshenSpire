@@ -29,6 +29,50 @@ export const attributes = [
 ];
 
 export const creationModes = [
+  // THE REBASED SCALE (plan phase 9). Ten was never a floor a player chose —
+  // it was the middle of a d20 habit this game does not otherwise keep. Five
+  // is the baseline, ten points are yours to place, and the span 3–12 is wide
+  // enough that a point is worth spending: under ruleset 5 a point of Wisdom
+  // IS a point of Mana and a point of Constitution IS a point of Stamina, so
+  // the scale and the pools finally speak the same units.
+  //
+  // THE OLDER MODES BELOW ARE KEPT AND HIDDEN. Every in-flight save was
+  // validated against its own mode's fixed total at the load door, and
+  // save.js ARCHIVES what fails there, so deleting a mode would refuse every
+  // run created under it. They stay in the table and out of creation, which
+  // characterCreation.visibleModeIds decides.
+  {
+    id: 'tuned2',
+    label: 'Tuned',
+    baseline: 5,
+    bonusPool: 10,
+    minimum: 3,
+    maximum: 12,
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
+    // THE SAME AUTHORITY THE OLD TUNED MODE CARRIED, REBASED. Strike and
+    // Defend scale off an attribute rather than off the weapon alone, and the
+    // baseline hand must still land where it always did. DEFEND IS WHY THE
+    // NUMBER IS -1: it scales off Dexterity, the stat the rebase compressed
+    // hardest, and at -3 a Reaver's guard fell from 5 to 3 and the simulator
+    // read it — the tier-1 boss band collapsed. At -1 the baseline guard is
+    // the 5 it always was.
+    // Dropping this block would have quietly taken
+    // attribute scaling off every basic attack the moment the baseline moved.
+    equipmentProfiles: {
+      unarmedAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      bladeAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      daggerPierceAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      bowPierceAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      staffMagicAttack: { baseValue: -1, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      sceptreArcaneAttack: { baseValue: -1, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      unarmedGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      weaponGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      shieldGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      staffGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      sceptreGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+    },
+  },
   {
     id: 'tuned',
     label: 'Tuned',
@@ -95,8 +139,16 @@ export const creationModes = [
 // standard preset with the five extra points laid along each class's grain.
 // The player reshapes them; nothing here is a recommendation.
 export const attributeRules = {
-  defaultMode: 'tuned',
+  defaultMode: 'tuned2',
   presets: {
+    // Each row sums to the mode's total (5 × 5 + 10 = 35) and sits inside
+    // 3–12; attributeContentProblems refuses any that does not, by name.
+    tuned2: {
+      reaver: { strength: 10, dexterity: 6, constitution: 9, wisdom: 3, intelligence: 7 },
+      starseer: { strength: 5, dexterity: 6, constitution: 7, wisdom: 11, intelligence: 6 },
+      herald: { strength: 6, dexterity: 5, constitution: 7, wisdom: 10, intelligence: 7 },
+      rogue: { strength: 7, dexterity: 11, constitution: 7, wisdom: 3, intelligence: 7 },
+    },
     tuned: {
       reaver: { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 },
       starseer: { strength: 11, dexterity: 11, constitution: 8, wisdom: 13, intelligence: 10 },

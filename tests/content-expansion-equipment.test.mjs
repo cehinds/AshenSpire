@@ -142,6 +142,8 @@ for (const [id, classId, slot, pool] of [
     applyLevelUp(r, run, pool === 'mana' ? 'wisdom' : 'constitution');
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
   }
-  assert.equal(run[maxKey], beforeAssignment + 1, `${id}: five assigned points increase the equipped pool once`);
+  // Ruleset 5 (plan phase 9): Mana IS Wisdom and Stamina IS Constitution, so
+  // every assigned point moves the pool rather than every fifth one.
+  assert.equal(run[maxKey], beforeAssignment + 5, `${id}: each assigned point raises the equipped pool`);
 }
 console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');

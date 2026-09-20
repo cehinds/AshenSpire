@@ -61,9 +61,9 @@ export const balance = {
     // THE PLAYER'S VESSEL (plan phase 8, proposal §7.3): its max is Constitution ×
     // this, plus the worn body armour's poiseThreshold, plus relic
     // poiseThresholdAdd (model/statProjection.js playerPoiseThresholdReceipt).
-    // A derived-stat row for it waits for phase 9's ruleset, which rewrites
-    // every derived formula at once; until then the coefficient lives here.
-    playerPerConstitution: 1, // PROVISIONAL
+    // THE CONSTITUTION TERM LEFT THIS BLOCK IN PHASE 9. It is a derived-stat
+    // row now (derivedStats.js `poise`, ruleset 5) and the receipt reads it
+    // there; a copy here would be a second home for one number.
     // OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
     // blow that draws blood rocks the player by this much; the ruleset's
     // weapon impact replaces it wherever a ruleset is handed in.
