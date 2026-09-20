@@ -1968,3 +1968,17 @@ current/previous nodes, visited/resolved sets, cleared state and pending choice.
 Old saves without this field retain their original behavior. A saved combat
 inside a dungeon resumes the dungeon encounter, including in World Journey.
 Scene draw order is floor, background, actors, then interface.
+
+
+## New-game opening presentation (2026-09-19)
+
+Solo new games may show a configurable six-scene prologue after creation and
+starting draft, after map generation but before map mounting. Its text and
+presentation overrides are included in the existing advanced configuration
+snapshot/export. Optional `run.prologue` is `{version:1,status:'pending'|'complete',scene:0..5,reason?:'completed'|'skipped'}`.
+Pending saves resume at the saved scene boundary; absent or completed state does
+not replay. Preview does not write this state. `settings.prologueSeen` is a
+profile playback preference, never part of gameplay RNG. Skip and Set forth
+complete presentation exactly once without selecting/resolving a node. The
+five-second default transition and per-scene holds are independent; final
+arrival waits for the player. Settings and hidden pages suspend playback.

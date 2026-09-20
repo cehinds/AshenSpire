@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1213",
+    "id": "pr-1211",
     "date": "2026-09-19",
     "group": "2026-09-19",
-    "summary": "Keep your hand and choose how the next turn draws",
-    "detail": "New solo combats start with three configurable cards, retain unplayed cards, and refill to capacity. Advanced → Hand & Draw controls stat scaling, fixed draws, optional discards, capacity, and reshuffling. Existing fights and LAN keep their previous rules. Settings now has a compact, aligned search, options, and close toolbar.",
-    "build": "0.7.1.306",
-    "pullRequest": 1213,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1213"
+    "summary": "Your journey now opens with six painted scenes you can rewrite",
+    "detail": "After character creation, see the cold hearths, the unfinished burning at the hut, your class’s reason to leave and the road to your actual starting place. Set forth reveals the first playable map. Advanced → Opening sequence lets you edit every line, scene hold, transition, motif wash, character shadow strength and traveller placement, with separate class dialogue and a preview. Transitions default to five seconds; all changes travel with configuration exports, and earlier art-studio exports can be loaded there too. Portrait artwork keeps the story readable on phones. Each traveller and its ground shadow share one transparent layer, including character and scene WebP downloads. The new paintings and existing environment/animation plates are compressed while preserving dimensions and transparency, keeping the standalone game below the repository’s file limit.",
+    "build": "0.7.1.308",
+    "pullRequest": 1211,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1211"
   },
   {
     "id": "pr-1210",

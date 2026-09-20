@@ -1,0 +1,19 @@
+.prologue-screen{position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
+.prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
+.prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
+.prologue-background{width:100%;height:100%;object-fit:cover;display:block}
+.prologue-actor{position:absolute;width:auto;transform:translateX(-50%);pointer-events:none}
+.prologue-wash{position:absolute;inset:0;mix-blend-mode:color;pointer-events:none}
+.prologue-caption{position:relative;z-index:2;padding:1rem max(1.25rem,env(safe-area-inset-right)) max(1rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
+.prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
+.prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
+.prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
+.prologue-location{font-size:2rem;color:var(--gold);margin:.5rem}
+.prologue-progress{font-size:1.2rem;color:#b8ac98;margin:.5rem}
+.prologue-controls{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.prologue-controls button{min-height:48px}
+.prologue-preview-body{padding:0!important;overflow:auto!important}
+.prologue-preview-body .prologue-screen{height:70dvh;min-height:24rem}
+.set-prologue-text{width:100%;min-height:5rem;resize:vertical;font:inherit;line-height:1.4;padding:.65rem;background:var(--bg);color:var(--text);border:1px solid var(--line-soft);border-radius:4px}
+@media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:75dvh}.set-row-prologue .r-trail{width:100%;min-width:0}}
+@media(max-height:500px) and (orientation:landscape){.prologue-screen{grid-template-columns:1fr minmax(18rem,45%);grid-template-rows:1fr}.prologue-caption{overflow:auto}.prologue-preview-body .prologue-screen{min-height:15rem;height:65dvh}}

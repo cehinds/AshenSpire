@@ -3,6 +3,7 @@
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
+import { prologueRows, prologuePresetOverrides } from './prologue.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -262,7 +263,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return [...handRulesRows(bundle.attributes), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
+  return [...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
@@ -427,6 +428,9 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
+  if (file?.kind === 'AshenSpire prologue art') file = {
+    schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION, game: 'Ashen Spire', overrides: prologuePresetOverrides(file),
+  };
   if (!file || file.game !== 'Ashen Spire' || file.schemaVersion !== ADVANCED_CONFIG_SCHEMA_VERSION
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
@@ -450,7 +454,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
       valid = typeof value === 'number' && Number.isFinite(value)
         && value >= (row.min ?? 0) && value <= (row.max ?? 100)
         && (!row.integer || Number.isInteger(value));
-    } else if (typeof row.def === 'string') valid = typeof value === 'string' && value.length <= 1000;
+    } else if (typeof row.def === 'string') valid = typeof value === 'string' && value.length <= (row.maxLength ?? 1000);
     if (!valid) throw new Error(`Invalid value for ${row.label || key}. Nothing was imported.`);
     changes[row.key] = value;
   }

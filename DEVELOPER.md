@@ -751,3 +751,16 @@ Combat cards select before committing. A selected card retains its fan position 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
 Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+
+## Opening sequence
+
+Advanced → Opening sequence configures all six scenes, class lines, captions,
+controls, holds, transitions and tint. The authored data is in
+`content/config/ui/screens/prologue.json`; rebuild with the config compiler.
+`src/model/prologue.js` projects settings without gameplay RNG. The shared
+`mountPrologue` renderer serves new solo games and the settings preview.
+`run.prologue` stores a version, pending/complete status and scene index; new
+runs snapshot the effective overrides in the existing advanced-config snapshot.
+Old saves bypass the opening. The completion callback persists before revealing
+the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
+immutability, class lines, destination, and interrupted save recovery.

@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { previewPrologue } from './prologue.js';
 import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
 import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
@@ -580,6 +581,7 @@ const SECTIONS = {
 
 const ADVANCED_GROUPS = Object.freeze([
   { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
+  { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
   { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
   { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
@@ -766,6 +768,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
+  if (r.type === 'textarea') {
+    const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
+    return `${rowOpen('set-row-wide set-row-prologue')}${stack()}<span class="r-trail"><textarea class="set-prologue-text" data-key="${esc(r.key)}" maxlength="${r.maxLength}" aria-label="${esc(r.label)}">${esc(val)}</textarea></span></div>`;
   }
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
@@ -1693,6 +1699,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
   });
 
+  container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
+    btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('.set-prologue-text').forEach(input => {
+    input.addEventListener('input', () => {
+      settings[input.dataset.key] = input.value;
+      onChange({[input.dataset.key]:input.value});
+    });
+  });
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.

@@ -8,6 +8,7 @@ export function advancedSection(row) {
 
 function topic(row, section) {
   if (row.handTopic) return row.handTopic;
+  if (row.prologueTopic) return row.prologueTopic;
   const key = row.key;
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   if (section === 'Classes') {

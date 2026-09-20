@@ -45,6 +45,15 @@ export function relicIcon(relic) {
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 
+/** Opening art uses the same external/standalone asset seam as the game. */
+export function prologueArtwork(id, layout = 'desktop', {destinationArt} = {}) {
+  if (destinationArt) return assetUrl(destinationArt);
+  const classes = ['reaver','starseer','rogue','herald'];
+  const scenes = ['warmth','year','night','carry','road','step'];
+  if (!classes.includes(id) && !scenes.includes(id)) throw new Error(`Unknown opening art: ${id}`);
+  return assetUrl(`assets/prologue/${id}${classes.includes(id) ? '' : `-${layout === 'mobile' ? 'mobile' : 'desktop'}`}.webp`);
+}
+
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
 // board reads best when sprites fill it, and the whole UI is zoomed to fit the
