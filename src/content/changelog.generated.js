@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1229",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Picking a node on the map brings it to the middle of the screen",
+    "detail": "Selecting a room used to open the tray and throw the act into the right half of the screen; the camera moved down to the node you picked and never across to it. It now centres the picked node on both axes, in the part of the map the open tray leaves visible, and glides back the same way when you close the tray. ⊙, the zoom buttons and a drag also take effect straight away while that camera move is still running, instead of being undone by it. The map's own panning, zoom and saved camera are otherwise unchanged.",
+    "build": "0.7.1.339",
+    "pullRequest": 1229,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1229"
+  },
+  {
     "id": "pr-1233",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -18,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Your level and every skill you are training now have bars you can watch",
     "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.339",
+    "build": "0.7.1.341",
     "pullRequest": 1228,
     "url": "https://github.com/cehinds/AshenSpire/pull/1228"
   },
