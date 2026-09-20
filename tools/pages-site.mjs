@@ -159,7 +159,7 @@ p.lead{color:var(--mut);margin:.25rem 0 1.5rem}.grid{display:grid;gap:1rem;grid-
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}.card h3{margin:0 0 .25rem;font-size:1.15rem}
 .role{color:var(--mut);font-size:.9rem;margin:0 0 .75rem}.stamp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;margin:.25rem 0}
 .meta{color:var(--mut);font-size:.85rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
-a{color:var(--acc)}a.play{display:inline-block;margin:.6rem .6rem 0 0;padding:.45rem .9rem;border:1px solid var(--acc);border-radius:8px;text-decoration:none;font-weight:600}
+a{color:var(--acc)}a.play.dl{background:var(--acc);color:var(--card)}a.play{display:inline-block;margin:.6rem .6rem 0 0;padding:.45rem .9rem;border:1px solid var(--acc);border-radius:8px;text-decoration:none;font-weight:600}
 table{width:100%;border-collapse:collapse;margin:.5rem 0 1rem}th,td{text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:top}
 th{color:var(--mut);font-weight:600}td.mono,th.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}footer{color:var(--mut);font-size:.85rem;margin-top:3rem}
 .note{border-left:3px solid var(--acc);padding:.4rem .8rem;color:var(--mut);font-size:.9rem;margin:1rem 0}
@@ -169,9 +169,29 @@ function stampOf(b) { return b.version ? `BUILD ${b.version}.${b.ordinal} · src
 function changelogUrl(b) { return `${REPO_URL}/blob/${b.sha}/CHANGELOG.md`; }
 function commitUrl(b) { return `${REPO_URL}/commit/${b.sha}`; }
 
+// DOWNLOAD IS A PLAIN LINK, AND THAT IS THE WHOLE POINT.
+//
+// The in-game "download the game" button fetches the build with `fetch`, holds
+// it in a Blob and then clicks a synthetic anchor. On mobile that path is the
+// one that fails: a multi-megabyte Blob in a memory-tight browser tab, a save
+// that has to happen inside a user-activation window the network wait already
+// spent, and no File System Access API to fall back on. The build is a static
+// same-origin file on this very site, so an `<a download>` pointed straight at
+// it needs none of that — the browser downloads it itself, resumable, with no
+// script running and nothing buffered in the page.
+//
+// The href is the build's own `index.html` (the byte-identical blob written
+// above), not the directory URL, because a directory URL renders the game
+// instead of naming a file to save.
+function downloadName(b) { return `AshenSpire-${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
+function downloadHref(rel, b) { return `${rel}${b.branch}/${b.ordinal}/index.html`; }
+function downloadLink(rel, b, label = 'Download') {
+  return `<a class="play dl" href="${downloadHref(rel, b)}" download="${esc(downloadName(b))}">${esc(label)}</a>`;
+}
+
 function rowsTable(builds, rel) {
-  return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
-    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
+  return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
+    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td><a href="${downloadHref(rel, b)}" download="${esc(downloadName(b))}">${esc(downloadName(b))}</a></td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -289,13 +309,14 @@ function rootIndex(branchData, generatedAt, otherPages) {
     if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p></section>`;
     return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
-<a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a> <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
+<a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a> ${downloadLink('', b, `Download ${branch} ${b.ordinal}`)} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
   const all = branchData.flatMap((d) => d.builds).sort((a, b) => b.ordinal - a.ordinal);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
 <p class="lead">Each build is the exact <code>AshenSpire.html</code> that commit shipped, served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>. The stamp here is the one the game shows on its title screen.</p>
 <div class="grid">${cards}</div>
+<div class="note"><strong>Download instead of play:</strong> every build is a single self-contained <code>.html</code> file — the <em>Download</em> link on each card and in the table saves it straight from this site, which is the path that works on phones and tablets where the in-game downloader cannot hold the whole file in memory. Open the saved file in any browser to play offline; use <em>Export saves</em> in the game to carry saves across.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '')}
 <h2>Other pages on this site</h2>
@@ -314,7 +335,8 @@ function branchIndex(branch, builds, head, generatedAt) {
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
-${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a> <a class="play" href="latest/">/latest/ alias</a></p>` : '<p class="meta">no build on this branch</p>'}
+${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a> ${downloadLink('../', builds[0], `Download latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a></p>
+<p class="meta">A download is one self-contained HTML file. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -387,6 +409,15 @@ function assemble(outDir, keep) {
   writeFileSync(join(outDir, 'index.html'), root);
   for (const d of branchData) for (const b of d.builds) if (!root.includes(`href="${d.branch}/${b.ordinal}/"`)) throw new Error(`root index does not link ${d.branch}/${b.ordinal}`);
   checks++;
+  // THE DOWNLOAD LINK IS PROVEN LIKE THE PLAY LINK IS. A download offered by
+  // this page and not present in the tree is worse than no download at all:
+  // it is the mobile failure this pass exists to remove, moved one layer out.
+  for (const d of branchData) for (const b of d.builds) {
+    const href = downloadHref('', b);
+    if (!root.includes(`href="${href}" download="`)) throw new Error(`root index does not offer a download for ${d.branch}/${b.ordinal}`);
+    if (!existsSync(join(outDir, href))) throw new Error(`download target missing on disk: ${href}`);
+    checks++;
+  }
   writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }

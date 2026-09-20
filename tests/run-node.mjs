@@ -1109,6 +1109,7 @@ try {
 }
 try {
   await import('./equipment-animation.test.mjs');
+await import('./twin-sword-animation.test.mjs');
 } catch (error) {
   zoomExtra++;
   console.error('FAIL Equipment animation references:', error);
