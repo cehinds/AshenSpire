@@ -87,6 +87,7 @@ import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
+import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan } from '../../model/formationMovement.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -147,9 +148,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
-        <div class="formation-grid" aria-hidden="true">
-          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<button type="button" disabled tabindex="-1" aria-label="Position ${row}${column}" class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></button>`)).join('')}
-        </div>
+        ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>

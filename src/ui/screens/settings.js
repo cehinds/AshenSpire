@@ -9,6 +9,7 @@
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { previewPrologue } from './prologue.js';
 import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
+import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -1355,7 +1356,7 @@ function categoryHtml(cat, settings, saves) {
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Classes' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          + sub.rows.map(row => {
+          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
             const compact = { ...row };
             if (group.id === 'Classes' && !['General', 'Assign points'].includes(sub.id)) {
               compact.label = row.label.replace(/^.*? — /, '');
@@ -1365,7 +1366,7 @@ function categoryHtml(cat, settings, saves) {
               compact.note = 'Applies to a new run.';
             }
             return settingsRowHtml(settings, compact);
-          }).join('') + '</div>').join('') + '</section>';
+          }).join('')) + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
       + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
@@ -1499,6 +1500,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     else container.querySelector('.set-panel')?.prepend(sections);
   };
   const wire = () => {
+  mountFormationSettings(container, settings, onChange,
+    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -2267,6 +2270,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {
+    if (!applyPendingFormationSettings(door.body)) return;
     if (settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });

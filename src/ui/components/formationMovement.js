@@ -17,7 +17,7 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   let released = false;
   const config = () => presentationConfig(readSettings());
   const duration = key => config()[key] === 'hold' ? holdMs(readSettings(), holdConfig) : 0;
-  const usable = (cell, fromReview = false) => field.isConnected && (!veilIsOpen() || fromReview) && available() && plan(cell).ok
+  const usable = (cell, fromReview = false) => field.isConnected && tiles.some(tile => tile.dataset.cell === cell && !tile.hidden) && (!veilIsOpen() || fromReview) && available() && plan(cell).ok
     && !tiles.some(tile => tile.dataset.cell === cell && tile.dataset.occupied === 'true');
   const commit = (cell, fromReview = false) => {
     if (!usable(cell, fromReview)) { selected = null; refresh(); return; }
@@ -50,6 +50,7 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   cancel.addEventListener('click', () => { selected = null; refresh(); });
   const escape = event => { if (event.key === 'Escape') { selected = null; refresh(); } };
   field.addEventListener('keydown', escape);
+  field.addEventListener('formationlayoutchange', refresh);
   function refresh() {
     if (released) return;
     const enabled = config().movementEnabled;
@@ -71,5 +72,5 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-formation-settings'] });
   observer.observe(document.body, { childList: true });
   refresh();
-  return { refresh, release() { released = true; observer.disconnect(); releases.forEach(release => release()); field.removeEventListener('keydown', escape); tray.remove(); } };
+  return { refresh, release() { released = true; observer.disconnect(); releases.forEach(release => release()); field.removeEventListener('keydown', escape); field.removeEventListener('formationlayoutchange', refresh); tray.remove(); } };
 }
