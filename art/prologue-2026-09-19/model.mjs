@@ -16,5 +16,20 @@ export function validateSequence(value, defaults) {
   for(const key of ['tintSource','accent','characterTint','reduceMotion'])result.presentation[key]=p[key];
   return result;
 }
+/**
+ * sceneNavigation(data, index) → where the Next button and the auto-advance
+ * timer may go from `index`, derived from the sequence itself.
+ *
+ * The opening was six scenes and is now five. Every "is this the last one?"
+ * here used to be the literal 5 or 6, so cutting a scene left the final scene
+ * advancing into `data.scenes[5]` (undefined) and a counter reading "5 / 6".
+ * `final` is the end of THIS sequence, whatever length it is, and `next` is
+ * null there rather than an index nothing answers to.
+ */
+export function sceneNavigation(data, index) {
+  const total = data.scenes.length;
+  const final = index >= total - 1;
+  return { total, final, next: final ? null : index + 1, counter: `${index + 1} / ${total}` };
+}
 export function sceneCopy(scene,data,classId){const cls=data.classes[classId];return{speaker:scene.speaker.replaceAll('{class}',cls.name).replaceAll('{name}','Forsaken'),text:scene.text.replaceAll('{classLine}',cls.line).replaceAll('{class}',cls.name)};}
 export function motifColour(data){const p=data.presentation;if(p.tintSource==='character'&&p.characterTint==='gold')return data.palettes.accent[p.accent];return data.palettes[p.tintSource][p.tintSource==='accent'?p.accent:p.characterTint];}

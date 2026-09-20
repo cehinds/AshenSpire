@@ -1,4 +1,4 @@
-import { prologueRows, prologuePresetOverrides } from './prologue.js';
+import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
@@ -71,14 +71,18 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
 });
 
 export function currentAdvancedKey(key) {
-  return LEGACY_BALANCE_KEYS[key] ?? key;
+  return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
 
 function withoutSupersededLegacy(entries) {
   const present = new Set(entries.map(([key]) => key));
-  return entries
+  // The opening's per-scene keys used to be POSITIONAL, and the scenes moved.
+  // They are translated by scene id before anything looks a row up, so an
+  // exported file written before the reorder still imports, and lands on the
+  // scene it was written for. See migratePrologueEntries.
+  return migratePrologueEntries(entries
     .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
-    .map(([key, value]) => [currentAdvancedKey(key), value]);
+    .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
 
 function balanceGroup(path) {
@@ -135,8 +139,18 @@ function explicitRows(bundle) {
         cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
         type: 'number', integer: true, step: 1,
         min: Math.max(1, need?.minimum || 0), max: 495, def,
+        // The floor MOVED UP after schema version 1 shipped, so a configuration
+        // exported before it holds values this row no longer accepts. Refusing
+        // them is right; refusing his whole file over them is not.
+        floorGroup: `attributeRules.presets.${modeId}.${classDef.id}`,
+        raisedFloor: need ? { group: `attributeRules.presets.${modeId}.${classDef.id}` } : undefined,
         key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classDef.id}.${attribute.id}`,
         label: `${classLabel} — ${attribute.label}`,
+        // The floor sentence is its OWN field as well as part of the note: the
+        // class topics compact a row's note away (the label already names the
+        // class), and compacting it away took the only explanation of where the
+        // floor comes from with it.
+        floorNote: need ? `It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '',
         note: `Starting ${attribute.label.toLowerCase()} for ${classLabel}. The class's attributes must total the character's points, set under Assign points.`
           + (need ? ` It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '')
           + ' Applies to a new run.',
@@ -520,7 +534,45 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
   }, null, 2) + '\n';
 }
 
-export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = []) {
+/**
+ * A ROW'S FLOOR MOVED, AND HIS FILE PREDATES IT.
+ *
+ * `parseAdvancedConfigFile` is all-or-nothing on purpose: a file that half
+ * applies is worse than one that does not. But two floors were raised while the
+ * schema version stayed at 1 — the character's total points (the attribute
+ * count → the kit floor) and each class's attribute cells (1 → the kit
+ * minimum) — so values that imported last week now abort the entire file and
+ * take every unrelated setting with them.
+ *
+ * Refusing the value is still right. This decides what refusing it COSTS:
+ *   · the total is CLAMPED to the floor, because the class tables rescale to
+ *     whatever total stands and a clamped total is a working one;
+ *   · a class's attribute cells are SKIPPED AS A SET, because raising one cell
+ *     to its kit floor would break the set's total and fail validation anyway —
+ *     that class keeps its authored table, and every other class still imports.
+ * Both say so by name in `warnings`, which the import door shows.
+ */
+function tolerateRaisedFloors(entries, rows, warnings) {
+  const skippedGroups = new Set();
+  const kept = [];
+  for (const [key, raw] of entries) {
+    const row = rows.get(key);
+    const floor = row?.raisedFloor;
+    if (!floor || typeof raw !== 'number' || !Number.isFinite(raw) || raw >= row.min) { kept.push([key, raw]); continue; }
+    if (floor.clamp) {
+      warnings.push(`${row.label}: ${raw} is below the ${row.min} this version requires and was raised to ${row.min}. Everything else in the file was imported.`);
+      kept.push([key, row.min]);
+    } else {
+      skippedGroups.add(floor.group);
+      warnings.push(`${row.label}: ${raw} is below the ${row.min} this class's starting kit asks for, so its attribute table was left as authored. Everything else in the file was imported.`);
+    }
+  }
+  // A skipped class is skipped WHOLE: one cell below its kit floor invalidates
+  // the set's total, so leaving its siblings in would fail validation anyway.
+  return kept.filter(([key]) => !skippedGroups.has(rows.get(key)?.floorGroup));
+}
+
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = []) {
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
@@ -536,7 +588,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of withoutSupersededLegacy(Object.entries(file.overrides))) {
+  for (const [key, raw] of tolerateRaisedFloors(withoutSupersededLegacy(Object.entries(file.overrides)), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;

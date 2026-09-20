@@ -1,3 +1,5 @@
+import { contentBundle } from '../../content/index.js';
+
 // Presentation only: every setting keeps its existing key and value semantics.
 const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./g, ' ').replace(/^./, c => c.toUpperCase());
 
@@ -12,8 +14,17 @@ export function advancedSection(row) {
   return row.advancedGroup || 'Gameplay';
 }
 
-// The class topics, in the order the creation screen lists its classes.
-export const CLASS_TOPICS = Object.freeze(['Reaver', 'Starseer', 'Rogue', 'Herald']);
+/**
+ * The class topics, in the order the content bundle lists its classes.
+ *
+ * DERIVED, NOT TRANSCRIBED. `classTopic` on each row is `classDef.name`; four
+ * names typed out here meant a renamed or added class kept its full label and
+ * sorted after the named topics, with nothing failing. The naming rule is the
+ * one `advancedConfigRows` uses for a class with no name.
+ */
+export const CLASS_TOPICS = Object.freeze((contentBundle.classes || [])
+  .map((classDef) => classDef.name
+    || String(classDef.id).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())));
 
 function topic(row, section) {
   if (row.statTopic) return row.statTopic;

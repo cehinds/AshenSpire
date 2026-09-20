@@ -14,8 +14,11 @@ const TOTAL_MAX = 495;
 // offers: how many points are AVAILABLE TO ASSIGN, and the TOTAL a character
 // carries. Everything else — the per-attribute baseline, the floor, the
 // ceiling, each class's preset — is derived from those two and sits under the
-// same topic. The keys are unchanged (`…<modeId>.total`), so an exported
-// configuration still loads.
+// same topic. The keys are unchanged (`…<modeId>.total`), but the row's FLOOR
+// is not: it moved from the attribute count to the kit floor (12), so an older
+// export carrying a smaller total is clamped to that floor with a named notice
+// — see `raisedFloor` below and `parseAdvancedConfigFile`. The rest of the file
+// still imports; before that, one stale total refused every other setting in it.
 
 /**
  * kitAttributeMinimums(bundle) → { [classId]: { [attributeId]: {minimum, itemId, kit} } }
@@ -129,11 +132,22 @@ export function startingStatRows(bundle) {
     add(PREFIX + mode.id + '.total', total,
       `${prefix}Total points on a character`, 'Assign points', {
         integer: true, step: 1, min: bounds.min, max: bounds.max, ...retired,
+        // The floor moved from the attribute count to the kit floor after
+        // schema version 1 shipped. An older export carrying a smaller total
+        // is clamped with a notice rather than taking the whole file down.
+        raisedFloor: bounds.min > ids.length ? { was: ids.length, clamp: true } : undefined,
+        // WHY THE FLOOR IS WHERE IT IS, as a sentence a refusal can borrow.
+        // A typed 8 clamps to 12; the row has to be able to say which class
+        // and which kit put 12 there, or the clamp is a number from nowhere.
+        boundsNote: floorSentence(bundle, bounds).trim(),
         note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
       });
   }
   add(PREFIX + 'autoScale', true, 'Automatically scale stat conversions', 'Assign points', {
-    note: 'On: conversion thresholds follow each mode’s pool relative to its original size. Off: use the conversion values below unchanged. Whole-number attributes can still cause rounding differences. Applies to new runs.',
+    // "Pool" now names the OTHER row. The ratio is total ÷ old total, so
+    // moving only the points available to assign leaves it at 1 and the
+    // conversions do not move at all.
+    note: 'On: conversion thresholds follow each mode’s total points relative to its original total. Off: use the conversion values below unchanged. Changing only the points available to assign leaves the total, and so the thresholds, unmoved. Whole-number attributes can still cause rounding differences. Applies to new runs.',
   });
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
