@@ -119,6 +119,7 @@ export const wireframeUi = freeze({
     railMinRem: shop.sizing.railMinRem,
     railMaxRem: shop.sizing.railMaxRem,
     offersFraction: shop.sizing.offersFraction,
+    detailMinRem: shop.sizing.detailMinRem,
     gapRem: shop.positioning.gapRem,
     wideMinRem: shop.sizing.wideMinRem,
     detailMaxFraction: shop.sizing.detailMaxFraction,

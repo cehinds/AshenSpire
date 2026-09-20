@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1233",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "The merchant shows four cards at once, and a card is no longer a small picture in a big empty box",
+    "detail": "Every shelf at the merchant — cards, armaments, weapon arts, relics, flasks and what he will buy — now lays its stock out four across and wraps below, instead of one or two per row with the rest behind a scroll. An armament for sale is the card itself: the panel that used to stand around it, twice its width and mostly empty, now appears only under the pointer, under keyboard focus, or on the offer being described beside the shelf. The offers column takes the room a shelf of cards needs, and the description column keeps a readable minimum. On a phone the same shelves show two across at the card's full size. Every card on a shelf is the same width, including the last row. The deck list a smith shows when seating a card follows the same rule.",
+    "build": "0.7.1.337",
+    "pullRequest": 1233,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1233"
+  },
+  {
     "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -28,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-20",
     "summary": "Combat and combat animation have their own Settings section",
     "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
-    "build": "0.7.1.334",
+    "build": "0.7.1.338",
     "pullRequest": 1227,
     "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },

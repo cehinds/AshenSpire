@@ -309,9 +309,15 @@
    wraps below. Keeping `overflow-x:auto` after the wrap made overflow-y compute
    to auto too and trapped the scaled cost tag 2px past that inner port's final
    endpoint at 360x640. The remaining `max-width` is the bound the wrap needs;
-   the generic `.screen` above owns any honest vertical travel and its cue. */
-  :root[data-layout='narrow'] #shop-cards.reward-row { max-width: 100%; }
-  :root[data-layout='narrow'] .reward-row:not(#shop-cards) { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+   the generic `.screen` above owns any honest vertical travel and its cue.
+
+   THE SHOP'S OWN SHELVES ARE NO LONGER `.reward-row`: they are `.card-shelf`
+   (kit.css), which wraps, centres and bounds itself at every width by the same
+   rule that decides how many cards a row holds. The two `#shop-cards` rules
+   that used to state the wrap here are gone rather than kept as a second
+   answer; the rows below are the ones still dealt as `.reward-row` — the
+   reward door, the draft and the co-op picks. */
+  :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
 /* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
@@ -337,8 +343,13 @@
 
    Scoped to #shop-cards, NOT to .reward-row: the coop reward rows are red in
    the same sweep and they are Viki's, dealt by name (wave-three board,
-   2026-08-14) — a class-level wrap here would fix her rows behind her back. */
-:root[data-layout='narrow'] #shop-cards { flex-wrap: wrap; justify-content: center; }
+   2026-08-14) — a class-level wrap here would fix her rows behind her back.
+
+   SUPERSEDED, 2026-09-20, and deliberately left standing as the reason. The
+   wrap this rule asked for is now what `.card-shelf` does at every width, on
+   every shop shelf rather than on the card row alone, so the rule itself is
+   removed and its finding is not: a shelf that has to be told to wrap, once
+   per id, is the shape the shelf primitive exists to end. */
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */

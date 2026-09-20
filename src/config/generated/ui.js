@@ -3,7 +3,7 @@
 // Every value is already resolved: variables substituted, fractions divided.
 //
 // source content/config/ui/components/buttons.json f03ef73d87040802
-// source content/config/ui/components/card.json ca232af0e080fbbf
+// source content/config/ui/components/card.json 3f62c61c7754d204
 // source content/config/ui/components/categoryNav.json 631202269af56449
 // source content/config/ui/components/choiceBody.json a94c731dc8075f80
 // source content/config/ui/components/dialogueFrame.json e924351f29b485fa
@@ -45,7 +45,7 @@
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
 // source content/config/ui/screens/prologue.json acb9ab41e1763d33
-// source content/config/ui/screens/shop.json c11f4338ff4a7f02
+// source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
 
@@ -521,6 +521,11 @@ export const uiConfig = deepFreeze({
             "widthPx": 320
           }
         },
+        "shelf": {
+          "maxColumns": 4,
+          "gapPx": 12,
+          "minTrackPx": 120
+        },
         "doorReadableMinPx": 384,
         "tuning": {
           "minPx": 64,
@@ -917,6 +922,7 @@ export const uiConfig = deepFreeze({
         "railMinRem": 11,
         "railMaxRem": 28,
         "offersFraction": 0.5,
+        "detailMinRem": 22,
         "wideMinRem": 60,
         "detailMaxFraction": 0.5
       },
