@@ -1,3 +1,4 @@
+import { previewPrologue } from './prologue.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -7,7 +8,6 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { previewPrologue } from './prologue.js';
 import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
 import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
@@ -32,7 +32,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblems, advancedConfigRows, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblems, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -580,8 +580,9 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
-  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
+  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
+  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
   { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
   { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
@@ -1011,6 +1012,10 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
+  if (settings?.[row.key] === undefined && row.key.startsWith('gameConfig.attributeRules.presets.')) {
+    const path = row.key.slice('gameConfig.'.length).split('.');
+    return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
+  }
   const raw = (settings || {})[row.key];
   // The rule itself lives in CardSizeModel so the card-size model and this row
   // cannot disagree about what a stored number means — they did, by a floor
@@ -1536,6 +1541,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     [...container.querySelectorAll('.set-subtab')].find(tab => tab.dataset.advancedGroup === event.target.value)?.click();
   });
   const reportAdvancedProblems = () => {
+    for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
+      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
+    }
     const rules = resolveHandRules(settings, contentBundle.attributes);
     const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
     if (section) {

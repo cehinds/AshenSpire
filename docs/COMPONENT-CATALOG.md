@@ -632,3 +632,6 @@ read-only card faces and footer buttons into the turn-end discard selector.
 Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
 cancel without changing combat state. `src/engine/handRules.js` validates the
 selection independently before the turn can advance.
+
+### Ratings, Poise and Ward
+The Advanced Settings workspace adds Stats & Defence subgroups for each formula, curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

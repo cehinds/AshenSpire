@@ -103,6 +103,7 @@ export function resourceStrip(rows, poise) {
     return item;
   });
   chips.push(chip({ key: 'Poise', value: poise.value, attrs: { dataset: { stat: 'poise' } } }));
+  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) chips.push(chip({ key: id === 'ward' ? 'Ward' : id.toUpperCase(), value: poise.ratings[id], attrs: { dataset: { stat: id } } }));
   const strip = statStrip(chips, { class: 'cc-derived', 'aria-label': 'Derived resources' });
   return markUiComponent(strip, UI.resourceStrip);
 }

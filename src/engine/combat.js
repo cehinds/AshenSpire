@@ -17,6 +17,7 @@ import { formationMovePlan } from '../model/formationMovement.js';
 import * as A from './actions.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
 import { scaledCards } from '../model/handRules.js';
+import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -62,7 +63,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null,
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, ratingAttributeScale = 1,
 }) {
   const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -87,6 +88,7 @@ export function createCombat({
       ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null }).value
       : 0);
   const combat = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules), ratingAttributeScale } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
@@ -191,6 +193,10 @@ export function createCombat({
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  if (combat.ratingsRules) {
+    refreshCombatRatings(combat);
+    for (const enemy of combat.enemies) enemy.wardMeter = { value: 0, max: Math.max(1, enemy.poiseMeter?.max || 1), growths: 0 };
+  }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
     instanceId: c.instanceId,
@@ -304,6 +310,7 @@ function startPlayerTurn(combat) {
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
   p.pendingActionLoss = 0;
+  recoverRatingMeters(combat, p);
 
   // Draw.
   A.drawCards(combat, turnDrawCount(combat));
@@ -833,6 +840,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     attributes: combat.attributes || null,
   }).value);
 
+  refreshCombatRatings(combat);
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);
   combat.emit('equipmentRearmed', {
     slotId, setIndex, pieceId, cost: price.cost, rule: price.ruleId,
@@ -899,6 +907,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // cardTagIs). The card definition and the deck instance never carry them.
   const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
@@ -1115,7 +1124,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'block': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary));
+        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
         break;
       }
       case 'applyStatus': {
@@ -1124,6 +1133,8 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'heal':
+        entry.value = evalPreview(combat, action, eff.amount, primary) + cardRatingBonus(combat, p, action.card, 'heal');
+        break;
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
@@ -1201,7 +1212,8 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const out = { ...intent };
   if (intent.damage != null) {
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage);
+    const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
+    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], damageSchool ? { damageSchool } : null);
     out.hits = intent.hits != null ? intent.hits : 1;
     out.totalDamage = out.damage * out.hits;
   }

@@ -34,6 +34,10 @@ const sourcesHtml = (sources, empty) => (sources.length
   : flavourHtml(empty));
 
 export function renderPlayerPoise(receipt) {
+  if (receipt.ratings) return `<section class="player-poise-receipt">${eyebrowHtml('Ratings, Poise & Ward')}`
+    + Object.entries(receipt.ratings).map(([id, value]) => pairHtml(id.toUpperCase(), `<strong>${value}</strong>`)).join('')
+    + receipt.ratingSources.map(source => flavourHtml(`${source.name}: ${Object.entries(source).filter(([id, value]) => id !== 'name' && value).map(([id, value]) => `${id.toUpperCase()} +${value}`).join(', ') || 'No rating bonus'}`)).join('')
+    + flavourHtml(receipt.note) + '</section>';
   return `<section class="player-poise-receipt">${eyebrowHtml(receipt.label)}`
     + sourcesHtml(receipt.sources, 'No item or relic contribution.')
     + pairHtml(`Items ${receipt.equipment} + relics ${receipt.relic}`, `<strong>${receipt.value}</strong>`)

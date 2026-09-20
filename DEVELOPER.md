@@ -764,3 +764,5 @@ runs snapshot the effective overrides in the existing advanced-config snapshot.
 Old saves bypass the opening. The completion callback persists before revealing
 the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
+### Ratings and starting pools
+Settings → Advanced → Progression controls starting stat pools and resource conversions. Stats & Defence controls rating formulas, physical/magical resistance, status weights, impact categories, breaks and per-source bonuses. Source models: src/model/startingStatConfig.js and src/model/combatRatings.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs.

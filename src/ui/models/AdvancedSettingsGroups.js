@@ -7,8 +7,9 @@ export function advancedSection(row) {
 }
 
 function topic(row, section) {
-  if (row.handTopic) return row.handTopic;
+  if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
+  if (row.handTopic) return row.handTopic;
   const key = row.key;
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   if (section === 'Classes') {

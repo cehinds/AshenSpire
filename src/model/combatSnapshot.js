@@ -1,5 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
+import { combatRatingProblems } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -43,6 +44,8 @@ function entityProblems(entity, path, { player = false } = {}) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
   }
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
+  if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
+  if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
   return problems;
 }
@@ -71,6 +74,8 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
+  if (snapshot.ratingsRules !== undefined) problems.push(...combatRatingProblems(snapshot.ratingsRules));
+  if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written

@@ -653,6 +653,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter?.max || 0 },
+          ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: entity.ratings[id] })) : []),
           { label: 'Block', value: v.block || 0 },
         ], 'player'),
         skillLabel: 'Active skills & stance',
@@ -786,6 +788,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       statuses,
       stanceId: e.stanceId,
       poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
+      wardMeter: e.wardMeter ? { value: e.wardMeter.value, max: e.wardMeter.max } : null,
       arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
     };
   }
@@ -822,6 +825,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'impactDealt':
           if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
+          break;
+        case 'ratingImpact':
+          if (t) t[e.meter + 'Meter'] = { value: e.value, max: e.max };
           break;
         case 'hpLost':
           if (t) t.hp = Math.max(0, t.hp - e.amount);

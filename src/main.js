@@ -1125,7 +1125,7 @@ function resumeRun(slot = 1) {
   const authoredRegistries = createRegistries(contentBundle);
   run = saves.loadRun(authoredRegistries, slot);
   if (!run) return showTitle();
-  rebuildRegistries(run.advancedConfigSnapshot || {});
+  rebuildRegistries(run.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   if (run.journey) syncWorldPosition();
@@ -2059,6 +2059,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
+    ratingsRules: registries.balance.combatRatings || null,
+    ratingAttributeScale: run.attributeModeSnapshot?.statConversionScale || 1,
     handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
     registries,
     rng,
