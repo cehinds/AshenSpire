@@ -93,4 +93,8 @@ final result: passed
 - [x] Shared preview/combat geometry and movement boundaries.
 - [x] Desktop/phone visual review, regression checks and refreshed game bundles.
 
+### Dev integration verification
+
+Integrated against current remote dev (`72a44b0c`), preserving its opening sequence, living-target guards and other changes. All 430 tests in the complete UI/configuration group pass; the browser engine page reports 120 passed, 0 failed. Normal title-menu navigation and saved formation settings across reload were verified. The final compiled web build opens the editor without console warnings or errors. A narrow 535px window revealed a zoom-dependent two-column layout; a viewport breakpoint now stacks it correctly. Current-window evidence is in `docs/preview/formation-layout/window.png`. The earlier full Node run was stopped after remote dev advanced and is not claimed as a completed gate. No background-reference preview is included in this merge; the owner requested merging the current editor first.
+
 final result: passed
