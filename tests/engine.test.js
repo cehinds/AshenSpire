@@ -126,7 +126,7 @@ import { playerLevel } from '../src/model/levels.js';
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -7097,8 +7097,50 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
     eq(display.filter((r) => r.key === 'fullscreen').length, 1,
       'Fullscreen moved to the first seat without being duplicated');
-    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
-      'Combat pacing remains available behind Fullscreen');
+    // COMBAT PACING LEFT DISPLAY FOR THE COMBAT GROUP (his report: "no good
+    // section to customize combat, combat animation"). The claim this line has
+    // always made is that the row is still REACHABLE from the General tab and
+    // is not what Fullscreen displaced, so it is asserted where the row now
+    // lives — General still draws it, in one group, exactly once.
+    eq(display.some((r) => r.key === 'animSpeed'), false,
+      'Combat pacing is no longer filed beside the display preferences');
+    const combat = categoryHandler('Combat').rows;
+    assert(combat.some((r) => r.key === 'animSpeed'), 'Combat pacing is filed under Combat');
+    eq(categoryHandler('General').rows.filter((r) => r.key === 'animSpeed').length, 1,
+      'the General tab still offers Combat pacing, once');
+
+    // ---- THE COMBAT GROUP IS THE ANSWER TO "no good section to customize
+    // combat, combat animation, etc", so what it HOLDS is asserted, not
+    // described. A row that drifts back out of it takes the report with it.
+    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio',
+      'the General tab offers three groups, and Combat sits between them');
+    const combatTopics = generalGroups('Combat');
+    eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
+      'Combat names its topics for what a player came looking for');
+    eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
+      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard',
+      'every combat pacing, quality, shake, sprite and played-card switch is under one name');
+    eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
+      'armamentsPresentation,armamentsPhonePlacement',
+      'the combat Armaments cluster is filed with combat, not with the accent colour');
+
+    // ONE HOME EACH: a row that moved must not still be drawn where it was.
+    // Display keeps Fullscreen first (test 61's original subject) and its
+    // leftover effects topic is named for the one screen it still describes.
+    const displayTopics = generalGroups('Display');
+    eq([...displayTopics.keys()][0], 'Interface', 'Display still opens on the group holding Fullscreen');
+    eq(displayTopics.get('Interface')[0].key, 'fullscreen', 'and Fullscreen is still first inside it');
+    eq(displayTopics.has('Effects & pacing'), false,
+      'the bag that mixed combat pacing with the title entrance is gone');
+    eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
+      'what is left of it is named for the title screen it actually holds');
+    for (const key of ['useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'showPlayedCard',
+      'armamentsPresentation', 'armamentsPhonePlacement']) {
+      eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
+        `${key} has exactly one home in the General tab`);
+      eq(categoryHandler('Advanced').rows.some((r) => r.key === key), false,
+        `${key} is not also drawn behind Advanced`);
+    }
     eq(display.some((r) => r.key === 'fullscreen'), true,
       'Settings exposes the browser-owned Fullscreen state');
     eq(audio.some((r) => r.key === 'musicEnabled'), true,

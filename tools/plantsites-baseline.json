@@ -115,7 +115,7 @@
   "unreadable": {
     "tools/armoury-picked-up.mjs": 11,
     "tools/card-drag-targeting.mjs": 6,
-    "tools/displayfirst.mjs": 6,
+    "tools/displayfirst.mjs": 7,
     "tools/doorplant.mjs": 3,
     "tools/flask-menu-cancel.mjs": 1,
     "tools/gatelist.mjs": 4,
@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "dfa85ef10b6c4276"
+      "digest": "75d839e35e286902"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
