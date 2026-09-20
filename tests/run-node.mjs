@@ -1116,9 +1116,10 @@ try {
 try {
   const { spawnSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
-  const result = spawnSync(process.execPath, ['--test', fileURLToPath(new URL('./unarmed-animation.test.mjs', import.meta.url))], { encoding: 'utf8' });
+  const suites = ['unarmed-animation.test.mjs', 'unarmed-magic.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...suites.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.stdout + result.stderr);
-  console.log('PASS Unarmed animation references: ownership, routing, timing and all armor assets');
+  console.log('PASS Unarmed physical and magic references: real import orders, ownership, routing, timing and all armor assets');
 } catch (error) {
   zoomExtra++;
   console.error('FAIL Unarmed animation references:', error);
