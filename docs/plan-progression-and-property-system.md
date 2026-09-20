@@ -544,9 +544,14 @@ in `docs/BALANCE.md`.
 `characterCreation.visibleModeIds` offers; `tuned`, `standard` and `pointbuy`
 stay in the table for the saves admitted against them. Ruleset 5 ships the
 five formulas above; Mana and Stamina lose their five-point tier, so the two
-deviations phase 8 deferred both land here — the four signature arts cost 2
-stamina / 2 Mana, and Poise is a derived row (`rules.poise`) whose coefficient
-left `balance.poise`. The required row set is now a function of the ruleset
+Poise deferral lands here: it is a derived row (`rules.poise`) whose
+coefficient left `balance.poise`. **The 2/2 signature arts do NOT land**, and
+the reason is a mechanism rather than a number — a card resolves its cost from
+the live table while a run's pools are snapshotted, so raising the cost strands
+the starter card of every run already under way (a ruleset-4 Reaver at Wisdom 8
+holds one Mana, a Starseer at Constitution 8 one stamina). Raised to 2/2 inside
+this PR and reverted once review named it; the step needs run-stamped card
+costs, which is its own task. The required row set is now a function of the ruleset
 version (`derivedStatIdsFor`), so a version-4 snapshot is not asked for a Poise
 row it never had. `tuned2` carries its own `equipmentProfiles` at `baseValue`
 -1: Defend scales off Dexterity, the stat the rebase compressed hardest, and

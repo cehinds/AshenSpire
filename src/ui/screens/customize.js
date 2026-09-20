@@ -31,7 +31,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -306,8 +306,16 @@ export function mountCustomize(app, {
   for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
-  const STANDARD = 'standard';
-  const POINTBUY = 'pointbuy';
+  // THE EDITABLE MODE IS DATA, NOT A LITERAL (plan phase 9). This screen used
+  // to name 'pointbuy' as the one mode with points to place and 'standard' as
+  // the preset it previewed from. The rebase made `tuned2` both, and two
+  // hard-coded ids would have left the advertised ten placeable points
+  // uneditable while the preview showed a retired mode's character (Codex,
+  // #1217). Both now resolve from attributeRules.defaultMode, which is the
+  // mode creation offers.
+  const EDITABLE = defaultCreationModeId(registries);
+  const STANDARD = EDITABLE;
+  const POINTBUY = EDITABLE;
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.

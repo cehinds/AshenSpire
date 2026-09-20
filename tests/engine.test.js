@@ -1702,13 +1702,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 3, maxMana: 3, stamina: 3 });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
-    eq(pv.manaCost, 2, 'preview exposes the same mana cost execution charges');
+    eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
     dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
-    eq(spend.player.mana, 1, 'signature starter spends 2 mana');
-    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 2), 'mana spend emits a receipt');
+    eq(spend.player.mana, 1, 'signature starter spends 1 mana');
+    assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
     const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
@@ -9470,7 +9470,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
-    eq(REG.cards.get('gorefireSlash').staminaCost, 2, 'the signature art asks two stamina beside its two Mana (plan phase 9)');
+    eq(REG.cards.get('gorefireSlash').staminaCost, 1, 'the signature art costs stamina beside its Mana');
 
     // THE PLAYER'S METER: a fill applies the row's statuses and takes one
     // action off the next turn, once; the meter grows as an enemy's does.
@@ -9568,9 +9568,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const manaRow = rowOf('mana'); const staminaRow = rowOf('stamina');
     eq(manaRow.value - manaRow.base, star.attributes.wisdom, 'a new Starseer opens with Wisdom in Mana');
     eq(staminaRow.value - staminaRow.base, star.attributes.constitution, 'and Constitution in Stamina');
-    assert(star.maxStamina >= REG.cards.get('starstonePebble').staminaCost
-      && star.maxMana >= REG.cards.get('starstonePebble').manaCost,
-    'so the signature art is playable on the first floor, which is what phase 8 deferred');
+    // The pools could now fund a 2/2 signature art, but the cost stays 1/1:
+    // a card resolves its cost LIVE while a run's pools are snapshotted, so
+    // raising it strands the starter card of every run already under way
+    // (a legacy Reaver at Wisdom 8 holds one Mana). That step needs
+    // run-stamped costs, which is a mechanism and not this phase's number.
+    const art = REG.cards.get('starstonePebble');
+    assert(star.maxStamina >= art.staminaCost && star.maxMana >= art.manaCost,
+      'the signature art is playable on the first floor');
+    assert(art.staminaCost === 1 && art.manaCost === 1,
+      'and stays at 1/1 until costs travel with the run rather than with the table');
 
     // THE POISE ROW, WHICH PHASE 8 LEFT IN BALANCE AND THIS PHASE MOVED.
     assert(!!rules.rules.poise, 'Poise is a derived row now');
