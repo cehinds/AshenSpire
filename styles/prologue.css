@@ -17,3 +17,59 @@
 .set-prologue-text{width:100%;min-height:5rem;resize:vertical;font:inherit;line-height:1.4;padding:.65rem;background:var(--bg);color:var(--text);border:1px solid var(--line-soft);border-radius:4px}
 @media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:75dvh}.set-row-prologue .r-trail{width:100%;min-width:0}}
 @media(max-height:500px) and (orientation:landscape){.prologue-screen{grid-template-columns:1fr minmax(18rem,45%);grid-template-rows:1fr}.prologue-caption{overflow:auto}.prologue-preview-body .prologue-screen{min-height:15rem;height:65dvh}}
+
+/* ---- the opening's wireframes and text plate -------------------------------
+   Every value below is a SETTING (Advanced → Opening): which frame presents a
+   scene, how the painting sits in it, where the words go, what is behind them
+   and whether they are outlined. The stylesheet states the frames; the custom
+   properties carry the owner's numbers in. Defaults here match the shipped
+   configuration, so a profile that has never touched these renders as before. */
+.prologue-screen{--prologue-text-scale:1;--prologue-text-align:center;--prologue-box:rgba(16,14,12,.72);--prologue-outline-color:#100e0c;--prologue-outline-width:0px;--prologue-fit:cover;--prologue-focus:50% 50%;--prologue-scale:1}
+.prologue-background{object-fit:var(--prologue-fit);object-position:var(--prologue-focus);transform:scale(var(--prologue-scale))}
+.prologue-caption{text-align:var(--prologue-text-align)}
+.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale))}
+.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale))}
+.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale))}
+.prologue-location{font-size:calc(2rem*var(--prologue-text-scale))}
+.prologue-progress{font-size:calc(1.2rem*var(--prologue-text-scale))}
+/* The container: present or absent, and when present, visible or not. An
+   invisible container still holds its spacing — that is the difference between
+   "no container" and "a container you cannot see". */
+.prologue-has-box .prologue-caption{background:var(--prologue-box);border-radius:10px}
+.prologue-box-hidden .prologue-caption{background:transparent}
+.prologue-screen:not(.prologue-has-box) .prologue-caption{background:transparent;padding-inline:0}
+.prologue-outlined .prologue-title,.prologue-outlined .prologue-speaker,.prologue-outlined .prologue-dialogue,.prologue-outlined .prologue-location,.prologue-outlined .prologue-banner-text{-webkit-text-stroke:var(--prologue-outline-width) var(--prologue-outline-color);paint-order:stroke fill}
+.prologue-banner{position:absolute;left:0;right:0;display:flex;justify-content:center;padding:.6rem 1rem;pointer-events:none;background:linear-gradient(90deg,transparent,var(--prologue-box) 18%,var(--prologue-box) 82%,transparent)}
+.prologue-banner.banner-top{top:0}
+.prologue-banner.banner-bottom{bottom:0}
+.prologue-banner-text{font-size:calc(1.5rem*var(--prologue-text-scale));letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center}
+/* Text over the art: one cell, and `data-position` places the plate in it. */
+.prologue-layout-overlay{grid-template-rows:1fr}
+.prologue-layout-overlay .prologue-stage,.prologue-layout-overlay .prologue-caption{grid-row:1;grid-column:1}
+.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;height:max-content}
+.prologue-layout-overlay .prologue-caption[data-position^=top]{align-self:start}
+.prologue-layout-overlay .prologue-caption[data-position^=middle]{align-self:center}
+.prologue-layout-overlay .prologue-caption[data-position$=left]{justify-self:start;max-width:min(46rem,62%)}
+.prologue-layout-overlay .prologue-caption[data-position$=right]{justify-self:end;max-width:min(46rem,62%)}
+.prologue-layout-letterbox .prologue-stage{background:#000}
+.prologue-layout-letterbox .prologue-background{object-fit:contain}
+.prologue-layout-panelLeft,.prologue-layout-panelRight{grid-template-rows:1fr;grid-template-columns:minmax(18rem,34%) 1fr}
+.prologue-layout-panelRight{grid-template-columns:1fr minmax(18rem,34%)}
+.prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption{grid-row:1;display:grid;align-content:center;overflow:auto}
+.prologue-layout-panelLeft .prologue-caption{grid-column:1}
+.prologue-layout-panelLeft .prologue-stage{grid-row:1;grid-column:2}
+.prologue-layout-panelRight .prologue-stage{grid-row:1;grid-column:1}
+.prologue-layout-panelRight .prologue-caption{grid-column:2}
+/* A phone in portrait has no room for a side panel or a floating plate; both
+   fall back to the caption frame rather than squeezing the words to a column. */
+@media(max-width:760px) and (orientation:portrait){
+  .prologue-layout-panelLeft,.prologue-layout-panelRight,.prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:minmax(14rem,1fr) auto}
+  .prologue-layout-panelLeft .prologue-stage,.prologue-layout-panelRight .prologue-stage,.prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
+  .prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption,.prologue-layout-overlay .prologue-caption{grid-row:2;grid-column:1;max-width:none;justify-self:stretch;margin:0}
+}
+/* The colour rows in Advanced → Opening: a palette you tap, and the system
+   wheel folded away behind its own button until it is wanted. */
+.set-swatch-trail{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.set-row-swatches .as-swatches{gap:.45rem}
+.set-row-swatches .set-swatch::before{width:2rem;height:2rem}
+.set-swatch-trail .set-wheel{width:3.2rem;height:2.4rem;padding:0;border:1px solid var(--line-soft);border-radius:4px;background:transparent}

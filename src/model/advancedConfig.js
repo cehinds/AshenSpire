@@ -594,7 +594,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
     let valid = false;
     if (row.type === 'choice') valid = row.choices.includes(value);
-    else if (row.type === 'color') valid = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+    else if (['color', 'colorSwatch'].includes(row.type)) valid = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
     else if (typeof row.def === 'boolean') valid = typeof value === 'boolean';
     else if (['number', 'range'].includes(row.type) || typeof row.def === 'number') {
       valid = typeof value === 'number' && Number.isFinite(value)
@@ -610,15 +610,25 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
 }
 
 export async function saveAdvancedConfigFile(settings, options = {}) {
+  return saveJsonFile(advancedConfigExport(settings, options.build || {}, options.includeKeys || []), options);
+}
+
+/**
+ * saveJsonFile(text, options) → the Save As door, then the download fallback.
+ *
+ * Extracted from `saveAdvancedConfigFile` when the opening grew a file of its
+ * own: two exports, one set of browser quirks. The caller decides what the
+ * bytes are and what the file is called; this only decides how it leaves.
+ */
+export async function saveJsonFile(text, options = {}) {
   const win = options.window || globalThis.window;
   const doc = options.document || globalThis.document;
-  const text = advancedConfigExport(settings, options.build || {}, options.includeKeys || []);
   const filename = options.filename || 'ashen-spire-game-config.json';
   if (win && typeof win.showSaveFilePicker === 'function') {
     try {
       const handle = await win.showSaveFilePicker({
         suggestedName: filename,
-        types: [{ description: 'Ashen Spire game configuration', accept: { 'application/json': ['.json'] } }],
+        types: [{ description: options.description || 'Ashen Spire game configuration', accept: { 'application/json': ['.json'] } }],
       });
       const writable = await handle.createWritable();
       await writable.write(text);

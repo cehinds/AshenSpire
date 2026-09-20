@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
-import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS } from '../src/model/prologue.js';
+import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueSceneArt, prologueScenePreset, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS } from '../src/model/prologue.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
@@ -234,4 +234,115 @@ test('a raised row floor costs that row, not the whole file', () => {
   assert.equal(more.length,1);
   assert.match(more[0],/Starseer — Intelligence: 2 is below the 8 this class's starting kit asks for/);
   assert.match(more[0],/Everything else in the file was imported/);
+});
+
+// ---- the opening as a STAGING, not a fixed film -----------------------------
+//
+// Order, inclusion, artwork and the frame around the words are settings now.
+// The indices never stop meaning what they meant: `config.scenes` stays in
+// authored order (a paused run recorded one of those numbers) and the sequence
+// is a view over it. These guard that separation, the file that carries it, and
+// the CSS the frames are actually drawn by.
+test('the opening plays in the configured order, over the configured subset', () => {
+  const ids = config => prologueSequence(config).map(index => config.scenes[index].id);
+  assert.deepEqual(ids(prologueConfig()), ['warmth','year','carry','night','step'], 'untouched, the authored order stands');
+  const reordered = prologueConfig({
+    'gameConfig.prologue.scenes.step.order': 1,
+    'gameConfig.prologue.scenes.warmth.order': 5,
+  });
+  assert.deepEqual(ids(reordered), ['step','year','carry','night','warmth']);
+  const shortened = prologueConfig({
+    'gameConfig.prologue.scenes.year.enabled': false,
+    'gameConfig.prologue.scenes.night.enabled': false,
+  });
+  assert.deepEqual(ids(shortened), ['warmth','carry','step'], 'the number of scenes is the number switched on');
+  // Switching every scene off would leave a screen with no scene and no way
+  // out of it, so the authored order stands in.
+  const none = prologueConfig(Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(scene => [`gameConfig.prologue.scenes.${scene.id}.enabled`, false])));
+  assert.equal(prologueSequence(none).length, PROLOGUE_DEFAULTS.scenes.length);
+  // Ties keep authored order, so a half-numbered sequence is still stable:
+  // `night` sharing position 1 with `warmth` sits behind it, not in front.
+  assert.deepEqual(ids(prologueConfig({'gameConfig.prologue.scenes.night.order': 1})), ['warmth','night','year','carry','step']);
+  // The indices are into the AUTHORED list either way: that is what a paused
+  // run holds, and what every setting key is named for.
+  assert.deepEqual([...prologueSequence(reordered)].sort((a,b)=>a-b), [0,1,2,3,4]);
+});
+
+test('a scene names its painting, and every offered painting is shipped for both layouts', () => {
+  const config = prologueConfig({'gameConfig.prologue.scenes.step.art': 'road'});
+  assert.equal(prologueSceneArt(config.scenes.find(scene => scene.id === 'step')), 'road');
+  assert.equal(prologueSceneArt(config.scenes.find(scene => scene.id === 'night')), 'night', 'a scene defaults to its own art');
+  // A value outside the offered set falls back to the scene's own painting
+  // rather than asking the asset layer for a file that cannot exist.
+  assert.equal(prologueSceneArt({id: 'night', art: 'not-a-painting'}), 'night');
+  for (const art of PROLOGUE_ART_IDS) {
+    for (const layout of ['desktop', 'mobile']) {
+      const path = prologueArtwork(art, layout, {classId: 'reaver'});
+      const bytes = readFileSync(new URL(`../${path.replace(/^\.?\//, '')}`, import.meta.url));
+      assert.equal(bytes.subarray(8, 12).toString(), 'WEBP', `${art} ${layout} is a shipped painting`);
+    }
+  }
+});
+
+test('the staging settings import and export, alone and inside the whole configuration', () => {
+  const edits = {
+    'gameConfig.prologue.presentation.layout': 'overlay',
+    'gameConfig.prologue.presentation.imageScale': 1.25,
+    'gameConfig.prologue.presentation.imageFocusY': 30,
+    'gameConfig.prologue.presentation.textPosition': 'middle-left',
+    'gameConfig.prologue.presentation.textBoxVisible': false,
+    'gameConfig.prologue.presentation.textBoxOpacity': .4,
+    'gameConfig.prologue.presentation.textOutline': true,
+    'gameConfig.prologue.presentation.textOutlineColor': '#7fa8c9',
+    'gameConfig.prologue.scenes.warmth.banner': true,
+    'gameConfig.prologue.scenes.warmth.art': 'road',
+    'gameConfig.prologue.scenes.warmth.order': 4,
+    'gameConfig.prologue.scenes.night.enabled': false,
+  };
+  // The whole-game file carries them, unchanged, like any other override.
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(edits), contentBundle), edits);
+  // And the opening's own file is the same settings under the art-studio shape,
+  // so one importer reads both and a scene file needs no format of its own.
+  const scenes = parseAdvancedConfigFile(prologueScenePreset(edits), contentBundle);
+  const staged = prologueConfig(scenes);
+  assert.deepEqual(staged, prologueConfig(edits), 'the scene file round trips every staging setting');
+  assert.equal(staged.presentation.layout, 'overlay');
+  assert.equal(staged.scenes.find(scene => scene.id === 'warmth').banner, true);
+  assert.deepEqual(prologueSequence(staged).map(index => staged.scenes[index].id), ['year','carry','warmth','step']);
+});
+
+test('a staging value the screen could not draw is refused, and refuses the file with it', () => {
+  const bad = {
+    'gameConfig.prologue.presentation.layout': 'diagonal',
+    'gameConfig.prologue.presentation.textOutlineColor': 'cornflower',
+    'gameConfig.prologue.presentation.imageScale': 12,
+    'gameConfig.prologue.scenes.warmth.order': 1.5,
+    'gameConfig.prologue.scenes.warmth.art': 'https://untrusted.example/image.webp',
+    'gameConfig.prologue.presentation.textPosition': 'bottom-middle',
+  };
+  for (const [key, value] of Object.entries(bad)) {
+    assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({[key]: value}), contentBundle), new RegExp('Nothing was imported'), key);
+  }
+  // A stored value that somehow survives is still not read into the config.
+  assert.equal(prologueConfig({'gameConfig.prologue.presentation.layout': 'diagonal'}).presentation.layout, 'caption');
+  assert.equal(prologueConfig({'gameConfig.prologue.scenes.warmth.order': 1.5}).scenes[0].order, 1);
+});
+
+test('every frame and text position the settings offer is a frame the stylesheet draws', () => {
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  for (const id of Object.keys(PROLOGUE_LAYOUTS)) {
+    if (id === 'caption') continue;  // the shipped frame is the base rule set
+    assert.ok(css.includes(`.prologue-layout-${id}`), `${id} has no stylesheet`);
+  }
+  for (const position of PROLOGUE_TEXT_POSITIONS) {
+    const [band, side] = position.split('-');
+    assert.ok(css.includes(`[data-position^=${band}]`) || band === 'bottom', `${band} band is not placed`);
+    assert.ok(css.includes(`[data-position$=${side}]`) || side === 'center', `${side} side is not placed`);
+  }
+  // The properties the screen writes are the properties the stylesheet reads.
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  for (const property of ['--prologue-text-scale','--prologue-text-align','--prologue-box','--prologue-outline-color','--prologue-outline-width','--prologue-fit','--prologue-focus','--prologue-scale']) {
+    assert.ok(screen.includes(`'${property}'`), `${property} is never set`);
+    assert.ok(css.includes(`var(${property}`), `${property} is never read`);
+  }
 });

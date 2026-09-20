@@ -19,6 +19,43 @@ export const PROLOGUE_CUT_SCENE_ID = 'road';
 export const PROLOGUE_CUT_SCENE_HEIR = 'step';
 
 /**
+ * THE PAINTINGS A SCENE MAY DRAW ON, which is not the same list as the scenes.
+ *
+ * Art used to be the scene's own id and nothing else, so "play the road
+ * painting under the last line" was impossible and `road`'s artwork — still
+ * shipped in both asset trees — was unreachable after the scene was cut. A
+ * scene now NAMES its background, defaulting to its own id, so the order of
+ * scenes and the order of paintings are two separate decisions.
+ */
+export const PROLOGUE_ART_IDS = ['warmth', 'year', 'carry', 'night', 'step', 'road'];
+const PROLOGUE_ART_LABELS = {
+  warmth: 'Remembered warmth', year: 'The Burning', carry: 'What the fire left (per class)',
+  night: 'Last night', step: 'The first step', road: 'The long road',
+};
+
+/** Which frame the scene is presented in. `caption` is the shipped one. */
+export const PROLOGUE_LAYOUTS = {
+  caption: 'Caption below the art',
+  overlay: 'Text over the art',
+  letterbox: 'Letterboxed art, text below',
+  panelLeft: 'Text panel left, art right',
+  panelRight: 'Art left, text panel right',
+};
+
+/** Where the text sits when the layout lets it float (overlay layouts). */
+export const PROLOGUE_TEXT_POSITIONS = [
+  'top-left', 'top-center', 'top-right',
+  'middle-left', 'middle-center', 'middle-right',
+  'bottom-left', 'bottom-center', 'bottom-right',
+];
+
+/** Colours offered as swatches beside the wheel on every opening colour row. */
+export const PROLOGUE_SWATCHES = Object.freeze([
+  '#100e0c', '#1c1713', '#000000', '#eee6d5', '#ffffff',
+  '#c9a227', '#c1453a', '#7fa8c9', '#8bae54', '#a06cc8', '#c9502e',
+]);
+
+/**
  * migratePrologueSettingKey(key) → the current name of a stored opening key.
  *
  * `gameConfig.prologue.scenes.<n>.<field>` is a version-1 key: `<n>` indexes the
@@ -84,6 +121,7 @@ export function prologueRows() {
     note: 'Saved with your configuration. Applies to previews and new openings.', ...options,
   });
   const number = (min, max, step = .1) => ({ type: 'number', min, max, step, integer: false });
+  const whole = (min, max) => ({ type: 'number', min, max, step: 1, integer: true });
   const choice = (choices, choiceLabels) => ({ type: 'choice', choices, choiceLabels, dropdown: true });
   const text = (maxLength = 1000) => ({ type: 'textarea', maxLength });
   add(['presentation', 'playback'], 'Show opening', 'Playback', choice(['every','once','off'], {every:'Every new game',once:'First time per profile',off:'Off'}));
@@ -95,9 +133,29 @@ export function prologueRows() {
   add(['presentation', 'customTint'], 'Custom artwork colour', 'Motif', {type:'color'});
   add(['presentation', 'wash'], 'Colour wash strength', 'Motif', number(0,.4,.01));
   add(['presentation', 'shadowStrength'], 'Character shadow strength', 'Motif', number(0,1,.05));
+  add(['presentation', 'layout'], 'Scene wireframe', 'Stage', {...choice(Object.keys(PROLOGUE_LAYOUTS),PROLOGUE_LAYOUTS),note:'Which frame presents a scene: the caption under the art, text floating over it, a letterboxed plate, or a side panel.'});
+  add(['presentation', 'imageScale'], 'Artwork scale', 'Stage', {...number(.5,3,.05),note:'Zooms the painting inside its frame. 1 fills the frame as shipped; larger crops in.'});
+  add(['presentation', 'imageFit'], 'Artwork fit', 'Stage', choice(['cover','contain','fill'], {cover:'Fill the frame (crop)',contain:'Fit the whole painting',fill:'Stretch to the frame'}));
+  add(['presentation', 'imageFocusX'], 'Artwork focus — horizontal (%)', 'Stage', {...whole(0,100),note:'Which part of the painting stays in frame when it is cropped. 50 is the centre.'});
+  add(['presentation', 'imageFocusY'], 'Artwork focus — vertical (%)', 'Stage', {...whole(0,100),note:'0 keeps the top of the painting, 100 the bottom.'});
+  add(['presentation', 'bannerPosition'], 'Banner position', 'Stage', choice(['top','bottom'], {top:'Across the top',bottom:'Across the bottom'}));
+  add(['presentation', 'textPosition'], 'Text position', 'Text', {...choice(PROLOGUE_TEXT_POSITIONS,Object.fromEntries(PROLOGUE_TEXT_POSITIONS.map(id=>[id,id.split('-').map((word,index)=>index?word:word[0].toUpperCase()+word.slice(1)).join(' ')]))),note:'Where the words sit. Floating positions need a wireframe that puts text over the art.'});
+  add(['presentation', 'textAlign'], 'Text alignment', 'Text', choice(['left','center','right'], {left:'Left',center:'Centred',right:'Right'}));
+  add(['presentation', 'textScale'], 'Text size', 'Text', {...number(.6,2,.05),note:'Multiplies every line in the caption, title and speaker together.'});
+  add(['presentation', 'textBox'], 'Text sits in a container', 'Text', {note:'Off lets the words lie directly on the artwork.'});
+  add(['presentation', 'textBoxVisible'], 'Container is visible', 'Text', {note:'Off keeps the container’s spacing but draws nothing behind the words.'});
+  add(['presentation', 'textBoxOpacity'], 'Container opacity', 'Text', number(0,1,.01));
+  add(['presentation', 'textBoxColor'], 'Container colour', 'Text', {type:'colorSwatch',swatches:PROLOGUE_SWATCHES});
+  add(['presentation', 'textOutline'], 'Outline the text', 'Text', {note:'Draws a contrasting edge around every letter so words stay legible over bright artwork.'});
+  add(['presentation', 'textOutlineColor'], 'Outline colour', 'Text', {type:'colorSwatch',swatches:PROLOGUE_SWATCHES});
+  add(['presentation', 'textOutlineWidth'], 'Outline thickness (px)', 'Text', number(0,8,.5));
   for (const [index, scene] of PROLOGUE_DEFAULTS.scenes.entries()) {
     const path = ['scenes', String(index)];
     add([...path,'name'], 'Scene title', scene.name, text(160));
+    add([...path,'enabled'], 'Play this scene', scene.name, {note:'Off shortens the opening by one scene. The opening always keeps at least one.'});
+    add([...path,'order'], 'Position in the opening', scene.name, {...whole(1,PROLOGUE_DEFAULTS.scenes.length),note:'Scenes play in this order, lowest first. Ties keep their authored order.'});
+    add([...path,'art'], 'Scene artwork', scene.name, {...choice(PROLOGUE_ART_IDS,PROLOGUE_ART_LABELS),note:'Which painting plays under this scene. Any scene may borrow another scene’s art.'});
+    add([...path,'banner'], 'Show a title banner', scene.name, {note:'Draws the scene title as a banner across the artwork.'});
     add([...path,'speaker'], 'Speaker', scene.name, {...text(160),note:'Use {name} for the player or {class} for their class.'});
     add([...path,'text'], 'Dialogue', scene.name, {...text(5000),note:'Editable narration; line breaks are preserved. {classLine} uses the selected class’s line.'});
     add([...path,'seconds'], 'Scene duration (seconds)', scene.name, {...number(1,180),note:'Total scene time, including its transition. Default: 5 seconds. The final scene waits for Set forth.'});
@@ -114,6 +172,13 @@ export function prologueRows() {
   // scene that followed it rather than refusing the entire file.
   add(['presentation','previewScene'], 'Preview starting scene', 'Preview', {...choice(PROLOGUE_DEFAULTS.scenes.map(s=>s.id),Object.fromEntries(PROLOGUE_DEFAULTS.scenes.map(s=>[s.id,s.name]))), legacyChoices:{[PROLOGUE_CUT_SCENE_ID]:PROLOGUE_CUT_SCENE_HEIR}});
   rows.push({cat:'Advanced',advancedGroup:'Opening',prologueTopic:'Preview',type:'button',key:'prologuePreview',label:'Preview opening',btn:'Play preview',note:'Uses these settings without creating a run or marking the opening seen.'});
+  // THE SCENE FILE IS A VIEW OF THE SAME KEYS, NOT A SECOND STORE. Export
+  // writes the opening exactly as the art studio's preset is shaped, and the
+  // ordinary configuration import already accepts that shape — so an opening
+  // travels on its own, and travels inside a whole-game export as well,
+  // without either file learning a format the other does not read.
+  rows.push({cat:'Advanced',advancedGroup:'Opening',prologueTopic:'Scene file',type:'button',key:'prologueSceneExport',label:'Export scene configuration',btn:'Export JSON',note:'Writes every opening setting — order, artwork, wireframe, text — to one file. These settings also travel inside the whole game configuration export.'});
+  rows.push({cat:'Advanced',advancedGroup:'Opening',prologueTopic:'Scene file',type:'button',key:'prologueSceneImport',label:'Load scene configuration',btn:'Load JSON',note:'Reads a scene file, or an art-studio preset. Nothing is applied unless the whole file is valid.'});
   return rows;
 }
 
@@ -126,13 +191,51 @@ export function prologueConfig(settings = {}) {
     const value = settings[row.key] ?? (legacy === null ? undefined : settings[legacy]);
     if (value === undefined || !row.prologuePath) continue;
     const valid = row.type === 'choice' ? row.choices.includes(value)
-      : row.type === 'color' ? typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
+      : ['color', 'colorSwatch'].includes(row.type) ? typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
       : row.type === 'textarea' ? typeof value === 'string' && value.length <= row.maxLength
-      : row.type === 'number' ? typeof value === 'number' && Number.isFinite(value) && value >= row.min && value <= row.max
+      : row.type === 'number' ? typeof value === 'number' && Number.isFinite(value) && value >= row.min && value <= row.max && (!row.integer || Number.isInteger(value))
       : typeof value === 'boolean';
     if (valid) put(config,row.prologuePath,value);
   }
   return config;
+}
+
+/**
+ * prologueSequence(config) → the scene indices to play, in playing order.
+ *
+ * The indices are into `config.scenes`, which stays in AUTHORED order forever:
+ * a saved run records where it stopped as one of these numbers, and a reorder
+ * must not move a paused run to a different scene. Order and inclusion are
+ * settings laid over that fixed list, so the opening can be resequenced and
+ * shortened while `run.prologue.scene` keeps meaning what it meant.
+ *
+ * AN OPENING IS NEVER EMPTY. Switching every scene off would otherwise give a
+ * sequence with no scene to show and no button to leave it with, so the
+ * authored order stands in.
+ */
+export function prologueSequence(config) {
+  const all = config.scenes.map((scene, index) => ({ scene, index }));
+  const kept = all.filter(({ scene }) => scene.enabled !== false);
+  return (kept.length ? kept : all)
+    .map((entry) => ({ ...entry, at: Number.isFinite(entry.scene.order) ? entry.scene.order : entry.index + 1 }))
+    .sort((a, b) => a.at - b.at || a.index - b.index)
+    .map((entry) => entry.index);
+}
+
+/** The painting a scene draws on: its own by default, any shipped one by setting. */
+export function prologueSceneArt(scene) {
+  return PROLOGUE_ART_IDS.includes(scene?.art) ? scene.art : scene?.id;
+}
+
+/**
+ * prologueScenePreset(settings) → the opening alone, as a file.
+ *
+ * Deliberately the SAME shape the art studio already exports and
+ * `prologuePresetOverrides` already reads, so one importer serves both and a
+ * scene file dropped into Load game configuration works without a second path.
+ */
+export function prologueScenePreset(settings = {}) {
+  return `${JSON.stringify(prologueConfig(settings), null, 2)}\n`;
 }
 
 /** Bridge the original art-studio exports into ordinary game settings. */
