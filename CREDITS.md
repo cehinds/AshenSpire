@@ -8,6 +8,8 @@ Original artwork generated for AshenSpire with OpenAI's built-in image generatio
 
 Twelve new desktop/portrait paintings generated with OpenAI's built-in Image Generation tool: the inward Burning, forest departure, and four class memories. Compressed WebPs are in `assets/prologue/`; exact prompts and source image names are in `art/prologue-2026-09-19/revision-prompts.json`. PNG masters remain in the owner's local `masters-burning-v2/` folder. The original opening relief is unchanged. No third-party artwork or license is claimed.
 
+The final Herald memory revision depicts the hooded, veiled novice burning from within while collapsing against the monumental summit hearth and tending the Sovereign Ember. Desktop and mobile masters, exact prompts, export settings, checksums and provenance are retained in `art/prologue-herald-summit/`. Generated with OpenAI's built-in Image Generation tool; no third-party artwork or license is claimed.
+
 ## Opening sequence art (2026-09-19)
 
 Twelve original desktop/portrait paintings and four transparent class
