@@ -140,6 +140,12 @@ function runTool(root, tool, args, timeoutMs, env) {
  *   prep    — [[cmd, ...argv]] run in the copy AFTER the edits and BEFORE the
  *             tool; each must exit 0 or the plant is a hard red.
  *   expectRed — RegExp the failing run's output must match
+ *   args    — argv for THIS plant's run, replacing the shared `args`. For a
+ *             defect that only exists at one shape: the creation menu's zoom
+ *             arithmetic renders correctly at --ui-zoom 1.00 and wrongly
+ *             either side of it, so a plant of it run only at a 1.00 shape is
+ *             a false NOT-CAUGHT. A plant that names its own argv gets its own
+ *             clean baseline at the same argv, below.
  * args: extra argv for every tool run (e.g. ['--only', '390x844'])
  * realRoot: the checkout to copy. Defaults to this repo and no tool passes it —
  *   it exists so `doorplant.mjs --selftest` can run this harness whole against a
@@ -241,7 +247,7 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
         failed++;
         continue;
       }
-      const r = runTool(root, tool, args, timeoutMs, env);
+      const r = runTool(root, tool, p.args || args, timeoutMs, env);
       restore();
       // A prep stage WRITES into the copy (content-build regenerates modules),
       // so restoring the edited sources is not enough — re-run it clean so the
@@ -283,12 +289,21 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
         console.error(`    tail: ${r.out.trim().split('\n').slice(-6).join('\n    ')}`);
       }
     }
-    const clean = runTool(root, tool, args, timeoutMs, env);
-    if (clean.code === 0) console.log(`  CLEAN  unplanted copy runs green (exit 0) — the reds above were the plants, not the harness.`);
-    else {
-      failed++;
-      console.error(`  RED  clean copy exited ${clean.code} — the baseline is not green, so no plant above proves anything.`);
-      console.error(`    tail: ${clean.out.trim().split('\n').slice(-8).join('\n    ')}`);
+    // ONE CLEAN RUN PER ARGV A PLANT ACTUALLY USED. A plant that names its own
+    // `args` is a plant whose defect only exists at that shape, and the
+    // baseline that proves its red was the plant has to be the run it was
+    // compared against — a green at some OTHER shape says nothing about it.
+    const argvs = [...new Set([JSON.stringify(args), ...plants.map((p) => JSON.stringify(p.args || args))])];
+    for (const argv of argvs) {
+      const at = JSON.parse(argv);
+      const label = at.length ? at.join(' ') : '(no argv)';
+      const clean = runTool(root, tool, at, timeoutMs, env);
+      if (clean.code === 0) console.log(`  CLEAN  unplanted copy runs green (exit 0) at ${label} — the reds above were the plants, not the harness.`);
+      else {
+        failed++;
+        console.error(`  RED  clean copy exited ${clean.code} at ${label} — the baseline is not green, so no plant compared against it proves anything.`);
+        console.error(`    tail: ${clean.out.trim().split('\n').slice(-8).join('\n    ')}`);
+      }
     }
   } finally {
     rmSync(root, { recursive: true, force: true });

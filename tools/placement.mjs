@@ -48,6 +48,30 @@
 //                 and 66.5%, the Inspect row's right 39% under the DRAW pile so
 //                 a tap there opened the draw modal. THE COUNT IS ZERO, NOT A
 //                 BUDGET: it is a count of touched controls, not a threshold.
+//   P6 ON SCREEN  character creation's header menu opens under its ☰, right-
+//                 aligned to it, AND INSIDE THE VIEWPORT — the claim none of
+//                 P1-P5 makes, and the one the shipped defect broke. The menu
+//                 open-coded its own placement and read the zoom off
+//                 `document.documentElement`, which is the ONE element
+//                 `body { zoom: var(--ui-zoom) }` does not touch, so it
+//                 answered 1.00 at every UI size and visual px went straight
+//                 into a local-px `style.left`. Measured before the fix,
+//                 through this same door, in this file's local px: at
+//                 1920x1080 (--ui-zoom 1.48) the menu's box was
+//                 (1580.8,72.7)-(1800.8,304.7) in a 1297.3x729.7 room — its
+//                 LEFT edge alone 283 px past the right one, so none of it was
+//                 on the glass; at 390x844 (0.90) it was 37 px off its
+//                 button's right edge and still on screen. The popover was
+//                 OPEN the whole time and every category in it hit-testable. A
+//                 menu drawn where nobody can see it reads to a player as a
+//                 button that does nothing, which is how it was reported —
+//                 which is also why NEITHER of the two placement claims the
+//                 other intents make is enough on its own here.
+//                 NOTE THE SHAPE DEPENDENCE: at exactly
+//                 --ui-zoom 1.00 the old arithmetic is CORRECT, so 1200x730
+//                 (which is 1.00) is blind to this whole class — see SHAPES
+//                 below for why 1920x1080 joined it, and the corpus plant for
+//                 the measurement at each of the three.
 //
 // THE DOOR, AND IT IS NARROWER THAN THIS HEADER CLAIMED UNTIL 2026-08-17. Every
 // number is read off a real boot: served over http, loaded in headless Chromium,
@@ -277,6 +301,37 @@ if (process.argv.includes('--selftest')) {
         expectRed: /P5 /,
       },
       {
+        // THE SHIPPED DEFECT, PUT BACK BYTE-FOR-BYTE: the creation menu takes
+        // its placement arithmetic back, zoom read off <html> and all. This is
+        // the only plant in the corpus that names its own shape, and it has to:
+        // the old arithmetic is CORRECT at --ui-zoom 1.00, which is what the
+        // corpus's shared 1200x730 resolves to, so run there it is a false
+        // NOT-CAUGHT. Measured through this door at each shape: 1200x730 (1.00)
+        // green, 390x844 (0.90) red on align:'end' only — 37 local px off, still
+        // on the screen — and 1920x1080 (1.48) red on ON SCREEN, the menu at
+        // (1580.8,72.7)-(1800.8,304.7) in a 1297.3-wide room. The plant names
+        // the shape that reproduces the REPORTED symptom, so the red it is
+        // graded on is the invisibility and not a near miss.
+        name: 'the creation menu takes its placement back — and reads the zoom off <html>, which never carries it',
+        args: ['--only', '1920x1080'],
+        file: 'src/ui/screens/customize.js',
+        // Written as joined lines rather than a template literal: the
+        // replacement is itself template-literal code, backticks and all.
+        find: [
+          '      const view = viewportLocalBox();',
+          "      const at = placeAnchored(headTools, menu, { intent: 'under', align: 'end', view });",
+        ].join('\n'),
+        replace: [
+          '      const rect = menu.getBoundingClientRect(); /* planted: the second copy, back */',
+          '      const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;',
+          '      headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;',
+          '      headTools.style.top = `${(rect.bottom + 8) / zoom}px`;',
+          '      const view = viewportLocalBox();',
+          '      const at = { top: headTools.getBoundingClientRect().top };',
+        ].join('\n'),
+        expectRed: /P6 .*OFF THE SCREEN/,
+      },
+      {
         // The gap loses its home on THIS surface. A second site for the P1
         // assertion. Target the unique selector and force the computed value to
         // zero so the plant is line-ending independent and cannot accidentally
@@ -303,7 +358,16 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 if (!browserPath) { console.error('placement: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const SHAPES = [{ w: 390, h: 844, d: 3, mobile: true }, { w: 1200, h: 730, d: 1, mobile: false }];
+// 1920x1080 IS HERE BECAUSE --ui-zoom 1.00 HIDES A WHOLE CLASS OF DEFECT, and
+// this file had no shape that was not ~1.00. fx.js already records what that
+// costs: "At 1920x1080 the tooltip rendered at top 1406 in a 1080px viewport.
+// Card tooltips did not exist for a player on the commonest desktop
+// resolution." The creation menu shipped the same defect at the same shape
+// (--ui-zoom 1.48, popover at x=2339 in a 1920-wide room) and neither of the
+// two shapes below could see it: 390x844 resolves 0.90, where the same
+// arithmetic is merely 37 local px off, and 1200x730 resolves exactly 1.00,
+// where it is CORRECT. A conversion bug is invisible at the identity.
+const SHAPES = [{ w: 390, h: 844, d: 3, mobile: true }, { w: 1200, h: 730, d: 1, mobile: false }, { w: 1920, h: 1080, d: 1, mobile: false }];
 const GAP_TOL = 0.5; // local px — float noise, not a verdict threshold (see header)
 
 // THE PROPERTY NAME HAS ONE HOME TOO, AND IT IS NOT THIS FILE. fx.js exports
@@ -627,6 +691,45 @@ async function main() {
         else bad('P4', shape, `align: 'end' did not hold — panel right ${r.p.right.toFixed(1)} vs button right ${r.a.right.toFixed(1)} local px, and the panel is not against the bound`);
       }
     }
+    // ---- the creation header menu, and whether it is ON THE SCREEN ---------
+    // The one surface in this file whose defect was INVISIBILITY rather than a
+    // bad neighbour: it opened, correctly sized, past the edge of the viewport.
+    // So this block asserts the two placement claims the other intents assert
+    // AND a third that only makes sense once a placed surface can leave the
+    // screen entirely — that its box is inside the room it was bound to.
+    await cdp.send('Page.navigate', { url: `${base}?shot=customize` }, S);
+    await until(`!!document.querySelector('.screen.customize .cz-menu-button')`, 'creation');
+    await wait(600);
+    await ev(`document.querySelector('.cz-menu-button').click(); true`);
+    const czOpen = await ev(`!!document.querySelector('.cz-header-menu:popover-open')`).catch(() => false)
+      || await until(`!!document.querySelector('.cz-header-menu:popover-open')`, 'creation menu', 4000).then(() => true).catch(() => false);
+    if (!czOpen) bad('P6', shape, 'clicking ☰ in the creation header opened no menu — nothing measured');
+    else {
+      await wait(250);
+      const cz = await ev(READ('.cz-menu-button', '.cz-header-menu'));
+      gapChecks(shape, 'creation menu vs ☰', cz);
+      if (!cz.missing) {
+        const room = await ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+          return { z, w: innerWidth/z, h: innerHeight/z }; })()`);
+        // THE CLAIM THE DEFECT BROKE. Half a pixel of slack on each edge is the
+        // same float-noise allowance P2 uses, not a budget: a menu 17 px off the
+        // edge and a menu 745 px off it are the same defect.
+        const inside = cz.p.left >= -0.5 && cz.p.top >= -0.5
+          && cz.p.right <= room.w + 0.5 && cz.p.bottom <= room.h + 0.5;
+        if (inside) ok('P6', shape, `the menu is ON THE SCREEN at --ui-zoom ${room.z} — (${cz.p.left.toFixed(1)},${cz.p.top.toFixed(1)})-(${cz.p.right.toFixed(1)},${cz.p.bottom.toFixed(1)}) inside ${room.w.toFixed(1)}x${room.h.toFixed(1)} local px`);
+        else bad('P6', shape, `the menu is OFF THE SCREEN at --ui-zoom ${room.z} — (${cz.p.left.toFixed(1)},${cz.p.top.toFixed(1)})-(${cz.p.right.toFixed(1)},${cz.p.bottom.toFixed(1)}) against a ${room.w.toFixed(1)}x${room.h.toFixed(1)} local px room. It is open and sized; a player cannot see it, which reads as a ☰ that does nothing`);
+        if (cz.p.top >= cz.a.bottom - 0.5) ok('P6', shape, `the menu opens UNDER ☰ (menu top ${cz.p.top.toFixed(1)} ≥ button bottom ${cz.a.bottom.toFixed(1)} local px)`);
+        else bad('P6', shape, `the menu is NOT under ☰ — menu top ${cz.p.top.toFixed(1)} against button bottom ${cz.a.bottom.toFixed(1)} local px. 'under' is the intent this call site names`);
+        // Same waiver as P4, for the same reason and stated the same way: the
+        // bound outranks `align: 'end'`, and an assertion that excuses itself
+        // silently is the thing this house calls green-that-was-not-clearance.
+        if (Math.abs(cz.p.right - cz.a.right) <= 0.5) ok('P6', shape, `right-aligned to ☰ (${cz.p.right.toFixed(1)} = ${cz.a.right.toFixed(1)} local px)`);
+        else if (cz.p.left <= 4.5) ok('P6', shape, `right-alignment WAIVED — the bound moved it (menu left ${cz.p.left.toFixed(1)} is on the screen margin)`);
+        else bad('P6', shape, `align: 'end' did not hold — menu right ${cz.p.right.toFixed(1)} vs button right ${cz.a.right.toFixed(1)} local px, and the menu is not against the bound`);
+      }
+      await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`);
+    }
+
     await cdp.send('Target.closeTarget', { targetId });
   }
 

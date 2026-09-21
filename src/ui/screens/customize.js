@@ -63,6 +63,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
@@ -266,14 +267,31 @@ export function mountCustomize(app, {
       navigation.append(item);
     }
     headTools.prepend(navigation);
+    // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
+    // This used to be its own arithmetic, and it read the zoom off the WRONG
+    // ELEMENT: `getComputedStyle(document.documentElement).zoom`. The app is
+    // zoomed by `body { zoom: var(--ui-zoom) }` (styles/base.css), and <html>
+    // "is the one element the zoom does not touch" — so that read answered 1 at
+    // every UI size and the visual px of `getBoundingClientRect()` went straight
+    // into `style.left`, a LOCAL px property. The menu then landed at offset x
+    // zoom, further right the wider the screen: measured at 1920x1080
+    // (--ui-zoom 1.48) the popover opened at x=2339 — its LEFT edge 419 px past
+    // the right edge of a 1920 px viewport, none of it on the glass; at
+    // 1280x900 (1.07) it hung 17 px off. The popover was open the whole time,
+    // and every category in it was hit-testable — it was simply drawn
+    // where nobody could see it, which reads as a menu button that does nothing.
+    // `position: fixed` does not escape the zoom (EldenSpire#15); fx.js is the
+    // one home for the conversion and `intent: 'under', align: 'end'` is the
+    // same answer quicknav's ☰ gives, bound to the screen on both axes so a
+    // short window cannot push the categories off the bottom either.
     menu.addEventListener('click', () => {
       headTools.togglePopover();
-      if (headTools.matches(':popover-open')) {
-        const rect = menu.getBoundingClientRect();
-        const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
-        headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;
-        headTools.style.top = `${(rect.bottom + 8) / zoom}px`;
-      }
+      if (!headTools.matches(':popover-open')) return;
+      const view = viewportLocalBox();
+      const at = placeAnchored(headTools, menu, { intent: 'under', align: 'end', view });
+      // Taller than the room it has: scroll inside itself rather than pin the
+      // last category off the bottom edge.
+      headTools.style.maxHeight = `${Math.max(0, view.height - at.top - 8)}px`;
     });
     headTools.addEventListener('toggle', () => menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open'))));
     close.querySelector('.modal-close-face').textContent = '\u00d7';
