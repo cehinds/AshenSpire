@@ -38,8 +38,14 @@ import { t } from '../strings.js';
 import {
   categoryNavPlan, categoryNavKey, categoryNavLanding, categoryNavAfterPick, categoryNavFace,
 } from '../models/CategoryNavModel.js';
+import { resolveCategoryNavMode } from '../models/WireframeChoiceModel.js';
+import { activeWireframeChoice } from '../wireframeChoices.js';
 
 const OPEN = new Set();
+// Every attached navigation, so a Menus choice (Settings → Advanced →
+// Wireframes) reaches the menus already on the page instead of only the next
+// one opened. Membership ends at `release()`, the same lifetime as the host.
+const LIVE = new Set();
 let serial = 0;
 
 function onEscape(event) {
@@ -91,6 +97,27 @@ const node = (tag, attrs = {}, children = []) => {
  * `attach(host)` puts the selector before the rail inside the `.as-railed`
  * host and starts measuring it; kit `railed(nav, pane)` does that for you.
  */
+/**
+ * replanCategoryNavs() → how many attached navigations re-asked the question.
+ *
+ * Called when a Menus wireframe choice changes. A navigation whose host has
+ * left the document releases itself here rather than being re-measured — the
+ * same sweep `onEscape` runs, and the same contract: a host that is detached
+ * and put back must be `attach`ed again, which is what every door that keeps a
+ * nav already does. The rest re-run `plan()`, which is the call their
+ * ResizeObserver makes, so nothing can happen here that a window resize could
+ * not already do.
+ */
+export function replanCategoryNavs() {
+  let replanned = 0;
+  for (const nav of [...LIVE]) {
+    if (!nav.connected()) { nav.release(); continue; }
+    nav.plan();
+    replanned += 1;
+  }
+  return replanned;
+}
+
 export function categoryNav({
   items = [], ariaLabel = '', rail = null, railAttrs = {}, choose = null, label = null, face = null,
   onChange = null, toggleClass = '', toggleId = '', config,
@@ -164,7 +191,15 @@ export function categoryNav({
       categoryCount: items.length,
       current: mode,
     }, config);
-    if (result.measured && result.mode !== mode) apply(result.mode);
+    // The model answers what FITS; the player answers what they want to look
+    // at, and their answer wins — including the case the model never returns,
+    // a rail on a host it has to squeeze into. `auto` leaves the measured
+    // answer exactly as it was, and an unmeasured host then keeps its mode
+    // (the plan hands `current` back). A CHOSEN mode does not wait for a box,
+    // because nothing about it needs measuring: the `result.measured ||` arm is
+    // only reached when the choice disagrees with the mode on screen.
+    const wanted = resolveCategoryNavMode(result.mode, activeWireframeChoice('wireframeMenuNav', root));
+    if ((result.measured || wanted !== result.mode) && wanted !== mode) apply(wanted);
     return mode;
   };
 
@@ -174,6 +209,7 @@ export function categoryNav({
     sizeObserver = null;
     selectionObserver = null;
     OPEN.delete(api);
+    LIVE.delete(api);
   };
 
   toggle.addEventListener('click', () => setOpen(!open, true));
@@ -207,6 +243,7 @@ export function categoryNav({
 
   const attach = (hostNode) => {
     host = hostNode;
+    LIVE.add(api);
     if (list.parentElement !== host) host.prepend(list);
     host.insertBefore(toggle, list);
     host.dataset.catNav = mode;

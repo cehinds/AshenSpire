@@ -447,11 +447,17 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   overflow: hidden;
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.69), inset 0 1px 0 rgba(var(--accent-rgb), 0.09);
 }
-/* FOUR WIDTHS, a body picks the smallest that holds it. */
-.modal[data-size='sm'], .as-modal[data-size="sm"] { width: 43rem; max-width: 100%; }
-.modal[data-size='md'], .as-modal[data-size="md"] { width: 57rem; max-width: 100%; }
-.modal[data-size='lg'], .as-modal[data-size="lg"] { width: 76rem; max-width: 100%; height: 86%; }
-.modal[data-size='xl'], .as-modal[data-size="xl"] { width: 96rem; max-width: 100%; height: 88%; }
+/* FOUR WIDTHS, a body picks the smallest that holds it — and the rung it lands
+   on is also PUBLISHED as `--modal-rung-width`, because a door that computes
+   its own width from the rung (the Settings window, which takes the smaller of
+   the rung and the player's own window width) must not re-type the number.
+   `data-size` is the rung in force: the body's own, moved by the Modals width
+   choice. A rule that belongs to ONE DOOR rather than to a rung keys off
+   `data-authored-size`, which is what that door asked for and never moves. */
+.modal[data-size='sm'], .as-modal[data-size="sm"] { --modal-rung-width: 43rem; width: var(--modal-rung-width); max-width: 100%; }
+.modal[data-size='md'], .as-modal[data-size="md"] { --modal-rung-width: 57rem; width: var(--modal-rung-width); max-width: 100%; }
+.modal[data-size='lg'], .as-modal[data-size="lg"] { --modal-rung-width: 76rem; width: var(--modal-rung-width); max-width: 100%; height: 86%; }
+.modal[data-size='xl'], .as-modal[data-size="xl"] { --modal-rung-width: 96rem; width: var(--modal-rung-width); max-width: 100%; height: 88%; }
 /* A FIXED BOX AT THE RAILED RUNGS (Constantine, 2026-09-03: "modals should be
    fixed size"): the height is the veil's share, so switching from a four-row
    pane to a nine-row pane changes what scrolls, never the door. sm and md
@@ -4034,7 +4040,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-heading { font-size:12px; letter-spacing:.03em; }
 .epc-flavor { font-size:14px; line-height:1.1; padding-top:0; }
 .epc-footer { font-size:13px; letter-spacing:0; }
-.card-inspection-modal.modal[data-size='lg'] { height:auto; }
+/* The inspection door's own height, so it keeps it at whatever rung the
+   Modals width choice puts the door on (it asks for lg). */
+.card-inspection-modal.modal[data-authored-size='lg'] { height:auto; }
 .equipment-poker-card, .card.playing-poker-card, .shop-inspect-card { -webkit-user-select:none; user-select:none; }
 .card-inspection-details { font-size:max(16px, calc(16px / var(--ui-zoom, 1))); }
 .epc-effects { position:relative; }

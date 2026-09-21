@@ -187,7 +187,14 @@ export function wireBattlefieldStage(field, model) {
   // element's unzoomed content box. Refit after responsive UI settings settle.
   const layoutObserver = new MutationObserver(schedule);
   layoutObserver.observe(document.documentElement, {
-    attributes: true, attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-formation-settings'],
+    // The two scene words are named here rather than left to ride on
+    // `data-formation-settings` (which applyDisplaySettings also rewrites on
+    // every pass): a fight on screen must refit because the player answered
+    // the Scenes choice, not because another attribute happened to change in
+    // the same breath.
+    attributes: true,
+    attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-formation-settings',
+      'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
   const detachObserver = new MutationObserver(() => {

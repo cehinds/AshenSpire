@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1235",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Settings now lets you choose the wireframe modal windows, menus and scenes draw",
+    "detail": "Several of the layouts the game is drawn from leave a decision open, and until now the game answered each one for you. Settings → Advanced → Wireframes hands those answers back, in three groups with a drop down each: Modals sets how wide a window opens (one step narrower or wider than it asks for) and how far the buttons along its bottom run; Menus sets whether a categorized menu draws its categories as a rail down the left or as one selector above the pane, instead of choosing by how much room there is, and how much of the screen a workspace takes; Scenes sets whether a fight or a conversation paints its backdrop at all, and whether that painting is cropped so its ground line meets the floor band or simply centred — a fight or conversation on screen changes with it too. Every one of them starts on As designed, which is the game exactly as it was, and changing a window or menu answer redraws the windows already open — including the Settings window you changed it in. Where the fighters stand is set by the formation and does not move either way.",
+    "build": "0.7.1.356",
+    "pullRequest": 1235,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1235"
+  },
+  {
     "id": "pr-1237",
     "date": "2026-09-21",
     "group": "2026-09-21",

@@ -2,7 +2,7 @@
 // choices. The action is not committed until the primary button is pressed.
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { modalHead, modalFooter, el, prose } from '../kit/index.js';
+import { modalHead, modalFooter, el, prose, stampModalSize } from '../kit/index.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -80,7 +80,7 @@ export function openConfirmationModal({
   // "Confirm" / "Careful" category word standing over the real question.
   const dialog = document.createElement('section');
   dialog.className = `modal confirmation-modal${tone === 'danger' ? ' danger' : ''}`;
-  dialog.dataset.size = 'sm';
+  stampModalSize(dialog, 'sm');
   dialog.setAttribute('role', tone === 'danger' ? 'alertdialog' : 'dialog');
   dialog.setAttribute('aria-modal', 'true');
   dialog.setAttribute('aria-labelledby', 'confirmation-modal-title');

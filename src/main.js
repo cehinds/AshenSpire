@@ -3,6 +3,10 @@ import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, d
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
+import { applyWireframeChoices } from './ui/wireframeChoices.js';
+import { restampModalWireframes } from './ui/components/modalShell.js';
+import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
+import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -820,6 +824,24 @@ function applyDisplaySettings(settings) {
     lastMusicFolder = folder;
     audio.configureMusic({ folder });
   }
+  // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
+  // choice on the root, read by the modal shell, the kit's category navigation,
+  // the W1 workspace frame and the scene fitter — the same shape as cardMotif
+  // above. Then the three surfaces that can be ON SCREEN while the answer
+  // changes are re-resolved in place: Settings is itself a W1 door, and an
+  // answer a player cannot see land is an answer they cannot judge. Everything
+  // else takes its word the next time it draws.
+  //
+  // AFTER applyUiScale AND applyTapSize, and that order is load-bearing: the
+  // category navigation re-measures against `--ui-zoom` and the rail item's
+  // tap floor, so re-planning before those two are written would judge this
+  // pass against the last pass's numbers (review, 2026-09-20). It is last in
+  // this function for a second reason: nothing below it can be skipped by a
+  // throw from a door that is already on screen.
+  applyWireframeChoices(settings);
+  restampModalWireframes(document);
+  restampWorkspaceFrames(document);
+  replanCategoryNavs();
 }
 applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
