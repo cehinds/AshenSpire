@@ -40,6 +40,18 @@ export const combatRatingDefaults = {
 const prefix = 'gameConfig.combatRatings.';
 const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
 
+/**
+ * ratingLabel(id) → what a PLAYER calls this rating.
+ *
+ * AR, DR and PR are acronyms; Poise and Ward are words. The tab name below has
+ * always known that ("Poise formula", not "POISE formula") — the ROWS did not,
+ * so one menu carried "POISE — Base" and "Straight Sword — additional WARD"
+ * beside a tab spelling the same two the ordinary way, across some seven
+ * hundred rows. One reader now, so the tab and its rows cannot disagree
+ * (owner, 2026-09-21: "make them consistent with what I see with each other").
+ */
+const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
+
 export function ratingSourceKey(piece) {
   return piece.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : `armament:${piece.id}`;
 }
@@ -58,7 +70,7 @@ export function combatRatingRows(bundle) {
   });
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${id.toUpperCase()} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
+      `${ratingLabel(id)} — ${words(field)}`, `${ratingLabel(id)} formula`, {
         note: field === 'base' ? 'Added after the multipliers, then equipment and other bonuses.'
           : field === 'multiplier' ? 'Scales this rating’s attribute total. 1 leaves the weights as written.'
           : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
@@ -75,21 +87,21 @@ export function combatRatingRows(bundle) {
   }
   for (const status of bundle.statuses) {
     for (const id of ['poise', 'ward']) add(`statuses.${status.id}.${id}`, combatRatingDefaults.statuses[status.id]?.[id] || 0,
-      `${status.name} — ${words(id)} weight`, 'Status resistance', {
+      `${status.name} — ${ratingLabel(id)} weight`, 'Status resistance', {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${id.toUpperCase()} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     for (const id of ratingIds) add(`bonuses.${ratingSourceKey(piece)}.${id}`, 0,
-      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — additional ${id.toUpperCase()}`, piece.kind === 'armor' ? 'Armour bonuses' : 'Weapon bonuses', {
+      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — additional ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour bonuses' : 'Weapon bonuses', {
         note: 'Adds to the item’s authored ratings while equipped. Every equipped item contributes once.',
       });
   }
-  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${id.toUpperCase()}`, 'Relic bonuses');
+  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
-    for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${words(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
+    for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${ratingLabel(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });

@@ -262,3 +262,33 @@ test('armour, relic and status bonuses are additive and counted once', async () 
   applyStatus(c, c.player, 'strength', 2, c.player);
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
 });
+
+// AR, DR and PR are acronyms. Poise and Ward are words, and every surface in
+// the game spells them that way — including this file's own tab name, which
+// has always read "Poise formula". The ROWS under it read "POISE — Base",
+// "Strength — WARD per stack", "Straight Sword — additional WARD": one id,
+// two spellings, roughly seven hundred rows apart from their own heading.
+//
+// The general Advanced-label test cannot catch this — "POISE" opens with a
+// capital and carries no camelCase, so it passes either way. This is the
+// assertion that has to be specific.
+test('a rating is spelled the same on its rows as on its tab', async () => {
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const rows = combatRatingRows(contentBundle);
+
+  for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
+    const formula = rows.filter(row => row.statTopic === `${expected} formula`);
+    assert.ok(formula.length >= 3, `${expected} has a formula group of its own`);
+    assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
+    assert.ok(rows.some(row => row.key.endsWith(`.${id}`) && / — additional /.test(row.label)
+      && row.label.endsWith(expected)), `an equipment bonus row spells ${id} as "${expected}"`);
+  }
+
+  // The falsifier, stated as its own line: the two that are NOT acronyms are
+  // never shouted, anywhere in the group — labels or topics.
+  const shouted = rows.filter(row => /\b(POISE|WARD)\b/.test(`${row.label} ${row.statTopic || ''}`));
+  assert.deepEqual(shouted.map(row => row.label), [],
+    'no row shouts a rating whose name is an ordinary word');
+  // And the three that ARE acronyms are never softened into words.
+  assert.ok(!rows.some(row => /\b(Ar|Dr|Pr)\b/.test(row.label)), 'AR, DR and PR stay acronyms');
+});
