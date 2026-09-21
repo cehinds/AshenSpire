@@ -208,3 +208,51 @@ test('mobile and unsupported desktop export fall back to a local browser downloa
   assert(clicked);
   assert(revoked);
 });
+
+// EVERY GENERATED BALANCE ROW DESCRIBES ITSELF, and describes itself only
+// once. All 325 of them used to carry the same sentence — "Authored balance
+// value: <path>. Applies to a new run." — so the description under a row said
+// nothing the key above it had not (owner, 2026-09-21). These three assertions
+// are what keep that from coming back: a path model/balanceNotes.js does not
+// cover falls through to the old fallback and fails the first; a sentence
+// copied onto a second row fails the second; a family written as a list rather
+// than a rule fails one or the other the next time content adds a member.
+test('every generated balance row carries its own description', () => {
+  const generated = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
+  assert.ok(generated.length > 300, `expected the balance leaves to be generated, got ${generated.length}`);
+
+  const undescribed = generated.filter((row) => row.note.startsWith('Authored balance value:'));
+  assert.deepEqual(undescribed.map((row) => row.searchPath), [],
+    'these balance paths have no sentence in src/model/balanceNotes.js');
+
+  const byNote = new Map();
+  for (const row of generated) {
+    if (!byNote.has(row.note)) byNote.set(row.note, []);
+    byNote.get(row.note).push(row.searchPath);
+  }
+  const shared = [...byNote.values()].filter((paths) => paths.length > 1);
+  assert.deepEqual(shared, [], 'these balance rows describe themselves with the same words');
+
+  for (const row of generated) {
+    assert.ok(row.note.endsWith('Applies to a new run.'), `${row.searchPath} must still say when it takes effect`);
+    assert.ok(row.note.length > 'Applies to a new run.'.length + 20, `${row.searchPath} says nothing before the new-run clause`);
+  }
+});
+
+// A NAME IN A NOTE IS THE CONTENT'S NAME, never a copy of it. Renaming a relic
+// renames its rows; a relic added to balance.powers gets a real sentence with
+// no edit to balanceNotes.js. The same rule covers talents, classes, and the
+// rows of an authored list, which name themselves by their own id or tag.
+test('generated balance descriptions derive their names from the bundle', () => {
+  const rows = new Map(advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance).map((row) => [row.searchPath, row.note]));
+  const relic = (contentBundle.relics || []).find((entry) => entry.id === 'ivoryComb');
+  assert.ok(rows.get('powers.ivoryComb.n').startsWith(`${relic.name} —`));
+  const talent = (contentBundle.nodes || []).find((node) => node.id === 'ironFooting');
+  assert.ok(rows.get('classTree.ironFooting.block').startsWith(`${talent.label}, a tier-1 `));
+  assert.match(rows.get('classTree.ironFooting.block'), /Reaver talent/);
+  assert.match(rows.get('equipment.views.0.figure'), /the grid Armoury view/);
+  assert.match(rows.get('equipment.swapCostByCategory.0.cost'), /tagged heavy/);
+  assert.match(rows.get('flaskGrowth.0.amount'), /Golden Sprout/);
+  assert.match(rows.get('poise.onFill.0.stacks'), /Staggered/);
+});

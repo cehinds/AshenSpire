@@ -1694,9 +1694,15 @@ function categoryHtml(cat, settings, saves) {
               // the only place the row's minimum explains itself. Dropping it
               // left the floor a number from nowhere.
               compact.note = row.floorNote || '';
-            } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
+            } else if (row.generatedBalance) {
+              // The path IS the label here: a generated row's leaf name alone
+              // ("0", "common", "min") names nothing on its own.
               compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
-              compact.note = 'Applies to a new run.';
+              // THE NOTE STAYS. It used to be replaced with 'Applies to a new
+              // run.' — the same five words under all 325 of these rows —
+              // because the note underneath was the path again and worth no
+              // more. model/balanceNotes.js gives each row its own sentence
+              // now, and that sentence already ends with the new-run clause.
             }
             return settingsRowHtml(settings, compact);
           }).join('')) + '</div>').join('') + '</section>';

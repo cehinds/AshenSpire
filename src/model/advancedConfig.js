@@ -1,4 +1,5 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
+import { balanceNote } from './balanceNotes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
@@ -116,10 +117,23 @@ function balanceGroup(path) {
   return 'Rules';
 }
 
-function leafRows(value, path = [], rows = []) {
+// EVERY GENERATED ROW SAYS WHAT IT DOES. This used to read `Authored balance
+// value: <path>. Applies to a new run.` for all 325 of them — one sentence,
+// repeated, saying only what the key beside it already said (owner,
+// 2026-09-21: "the description for most of the settings say the same thing and
+// aren't very helpful descriptions"). model/balanceNotes.js owns the sentences
+// and derives every name it uses from the bundle; the old line survives only
+// as the fallback for a path no rule there covers, and a test holds that
+// fallback at zero for the shipped bundle.
+//
+// `parent` is the object or array the leaf sits in, handed down so a row
+// inside an authored list (a swap-cost category, an armoury view, a flask
+// growth row) can name itself by its own tag or id instead of by its index.
+function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
     const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -128,14 +142,18 @@ function leafRows(value, path = [], rows = []) {
       def: value,
       ...domain,
       label: word(path[path.length - 1]),
-      note: `Authored balance value: ${joined}. Applies to a new run.`,
+      // The flag, not the sentence, is what marks a generated row: the Advanced
+      // panel used to recognise one by the boilerplate it carried, which meant
+      // giving a row a real description would have quietly changed how it drew.
+      generatedBalance: true,
+      note: `${described || `Authored balance value: ${joined}.`} Applies to a new run.`,
       configPath: ['balance', ...path],
       searchPath: joined,
     });
     return rows;
   }
   if (!value || typeof value !== 'object') return rows;
-  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows);
+  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows, bundle, value);
   return rows;
 }
 
@@ -344,7 +362,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 ]);
 
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  const generated = leafRows(bundle.balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
   return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
