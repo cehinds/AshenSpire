@@ -405,8 +405,12 @@ test('the text container keeps the shipped strip, and takes the colour it is giv
   // writing a broken background onto the screen.
   assert.equal(prologueBoxBackground({textBoxColor: 'cornflower', textBoxOpacity: 2}), 'linear-gradient(rgba(25,21,15,1),rgba(16,14,12,1))');
   const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
-  assert.ok(!/^\.prologue-has-box \.prologue-caption\{[^}]*border-radius/m.test(css), 'the full-width caption strip takes no radius');
-  assert.match(css, /\.prologue-layout-overlay\.prologue-has-box \.prologue-caption[^{]*\{border-radius/, 'a floating plate does');
+  // The corner radius is a SETTING, with one home: a hardcoded radius for the
+  // floating frames would always beat the number the owner typed. It ships at
+  // 0, which is the square strip the opening has always had.
+  assert.match(css, /border-radius:var\(--prologue-box-radius,0\)/);
+  assert.ok(!/border-radius:10px/.test(css), 'and no frame carries a radius of its own');
+  assert.equal(prologueConfig().presentation.boxRadius, 0);
 });
 
 test('the wash is the scene\'s own staging, not a branch about a scene id', () => {
@@ -619,4 +623,71 @@ test('the first frame is already staged, and the inset measures the axis it name
   const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
   assert.match(css, /calc\(var\(--prologue-inset-y,4\)\*1cqh\) calc\(var\(--prologue-inset-x,4\)\*1cqw\)/);
   assert.match(css, /\.prologue-screen\{container-type:size/, 'and the screen is the container those units measure');
+});
+
+// ---- the buttons are the frame's, and the dials reach the stylesheet -------
+test('the controls stand in a band at the bottom, whatever the words do', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  // The caption holds the WORDS. Continue used to be inside it, so an overlay
+  // wireframe floated the buttons into the middle of the picture with them.
+  assert.match(screen, /const caption = el\('div',\{class:'prologue-caption'\},\[title,speaker,dialogue,location\]\)/);
+  assert.match(screen, /const bar = el\('div',\{class:'prologue-bar'\},\[progress,controls\]\)/);
+  assert.match(screen, /if \(inText\) caption\.append\(progress,controls\)/, 'and they can be asked back under the text');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.match(css, /\.prologue-bar\{grid-row:3/, 'the band is the frame\'s last row');
+  // Every wireframe keeps the band last: the ones that restate their grid say
+  // where it goes, and the short-landscape and portrait fallbacks move it with
+  // the caption rather than dropping it on top of one.
+  assert.match(css, /\.prologue-layout-panelLeft \.prologue-bar,\.prologue-layout-panelRight \.prologue-bar,\.prologue-layout-overlay \.prologue-bar\{grid-row:2;grid-column:1\/-1\}/);
+  assert.match(css, /\.prologue-layout-panelLeft \.prologue-bar,\.prologue-layout-panelRight \.prologue-bar,\.prologue-layout-overlay \.prologue-bar\{grid-row:3;grid-column:1\}/);
+  for (const rows of [/\.prologue-layout-overlay\{grid-template-rows:1fr auto\}/, /\.prologue-layout-panelLeft,\.prologue-layout-panelRight\{grid-template-rows:1fr auto/]) {
+    assert.match(css, rows, 'a wireframe that states its rows leaves one for the band');
+  }
+  assert.equal(prologueConfig().presentation.controlsPosition, 'bar');
+});
+
+test('every staging dial the settings offer is a property the stylesheet reads', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  // A field that reaches neither the screen nor the stylesheet is a row that
+  // does nothing, which is worse than no row at all.
+  const carried = {
+    imageBrightness: '--prologue-filter', imageContrast: '--prologue-filter', imageSaturation: '--prologue-filter',
+    imageBlur: '--prologue-filter', imageFlip: '--prologue-flip', vignette: '--prologue-vignette',
+    backdropColor: '--prologue-backdrop', letterboxColor: '--prologue-letterbox',
+    titleColor: '--prologue-title-color', speakerColor: '--prologue-speaker-color',
+    dialogueColor: '--prologue-dialogue-color', locationColor: '--prologue-location-color',
+    titleScale: '--prologue-title-scale', speakerScale: '--prologue-speaker-scale',
+    lineHeight: '--prologue-line-height', letterSpacing: '--prologue-letter-spacing',
+    textMaxWidth: '--prologue-measure', textFont: '--prologue-font',
+    boxPadding: '--prologue-box-padding', boxRadius: '--prologue-box-radius',
+    boxBorderWidth: '--prologue-box-border', boxBorderColor: '--prologue-box-border-color', boxBlur: '--prologue-box-blur',
+  };
+  for (const [field, property] of Object.entries(carried)) {
+    assert.ok(field in prologueConfig().presentation, `${field} has no authored default`);
+    assert.ok(screen.includes(`'${property}'`), `${field} is never written as ${property}`);
+    assert.ok(css.includes(`var(${property}`), `${property} is never read`);
+  }
+  // The ones the screen reads directly rather than through a property.
+  assert.match(screen, /title\.hidden = stage\.titleVisible === false/);
+  assert.match(screen, /speaker\.hidden = stage\.speakerVisible === false/);
+  assert.match(screen, /stage_\.locationVisible === false/);
+  assert.match(screen, /stage_\.progressStyle === 'dots'/);
+  assert.match(screen, /stage_\.transitionEase \|\| 'ease-in-out'/);
+  assert.match(screen, /stage_\.cameraEase \|\| 'linear'/);
+  assert.match(screen, /delayMs = Math\.max\(0,Number\(stage_\.textDelaySeconds\)/);
+  assert.match(screen, /p\.advanceOnClick === true/);
+  // The transition time is per scene now, so it has ONE home: the staging.
+  assert.ok(PROLOGUE_STAGE_FIELDS.some(field => field.key === 'transitionSeconds'));
+  assert.equal(prologueRows().filter(row => row.key.endsWith('presentation.transitionSeconds')).length, 1);
+  // And the whole staging is still answerable per scene, which is the point.
+  const scene = prologueConfig({
+    [`${PROLOGUE_PREFIX}scenes.warmth.ownStaging`]: true,
+    [`${PROLOGUE_PREFIX}scenes.warmth.stage.imageSaturation`]: 0,
+    [`${PROLOGUE_PREFIX}scenes.warmth.stage.textDelaySeconds`]: 2,
+  });
+  const staged = prologueStaging(scene, scene.scenes[0]);
+  assert.equal(staged.imageSaturation, 0, 'one scene may be grey while the rest are not');
+  assert.equal(staged.textDelaySeconds, 2);
+  assert.equal(prologueStaging(scene, scene.scenes[1]).imageSaturation, 1);
 });

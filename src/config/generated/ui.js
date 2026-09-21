@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json e1c2d650ace2d172
+// source content/config/ui/screens/prologue.json a430e8765281d3d3
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -772,7 +772,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-21-staging-v5",
+          "revision": "2026-09-21-staging-v6",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -1031,7 +1031,43 @@ export const uiConfig = deepFreeze({
             "textInsetX": 4,
             "textInsetY": 4,
             "reveal": "none",
-            "revealSpeed": 45
+            "revealSpeed": 45,
+            "imageBrightness": 1,
+            "imageContrast": 1,
+            "imageSaturation": 1,
+            "imageBlur": 0,
+            "imageFlip": false,
+            "vignette": 0,
+            "backdropColor": "#100e0c",
+            "letterboxColor": "#000000",
+            "transitionEase": "ease-in-out",
+            "cameraEase": "linear",
+            "titleVisible": true,
+            "speakerVisible": true,
+            "locationVisible": true,
+            "progressStyle": "numbers",
+            "titleColor": "#c9a227",
+            "speakerColor": "#c0b39d",
+            "dialogueColor": "#eee6d5",
+            "locationColor": "#c9a227",
+            "titleScale": 1,
+            "speakerScale": 1,
+            "lineHeight": 1.5,
+            "letterSpacing": 0,
+            "textMaxWidth": 65,
+            "textFont": "display",
+            "textDelaySeconds": 0,
+            "boxPadding": 1,
+            "boxRadius": 0,
+            "boxBorderWidth": 0,
+            "boxBorderColor": "#c9a227",
+            "boxBlur": 0,
+            "controlsPosition": "bar",
+            "controlsAlign": "center",
+            "controlsSize": "normal",
+            "showPause": true,
+            "showSkip": true,
+            "advanceOnClick": false
           },
           "palettes": {
             "accent": {

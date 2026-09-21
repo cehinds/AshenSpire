@@ -1,10 +1,10 @@
-.prologue-screen{container-type:size;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
+.prologue-screen{container-type:size;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto auto;min-height:100%;height:100dvh;background:var(--prologue-backdrop,#100e0c);color:#eee6d5;overflow:auto}
 .prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
 .prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
 .prologue-background{width:100%;height:100%;object-fit:cover;display:block}
 .prologue-actor{position:absolute;width:auto;transform:translateX(-50%);pointer-events:none}
 .prologue-wash{position:absolute;inset:0;mix-blend-mode:color;pointer-events:none}
-.prologue-caption{position:relative;z-index:2;padding:1rem max(1.25rem,env(safe-area-inset-right)) max(1rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
+.prologue-caption{position:relative;z-index:2;padding:var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-right)) var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
 .prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
 .prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
 .prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
@@ -36,9 +36,6 @@
    invisible container still holds its spacing — that is the difference between
    "no container" and "a container you cannot see". */
 .prologue-has-box .prologue-caption{background:var(--prologue-box)}
-/* A plate that FLOATS gets rounded corners; the caption strip runs the width of
-   the screen, where a radius would only cut the corners off the background. */
-.prologue-layout-overlay.prologue-has-box .prologue-caption,.prologue-layout-panelLeft.prologue-has-box .prologue-caption,.prologue-layout-panelRight.prologue-has-box .prologue-caption{border-radius:10px}
 .prologue-box-hidden .prologue-caption{background:transparent}
 .prologue-screen:not(.prologue-has-box) .prologue-caption{background:transparent;padding-inline:0}
 .prologue-outlined .prologue-title,.prologue-outlined .prologue-speaker,.prologue-outlined .prologue-dialogue,.prologue-outlined .prologue-location,.prologue-outlined .prologue-banner-text{-webkit-text-stroke:var(--prologue-outline-width) var(--prologue-outline-color);paint-order:stroke fill}
@@ -47,7 +44,7 @@
 .prologue-banner.banner-bottom{bottom:0}
 .prologue-banner-text{font-size:calc(1.5rem*var(--prologue-text-scale));letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center}
 /* Text over the art: one cell, and `data-position` places the plate in it. */
-.prologue-layout-overlay{grid-template-rows:1fr}
+.prologue-layout-overlay{grid-template-rows:1fr auto}
 .prologue-layout-overlay .prologue-stage,.prologue-layout-overlay .prologue-caption{grid-row:1;grid-column:1}
 .prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;margin:calc(var(--prologue-inset-y,4)*1cqh) calc(var(--prologue-inset-x,4)*1cqw);height:max-content}
 .prologue-layout-overlay .prologue-caption[data-position^=top]{align-self:start}
@@ -56,19 +53,23 @@
 .prologue-layout-overlay .prologue-caption[data-position$=right]{justify-self:end;max-width:min(46rem,62%)}
 .prologue-layout-letterbox .prologue-stage{background:#000}
 .prologue-layout-letterbox .prologue-background{object-fit:contain}
-.prologue-layout-panelLeft,.prologue-layout-panelRight{grid-template-rows:1fr;grid-template-columns:minmax(18rem,34%) 1fr}
+.prologue-layout-panelLeft,.prologue-layout-panelRight{grid-template-rows:1fr auto;grid-template-columns:minmax(18rem,34%) 1fr}
 .prologue-layout-panelRight{grid-template-columns:1fr minmax(18rem,34%)}
 .prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption{grid-row:1;display:grid;align-content:center;overflow:auto}
 .prologue-layout-panelLeft .prologue-caption{grid-column:1}
 .prologue-layout-panelLeft .prologue-stage{grid-row:1;grid-column:2}
+.prologue-layout-panelLeft .prologue-bar,.prologue-layout-panelRight .prologue-bar,.prologue-layout-overlay .prologue-bar{grid-row:2;grid-column:1/-1}
 .prologue-layout-panelRight .prologue-stage{grid-row:1;grid-column:1}
 .prologue-layout-panelRight .prologue-caption{grid-column:2}
 /* A phone in portrait has no room for a side panel or a floating plate; both
    fall back to the caption frame rather than squeezing the words to a column. */
 @media(max-width:760px) and (orientation:portrait){
-  .prologue-layout-panelLeft,.prologue-layout-panelRight,.prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:minmax(14rem,1fr) auto}
+  .prologue-layout-panelLeft,.prologue-layout-panelRight,.prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:minmax(14rem,1fr) auto auto}
   .prologue-layout-panelLeft .prologue-stage,.prologue-layout-panelRight .prologue-stage,.prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
   .prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption,.prologue-layout-overlay .prologue-caption{grid-row:2;grid-column:1;max-width:none;justify-self:stretch;margin:0}
+  /* …and the band follows the caption down to the third row, rather than
+     keeping the second-row place it takes when the words are over the art. */
+  .prologue-layout-panelLeft .prologue-bar,.prologue-layout-panelRight .prologue-bar,.prologue-layout-overlay .prologue-bar{grid-row:3;grid-column:1}
 }
 /* The colour rows in Advanced → Opening: a palette you tap, and the system
    wheel folded away behind its own button until it is wanted. */
@@ -84,8 +85,13 @@
    for — the wireframe the owner chose is the wireframe that is drawn. The two
    panel frames already restate their columns above, so they are unaffected. */
 @media(max-height:500px) and (orientation:landscape){
-  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr}
-  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
+  /* The side-panel fallback puts the art beside the words; the band still runs
+     the width of the screen underneath both. */
+  .prologue-screen{grid-template-rows:1fr auto}
+  .prologue-bar{grid-row:2;grid-column:1/-1}
+  .prologue-layout-letterbox .prologue-bar{grid-row:3}
 }
 /* A scene with no painting is a text card: the backdrop, and the words. */
 .prologue-plate-bare{background:#100e0c}
@@ -110,3 +116,30 @@
 .set-scene-acts .as-btn,.set-preset-acts .as-btn{min-height:40px}
 .set-scene-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
 @media(max-width:760px){.set-scene-name{flex-basis:100%}.set-scene-acts{width:100%}}
+
+/* ---- the control band, and every dial the staging writes ------------------
+   The buttons are the FRAME's: a band along the bottom of the screen, under
+   the words but never part of them, so a wireframe that floats the text into
+   the middle of the picture leaves Continue where a hand expects it. */
+.prologue-bar{grid-row:3;position:relative;z-index:3;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;justify-content:var(--prologue-controls-align,center);padding:.6rem max(1.25rem,env(safe-area-inset-right)) max(.7rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));background:linear-gradient(#15110d,#100e0c);border-top:1px solid rgba(255,255,255,.06)}
+.prologue-bar .prologue-progress{margin:0}
+.prologue-controls{justify-content:var(--prologue-controls-align,center)}
+.prologue-controls-compact .prologue-controls button{min-height:40px;padding-block:.35rem;font-size:.95em}
+.prologue-controls-large .prologue-controls button{min-height:60px;padding-inline:1.4rem;font-size:1.15em}
+.prologue-controls-text .prologue-caption{padding-bottom:max(1rem,env(safe-area-inset-bottom))}
+/* The picture: four dials in one filter, the mirror, the vignette over it. */
+.prologue-background{filter:var(--prologue-filter,none);transform:scale(var(--prologue-scale,1)) scaleX(var(--prologue-flip,1))}
+.prologue-plate{background:var(--prologue-backdrop,#100e0c)}
+.prologue-plate::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:var(--prologue-vignette,0);background:radial-gradient(ellipse at center,transparent 45%,#000 120%)}
+.prologue-layout-letterbox .prologue-stage{background:var(--prologue-letterbox,#000)}
+/* The words, part by part. */
+.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1));font-family:var(--prologue-font,var(--font-display))}
+.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
+.prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-display))}
+.prologue-location{color:var(--prologue-location-color,var(--gold))}
+.prologue-text-waiting .prologue-title,.prologue-text-waiting .prologue-speaker,.prologue-text-waiting .prologue-dialogue,.prologue-text-waiting .prologue-location{visibility:hidden}
+/* The container, in detail: it keeps its spacing whatever it is drawn with. */
+.prologue-has-box .prologue-caption{border-radius:var(--prologue-box-radius,0);border:var(--prologue-box-border,0) solid var(--prologue-box-border-color,transparent);backdrop-filter:blur(var(--prologue-box-blur,0))}
+.prologue-dot{display:inline-block;width:.55rem;height:.55rem;margin:0 .22rem;border-radius:50%;background:currentColor;opacity:.35}
+.prologue-dot.on{opacity:1;box-shadow:0 0 6px currentColor}
+@media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto auto}}

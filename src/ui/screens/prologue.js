@@ -66,8 +66,22 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const pause = button({label:config.labels.pause});
   const skip = button({label:preview ? config.labels.close : config.labels.skip});
   const controls = el('div',{class:'prologue-controls'},[pause,skip,next]);
-  const caption = el('div',{class:'prologue-caption'},[title,speaker,dialogue,location,progress,controls]);
-  root.append(stage,caption); host.replaceChildren(root);
+  const caption = el('div',{class:'prologue-caption'},[title,speaker,dialogue,location]);
+  // THE BUTTONS BELONG TO THE FRAME. They used to live inside the caption, so a
+  // wireframe that floats the words into the middle of the picture floated
+  // Continue into the middle with them (owner, with a screenshot). They stand
+  // in a band along the bottom of the screen — under the words, but not part of
+  // them — unless the owner asks for them back under the text.
+  const inText = p.controlsPosition === 'text';
+  const bar = el('div',{class:'prologue-bar'},[progress,controls]);
+  if (inText) caption.append(progress,controls);
+  root.append(stage,caption); if (!inText) root.append(bar);
+  root.classList.toggle('prologue-controls-text',inText);
+  root.classList.add(`prologue-controls-${['compact','normal','large'].includes(p.controlsSize) ? p.controlsSize : 'normal'}`);
+  root.style.setProperty('--prologue-controls-align',{left:'flex-start',right:'flex-end'}[p.controlsAlign] || 'center');
+  pause.hidden = p.showPause === false;
+  skip.hidden = p.showSkip === false;
+  host.replaceChildren(root);
   // THE STAGING IS WRITTEN AS CSS CUSTOM PROPERTIES, and written again for each
   // scene: a scene that keeps its own staging (prologueStaging) answers every
   // one of these for itself, so one scene may letterbox while the rest fill the
@@ -96,6 +110,33 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     root.style.setProperty('--prologue-fit', stage.imageFit || 'cover');
     root.style.setProperty('--prologue-focus', `${stage.imageFocusX ?? 50}% ${stage.imageFocusY ?? 50}%`);
     root.style.setProperty('--prologue-scale', String(Number(stage.imageScale) || 1));
+    // The painting as a PICTURE — one filter, built from the four dials that
+    // describe it, plus the mirror, which is a transform and rides with scale.
+    root.style.setProperty('--prologue-filter', `brightness(${stage.imageBrightness ?? 1}) contrast(${stage.imageContrast ?? 1}) saturate(${stage.imageSaturation ?? 1}) blur(${Number(stage.imageBlur) || 0}px)`);
+    root.style.setProperty('--prologue-flip', stage.imageFlip === true ? '-1' : '1');
+    root.style.setProperty('--prologue-vignette', String(Number(stage.vignette) || 0));
+    root.style.setProperty('--prologue-backdrop', stage.backdropColor || '#100e0c');
+    root.style.setProperty('--prologue-letterbox', stage.letterboxColor || '#000000');
+    // The words, part by part.
+    root.style.setProperty('--prologue-title-color', stage.titleColor || '#c9a227');
+    root.style.setProperty('--prologue-speaker-color', stage.speakerColor || '#c0b39d');
+    root.style.setProperty('--prologue-dialogue-color', stage.dialogueColor || '#eee6d5');
+    root.style.setProperty('--prologue-location-color', stage.locationColor || '#c9a227');
+    root.style.setProperty('--prologue-title-scale', String(stage.titleScale ?? 1));
+    root.style.setProperty('--prologue-speaker-scale', String(stage.speakerScale ?? 1));
+    root.style.setProperty('--prologue-line-height', String(stage.lineHeight ?? 1.5));
+    root.style.setProperty('--prologue-letter-spacing', `${Number(stage.letterSpacing) || 0}em`);
+    root.style.setProperty('--prologue-measure', `${Number(stage.textMaxWidth) || 65}ch`);
+    root.style.setProperty('--prologue-font', stage.textFont === 'body' ? 'var(--font-body)' : 'var(--font-display)');
+    // The container, in detail.
+    root.style.setProperty('--prologue-box-padding', `${Number(stage.boxPadding) || 0}rem`);
+    root.style.setProperty('--prologue-box-radius', `${Number(stage.boxRadius) || 0}px`);
+    root.style.setProperty('--prologue-box-border', `${Number(stage.boxBorderWidth) || 0}px`);
+    root.style.setProperty('--prologue-box-border-color', stage.boxBorderColor || '#c9a227');
+    root.style.setProperty('--prologue-box-blur', `${Number(stage.boxBlur) || 0}px`);
+    title.hidden = stage.titleVisible === false;
+    speaker.hidden = stage.speakerVisible === false;
+    progress.hidden = stage.progressStyle === 'hidden';
   }
   // The scenes play in the configured ORDER, over the configured SUBSET; the
   // numbers below stay indices into the authored list, which is what a paused
@@ -106,11 +147,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   let position = prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
   let sceneIndex = order[position], elapsed = 0;
   let stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
-  let animations = [], previous = null, reveal = null;
+  let animations = [], previous = null, reveal = null, delayMs = 0;
   const reduced = () => p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
   const ownerVeil = root.closest('.modal-veil');
   const blocked = () => document.hidden || (topVeil() && topVeil() !== ownerVeil);
-  const transitionMs = scene => prologueTransitionMs(scene,p,reduced());
+  const transitionMs = (scene,stage) => prologueTransitionMs(scene,stage,reduced());
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
@@ -122,6 +163,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   function togglePause() { paused = !paused; last = 0; pause.textContent = paused ? config.labels.resume : config.labels.pause; }
   function visibility() { last = 0; }
   function rotate() { showScene(position,{resumeAt:elapsed,notify:false}); }
+  function paintDelay(at) { caption.classList.toggle('prologue-text-waiting', at < delayMs && !reduced()); }
   function startReveal(text, stage) {
     const steps = revealSteps(text, stage);
     if (!steps || reduced()) { dialogue.textContent = text; return null; }
@@ -199,12 +241,15 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (previous) previous.style.opacity = '1';
     applyStaging(stage_);
     title.textContent = copy.title; speaker.textContent = copy.speaker;
-    location.textContent = copy.location; location.hidden = !copy.location;
+    location.textContent = copy.location; location.hidden = !copy.location || stage_.locationVisible === false;
     // THE WHOLE LINE IS ALWAYS IN THE DOM, and the reveal only hides part of it:
     // a screen reader, a text search and `prefers-reduced-motion` all get the
     // finished narration, and nothing has to be re-typed when the scene is
     // resumed after a pause, a rotation or a tab switch.
+    // The words may WAIT: the artwork holds alone for a beat before they arrive.
+    delayMs = Math.max(0,Number(stage_.textDelaySeconds) || 0) * 1000;
     reveal = startReveal(copy.text,stage_);
+    paintDelay(elapsed);
     // A scene may take the music with it, and may open on a sound — but only
     // when the scene is actually being ENTERED. `notify` is false when the same
     // scene is re-drawn in place (a rotation, a breakpoint change), and a
@@ -215,18 +260,32 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (notify && audio && scene.music && scene.music !== 'keep') audio.music?.(scene.music);
     if (notify && audio && scene.stinger && scene.stinger !== 'none') audio.sfx?.(scene.stinger);
     next.textContent = position === order.length-1 ? config.labels.setForth : config.labels.continue;
-    progress.textContent = `${position+1} / ${order.length}`;
+    // The counter is numbers, dots, or nothing. Dots are decorative — the same
+    // fact is in the label, which is what a screen reader is given.
+    progress.setAttribute('aria-label',`Scene ${position+1} of ${order.length}`);
+    if (stage_.progressStyle === 'dots') {
+      progress.replaceChildren(...order.map((_,at)=>el('span',{class:`prologue-dot${at === position ? ' on' : ''}`,'aria-hidden':'true'})));
+    } else {
+      progress.textContent = `${position+1} / ${order.length}`;
+    }
     stage.append(plate);
-    const duration = transitionMs(scene);
+    const duration = transitionMs(scene,stage_);
     if (duration) {
       const frames = scene.effect === 'ash' ? [{opacity:0,clipPath:'inset(0 0 100% 0)'},{opacity:1,clipPath:'inset(0)'}]
         : scene.effect === 'dip' ? [{opacity:0,offset:0},{opacity:0,offset:.5},{opacity:1,offset:1}] : [{opacity:0},{opacity:1}];
-      animations.push(plate.animate(frames,{duration,fill:'both',easing:'ease-in-out'}));
+      animations.push(plate.animate(frames,{duration,fill:'both',easing:stage_.transitionEase || 'ease-in-out'}));
       if (previous && scene.effect === 'dip') animations.push(previous.animate([{opacity:1},{opacity:0}],{duration:duration/2,fill:'both'}));
     }
     const camera = cameraFrames(stage_,scene);
-    if (!reduced() && camera) animations.push(plate.animate(camera,{duration:prologueSceneMs(scene),fill:'both',easing:'linear'}));
+    if (!reduced() && camera) animations.push(plate.animate(camera,{duration:prologueSceneMs(scene),fill:'both',easing:stage_.cameraEase || 'linear'}));
     animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
+    // A SCENE NOBODY CAN SEE YET STILL HAS TO BE DRAWN. The entrance is paused
+    // at `elapsed` — 0 for a new scene, which is a fully transparent plate —
+    // and `tick` only advances it while the page is visible and no veil is over
+    // it. So a tab opened in the background, a screen behind a modal, or a
+    // capture tool held the artwork at opacity 0 and showed the caption over
+    // black. Nobody is watching the fade in that state; the picture matters.
+    if (blocked()) animations.forEach(a=>a.finish());
     previous = plate; loading = false; next.disabled = false; last = 0;
   }
   function tick(now) {
@@ -236,12 +295,19 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       if (reduced()) animations.forEach(a=>a.finish());
       else animations.forEach(a=>{a.currentTime=elapsed;});
       const scene = config.scenes[sceneIndex];
-      if (reveal) reveal(elapsed,reduced());
+      paintDelay(elapsed);
+      if (reveal) reveal(Math.max(0,elapsed-delayMs),reduced());
       // A scene may HOLD: the owner marks it, and it waits for Continue however
       // the opening is otherwise paced.
       if (p.autoAdvance && !scene.waitForInput && elapsed >= prologueSceneMs(scene) && position < order.length-1) showScene(position+1);
     }
     last = now; raf = requestAnimationFrame(tick);
+  }
+  // The whole picture can be the Continue button, for a reader who would rather
+  // not aim at one.
+  if (p.advanceOnClick === true) {
+    stage.style.cursor = 'pointer';
+    stage.addEventListener('click',()=>{ if (!loading && !paused) next.click(); });
   }
   pause.onclick = togglePause;
   next.onclick = () => { if (!loading) position === order.length-1 ? finish('completed') : showScene(position+1); };
