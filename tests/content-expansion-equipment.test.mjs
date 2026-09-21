@@ -143,7 +143,11 @@ for (const [id, classId, slot, pool] of [
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
   }
   // Ruleset 5 (plan phase 9): Mana IS Wisdom and Stamina IS Constitution, so
-  // every assigned point moves the pool rather than every fifth one.
-  assert.equal(run[maxKey], beforeAssignment + 5, `${id}: each assigned point raises the equipped pool`);
+  // every assigned point moves the pool rather than every fifth one — and the
+  // lean creation mode converts at its own scale, so a point is that many
+  // tiers of it. Read off the run's own snapshot rather than restated here.
+  const poolRow = run.derivedStatRuleSnapshot.rules.rules[pool];
+  const perPoint = Math.round(poolRow.gainPerTier / poolRow.pointsPerTier);
+  assert.equal(run[maxKey], beforeAssignment + 5 * perPoint, `${id}: each assigned point raises the equipped pool`);
 }
 console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');

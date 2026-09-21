@@ -54,15 +54,16 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
   const configured = configuredContentBundle(contentBundle, {
-    'gameConfig.attributeRules.presets.tuned2.reaver.strength': 12,
-    'gameConfig.attributeRules.presets.tuned2.reaver.dexterity': 4,
+    'gameConfig.attributeRules.presets.lean.reaver.strength': 4,
+    'gameConfig.attributeRules.presets.lean.reaver.dexterity': 1,
+    'gameConfig.attributeRules.presets.lean.reaver.constitution': 1,
     'gameConfig.balance.xp.combatWin': 30,
     'gameConfig.progression.xpMultiplier': 2,
     'gameConfig.progression.rewardMultiplier': 0.5,
     'gameConfig.derivedStatRules.defaults.pointsPerTier': 3,
   });
-  assert.equal(configured.attributeRules.presets.tuned2.reaver.strength, 12);
-  assert.equal(contentBundle.attributeRules.presets.tuned2.reaver.strength, 10);
+  assert.equal(configured.attributeRules.presets.lean.reaver.strength, 4);
+  assert.equal(contentBundle.attributeRules.presets.lean.reaver.strength, 3);
   assert.equal(configured.balance.xp.combatWin, 60);
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
   assert.equal(contentBundle.balance.xp.combatWin, 50);
@@ -71,10 +72,10 @@ test('configured bundle overlays starting stats and progression without mutating
 });
 
 test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {
-  const settings = { 'gameConfig.attributeRules.presets.tuned2.reaver.strength': 12 };
-  assert.match(advancedConfigProblems(contentBundle, settings)[0], /Reaver.*total 35/);
+  const settings = { 'gameConfig.attributeRules.presets.lean.reaver.strength': 4 };
+  assert.match(advancedConfigProblems(contentBundle, settings)[0], /Reaver.*total 8/);
   const configured = configuredContentBundle(contentBundle, settings);
-  assert.deepEqual(configured.attributeRules.presets.tuned2.reaver, contentBundle.attributeRules.presets.tuned2.reaver);
+  assert.deepEqual(configured.attributeRules.presets.lean.reaver, contentBundle.attributeRules.presets.lean.reaver);
 });
 
 test('cross-field ranges are refused instead of reaching a new run inverted', () => {
