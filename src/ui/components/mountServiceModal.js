@@ -148,8 +148,9 @@ export function mountMountServiceModal(host, initialModel, {
   const modal = shell.panel;
   modal.dataset.wireframe = p0.service === 'extract' ? 'W1j' : 'W1k';
   modal.setAttribute('aria-describedby', 'mount-modal-consequence');
-  workspaceFrame(modal);
-  for (const [prop, value] of Object.entries(smithWorkspaceVars())) modal.style.setProperty(prop, value);
+  // The door's own three properties go THROUGH the frame, which remembers them:
+  // a later restamp (the Workspace frame choice) re-applies both halves.
+  workspaceFrame(modal, smithWorkspaceVars());
   markUiComponent(modal, UI.mountServiceModal, initialModel.variant);
 
   const costPairHtml = (selected) => `<span class="smith-cost-pair">

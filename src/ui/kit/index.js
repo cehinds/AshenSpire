@@ -23,6 +23,7 @@ import {
   buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
   modalFooter as shellModalFooter, modalCloseButton as shellModalCloseButton, modalCloseButtonHtml as shellModalCloseButtonHtml,
   openModal as shellOpenModal, MODAL_SIZES as SHELL_MODAL_SIZES, bindModalDismiss as shellBindModalDismiss,
+  stampModalSize as shellStampModalSize,
 } from '../components/modalShell.js';
 
 // Re-exported one name per line: tools/bundle.mjs reads `export const NAME`
@@ -46,6 +47,7 @@ export function modalCloseButton(options) { return shellModalCloseButton(options
 export function modalCloseButtonHtml(options) { return shellModalCloseButtonHtml(options); }
 export function openModal(options) { return shellOpenModal(options); }
 export function bindModalDismiss(options) { return shellBindModalDismiss(options); }
+export function stampModalSize(panel, size) { return shellStampModalSize(panel, size); }
 export function BUTTON_ROW_SIZES() { return SHELL_BUTTON_ROW_SIZES; }
 export function MODAL_SIZES() { return SHELL_MODAL_SIZES; }
 
@@ -448,8 +450,8 @@ export const railed = (railNode, paneNode, attrs = {}) => {
   const host = el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [nav ? nav.rail : railNode, paneNode]);
   return nav ? nav.attach(host) : host;
 };
-import { categoryNav, landControl } from './categoryNav.js';
-export { categoryNav, landControl };
+import { categoryNav, landControl, replanCategoryNavs } from './categoryNav.js';
+export { categoryNav, landControl, replanCategoryNavs };
 /** popover({ caption, groups: [[row, …], …], attrs }) — Eyebrow cap + hairline-grouped rows. */
 export function popover({ caption = '', groups = [], attrs = {}, className = '' } = {}) {
   return el('div', { ...attrs, class: cls('as-pop', className) }, [
@@ -527,9 +529,12 @@ export function pageDoor({ eyebrow: eb = '', title = '', size = 'md', full = fal
   const foot = (note || ways.length || primary) ? modalFooter({ note, secondary: ways, primary, size: footSize }) : null;
   if (foot) foot.querySelector('.modal-foot-actions')?.classList.add('modal-btnrow');
   const door = el('section', {
-    ...attrs, class: cls('modal as-pagedoor', full ? 'full' : '', className), dataset: { ...(attrs.dataset || {}), size },
+    ...attrs, class: cls('modal as-pagedoor', full ? 'full' : '', className), dataset: { ...(attrs.dataset || {}) },
     role: attrs.role || 'region', 'aria-label': attrs['aria-label'] || title || null,
   }, [head, bodyEl, foot]);
+  // The rung through the shell's one stamp, so a page door answers the width
+  // choice (Settings → Advanced → Wireframes → Modals) like every other door.
+  stampModalSize(door, size);
   return Object.assign(door, { head, body: bodyEl, foot });
 }
 

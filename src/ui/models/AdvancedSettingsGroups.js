@@ -1,4 +1,5 @@
 import { contentBundle } from '../../content/index.js';
+import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./g, ' ').replace(/^./, c => c.toUpperCase());
@@ -27,6 +28,10 @@ export const CLASS_TOPICS = Object.freeze((contentBundle.classes || [])
     || String(classDef.id).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())));
 
 function topic(row, section) {
+  // A row that names its own topic is filed under it. The Wireframes rows are
+  // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
+  // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
+  if (row.wireframeTopic) return row.wireframeTopic;
   if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
   if (row.handTopic) return row.handTopic;
@@ -116,6 +121,13 @@ export function advancedSubgroups(rows, section) {
     result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }
   if (section === 'Interface') result.sort((a, b) => Number(b.id === 'Formation layout') - Number(a.id === 'Formation layout'));
+  // Modals, then Menus, then Scenes: outermost surface first, and the order the
+  // catalogue itself is written in — discovered, not restated, so the two
+  // cannot disagree about which family comes first.
+  if (section === 'Wireframes') {
+    const order = WIREFRAME_CHOICE_GROUPS.map((group) => group.label);
+    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
     // rescaled by it. Equipment requirements come second because they are the

@@ -981,12 +981,18 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    so BOTH doors get it: the Settings modal's `.set-body` and the in-run
    overlay's `.overlay-body`. Scoping these to `.settings-modal` gave the
    overlay a second scrollbar and none of the chrome below. */
-.modal.settings-modal[data-size='lg'] {
-  width: min(76rem, calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
+/* THE SETTINGS WINDOW'S OWN BOX, keyed to the rung it ASKED for rather than
+   the one in force: the Modals width choice may have moved it, and these rules
+   are this door's contract (its width setting, its height, the veil's room),
+   not the rung's. The width takes the smaller of the rung in force
+   (`--modal-rung-width`, published by the ladder in kit.css) and the player's
+   own Window width, so the two settings compose instead of cancelling. */
+.modal.settings-modal[data-authored-size='lg'] {
+  width: min(var(--modal-rung-width, 76rem), calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
   height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
   max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
 }
-:root[data-short='true'] .modal.settings-modal[data-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
+:root[data-short='true'] .modal.settings-modal[data-authored-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
 .modal > [data-settings-host] { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
 .modal > [data-settings-host] > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
 [data-settings-host] .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
@@ -1073,7 +1079,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-topic-panel[hidden], .set-topic-panel .set-row[hidden], .set-advanced-group[hidden] { display: none; }
 .set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }
 [data-settings-host] .set-topic-panel .set-row { padding: .4rem .7rem; }
-@media (min-width: 800px) { .modal.settings-modal[data-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
+@media (min-width: 800px) { .modal.settings-modal[data-authored-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
 .set-reset-menu { position: relative; }
 .set-reset-menu summary { list-style: none; cursor: pointer; }
 .set-reset-menu[open] > button { position: absolute; right: 0; top: 100%; z-index: 5; min-width: 16rem; background: var(--panel, #211d17); }
@@ -1098,7 +1104,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-config-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 .set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
 @media (max-width: 600px) {
-  .modal.settings-modal[data-size='lg'] { width: 100%; border-radius: var(--r-3); }
+  .modal.settings-modal[data-authored-size='lg'] { width: 100%; border-radius: var(--r-3); }
   [data-settings-host] .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
   [data-settings-host] .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
 }

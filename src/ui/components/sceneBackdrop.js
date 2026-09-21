@@ -8,6 +8,9 @@
 // runs on behind the other bands (SceneLayerModel.sceneWindowLayers). The
 // model owns every number; this only writes the result.
 import { sceneLayers, sceneWindowLayers } from '../models/SceneLayerModel.js';
+import { resolveSceneConfig } from '../models/WireframeChoiceModel.js';
+import { activeWireframeChoices } from '../wireframeChoices.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 import { ENVIRONMENTS } from '../../content/environments.js';
 import { LEGACY_SCENES } from '../../model/legacyDungeon.js';
 
@@ -30,9 +33,15 @@ export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop 
   if (!art) return null;
   const scene = sceneById(backdrop.dataset.scene);
   const framed = windowTop !== 0 || windowHeight !== height;
+  // WGS6 and WGS7 are the two switches a player can answer (Settings →
+  // Advanced → Wireframes → Scenes). Only those two are taken: the caller's
+  // config is otherwise its own — the dialogue fits the plate to a window with
+  // its own floor fraction, and an answer about the skyline must not flatten
+  // that back to combat's.
+  const chosen = resolveSceneConfig(config || wireframeUi.scene, activeWireframeChoices());
   const layers = framed
-    ? sceneWindowLayers({ width, height, windowTop, windowHeight, scene, config })
-    : sceneLayers({ width, height, scene, config });
+    ? sceneWindowLayers({ width, height, windowTop, windowHeight, scene, config: chosen })
+    : sceneLayers({ width, height, scene, config: chosen });
   const viewBox = framed ? layers.frame.viewBox : layers.skyline.viewBox;
   if (viewBox) art.setAttribute('viewBox', viewBox.join(' '));
   backdrop.dataset.sceneFit = layers.aligned ? 'floor' : 'cover';
