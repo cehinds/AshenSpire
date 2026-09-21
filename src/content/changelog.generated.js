@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1249",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Every combat stat now has one job, one settings home and one calculation you can preview",
+    "detail": "Advanced → Stats now keeps HP, Mana, Stamina, Actions, Draw, hand rules and all five combat ratings together, with expandable live receipts that show the edited formula, attribute terms, equipment and relic additions, caps and enemy values before a new run begins. Duplicate and inert controls have been removed without breaking older configuration files. In combat, Attack Rating powers physical cards and Potency Rating powers magical cards and effects; incoming damage now passes through Defence Rating as a flat subtraction, then Poise as capped reduction on every hit, then Ward as a second capped layer only for magic. Defence can stop a hit completely, while neither percentage layer can grant immunity on its own. Poise and Ward still carry their impact and break meters, enemies use their configured defences, previews match execution, and runs or combat saves born under the earlier ratings rules keep their original arithmetic.",
+    "build": "0.7.1.378",
+    "pullRequest": 1249,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1249"
+  },
+  {
     "id": "pr-1248",
     "date": "2026-09-21",
     "group": "2026-09-21",
