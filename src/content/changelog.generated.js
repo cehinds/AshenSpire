@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1241",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Advanced settings read as one menu again",
+    "detail": "Half the rows in Advanced were named by a person — HP — base amount, Reaver — Strength — and the other half were named by the game, out of the setting's own internal spelling, so hand Max and levels · player Starting Level sat two rows under HP — base amount in the same list. Worse, twelve rows under Enemy scaling were all called Per Level, because only the last word of the name was ever used and the screen was patching the rest back in afterwards. Every row is now named once, in one place, the way the hand-written ones always were: Hand Max, Starting Cinders, HP — Per Level. A group no longer repeats its own name in every line beneath it, so the Reaver tab simply lists Strength, Dexterity, Base HP, and Poise and Ward are spelled like the words they are instead of shouting POISE and WARD across seven hundred rows. Two rows have left the screen: energy and draw under Starting values, which looked like they set your actions and your opening hand and set nothing at all — the rows that really do are Actions and Draw under Stat conversions, a group away, which is why the two never agreed. A settings file that still names the old two loads exactly as before.",
+    "build": "0.7.1.363",
+    "pullRequest": 1241,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1241"
+  },
+  {
     "id": "pr-1239",
     "date": "2026-09-21",
     "group": "2026-09-21",
