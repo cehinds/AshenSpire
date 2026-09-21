@@ -50,8 +50,9 @@ import { applyGraceRefill } from './encounters.js';
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
-  if (ctx.foundation) return F.foundationDamage(ctx, source, target, base, carrier, attackTags || []).amount;
-  let dmg = base + cardRatingBonus(ctx, source, carrier, 'damage');
+  const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
+  if (ctx.foundation) return F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []).amount;
+  let dmg = ratedBase;
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
     dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
@@ -139,7 +140,8 @@ export function attackTagsFor(action, effect, registries) {
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
-  const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, base, carrier, attackTags || []) : null;
+  const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
+  const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
   const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
@@ -226,7 +228,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  let amt = base + cardRatingBonus(ctx, entity, card, 'block') + statuses.getAdd(ctx, entity, 'blockAdd');
+  let amt = base + cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
@@ -767,7 +769,7 @@ function runOpcode(ctx, action, eff) {
         const amount = mult === 1
           ? evalNum(ctx, action, eff.amount, 0, t)
           : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
-        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal'));
+        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount));
       }
       break;
     }

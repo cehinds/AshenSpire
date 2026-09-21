@@ -16,6 +16,7 @@ import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;
@@ -52,10 +53,9 @@ for (const school of DAMAGE_SCHOOLS) {
 }
 
 check(dagger?.attackProfile === 'daggerPierceAttack', 'dagger explicitly references its DEX attack profile', String(dagger?.attackProfile));
-check(daggerProfile?.scalingStat === 'dexterity' && daggerProfile?.baseValue === 3
-  && daggerProfile?.pointsPerTier === 5 && daggerProfile?.rounding === 'floor'
-  && daggerProfile?.gainPerTier === 1 && (daggerProfile?.cap === '' || daggerProfile?.cap == null),
-  'dagger profile authors base 3 + floor(DEX/5), uncapped', JSON.stringify(daggerProfile));
+check(daggerProfile?.ratingId === 'ar' && daggerProfile?.baseValue === 3
+  && (daggerProfile?.cap === '' || daggerProfile?.cap == null),
+  'dagger profile authors base 3 + source AR, uncapped', JSON.stringify(daggerProfile));
 check(daggerProfile?.damageSchool === 'physical' && daggerProfile?.tags?.includes('pierce')
   && daggerProfile?.tags?.includes('flourish') && !(daggerProfile?.mods || []).some((mod) => /^hits=/.test(mod)),
   'dagger explicitly authors Pierce, finesse tags, and two hits', JSON.stringify(daggerProfile));
@@ -67,8 +67,8 @@ const sword = piece('straightSword');
 check(!(sword?.mods || []).some((mod) => /^strike\.damage=/.test(mod)),
   'Straight Sword has no duplicate item damage above its profile receipt', JSON.stringify(sword?.mods));
 
-check(bow?.kind === 'weapon' && bow?.hand === 'right' && bow?.rarity === 'common',
-  'representative shortbow is a common right-hand weapon row', JSON.stringify(bow));
+check(bow?.kind === 'weapon' && bow?.hand === 'either' && bow?.rarity === 'common',
+  'representative shortbow is a common either-hand weapon row', JSON.stringify(bow));
 check(bow?.artKey === 'dagger',
   'shortbow declares the temporary existing generic-art boundary', JSON.stringify(bow));
 {
@@ -81,24 +81,23 @@ check(bow?.artKey === 'dagger',
 }
 check(bow?.attackProfile === 'bowPierceAttack' && bow?.techniqueProfile === 'bowTechnique',
   'shortbow references explicit attack and technique profiles', JSON.stringify(bow));
-check(bowProfile?.baseValue === 4 && bowProfile?.scalingStat === 'dexterity'
-  && bowProfile?.pointsPerTier === 5 && bowProfile?.rounding === 'floor'
-  && bowProfile?.gainPerTier === 1 && (bowProfile?.cap === '' || bowProfile?.cap == null),
-  'bow profile authors base 4 + floor(DEX/5), uncapped', JSON.stringify(bowProfile));
+check(bowProfile?.baseValue === 4 && bowProfile?.ratingId === 'ar'
+  && (bowProfile?.cap === '' || bowProfile?.cap == null),
+  'bow profile authors base 4 + source AR, uncapped', JSON.stringify(bowProfile));
 check(bowProfile?.damageSchool === 'physical'
   && ['pierce', 'ranged', 'precision'].every((tag) => bowProfile?.tags?.includes(tag))
   && !(bowProfile?.mods || []).some((mod) => /^hits=/.test(mod)),
   'bow explicitly authors Pierce/ranged/precision and one hit', JSON.stringify(bowProfile));
-check(bowTechnique?.role === 'technique' && bowTechnique?.scalingStat === 'dexterity'
+check(bowTechnique?.role === 'technique' && bowTechnique?.ratingId === 'ar'
   && ['ranged', 'precision'].every((tag) => bowTechnique?.tags?.includes(tag)),
-  'bow technique is an explicit DEX presentation row', JSON.stringify(bowTechnique));
+  'bow technique is an explicit AR presentation row', JSON.stringify(bowTechnique));
 for (const row of [bow, bowProfile, bowTechnique].filter(Boolean)) {
   check(!['range', 'distance', 'position', 'lineOfSight', 'los'].some((key) => Object.hasOwn(row, key)),
     `${row.id} adds no ranged-position system field`, JSON.stringify(row));
 }
 
 const baseRun = createRunState({ seed: 0x51a7, classId: 'reaver', registries: R });
-const allTen = { strength: 10, dexterity: 10, vigour: 10, wisdom: 10, intelligence: 10 };
+const allTen = { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 };
 function roleReceipt(pieceId, role, attributes) {
   if (!piece(pieceId)) return null;
   const loadout = structuredClone(baseRun.loadout);
@@ -126,17 +125,16 @@ function vector(attributes) {
 }
 
 const expectedBase = {
-  swordAttack: 7, daggerAttack: 5, bowAttack: 6, weaponGuard: 4,
-  sceptreAttack: 6, staffAttack: 4,
-  hp: 94, stamina: 2, mana: 2, energy: 3, draw: 5,
+  swordAttack: 12, daggerAttack: 9, bowAttack: 10, weaponGuard: 9,
+  sceptreAttack: 16, staffAttack: 13,
+  hp: 80, stamina: 11, mana: 11, energy: 5, draw: 5,
 };
 const expectedChanges = {
-  strength: { swordAttack: 8 },
-  dexterity: { daggerAttack: 6, bowAttack: 7, weaponGuard: 5, energy: 4 },
-  // hp pays per POINT (D17: "1 hp point per") — 84 + 15; stamina still tiers.
-  vigour: { hp: 99, stamina: 3 },
-  wisdom: { sceptreAttack: 7, mana: 3 },
-  intelligence: { staffAttack: 5, draw: 6 },
+  strength: { swordAttack: 14, daggerAttack: 11, bowAttack: 12 },
+  dexterity: { weaponGuard: 11, energy: 6 },
+  constitution: { hp: 100, stamina: 16 },
+  wisdom: { sceptreAttack: 18, staffAttack: 15, mana: 16 },
+  intelligence: { sceptreAttack: 18, staffAttack: 15, draw: 6 },
 };
 equal(JSON.stringify(vector(allTen)), JSON.stringify(expectedBase), 'all-10 output vector matches exact representative receipts');
 for (const stat of Object.keys(allTen)) {
@@ -146,13 +144,13 @@ for (const stat of Object.keys(allTen)) {
     `${stat.toUpperCase()} +5 changes only its owned output cells`);
 }
 
-const standardRun = createRunState({ seed: 0x4850, classId: 'reaver', registries: R });
+const standardRun = createRunState({ seed: 0x4850, classId: 'reaver', registries: R, attributeMode: 'standard' });
 const con15Run = createRunState({
-  seed: 0x4851, classId: 'reaver', registries: R,
-  attributes: { strength: 10, dexterity: 10, vigour: 15, wisdom: 10, intelligence: 10 },
+  seed: 0x4851, classId: 'reaver', registries: R, attributeMode: 'standard',
+  attributes: { strength: 10, dexterity: 10, constitution: 15, wisdom: 10, intelligence: 10 },
 });
-check(standardRun.maxHp === 96 && con15Run.maxHp === 99 && con15Run.maxStamina === 3,
-  'actual Wayfarer runs consume the VIG HP/Stamina receipt (HP per point, D17)', `${standardRun.maxHp}/${con15Run.maxHp}/${con15Run.maxStamina}`);
+check(standardRun.maxHp === 88 && con15Run.maxHp === 100 && con15Run.maxStamina === 16,
+  'actual standard runs consume the CON HP/Stamina receipt', `${standardRun.maxHp}/${con15Run.maxHp}/${con15Run.maxStamina}`);
 
 function executionReceipt(pieceId, expectedPerHit, expectedHits) {
   if (!piece(pieceId)) return { missing: true };
@@ -166,6 +164,7 @@ function executionReceipt(pieceId, expectedPerHit, expectedHits) {
   const effect = def.effects.find((row) => row.op === 'damage');
   const combat = createCombat({
     registries: R, rng: createRng(91),
+    ratingsRules: resolveCombatRatings({}, contentBundle),
     player: {
       classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
       maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
@@ -175,6 +174,7 @@ function executionReceipt(pieceId, expectedPerHit, expectedHits) {
     enemyIds: [R.enemies.ids()[0]],
   });
   const live = [...combat.piles.hand, ...combat.piles.draw].find((card) => card.instanceId === attack.instanceId);
+  for (const enemy of combat.enemies) enemy.ratings = { ...enemy.ratings, poise: 0, ward: 0 };
   if (!combat.piles.hand.includes(live)) {
     combat.piles.draw.splice(combat.piles.draw.indexOf(live), 1);
     combat.piles.hand.push(live);
@@ -193,9 +193,9 @@ function executionReceipt(pieceId, expectedPerHit, expectedHits) {
     expectedHits,
   };
 }
-for (const [id, amount, hits] of [['dagger', 5, 2], ['shortbow', 6, 1]]) {
+for (const [id, amount, hits, definitionAmount] of [['dagger', 9, 2, 3], ['shortbow', 10, 1, 4]]) {
   const got = executionReceipt(id, amount, hits);
-  check(!got.missing && got.receipt === amount && got.definitionAmount === amount
+  check(!got.missing && got.receipt === amount && got.definitionAmount === definitionAmount
     && got.definitionHits === hits && got.previewAmount === amount && got.previewHits === hits
     && got.executedTotal === amount * hits,
   `${id} receipt, preview and execution agree per hit`, JSON.stringify(got));
@@ -217,13 +217,13 @@ function projectedAttack(pieceId, extraMod = null) {
   };
 }
 
-for (const [id, amount, rarityBonus] of [['straightSword', 7, 0], ['dagger', 5, 0], ['shortbow', 6, 0], ['boneSceptre', 6, 1]]) {
+for (const [id, amount, rarityBonus, effectBase] of [['straightSword', 12, 0, 5], ['dagger', 9, 0, 3], ['shortbow', 10, 0, 4], ['boneSceptre', 16, 1, 4]]) {
   const receipt = roleReceipt(id, 'attack', allTen);
   const projected = projectedAttack(id);
   check(receipt?.rarityBonus === rarityBonus && receipt?.value === amount
-    && projected.receipt?.value === amount && projected.final === amount
+    && projected.receipt?.value === amount && projected.final === effectBase
     && !(piece(id)?.mods || []).some((mod) => /^strike\.damage=/.test(mod)),
-  `${id} applies rarity exactly once and no item mod duplicates final damage`, JSON.stringify({ receipt, projected, mods: piece(id)?.mods }));
+  `${id} separates base plus rarity from its runtime source rating`, JSON.stringify({ receipt, projected, mods: piece(id)?.mods }));
 }
 
 for (const id of ['straightSword', 'dagger', 'shortbow']) {
@@ -236,29 +236,26 @@ for (const id of ['straightSword', 'dagger', 'shortbow']) {
 const layered = createRunState({
   seed: 901, classId: 'reaver', registries: R,
   derivedStatOptions: {
-    modeModifiers: { equipmentProfiles: {
-      daggerPierceAttack: { gainPerTier: 2 }, bowPierceAttack: { gainPerTier: 2 },
-    } },
     runModifiers: [{ equipmentProfiles: {
-      daggerPierceAttack: { gainPerTier: 3 }, bowPierceAttack: { gainPerTier: 3 },
+      daggerPierceAttack: { baseValue: 5 }, bowPierceAttack: { baseValue: 6 },
     } }],
     explicitOverride: { equipmentProfiles: {
-      daggerPierceAttack: { gainPerTier: 4 }, bowPierceAttack: { gainPerTier: 4 },
+      daggerPierceAttack: { baseValue: 6 }, bowPierceAttack: { baseValue: 7 },
     } },
   },
 });
-check(layered.equipmentProfileRuleSnapshot.profiles.daggerPierceAttack.gainPerTier === 4
-  && layered.equipmentProfileRuleSnapshot.profiles.bowPierceAttack.gainPerTier === 4,
-  'host override precedence snapshots both DEX profile rows', JSON.stringify(layered.equipmentProfileRuleSnapshot.profiles));
+check(layered.equipmentProfileRuleSnapshot.profiles.daggerPierceAttack.baseValue === 6
+  && layered.equipmentProfileRuleSnapshot.profiles.bowPierceAttack.baseValue === 7,
+  'host override precedence snapshots both AR profile rows', JSON.stringify(layered.equipmentProfileRuleSnapshot.profiles));
 layered.loadout.sets.leftHand[0] = null;
 layered.loadout.sets.rightHand[0] = 'dagger';
 stampDeck(R, layered);
 const layeredAttack = layered.deck.find((card) => card.equipmentRole === 'attack');
-check(layeredAttack.profileId === 'daggerPierceAttack' && layeredAttack.profileReceipt.value === 11,
+check(layeredAttack.profileId === 'daggerPierceAttack' && layeredAttack.profileReceipt.value === 8,
   'DEX dagger consumes the host-resolved override snapshot', JSON.stringify(layeredAttack));
 layered.loadout.sets.rightHand[0] = 'shortbow';
 stampDeck(R, layered);
-check(layeredAttack.profileId === 'bowPierceAttack' && layeredAttack.profileReceipt.value === 12,
+check(layeredAttack.profileId === 'bowPierceAttack' && layeredAttack.profileReceipt.value === 9,
   'DEX bow consumes the same host-resolved override snapshot', JSON.stringify(layeredAttack));
 
 const save = createSaveManager(createMemoryStorage());
@@ -267,7 +264,7 @@ const resumed = save.loadRun(R);
 const resumedAttack = resumed?.deck.find((card) => card.equipmentRole === 'attack');
 check(resumedAttack?.profileId === 'bowPierceAttack'
   && JSON.stringify(resumedAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt)
-  && resolveCard(R, resumedAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
+  && resolveCard(R, resumedAttack).effects.find((effect) => effect.op === 'damage')?.amount === 7,
   'save resume preserves DEX profile and calculation receipt identity', JSON.stringify(resumedAttack));
 
 const coop = createCoopCombat({
@@ -275,6 +272,8 @@ const coop = createCoopCombat({
   players: [{
     id: 'p1', classId: layered.class, maxHp: layered.maxHp, hp: layered.hp,
     maxMana: layered.maxMana, mana: layered.mana, maxStamina: layered.maxStamina, stamina: layered.stamina,
+    energyMax: layered.energyMax, drawPerTurn: layered.drawPerTurn,
+    attributes: layered.attributes, loadout: layered.loadout,
     deck: layered.deck, relicIds: [], flasks: [],
   }],
 });
@@ -282,16 +281,16 @@ const coopAttack = [...coop.players.get('p1').piles.hand, ...coop.players.get('p
   .find((card) => card.instanceId === layeredAttack.instanceId);
 check(coopAttack?.profileId === layeredAttack.profileId
   && JSON.stringify(coopAttack.profileReceipt) === JSON.stringify(layeredAttack.profileReceipt)
-  && resolveCard(R, coopAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
+  && resolveCard(R, coopAttack).effects.find((effect) => effect.op === 'damage')?.amount === 7,
   'co-op transport preserves DEX profile and calculation receipt identity', JSON.stringify(coopAttack));
 
 const driftProfiles = contentBundle.equipment.basicCardProfiles.map((row) => (
-  ['daggerPierceAttack', 'bowPierceAttack'].includes(row.id) ? { ...row, gainPerTier: 99 } : row
+  ['daggerPierceAttack', 'bowPierceAttack'].includes(row.id) ? { ...row, baseValue: 99 } : row
 ));
 const driftR = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, basicCardProfiles: driftProfiles } });
 stampDeck(driftR, layered);
-check(layeredAttack.profileReceipt.value === 12
-  && resolveCard(driftR, layeredAttack).effects.find((effect) => effect.op === 'damage')?.amount === 12,
+check(layeredAttack.profileReceipt.value === 9
+  && resolveCard(driftR, layeredAttack).effects.find((effect) => effect.op === 'damage')?.amount === 7,
   'live profile drift cannot rewrite the saved host snapshot', JSON.stringify(layeredAttack.profileReceipt));
 
 console.log(`\nequipment-stat-isolation: ${passed} passed, ${failed} failed`);

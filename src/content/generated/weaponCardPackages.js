@@ -111,12 +111,12 @@ export const weaponCardPackages = [
     "weaponId": "twinblade",
     "package": {
       "compatibility": "attack-v1",
-      "fillerAttackProfileId": "bladeAttack",
+      "fillerAttackProfileId": "twinbladeAttack",
       "weaponArtDefaults": [
         "twinbladeFlurry"
       ],
       "combatKit": {
-        "attackProfileId": "bladeAttack",
+        "attackProfileId": "twinbladeAttack",
         "guardProfileId": "weaponGuard",
         "artCardId": "twinbladeFlurry"
       }

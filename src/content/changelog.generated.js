@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1246",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Weapon cards now show and deal one direct calculation, with no hidden equipment tiers",
+    "detail": "Slashing Strike, Shield Defend and weapon techniques now read exactly as card base + that weapon or shield's rating + rarity: a straight sword with 3 AR makes Slashing Strike 5 + 3 + 0 = 8, while a shield with 5 DR makes Shield Defend 3 + 5 + 0 = 8. The removed tier and points-per-tier layer can no longer inflate, suppress or obscure those numbers, and another equipped item cannot lend its rating to the wrong card. Weapon AR now lives in the intended 0–4 range, every technique explicitly names the rating it uses, and the same result is preserved in previews, live combat, co-op, capped profiles, customized profile snapshots and older saves.",
+    "build": "0.7.1.374",
+    "pullRequest": 1246,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1246"
+  },
+  {
+    "id": "pr-1245",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "The character summary is a real card hand, and every stat can be read",
+    "detail": "The character card's lower numbers used to wrap as loose chips until the last line was cut through, while the armour, weapons and relic beside it had the card interaction the stat card was missing. Primary and derived stats now use the same aligned grid: HP, MP, SP and AP stay compact, six headline values fit on the face, and an ellipsis says when the full card has more. Every card in the summary now behaves alike: select it and the card moves down, leaving its information control on the layer above. The full character card keeps the normal card shape, spells out every acronym — Strength (STR), Health Points (HP), Attack Rating (AR) and the rest — and its inspection scrolls as one page instead of stretching the card or cutting the calculations off.",
+    "build": "0.7.1.372",
+    "pullRequest": 1245,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1245"
+  },
+  {
     "id": "pr-1241",
     "date": "2026-09-21",
     "group": "2026-09-21",

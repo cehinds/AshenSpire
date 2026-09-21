@@ -81,19 +81,20 @@ export function currentAdvancedKey(key) {
 // owner's own exported file would refuse to come back. These are dropped with
 // a named warning instead, and the file lands.
 //
-//   ratings.<id>.pointsPerIncrease / .gain  superseded by `<id>.multiplier`
+//   ratings.<id>.pointsPerIncrease / .gain / .multiplier
+//                                           superseded by the one global multiplier
 //                                           and the global `multiplier`
 //                                           (model/combatRatings.js).
 //   startingStats.autoScale                 the creation scale no longer
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain))$/;
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Rating points-per-increase and gain are now per-rating multipliers, and automatic conversion scaling was removed. Those entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -575,14 +576,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
-  if (configured.balance.combatRatings.enabled) {
-    for (const mode of configured.creationModes) {
-      mode.equipmentProfiles ||= {};
-      for (const profile of configured.equipment.basicCardProfiles) {
-        mode.equipmentProfiles[profile.id] = { ...mode.equipmentProfiles[profile.id], baseValue: profile.baseValue, gainPerTier: 0 };
-      }
-    }
-  }
   return configured;
 }
 

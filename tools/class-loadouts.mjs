@@ -8,6 +8,7 @@ import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loa
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 
@@ -149,36 +150,25 @@ check((magic?.effects.find((e) => e.op === 'damage')?.tags || []).includes('star
 check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
   'Ash Staff attack presents its explicit magic/starstone tag', JSON.stringify(magic?.cardTags));
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
-// THE DEFAULT CREATION MODE OWNS THIS NUMBER, NOT THE PROFILE ROW. SPEC §3.5
-// makes Magic `-6 + WIS`, and §5.1 makes `tuned` the default mode with a
-// contractual Starseer preset of 11/11/8/13/10 — so the shipped receipt is
-// -6 + 13 × 1 + 0 = 7. The profile row's own 2 + floor(INT / 5) is the
-// pre-`tuned` formula that `tuned` layers over, and it is still the answer for
-// `standard`/`pointbuy`, which is exactly the additive, save-safe promise §5.1
-// makes for the older modes. This row asserted that legacy answer against the
-// default mode and so shipped red from 9434b7c5 (2026-08-23) onward: the mode
-// moved and the expectation did not. The legacy answer keeps its own row below,
-// so neither side can move again without one of the two going red by name.
-check(attack?.profileReceipt?.base === -6 && attack.profileReceipt.sourceStat === 'wisdom'
-  && attack.profileReceipt.tier === 13 && attack.profileReceipt.gainPerTier === 1
-  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 7,
-  'Ash Staff tuned WIS receipt is exactly -6 + 13 + 0 = 7', JSON.stringify(attack?.profileReceipt));
-check(magic?.effects.find((e) => e.op === 'damage')?.amount === 7,
-  'resolved Ash Staff execution definition uses receipt value 7', JSON.stringify(magic?.effects));
-// §5.1: "both older modes must continue to validate exactly as authored". A
-// `standard` run carries no equipmentProfiles layer, so it reads the profile
-// row untouched — base 2, INT, per 5 — and that is the one place 2 + 2 + 0 = 4
-// is still the right answer.
+check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.rating?.id === 'pr'
+  && attack.profileReceipt.rating.attributeValue === 2
+  && attack.profileReceipt.rating.equipmentBase === 1
+  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 5,
+  'Ash Staff receipt is 2 base + 3 source PR + 0 rarity = 5', JSON.stringify(attack?.profileReceipt));
+check(magic?.effects.find((e) => e.op === 'damage')?.amount === 2,
+  'resolved Ash Staff definition carries base plus rarity before runtime PR', JSON.stringify(magic?.effects));
 const standardSeer = createRunState({ seed: 2, classId: 'starseer', registries: R, attributeMode: 'standard' });
 const standardReceipt = standardSeer.deck.find((c) => c.equipmentRole === 'attack')?.profileReceipt;
-check(standardReceipt?.base === 2 && standardReceipt.sourceStat === 'intelligence'
-  && standardReceipt.pointsPerTier === 5 && standardReceipt.tier === 2
-  && standardReceipt.rarityBonus === 0 && standardReceipt.value === 4,
-  'legacy standard mode still reads the authored INT profile: 2 + 2 + 0 = 4', JSON.stringify(standardReceipt));
+check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
+  && standardReceipt.rating.attributeValue === 12
+  && standardReceipt.rating.equipmentBase === 1
+  && standardReceipt.rarityBonus === 0 && standardReceipt.value === 15,
+  'standard mode uses the same direct PR formula against its saved attributes', JSON.stringify(standardReceipt));
 
 const C = createCombat({
   registries: R,
   rng: createRng(71),
+  ratingsRules: resolveCombatRatings({}, contentBundle),
   player: {
     classId: 'starseer', attributes: starseer.attributes, maxHp: starseer.maxHp, hp: starseer.hp,
     maxMana: starseer.maxMana, mana: starseer.mana, maxStamina: starseer.maxStamina, stamina: starseer.stamina,
@@ -187,6 +177,7 @@ const C = createCombat({
   },
   enemyIds: [R.enemies.ids()[0]],
 });
+for (const enemy of C.enemies) enemy.ratings = { ...enemy.ratings, poise: 0, ward: 0 };
 let liveAttack = [...C.piles.hand, ...C.piles.draw].find((c) => c.equipmentRole === 'attack');
 if (!C.piles.hand.includes(liveAttack)) {
   C.piles.draw.splice(C.piles.draw.indexOf(liveAttack), 1);
@@ -195,8 +186,8 @@ if (!C.piles.hand.includes(liveAttack)) {
 const previewDamage = previewCard(C, liveAttack.instanceId, 'e1').values.find((v) => v.op === 'damage').value;
 const hpBefore = C.enemies[0].hp;
 dispatch(C, { type: 'playCard', cardInstanceId: liveAttack.instanceId, targetId: 'e1' });
-check(previewDamage === 7 && hpBefore - C.enemies[0].hp === previewDamage,
-  'Ash Staff magic preview and execution share exact value 7', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
+check(previewDamage === 5 && hpBefore - C.enemies[0].hp === previewDamage,
+  'Ash Staff magic preview and execution share exact value 5', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
 
 // Stable role identity: a profile swap may change what the card resolves to,
 // never its instance id, upgrade flag, or signature card.
@@ -260,7 +251,7 @@ refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeck
   },
 });
 
-// Host-resolved equipment scaling must be snapshotted, not recomputed from
+// Host-resolved equipment profiles must be snapshotted, not recomputed from
 // whatever profile CSV happens to ship when a save resumes.
 let layered;
 let layeredError = '';
@@ -274,16 +265,16 @@ try {
     // would assert a layer that never lands. `tuned` supplies it instead, and
     // base === -6 below is the proof it did.
     derivedStatOptions: {
-      runModifiers: [{ equipmentProfiles: { staffMagicAttack: { gainPerTier: 3 } } }],
-      explicitOverride: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 4 } } },
+      runModifiers: [{ equipmentProfiles: { staffMagicAttack: { baseValue: 3 } } }],
+      explicitOverride: { equipmentProfiles: { staffMagicAttack: { baseValue: 4 } } },
     },
   });
 } catch (error) { layeredError = error.message; layered = createRunState({ seed: 3, classId: 'starseer', registries: R }); }
 const layeredAttack = layered.deck.find((c) => c.equipmentRole === 'attack');
-check(layeredAttack?.profileReceipt?.base === -6 && layeredAttack.profileReceipt.gainPerTier === 4
-  && layeredAttack.profileReceipt.value === 46,
-  'mode/run/explicit equipment scaling resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
-check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.gainPerTier === 4,
+check(layeredAttack?.profileReceipt?.base === 4 && layeredAttack.profileReceipt.rating?.id === 'pr'
+  && layeredAttack.profileReceipt.value === 7,
+  'run/explicit equipment profile resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
+check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.baseValue === 4,
   'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
 
 // A profile's tags are tagging.csv rows now, not a column on the profile, so
@@ -298,7 +289,7 @@ const cloneBundle = () => ({
   },
 });
 const driftBundle = cloneBundle();
-driftBundle.equipment.basicCardProfiles.find((p) => p.id === 'staffMagicAttack').gainPerTier = 99;
+driftBundle.equipment.basicCardProfiles.find((p) => p.id === 'staffMagicAttack').baseValue = 99;
 const driftR = createRegistries(driftBundle);
 const beforeDrift = layeredAttack.profileReceipt.value;
 let driftError = '';
@@ -320,7 +311,7 @@ contentRefuses('schema: negative finite cap is refused', /cap.*negative|non-nega
   (b) => { b.equipment.basicCardProfiles[0].cap = -1; });
 contentRefuses('schema: compatibility vocabulary is role-bound', /compatibility/i,
   (b) => { b.equipment.basicCardProfiles[0].compatibility = 'guard-v1'; });
-for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap', 'flavor', 'mods', 'compatibility']) {
+for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'ratingId', 'cap', 'flavor', 'mods', 'compatibility']) {
   contentRefuses(`schema completeness: missing ${field} is refused`, new RegExp(`basicCardProfiles.*${field}`, 'i'),
     (b) => { delete b.equipment.basicCardProfiles[0][field]; });
 }
@@ -334,12 +325,10 @@ for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageS
 // its defect becomes impossible to write, and this one has not.
 contentRefuses('tagging: a profile with no tag rows is refused', /basicCardProfiles.*carries no tag/i,
   (b) => { b.tagging = b.tagging.filter((row) => !(row.family === 'basicCardProfile' && row.objectId === 'staffMagicAttack')); });
-contentRefuses('schema product: zero pointsPerTier is refused', /pointsPerTier.*> 0/i,
-  (b) => { b.equipment.basicCardProfiles[0].pointsPerTier = 0; });
 contentRefuses('schema product: negative baseValue is refused', /baseValue.*non-negative/i,
   (b) => { b.equipment.basicCardProfiles[0].baseValue = -1; });
-contentRefuses('schema product: unknown scaling stat is refused', /scalingStat.*Dangling|unknown attributes/i,
-  (b) => { b.equipment.basicCardProfiles[0].scalingStat = 'luck'; });
+contentRefuses('schema product: unknown rating is refused', /ratingId.*luck|Expected one of/i,
+  (b) => { b.equipment.basicCardProfiles[0].ratingId = 'luck'; });
 contentRefuses('schema product: duplicate profile id is refused', /Duplicate profile id/i,
   (b) => { b.equipment.basicCardProfiles.push({ ...b.equipment.basicCardProfiles[0] }); });
 
