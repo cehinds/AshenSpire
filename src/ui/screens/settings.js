@@ -893,6 +893,56 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
+/**
+ * compactRowLabel(label, topic) → the label with the leading subjects the tab
+ * already names taken off.
+ *
+ * The row owns its full label; a tab is a heading, and a heading repeated in
+ * every line beneath it is noise. "Reaver — Strength" under the Reaver tab is
+ * "Strength"; "Levels · Enemy Scaling · HP — Per level" under Enemy scaling is
+ * "HP — Per level". Nothing is invented and nothing is recased: this only ever
+ * removes whole leading subjects, and only when they ARE the tab.
+ *
+ * A TAB NAME CAN SPAN SEVERAL SUBJECTS, and comparing one at a time missed
+ * every such tab. `Equipment drops` is one heading over rows that read
+ * "Equipment · Drops — Enabled": no single subject folds to "equipmentdrops",
+ * so all nine rows said the tab's name back to it. Rules → Skill xp and
+ * Rules → Skill class did the same. So a RUN of adjacent subjects is matched,
+ * longest reach first, which subsumes the single-subject case.
+ *
+ * A tab that renames what it covers still matches nothing, by design: Rewards
+ * → `Shop · Card prices` heads rows built from `shop.cardCost.*`, and "Card
+ * prices" is not "Card Cost". Those keep their full label rather than have
+ * this function guess.
+ *
+ * It never returns an empty label. A row whose every subject matches its tab
+ * keeps its leaf, and a leaf that is itself blank keeps the whole label,
+ * because a blank row is worse than a redundant one.
+ */
+export function compactRowLabel(label, topic) {
+  const text = String(label || '');
+  // The LAST em dash separates the leaf, so a leaf containing one of its own
+  // ("Enter: Bulwark — impact override" under a two-part subject) still splits
+  // where a reader would split it.
+  const cut = text.lastIndexOf(' — ');
+  if (cut < 0) return text;
+  const leaf = text.slice(cut + 3);
+  const subjects = text.slice(0, cut).split(/ · | — /);
+  const fold = (value) => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const want = fold(topic);
+  if (!want) return text;
+  let matched = -1;
+  for (let end = subjects.length - 1; end >= 0 && matched < 0; end -= 1) {
+    for (let start = 0; start <= end; start += 1) {
+      if (fold(subjects.slice(start, end + 1).join(' ')) === want) { matched = end; break; }
+    }
+  }
+  if (matched < 0) return text;
+  const kept = subjects.slice(matched + 1);
+  if (kept.length) return `${kept.join(' · ')} — ${leaf}`;
+  return leaf.trim() || text;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // W1a: help only where the effect is not obvious. Condition and status lines
   // are feedback, and settingsRowShowsHelp always keeps them.
@@ -1828,7 +1878,7 @@ function ratingPreviewHtml(settings, ratingId, previewAttributes) {
     };
   });
   const sum = terms.reduce((total, term) => total + term.value, 0);
-  const scaled = Math.floor(sum * config.multiplier * rule.multiplier + 1e-9);
+  const scaled = Math.floor(sum * config.multiplier + 1e-9);
   const total = rule.base + scaled;
   const expanded = terms.filter((term) => term.weight !== 0)
     .map((term) => `floor(${term.points} ${term.label} × ${term.weight})`).join(' + ') || '0 from attributes';
@@ -1846,8 +1896,8 @@ function ratingPreviewHtml(settings, ratingId, previewAttributes) {
           : 'Potency Rating is added to magical card damage, Block, and healing.';
   return `<div class="set-example" data-rating-example="${esc(ratingId)}">
     <div class="set-example-head"><strong>${esc(heading)}</strong><span>${esc(source)}</span></div>
-    <code>${esc(expanded)} = ${sum}; floor(${sum} × ${config.multiplier} all ratings × ${rule.multiplier} ${esc(combatRatingNames[ratingId])}) + ${rule.base} base = <b>${total}</b></code>
-    <p>${esc(meaning)} Weights convert each attribute separately and round down before the multipliers; a weight of 0 ignores that attribute.</p>
+    <code>${esc(expanded)} = ${sum}; floor(${sum} × ${config.multiplier} all ratings) + ${rule.base} base = <b>${total}</b></code>
+    <p>${esc(meaning)} Weights convert each attribute separately and round down before the global multiplier; a weight of 0 ignores that attribute.</p>
   </div>`;
 }
 
@@ -1912,17 +1962,23 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
           + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map((row, rowIndex) => {
-            const compact = { ...row };
+            // SHORTEN WHAT THE TAB ALREADY SAYS — and only that. The label
+            // itself has ONE home (`leafRows` in model/advancedConfig.js); a
+            // branch here used to rebuild every generated balance row's label
+            // out of `row.key`, splitting camelCase without capitalising it,
+            // which is how "hand Max" and "levels · player Starting Level"
+            // came to sit two rows under "HP — base amount" in one menu. That
+            // is gone. What is left is presentation: under a tab named
+            // "Enemy scaling", a row called "Levels · Enemy Scaling · HP — Per
+            // Level" says the tab's own name back to the reader, and the class
+            // tabs have always compacted that away. Now every tab does.
+            const compact = { ...row, label: compactRowLabel(row.label, sub.id) };
             if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
-              compact.label = row.label.replace(/^.*? — /, '');
               // The class's own topic already says which class this is, so the
               // note goes — EXCEPT the sentence naming the kit floor, which is
               // the only place the row's minimum explains itself. Dropping it
               // left the floor a number from nowhere.
               compact.note = row.floorNote || '';
-            } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
-              compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
-              compact.note = 'Applies to a new run.';
             }
             const previousSection = rowIndex > 0 ? sub.rows[rowIndex - 1].settingSection : null;
             const heading = row.settingSection && row.settingSection !== previousSection

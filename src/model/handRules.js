@@ -33,7 +33,16 @@ export function handRulesRows(attributes = []) {
   });
   const addGroupRows = (group, topic) => {
     const subject = group === 'capacity' ? 'hand capacity' : group === 'starting' ? 'opening hand' : 'turn draw';
-    const labels = { base: group === 'capacity' ? 'Base hand capacity' : group === 'starting' ? 'Base opening hand' : 'Base cards drawn per turn', statEnabled: `Scale ${subject} from an attribute`, stat: 'Attribute used for scaling', baseline: 'Attribute points before bonuses begin', pointsPerCard: 'Attribute points per extra card', minimum: 'Minimum cards', maximum: 'Maximum cards' };
+    const labelSubject = subject[0].toUpperCase() + subject.slice(1);
+    const labels = {
+      base: group === 'capacity' ? 'Base hand capacity' : group === 'starting' ? 'Base opening hand' : 'Base cards drawn per turn',
+      statEnabled: `Scale ${subject} from an attribute`,
+      stat: `${labelSubject} — attribute used for scaling`,
+      baseline: `${labelSubject} — attribute points before bonuses begin`,
+      pointsPerCard: `${labelSubject} — attribute points per extra card`,
+      minimum: `${labelSubject} — minimum cards`,
+      maximum: `${labelSubject} — maximum cards`,
+    };
     for (const [field, def] of Object.entries(handRulesDefaults[group])) {
       const extra = {};
       if (field === 'stat') Object.assign(extra, { type: 'choice', choices: attributes.map(a => a.id), choiceLabels: Object.fromEntries(attributes.map(a => [a.id, `${a.label} (${a.shortLabel})`])) });

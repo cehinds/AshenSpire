@@ -124,7 +124,7 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 478, 'all 478 shipped objects: existing 462 plus four shared armor sets projected into all four classes');
+  assert.equal(counted, 479, 'all 479 shipped objects, including projected shared armor sets');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

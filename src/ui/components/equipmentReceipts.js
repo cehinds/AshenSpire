@@ -36,7 +36,7 @@ const sourcesHtml = (sources, empty) => (sources.length
 export function renderPlayerPoise(receipt) {
   if (receipt.ratings) return `<section class="player-poise-receipt">${eyebrowHtml('Ratings, Poise & Ward')}`
     + Object.entries(receipt.ratings).map(([id, value]) => pairHtml(id.toUpperCase(), `<strong>${value}</strong>`)).join('')
-    + receipt.ratingSources.map(source => flavourHtml(`${source.name}: ${Object.entries(source).filter(([id, value]) => id !== 'name' && value).map(([id, value]) => `${id.toUpperCase()} +${value}`).join(', ') || 'No rating bonus'}`)).join('')
+    + receipt.ratingSources.map(source => flavourHtml(`${source.name}: ${['ar', 'dr', 'pr', 'poise', 'ward'].filter(id => source[id]).map(id => `${id.toUpperCase()} +${source[id]}`).join(', ') || 'No rating bonus'}`)).join('')
     + flavourHtml(receipt.note) + '</section>';
   return `<section class="player-poise-receipt">${eyebrowHtml(receipt.label)}`
     + sourcesHtml(receipt.sources, 'No item or relic contribution.')
@@ -73,7 +73,8 @@ export function renderRoleCopies(surface) {
     attrs: ` data-role="${esc(row.role)}"`,
     nameHtml: `${esc(row.profile.displayName)} <em class="as-pill role-copy-count">x${row.copies}</em>`,
     hintHtml: `${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}`,
-    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier} + ${row.receipt.rarityBonus} rarity =`, `<strong>${row.receipt.value}</strong>`),
+    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity =`,
+    `<strong>${row.receipt.value}</strong>`),
   })).join('');
 }
 

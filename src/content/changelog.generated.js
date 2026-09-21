@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1246",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Weapon cards now show and deal one direct calculation, with no hidden equipment tiers",
+    "detail": "Slashing Strike, Shield Defend and weapon techniques now read exactly as card base + that weapon or shield's rating + rarity: a straight sword with 3 AR makes Slashing Strike 5 + 3 + 0 = 8, while a shield with 5 DR makes Shield Defend 3 + 5 + 0 = 8. The removed tier and points-per-tier layer can no longer inflate, suppress or obscure those numbers, and another equipped item cannot lend its rating to the wrong card. Weapon AR now lives in the intended 0–4 range, every technique explicitly names the rating it uses, and the same result is preserved in previews, live combat, co-op, capped profiles, customized profile snapshots and older saves.",
+    "build": "0.7.1.374",
+    "pullRequest": 1246,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1246"
+  },
+  {
+    "id": "pr-1245",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "The character summary is a real card hand, and every stat can be read",
+    "detail": "The character card's lower numbers used to wrap as loose chips until the last line was cut through, while the armour, weapons and relic beside it had the card interaction the stat card was missing. Primary and derived stats now use the same aligned grid: HP, MP, SP and AP stay compact, six headline values fit on the face, and an ellipsis says when the full card has more. Every card in the summary now behaves alike: select it and the card moves down, leaving its information control on the layer above. The full character card keeps the normal card shape, spells out every acronym — Strength (STR), Health Points (HP), Attack Rating (AR) and the rest — and its inspection scrolls as one page instead of stretching the card or cutting the calculations off.",
+    "build": "0.7.1.372",
+    "pullRequest": 1245,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1245"
+  },
+  {
+    "id": "pr-1241",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Advanced settings read as one menu again",
+    "detail": "Half the rows in Advanced were named by a person — HP — base amount, Reaver — Strength — and the other half were named by the game, out of the setting's own internal spelling, so hand Max and levels · player Starting Level sat two rows under HP — base amount in the same list. Worse, twelve rows under Enemy scaling were all called Per Level, because only the last word of the name was ever used and the screen was patching the rest back in afterwards. Every row is now named once, in one place, and in the voice the hand-written ones always used: the thing a row belongs to is a heading — Levels · Enemy Scaling — and the row itself is a phrase — Hand max, Starting cinders, HP — Per level — which is how Resistance cap and Strength required have always read. A group no longer repeats its own name in every line beneath it, whether that name is one word or three: the Reaver tab simply lists Strength, Dexterity, Base HP, Equipment drops lists Enabled and Chance — Treasure, and Skill xp lists Base and Growth. Poise and Ward are spelled like the words they are instead of shouting POISE and WARD across seven hundred rows. Two rows have left the screen: energy and draw under Starting values, which looked like they set your actions and your opening hand and set nothing at all — the rows that really do are Actions and Draw under Stat conversions, a group away, which is why the two never agreed. Retiring them also takes them out of Reset this group, so a profile that already stored one keeps it, invisible and inert. A settings file that still names the old two loads exactly as before.",
+    "build": "0.7.1.367",
+    "pullRequest": 1241,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1241"
+  },
+  {
     "id": "pr-1240",
     "date": "2026-09-21",
     "group": "2026-09-21",
