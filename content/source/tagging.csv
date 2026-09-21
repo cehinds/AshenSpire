@@ -332,6 +332,7 @@ armour,rogue,shadow,venom
 basicCardProfile,,unarmedAttack,basic
 basicCardProfile,,shieldAttack,guard
 basicCardProfile,,bladeAttack,blade
+basicCardProfile,,twinbladeAttack,blade
 basicCardProfile,,daggerPierceAttack,pierce
 basicCardProfile,,daggerPierceAttack,flourish
 basicCardProfile,,bowPierceAttack,pierce
@@ -677,6 +678,7 @@ basicCardProfile,,unarmedAttack,fx:utility
 basicCardProfile,,shieldAttack,fx:guard
 basicCardProfile,,shieldAttack,fx:shield
 basicCardProfile,,bladeAttack,fx:blade
+basicCardProfile,,twinbladeAttack,fx:blade
 basicCardProfile,,daggerPierceAttack,fx:pierce
 basicCardProfile,,daggerPierceAttack,fx:flourish
 basicCardProfile,,bowPierceAttack,fx:pierce
@@ -1050,7 +1052,9 @@ basicCardProfile,,unarmedAttack,damage:blunt
 basicCardProfile,,shieldAttack,source:weapon
 basicCardProfile,,shieldAttack,delivery:melee
 basicCardProfile,,bladeAttack,source:weapon
+basicCardProfile,,twinbladeAttack,source:weapon
 basicCardProfile,,bladeAttack,delivery:melee
+basicCardProfile,,twinbladeAttack,delivery:melee
 basicCardProfile,,daggerPierceAttack,source:weapon
 basicCardProfile,,daggerPierceAttack,delivery:melee
 basicCardProfile,,daggerPierceAttack,damage:piercing
@@ -1613,6 +1617,7 @@ armour,rogue,shadow,classification.armour
 basicCardProfile,,unarmedAttack,classification.basicCardProfile
 basicCardProfile,,shieldAttack,classification.basicCardProfile
 basicCardProfile,,bladeAttack,classification.basicCardProfile
+basicCardProfile,,twinbladeAttack,classification.basicCardProfile
 basicCardProfile,,daggerPierceAttack,classification.basicCardProfile
 basicCardProfile,,bowPierceAttack,classification.basicCardProfile
 basicCardProfile,,staffMagicAttack,classification.basicCardProfile

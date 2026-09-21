@@ -3,7 +3,8 @@ import { tokenRe } from './validate.js';
 import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
 } from './cardMounts.js';
-import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
+import { deriveStat } from './derivedStats.js';
+import { defaultRatingFormula, effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -15,8 +16,8 @@ import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgr
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
 import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 
-const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
-const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
+const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
+const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
 const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
@@ -398,10 +399,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!registries.cards.has(profile.baseCardId)) problems.push(`${profile.id}: unknown base card '${profile.baseCardId}'`);
     if (!DAMAGE_SCHOOLS.includes(profile.damageSchool)) problems.push(`${profile.id}: unknown damage school '${profile.damageSchool}'`);
     if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
-    if (!attributeIds.has(profile.scalingStat)) problems.push(`${profile.id}: unknown scalingStat '${profile.scalingStat}'`);
-    if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
-    if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
-    if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
+    if (!ratingIds.includes(profile.ratingId)) problems.push(`${profile.id}: unknown ratingId '${profile.ratingId}'`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     // The service owns what a family may carry, so this reads the same rule
@@ -1030,19 +1028,29 @@ export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
 /** Validate and clone a saved equipment scaling snapshot without live-data repair. */
 export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
-  if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
+  if (![1, EQUIPMENT_PROFILE_SNAPSHOT_VERSION].includes(snapshot.snapshotVersion)) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
   if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
   snapshot = structuredClone(snapshot);
+  if (snapshot.snapshotVersion === 1) {
+    const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => {
+      const live = profileRule(profile);
+      const saved = snapshot.profiles[profile.id] || {};
+      const preserved = Object.fromEntries(
+        [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility']
+          .filter((key) => saved[key] !== undefined && key !== 'ratingId')
+          .map((key) => [key, saved[key]]),
+      );
+      return [profile.id, { ...live, ...preserved }];
+    }));
+    snapshot = { snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses: snapshot.rarityBonuses };
+  }
   const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
   for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
   for (const profile of registries.equipment.basicCardProfiles || []) {
     const rule = snapshot.profiles[profile.id];
     if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
     if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
-    if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
-    if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
-    if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
-    if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
+    if (!ratingIds.includes(rule.ratingId)) throw new Error(`${profile.id}.ratingId '${rule.ratingId}' is unknown`);
     if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
     if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
     // Version-1 snapshots predate combat carriers. They adopt the live row
@@ -1089,16 +1097,14 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const profile = row.profile;
   const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
   if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-  // Ratings-enabled runs retire equipment-card attribute tiers by snapshotting
-  // gainPerTier as zero. Do not derive or expose a meaningless "stat tier x 0"
-  // term: the card keeps its authored base/rarity while AR/PR/DR/Poise/Ward
-  // apply their direct weighted-attribute formula in combatRatings.js.
-  const tier = rule.gainPerTier === 0
-    ? null
-    : deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  const raw = rule.baseValue + (tier?.value || 0) + rarityBonus;
+  const ratingConfig = registries.balance?.combatRatings || defaultRatingFormula;
+  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId);
+  rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
+  const uncappedEffectBase = rule.baseValue + rarityBonus;
+  const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
+  const raw = uncappedEffectBase + rating.value;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
   if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
   return {
@@ -1108,14 +1114,15 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
     base: rule.baseValue,
     rarity,
     rarityBonus,
-    ...(tier || {}),
+    rating,
+    effectBase,
     raw,
     cap: rule.cap,
     value,
   };
 }
 
-/** Calculation receipts; legacy nonzero tier arithmetic is owned by derivedStats.js. */
+/** Calculation receipts for card base + source-equipment rating + rarity. */
 export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
   const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
@@ -2901,6 +2908,10 @@ export function stampDeck(registries, run, cards, {
       if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
       if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
+      inst.ratingId = row.receipt.rating.id;
+      inst.ratingValue = row.receipt.rating.value;
+      if (Number.isFinite(row.receipt.cap)) inst.ratingCap = row.receipt.cap;
+      else delete inst.ratingCap;
       inst.profileReceipt = { ...row.receipt };
       const sourceArmamentId = row.piece && row.piece.id;
       if (sourceArmamentId) {
@@ -2939,8 +2950,8 @@ export function stampDeck(registries, run, cards, {
     const mods = cardMods(registries, run.loadout, run.class, {
       attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
-    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
-      : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
+    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.effectBase}`
+      : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
     const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;

@@ -29,7 +29,7 @@ test('modifier copy preserves assignment versus signed changes and authored mech
 });
 test('requirements and hybrid item types retain authored identity', () => {
   const m=equipmentCardModel(r,r.equipment.armaments.find(p=>p.id==='greatsword'));
-  assert.match(m.requirement,/STR 12/);
+  assert.match(m.requirement,/STR 3/);
   const hybrid=equipmentCardModel(r,r.equipment.armaments.find(p=>p.id==='parryDagger'));
   assert.match(hybrid.type,/Blade \/ Shield/);
   assert.match(hybrid.typeExplanation,/Blade/);

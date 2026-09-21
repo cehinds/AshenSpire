@@ -1709,6 +1709,12 @@ export const tagging = [
   {
     "family": "basicCardProfile",
     "scope": "",
+    "objectId": "twinbladeAttack",
+    "tagId": "blade"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
     "objectId": "daggerPierceAttack",
     "tagId": "pierce"
   },
@@ -3768,6 +3774,12 @@ export const tagging = [
     "family": "basicCardProfile",
     "scope": "",
     "objectId": "bladeAttack",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "twinbladeAttack",
     "tagId": "fx:blade"
   },
   {
@@ -5999,7 +6011,19 @@ export const tagging = [
   {
     "family": "basicCardProfile",
     "scope": "",
+    "objectId": "twinbladeAttack",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
     "objectId": "bladeAttack",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "twinbladeAttack",
     "tagId": "delivery:melee"
   },
   {
@@ -9282,6 +9306,12 @@ export const tagging = [
     "family": "basicCardProfile",
     "scope": "",
     "objectId": "bladeAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "twinbladeAttack",
     "tagId": "classification.basicCardProfile"
   },
   {

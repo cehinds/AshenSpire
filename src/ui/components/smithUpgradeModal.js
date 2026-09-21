@@ -280,9 +280,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
       const facts = el('div', { class: 'smith-card-facts' }, [
         eyebrow('Current → upgraded'),
         ...row.changes.map((change) => prose(change)),
-        row.scaling
-          ? flavour(`Scales with ${row.scaling.label}: +${row.scaling.gainPerTier} per ${row.scaling.pointsPerTier} points · current ${row.scaling.actual == null ? '?' : row.scaling.actual}`, { class: 'smith-scaling' })
-          : flavour('No attribute scaling.', { class: 'smith-scaling' }),
+        row.rating
+          ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
+          : flavour('No source rating.', { class: 'smith-scaling' }),
         flavour(`Source: ${selected.name}`),
       ]);
       const detail = el('div', { class: `smith-fold-detail${row.reference ? '' : ' no-card'}` }, [
