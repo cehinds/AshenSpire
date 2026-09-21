@@ -31,7 +31,6 @@ test('Progression is the one driver: pool first, then each class, and the tier s
     'Lowest a stat may be set to',
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
-    'Automatically scale stat conversions',
   ]);
   assert.ok(!assign.rows.some(row => row.key === 'statTierSize'), 'points, not tiers');
 

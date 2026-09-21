@@ -412,12 +412,6 @@ export function startingStatRows(bundle) {
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
-  add(PREFIX + 'autoScale', true, 'Automatically scale stat conversions', 'Assign points', {
-    // "Pool" now names the OTHER row. The ratio is total ÷ old total, so
-    // moving only the points available to assign leaves it at 1 and the
-    // conversions do not move at all.
-    note: 'On: conversion thresholds follow each mode’s total points relative to its original total, composing with any scale the mode already ships with. Off: use the conversion values below, and the mode’s own shipped scale, unchanged. Whole-number attributes can still cause rounding differences. Applies to new runs.',
-  });
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
     for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
@@ -426,7 +420,12 @@ export function startingStatRows(bundle) {
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
         min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
         configPath: ['derivedStatRules', 'rules', id, field],
-        note: `Uses ${rule.sourceStat}. Automatic scaling adjusts the points required; base and gain stay unchanged.`,
+        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
+        // scaling adjusted the points required — the behaviour this row's own
+        // panel no longer has. A note describing a retired mechanism is worse
+        // than none: it tells a player the number they typed is not the number
+        // in force, which is exactly backwards now.
+        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
       });
     }
   }
@@ -632,13 +631,15 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       };
     }
   }
-  // THE MODE'S OWN SHIPPED SCALE IS A FACTOR, NOT A DEFAULT TO OVERWRITE. The
-  // `lean` mode ships one (8/35) so the authored pools mean what they meant on
-  // the tuned2 span; a retune here has to COMPOSE with it, or turning the total
-  // up to 16 would replace a 0.23 with a 2 and quadruple every derived pool.
-  if (settings[PREFIX + 'autoScale'] !== false && ratio !== 1) {
-    next.statConversionScale = (Number.isFinite(mode.statConversionScale) ? mode.statConversionScale : 1) * ratio;
-  }
+  // NO `statConversionScale` IS WRITTEN ANY MORE (owner, 2026-09-21). The mode
+  // used to record `total ÷ oldTotal` here, and every formula downstream
+  // DIVIDED by it: ratings, derived pools and hand sizes all read an attribute
+  // multiplied by the inverse, so a 12-point character was priced as a
+  // 35-point one and the settings panel's own weights described arithmetic the
+  // game did not do. The ratio still shapes the FLOOR, CEILING and PRESETS
+  // above — where it is visible as whole attribute points on the sheet — and
+  // stops there. A smaller pool now means smaller numbers, which is what
+  // shrinking it says.
   return { mode: next, presets, refusals };
 }
 

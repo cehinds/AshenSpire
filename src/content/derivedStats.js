@@ -18,14 +18,14 @@ export const derivedStatRules = {
   },
   rules: {
     energy: {
-      base: 2,
+      base: 3,
       sourceStat: 'dexterity',
       pointsPerTier: 5,
       gainPerTier: 1,
       cap: null,
     },
     draw: {
-      base: 4,
+      base: 3,
       sourceStat: 'intelligence',
       pointsPerTier: 5,
       gainPerTier: 1,
@@ -38,7 +38,7 @@ export const derivedStatRules = {
       // generic derived-stat engine express the per-point coefficient exactly.
       // Relic resource.flat rows fold into base; equipment max-HP mods and the
       // persisted adjustment remain the two external addends at the run door.
-      base: 20,
+      base: 30,
       sourceStat: 'constitution',
       pointsPerTier: 1,
       gainPerTier: 4,
@@ -51,7 +51,7 @@ export const derivedStatRules = {
     stamina: {
       // Ruleset 5: the pool IS Constitution, on the same one-point tier as
       // Mana's — the body's own reserve rather than a tier of five.
-      base: 0,
+      base: 1,
       sourceStat: 'constitution',
       pointsPerTier: 1,
       gainPerTier: 1,
@@ -62,7 +62,7 @@ export const derivedStatRules = {
       // not carry a second base pool that can drift from this row. Under
       // ruleset 5 the pool IS Wisdom, which is what lets a signature art ask
       // for two points of it on the first floor (plan phase 9).
-      base: 0,
+      base: 1,
       sourceStat: 'wisdom',
       pointsPerTier: 1,
       gainPerTier: 1,
@@ -75,7 +75,7 @@ export const derivedStatRules = {
     // that stamps the meter reads this row. Armour and relics remain the two
     // external addends, exactly as HP's are.
     poise: {
-      base: 0,
+      base: 1,
       sourceStat: 'constitution',
       pointsPerTier: 1,
       gainPerTier: 1,

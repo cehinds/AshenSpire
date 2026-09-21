@@ -44,7 +44,6 @@ export function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
-    ...(combat.ratingAttributeScale !== undefined ? { ratingAttributeScale: combat.ratingAttributeScale } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
@@ -106,7 +105,13 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     registries,
     rng,
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
-    ...(saved.ratingAttributeScale !== undefined ? { ratingAttributeScale: saved.ratingAttributeScale } : {}),
+    // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
+    // saved by an earlier build holds the creation-scale divisor its ratings
+    // and hand sizes were read through; nothing divides an attribute any more,
+    // so restoring it would put a number into the live combat that no formula
+    // reads and the next save would write out again. The resumed fight is
+    // rated by the one calculation, like every other. `combatSnapshotProblems`
+    // still tolerates the field on disk, so an older save still loads.
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,

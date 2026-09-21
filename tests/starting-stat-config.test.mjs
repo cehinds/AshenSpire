@@ -5,6 +5,7 @@ import { configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile 
 import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
+import { deriveStat } from '../src/model/derivedStats.js';
 
 // The pool dial is exercised through the mode creation OFFERS. It used to be
 // driven here through `pointbuy`, which is retired — and a retired mode is no
@@ -22,40 +23,66 @@ test('pool changes redistribute every class exactly and leave authored content a
   assert.equal(contentBundle.creationModes.find(m => m.id === 'lean').bonusPool, 3);
 });
 
-test('automatic scaling changes thresholds; manual mode keeps configured thresholds', () => {
+// ---- the pool converts nothing (owner, 2026-09-21) ------------------------
+//
+// "why are the stats so high?" — a character was scored on attributes it did
+// not have. The mode carried `statConversionScale`, and the ratings receipt,
+// the derived rows and the hand-size rule all DIVIDED by it, so a lean
+// character entered every formula at five times the value on its own sheet.
+// The ratio still shapes floors, ceilings and presets, where it is visible as
+// whole attribute points; it reaches no formula. A configured threshold is now
+// the threshold a run is born with, whatever pool it was born on.
+test('a retuned pool moves the presets and leaves every threshold alone', () => {
   const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
-  const auto = configuredContentBundle(contentBundle, settings);
-  const manual = configuredContentBundle(contentBundle, { ...settings, 'gameConfig.startingStats.autoScale': false });
-  // THE RETUNE COMPOSES WITH THE MODE'S OWN SCALE, IT DOES NOT REPLACE IT.
-  // `lean` ships a fifth; 10 points against its authored 8 is a ratio of 1.25,
-  // so automatic scaling lands on a quarter. Switching it off leaves the
-  // mode's shipped fifth exactly where it was authored — the point of the
-  // switch is the RETUNE, not the mode.
-  assert.equal(auto.creationModes.find(m => m.id === 'lean').statConversionScale, 0.25);
-  assert.equal(manual.creationModes.find(m => m.id === 'lean').statConversionScale, 1 / 5);
-  assert.equal(manual.derivedStatRules.rules.hp.pointsPerTier, 2);
-  const a = createRunState({ registries: createRegistries(auto), classId: 'reaver', seed: 42, attributeMode: 'lean' });
-  const b = createRunState({ registries: createRegistries(manual), classId: 'reaver', seed: 42, attributeMode: 'lean' });
-  assert.equal(Object.values(a.attributes).reduce((x,y) => x+y), 10);
-  // A wider tier is fewer tiers: automatically scaling UP to a quarter buys
-  // less per point than the shipped fifth the manual run keeps. The direction
-  // is not the property — that the two differ, and that each run carries the
-  // threshold it was born with, is.
-  assert(b.maxHp > a.maxHp);
+  const wide = configuredContentBundle(contentBundle, settings);
+  assert.equal(wide.creationModes.find(m => m.id === 'lean').statConversionScale, undefined,
+    'no mode carries a conversion scale, shipped or retuned');
+  assert.equal(wide.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
+
+  const registries = createRegistries(wide);
+  const a = createRunState({ registries, classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  assert.equal(Object.values(a.attributes).reduce((x, y) => x + y), 10);
+
+  // THE THRESHOLD THE RUN WAS BORN WITH IS THE ONE THAT WAS CONFIGURED. It
+  // used to be multiplied by the mode's scale on its way into the snapshot, so
+  // the row a save carried was never the row the panel showed.
+  const row = a.derivedStatRuleSnapshot.rules.rules.hp;
+  assert.equal(row.pointsPerTier, 2);
+  const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
+    { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
+  assert.equal(receipt.value, row.base + row.gainPerTier * Math.floor(a.attributes.constitution / row.pointsPerTier));
+
+  // A bigger pool buys more, which is the whole of what a pool now does.
+  const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  const wider = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, { ...settings, [poolKey]: 40 })), classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  assert(wider.maxHp > narrow.maxHp, 'fewer points buy less HP');
 });
 
-test('pool and conversion settings round trip and reject impossible budgets', () => {
-  const settings = { [poolKey]: 10, 'gameConfig.startingStats.autoScale': false };
+test('pool settings round trip, reject impossible budgets, and tolerate the retired scaling dial', () => {
+  const settings = { [poolKey]: 10 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [legacyPoolKey]: 2 }), contentBundle));
+
+  // AN OLDER EXPORT STILL IMPORTS. `parseAdvancedConfigFile` refuses an unknown
+  // key outright, which would have made the owner's own exported file
+  // unimportable the day these dials were removed.
+  const stale = JSON.stringify({
+    schemaVersion: JSON.parse(advancedConfigExport(settings)).schemaVersion,
+    game: 'Ashen Spire',
+    overrides: { ...settings, 'gameConfig.startingStats.autoScale': false, 'gameConfig.combatRatings.ratings.ar.gain': 2 },
+  });
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(stale, contentBundle, {}, [], warnings), settings);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /multipliers/);
 });
 
 
-test('stat-driven hand sizes use normalized attributes when auto scaling is enabled', async () => {
+test('stat-driven hand sizes read the attribute the sheet shows', async () => {
   const { scaledCards } = await import('../src/model/handRules.js');
   const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
-  assert.equal(scaledCards(rule, { intelligence: 2 }, 0.2), 5);
   assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
+  assert.equal(scaledCards(rule, { intelligence: 10 }), 5);
 });
 
 // ---- the owner's report, as two properties (2026-09-20) --------------------
@@ -194,19 +221,27 @@ test('the shipped default IS his sentence: 1 in every stat and 3 to assign', () 
   assert.deepEqual(attributeContentProblems(contentBundle), []);
 });
 
-test('a stock lean character is the stock tuned character it replaced', () => {
-  // The scale is a fifth — one lean point IS one tuned tier of five — so a
-  // character who assigns nothing has the pools tuned2 opened with. This is the
-  // property that keeps "low stats" from silently meaning "a third less action
-  // economy"; 8/35 (the ratio of the totals) failed it at 2 Actions and 4 draw.
+// RESTATED WHEN THE CONVERSION SCALE WAS REMOVED (owner, 2026-09-21). #1238
+// held the lean character's POOLS level with tuned2's by dividing every
+// threshold by five — one lean point bought one tuned tier. That divisor is
+// gone: a formula reads the attribute the sheet shows, so a lean point buys a
+// lean point and the pools a stock character opens on are a fifth of what
+// #1238 shipped. The property worth holding is no longer "the same pools as
+// tuned2" — it is that every pool is the authored row read against the
+// attribute, with nothing in between.
+test('a stock lean character is priced by the rows, with no scale in between', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ registries, classId: 'reaver', seed: 7, attributeMode: 'lean' });
-  assert.equal(run.attributeModeSnapshot.statConversionScale, 1 / 5);
-  assert.equal(run.energyMax, 3, 'three Actions a turn, as under tuned2');
-  assert.equal(run.drawPerTurn, 5, 'five cards a turn, as under tuned2');
-  // Every attribute the Reaver leaves at the baseline converts exactly as a
-  // tuned2 attribute at ITS baseline of five did: Mana and Stamina are 5.
-  assert.equal(run.maxMana, 5);
+  assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
+  const rules = contentBundle.derivedStatRules.rules;
+  const pool = (id, attribute) => rules[id].base + rules[id].gainPerTier * Math.floor(attribute / rules[id].pointsPerTier);
+  assert.equal(run.energyMax, pool('energy', run.attributes.dexterity));
+  assert.equal(run.drawPerTurn, pool('draw', run.attributes.intelligence));
+  assert.equal(run.maxMana, pool('mana', run.attributes.wisdom));
+  // The numbers those rows now state, on the lean span: Mana is its base of 1
+  // plus Wisdom, and Actions and draw sit at their base of 3 until a point
+  // clears a five-point tier no lean character can reach.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 2]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {
@@ -420,15 +455,19 @@ test('an attribute card never promises more than the rule pays', async () => {
     }).find(row => row.id === 'constitution');
     return { card, run, registries };
   };
-  // The shipped fifth: a point is five tiers of four HP.
-  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +20 every 1 point'));
+  // The authored row, read against the attribute the sheet shows: four HP a
+  // point. It used to read +20, because the lean mode divided the tier by five
+  // before anything saw it (#1238); with that divisor gone the card states the
+  // row.
+  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +4 every 1 point'));
 
-  // A SCALE THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. At a total of 24 the
-  // ratio is 3 and the tier becomes 0.6, where one point buys ONE tier, not
-  // two: `floor((con + 1) / 0.6) - floor(con / 0.6)` is 1 at the preset. The
-  // card said +8 while the run paid +4 — a card that promises more than the
-  // rule pays is worse than one that says nothing.
-  const wide = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.total': 24 });
+  // A THRESHOLD THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. A tier of 0.6
+  // buys ONE tier for some points and two for others: `floor((con + 1) / 0.6)
+  // − floor(con / 0.6)` is 1 at the preset. The card said more than the run
+  // paid — a card that promises more than the rule pays is worse than one that
+  // says nothing. The pool no longer produces such a tier; the Advanced
+  // threshold row still can, so the property is driven by that row instead.
+  const wide = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 0.6 });
   const { card, run, registries } = hpLine(wide);
   const stated = /HP \+(\d+) every 1 point/.exec(card.reveal.lines.find(line => line.startsWith('HP ')))?.[1];
   const raised = createRunState({
