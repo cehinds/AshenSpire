@@ -1,15 +1,29 @@
 # Optional attribute minima for equipping an owned equipment item. Hand and category
 # continue to live on weapons.csv and equipSlots.csv; this table adds no class.
+#
+# RESTATED FOR THE LEAN SCALE (owner, 2026-09-20: "the default stat for each stat
+# is 1 and assign allows a user to assign 3 points ... reduce equipment
+# requirements across the board for this low stat environment"). The numbers
+# below were authored against the tuned2 span 3-12; the `lean` creation mode
+# opens every attribute at 1 and hands the player 3 points, so the span is 1-4
+# and an 8 was unreachable by any character. Each row is the old value carried
+# onto the new span by the same map, round((old - 3) / 3) + 1, clamped to 1-4:
+#
+#   5 -> 2    6 -> 2    8 -> 3
+#
+# These are AUTHORED defaults, not the last word: Settings -> Advanced ->
+# Progression -> Equipment requirements exposes one row per line below, so the
+# whole table moves with the scale when the scale is retuned.
 itemId,attributeId,minimum
-straightSword,strength,5
-greatsword,strength,8
-dagger,dexterity,6
-ashStaff,intelligence,8
+straightSword,strength,2
+greatsword,strength,3
+dagger,dexterity,2
+ashStaff,intelligence,3
 
-wayfarerPlate,strength,8
+wayfarerPlate,strength,3
 
-nightweave,intelligence,8
+nightweave,intelligence,3
 
-riteVestments,wisdom,8
+riteVestments,wisdom,3
 
-gutterLeathers,dexterity,8
+gutterLeathers,dexterity,3

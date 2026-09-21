@@ -219,25 +219,25 @@ test('the cut scene yields to the scene that inherited its keys, and never overw
 test('a raised row floor costs that row, not the whole file', () => {
   const warnings = [];
   const changes = parseAdvancedConfigFile(JSON.stringify({schemaVersion:1, game:'Ashen Spire', overrides:{
-    'gameConfig.startingStats.tuned2.total': 8,          // floor was the attribute count, is now 12
+    'gameConfig.startingStats.lean.total': 4,            // floor was the attribute count, is now the kit floor
     'gameConfig.prologue.scenes.5.text': 'Still imported',
   }}), contentBundle, {}, [], warnings);
-  assert.equal(changes['gameConfig.startingStats.tuned2.total'],12,'clamped to the floor, not refused');
+  assert.equal(changes['gameConfig.startingStats.lean.total'],7,'clamped to the floor, not refused');
   assert.equal(changes['gameConfig.prologue.scenes.step.text'],'Still imported','the rest of the file landed');
   assert.equal(warnings.length,1);
-  assert.match(warnings[0],/8 is below the 12 this version requires and was raised to 12/);
+  assert.match(warnings[0],/4 is below the 7 this version requires and was raised to 7/);
 
   // A class cell below its kit floor skips that CLASS's table — raising one
   // cell would break the set's total — and says so, while everything else lands.
   const more = [];
   const kept = parseAdvancedConfigFile(JSON.stringify({schemaVersion:1, game:'Ashen Spire', overrides:{
-    'gameConfig.attributeRules.presets.tuned2.starseer.intelligence': 2,
-    'gameConfig.attributeRules.presets.tuned2.starseer.strength': 14,
+    'gameConfig.attributeRules.presets.lean.starseer.intelligence': 2,
+    'gameConfig.attributeRules.presets.lean.starseer.strength': 4,
     'gameConfig.prologue.scenes.0.text': 'Still imported',
   }}), contentBundle, {}, [], more);
   assert.deepEqual(Object.keys(kept),['gameConfig.prologue.scenes.warmth.text']);
   assert.equal(more.length,1);
-  assert.match(more[0],/Starseer — Intelligence: 2 is below the 8 this class's starting kit asks for/);
+  assert.match(more[0],/Starseer — Intelligence: 2 is below the 3 this class's starting kit asks for/);
   assert.match(more[0],/Everything else in the file was imported/);
 });
 

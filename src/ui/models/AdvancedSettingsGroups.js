@@ -130,9 +130,12 @@ export function advancedSubgroups(rows, section) {
   }
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
-    // rescaled by it. A topic not named here keeps its discovered order, after
-    // the named ones.
-    const order = ['Assign points', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
+    // rescaled by it. Equipment requirements come second because they are the
+    // FLOOR under it — the least a character can carry is whatever the starting
+    // kits ask for — so the two are read together, and only then the class
+    // tables they bound. A topic not named here keeps its discovered order,
+    // after the named ones.
+    const order = ['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   }
