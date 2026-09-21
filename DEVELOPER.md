@@ -798,7 +798,16 @@ them. `presets.<id>` are three slots a whole opening parks in
 (`prologueSlotPayload` / `prologueSlotChanges` — loading is a replacement, so
 the change set names the keys to unset as well). Per-scene `music`/`stinger`
 reach the audio engine through the `audio` option `main.js` passes to
-`mountPrologue`; the settings preview passes none and keeps what is playing. The authored
+`mountPrologue`; the settings preview passes none and keeps what is playing.
+Deliberate quiet is the `quiet` bed (`content/music.js`), never `stopMusic()` —
+the engine remembers the context it is in.
+
+The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
+is the last grid row of every wireframe, so text that floats does not take
+Continue with it. `presentation.controlsPosition: 'text'` puts them back under
+the words. `node tools/screenshot.mjs --only prologue` photographs the opening
+(`?shot=prologue`, with `?shotSettings={…}` to stage it), which is how a staging
+change is checked against the real screen rather than against its selectors. The authored
 data is in `content/config/ui/screens/prologue.json`; rebuild with the config
 compiler. Scene file: `prologueScenePreset` exports the opening alone in the
 art-studio preset shape that `parseAdvancedConfigFile` already imports, so the
