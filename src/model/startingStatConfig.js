@@ -420,7 +420,12 @@ export function startingStatRows(bundle) {
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
         min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
         configPath: ['derivedStatRules', 'rules', id, field],
-        note: `Uses ${rule.sourceStat}. Automatic scaling adjusts the points required; base and gain stay unchanged.`,
+        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
+        // scaling adjusted the points required — the behaviour this row's own
+        // panel no longer has. A note describing a retired mechanism is worse
+        // than none: it tells a player the number they typed is not the number
+        // in force, which is exactly backwards now.
+        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
       });
     }
   }

@@ -205,6 +205,28 @@ test('a combat save written before the multipliers still validates and resumes',
   assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
 });
 
+// A FIGHT SAVED BEFORE THE CHANGE RESUMES, AND RESUMES UNDER THE ONE
+// CALCULATION. Its snapshot carries the old rating rules and the creation
+// divisor they were read through; the divisor is not carried back into the
+// live fight, and the legacy rule fields read as the multipliers' default of
+// 1. The fight's ratings therefore move on resume — the owner's call
+// (2026-09-21), and the alternative was two rating formulas kept forever.
+test('a pre-change combat snapshot resumes without its divisor', async () => {
+  const { serializeCombatSnapshot, restoreCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+  const c = fight();
+  const snapshot = serializeCombatSnapshot(c);
+  snapshot.ratingAttributeScale = 0.2;
+  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) {
+    delete snapshot.ratingsRules.ratings[id].multiplier;
+    snapshot.ratingsRules.ratings[id].pointsPerIncrease = 1;
+    snapshot.ratingsRules.ratings[id].gain = 1;
+  }
+  delete snapshot.ratingsRules.multiplier;
+  const resumed = restoreCombatSnapshot({ registries, rng: createRng(998), snapshot });
+  assert.equal(resumed.ratingAttributeScale, undefined, 'the divisor is not carried into the live fight');
+  assert.deepEqual(resumed.player.ratings, c.player.ratings, 'and the resumed fight is rated by the one calculation');
+});
+
 // THE CREATION POOL IS NOT A COEFFICIENT. A creation mode used to carry
 // `statConversionScale` and this receipt divided by it, so the lean span's
 // every attribute entered the formulas at five times the value on the sheet: a

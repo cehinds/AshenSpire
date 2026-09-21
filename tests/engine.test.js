@@ -6517,8 +6517,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the whole save story of the formula change.
     eq(run.maxHp, 88, 'legacy maxHp is re-derived through the current CON/flat-bonus authority (ruleset 5: 30 + 4 × CON + 10 flat)');
     eq(run.hp, 88, 'a legacy full-HP save remains full after current-rule migration');
-    eq(run.energyMax, 4, 'energyMax follows the rebased DEX tier (ruleset 5), not the rename');
-    eq(run.drawPerTurn, 6, 'drawPerTurn follows the rebased INT tier (ruleset 5), not the rename');
+    eq(run.energyMax, 5, 'energyMax follows the rebased DEX tier over its base of 3 (ruleset 5), not the rename');
+    eq(run.drawPerTurn, 5, 'drawPerTurn follows the rebased INT tier over its base of 3 (ruleset 5), not the rename');
     // Forward hygiene: the next save writes zero dead bytes.
     assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
