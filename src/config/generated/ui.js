@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 37ca7db60d00f6d3
+// source content/config/ui/screens/prologue.json e1c2d650ace2d172
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -771,7 +771,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-20-staging-v3",
+          "revision": "2026-09-21-staging-v5",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -816,7 +816,12 @@ export const uiConfig = deepFreeze({
               "art": "warmth",
               "enabled": true,
               "order": 1,
-              "banner": false
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "year",
@@ -829,7 +834,12 @@ export const uiConfig = deepFreeze({
               "art": "year",
               "enabled": true,
               "order": 2,
-              "banner": false
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "carry",
@@ -854,7 +864,12 @@ export const uiConfig = deepFreeze({
               "art": "carry",
               "enabled": true,
               "order": 3,
-              "banner": false
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "night",
@@ -867,7 +882,14 @@ export const uiConfig = deepFreeze({
               "art": "night",
               "enabled": true,
               "order": 4,
-              "banner": false
+              "banner": false,
+              "ownStaging": true,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {
+                "wash": 0.06
+              }
             },
             {
               "id": "step",
@@ -893,7 +915,84 @@ export const uiConfig = deepFreeze({
               "art": "step",
               "enabled": true,
               "order": 5,
-              "banner": false
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraA",
+              "name": "Added scene 1",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 6,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraB",
+              "name": "Added scene 2",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 7,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraC",
+              "name": "Added scene 3",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 8,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraD",
+              "name": "Added scene 4",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 9,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             }
           ],
           "presentation": {
@@ -925,7 +1024,13 @@ export const uiConfig = deepFreeze({
             "textBoxColor": "#100e0c",
             "textOutline": false,
             "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2
+            "textOutlineWidth": 2,
+            "camera": "auto",
+            "cameraAmount": 3.5,
+            "textInsetX": 4,
+            "textInsetY": 4,
+            "reveal": "none",
+            "revealSpeed": 45
           },
           "palettes": {
             "accent": {
@@ -942,14 +1047,26 @@ export const uiConfig = deepFreeze({
               "rot": "#b5541c",
               "grace": "#9fc3e8"
             }
+          },
+          "slots": 4,
+          "presets": {
+            "a": {
+              "name": "Slot 1",
+              "data": ""
+            },
+            "b": {
+              "name": "Slot 2",
+              "data": ""
+            },
+            "c": {
+              "name": "Slot 3",
+              "data": ""
+            }
           }
         }
       },
       "sizing": {
         "mobileBreakpoint": 760
-      },
-      "motion": {
-        "zoom": 1.035
       }
     },
     "shop": {
