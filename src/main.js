@@ -1057,7 +1057,9 @@ function showPrologue() {
   const settings = { ...saves.loadMeta().settings, ...run.advancedConfigSnapshot?.overrides };
   audio.music('map');
   mountPrologue(app, {
-    settings, run, startScene: pendingPrologueScene(run) ?? 0, onSettings: showSettings,
+    // The opening may take the music with it, scene by scene (Advanced →
+    // Opening → Music); `map` above is what it starts over.
+    settings, run, audio, startScene: pendingPrologueScene(run) ?? 0, onSettings: showSettings,
     onScene: scene => { if (run === openingRun) { run.prologue.scene = scene; persist(); } },
     onFinish: reason => {
       if (run !== openingRun || run.prologue.status !== 'pending') return;
