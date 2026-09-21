@@ -283,41 +283,19 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  let modeModifiers = modeProfiles
+  // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
+  // A smaller starting pool used to multiply every `pointsPerTier` by the
+  // ratio, which is the same as handing each formula an inflated attribute:
+  // 12 points on the authored 35-point scale meant CON 1 bought the HP of CON
+  // 2.92. The row now reads the attribute the sheet shows — `base +
+  // gainPerTier × floor(attribute ÷ pointsPerTier)` — and a pool worth fewer
+  // points buys fewer pools, which is what a smaller pool means. Runs already
+  // carrying a scaled snapshot keep it: a climb is priced by the rules it was
+  // born under, and `existing` below is still the authority.
+  const modeModifiers = modeProfiles
     ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
     : derivedStatOptions.modeModifiers;
-  const scale = run.attributeModeSnapshot?.statConversionScale;
-  // THE SCALE IS THE LAST WORD, AND IT HAS TO BE — IT USED TO BE THE FIRST.
-  // The creation mode's conversion scale used to ride in `modeModifiers`, which
-  // resolveDerivedStatRules applies BEFORE `runModifiers` and `explicitOverride`.
-  // The Advanced "Stat points per tier" dial arrives as an explicitOverride
-  // whose `defaults` is assigned onto every row, so turning that dial DELETED
-  // the mode's scale outright. On a scale of 1 nobody could see it; on the lean
-  // mode's fifth it would have taken a character from 70 max HP to 28 the first
-  // time he touched an unrelated setting. So the scale is read off the rules as
-  // they finally resolve — his dial included — and re-applied in the last layer,
-  // where `rules` beats the same layer's `defaults` by construction.
-  let scaledOverride = derivedStatOptions.explicitOverride;
-  if (Number.isFinite(scale) && scale > 0 && scale !== 1) {
-    const resolved = resolveDerivedStatRules(registries.derivedStatRules, derivedOptions(registries, { ...derivedStatOptions, modeModifiers }));
-    const rules = { ...(scaledOverride?.rules || {}) };
-    for (const [id, rule] of Object.entries(resolved.rules)) {
-      // ROUNDED, BECAUSE A TIER IS COUNTED BY DIVISION AND DIVISION IS WHERE
-      // BINARY FLOAT LIES. `tier = floor(points / pointsPerTier)`: at a scale
-      // of a fifth, a three-point tier becomes 0.6000000000000001, and three
-      // points then divide to 4.999999999999999 — one whole tier of HP, Mana
-      // or Actions lost to the last bit of a product nobody can see. Six
-      // decimal places is far finer than any authored or configurable tier and
-      // lands every such product on the number it was meant to be.
-      rules[id] = { ...rules[id], pointsPerTier: Number((rule.pointsPerTier * scale).toFixed(6)) };
-    }
-    scaledOverride = { ...(scaledOverride || {}), rules };
-  }
-  const effectiveDerivedStatOptions = {
-    ...derivedStatOptions,
-    modeModifiers,
-    ...(scaledOverride ? { explicitOverride: scaledOverride } : {}),
-  };
+  const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
   const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class) : null;

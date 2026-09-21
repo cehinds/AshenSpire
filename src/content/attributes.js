@@ -61,28 +61,23 @@ export const creationModes = [
     // now a dial (gameConfig.startingStats.lean.baseline).
     belowBaseline: 'allow',
     redistribution: 'fixedTotal',
-    // THE POOLS ARE NOT THE STATS, AND THIS IS THE LINE THAT KEEPS THEM APART.
-    // derivedStatRules is authored in ruleset-5 units — Mana IS Wisdom, Stamina
-    // IS Constitution, HP is 20 + 4 x CON — every coefficient read off the
-    // tuned2 span 3-12. Carried onto a 1-4 span unchanged, a Starseer would
-    // climb the Spire on 2 Mana and a Reaver on 28 HP: the same coefficient
-    // against a fifth of the points. This is the same field the settings pool
-    // row has always written when a total is retuned, authored here so the
-    // SHIPPED default gets the treatment a tuned one does. It divides every
-    // rule's pointsPerTier at the run door (model/state.js).
-    //
-    // WHY A FIFTH AND NOT 8/35. 8/35 is the ratio of the two TOTALS, and it is
-    // the right answer when a pool is retuned inside one scale. It is the wrong
-    // answer here, because it holds the total steady and lets the BASELINE
-    // drift: a stock character's Actions fell from 3 to 2 and its draw from 5
-    // to 4 — a third of the action economy, for a change nobody asked for. A
-    // fifth is the ratio of the two BASELINES (tuned2's 5 to lean's 1), which
-    // states the scale in one sentence: ONE LEAN POINT IS ONE TUNED TIER OF
-    // FIVE. A character who assigns nothing is exactly the character tuned2
-    // opened with — 40 HP, 3 Actions, 5 draw, Mana and Stamina of 5 — and each
-    // of the three assignable points is worth a whole tier of the old scale,
-    // which is what makes a point worth spending on a pool this small.
-    statConversionScale: 1 / 5,
+    // NO CONVERSION SCALE, AND THE POOLS ARE SMALLER FOR IT (owner,
+    // 2026-09-21: "all calculations should be sum(floor(statmult*stat)) +
+    // equipment bonus"). This mode shipped `statConversionScale: 1/5` so the
+    // ruleset-5 coefficients — Mana IS Wisdom, HP is 30 + 4 × CON, every one
+    // read off the tuned2 span 3-12 — would land on tuned2's own pools when
+    // the span became 1-4. The cost was that no formula read the attribute on
+    // the character sheet: every one of them divided by the fifth first, and
+    // the settings rows the player tunes described arithmetic the game did not
+    // do. The divisor is gone from the codebase; what a coefficient says is
+    // what it does. THE POOLS THIS MODE OPENS ON ARE THEREFORE WELL UNDER WHAT
+    // #1238 SHIPPED — a stock Reaver climbs on 48 HP where it climbed on 70,
+    // both figures counting the Forsaken Medallion's flat ten — and moving
+    // them is a retune of `derivedStatRules` and the rating weights, in the
+    // open, not a scale hidden behind them. The bases carry part of that
+    // restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
+    // Poise and Ward → 1), which is why it is not the bare fifth the divisor
+    // would have made it.
     // THE SAME AUTHORITY tuned2 CARRIES, RESTATED FOR THIS SPAN. Strike and
     // Defend scale off an attribute rather than off the weapon alone, and a
     // profile is read as `baseValue + floor(stat / pointsPerTier) × gainPerTier`.
@@ -90,7 +85,7 @@ export const creationModes = [
     // Carried over unchanged (gain 1 per point), the whole of Strike would live
     // between 4 and 7, because four points is the whole span — the basic attack
     // would stop answering to the attribute it scales off. So the GAIN carries
-    // the rebase here, the way statConversionScale carries it for the pools:
+    // the rebase here, in the open and on the row that states it:
     // two per lean point, opening at 3.
     //
     //   STR 1 → 5    STR 2 → 7    STR 3 → 9    STR 4 → 11

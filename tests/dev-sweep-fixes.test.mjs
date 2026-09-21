@@ -101,10 +101,21 @@ ok(opening.scene.enemies.every((e) => e.performedMoves.length === 0),
   'nothing has resolved on the opening turn, and the field says so rather than being absent');
 
 // Play the fight out far enough that an enemy actually acts.
+//
+// THE READING COMES FROM THE LAST TURN THAT WAS STILL A FIGHT (2026-09-21). A
+// finished fight's snapshot carries no enemies at all, and a party can now
+// FALL inside six turns — the derived-stat bases moved, so two Reavers climb
+// on 36 HP rather than the 70 this loop was written against. Reading the sixth
+// snapshot unconditionally made the assertion depend on the party surviving,
+// which is not what it is about: what it tests is that a snapshot of a fight
+// in progress reports the moves each enemy has PERFORMED.
+let later = opening;
 for (let turn = 0; turn < 6 && !host.live?.combat?.result; turn++) {
   for (const id of ['p1', 'p2']) host.combatEndTurn(id);
+  const snapshot = host.snapshot();
+  if (snapshot.scene.kind !== 'combat') break;
+  later = snapshot;
 }
-const later = host.snapshot();
 const acted = (later.scene.enemies || []).filter((e) => e.performedMoves.length);
 ok(acted.length > 0, 'after the enemy phases, at least one enemy reports the moves it PERFORMED');
 ok(acted.every((e) => e.performedMoves.every((m) => typeof m === 'string' && m)),

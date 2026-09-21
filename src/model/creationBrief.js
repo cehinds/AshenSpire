@@ -174,14 +174,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
         const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
-        // THE RUN'S TIER, NOT THE TABLE'S. A creation mode may carry a
-        // conversion scale (attributes.js `statConversionScale`), and the run
-        // door multiplies every rule's `pointsPerTier` by it — so the authored
-        // row says "every 1 point" while the character on screen is getting
-        // five tiers for that point. The projection is the run's own
-        // derivation and already carries the resolved tier; reading the
-        // authored row here is the copy-that-nothing-syncs the card exists to
-        // avoid (Law 1 clause 2).
+        // THE RUN'S TIER, NOT THE TABLE'S. A run carries the derived-stat rows
+        // it was BORN under — a settings override tunes the live table while a
+        // climb in progress keeps its own snapshot — so the authored row can
+        // say "every 1 point" while the character on screen was priced by a
+        // different one. The projection is the run's own derivation and
+        // already carries the resolved tier; reading the authored row here is
+        // the copy-that-nothing-syncs the card exists to avoid (Law 1 clause
+        // 2).
         const row = projected.get(id);
         const authoredPoints = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
         const resolvedPoints = Number.isFinite(row?.pointsPerTier) ? row.pointsPerTier : authoredPoints;

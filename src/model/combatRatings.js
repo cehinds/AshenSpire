@@ -3,14 +3,28 @@ import { resolveUpgradedRelic } from './itemUpgrades.js';
 
 export const ratingIds = ['ar', 'dr', 'pr', 'poise', 'ward'];
 const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
-const rule = weights => ({ base: 0, pointsPerIncrease: 1, gain: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
+const rule = (weights, base = 0) => ({ base, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
 export const combatRatingDefaults = {
   enabled: true,
+  // EVERY RATING IS A SUM OF FLOORED ATTRIBUTE TERMS, then multiplied (owner,
+  // 2026-09-21): `multiplier × <rating>.multiplier × Σ floor(weight × attribute)
+  // + base`. Both multipliers ship at 1 — they are the handle for scaling a
+  // rating, or every rating, without editing five weights, and the weight
+  // itself is the rate a point converts at. The pair `pointsPerIncrease`/`gain`
+  // they replace divided the SUMMED points, which made a 0.25 weight mean
+  // nothing on its own and hid a second rate behind a first.
+  multiplier: 1,
   ratings: {
     ar: rule({ strength: 0.5 }), dr: rule({ dexterity: 0.5 }),
     pr: rule({ wisdom: 0.5, intelligence: 0.5 }),
-    poise: rule({ constitution: 1, strength: 0.5 }),
-    ward: rule({ wisdom: 1, intelligence: 0.5 }),
+    // POISE AND WARD OPEN AT 1 (owner, 2026-09-21: "poise, mp, sp, ward are
+    // base 1"). A vessel of nothing is not a vessel: with every attribute term
+    // floored on its own, a character who put no points in the stats these
+    // read would carry a meter of zero, and the break rules floor it to 1
+    // anyway. Stating it on the row is the same number where a player can see
+    // and move it. AR and DR stay at 0 — they are damage terms, not vessels.
+    poise: rule({ constitution: 1, strength: 0.5 }, 1),
+    ward: rule({ wisdom: 1, intelligence: 0.5 }, 1),
   },
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
@@ -39,13 +53,15 @@ export function combatRatingRows(bundle) {
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
   add('enabled', true, 'Enable ratings, Poise & Ward', 'General');
+  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
+    note: 'Scales the attribute total of every rating at once, before each rating’s own multiplier. 1 leaves the formulas as written.',
+  });
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
       `${id.toUpperCase()} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
-        min: field === 'pointsPerIncrease' ? 0.01 : 0,
-        note: field === 'base' ? 'Base + whole stat increases × gain, then equipment and other bonuses.'
-          : field === 'pointsPerIncrease' ? 'Weighted stat points needed for each increase.'
-          : field === 'gain' ? 'Rating gained per complete increase.' : 'Contribution from each point in this attribute. Set 0 to ignore it.',
+        note: field === 'base' ? 'Added after the multipliers, then equipment and other bonuses.'
+          : field === 'multiplier' ? 'Scales this rating’s attribute total. 1 leaves the weights as written.'
+          : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {
@@ -88,13 +104,31 @@ export function combatRatingRows(bundle) {
   return rows;
 }
 
+/**
+ * onGrid(value, row) → the value the row could actually have produced.
+ *
+ * THE PANEL'S STEP IS THE DOMAIN, AND THE IMPORT DOOR DOES NOT ENFORCE IT.
+ * `parseAdvancedConfigFile` checks finite/min/max/integer and nothing else, so
+ * a hand-edited configuration can carry a weight of 0.9999999999 on a row
+ * whose step is 0.01 — a number no player could type here. `ratingReceipt`
+ * floors with a 1e-9 epsilon (which is what makes 0.29 × 100 land on 29
+ * instead of 28.999999999999996), and that epsilon would read such a weight as
+ * a clean 1: the receipt would pay a point the config does not state. Snapping
+ * to the row's own step closes it at the door instead of loosening the floor,
+ * so the number the receipt uses is the number the panel would show.
+ */
+function onGrid(value, row) {
+  if (!Number.isFinite(value) || !Number.isFinite(row.step) || row.step <= 0) return value;
+  return Number((Math.round(value / row.step) * row.step).toFixed(6));
+}
+
 export function resolveCombatRatings(settings, bundle) {
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   for (const row of combatRatingRows(bundle)) {
     const raw = settings[row.key] ?? (row.type === 'choice' || row.key.includes('.enemyRatings.') ? row.def : undefined);
     if (raw === undefined) continue;
-    const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : Number(raw);
+    const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : onGrid(Number(raw), row);
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
     if (typeof value === 'number' && (!Number.isFinite(value) || value < row.min || value > row.max || (row.integer && !Number.isInteger(value)))) continue;
     const path = row.key.slice(prefix.length).split('.');
@@ -121,9 +155,16 @@ export function resolveCombatRatings(settings, bundle) {
 export function combatRatingProblems(config) {
   if (!config || typeof config !== 'object') return ['Missing combat rating rules'];
   const problems = [];
+  // A MULTIPLIER THIS BUILD ADDED IS ABSENT FROM EVERY SAVED FIGHT, and
+  // `combatSnapshotProblems` runs this over a restored snapshot's own rules.
+  // Requiring the field would have refused every in-flight combat save written
+  // before it existed — the run would not resume. Absent reads as 1, exactly
+  // as `ratingReceipt` reads it; a WRITTEN one is still held to its domain.
+  if (config.multiplier !== undefined && (!Number.isFinite(config.multiplier) || config.multiplier < 0)) problems.push('Invalid rating multiplier');
   for (const id of ratingIds) {
     const r = config.ratings?.[id];
-    if (!r || [...attributes, 'base', 'gain', 'pointsPerIncrease'].some(k => !Number.isFinite(r[k]) || r[k] < 0) || r.pointsPerIncrease <= 0) problems.push(`Invalid ${id} formula`);
+    if (!r || [...attributes, 'base'].some(k => !Number.isFinite(r[k]) || r[k] < 0)
+      || (r.multiplier !== undefined && (!Number.isFinite(r.multiplier) || r.multiplier < 0))) problems.push(`Invalid ${id} formula`);
   }
   if (!config.resistance || ['physicalK', 'magicalK', 'statusK'].some(k => !(config.resistance[k] > 0)) || !(config.resistance.maximum >= 0 && config.resistance.maximum < 1)) problems.push('Invalid resistance curve');
   const impact = config.impact;
@@ -142,13 +183,25 @@ export function combatRatingProblems(config) {
 export function ratingReceipt(registries, run, config) {
   const totals = Object.fromEntries(ratingIds.map(id => [id, 0]));
   const sources = [];
-  const scale = run.attributeModeSnapshot?.statConversionScale || run.ratingAttributeScale || 1;
   const add = (name, values) => { sources.push({ name, ...values }); for (const id of ratingIds) totals[id] += Number(values[id]) || 0; };
   const stat = {};
+  // EACH ATTRIBUTE TERM IS FLOORED ON ITS OWN, and the multipliers scale what
+  // they add up to (owner, 2026-09-21): a weight IS the rate that attribute
+  // converts at, so a 0.25 weight is "four points buy one", visible in the
+  // receipt as the term it contributes rather than as a share of a pooled sum.
+  //
+  // NOTHING DIVIDES BY THE CREATION SCALE ANY MORE. A shrunken starting pool
+  // used to be handed back to these formulas multiplied by its inverse — 12
+  // points on the 35-point scale meant every attribute entered here at 2.92×
+  // its own value, and a Starseer reading INT 8 on the sheet scored Ward as if
+  // it held 23. The panel's own weights were the one honest description of the
+  // arithmetic and they were wrong by that factor. The scale is gone from the
+  // formulas entirely; a smaller pool now means smaller ratings, which is what
+  // shrinking it says.
   for (const id of ratingIds) {
     const r = config.ratings[id];
-    const points = attributes.reduce((n, a) => n + (run.attributes?.[a] || 0) * r[a], 0) / scale;
-    stat[id] = r.base + Math.floor((points + 1e-9) / r.pointsPerIncrease) * r.gain;
+    const points = attributes.reduce((n, a) => n + Math.floor((run.attributes?.[a] || 0) * r[a] + 1e-9), 0);
+    stat[id] = r.base + Math.floor(points * (config.multiplier ?? 1) * (r.multiplier ?? 1) + 1e-9);
   }
   add('Attributes', stat);
   if (run.loadout) for (const piece of equippedPieces(registries, run.loadout, run.class || run.player?.classId, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
