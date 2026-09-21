@@ -127,17 +127,28 @@ async function main() {
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
       { name: 'desktop-class-defaults', width: 1440, height: 900, group: 'Progression', search: 'Reaver', mobile: false },
       { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
+      { name: 'desktop-stats', width: 1440, height: 900, group: 'Stats', subgroup: 'Actions', mobile: false },
       { name: 'desktop-placement', width: 1440, height: 900, group: 'Interface', search: 'default', mobile: false },
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
       { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
       { name: 'phone-interface', width: 390, height: 844, group: 'Interface', mobile: true },
+      { name: 'phone-stats', width: 390, height: 844, group: 'Stats', subgroup: 'Actions', mobile: true },
       { name: 'phone-export', width: 390, height: 844, group: 'Export', mobile: true },
       { name: 'phone-placement', width: 390, height: 844, group: 'Interface', search: 'default', mobile: true },
-    ].filter(shape => !process.argv.includes('--combat-only') && (!process.argv.includes('--settings-files-only') || shape.group === 'Export'))) {
+    ].filter(shape => !process.argv.includes('--combat-only')
+      && (!process.argv.includes('--settings-files-only') || shape.group === 'Export')
+      && (!process.argv.includes('--stats-only') || shape.group === 'Stats'))) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
       }, sessionId);
-      const shotSettings = encodeURIComponent(JSON.stringify({ settingsAdvancedCategory: shape.group }));
+      const stagedSettings = {
+        settingsAdvancedCategory: shape.group,
+        ...(shape.subgroup ? { [`settingsAdvancedSubgroup.${shape.group}`]: shape.subgroup } : {}),
+        ...(shape.group === 'Stats'
+          ? { 'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 0.2 }
+          : {}),
+      };
+      const shotSettings = encodeURIComponent(JSON.stringify(stagedSettings));
       await cdp.send('Page.navigate', { url: `${previewURL}?shot=settings&shotSettings=${shotSettings}` }, sessionId);
       await until("!!document.querySelector('.settings-modal [data-advanced-search]')", 'advanced settings');
       await wait(250);
@@ -182,6 +193,8 @@ async function main() {
           group: active?.dataset.advancedPanel,
           rows: active?.querySelectorAll('.set-row:not([hidden])').length || 0,
           placementLabels: [...(active?.querySelectorAll('.set-row:not([hidden]) .ls-label') || [])].map((node) => node.textContent),
+          statLabels: [...(active?.querySelectorAll('[data-topic-panel]:not([hidden]) .set-row:not([hidden]) .ls-label') || [])].map((node) => node.textContent),
+          statFormula: active?.querySelector('[data-topic-panel]:not([hidden]) .set-example code')?.textContent || '',
           viewport: [innerWidth, innerHeight],
           modal: [Math.round(modal.getBoundingClientRect().width), Math.round(modal.getBoundingClientRect().height)],
           verticalScrollOwners: scrollable.map((el) => el.className),
@@ -191,14 +204,57 @@ async function main() {
       if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
       }
-      if (shape.search && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
+      if (shape.name.includes('placement') && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
         .every((label) => state.placementLabels.includes(label))) {
         throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
+      }
+      if (shape.group === 'Stats' && (!state.statLabels.includes('Actions — gain per attribute point')
+        || state.statLabels.some((label) => /points per|gain per tier/i.test(label))
+        || !state.statFormula.includes('floor(0.2 ×'))) {
+        throw new Error(`${shape.name}: multiplier controls or receipt missing: ${JSON.stringify(state)}`);
+      }
+      if (shape.group === 'Stats') {
+        await evaluate(`(() => {
+          const input = document.querySelector('input[data-key="gameConfig.derivedStatRules.rules.energy.attributeMultiplier"]');
+          input.value = '0.4';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        })()`);
+        await until("document.querySelector('[data-stats-preview=\"Actions\"] code')?.textContent.includes('floor(0.4 ×')",
+          `${shape.name} live multiplier receipt`);
+        for (const [topic, required] of [
+          ['HP', ['gain per attribute point', 'gain per level', 'floor(1 ×']],
+          ['Mana', ['gain per attribute point', 'gain per level', 'floor(0.2 ×']],
+          ['Attack rating (AR)', ['Attack Rating', 'STR', 'DEX', 'WIS', 'INT']],
+          ['Potency rating (PR)', ['Potency Rating', 'INT', 'WIS', 'DEX', 'CON']],
+        ]) {
+          await evaluate(`document.querySelector('[data-topic=${JSON.stringify(topic)}]').click()`);
+          await until(`!document.querySelector('[data-topic-panel=${JSON.stringify(topic)}]').hidden`,
+            `${shape.name} ${topic} topic`);
+          const details = await evaluate(`(() => {
+            const panel = document.querySelector('[data-topic-panel=${JSON.stringify(topic)}]');
+            return {
+              labels: [...panel.querySelectorAll('.set-row:not([hidden]) .ls-label')].map(node => node.textContent).join(' | '),
+              preview: panel.querySelector('.set-example')?.textContent || '',
+            };
+          })()`);
+          if (!required.every((part) => `${details.labels} ${details.preview}`.includes(part))) {
+            throw new Error(`${shape.name}: ${topic} details missing: ${JSON.stringify(details)}`);
+          }
+        }
+        await evaluate("document.querySelector('[data-topic=\"Overview\"]').click()");
+        await evaluate("document.querySelector('[data-key=\"gameConfig.combatRatings.enabled\"]').click()");
+        await until("!!document.querySelector('[data-key=\"gameConfig.derivedStatRules.rules.poise.attributeMultiplier\"]')"
+          + " && !document.querySelector('[data-key=\"gameConfig.combatRatings.ratings.poise.constitution\"]')",
+        `${shape.name} ratings-disabled Poise authority`);
+        await evaluate("document.querySelector('[data-key=\"gameConfig.combatRatings.enabled\"]').click()");
+        await until("!!document.querySelector('[data-key=\"gameConfig.combatRatings.ratings.poise.constitution\"]')"
+          + " && !document.querySelector('[data-key=\"gameConfig.derivedStatRules.rules.poise.attributeMultiplier\"]')",
+        `${shape.name} ratings-enabled Poise authority`);
       }
       console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
       await capture(shape.name);
     }
-    if (process.argv.includes('--settings-files-only')) return;
+    if (process.argv.includes('--settings-files-only') || process.argv.includes('--stats-only')) return;
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
     }, sessionId);

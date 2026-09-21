@@ -100,7 +100,7 @@ function validatePerLevel(out, value, path) {
   if (value === undefined) return;
   if (!plainObject(value)) { problem(out, path, 'must be { every, gain }'); return; }
   unknownFields(out, value, PER_LEVEL_FIELDS, path);
-  if (!Number.isInteger(value.every) || value.every <= 0) problem(out, `${path}.every`, 'must be a positive integer number of levels');
+  if (!Number.isFinite(value.every) || value.every <= 0) problem(out, `${path}.every`, 'must be a finite number of levels > 0');
   if (!Number.isFinite(value.gain) || value.gain < 0) problem(out, `${path}.gain`, 'must be a finite number >= 0');
 }
 
@@ -315,7 +315,8 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
   const gainPerTier = gainValue(rule.gainPerTier, classDef, statId);
   const round = Math[rule.rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
-  const tier = round(points / rule.pointsPerTier);
+  const quotient = points / rule.pointsPerTier;
+  const tier = round(quotient + (rule.rounding === 'floor' ? 1e-9 : 0));
   return {
     sourceStat,
     points,
@@ -335,8 +336,8 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
 export function levelBonus(row, level) {
   const term = row && row.perLevel;
   if (!plainObject(term) || !Number.isInteger(level) || level <= 1) return 0;
-  if (!Number.isInteger(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
-  return Math.floor((level - 1) / term.every) * term.gain;
+  if (!Number.isFinite(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
+  return Math.floor((level - 1) / term.every + 1e-9) * term.gain;
 }
 
 /**

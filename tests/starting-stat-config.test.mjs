@@ -5,7 +5,7 @@ import { configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile 
 import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
-import { deriveStat } from '../src/model/derivedStats.js';
+import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 
 // The pool dial is exercised through the mode creation OFFERS. It used to be
 // driven here through `pointbuy`, which is retired — and a retired mode is no
@@ -56,6 +56,50 @@ test('a retuned pool moves the presets and leaves every threshold alone', () => 
   const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
   const wider = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, { ...settings, [poolKey]: 40 })), classId: 'reaver', seed: 42, attributeMode: 'lean' });
   assert(wider.maxHp > narrow.maxHp, 'fewer points buy less HP');
+});
+
+test('fractional multipliers floor the displayed attribute and level products', () => {
+  const configured = configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 0.2,
+    'gameConfig.derivedStatRules.rules.mana.perLevel.multiplier': 0.2,
+  });
+  const rules = resolveDerivedStatRules(configured.derivedStatRules, {
+    attributeIds: configured.attributes.map(attribute => attribute.id),
+    classFields: ['maxHp', 'maxMana'],
+  });
+  const classDef = configured.classes.find(row => row.id === 'reaver');
+  assert.equal(deriveStat(rules, 'energy', {
+    attributes: { dexterity: 5 }, classDef, level: 1,
+  }).value, 4, '3 base + floor(0.2 × 5 DEX)');
+  assert.equal(deriveStat(rules, 'mana', {
+    attributes: { wisdom: 5 }, classDef, level: 11,
+  }).value, 8, '1 base + 5 from WIS + floor(0.2 × 10 levels)');
+
+  const thirds = configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 0.3,
+    'gameConfig.derivedStatRules.rules.mana.perLevel.multiplier': 0.3,
+  });
+  const thirdRules = resolveDerivedStatRules(thirds.derivedStatRules, {
+    attributeIds: thirds.attributes.map(attribute => attribute.id),
+    classFields: ['maxHp', 'maxMana'],
+  });
+  assert.equal(deriveStat(thirdRules, 'energy', {
+    attributes: { dexterity: 10 }, classDef, level: 1,
+  }).value, 6, 'reciprocal storage does not lose the 0.3 × 10 boundary');
+  assert.equal(deriveStat(thirdRules, 'mana', {
+    attributes: { wisdom: 0 }, classDef, level: 11,
+  }).value, 4, 'fractional level intervals evaluate floor(0.3 × 10) exactly');
+
+  const boundary = configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 4.6,
+  });
+  const boundaryRules = resolveDerivedStatRules(boundary.derivedStatRules, {
+    attributeIds: boundary.attributes.map(attribute => attribute.id),
+    classFields: ['maxHp', 'maxMana'],
+  });
+  assert.equal(deriveStat(boundaryRules, 'energy', {
+    attributes: { dexterity: 5 }, classDef, level: 1,
+  }).value, 26, 'reciprocal storage does not undercount 4.6 × 5');
 });
 
 test('pool settings round trip, reject impossible budgets, and tolerate the retired scaling dial', () => {

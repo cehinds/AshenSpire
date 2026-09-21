@@ -34,7 +34,7 @@ export const derivedStatRules = {
       perLevel: { every: 10, gain: 1 },
     },
     hp: {
-      // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
+      // Tuned rule: 30 + 4 × CON + flat bonuses. A one-point tier makes the
       // generic derived-stat engine express the per-point coefficient exactly.
       // Relic resource.flat rows fold into base; equipment max-HP mods and the
       // persisted adjustment remain the two external addends at the run door.
@@ -42,11 +42,10 @@ export const derivedStatRules = {
       sourceStat: 'constitution',
       pointsPerTier: 1,
       gainPerTier: 4,
-      // THE CHARACTER LEVEL'S OWN TERM (plan phase 6): every five levels past
-      // the first the maximum gains this, beside whatever the points bought.
-      // Snapshotted with the row, so a run born before it never gains it and
-      // a run born under it keeps it whatever the table says later.
-      perLevel: { every: 5, gain: 5 },
+      // One point per level after level 1. The Settings surface expresses this
+      // as a fractional per-level rate and stores the equivalent reciprocal
+      // interval here so old snapshots keep their existing shape.
+      perLevel: { every: 1, gain: 1 },
     },
     stamina: {
       // Ruleset 5: the pool IS Constitution, on the same one-point tier as
@@ -125,6 +124,6 @@ export const derivedStatRules = {
     // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
     draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
-    poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
+    poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much impact you can withstand before your footing breaks.' },
   },
 };

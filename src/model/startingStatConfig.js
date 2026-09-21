@@ -414,19 +414,76 @@ export function startingStatRows(bundle) {
   }
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
-    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
-      const value = rule[field] ?? bundle.derivedStatRules.defaults[field];
-      if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
+    const topic = id === 'energy' ? 'Actions' : id === 'draw' ? 'Draw & hand' : label;
+    // New solo combats derive their Poise threshold from the combat-rating
+    // formula. Keep the older single-stat keys importable for saved profiles
+    // and ratings-disabled runs, but do not present two editors for one meter.
+    const derivedRetired = id === 'poise' ? { retired: true } : {};
+    add(`gameConfig.derivedStatRules.rules.${id}.sourceStat`, rule.sourceStat, `${label} — scaling attribute`, topic, {
+      advancedGroup: 'Stats',
+      type: 'choice',
+      dropdown: true,
+      choices: bundle.attributes.map((attribute) => attribute.id),
+      choiceLabels: Object.fromEntries(bundle.attributes.map((attribute) => [attribute.id, `${attribute.label} (${attribute.shortLabel})`])),
+      configPath: ['derivedStatRules', 'rules', id, 'sourceStat'],
+      derivedStatId: id,
+      derivedStatLabel: label,
+      settingSection: 'Stat conversion',
+      note: `Which attribute determines ${label.toLowerCase()}. Changing this reroutes the formula; it does not move any character points. Applies to a new run.`,
+      ...derivedRetired,
+    });
+    add(`gameConfig.derivedStatRules.rules.${id}.base`, rule.base, `${label} — starting amount`, topic, {
+      advancedGroup: 'Stats',
+      min: 0, step: 0.01,
+      configPath: ['derivedStatRules', 'rules', id, 'base'],
+      derivedStatId: id,
+      derivedStatLabel: label,
+      settingSection: 'Stat conversion',
+      note: `The ${label.toLowerCase()} a character has before attribute or level bonuses are added. Applies to a new run.`,
+      ...derivedRetired,
+    });
+    const pointsPerTier = rule.pointsPerTier ?? bundle.derivedStatRules.defaults.pointsPerTier;
+    const gainPerTier = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : 0;
+    add(`gameConfig.derivedStatRules.rules.${id}.attributeMultiplier`, gainPerTier / pointsPerTier,
+      `${label} — gain per attribute point`, topic, {
+        advancedGroup: 'Stats',
+        min: 0, max: 999, step: 0.01,
+        derivedStatId: id,
+        derivedStatLabel: label,
+        derivedMultiplierFor: id,
+        settingSection: 'Stat conversion',
+        note: `Multiply the scaling attribute by this value, then round down. For example, 0.2 means every 5 attribute points add 1 ${label.toLowerCase()}. Applies to a new run.`,
+        ...derivedRetired,
+      });
+    for (const [field, value] of [['pointsPerTier', pointsPerTier], ['gainPerTier', gainPerTier]]) {
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — legacy ${field}`, topic, {
+        advancedGroup: 'Stats',
         min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
         configPath: ['derivedStatRules', 'rules', id, field],
-        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
-        // scaling adjusted the points required — the behaviour this row's own
-        // panel no longer has. A note describing a retired mechanism is worse
-        // than none: it tells a player the number they typed is not the number
-        // in force, which is exactly backwards now.
-        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
+        derivedStatId: id,
+        derivedStatLabel: label,
+        legacyFallbackKey: field === 'pointsPerTier' ? 'statTierSize' : undefined,
+        retired: true,
       });
+    }
+    if (rule.perLevel) {
+      add(`gameConfig.derivedStatRules.rules.${id}.perLevel.multiplier`, rule.perLevel.gain / rule.perLevel.every,
+        `${label} — gain per level`, topic, {
+          advancedGroup: 'Stats', integer: false, step: 0.01, min: 0, max: 999,
+          derivedStatId: id, derivedStatLabel: label, derivedLevelMultiplierFor: id,
+          settingSection: 'Level growth',
+          note: `Multiply levels gained after level 1 by this value, then round down. For example, 0.2 adds 1 ${label.toLowerCase()} after every 5 levels. Applies to a new run.`,
+          ...derivedRetired,
+        });
+      for (const [field, value] of [['every', rule.perLevel.every], ['gain', rule.perLevel.gain]]) {
+        add(`gameConfig.derivedStatRules.rules.${id}.perLevel.${field}`, value,
+          `${label} — legacy level ${field}`, topic, {
+            advancedGroup: 'Stats', integer: field === 'every', step: field === 'every' ? 1 : 0.01,
+            min: field === 'every' ? 1 : 0, max: 999,
+            configPath: ['derivedStatRules', 'rules', id, 'perLevel', field],
+            derivedStatId: id, derivedStatLabel: label, retired: true,
+          });
+      }
     }
   }
   return [...rows, ...equipmentRequirementRows(bundle)];

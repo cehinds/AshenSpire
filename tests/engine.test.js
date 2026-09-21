@@ -6784,11 +6784,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.levelUps, 1, 'the assignment is recorded — this is the number the load door reads'); eq(run.levelPoints, 1);
     eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
     // FOUR PER TIER, AND A TIER IS A POINT — no conversion scale between them.
-    eq(run.maxHp, startHp + 4, 'one CON point adds the configured four HP per tier immediately (ruleset 5)');
+    eq(run.maxHp, startHp + 5, 'one level and one CON point add one plus the configured four HP immediately (ruleset 5)');
     awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
     eq(run.level.level, 4, 'enough XP for two steps climbs two'); eq(run.level.unspentPoints, 2);
     applyLevelUp(REG, run, 'constitution'); applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 12, 'three CON points, three four-HP steps (ruleset 5)');
+    eq(run.maxHp, startHp + 15, 'three levels and three CON points add three plus three four-HP steps (ruleset 5)');
     eq(run.levelUps, 3, 'three points assigned');
 
     // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
@@ -6839,7 +6839,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(back.levelUps, 6, 'and so does the count that makes them legal');
     eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
     eq(back.level.level, 7, 'the character level rides the save'); eq(back.maxHp, run.maxHp);
-    assert(back.maxHp >= 30 + 4 * back.attributes.constitution + 5, `level 7 carries the level-6 threshold bump beside the six CON points — got ${back.maxHp}`);
+    assert(back.maxHp >= 30 + 4 * back.attributes.constitution + 6, `level 7 carries six per-level HP beside the six CON points — got ${back.maxHp}`);
 
     // THE e05be89 SAVE SHAPE, AND IT MUST LOAD. That build recorded `levelUps`
     // and no `levelPoints`, and it had exactly one possible level value, so for
@@ -6909,7 +6909,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(three.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 3); eq(three.levelPoints, 3, 'and records three');
     // Both values are visible under the per-CON HP formula.
     assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
-    eq(one.maxHp, hpBefore + 4, 'at 1, the same one level adds exactly the authored four HP a tier (ruleset 5)');
+    eq(one.maxHp, hpBefore + 5, 'at 1, the same one level adds one HP plus the authored four HP per CON point (ruleset 5)');
 
     // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
     // moment he turns the dial mid-climb.
@@ -7802,8 +7802,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical AR +2 every 1 point'),
+    const strengthLines = cards.find((card) => card.id === 'strength').reveal.lines;
+    assert(strengthLines.includes('Physical Attack Rating +2 every 1 point'),
       'the active run profile projects Strength attack scaling without copied UI prose');
+    assert(strengthLines.includes('Attack Rating: floor(1 × STR)')
+      && strengthLines.includes('Defence Rating: floor(0.25 × STR)')
+      && strengthLines.includes('Poise: floor(0.5 × STR)'),
+    'character creation spells out each combat rating and its exact contribution');
+    assert(cards.find((card) => card.id === 'intelligence').reveal.lines.includes('Potency Rating: floor(1 × INT)'),
+      'PR is named Potency Rating where character creation explains magic scaling');
 
     const changed = {
       ...contentBundle,
@@ -9247,28 +9254,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('90. the character level is earned: the ledger, the thresholds, the migration and the doors (plan phase 6)', () => {
-    // THE THRESHOLDS: every five levels past the first the maxima bump — the
-    // snapshot's own perLevel rows — beside whatever the points bought; the
-    // deficit is carried, the current pools ride up.
+    // THE THRESHOLDS: HP rises every level; Mana and Stamina every five, and
+    // Draw every ten — the snapshot's own perLevel rows — beside whatever the
+    // points bought; the deficit is carried, the current pools ride up.
     const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
     const rules = run.derivedStatRuleSnapshot.rules.rules;
-    eq(`${rules.hp.perLevel.every}/${rules.hp.perLevel.gain}`, '5/5', 'the HP row carries its level term in the snapshot');
+    eq(`${rules.hp.perLevel.every}/${rules.hp.perLevel.gain}`, '1/1', 'the HP row carries its level term in the snapshot');
     const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, drawPerTurn: run.drawPerTurn };
     run.hp = run.maxHp - 7;
     awardLevelXp(REG, run, [1, 2, 3, 4].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
-    eq(run.level.level, 5); eq(run.maxHp, born.maxHp, 'level 5 is below the first threshold');
+    eq(run.level.level, 5); eq(run.maxHp, born.maxHp + 4, 'each of the first four gained levels adds one HP');
     const got = awardLevelXp(REG, run, xpToNextLevel(REG, 5));
     eq(run.level.level, 6); assert(got.thresholds > 0, 'the step to 6 moved a maximum');
-    eq(run.maxHp, born.maxHp + rules.hp.perLevel.gain, 'level 6 adds the HP term'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
+    eq(run.maxHp, born.maxHp + 5 * rules.hp.perLevel.gain, 'level 6 carries five per-level HP'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
     eq(run.maxMana, born.maxMana + rules.mana.perLevel.gain); eq(run.maxStamina, born.maxStamina + rules.stamina.perLevel.gain);
     eq(run.drawPerTurn, born.drawPerTurn, 'the hand waits for level 11');
     awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
-    eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + 2 * rules.hp.perLevel.gain);
+    eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + 10 * rules.hp.perLevel.gain);
     eq(characterLevel(run), 11, 'the readers read the ledger'); eq(playerLevel(REG, run), 11, 'and so does the hidden player level');
     // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
     // formula's addends equal its result once the level term is non-zero.
     const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
-    eq(shown.levelBonus, 2 * rules.hp.perLevel.gain); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
+    eq(shown.levelBonus, 10 * rules.hp.perLevel.gain); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
     eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
     const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
     assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);

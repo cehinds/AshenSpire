@@ -1148,7 +1148,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
-        const descriptions = { ar: 'Added to physical attack-card damage.', dr: 'Added to physical defensive-skill Block.', pr: 'Added to magical card damage, Block and healing, including power effects.' };
+        const descriptions = { ar: 'Attack Rating is added to physical attack-card damage.', dr: 'Defence Rating is added to physical defensive-skill Block.', pr: 'Potency Rating is added to magical card damage, Block and healing, including power effects.' };
         if (descriptions[bar.id]) return esc(descriptions[bar.id]);
         if (bar.id === 'poise' || bar.id === 'ward') {
           const magical = bar.id === 'ward';

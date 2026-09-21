@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
+import { combatRatingDefaults, resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
 import { createCombat, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
@@ -26,13 +26,32 @@ const magical = { cardId: 'strike', type: 'attack', damageSchool: 'magic' };
 
 test('AR, DR and PR add once to their eligible effects; Poise and Ward formulas agree', () => {
   const c = fight();
-  // Poise and Ward open at a base of 1 (combatRatingDefaults): 1 + CON 10 +
-  // floor(STR 10 / 2), and 1 + WIS 10 + floor(INT 10 / 2).
-  assert.deepEqual(c.player.ratings, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 15);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 20);
-  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 15);
+  // Every rating has a coefficient budget of 2. Poise and Ward also include
+  // the authored base of 1.
+  assert.deepEqual(c.player.ratings, { ar: 19, dr: 19, pr: 19, poise: 20, ward: 20 });
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 29);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 29);
+  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 29);
   assert.equal(computeBlockGain(c, c.player, 10), 10);
+});
+
+test('each combat rating has a two-point coefficient budget', () => {
+  for (const [id, rule] of Object.entries(combatRatingDefaults.ratings)) {
+    const total = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
+      .reduce((sum, attribute) => sum + rule[attribute], 0);
+    assert.equal(total, 2, `${id} coefficient budget`);
+  }
+  assert.deepEqual(
+    Object.fromEntries(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
+      .map(attribute => [attribute, combatRatingDefaults.ratings.ar[attribute]])),
+    {
+    strength: 1,
+    dexterity: 0.5,
+    constitution: 0,
+    wisdom: 0.25,
+    intelligence: 0.25,
+    },
+  );
 });
 
 test('physical and magic resistance use distinct ratings before Block', () => {
@@ -126,7 +145,7 @@ test('a magical power carries PR into its later block trigger', async () => {
   c.enqueue = action => queued.push(action);
   fireOwnerHooks(c, c.player, 'ownerTurnEnd');
   for (const action of queued) executeAction(c, action);
-  assert.equal(c.player.block, 14);
+  assert.equal(c.player.block, 23);
 });
 
 
@@ -200,7 +219,7 @@ test('a combat save written before the multipliers still validates and resumes',
   for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) delete legacy.ratings[id].multiplier;
   assert.deepEqual(combatRatingProblems(legacy), []);
   const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
-  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
+  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 19, dr: 19, pr: 19, poise: 20, ward: 20 });
   // A written multiplier is still held to its domain.
   assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
 });
@@ -260,5 +279,5 @@ test('armour, relic and status bonuses are additive and counted once', async () 
   assert.equal(after.ar - before.ar, 10);
   const c = fight({ 'gameConfig.combatRatings.bonuses.status:strength.ar': 2 });
   applyStatus(c, c.player, 'strength', 2, c.player);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 35);
 });

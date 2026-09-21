@@ -21,8 +21,9 @@ Hand management lives in `src/content/handRules.js` (defaults),
 `src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
 per-fight snapshot from profile settings; legacy snapshots omit it. Run
 `node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
-for the focused rules, persistence and settings checks. Advanced → Hand & Draw
-Rules provides separate starting-hand, turn-draw, capacity and discard groups.
+for the focused rules, persistence and settings checks. Advanced → Stats →
+Draw & hand keeps starting-hand, turn-draw, capacity and discard controls
+together, with a live calculation receipt.
 
 `node tools/launch.mjs --build-only` produces the standalone aliases — the full
 single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
@@ -821,4 +822,24 @@ Old saves bypass the opening. The completion callback persists before revealing
 the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
 ### Ratings and starting pools
-Settings → Advanced → Progression controls starting stat pools and resource conversions. Stats & Defence controls rating formulas, physical/magical resistance, status weights, impact categories, breaks and per-source bonuses. Source models: src/model/startingStatConfig.js and src/model/combatRatings.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs.
+Settings → Advanced → Progression controls starting attribute pools, class
+defaults, equipment requirements, levels, and rewards. Advanced → Stats is the
+single home for resource conversions, hand/draw rules, rating formulas,
+physical/magical resistance, status weights, impact categories, breaks, and
+per-source bonuses. Its conversion and rating topics show a live expanded
+calculation using the current character when Settings is opened during a run,
+or a labeled example character otherwise. Derived-stat controls expose the
+player-facing formula `base + floor(attribute multiplier × stat) +
+floor(level multiplier × levels after 1)`; the configuration adapter stores
+reciprocal intervals so older snapshots and imported interval-based profiles
+remain readable. Combat-rating rows spell out Attack Rating, Defence Rating,
+and Potency Rating, and each shipped rating's five attribute coefficients have a
+total budget of 2. Attack Rating augments physical card damage, Potency Rating
+augments magic-card effects, Defence Rating augments physical defensive-skill
+Block, and Poise/Ward mitigate physical/magical hits respectively while serving
+as their impact meters. Source models:
+src/model/startingStatConfig.js, src/model/handRules.js, and
+src/model/combatRatings.js; engine integration: src/engine/combatRatings.js and
+src/engine/handRules.js. New runs snapshot configuration; saved combat snapshots
+preserve both meters and fractional buildup. Validate with
+`node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs`.

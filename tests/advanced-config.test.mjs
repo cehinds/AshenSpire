@@ -71,6 +71,35 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
 });
 
+test('legacy shared conversion values become per-trait fallbacks and explicit trait edits win', () => {
+  const configured = configuredContentBundle(contentBundle, {
+    statTierSize: 2,
+    'gameConfig.derivedStatRules.rules.energy.sourceStat': 'strength',
+    'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 1,
+  });
+  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 2);
+  assert.equal(configured.derivedStatRules.rules.energy.pointsPerTier, 2);
+  assert.equal(configured.derivedStatRules.rules.energy.sourceStat, 'strength');
+  assert.equal(configured.derivedStatRules.rules.hp.pointsPerTier, 1);
+  assert.equal(contentBundle.derivedStatRules.rules.energy.sourceStat, 'dexterity');
+});
+
+test('fractional derived multipliers round trip and normalize into exact rules', () => {
+  const settings = {
+    'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 0.2,
+    'gameConfig.derivedStatRules.rules.mana.perLevel.multiplier': 0.3,
+    'gameConfig.derivedStatRules.rules.mana.attributeMultiplier': 0,
+  };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
+  const configured = configuredContentBundle(contentBundle, settings);
+  assert.equal(configured.derivedStatRules.rules.energy.pointsPerTier, 5);
+  assert.equal(configured.derivedStatRules.rules.energy.gainPerTier, 1);
+  assert.ok(Math.abs(configured.derivedStatRules.rules.mana.perLevel.every - (10 / 3)) < 1e-12);
+  assert.equal(configured.derivedStatRules.rules.mana.perLevel.gain, 1);
+  assert.equal(configured.derivedStatRules.rules.mana.pointsPerTier, 1);
+  assert.equal(configured.derivedStatRules.rules.mana.gainPerTier, 0);
+});
+
 test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {
   const settings = { 'gameConfig.attributeRules.presets.lean.reaver.strength': 4 };
   assert.match(advancedConfigProblems(contentBundle, settings)[0], /Reaver.*total 8/);

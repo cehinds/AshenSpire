@@ -2,6 +2,13 @@ import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 
 export const ratingIds = ['ar', 'dr', 'pr', 'poise', 'ward'];
+export const combatRatingNames = Object.freeze({
+  ar: 'Attack Rating',
+  dr: 'Defence Rating',
+  pr: 'Potency Rating',
+  poise: 'Poise',
+  ward: 'Ward',
+});
 const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const rule = (weights, base = 0) => ({ base, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
 export const combatRatingDefaults = {
@@ -15,16 +22,17 @@ export const combatRatingDefaults = {
   // nothing on its own and hid a second rate behind a first.
   multiplier: 1,
   ratings: {
-    ar: rule({ strength: 0.5 }), dr: rule({ dexterity: 0.5 }),
-    pr: rule({ wisdom: 0.5, intelligence: 0.5 }),
+    ar: rule({ strength: 1, dexterity: 0.5, wisdom: 0.25, intelligence: 0.25 }),
+    dr: rule({ dexterity: 1, constitution: 0.5, strength: 0.25, wisdom: 0.25 }),
+    pr: rule({ intelligence: 1, wisdom: 0.5, dexterity: 0.25, constitution: 0.25 }),
     // POISE AND WARD OPEN AT 1 (owner, 2026-09-21: "poise, mp, sp, ward are
     // base 1"). A vessel of nothing is not a vessel: with every attribute term
     // floored on its own, a character who put no points in the stats these
     // read would carry a meter of zero, and the break rules floor it to 1
     // anyway. Stating it on the row is the same number where a player can see
     // and move it. AR and DR stay at 0 — they are damage terms, not vessels.
-    poise: rule({ constitution: 1, strength: 0.5 }, 1),
-    ward: rule({ wisdom: 1, intelligence: 0.5 }, 1),
+    poise: rule({ constitution: 1, strength: 0.5, dexterity: 0.25, wisdom: 0.25 }, 1),
+    ward: rule({ wisdom: 1, intelligence: 0.5, constitution: 0.25, dexterity: 0.25 }, 1),
   },
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
@@ -47,7 +55,7 @@ export function ratingSourceKey(piece) {
 export function combatRatingRows(bundle) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
-    cat: 'Advanced', advancedGroup: 'Ratings & Resistance', statTopic: topic,
+    cat: 'Advanced', advancedGroup: 'Stats', statTopic: topic,
     key: prefix + path, def, label,
     ...(typeof def === 'number' ? { type: 'number', min: 0, max: 999, step: 0.01, integer: false } : {}),
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
@@ -57,8 +65,11 @@ export function combatRatingRows(bundle) {
     note: 'Scales the attribute total of every rating at once, before each rating’s own multiplier. 1 leaves the formulas as written.',
   });
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
+    const ratingName = combatRatingNames[id];
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${id.toUpperCase()} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
+      `${ratingName} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
+        settingSection: id === 'poise' ? 'Poise threshold & physical resistance'
+          : id === 'ward' ? 'Ward threshold & magical resistance' : undefined,
         note: field === 'base' ? 'Added after the multipliers, then equipment and other bonuses.'
           : field === 'multiplier' ? 'Scales this rating’s attribute total. 1 leaves the weights as written.'
           : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
@@ -79,15 +90,15 @@ export function combatRatingRows(bundle) {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${id.toUpperCase()} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${combatRatingNames[id]} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     for (const id of ratingIds) add(`bonuses.${ratingSourceKey(piece)}.${id}`, 0,
-      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — additional ${id.toUpperCase()}`, piece.kind === 'armor' ? 'Armour bonuses' : 'Weapon bonuses', {
+      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — additional ${combatRatingNames[id]}`, piece.kind === 'armor' ? 'Armour bonuses' : 'Weapon bonuses', {
         note: 'Adds to the item’s authored ratings while equipped. Every equipped item contributes once.',
       });
   }
-  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${id.toUpperCase()}`, 'Relic bonuses');
+  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${combatRatingNames[id]}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
     for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${words(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {

@@ -25,20 +25,15 @@ export function handRulesProblems(rules) {
 export function handRulesRows(attributes = []) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
-    cat: 'Advanced', advancedGroup: 'Hand & Draw', handTopic: topic,
+    cat: 'Advanced', advancedGroup: 'Stats', handTopic: topic,
+    settingSection: topic,
     key: HAND_RULES_PREFIX + path, def, label,
-    note: '',
+    note: 'Controls how cards move through your hand during combat.',
     ...(typeof def === 'number' ? { type: 'number', integer: true, step: 1, min: 0, max: 99 } : {}), ...extra,
   });
-  add('retain', handRulesDefaults.retain, 'Retain unplayed cards', 'Retention & discards');
-  add('promptDiscard', false, 'Prompt for optional discards', 'Retention & discards', { requires: ['retain', true] });
-  add('discardLimit', 10, 'Maximum optional discards per turn', 'Retention & discards', { requires: ['promptDiscard', true] });
-  add('replaceDiscards', false, 'Replace optional discards next turn', 'Retention & discards', { requires: ['promptDiscard', true], note: 'Adds replacements to fixed draws, still capped by hand capacity. Fill mode already refills the hand.' });
-  add('overflow', 'keep', 'When hand exceeds capacity', 'Hand capacity', { type: 'choice', dropdown: true, choices: ['keep', 'discard'], choiceLabels: { keep: 'Keep cards; stop drawing', discard: 'Discard excess at turn end' } });
-  add('reshuffle', true, 'Reshuffle when empty', 'Turn draws', { note: 'Shuffle the discard pile back into the draw pile when needed.' });
-  add('drawMode', 'fill', 'Draw mode', 'Turn draws', { type: 'choice', dropdown: true, choices: ['fill', 'fixed'], choiceLabels: { fill: 'Fill hand', fixed: 'Fixed draw' } });
-  for (const [group, topic] of Object.entries(groups)) {
-    const labels = { base: group === 'capacity' ? 'Base hand capacity' : group === 'starting' ? 'Base starting draw' : 'Base cards drawn per turn', statEnabled: 'Enable stat scaling', stat: 'Scaling stat', baseline: 'Stat baseline', pointsPerCard: 'Stat points per additional card', minimum: 'Minimum cards', maximum: 'Maximum cards' };
+  const addGroupRows = (group, topic) => {
+    const subject = group === 'capacity' ? 'hand capacity' : group === 'starting' ? 'opening hand' : 'turn draw';
+    const labels = { base: group === 'capacity' ? 'Base hand capacity' : group === 'starting' ? 'Base opening hand' : 'Base cards drawn per turn', statEnabled: `Scale ${subject} from an attribute`, stat: 'Attribute used for scaling', baseline: 'Attribute points before bonuses begin', pointsPerCard: 'Attribute points per extra card', minimum: 'Minimum cards', maximum: 'Maximum cards' };
     for (const [field, def] of Object.entries(handRulesDefaults[group])) {
       const extra = {};
       if (field === 'stat') Object.assign(extra, { type: 'choice', choices: attributes.map(a => a.id), choiceLabels: Object.fromEntries(attributes.map(a => [a.id, `${a.label} (${a.shortLabel})`])) });
@@ -46,11 +41,52 @@ export function handRulesRows(attributes = []) {
       if (group === 'capacity' && ['base', 'minimum', 'maximum'].includes(field)) extra.min = 1;
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
       if (group === 'turn') extra.fixedOnly = true;
+      if (field === 'base') extra.note = `The ${subject} before attribute bonuses.`;
+      if (field === 'statEnabled') extra.note = `On: the chosen attribute can add cards to the ${subject}. Off: only the base and limits apply.`;
+      if (field === 'stat') extra.note = `The character attribute that can add cards to the ${subject}.`;
       if (field === 'baseline') extra.note = 'Only points above this value earn bonus cards. Lower stats never subtract cards.';
-      if (field === 'pointsPerCard') extra.note = 'Whole intervals only: floor((stat − baseline) ÷ points per card).';
+      if (field === 'pointsPerCard') extra.note = 'Lower values award cards faster. Whole intervals only: floor((attribute − baseline) ÷ points per card).';
+      if (field === 'minimum') extra.note = `The ${subject} never falls below this amount, even when its base is lower.`;
+      if (field === 'maximum') extra.note = `The ${subject} never rises above this amount, even after attribute bonuses.`;
       add(`${group}.${field}`, def, labels[field], topic, extra);
     }
-  }
+  };
+
+  addGroupRows('starting', groups.starting);
+  add('drawMode', 'fill', 'How cards are drawn each turn', groups.turn, {
+    type: 'choice',
+    dropdown: true,
+    choices: ['fill', 'fixed'],
+    choiceLabels: { fill: 'Fill to hand capacity', fixed: 'Draw a fixed number' },
+    note: 'Fill draws until your hand reaches its capacity. Fixed draws the calculated turn amount, without exceeding capacity.',
+  });
+  add('reshuffle', true, 'Reshuffle when empty', groups.turn, {
+    note: 'Shuffle the discard pile back into the draw pile when needed.',
+  });
+  addGroupRows('turn', groups.turn);
+  addGroupRows('capacity', groups.capacity);
+  add('overflow', 'keep', 'When your hand is over capacity', groups.capacity, {
+    type: 'choice',
+    dropdown: true,
+    choices: ['keep', 'discard'],
+    choiceLabels: { keep: 'Keep cards; stop drawing', discard: 'Discard excess at turn end' },
+    note: 'Choose whether excess retained cards stay and prevent more draws, or must be discarded at turn end.',
+  });
+  add('retain', handRulesDefaults.retain, 'Keep unplayed cards after your turn', 'Retention & discards', {
+    note: 'On: cards you do not play stay in hand. Off: ordinary unplayed cards go to the discard pile at turn end.',
+  });
+  add('promptDiscard', false, 'Offer optional discards at turn end', 'Retention & discards', {
+    requires: ['retain', true],
+    note: 'When cards are retained, pause at turn end so you may discard unwanted cards before the next draw.',
+  });
+  add('discardLimit', 10, 'Most cards you may discard voluntarily', 'Retention & discards', {
+    requires: ['promptDiscard', true],
+    note: 'Caps only optional turn-end discards. Forced overflow discards may still require more.',
+  });
+  add('replaceDiscards', false, 'Replace optional discards next turn', 'Retention & discards', {
+    requires: ['promptDiscard', true],
+    note: 'Adds replacements to fixed draws, still capped by hand capacity. Fill mode already refills the hand.',
+  });
   return rows;
 }
 
@@ -89,8 +125,28 @@ export function handRulesSettingsProblems(settings = {}) {
  * reading of an attribute, one hand size.
  */
 export function scaledCards(rule, attributes = {}) {
-  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) - rule.baseline) / rule.pointsPerCard) : 0;
-  return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
+  return scaledCardsReceipt(rule, attributes).value;
+}
+
+export function scaledCardsReceipt(rule, attributes = {}) {
+  const points = Number(attributes?.[rule.stat]) || 0;
+  const eligible = Math.max(0, points - rule.baseline);
+  const bonus = rule.statEnabled ? Math.floor(eligible / rule.pointsPerCard) : 0;
+  const raw = rule.base + bonus;
+  const value = Math.min(rule.maximum, Math.max(rule.minimum, raw));
+  return {
+    stat: rule.stat,
+    points,
+    baseline: rule.baseline,
+    pointsPerCard: rule.pointsPerCard,
+    base: rule.base,
+    bonus,
+    raw,
+    minimum: rule.minimum,
+    maximum: rule.maximum,
+    statEnabled: rule.statEnabled,
+    value,
+  };
 }
 
 export function handRuleSummary(rules, attributes = {}) {

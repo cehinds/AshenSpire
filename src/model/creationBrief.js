@@ -53,6 +53,7 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
+import { combatRatingDefaults, combatRatingNames } from './combatRatings.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -145,10 +146,21 @@ function equipmentScalingLines(registries, attributeId, profiles) {
     const school = source.damageSchool || profile.damageSchool;
     const label = role === 'guard'
       ? 'Guard'
-      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}AR`;
+      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}Attack Rating`;
     lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
   }
   return [...lines];
+}
+
+function ratingScalingLines(registries, attribute) {
+  const ratings = registries.balance?.combatRatings || combatRatingDefaults;
+  if (!ratings?.enabled) return [];
+  return Object.entries(ratings.ratings || {}).flatMap(([id, rule]) => {
+    const weight = Number(rule?.[attribute.id]);
+    return Number.isFinite(weight) && weight > 0
+      ? [`${combatRatingNames[id] || id}: floor(${weight} × ${attribute.shortLabel})`]
+      : [];
+  });
 }
 
 /**
@@ -210,6 +222,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
       });
     const unlocks = unlockLines(registries, def.id);
     const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const ratingScaling = ratingScalingLines(registries, def);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
       : `${label} scales with ${def.label}`));
@@ -243,7 +256,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
       .map(([label, { gain, points }]) => `+${gain} ${label} ${cadence(points)}`);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
-    const lines = [...feeds, ...scaling, ...unlocks];
+    const lines = [...feeds, ...ratingScaling, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryHandler } from '../src/ui/screens/settings.js';
+import { advancedRowsForSettings, categoryHandler, settingsRow, statsTopicPreviewHtml } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups, CLASS_TOPICS } from '../src/ui/models/AdvancedSettingsGroups.js';
 
 test('grouping keeps every Advanced option reachable exactly once', () => {
@@ -15,10 +15,10 @@ test('grouping keeps every Advanced option reachable exactly once', () => {
 // The owner's four asks, as one structure (2026-09-20): class defaults live in
 // Progression, one driver holds the creation pool, "Assign points" is about
 // points rather than tiers, and the tier size sits under General.
-test('Progression is the one driver: pool first, then each class, and the tier size under General', () => {
+test('Progression is the one driver for starting attributes and class defaults', () => {
   const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Progression');
   assert.deepEqual(groups.map(group => group.id).slice(0, 6), ['Assign points', 'Equipment requirements', ...CLASS_TOPICS]);
-  assert.equal(advancedSection({ key: 'statTierSize' }), 'Progression', 'the tier size left the Classes tab with it');
+  assert.equal(advancedSection({ key: 'statTierSize' }), 'Stats', 'the legacy tier belongs to Stats, not starting progression');
 
   const assign = groups.find(group => group.id === 'Assign points');
   // His sentence, in his order: the baseline he names first is the row he sees
@@ -40,20 +40,105 @@ test('Progression is the one driver: pool first, then each class, and the tier s
   assert.ok(requirements.rows.some(row => row.key === 'gameConfig.equipmentRequirements.ashStaff.intelligence'),
     'and every authored minimum has a row of its own');
 
-  // The tier size AND its own bounds: one dial, one place.
+  // Tier-size bounds remain progression rules, but the retired global dial is
+  // not another editor beside the per-trait conversion controls.
   const general = groups.find(group => group.id === 'General');
   assert.deepEqual(general.rows.map(row => row.key).sort(), [
     'creationAutoAdvance',
     'gameConfig.balance.levelUp.tierSizeMax',
     'gameConfig.balance.levelUp.tierSizeMin',
-    'statTierSize',
   ]);
+  assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'));
+  assert.equal(settingsRow('statTierSize').retired, true, 'the old key remains import-compatible');
 
   for (const id of CLASS_TOPICS) {
     const group = groups.find(candidate => candidate.id === id);
-    assert.equal(group.rows.length, 8, `${id} keeps five attributes, base HP and two flask rows`);
+    assert.equal(group.rows.length, 7, `${id} keeps five attributes and two flask rows`);
     assert.ok(group.rows.every(row => row.key.includes(`.${id.toLowerCase()}.`)));
   }
+});
+
+test('Stats is the single menu for conversions, ratings, and hand rules', () => {
+  const rows = categoryHandler('Advanced').rows;
+  const stats = advancedSubgroups(rows, 'Stats');
+  assert.deepEqual(stats.slice(0, 9).map(group => group.id), [
+    'Overview', 'Actions', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward', 'Attack rating (AR)',
+  ]);
+  const keys = stats.flatMap(group => group.rows.map(row => row.key));
+  assert.ok(keys.some(key => key.startsWith('gameConfig.derivedStatRules.rules.energy.')));
+  assert.ok(keys.includes('gameConfig.derivedStatRules.rules.energy.attributeMultiplier'));
+  assert.ok(keys.includes('gameConfig.derivedStatRules.rules.mana.perLevel.multiplier'));
+  assert.ok(!keys.includes('gameConfig.derivedStatRules.rules.energy.pointsPerTier'));
+  assert.ok(!keys.includes('gameConfig.derivedStatRules.rules.energy.gainPerTier'));
+  assert.ok(keys.some(key => key.startsWith('gameConfig.handRules.starting.')));
+  assert.ok(keys.some(key => key.startsWith('gameConfig.combatRatings.ratings.ar.')));
+  assert.ok(keys.some(key => key.startsWith('gameConfig.balance.mana.')));
+  assert.equal(new Set(keys).size, keys.length);
+  assert.ok(!rows.some(row => ['gameConfig.balance.energy', 'gameConfig.balance.draw', 'gameConfig.balance.handMax'].includes(row.key)),
+    'obsolete fallback constants are not exposed as competing controls');
+  assert.ok(!keys.some(key => key.startsWith('gameConfig.derivedStatRules.rules.poise.')
+    || key.startsWith('gameConfig.balance.poise.')),
+  'legacy Poise formulas remain import-compatible without presenting competing editors');
+});
+
+test('ratings-disabled profiles expose only their active legacy Poise formula', () => {
+  const disabled = advancedRowsForSettings({ 'gameConfig.combatRatings.enabled': false });
+  assert.ok(disabled.some(row => row.key === 'gameConfig.combatRatings.enabled'));
+  assert.ok(disabled.some(row => row.key === 'gameConfig.derivedStatRules.rules.poise.attributeMultiplier'));
+  assert.ok(!disabled.some(row => row.key.startsWith('gameConfig.combatRatings.ratings.')));
+
+  const enabled = advancedRowsForSettings({});
+  assert.ok(enabled.some(row => row.key === 'gameConfig.combatRatings.ratings.poise.constitution'));
+  assert.ok(!enabled.some(row => row.key.startsWith('gameConfig.derivedStatRules.rules.poise.')));
+});
+
+test('generated balance labels retain enough path context to be unique in a topic', () => {
+  const progression = advancedSubgroups(categoryHandler('Advanced').rows, 'Progression');
+  const enemyScaling = progression.find(group => group.id === 'Enemy scaling');
+  assert.ok(enemyScaling);
+  const labels = enemyScaling.rows.map(row => row.label);
+  assert.equal(new Set(labels).size, labels.length);
+  assert.ok(labels.some(label => /HP.*Per level/.test(label)));
+  assert.ok(labels.some(label => /Damage.*Per level/.test(label)));
+});
+
+test('stat previews use edited values and show the expanded total', () => {
+  const html = statsTopicPreviewHtml({
+    'gameConfig.derivedStatRules.rules.energy.sourceStat': 'strength',
+    'gameConfig.derivedStatRules.rules.energy.base': 2,
+    'gameConfig.derivedStatRules.rules.energy.pointsPerTier': 4,
+    'gameConfig.derivedStatRules.rules.energy.gainPerTier': 3,
+  }, 'Actions', { strength: 11, dexterity: 2, constitution: 3, wisdom: 4, intelligence: 5 }, 11);
+  assert.match(html, /Current character · level 11 · STR 11/);
+  assert.match(html, /2 base \+ floor\(11 STR ÷ 4\) × 3 = <b>8<\/b>/);
+  const legacyThird = statsTopicPreviewHtml({
+    'gameConfig.derivedStatRules.rules.energy.pointsPerTier': 3,
+    'gameConfig.derivedStatRules.rules.energy.gainPerTier': 1,
+  }, 'Actions', { dexterity: 3 });
+  assert.match(legacyThird, /3 base \+ floor\(3 DEX ÷ 3\) × 1 = <b>4<\/b>/);
+  assert.doesNotMatch(legacyThird, /floor\(0\.333333 × 3 DEX\)/);
+
+  const draw = statsTopicPreviewHtml({
+    'gameConfig.handRules.starting.base': 10,
+    'gameConfig.handRules.starting.baseline': 5,
+    'gameConfig.handRules.starting.pointsPerCard': 2,
+    'gameConfig.handRules.capacity.base': 3,
+  }, 'Draw & hand', { intelligence: 9 });
+  assert.match(draw, /Opening hand:<\/b> 10 base \+ floor\(max\(0, 9 INT − 5\) ÷ 2\) = 12/);
+  assert.match(draw, /limited by hand capacity 3 = <strong>3<\/strong>/);
+  assert.match(draw, /retained for LAN and older saved fights/);
+
+  assert.doesNotThrow(() => statsTopicPreviewHtml({
+    'gameConfig.derivedStatRules.rules.energy.pointsPerTier': 0,
+  }, 'Actions'));
+  const hpAtLevel = statsTopicPreviewHtml({}, 'HP',
+    { strength: 1, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 }, 11);
+  assert.match(hpAtLevel, /30 base \+ floor\(4 × 2 CON\) \+ floor\(1 × 10 levels\) = <b>48<\/b>/);
+
+  const actions = statsTopicPreviewHtml({
+    'gameConfig.derivedStatRules.rules.energy.attributeMultiplier': 0.2,
+  }, 'Actions', { dexterity: 5 });
+  assert.match(actions, /3 base \+ floor\(0\.2 × 5 DEX\) = <b>4<\/b>/);
 });
 
 // A pool for a creation mode no player can pick is a dial whose only reachable

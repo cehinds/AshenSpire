@@ -5,12 +5,20 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { resolveHandRules, scaledCards, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
+import { handRulesRows, resolveHandRules, scaledCards, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 
 const registries = createRegistries(contentBundle);
+
+test('settings present each hand-rule subsection once in task order', () => {
+  const sections = handRulesRows(contentBundle.attributes)
+    .map(row => row.settingSection)
+    .filter((section, index, all) => index === 0 || section !== all[index - 1]);
+  assert.deepEqual(sections, ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards']);
+});
+
 function fight(overrides = {}, attributes = { intelligence: 10 }) {
   const settings = Object.fromEntries(Object.entries(overrides).map(([k, v]) => [prefix + k, v]));
   return createCombat({ registries, rng: createRng(2309), handRules: resolveHandRules(settings, contentBundle.attributes),

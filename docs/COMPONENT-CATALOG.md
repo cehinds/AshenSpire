@@ -298,6 +298,7 @@ custom art does not require a second card implementation.
 | `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
+| `settings-stat-receipt` | configured derived-stat, hand-rule, and combat-rating models | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
@@ -663,13 +664,21 @@ with one-hand grip. The visual miniature includes Rogue single dagger; the
 [full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
 class/outfit filters, pose order, timing, portrait and conversation references.
 
-### Hand & Draw Rules
+### Stats, conversions, and hand rules
 
-Advanced Settings groups the controls into Starting hand, Turn draws, Hand
-capacity, and Retention & discards. `src/model/handRules.js` owns row metadata,
-stat calculations and the live preview; `settings.js` uses the shared setting
-rows and desktop/compact navigation. In-run previews use the character's current
-attributes; title-screen previews show baseline values.
+Advanced → Stats is the single editing area for resource conversions, combat
+ratings, and hand behavior. Actions, Draw & hand, HP, Stamina, Mana, Poise,
+Ward, Attack Rating, Defence Rating, and Potency Rating have dedicated topics.
+Each derived trait has one attribute multiplier and, where applicable, one
+level multiplier; its receipt expands `base + floor(multiplier × stat) +
+floor(level multiplier × levels after 1)` and updates with the dial. Draw &
+hand keeps its controls in
+Starting hand, Turn draws, Hand capacity, and Retention & discards subsections.
+`src/model/handRules.js` owns row metadata and calculations; `settings.js`
+renders live expanded receipts from those models. In-run previews use the
+character's current attributes; title-screen previews use a labeled example
+class. Legacy shared tier settings and obsolete balance fallbacks remain
+import-compatible but do not appear as competing editors.
 
 `src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
 read-only card faces and footer buttons into the turn-end discard selector.
@@ -678,4 +687,9 @@ cancel without changing combat state. `src/engine/handRules.js` validates the
 selection independently before the turn can advance.
 
 ### Ratings, Poise and Ward
-The Advanced Settings workspace adds Stats & Defence subgroups for each formula, curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+The Advanced → Stats workspace adds subgroups for each formula, curve, impact,
+break penalty, and source/status override. Shared character resource strips and
+equipment receipts show Ward and Attack/Defence/Potency Rating contributions. The shared resource-bar
+renderer receives the Ward source on character models, with the same
+selected-character visibility as Poise. Combat inspection lists both meters and
+the three bonus ratings. Stagger and Disruption use the shared combat banner.

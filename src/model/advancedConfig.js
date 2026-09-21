@@ -70,6 +70,39 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
   [`${ADVANCED_CONFIG_PREFIX}balance.shrine.healPct`]: `${ADVANCED_CONFIG_PREFIX}balance.rest.hpPartialPct`,
 });
 
+const BALANCE_PRESENTATION = Object.freeze({
+  'mana.minActionCost': {
+    label: 'Minimum Actions on Mana cards',
+    settingSection: 'Mana card requirements',
+    note: 'The least Actions a card may cost if it also costs Mana. This validates authored cards and applies to a new run.',
+  },
+  'mana.minStaminaCost': {
+    label: 'Minimum Stamina on Mana cards',
+    settingSection: 'Mana card requirements',
+    note: 'The least Stamina a card may cost if it also costs Mana. This validates authored cards and applies to a new run.',
+  },
+});
+
+const LABEL_ACRONYMS = new Map(Object.entries({
+  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+}));
+
+function labelSegment(part, sentence = false) {
+  return String(part)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .map((piece, index) => LABEL_ACRONYMS.get(piece.toLowerCase())
+      || (sentence && index > 0 ? piece.toLowerCase() : piece[0].toUpperCase() + piece.slice(1)))
+    .join(' ');
+}
+
+function balanceLabel(path) {
+  const leaf = labelSegment(path[path.length - 1], true);
+  const context = path.slice(0, -1).map((part) => labelSegment(part));
+  return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
+}
+
 export function currentAdvancedKey(key) {
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
@@ -120,15 +153,20 @@ function leafRows(value, path = [], rows = []) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
     const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const retired = ['energy', 'draw', 'handMax'].includes(joined) || joined.startsWith('poise.');
+    const area = balanceGroup(joined);
+    const presentation = BALANCE_PRESENTATION[joined] || {};
     rows.push({
       cat: 'Advanced',
-      advancedGroup: balanceGroup(joined),
+      advancedGroup: area,
       key: `${ADVANCED_CONFIG_PREFIX}balance.${joined}`,
       type: typeof value === 'number' ? 'number' : undefined,
       def: value,
       ...domain,
-      label: word(path[path.length - 1]),
-      note: `Authored balance value: ${joined}. Applies to a new run.`,
+      ...(retired ? { retired: true } : {}),
+      label: presentation.label || balanceLabel(path),
+      note: presentation.note || `${word(joined)}. Shipping default: ${value}. This low-level ${area.toLowerCase()} value applies when a new run is created.`,
+      ...(presentation.settingSection ? { settingSection: presentation.settingSection } : {}),
       configPath: ['balance', ...path],
       searchPath: joined,
     });
@@ -201,7 +239,7 @@ function explicitRows(bundle) {
   for (const classDef of bundle.classes || []) {
     const classLabel = classDef.name || word(classDef.id);
     rows.push({
-      cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
+      cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel, retired: true,
       type: 'number', integer: true, step: 1,
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
@@ -384,6 +422,23 @@ function setPath(target, path, value) {
   cursor[path[path.length - 1]] = value;
 }
 
+function normalizeDerivedMultipliers(configured, settings) {
+  for (const [id, rule] of Object.entries(configured.derivedStatRules.rules || {})) {
+    const base = `${ADVANCED_CONFIG_PREFIX}derivedStatRules.rules.${id}`;
+    const attributeRaw = Number(settings[`${base}.attributeMultiplier`]);
+    if (Number.isFinite(attributeRaw) && attributeRaw >= 0) {
+      rule.pointsPerTier = attributeRaw === 0 ? 1 : 1 / attributeRaw;
+      rule.gainPerTier = attributeRaw === 0 ? 0 : 1;
+    }
+    if (!rule.perLevel) continue;
+    const levelRaw = Number(settings[`${base}.perLevel.multiplier`]);
+    if (Number.isFinite(levelRaw) && levelRaw >= 0) {
+      rule.perLevel.every = levelRaw === 0 ? 1 : 1 / levelRaw;
+      rule.perLevel.gain = levelRaw === 0 ? 0 : 1;
+    }
+  }
+}
+
 export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const settings = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
   const configured = cloneConfigurableBundle(bundle);
@@ -397,16 +452,27 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
+  const legacyTier = Number(settings.statTierSize
+    ?? settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`]);
+  if (Number.isInteger(legacyTier) && legacyTier > 0) {
+    configured.derivedStatRules.defaults.pointsPerTier = legacyTier;
+    for (const [id, rule] of Object.entries(configured.derivedStatRules.rules)) {
+      const key = `${ADVANCED_CONFIG_PREFIX}derivedStatRules.rules.${id}.pointsPerTier`;
+      if (settings[key] === undefined) rule.pointsPerTier = legacyTier;
+    }
+  }
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
     if (!row?.configPath) continue;
-    const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
-    if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
+    const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : Number(raw);
+    if (row.type === 'choice' && !row.choices.includes(value)) continue;
+    if (row.type !== 'choice' && typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'
       ? { classesById }
       : configured;
     setPath(root, row.configPath, value);
   }
+  normalizeDerivedMultipliers(configured, settings);
   const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
   if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
     const xp = configured.balance.xp;
@@ -422,8 +488,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was

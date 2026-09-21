@@ -42,6 +42,7 @@ const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
     previewAttributes: ctx.run?.attributes,
+    previewLevel: ctx.run?.level?.level,
     onChange: ctx.onSettingsChange || (() => {}),
     onOffline: ctx.onOffline,
   }),

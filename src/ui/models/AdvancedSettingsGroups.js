@@ -11,7 +11,13 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // the creation pool, each class's table, level-up, the tier size — is filed
 // under Progression, in that reading order.
 export function advancedSection(row) {
-  if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
+  if (row.key === 'statTierSize'
+    || row.key.startsWith('gameConfig.derivedStatRules.')
+    || row.key.startsWith('gameConfig.combatRatings.')
+    || row.key.startsWith('gameConfig.handRules.')
+    || row.key.startsWith('gameConfig.balance.mana.')
+    || row.key.startsWith('gameConfig.balance.poise.')) return 'Stats';
+  if (row.key === 'creationAutoAdvance') return 'Progression';
   return row.advancedGroup || 'Gameplay';
 }
 
@@ -31,12 +37,24 @@ function topic(row, section) {
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
+  const key = row.key;
+  const path = key.replace(/^gameConfig\.(balance\.)?/, '');
+  if (section === 'Stats') {
+    if (row.derivedStatId === 'energy') return 'Actions';
+    if (row.derivedStatId === 'draw' || row.handTopic) return 'Draw & hand';
+    if (row.derivedStatId) return row.derivedStatLabel || words(row.derivedStatId);
+    if (/^combatRatings\.ratings\.ar\./.test(path)) return 'Attack rating (AR)';
+    if (/^combatRatings\.ratings\.dr\./.test(path)) return 'Defence rating (DR)';
+    if (/^combatRatings\.ratings\.pr\./.test(path)) return 'Potency rating (PR)';
+    if (/^combatRatings\.ratings\.poise\./.test(path) || /^poise\./.test(path)) return 'Poise';
+    if (/^combatRatings\.ratings\.ward\./.test(path)) return 'Ward';
+    if (/^mana\./.test(path)) return 'Mana';
+    return row.statTopic === 'General' ? 'Overview' : row.statTopic || 'Overview';
+  }
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
   if (row.handTopic) return row.handTopic;
-  const key = row.key;
-  const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
     // His words, verbatim: "the assign points should be about how many points
@@ -116,9 +134,16 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
-  if (section === 'Hand & Draw') {
-    const order = ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards'];
-    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  if (section === 'Stats') {
+    const order = [
+      'Overview', 'Actions', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
+      'Attack rating (AR)', 'Defence rating (DR)', 'Potency rating (PR)',
+      'Resistance', 'Impact', 'Breaks', 'Status resistance', 'Status bonuses',
+      'Weapon bonuses', 'Armour bonuses', 'Relic bonuses', 'Enemy defences',
+      'Enemy impact', 'Enemy attack types', 'Attack overrides',
+    ];
+    const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
+    result.sort((a, b) => rank(a.id) - rank(b.id));
   }
   if (section === 'Interface') result.sort((a, b) => Number(b.id === 'Formation layout') - Number(a.id === 'Formation layout'));
   // Modals, then Menus, then Scenes: outermost surface first, and the order the
@@ -135,7 +160,7 @@ export function advancedSubgroups(rows, section) {
     // kits ask for — so the two are read together, and only then the class
     // tables they bound. A topic not named here keeps its discovered order,
     // after the named ones.
-    const order = ['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
+    const order = ['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'General'];
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   }

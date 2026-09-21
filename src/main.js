@@ -1427,6 +1427,7 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
+    previewLevel: run?.level?.level,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });
