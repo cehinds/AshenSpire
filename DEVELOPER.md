@@ -770,9 +770,40 @@ Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed tou
 
 ## Opening sequence
 
-Advanced → Opening sequence configures all six scenes, class lines, captions,
-controls, holds, transitions and tint. The authored data is in
-`content/config/ui/screens/prologue.json`; rebuild with the config compiler.
+Advanced → Opening configures every scene, class line, caption, control, hold,
+transition and tint, and the staging around them: which painting a scene draws
+on (`art`, any shipped opening painting, not only its own), whether it plays
+(`enabled`), where it plays (`order`), whether it carries a title banner, plus
+the wireframe, artwork scale/fit/focus, text position, alignment, size,
+container (present / visible / opacity / colour) and outline. `prologueSequence`
+turns order and inclusion into the playing order; the indices it returns stay
+indices into the AUTHORED `config.scenes`, which is what `run.prologue.scene`
+and every `gameConfig.prologue.scenes.<id>.*` key are named for, and
+`prologueResumePosition` is how a run paused on a scene since switched off finds
+where to carry on.
+
+Staging is held twice, from one table: `PROLOGUE_STAGE_FIELDS` names every field
+that exists both under `presentation` (the house style) and under each scene's
+`stage` (its own answer, read only when the scene sets `ownStaging`), and the
+rows, the defaults, the validation and `prologueStaging` all read that table, so
+a field cannot be added to one home and forgotten in the other. The `night`
+wash cap that used to be an `if` in the renderer is that scene's own staging.
+
+Scenes are added into named slots, never invented at runtime: the authored
+sequence carries `slots` empty scenes (`extraA`…), switched off, so every key an
+added scene writes is still a key the all-or-nothing importer can refuse a bad
+value for. `prologueSceneCopy`, `prologueSceneClear`, `prologueReorderChanges`
+and `prologueFreeSlot` are the list editor's whole model; Settings only renders
+them. `presets.<id>` are three slots a whole opening parks in
+(`prologueSlotPayload` / `prologueSlotChanges` — loading is a replacement, so
+the change set names the keys to unset as well). Per-scene `music`/`stinger`
+reach the audio engine through the `audio` option `main.js` passes to
+`mountPrologue`; the settings preview passes none and keeps what is playing. The authored
+data is in `content/config/ui/screens/prologue.json`; rebuild with the config
+compiler. Scene file: `prologueScenePreset` exports the opening alone in the
+art-studio preset shape that `parseAdvancedConfigFile` already imports, so the
+scene file and the whole-game configuration carry the same keys and one
+importer reads both.
 `src/model/prologue.js` projects settings without gameplay RNG. The shared
 `mountPrologue` renderer serves new solo games and the settings preview.
 `run.prologue` stores a version, pending/complete status and scene index; new

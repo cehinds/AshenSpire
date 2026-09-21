@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json acb9ab41e1763d33
+// source content/config/ui/screens/prologue.json e1c2d650ace2d172
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -771,7 +771,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-20-burning-v2",
+          "revision": "2026-09-21-staging-v5",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -812,7 +812,16 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
               "effect": "push",
-              "character": false
+              "character": false,
+              "art": "warmth",
+              "enabled": true,
+              "order": 1,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "year",
@@ -821,7 +830,16 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
               "effect": "fade",
-              "character": false
+              "character": false,
+              "art": "year",
+              "enabled": true,
+              "order": 2,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "carry",
@@ -842,7 +860,16 @@ export const uiConfig = deepFreeze({
                   "y": 79,
                   "height": 42
                 }
-              }
+              },
+              "art": "carry",
+              "enabled": true,
+              "order": 3,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             },
             {
               "id": "night",
@@ -851,7 +878,18 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
               "effect": "fade",
-              "character": false
+              "character": false,
+              "art": "night",
+              "enabled": true,
+              "order": 4,
+              "banner": false,
+              "ownStaging": true,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {
+                "wash": 0.06
+              }
             },
             {
               "id": "step",
@@ -873,7 +911,88 @@ export const uiConfig = deepFreeze({
                   "y": 81,
                   "height": 28
                 }
-              }
+              },
+              "art": "step",
+              "enabled": true,
+              "order": 5,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraA",
+              "name": "Added scene 1",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 6,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraB",
+              "name": "Added scene 2",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 7,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraC",
+              "name": "Added scene 3",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 8,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
+            },
+            {
+              "id": "extraD",
+              "name": "Added scene 4",
+              "seconds": 5,
+              "speaker": "",
+              "text": "",
+              "effect": "fade",
+              "character": false,
+              "art": "none",
+              "enabled": false,
+              "order": 9,
+              "banner": false,
+              "ownStaging": false,
+              "waitForInput": false,
+              "music": "keep",
+              "stinger": "none",
+              "stage": {}
             }
           ],
           "presentation": {
@@ -889,7 +1008,29 @@ export const uiConfig = deepFreeze({
             "customTint": "#c9a227",
             "previewClass": "reaver",
             "previewScene": "warmth",
-            "shadowStrength": 0.7
+            "shadowStrength": 0.7,
+            "layout": "caption",
+            "imageScale": 1,
+            "imageFit": "cover",
+            "imageFocusX": 50,
+            "imageFocusY": 50,
+            "bannerPosition": "top",
+            "textPosition": "bottom-center",
+            "textAlign": "center",
+            "textScale": 1,
+            "textBox": true,
+            "textBoxVisible": true,
+            "textBoxOpacity": 1,
+            "textBoxColor": "#100e0c",
+            "textOutline": false,
+            "textOutlineColor": "#100e0c",
+            "textOutlineWidth": 2,
+            "camera": "auto",
+            "cameraAmount": 3.5,
+            "textInsetX": 4,
+            "textInsetY": 4,
+            "reveal": "none",
+            "revealSpeed": 45
           },
           "palettes": {
             "accent": {
@@ -906,14 +1047,26 @@ export const uiConfig = deepFreeze({
               "rot": "#b5541c",
               "grace": "#9fc3e8"
             }
+          },
+          "slots": 4,
+          "presets": {
+            "a": {
+              "name": "Slot 1",
+              "data": ""
+            },
+            "b": {
+              "name": "Slot 2",
+              "data": ""
+            },
+            "c": {
+              "name": "Slot 3",
+              "data": ""
+            }
           }
         }
       },
       "sizing": {
         "mobileBreakpoint": 760
-      },
-      "motion": {
-        "zoom": 1.035
       }
     },
     "shop": {

@@ -33,7 +33,12 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import {
+  prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
+  prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
+  prologueFreeSlot, prologueStagedOrder, PROLOGUE_PREFIX, PROLOGUE_DEFAULTS,
+} from '../../model/prologue.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -93,6 +98,11 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+
+// A row that holds no value of its own: a button, the fullscreen action, the
+// opening's list editor. They are never exported and never reset, because
+// there is nothing under their key to export or take away.
+const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -848,6 +858,94 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
+  // ---- 'sceneList': THE OPENING AS A LIST, BECAUSE THAT IS WHAT IT IS ------
+  //
+  // Order was a number typed into a row per scene, which is workable at five
+  // scenes and clumsy the moment there are nine: to move one scene you edit two
+  // numbers, and nothing shows you the running order you are editing. The list
+  // IS the running order — drag it, or use the arrows, and the `order` keys are
+  // rewritten to match. Add / Duplicate / Remove work the empty slots the
+  // settings file already names, so a scene the owner adds is still a scene the
+  // importer can refuse a bad value for.
+  if (r.type === 'sceneList') {
+    const config = prologueConfig(settings);
+    const playing = prologueSequence(config);
+    // THE LIST IS THE STAGING, NOT "PLAYING, THEN THE REST". Listing the parked
+    // scenes after the playing ones meant every edit renumbered them to the end
+    // — switch a scene off, move anything, switch it back on, and it came back
+    // last. A scene that is off keeps its place here and gets it back.
+    const staged = prologueStagedOrder(config);
+    const live = index => config.scenes[index].enabled !== false;
+    const anyLive = staged.some(live);
+    const free = prologueFreeSlot(config);
+    const item = (index, at) => {
+      const scene = config.scenes[index];
+      const on = live(index);
+      // Duplicate reads the scene it is beside, so the row that IS the next
+      // free slot cannot be the source: it would be both sides of the copy.
+      const canCopy = free && scene.id !== free;
+      return `<li class="set-scene" draggable="true" data-scene="${esc(scene.id)}" data-live="${on ? '1' : '0'}">
+        <span class="set-scene-grip" aria-hidden="true">⠿</span>
+        <span class="set-scene-name">${esc(scene.name || scene.id)}${isPrologueSlot(scene) ? ' <em>(added)</em>' : ''}</span>
+        <span class="set-scene-at">${on ? `${at + 1} / ${playing.length}` : 'not playing'}</span>
+        <span class="set-scene-acts">
+          <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
+          <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
+          <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
+          ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
+        </span>
+      </li>`;
+    };
+    let at = -1;
+    const list = staged.map(index => item(index, live(index) ? ++at : -1)).join('');
+    const slotsLeft = config.scenes.filter(scene => isPrologueSlot(scene) && scene.enabled === false && !String(scene.text || '').trim()).length;
+    return `${rowOpen('set-row-wide set-row-scenes')}${stack()}
+      <div class="r-trail set-scene-trail">
+        <ol class="set-scene-list" data-scene-list>${list}</ol>
+        <div class="set-scene-tools">
+          <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
+          <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
+          ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
+        </div>
+      </div></div>`;
+  }
+  // ---- 'presetSlot': a whole opening, parked under a name ------------------
+  if (r.type === 'presetSlot') {
+    const parkedName = typeof settings[r.nameKey] === 'string' && settings[r.nameKey].trim()
+      ? settings[r.nameKey] : PROLOGUE_DEFAULTS.presets[r.presetId].name;
+    const filled = typeof settings[r.key] === 'string' && settings[r.key].length > 2;
+    return `${rowOpen('set-row-wide set-row-preset')}<span class="as-labelstack">
+        <span class="ls-label">${esc(parkedName)}</span>
+        <span class="ls-hint set-note">${filled ? 'Holds a saved opening.' : 'Empty.'} ${note}</span>
+      </span>
+      <span class="r-trail set-preset-acts">
+        <button type="button" class="as-btn" data-preset-save="${esc(r.presetId)}">Save</button>
+        <button type="button" class="as-btn" data-preset-load="${esc(r.presetId)}"${filled ? '' : ' disabled'}>Load</button>
+        <button type="button" class="as-btn" data-preset-clear="${esc(r.presetId)}"${filled ? '' : ' disabled'}>Clear</button>
+      </span></div>`;
+  }
+  // ---- 'colorSwatch': BOTH WAYS OF NAMING A COLOUR, ONE OF THEM FOLDED -----
+  //
+  // The swatches are the palette this game already paints with, so the common
+  // answer is one tap. The wheel is every other colour, and it is DISCLOSED
+  // rather than always open: a permanently mounted system colour input made a
+  // one-line setting two lines tall on a phone, times every colour row the
+  // opening now has. Both write the same key, and the swatch row shows which
+  // one the stored value matches — including "none of them", which is itself
+  // the answer to "did I pick this from the wheel?".
+  if (r.type === 'colorSwatch') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    const chips = (r.swatches || []).map((color) => {
+      const on = String(color).toLowerCase() === String(value).toLowerCase();
+      return `<button type="button" class="as-swatch set-swatch${on ? ' on' : ''}" style="--swatch:${esc(color)}" data-key="${esc(r.key)}" data-color="${esc(color)}" aria-pressed="${on}" aria-label="${esc(color)}" title="${esc(color)}"></button>`;
+    }).join('');
+    return `${rowOpen('set-row-wide set-row-swatches')}${stack()}<span class="r-trail set-swatch-trail">
+        <span class="as-swatches" role="group" aria-label="${esc(r.label)}">${chips}</span>
+        <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-controls="set-wheel-${esc(r.key)}" aria-expanded="false">Colour wheel</button>
+        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
+      </span></div>`;
   }
   if (r.type === 'textarea') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
@@ -1910,7 +2008,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = rows.filter(row => !['button', 'action'].includes(row.type)).map(row => row.key);
+      const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const changed = {};
       for (const key of keys) {
         delete settings[key];
@@ -1942,10 +2040,144 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     input.addEventListener('blur', commit);
   });
 
+  const commitColor = (key, value) => {
+    settings[key] = value;
+    onChange({ [key]: value });
+    // The swatch row is the readout as well as the control: a colour picked on
+    // the wheel lights its swatch if it happens to be one, and lights none if
+    // it is not.
+    container.querySelectorAll(`.set-swatch[data-key="${CSS.escape(key)}"]`).forEach(chip => {
+      const on = chip.dataset.color.toLowerCase() === value.toLowerCase();
+      chip.classList.toggle('on', on);
+      chip.setAttribute('aria-pressed', String(on));
+    });
+    const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(key)}"]`);
+    if (wheel && wheel.value.toLowerCase() !== value.toLowerCase()) wheel.value = value;
+  };
   container.querySelectorAll('.set-color').forEach(input => {
-    input.addEventListener('input', () => {
-      settings[input.dataset.key] = input.value;
-      onChange({ [input.dataset.key]: input.value });
+    input.addEventListener('input', () => commitColor(input.dataset.key, input.value));
+  });
+  container.querySelectorAll('.set-swatch').forEach(chip => {
+    chip.addEventListener('click', () => commitColor(chip.dataset.key, chip.dataset.color));
+  });
+  // ---- the opening's list editor and preset slots -------------------------
+  //
+  // Every write goes through one door: the model decides WHICH keys change
+  // (prologueReorderChanges / prologueSceneCopy / prologueSceneClear), this
+  // applies them the way the reset button already does — `undefined` unsets —
+  // and re-renders, because the list, the counts and the per-scene topics are
+  // all reading the same settings.
+  const applyPrologue = (changes, refocus = null) => {
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === undefined) delete settings[key]; else settings[key] = value;
+    }
+    if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    // A re-render replaces the button that was pressed, so reordering three
+    // places from the keyboard meant hunting for the arrow again after each
+    // press. The same control on the same scene takes the focus back.
+    if (refocus) container.querySelector(refocus)?.focus({ preventScroll: true });
+  };
+  // THE ORDER COMES FROM THE SETTINGS, NOT FROM THE DOM. A drag that is
+  // abandoned outside the list leaves the rows rearranged with nothing saved,
+  // and reading the DOM meant the next arrow press quietly persisted that
+  // abandoned arrangement. Every action re-derives the staging and edits it.
+  const stagedIds = () => {
+    const config = prologueConfig(settings);
+    return prologueStagedOrder(config).map(index => config.scenes[index].id);
+  };
+  container.querySelectorAll('[data-scene-list]').forEach(list => {
+    list.querySelectorAll('[data-scene-move]').forEach(btn => btn.addEventListener('click', () => {
+      const ids = stagedIds();
+      const from = ids.indexOf(btn.dataset.sceneId);
+      const to = from + (btn.dataset.sceneMove === 'up' ? -1 : 1);
+      if (from < 0 || to < 0 || to >= ids.length) return;
+      ids.splice(to, 0, ...ids.splice(from, 1));
+      applyPrologue(prologueReorderChanges(ids), `[data-scene-move="${btn.dataset.sceneMove}"][data-scene-id="${CSS.escape(btn.dataset.sceneId)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-toggle]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.sceneToggle;
+      const scene = prologueConfig(settings).scenes.find(row => row.id === id);
+      applyPrologue({ [prologueSettingKey(['scenes', id, 'enabled'])]: scene?.enabled === false },
+        `[data-scene-toggle="${CSS.escape(id)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-copy]').forEach(btn => btn.addEventListener('click', () => {
+      const source = btn.dataset.sceneCopy;
+      const slot = prologueFreeSlot(prologueConfig(settings));
+      // The free slot is never its own source — the markup disables that row's
+      // Duplicate, and this refuses it too rather than inserting at the front.
+      if (!slot || slot === source) return;
+      const ids = stagedIds().filter(id => id !== slot);
+      ids.splice(ids.indexOf(source) + 1, 0, slot);
+      applyPrologue({ ...prologueSceneCopy(settings, source, slot), ...prologueReorderChanges(ids) },
+        `[data-scene-remove="${CSS.escape(slot)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-remove]').forEach(btn => btn.addEventListener('click', () => {
+      applyPrologue(prologueSceneClear(btn.dataset.sceneRemove), '[data-scene-add]');
+    }));
+    // Dragging writes the same keys as the arrows. A drag that ends anywhere
+    // but on another row is ABANDONED: the rows are put back by a re-render,
+    // so what is on screen is always what is saved.
+    let dragging = null, dropped = false;
+    list.querySelectorAll('[data-scene]').forEach(item => {
+      item.addEventListener('dragstart', event => {
+        dragging = item; dropped = false; item.classList.add('set-scene-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', item.dataset.scene);
+      });
+      item.addEventListener('dragend', () => {
+        dragging?.classList.remove('set-scene-dragging');
+        const moved = !dropped && dragging;
+        dragging = null;
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      });
+      item.addEventListener('dragover', event => {
+        if (!dragging || dragging === item) return;
+        event.preventDefault();
+        const box = item.getBoundingClientRect();
+        item.parentNode.insertBefore(dragging, event.clientY - box.top < box.height / 2 ? item : item.nextSibling);
+      });
+    });
+    list.addEventListener('dragover', event => { if (dragging) event.preventDefault(); });
+    list.addEventListener('drop', event => {
+      if (!dragging) return;
+      event.preventDefault();
+      dropped = true;
+      applyPrologue(prologueReorderChanges([...list.querySelectorAll('[data-scene]')].map(node => node.dataset.scene)));
+    });
+  });
+  container.querySelectorAll('[data-scene-add]').forEach(btn => btn.addEventListener('click', () => {
+    const slot = prologueFreeSlot(prologueConfig(settings));
+    if (!slot) return;
+    applyPrologue({
+      [prologueSettingKey(['scenes', slot, 'enabled'])]: true,
+      ...prologueReorderChanges([...stagedIds().filter(id => id !== slot), slot]),
+    }, `[data-scene-remove="${CSS.escape(slot)}"]`);
+  }));
+  container.querySelectorAll('[data-preset-save]').forEach(btn => btn.addEventListener('click', () => {
+    try {
+      applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetSave, 'data'])]: prologueSlotPayload(panelSettings || settings) });
+      showSettingsNotice('Opening saved to this slot. It travels in your configuration file.');
+    } catch (error) { showSettingsNotice(error.message); }
+  }));
+  container.querySelectorAll('[data-preset-load]').forEach(btn => btn.addEventListener('click', () => {
+    try {
+      // Loading REPLACES the opening: prologueSlotChanges names the keys to
+      // take away as well as the ones to write.
+      applyPrologue(prologueSlotChanges(settings[prologueSettingKey(['presets', btn.dataset.presetLoad, 'data'])], settings));
+      showSettingsNotice('Opening loaded from this slot. Every other setting is unchanged.');
+    } catch (error) { showSettingsNotice(`That slot could not be loaded: ${error.message}`); }
+  }));
+  container.querySelectorAll('[data-preset-clear]').forEach(btn => btn.addEventListener('click', () => {
+    applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetClear, 'data'])]: undefined });
+  }));
+  container.querySelectorAll('.set-wheel-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(toggle.dataset.wheelToggle)}"]`);
+      if (!wheel) return;
+      wheel.hidden = !wheel.hidden;
+      toggle.setAttribute('aria-expanded', String(!wheel.hidden));
+      if (!wheel.hidden) wheel.focus({ preventScroll: true });
     });
   });
 
@@ -2017,7 +2249,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       btn.textContent = 'Saving…';
       const result = await saveAdvancedConfigFile(panelSettings || settings, {
         build: { contentVersion: contentBundle.version },
-        includeKeys: ROWS.filter((row) => row.cat === 'Advanced' && row.type !== 'button' && row.type !== 'action').map((row) => row.key),
+        includeKeys: ROWS.filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
       });
       btn.disabled = false;
       btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
@@ -2028,7 +2260,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('[data-btn="gameConfigImport"]').forEach(btn => {
+  // ONE IMPORTER, TWO DOORS. The opening's scene file is the same format under
+  // a narrower name (parseAdvancedConfigFile recognises an art-studio preset and
+  // turns it into ordinary overrides), so the scene door is this door with a
+  // different label — not a second reader that could drift from it.
+  //
+  // THE SCENE DOOR IS STILL NARROWER THAN THE READER. Both exports are .json and
+  // the whole-game one has the likelier filename, so picking the wrong one in
+  // Advanced → Opening is one mis-click — and the reader would have applied
+  // every balance and interface override in it under a notice that said only
+  // "Loaded 412 settings". The door that says scenes takes scenes, and says so
+  // by name when handed something wider.
+  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+    const openingOnly = buttonKey === 'prologueSceneImport';
     const picker = document.createElement('input');
     picker.type = 'file';
     picker.accept = '.json,application/json';
@@ -2045,6 +2289,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
+        if (outside.length) {
+          throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
+        }
         if (!container.isConnected) return;
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
@@ -2054,6 +2302,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
       } finally { btn.disabled = false; }
+    });
+  });
+
+  container.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      const result = await saveJsonFile(prologueScenePreset(panelSettings || settings), {
+        filename: 'ashen-spire-opening.json',
+        description: 'Ashen Spire opening scenes',
+      });
+      btn.disabled = false;
+      btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
+      showSettingsNotice(result.ok
+        ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'} The same settings also travel in the whole game configuration.`
+        : 'This browser could not create a local configuration file.');
+      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
     });
   });
 
@@ -2479,7 +2744,7 @@ function settingsHeaderTools() {
     + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
   tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
     build: { contentVersion: contentBundle.version },
-    includeKeys: ROWS.filter(row => !['button', 'action'].includes(row.type)).map(row => row.key),
+    includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
   });
   return tools;
 }
@@ -2548,7 +2813,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       exportButton.disabled = true;
       const result = await saveAdvancedConfigFile(panelSettings || settings, {
         build: { contentVersion: contentBundle.version },
-        includeKeys: ROWS.filter(row => !['button', 'action'].includes(row.type)).map(row => row.key),
+        includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
       });
       exportButton.disabled = false;
       if (result.ok) { prompt.close(); door.close(); }

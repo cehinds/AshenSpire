@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1237",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "The opening is staged scene by scene, and you can build one without leaving Settings",
+    "detail": "Advanced → Opening now lists the opening as a list: drag a scene, or use its arrows, to change where it plays, switch one off, duplicate one, or add a new one — four empty scenes are kept for that, and a new scene starts as a text card with no painting until you give it one. Each scene can also stop following the opening's house style: turn on Use its own staging and that scene alone decides its frame, its artwork scale, fit and focus, its colour wash, and everything about its text. One scene can be letterboxed while the rest fill the screen. New for every scene: a camera that drifts in, out or across while the scene holds, with a distance you set; music that changes from that scene onward, or a sound it opens on; a hold that waits for Continue however the rest of the opening is paced; and narration that can arrive letter by letter or a line at a time, at a speed — always in full for a screen reader, and always whole when Reduced motion is on. Floating text takes an inset, so it can keep clear of a face in the painting without moving somewhere else. Three named slots park a whole opening in your profile, so you can keep two and switch between them with a button; slots travel in your configuration file like everything else. The last scene of the night keeps its darker wash, which used to be a rule in the code and is now simply that scene's own setting — so borrowing that painting for another scene no longer washes it out.",
+    "build": "0.7.1.354",
+    "pullRequest": 1237,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1237"
+  },
+  {
+    "id": "pr-1236",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "You can now stage the opening: what plays, in what order, over which painting, in which frame",
+    "detail": "Advanced → Opening could change what a scene said; how it was presented was fixed. Each scene now has a switch that keeps it in or leaves it out, a position that decides when it plays, a painting chosen from every one the game ships — including the forest road, whose artwork has been sitting unused since that scene was cut — and an optional title banner across the art. The frame around it all is yours too: the caption under the art as before, or the words over the art, a letterboxed plate, or a panel beside it; the painting's scale, whether it crops or fits, and which part of it stays in frame; and for the text, where it sits, how it lines up, how large it is, whether it has a container behind it, whether that container can be seen, how solid it is, what colour it is, and whether every letter carries an outline — colours picked from the game's palette or from the colour wheel. Export scene configuration writes the opening to a file of its own, and Load scene configuration reads it back; the same settings also travel inside the whole game configuration, so a backup of one is a backup of both. An opening you had already tuned is untouched, and a run paused mid-opening resumes where it stood — on the next scene still in it, if the one it stopped on has been switched off.",
+    "build": "0.7.1.350",
+    "pullRequest": 1236,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1236"
+  },
+  {
     "id": "pr-1234",
     "date": "2026-09-20",
     "group": "2026-09-20",
