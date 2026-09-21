@@ -3577,7 +3577,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
     eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
-      JSON.stringify({ itemId: 'greatsword', attackRating: 9, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
@@ -3650,7 +3650,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     equipPiece(LEGACY_REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 9, 'the deck itself is stamped with the tuned STR strike receipt');
+    eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 3, 'the deck definition carries its base while runtime adds source AR');
     eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
     assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
@@ -3678,13 +3678,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       itemUpgradeLevels: combat.itemUpgradeLevels,
     }).value, 'the attribute term is really in the stamp: drop it and the threshold is lower');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    // TEN, NOT TWELVE, AND THE DIFFERENCE IS THE FIXTURE RATHER THAN THE RULE.
-    // This combat is hand-built from a player object that carries no
-    // `equipmentProfileRuleSnapshot`, so the re-stamp falls back to the
-    // AUTHORED profile and its five-point tier — which the lean span of 1–4
-    // never fills. The shipped path (main.js) hands the run's own snapshot to
-    // createCombat, and there the Reaver's Strike is the 9 asserted above.
-    eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 10, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
+    eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 6, 'every Strike carries the greatsword base plus rarity before runtime AR');
 
     // Re-arming a position in combat uses the same priced action economy, but
     // it can replace/move/unequip the item rather than only select a prepared
@@ -3805,7 +3799,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const loaded = saves.loadRun(LEGACY_REG);
     eq(loaded.loadout.sets.rightHand[1], null, 'the combat unequip round-trips');
     assert(loaded.loadout.storage.includes('dagger'), 'the unequipped item round-trips in carried storage');
-    eq(dmgOf(resolveCard(LEGACY_REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
+    eq(dmgOf(resolveCard(LEGACY_REG, loaded.deck.find((c) => c.cardId === 'strike'))), 2,
       'the saved deck round-trips with the live unarmed profile');
 
     // And a run saved before equipment existed is healed, not refused.
@@ -5112,7 +5106,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const RARITY = { common: 0, uncommon: 1, rare: 2 };
 
     const vec = (piece) => {
-      const out = {};
+      const out = {
+        'rating.attack': piece.attackRating || 0,
+        'rating.defense': piece.defenseRating || 0,
+        'impact.weight': piece.weight || 0,
+      };
+      for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
+        out[`requirement.${attribute}`] = -minimum;
+      }
       for (const raw of piece.mods) {
         const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
         if (!m) continue;
@@ -6291,8 +6292,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     rejected((b) => { b.creationModes[0].minimum = b.creationModes[0].baseline + 1; }, 'creationModes', 'minimum above baseline');
     rejected((b) => { b.creationModes[0].maximum = b.creationModes[0].baseline - 1; }, 'creationModes', 'baseline above maximum');
     rejected((b) => { b.creationModes[0].bonusPool = -1; }, 'bonusPool', 'negative bonus pool');
-    rejected((b) => { b.creationModes.find((m) => m.equipmentProfiles).equipmentProfiles.ghost = { baseValue: -6 }; }, 'ghost', 'unknown tuned equipment profile');
-    rejected((b) => { b.creationModes.find((m) => m.equipmentProfiles).equipmentProfiles.unarmedAttack.pointsPerTier = 0; }, 'pointsPerTier', 'non-positive tuned equipment tier');
+    rejected((b) => { b.creationModes[0].equipmentProfiles = { ghost: { baseValue: 6 } }; }, 'ghost', 'unknown tuned equipment profile');
+    rejected((b) => { b.creationModes[0].equipmentProfiles = { unarmedAttack: { ratingId: 'luck' } }; }, 'ratingId', 'unknown tuned equipment rating');
     rejected((b) => { b.attributeRules.defaultMode = 'missing'; }, 'defaultMode', 'dangling default mode');
     rejected((b) => { delete b.attributeRules.presets.standard.reaver.strength; }, 'strength', 'missing stat product cell');
     rejected((b) => { b.attributeRules.presets.standard.reaver.luck = 10; }, 'luck', 'extra stat cell');
@@ -6309,13 +6310,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,120,130,150,170,200,230,270,310,350', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
-    // The lean mode restates the same three profiles for its own span: the
-    // gain carries the rebase (two per point), and the baseline value is the
-    // one tuned2 opened on — 3 + 2 × 1 is the 4 that -1 + 5 was.
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
-    eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}/${tunedProfiles.unarmedAttack.gainPerTier}`, '3/strength/1/2', 'physical Strike is 3 + 2 × STR');
-    eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}/${tunedProfiles.staffMagicAttack.gainPerTier}`, '3/wisdom/1/2', 'magic Strike is 3 + 2 × WIS');
-    eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}/${tunedProfiles.unarmedGuard.gainPerTier}`, '3/dexterity/1/2', 'Defend is 3 + 2 × DEX');
+    eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
+    eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
+    eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 2030, '2,030 XP reaches level 11 — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
@@ -6323,8 +6321,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.sourceStat}/${rogueAttack.profileReceipt.points}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/strength/1/5', 'Rogue dagger Strike is stamped from the lean physical profile');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.sourceStat}/${rogueGuard.profileReceipt.points}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dexterity/3/9', 'Rogue buckler Defend is stamped from the lean defense profile');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/1/4', 'Rogue dagger Strike is stamped from source AR');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/6/9', 'Rogue buckler Defend is stamped from source DR');
     const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
@@ -7802,8 +7800,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical AR +2 every 1 point'),
-      'the active run profile projects Strength attack scaling without copied UI prose');
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.5 × STR), then × 1 global'),
+      'the active rating formula projects Strength AR weight without copied UI prose');
 
     const changed = {
       ...contentBundle,

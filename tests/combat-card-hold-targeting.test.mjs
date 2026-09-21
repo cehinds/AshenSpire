@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-const strip = (text) => text.split('\n')
+const strip = (text) => text.replace(/\r/g, '').split('\n')
   .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
 const combat = strip(source);
 let checks = 0;

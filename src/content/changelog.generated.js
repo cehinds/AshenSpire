@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1246",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Weapon cards now show and deal one direct calculation, with no hidden equipment tiers",
+    "detail": "Slashing Strike, Shield Defend and weapon techniques now read exactly as card base + that weapon or shield's rating + rarity: a straight sword with 3 AR makes Slashing Strike 5 + 3 + 0 = 8, while a shield with 5 DR makes Shield Defend 3 + 5 + 0 = 8. The removed tier and points-per-tier layer can no longer inflate, suppress or obscure those numbers, and another equipped item cannot lend its rating to the wrong card. Weapon AR now lives in the intended 0–4 range, every technique explicitly names the rating it uses, and the same result is preserved in previews, live combat, co-op, capped profiles, customized profile snapshots and older saves.",
+    "build": "0.7.1.374",
+    "pullRequest": 1246,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1246"
+  },
+  {
     "id": "pr-1245",
     "date": "2026-09-21",
     "group": "2026-09-21",

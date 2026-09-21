@@ -225,6 +225,7 @@
 "basicCardProfile","unarmedAttack","attack","true","unarmed","blunt","delivery:melee","",""
 "basicCardProfile","shieldAttack","attack","true","weapon","equipped source","delivery:melee","",""
 "basicCardProfile","bladeAttack","attack","true","weapon","equipped source","delivery:melee","",""
+"basicCardProfile","twinbladeAttack","attack","true","weapon","equipped source","delivery:melee","",""
 "basicCardProfile","daggerPierceAttack","attack","true","weapon","piercing","delivery:melee","technique:flourish",""
 "basicCardProfile","bowPierceAttack","attack","true","weapon","piercing","delivery:projectile","technique:precision",""
 "basicCardProfile","staffMagicAttack","attack","true","spell","arcane","delivery:projectile","","theme:astral"

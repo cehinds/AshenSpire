@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
-import { createCombat, previewIntent } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
+import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
@@ -148,7 +149,7 @@ test('explicit Poise damage respects configured break rules without legacy penal
 // which let four stats each short of their own threshold add up to a rating
 // nobody's weights had promised — and divided that pool by the creation scale
 // besides.
-test('every rating is the sum of its floored attribute terms, times its multipliers', async () => {
+test('every rating is the sum of its floored attribute terms times one global multiplier', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const run = createRunState({ seed: 42, classId: 'reaver', registries });
   run.loadout = null; run.relics = [];
@@ -175,19 +176,257 @@ test('every rating is the sum of its floored attribute terms, times its multipli
   }, contentBundle);
   assert.equal(ratingReceipt(registries, run, halves).totals.ar, 0);
 
-  // Both multipliers ship at 1 and neither changes a rating until it is moved.
+  // The one global multiplier ships at 1 and changes every rating together.
   assert.equal(resolveCombatRatings({}, contentBundle).multiplier, 1);
-  assert.equal(resolveCombatRatings({}, contentBundle).ratings.ar.multiplier, 1);
   const scaled = resolveCombatRatings({
     'gameConfig.combatRatings.multiplier': 2,
-    'gameConfig.combatRatings.ratings.ar.multiplier': 3,
     'gameConfig.combatRatings.ratings.ar.strength': 1,
     'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
     'gameConfig.combatRatings.ratings.ar.constitution': 0,
     'gameConfig.combatRatings.ratings.ar.wisdom': 0.25,
     'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
   }, contentBundle);
-  assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 18);
+  assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 6);
+});
+
+test('weapon cards add their source equipment rating without a tier', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
+  const { renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  const surface = equipmentSurfaceReceipt(currentRegistries, run);
+
+  const attack = surface.roles.find(row => row.role === 'attack');
+  const guard = surface.roles.find(row => row.role === 'guard');
+  const technique = surface.roles.find(row => row.role === 'technique');
+  assert.deepEqual(
+    [attack.receipt.base, attack.receipt.rating.equipmentBase, attack.receipt.rating.attributeValue, attack.receipt.rating.value, attack.receipt.rarityBonus, attack.receipt.value],
+    [5, 2, 1, 3, 0, 8],
+    'Slashing Strike is 5 base + (2 sword base AR + 1 attribute AR) + 0 rarity',
+  );
+  assert.deepEqual(
+    [guard.receipt.base, guard.receipt.rating.equipmentBase, guard.receipt.rating.attributeValue, guard.receipt.rating.value, guard.receipt.rarityBonus, guard.receipt.value],
+    [3, 5, 0, 5, 0, 8],
+    'Shield Defend is 3 base + (5 shield base DR + 0 attribute DR) + 0 rarity',
+  );
+  assert.deepEqual(
+    [technique.receipt.base, technique.receipt.rating.id, technique.receipt.rating.value, technique.receipt.value],
+    [0, 'ar', 3, 3],
+    'Weapon Technique explicitly uses its source weapon AR',
+  );
+
+  const html = renderRoleCopies(surface);
+  assert.doesNotMatch(html, /\btier\b/i);
+  assert.doesNotMatch(html, /pointsPerTier/);
+  assert.match(html, /5 base \+ 3 AR \(weapon\) \+ 0 rarity =/);
+  assert.match(html, /3 base \+ 5 DR \(shield\) \+ 0 rarity =/);
+});
+
+test('an equipment card uses only its source item rating', () => {
+  const c = fight();
+  c.player.ratings.ar = 10;
+  c.player.ratingSources = [
+    { name: 'Attributes', kind: 'attribute', ar: 3 },
+    { name: 'Straight Sword', kind: 'equipment', sourceId: 'straightSword', ar: 2 },
+    { name: 'Dagger', kind: 'equipment', sourceId: 'dagger', ar: 1 },
+    { name: 'Relic', kind: 'relic', ar: 4 },
+  ];
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 14,
+    '5 card base + 3 attribute AR + 2 source weapon AR + 4 global relic AR');
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'dagger' }), 13,
+    'the other equipped weapon does not leak into this card');
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, equipmentRole: 'attack' }), 12,
+    'an unarmed equipment-profile card excludes every equipped item but keeps attribute and relic AR');
+});
+
+test('co-op initializes source equipment ratings for every seat', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  const c = createCoopCombat({
+    registries: currentRegistries,
+    rng: createRng(998),
+    players: [{
+      id: 'p1', classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout,
+      itemUpgradeLevels: run.itemUpgradeLevels, relicIds: [],
+    }],
+    enemyIds: ['wanderingSoldier'],
+  });
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
+  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 8);
+  assert.equal(c.enemies[0].ratings.poise, c.ratingsRules.enemyRatings.wanderingSoldier.poise);
+});
+
+test('restoring a legacy combat rebuilds typed rating sources before source filtering', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  const c = createCombat({
+    registries: currentRegistries, rng: createRng(998), ratingsRules: configured.balance.combatRatings,
+    player: {
+      classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana,
+      mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina, energyMax: run.energyMax,
+      drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, itemUpgradeLevels: run.itemUpgradeLevels,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, relicIds: [],
+    },
+    enemyIds: ['wanderingSoldier'],
+  });
+  const snapshot = serializeCombatSnapshot(c);
+  snapshot.player.ratings.ar = 102;
+  snapshot.player.ratingSources = [
+    { name: 'Attributes', ar: 1 },
+    { name: 'Straight Sword', ar: 2 },
+    { name: 'Legacy off-hand weapon', ar: 99 },
+  ];
+  const resumed = restoreCombatSnapshot({ registries: currentRegistries, rng: createRng(998), snapshot });
+  assert.equal(computeAttackDamage(resumed, resumed.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
+  assert.deepEqual(resumed.player.ratingSources.filter(row => row.kind === 'equipment').map(row => row.sourceId), ['straightSword', 'roundShield', 'default']);
+  assert.equal(resumed.player.ratingSources.every(row => row.kind), true);
+});
+
+test('snapshot rating overrides stamp the card and govern preview and execution', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { stampDeck } = await import('../src/model/loadout.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  run.equipmentProfileRuleSnapshot.profiles.bladeAttack.ratingId = 'pr';
+  stampDeck(currentRegistries, run);
+  const stamped = run.deck.find(card => card.profileId === 'bladeAttack');
+  assert.equal(stamped.profileReceipt.rating.id, 'pr');
+  assert.equal(stamped.ratingId, 'pr');
+  const c = createCombat({
+    registries: currentRegistries, rng: createRng(998), ratingsRules: configured.balance.combatRatings,
+    player: {
+      classId: run.class, attributes: run.attributes, maxHp: 100, hp: 100, maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina, energyMax: 99, drawPerTurn: run.drawPerTurn,
+      deck: run.deck, loadout: run.loadout, itemUpgradeLevels: run.itemUpgradeLevels,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, relicIds: [],
+    },
+    enemyIds: ['wanderingSoldier'],
+  });
+  c.enemies[0].ratings.poise = 0;
+  const card = [...c.piles.hand, ...c.piles.draw].find(row => row.instanceId === stamped.instanceId);
+  c.piles.draw = c.piles.draw.filter(row => row !== card);
+  if (!c.piles.hand.includes(card)) c.piles.hand.push(card);
+  assert.equal(previewCard(c, card.instanceId, c.enemies[0].id).values[0].value, stamped.profileReceipt.value);
+  const hp = c.enemies[0].hp;
+  dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id });
+  assert.equal(hp - c.enemies[0].hp, stamped.profileReceipt.value);
+});
+
+test('ratings-disabled legacy runs carry their migrated direct source rating on the card', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const legacyBundle = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: {} });
+  const legacyRegistries = createRegistries(legacyBundle);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: legacyRegistries });
+  const stamped = run.deck.find(card => card.profileId === 'bladeAttack');
+  const c = createCombat({
+    registries: legacyRegistries, rng: createRng(998),
+    player: {
+      classId: run.class, attributes: run.attributes, maxHp: 100, hp: 100, maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina, energyMax: 99, drawPerTurn: run.drawPerTurn,
+      deck: run.deck, loadout: run.loadout, itemUpgradeLevels: run.itemUpgradeLevels,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, relicIds: [],
+    },
+    enemyIds: ['wanderingSoldier'],
+  });
+  const card = [...c.piles.hand, ...c.piles.draw].find(row => row.instanceId === stamped.instanceId);
+  assert.equal(c.ratingsRules, undefined);
+  assert.equal(previewCard(c, card.instanceId, c.enemies[0].id).values[0].value, stamped.profileReceipt.value);
+  c.piles.draw = c.piles.draw.filter(row => row !== card);
+  if (!c.piles.hand.includes(card)) c.piles.hand.push(card);
+  const hp = c.enemies[0].hp;
+  dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id });
+  assert.equal(hp - c.enemies[0].hp, stamped.profileReceipt.value);
+});
+
+test('version-one equipment profile migration preserves compatible saved overrides', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { restoreEquipmentProfileRuleSnapshot } = await import('../src/model/loadout.js');
+  const run = createRunState({ seed: 42, classId: 'reaver', registries });
+  const legacy = structuredClone(run.equipmentProfileRuleSnapshot);
+  legacy.snapshotVersion = 1;
+  legacy.profiles.bladeAttack.baseValue = 42;
+  legacy.profiles.bladeAttack.cap = 43;
+  legacy.profiles.bladeAttack.pointsPerTier = 5;
+  legacy.profiles.bladeAttack.gainPerTier = 3;
+  delete legacy.profiles.bladeAttack.ratingId;
+  const migrated = restoreEquipmentProfileRuleSnapshot(legacy, registries);
+  assert.equal(migrated.snapshotVersion, 2);
+  assert.equal(migrated.profiles.bladeAttack.baseValue, 42);
+  assert.equal(migrated.profiles.bladeAttack.cap, 43);
+  assert.equal(migrated.profiles.bladeAttack.ratingId, 'ar');
+  assert.equal(migrated.profiles.bladeAttack.pointsPerTier, undefined);
+  assert.equal(migrated.profiles.bladeAttack.gainPerTier, undefined);
+});
+
+test('profile caps constrain attack and guard receipts, previews, and execution', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { stampDeck } = await import('../src/model/loadout.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  run.equipmentProfileRuleSnapshot.profiles.bladeAttack.cap = 6;
+  run.equipmentProfileRuleSnapshot.profiles.shieldGuard.cap = 4;
+  stampDeck(currentRegistries, run);
+  const cards = {
+    attack: run.deck.find(card => card.profileId === 'bladeAttack'),
+    guard: run.deck.find(card => card.profileId === 'shieldGuard'),
+  };
+  assert.deepEqual([cards.attack.profileReceipt.value, cards.attack.ratingCap], [6, 6]);
+  assert.deepEqual([cards.guard.profileReceipt.value, cards.guard.ratingCap], [4, 4]);
+
+  const makeCombat = (card) => {
+    const c = createCombat({
+      registries: currentRegistries, rng: createRng(998), ratingsRules: configured.balance.combatRatings,
+      player: {
+        classId: run.class, attributes: run.attributes, maxHp: 100, hp: 100, maxMana: run.maxMana, mana: run.mana,
+        maxStamina: run.maxStamina, stamina: run.stamina, energyMax: 99, drawPerTurn: 1,
+        deck: [structuredClone(card)], loadout: run.loadout, itemUpgradeLevels: run.itemUpgradeLevels,
+        equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, relicIds: [],
+      },
+      enemyIds: ['wanderingSoldier'],
+    });
+    c.enemies[0].ratings.poise = 0;
+    return c;
+  };
+
+  const attackCombat = makeCombat(cards.attack);
+  const attack = attackCombat.piles.hand[0];
+  assert.equal(previewCard(attackCombat, attack.instanceId, attackCombat.enemies[0].id).values[0].value, 6);
+  const hp = attackCombat.enemies[0].hp;
+  dispatch(attackCombat, { type: 'playCard', cardInstanceId: attack.instanceId, targetId: attackCombat.enemies[0].id });
+  assert.equal(hp - attackCombat.enemies[0].hp, 6);
+
+  const guardCombat = makeCombat(cards.guard);
+  const guard = guardCombat.piles.hand[0];
+  assert.equal(previewCard(guardCombat, guard.instanceId).values[0].value, 4);
+  dispatch(guardCombat, { type: 'playCard', cardInstanceId: guard.instanceId });
+  assert.equal(guardCombat.player.block, 4);
+});
+
+test('foundation execution applies the same card rating as its preview', async () => {
+  const { prototypeInput } = await import('../src/content/prototypes/combatBuilds.js');
+  const input = prototypeInput('heavy', 'basic', 998);
+  input.ratingsRules = resolveCombatRatings({}, contentBundle);
+  const c = createCombat(input);
+  c.player.ratings = { ar: 5, dr: 0, pr: 0, poise: 1, ward: 1 };
+  c.player.ratingSources = [{ name: 'Attributes', kind: 'attribute', ar: 5 }];
+  const card = [...c.piles.hand, ...c.piles.draw].find(row => c.registries.cards.get(row.cardId).type === 'attack');
+  card.ratingId = 'ar';
+  c.piles.draw = c.piles.draw.filter(row => row !== card);
+  if (!c.piles.hand.includes(card)) c.piles.hand.push(card);
+  const shown = previewCard(c, card.instanceId, c.enemies[0].id).values.find(value => value.op === 'damage').value;
+  const hp = c.enemies[0].hp;
+  dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id });
+  assert.equal(hp - c.enemies[0].hp, shown);
 });
 
 // A SAVED FIGHT PREDATES THE MULTIPLIERS. `combatSnapshotProblems` validates a
@@ -197,7 +436,6 @@ test('a combat save written before the multipliers still validates and resumes',
   const { combatRatingProblems } = await import('../src/model/combatRatings.js');
   const legacy = resolveCombatRatings({}, contentBundle);
   delete legacy.multiplier;
-  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) delete legacy.ratings[id].multiplier;
   assert.deepEqual(combatRatingProblems(legacy), []);
   const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
   assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
@@ -217,7 +455,6 @@ test('a pre-change combat snapshot resumes without its divisor', async () => {
   const snapshot = serializeCombatSnapshot(c);
   snapshot.ratingAttributeScale = 0.2;
   for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) {
-    delete snapshot.ratingsRules.ratings[id].multiplier;
     snapshot.ratingsRules.ratings[id].pointsPerIncrease = 1;
     snapshot.ratingsRules.ratings[id].gain = 1;
   }

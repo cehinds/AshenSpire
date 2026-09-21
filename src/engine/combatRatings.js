@@ -1,4 +1,4 @@
-import { ratingReceipt, ratingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
+import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
 import { propertyMountsOf } from './properties.js';
 
 export function refreshCombatRatings(ctx) {
@@ -6,7 +6,7 @@ export function refreshCombatRatings(ctx) {
   const receipt = ratingReceipt(ctx.registries, ctx, ctx.ratingsRules);
   for (const mount of Object.values(propertyMountsOf(ctx, ctx.player) || {})) {
     for (const rule of mount.rules || []) {
-      const values = { name: rule.tag };
+      const values = { name: rule.tag, kind: 'property' };
       for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) {
         const bonus = rule.passives?.[`${id}Bonus`] || 0;
         values[id] = bonus; receipt.totals[id] += bonus;
@@ -61,11 +61,20 @@ export function recoverRatingMeters(ctx, entity) {
   }
 }
 
-export function cardRatingBonus(ctx, source, carrier, op) {
-  if (!ctx.ratingsRules || !source?.ratings || !carrier?.cardId) return 0;
+export function cardRatingBonus(ctx, source, carrier, op, base = 0) {
+  if (!source || !carrier?.cardId) return 0;
+  const capped = (amount) => Number.isFinite(carrier.ratingCap)
+    ? Math.max(0, Math.min(amount, carrier.ratingCap - base))
+    : amount;
+  if (!ctx.ratingsRules || !source.ratings) return capped(Number(carrier.ratingValue) || 0);
   const magical = isMagicalAttack(ctx, carrier);
-  if (op === 'damage') return ratingValue(ctx, source, magical ? 'pr' : 'ar');
-  if (op === 'block' && (carrier.type === 'skill' || magical)) return ratingValue(ctx, source, magical ? 'pr' : 'dr');
-  if (op === 'heal' && magical) return ratingValue(ctx, source, 'pr');
+  const value = (id) => {
+    const amount = sourceRatingValue(ctx, source, id, carrier.sourceArmamentId, !!carrier.equipmentRole);
+    return capped(amount);
+  };
+  if (carrier.ratingId && ['damage', 'block', 'heal'].includes(op)) return value(carrier.ratingId);
+  if (op === 'damage') return value(magical ? 'pr' : 'ar');
+  if (op === 'block' && (carrier.type === 'skill' || magical)) return value(magical ? 'pr' : 'dr');
+  if (op === 'heal' && magical) return value('pr');
   return 0;
 }
