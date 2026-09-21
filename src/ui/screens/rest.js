@@ -22,6 +22,7 @@ import { createLocationVisit, previewRest, restAt } from '../../engine/locations
 import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
+import { statProjection } from '../../model/statProjection.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -436,7 +437,14 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         attr.id,
         run.attributes[attr.id] + pending[attr.id],
       ]));
+      // THE RUN'S OWN PROJECTION, NOT THE AUTHORED TABLE. This is the screen
+      // where a point is actually spent, so the card that says what a point
+      // buys has to say what THIS run's point buys: a creation mode carries a
+      // conversion scale, and without the projection `attributeCardModels`
+      // falls back to the authored row — five times under on the lean scale,
+      // on the one screen where the number decides the choice.
       const cards = new Map(attributeCardModels(registries, values, {
+        projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
       }).map((card) => [card.id, card]));
       const spec = {

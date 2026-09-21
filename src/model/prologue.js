@@ -144,6 +144,55 @@ export const PROLOGUE_STAGE_FIELDS = Object.freeze([
     note: 'Whether the narration arrives whole, letter by letter, or a line at a time. Reduced motion always shows it whole.' },
   { key: 'revealSpeed', topic: 'Text', label: 'Reveal speed', min: 5, max: 200, step: 5, integer: true,
     note: 'Letters per second, or lines per ten seconds when revealing by line.' },
+  { key: 'textDelaySeconds', topic: 'Text', label: 'Text waits (seconds)', min: 0, max: 20, step: .5,
+    note: 'Hold the artwork alone before the words arrive.' },
+  // ---- the artwork itself, as a picture ------------------------------------
+  { key: 'imageBrightness', topic: 'Stage', label: 'Artwork brightness', min: .2, max: 2, step: .05 },
+  { key: 'imageContrast', topic: 'Stage', label: 'Artwork contrast', min: .2, max: 2, step: .05 },
+  { key: 'imageSaturation', topic: 'Stage', label: 'Artwork colour', min: 0, max: 2, step: .05,
+    note: '0 is grey. This is the painting itself, before the motif wash goes over it.' },
+  { key: 'imageBlur', topic: 'Stage', label: 'Artwork blur (px)', min: 0, max: 20, step: .5,
+    note: 'Softens the painting — useful under a text card, or to push a scene out of focus.' },
+  { key: 'imageFlip', topic: 'Stage', label: 'Mirror the artwork',
+    note: 'Flips the painting left to right, so a figure can face the other way.' },
+  { key: 'vignette', topic: 'Stage', label: 'Vignette strength', min: 0, max: 1, step: .05,
+    note: 'Darkens the frame’s edges. Holds the eye on the middle and helps text at an edge.' },
+  { key: 'backdropColor', topic: 'Stage', label: 'Backdrop colour', type: 'colorSwatch',
+    note: 'What lies behind the painting — the whole frame for a scene with no artwork.' },
+  { key: 'letterboxColor', topic: 'Stage', label: 'Letterbox bar colour', type: 'colorSwatch',
+    note: 'The bars either side of a letterboxed plate.' },
+  { key: 'transitionSeconds', topic: 'Stage', label: 'Transition time (seconds)', min: 0, max: 30, step: .1,
+    note: 'Maximum fade length. Fits inside the scene duration, capped at one quarter so the artwork stays readable.' },
+  { key: 'transitionEase', topic: 'Stage', label: 'Transition easing', type: 'choice',
+    choices: { 'ease-in-out': 'Ease in and out', linear: 'Even', ease: 'Ease', 'ease-in': 'Ease in', 'ease-out': 'Ease out' } },
+  { key: 'cameraEase', topic: 'Stage', label: 'Camera easing', type: 'choice',
+    choices: { linear: 'Even', 'ease-in-out': 'Ease in and out', 'ease-out': 'Settle at the end', 'ease-in': 'Start slowly' } },
+  // ---- the words, part by part ---------------------------------------------
+  { key: 'titleVisible', topic: 'Text', label: 'Show the scene title' },
+  { key: 'speakerVisible', topic: 'Text', label: 'Show the speaker' },
+  { key: 'locationVisible', topic: 'Text', label: 'Show the location caption' },
+  { key: 'progressStyle', topic: 'Text', label: 'Scene counter', type: 'choice',
+    choices: { numbers: 'Numbers (3 / 5)', dots: 'Dots', hidden: 'Hidden' } },
+  { key: 'titleColor', topic: 'Text', label: 'Title colour', type: 'colorSwatch' },
+  { key: 'speakerColor', topic: 'Text', label: 'Speaker colour', type: 'colorSwatch' },
+  { key: 'dialogueColor', topic: 'Text', label: 'Narration colour', type: 'colorSwatch' },
+  { key: 'locationColor', topic: 'Text', label: 'Location colour', type: 'colorSwatch' },
+  { key: 'titleScale', topic: 'Text', label: 'Title size', min: .5, max: 3, step: .05,
+    note: 'Multiplies the title on top of the overall text size.' },
+  { key: 'speakerScale', topic: 'Text', label: 'Speaker size', min: .5, max: 3, step: .05 },
+  { key: 'lineHeight', topic: 'Text', label: 'Line spacing', min: 1, max: 2.4, step: .05 },
+  { key: 'letterSpacing', topic: 'Text', label: 'Letter spacing (em)', min: -.05, max: .4, step: .01 },
+  { key: 'textMaxWidth', topic: 'Text', label: 'Line length (characters)', min: 30, max: 120, step: 1, integer: true,
+    note: 'How long a line of narration may run before it wraps.' },
+  { key: 'textFont', topic: 'Text', label: 'Narration typeface', type: 'choice',
+    choices: { display: 'Display serif', body: 'Body sans' } },
+  // ---- the container, in detail --------------------------------------------
+  { key: 'boxPadding', topic: 'Text', label: 'Container padding (rem)', min: 0, max: 6, step: .1 },
+  { key: 'boxRadius', topic: 'Text', label: 'Container corner radius (px)', min: 0, max: 40, step: 1, integer: true },
+  { key: 'boxBorderWidth', topic: 'Text', label: 'Container border (px)', min: 0, max: 6, step: .5 },
+  { key: 'boxBorderColor', topic: 'Text', label: 'Container border colour', type: 'colorSwatch' },
+  { key: 'boxBlur', topic: 'Text', label: 'Blur behind the container (px)', min: 0, max: 20, step: .5,
+    note: 'Frosts the artwork behind the words instead of covering it.' },
 ]);
 
 function stageRowSpec(field) {
@@ -235,8 +284,10 @@ export function prologueSettingKey(path) {
   return `${PROLOGUE_PREFIX}scenes.${id}.${path.slice(2).join('.')}`;
 }
 
+let ROW_CACHE = null;
 export function prologueRows() {
-  const rows = [];
+  if (ROW_CACHE) return ROW_CACHE;
+  const rows = ROW_CACHE = [];
   const add = (path, label, topic, options = {}) => rows.push({
     cat: 'Advanced', advancedGroup: 'Opening', prologueTopic: topic,
     key: prologueSettingKey(path), prologuePath: path,
@@ -253,7 +304,6 @@ export function prologueRows() {
   const text = (maxLength = 1000) => ({ type: 'textarea', maxLength });
   add(['presentation', 'playback'], 'Show opening', 'Playback', choice(['every','once','off'], {every:'Every new game',once:'First time per profile',off:'Off'}));
   add(['presentation', 'autoAdvance'], 'Advance scenes automatically', 'Playback');
-  add(['presentation', 'transitionSeconds'], 'Transition time (seconds)', 'Playback', {...number(0,30),note:'Maximum fade length. Fits inside the scene duration, capped at one quarter so the artwork stays readable.'});
   add(['presentation', 'speed'], 'Playback speed', 'Playback', number(.25,3,.25));
   add(['presentation', 'reduceMotion'], 'Still artwork', 'Playback', {note:'Disables fades and camera movement. The accessibility Reduced motion setting is also respected.'});
   add(['presentation', 'tintSource'], 'Artwork tint follows', 'Motif', choice(['accent','character','custom'], {accent:'Interface accent',character:'Character tint',custom:'Custom colour'}));
@@ -267,6 +317,16 @@ export function prologueRows() {
     });
   }
   add(['presentation', 'bannerPosition'], 'Banner position', 'Stage', choice(['top','bottom'], {top:'Across the top',bottom:'Across the bottom'}));
+  // THE CONTROLS ARE THE FRAME'S, NOT THE TEXT'S. They used to ride inside the
+  // caption, so a wireframe that floats the words to the middle of the picture
+  // floated Continue with them. They sit in a bar along the bottom unless the
+  // owner asks for them back under the text.
+  add(['presentation', 'controlsPosition'], 'Where the buttons sit', 'Controls', {...choice(['bar','text'], {bar:'A bar along the bottom',text:'Under the text'}),note:'The bar stays at the bottom of the screen whatever the wireframe does with the words.'});
+  add(['presentation', 'controlsAlign'], 'Button alignment', 'Controls', choice(['left','center','right'], {left:'Left',center:'Centred',right:'Right'}));
+  add(['presentation', 'controlsSize'], 'Button size', 'Controls', choice(['compact','normal','large'], {compact:'Compact',normal:'Normal',large:'Large'}));
+  add(['presentation', 'showPause'], 'Show Pause', 'Controls');
+  add(['presentation', 'showSkip'], 'Show Skip opening', 'Controls', {note:'With this off the opening has no skip button and plays through to Set forth. Playback → Show opening turns the whole opening off instead.'});
+  add(['presentation', 'advanceOnClick'], 'Click the artwork to continue', 'Controls', {note:'Anywhere on the picture advances the scene, as well as the Continue button.'});
   for (const [index, scene] of PROLOGUE_DEFAULTS.scenes.entries()) {
     const path = ['scenes', String(index)];
     add([...path,'name'], 'Scene title', scene.name, text(160));

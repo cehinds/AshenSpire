@@ -95,6 +95,11 @@ const SHOTS = [
   { name: 'rest', query: '?shot=rest' }, // shrine — the unfolded room band
   { name: 'shop', query: '?shot=shop' }, // merchant — the unfolded room band
   { name: 'customize', query: '?shot=customize', stable: true }, // character build — the class figure
+  // THE OPENING HAS NEVER BEEN PHOTOGRAPHED, and `?shot=prologue` has been in
+  // src/main.js the whole time. Two PRs' worth of staging settings shipped with
+  // "nothing in the suite paints the opening" written in their verification —
+  // true, and fixable in one line: this is the screen those settings are for.
+  { name: 'prologue', query: '?shot=prologue' },
   // One capture per class, and one off-default tint, because the class sprites
   // are four sources × five tints and a single default shot is evidence for one
   // of twenty. art.md §§145-150,189-192 wants every named variant.

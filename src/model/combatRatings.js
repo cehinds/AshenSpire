@@ -3,7 +3,7 @@ import { resolveUpgradedRelic } from './itemUpgrades.js';
 
 export const ratingIds = ['ar', 'dr', 'pr', 'poise', 'ward'];
 const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
-const rule = weights => ({ base: 0, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
+const rule = (weights, base = 0) => ({ base, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
 export const combatRatingDefaults = {
   enabled: true,
   // EVERY RATING IS A SUM OF FLOORED ATTRIBUTE TERMS, then multiplied (owner,
@@ -17,8 +17,14 @@ export const combatRatingDefaults = {
   ratings: {
     ar: rule({ strength: 0.5 }), dr: rule({ dexterity: 0.5 }),
     pr: rule({ wisdom: 0.5, intelligence: 0.5 }),
-    poise: rule({ constitution: 1, strength: 0.5 }),
-    ward: rule({ wisdom: 1, intelligence: 0.5 }),
+    // POISE AND WARD OPEN AT 1 (owner, 2026-09-21: "poise, mp, sp, ward are
+    // base 1"). A vessel of nothing is not a vessel: with every attribute term
+    // floored on its own, a character who put no points in the stats these
+    // read would carry a meter of zero, and the break rules floor it to 1
+    // anyway. Stating it on the row is the same number where a player can see
+    // and move it. AR and DR stay at 0 — they are damage terms, not vessels.
+    poise: rule({ constitution: 1, strength: 0.5 }, 1),
+    ward: rule({ wisdom: 1, intelligence: 0.5 }, 1),
   },
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,

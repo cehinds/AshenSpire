@@ -7,55 +7,65 @@ import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
 import { deriveStat } from '../src/model/derivedStats.js';
 
-const poolKey = 'gameConfig.startingStats.pointbuy.total';
+// The pool dial is exercised through the mode creation OFFERS. It used to be
+// driven here through `pointbuy`, which is retired — and a retired mode is no
+// longer rewritten at all, because the only thing that rewrite can reach is a
+// save (see 'a mode no player can pick is never rewritten' below).
+const poolKey = 'gameConfig.startingStats.lean.total';
+const legacyPoolKey = 'gameConfig.startingStats.pointbuy.total';
 test('pool changes redistribute every class exactly and leave authored content alone', () => {
-  for (const total of [5, 10, 60, 100, 495]) {
+  // 7 is the kit floor; below it no class can hold what it starts in.
+  for (const total of [7, 10, 60, 100, 495]) {
     const configured = configuredContentBundle(contentBundle, { [poolKey]: total });
     assert.deepEqual(attributeContentProblems(configured), []);
-    for (const preset of Object.values(configured.attributeRules.presets.pointbuy)) assert.equal(Object.values(preset).reduce((a,b) => a+b, 0), total);
+    for (const preset of Object.values(configured.attributeRules.presets.lean)) assert.equal(Object.values(preset).reduce((a,b) => a+b, 0), total);
   }
-  assert.equal(contentBundle.creationModes.find(m => m.id === 'pointbuy').bonusPool, 10);
+  assert.equal(contentBundle.creationModes.find(m => m.id === 'lean').bonusPool, 3);
 });
 
-// ---- the pool no longer normalizes anything (owner, 2026-09-21) -----------
+// ---- the pool converts nothing (owner, 2026-09-21) ------------------------
 //
-// "why are the stats so high?" — a 12-point character was scoring the ratings
-// of a 35-point one. The mode recorded `total ÷ oldTotal` and every formula
-// downstream DIVIDED by it, so an attribute entered each formula at 2.92× the
-// value on the sheet. The ratio still shapes floors, ceilings and presets,
-// where it is visible as whole points; it reaches no formula.
-test('a smaller pool lowers the pools it buys instead of normalizing them', () => {
+// "why are the stats so high?" — a character was scored on attributes it did
+// not have. The mode carried `statConversionScale`, and the ratings receipt,
+// the derived rows and the hand-size rule all DIVIDED by it, so a lean
+// character entered every formula at five times the value on its own sheet.
+// The ratio still shapes floors, ceilings and presets, where it is visible as
+// whole attribute points; it reaches no formula. A configured threshold is now
+// the threshold a run is born with, whatever pool it was born on.
+test('a retuned pool moves the presets and leaves every threshold alone', () => {
   const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
-  const small = configuredContentBundle(contentBundle, settings);
-  const large = configuredContentBundle(contentBundle, { ...settings, [poolKey]: 60 });
-  assert.equal(small.creationModes.find(m => m.id === 'pointbuy').statConversionScale, undefined,
-    'no conversion scale is written for any pool');
-  assert.equal(small.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
+  const wide = configuredContentBundle(contentBundle, settings);
+  assert.equal(wide.creationModes.find(m => m.id === 'lean').statConversionScale, undefined,
+    'no mode carries a conversion scale, shipped or retuned');
+  assert.equal(wide.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
 
-  const registries = createRegistries(small);
-  const run = bundle => createRunState({ registries: createRegistries(bundle), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
-  const a = run(small);
-  const b = run(large);
+  const registries = createRegistries(wide);
+  const a = createRunState({ registries, classId: 'reaver', seed: 42, attributeMode: 'lean' });
   assert.equal(Object.values(a.attributes).reduce((x, y) => x + y), 10);
-  assert(a.maxHp < b.maxHp, 'fewer points buy less HP');
+
   // THE THRESHOLD THE RUN WAS BORN WITH IS THE ONE THAT WAS CONFIGURED. It
-  // used to be multiplied by the pool ratio on its way into the snapshot, so
+  // used to be multiplied by the mode's scale on its way into the snapshot, so
   // the row a save carried was never the row the panel showed.
   const row = a.derivedStatRuleSnapshot.rules.rules.hp;
   assert.equal(row.pointsPerTier, 2);
   const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
     { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
   assert.equal(receipt.value, row.base + row.gainPerTier * Math.floor(a.attributes.constitution / row.pointsPerTier));
+
+  // A bigger pool buys more, which is the whole of what a pool now does.
+  const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  const wider = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, { ...settings, [poolKey]: 40 })), classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  assert(wider.maxHp > narrow.maxHp, 'fewer points buy less HP');
 });
 
 test('pool settings round trip, reject impossible budgets, and tolerate the retired scaling dial', () => {
   const settings = { [poolKey]: 10 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
-  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [poolKey]: 2 }), contentBundle));
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [legacyPoolKey]: 2 }), contentBundle));
 
   // AN OLDER EXPORT STILL IMPORTS. `parseAdvancedConfigFile` refuses an unknown
   // key outright, which would have made the owner's own exported file
-  // unimportable the day its dial was removed.
+  // unimportable the day these dials were removed.
   const stale = JSON.stringify({
     schemaVersion: JSON.parse(advancedConfigExport(settings)).schemaVersion,
     game: 'Ashen Spire',
@@ -69,15 +79,10 @@ test('pool settings round trip, reject impossible budgets, and tolerate the reti
 
 
 test('stat-driven hand sizes read the attribute the sheet shows', async () => {
-  const { scaledCards, handRuleSummary, resolveHandRules } = await import('../src/model/handRules.js');
+  const { scaledCards } = await import('../src/model/handRules.js');
   const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
   assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
   assert.equal(scaledCards(rule, { intelligence: 10 }), 5);
-  // handRuleSummary never had a scale to pass, so it described a hand the
-  // engine did not deal whenever one was in force. One reading, one hand.
-  const rules = resolveHandRules({}, contentBundle.attributes);
-  const attributes = { strength: 12, dexterity: 12, constitution: 12, wisdom: 12, intelligence: 12 };
-  assert.ok(handRuleSummary(rules, attributes).startsWith(`${Math.min(scaledCards(rules.capacity, attributes), scaledCards(rules.starting, attributes))} starting cards`));
 });
 
 // ---- the owner's report, as two properties (2026-09-20) --------------------
@@ -93,29 +98,41 @@ test('a configured pool and a configured class default both reach a new run', as
     attributeMode: configured.attributeRules.defaultMode,
   });
 
-  const pooled = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.tuned2.total': 50 });
+  const pooled = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.total': 50 });
   assert.equal(validateContent(pooled).ok, true, 'a legal pool produces a bundle a run can be born from');
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
     assert.equal(Object.values(run(pooled, classId).attributes).reduce((a, b) => a + b, 0), 50,
-      `${classId} starts the run on the configured pool, not the authored 35`);
+      `${classId} starts the run on the configured pool, not the authored 8`);
   }
   // The kit floor is the thing that was never read: scaling down must leave
-  // every class able to hold the weapon it starts holding.
-  const small = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.tuned2.total': 12 });
+  // every class able to hold the weapon it starts holding. The equipment table
+  // was restated for the lean span, so the numbers it asks for are smaller —
+  // the property is that the floor is still READ, not that it is still 8.
+  // 7 is the floor itself — the Starseer's 3 Intelligence plus a point in each
+  // of the other four — so at 7 every class's table is pinned to what its kit
+  // asks for and nothing is left over to hide a mistake.
+  const floorTotal = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.total': 7 });
+  assert.equal(validateContent(floorTotal).ok, true);
+  assert.deepEqual(run(floorTotal, 'starseer').attributes,
+    { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 3 },
+    'the Ash Focus staff still asks 3 Intelligence, and the rest is one point each');
+  assert.ok(run(floorTotal, 'reaver').attributes.strength >= 2, 'the Iron Vanguard sword still asks 2 Strength');
+
+  const small = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.total': 12 });
   assert.equal(validateContent(small).ok, true);
-  assert.equal(run(small, 'starseer').attributes.intelligence, 8, 'the Ash Focus staff still asks 8 Intelligence');
-  assert.equal(run(small, 'reaver').attributes.strength, 5, 'the Iron Vanguard sword still asks 5 Strength');
+  assert.ok(run(small, 'starseer').attributes.intelligence >= 3, 'the Ash Focus staff still asks 3 Intelligence');
+  assert.ok(run(small, 'reaver').attributes.strength >= 2, 'the Iron Vanguard sword still asks 2 Strength');
 
   const tuned = configuredContentBundle(contentBundle, {
-    'gameConfig.attributeRules.presets.tuned2.reaver.strength': 12,
-    'gameConfig.attributeRules.presets.tuned2.reaver.dexterity': 6,
-    'gameConfig.attributeRules.presets.tuned2.reaver.constitution': 9,
-    'gameConfig.attributeRules.presets.tuned2.reaver.wisdom': 3,
-    'gameConfig.attributeRules.presets.tuned2.reaver.intelligence': 5,
+    'gameConfig.attributeRules.presets.lean.reaver.strength': 4,
+    'gameConfig.attributeRules.presets.lean.reaver.dexterity': 1,
+    'gameConfig.attributeRules.presets.lean.reaver.constitution': 1,
+    'gameConfig.attributeRules.presets.lean.reaver.wisdom': 1,
+    'gameConfig.attributeRules.presets.lean.reaver.intelligence': 1,
     'gameConfig.classes.reaver.maxHp': 61,
   });
   assert.deepEqual(run(tuned, 'reaver').attributes,
-    { strength: 12, dexterity: 6, constitution: 9, wisdom: 3, intelligence: 5 },
+    { strength: 4, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
     'a class default the owner typed is the one the run is born with');
 });
 
@@ -123,12 +140,13 @@ test('a refused value is named on its own row and costs nothing but itself', asy
   const { validateContent } = await import('../src/model/validate.js');
   const { advancedConfigProblems, advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
 
-  // His screenshot: every pool set to 8. Eight cannot hold the Starseer's
-  // staff, so it is refused — and the run used to lose EVERY other tuned value
-  // with it, because rebuildRegistries discarded the whole configured bundle
-  // when validateContent failed.
+  // His screenshot's shape, restated on the lean scale: a total below the kit
+  // floor. Six cannot hold the Starseer's staff and leave every other
+  // attribute a point, so it is refused — and the run used to lose EVERY other
+  // tuned value with it, because rebuildRegistries discarded the whole
+  // configured bundle when validateContent failed.
   const settings = {
-    'gameConfig.startingStats.tuned2.total': 8,
+    'gameConfig.startingStats.lean.total': 6,
     'gameConfig.balance.startingCinders': 99,
     'gameConfig.classes.reaver.maxHp': 61,
   };
@@ -136,11 +154,11 @@ test('a refused value is named on its own row and costs nothing but itself', asy
   assert.equal(validateContent(configured).ok, true, 'the bundle still validates, so nothing is thrown away');
   assert.equal(configured.balance.startingCinders, 99, 'an unrelated valid setting survives the refusal');
   assert.equal(configured.classes.find(row => row.id === 'reaver').maxHp, 61);
-  assert.equal(configured.creationModes.find(row => row.id === 'tuned2').baseline * 5
-    + configured.creationModes.find(row => row.id === 'tuned2').bonusPool, 35, 'the refused pool holds at its last good value');
+  assert.equal(configured.creationModes.find(row => row.id === 'lean').baseline * 5
+    + configured.creationModes.find(row => row.id === 'lean').bonusPool, 8, 'the refused pool holds at its last good value');
 
   const [problem] = advancedConfigProblemRows(contentBundle, settings);
-  assert.deepEqual(problem.keys, ['gameConfig.startingStats.tuned2.total'], 'the sentence is addressed to the row that caused it');
+  assert.deepEqual(problem.keys, ['gameConfig.startingStats.lean.total'], 'the sentence is addressed to the row that caused it');
   assert.match(problem.message, /refused/);
   assert.match(problem.message, /Starseer/, 'it names the class and kit that set the floor');
   assert.match(problem.message, /every other setting you changed is still applied/);
@@ -148,16 +166,16 @@ test('a refused value is named on its own row and costs nothing but itself', asy
   // The same property one level down: one class's table can be wrong without
   // taking another class's correct table with it.
   const mixed = {
-    'gameConfig.attributeRules.presets.tuned2.reaver.strength': 2,
-    'gameConfig.attributeRules.presets.tuned2.herald.strength': 7,
-    'gameConfig.attributeRules.presets.tuned2.herald.wisdom': 9,
+    'gameConfig.attributeRules.presets.lean.reaver.strength': 2,
+    'gameConfig.attributeRules.presets.lean.herald.strength': 2,
+    'gameConfig.attributeRules.presets.lean.herald.wisdom': 2,
     'gameConfig.balance.startingCinders': 99,
   };
   const partial = configuredContentBundle(contentBundle, mixed);
   assert.equal(validateContent(partial).ok, true);
-  assert.deepEqual(partial.attributeRules.presets.tuned2.reaver, contentBundle.attributeRules.presets.tuned2.reaver,
+  assert.deepEqual(partial.attributeRules.presets.lean.reaver, contentBundle.attributeRules.presets.lean.reaver,
     'the Reaver falls back to its authored table');
-  assert.equal(partial.attributeRules.presets.tuned2.herald.strength, 7, 'the Herald keeps the table the owner typed');
+  assert.equal(partial.attributeRules.presets.lean.herald.strength, 2, 'the Herald keeps the table the owner typed');
   assert.equal(partial.balance.startingCinders, 99);
   assert.ok(advancedConfigProblems(contentBundle, mixed).some(message => /Reaver/.test(message)));
   assert.ok(!advancedConfigProblems(contentBundle, mixed).some(message => /Herald/.test(message)));
@@ -165,12 +183,12 @@ test('a refused value is named on its own row and costs nothing but itself', asy
 
 test('the new points-available key round trips, and a retired mode key still imports', () => {
   const settings = {
-    'gameConfig.startingStats.tuned2.total': 50,
-    'gameConfig.startingStats.tuned2.bonusPool': 25,
+    'gameConfig.startingStats.lean.total': 50,
+    'gameConfig.startingStats.lean.bonusPool': 25,
   };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   const configured = configuredContentBundle(contentBundle, settings);
-  const mode = configured.creationModes.find(row => row.id === 'tuned2');
+  const mode = configured.creationModes.find(row => row.id === 'lean');
   assert.deepEqual([mode.baseline, mode.bonusPool], [5, 25],
     'the baseline is what is left of the total once the assignable points are taken out');
 
@@ -178,4 +196,285 @@ test('the new points-available key round trips, and a retired mode key still imp
   // Those rows left the screen; their keys did not leave the file format.
   const legacy = { 'gameConfig.startingStats.pointbuy.total': 40, 'gameConfig.startingStats.standard.total': 40 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy);
+});
+
+// ---- the reframe (owner, 2026-09-20) ---------------------------------------
+//
+// "the default stat for each stat is 1 and assign allows a user to assign 3
+// points … I'd like to have more stat customization options in general to be
+// able to make this change in the settings."
+
+test('the shipped default IS his sentence: 1 in every stat and 3 to assign', () => {
+  const lean = contentBundle.creationModes.find(row => row.id === 'lean');
+  assert.equal(contentBundle.attributeRules.defaultMode, 'lean');
+  assert.deepEqual(
+    { baseline: lean.baseline, bonusPool: lean.bonusPool, minimum: lean.minimum, maximum: lean.maximum },
+    { baseline: 1, bonusPool: 3, minimum: 1, maximum: 4 },
+    'baseline 1, three points to place, and a ceiling of exactly what the pool can pay for');
+  for (const [classId, preset] of Object.entries(contentBundle.attributeRules.presets.lean)) {
+    const values = Object.values(preset);
+    assert.equal(values.reduce((a, b) => a + b, 0), 8, `${classId} carries 5 × 1 + 3`);
+    assert.ok(values.every(value => value >= 1 && value <= 4), `${classId} sits inside 1–4`);
+    assert.equal(values.filter(value => value > 1).reduce((sum, value) => sum + (value - 1), 0), 3,
+      `${classId} opens with exactly three points placed on top of the baseline`);
+  }
+  assert.deepEqual(attributeContentProblems(contentBundle), []);
+});
+
+// RESTATED WHEN THE CONVERSION SCALE WAS REMOVED (owner, 2026-09-21). #1238
+// held the lean character's POOLS level with tuned2's by dividing every
+// threshold by five — one lean point bought one tuned tier. That divisor is
+// gone: a formula reads the attribute the sheet shows, so a lean point buys a
+// lean point and the pools a stock character opens on are a fifth of what
+// #1238 shipped. The property worth holding is no longer "the same pools as
+// tuned2" — it is that every pool is the authored row read against the
+// attribute, with nothing in between.
+test('a stock lean character is priced by the rows, with no scale in between', () => {
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 7, attributeMode: 'lean' });
+  assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
+  const rules = contentBundle.derivedStatRules.rules;
+  const pool = (id, attribute) => rules[id].base + rules[id].gainPerTier * Math.floor(attribute / rules[id].pointsPerTier);
+  assert.equal(run.energyMax, pool('energy', run.attributes.dexterity));
+  assert.equal(run.drawPerTurn, pool('draw', run.attributes.intelligence));
+  assert.equal(run.maxMana, pool('mana', run.attributes.wisdom));
+  // The numbers those rows now state, on the lean span: Mana is its base of 1
+  // plus Wisdom, and Actions and draw sit at their base of 3 until a point
+  // clears a five-point tier no lean character can reach.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 2]);
+});
+
+test('the baseline is a dial, and it decides the total when it is set', () => {
+  const key = (dial) => `gameConfig.startingStats.lean.${dial}`;
+  const raised = configuredContentBundle(contentBundle, { [key('baseline')]: 4, [key('bonusPool')]: 5 });
+  const mode = raised.creationModes.find(row => row.id === 'lean');
+  assert.deepEqual([mode.baseline, mode.bonusPool], [4, 5],
+    '4 in every stat plus 5 to assign — the total is the arithmetic in his sentence, not a third number');
+  for (const preset of Object.values(raised.attributeRules.presets.lean)) {
+    assert.equal(Object.values(preset).reduce((a, b) => a + b, 0), 25, '4 × 5 + 5');
+  }
+  // With no baseline typed the total still drives and the baseline is derived
+  // from it — (total − points available) ÷ 5, the remainder joining the points
+  // to assign. Unchanged to the letter, which is what keeps every configuration
+  // exported before the baseline row existed resolving to its own numbers.
+  const byTotal = configuredContentBundle(contentBundle, { [key('total')]: 20 });
+  const totalled = byTotal.creationModes.find(row => row.id === 'lean');
+  assert.deepEqual([totalled.baseline, totalled.bonusPool], [3, 5],
+    'the authored 3 points to assign are kept, 17 ÷ 5 is the baseline, and the 2 left over join the pool');
+});
+
+test('the floor, the ceiling and the reclaim clause are dials too', () => {
+  const key = (dial) => `gameConfig.startingStats.lean.${dial}`;
+  const configured = configuredContentBundle(contentBundle, {
+    [key('baseline')]: 5, [key('bonusPool')]: 10, [key('minimum')]: 2, [key('maximum')]: 9, [key('belowBaseline')]: false,
+  });
+  const mode = configured.creationModes.find(row => row.id === 'lean');
+  assert.deepEqual(
+    { baseline: mode.baseline, bonusPool: mode.bonusPool, minimum: mode.minimum, maximum: mode.maximum, belowBaseline: mode.belowBaseline },
+    { baseline: 5, bonusPool: 10, minimum: 2, maximum: 9, belowBaseline: 'forbid' });
+  assert.deepEqual(attributeContentProblems(configured), [], 'the configured mode is content a run can be born from');
+});
+
+test('an impossible limit is refused on its own row and costs nothing else', async () => {
+  const { advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
+  const key = (dial) => `gameConfig.startingStats.lean.${dial}`;
+  // A floor above the baseline is the one shape attributeContentProblems
+  // refuses outright ("minimum 3 exceeds baseline 1"), so it never reaches the
+  // content door: the row that carries it is the row that is told.
+  const settings = { [key('minimum')]: 3, 'gameConfig.balance.startingCinders': 99 };
+  const configured = configuredContentBundle(contentBundle, settings);
+  assert.equal(configured.creationModes.find(row => row.id === 'lean').minimum, 1, 'the floor holds at its last good value');
+  assert.equal(configured.balance.startingCinders, 99, 'an unrelated valid setting survives the refusal');
+  const problem = advancedConfigProblemRows(contentBundle, settings).find(row => row.keys[0] === key('minimum'));
+  assert.match(problem.message, /Lowest a stat may be set to/);
+  assert.match(problem.message, /every other setting you changed is still applied/);
+});
+
+test('equipment requirements are dials, one by one and across the board', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  const requirement = (bundle, itemId) => bundle.equipment.equipmentRequirements
+    .find(row => row.itemId === itemId).minimum;
+  const piece = (bundle, itemId) => bundle.equipment.armaments.find(row => row.id === itemId);
+
+  const halved = configuredContentBundle(contentBundle, { 'gameConfig.equipmentRequirements.scale': 0.5 });
+  assert.equal(validateContent(halved).ok, true);
+  assert.equal(requirement(halved, 'greatsword'), 2, '3 halved and rounded');
+  assert.equal(requirement(halved, 'ashStaff'), 2);
+  // THE COPY EACH PIECE CARRIES MOVES WITH THE TABLE. `requirements.attributes`
+  // is what the equip door, the item card and smithing read; a configured table
+  // that left it behind would show one number and enforce another.
+  assert.equal(piece(halved, 'greatsword').requirements.attributes.strength, 2);
+  assert.equal(contentBundle.equipment.armaments.find(row => row.id === 'greatsword').requirements.attributes.strength, 3,
+    'the authored bundle is untouched');
+
+  const mixed = configuredContentBundle(contentBundle, {
+    'gameConfig.equipmentRequirements.scale': 0.5,
+    'gameConfig.equipmentRequirements.greatsword.strength': 4,
+  });
+  assert.equal(requirement(mixed, 'greatsword'), 4, 'a row of its own overrides the multiplier');
+  assert.equal(requirement(mixed, 'ashStaff'), 2, 'and leaves every other row on the multiplier');
+
+  // The floor under the pool moves with them: lowering what the Ash Focus asks
+  // lets a smaller total through than the authored table allowed.
+  const free = {
+    'gameConfig.equipmentRequirements.scale': 0,
+    'gameConfig.startingStats.lean.total': 5,
+  };
+  const opened = configuredContentBundle(contentBundle, free);
+  assert.equal(validateContent(opened).ok, true);
+  const mode = opened.creationModes.find(row => row.id === 'lean');
+  assert.equal(mode.baseline * 5 + mode.bonusPool, 5, 'one point each is legal once nothing asks for more');
+  const { advancedConfigProblems } = await import('../src/model/advancedConfig.js');
+  assert.deepEqual(advancedConfigProblems(contentBundle, free), [],
+    'and the total is not refused against a floor his own settings removed');
+});
+
+test('every new dial and requirement row survives export and import', () => {
+  const settings = {
+    'gameConfig.startingStats.lean.baseline': 3,
+    'gameConfig.startingStats.lean.bonusPool': 6,
+    'gameConfig.startingStats.lean.minimum': 2,
+    'gameConfig.startingStats.lean.maximum': 9,
+    'gameConfig.startingStats.lean.belowBaseline': false,
+    'gameConfig.equipmentRequirements.scale': 0.5,
+    'gameConfig.equipmentRequirements.greatsword.strength': 4,
+  };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
+});
+
+// ---- what the review of #1238 found, as properties -------------------------
+//
+// Every case below was a way for one dial to cost the owner something other
+// than itself. They are the whole point of this driver, so each gets a test.
+
+test('a raised equipment requirement never costs the owner his whole configuration', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  const { advancedConfigProblems } = await import('../src/model/advancedConfig.js');
+  const sword = (bundle) => bundle.equipment.equipmentRequirements.find(row => row.itemId === 'straightSword').minimum;
+
+  // THE DEFECT THIS ANSWERS. validateContent refuses a preset that cannot hold
+  // its class's kit, and rebuildRegistries answers a failed validation by
+  // falling back to AUTHORED DEFAULTS — so a requirement raised past what the
+  // presets carry discarded every other value he had tuned.
+  for (const raise of [
+    { 'gameConfig.equipmentRequirements.scale': 2 },
+    { 'gameConfig.equipmentRequirements.scale': 10 },
+    { 'gameConfig.equipmentRequirements.ashStaff.intelligence': 40 },
+  ]) {
+    const settings = { ...raise, 'gameConfig.balance.startingCinders': 99 };
+    const configured = configuredContentBundle(contentBundle, settings);
+    assert.equal(validateContent(configured).ok, true, `${JSON.stringify(raise)} still produces a bundle a run can be born from`);
+    assert.equal(configured.balance.startingCinders, 99, 'and the unrelated setting beside it survives');
+    assert.equal(sword(configured), 2, 'the authored table holds when the raise cannot be worn');
+    assert.ok(advancedConfigProblems(contentBundle, settings).some(message => /Equipment requirements:/.test(message)),
+      'and the refusal says so by name rather than falling back in silence');
+  }
+
+  // A raise the classes CAN be fitted around is applied, and the presets move
+  // with it — this is the case the early return used to skip, because no
+  // starting-stat dial had moved.
+  const fitted = configuredContentBundle(contentBundle, { 'gameConfig.equipmentRequirements.straightSword.strength': 4 });
+  assert.equal(validateContent(fitted).ok, true);
+  assert.equal(sword(fitted), 4);
+  assert.equal(fitted.attributeRules.presets.lean.reaver.strength, 4, 'the Reaver is re-fitted around its own kit');
+  assert.deepEqual(advancedConfigProblems(contentBundle, { 'gameConfig.equipmentRequirements.straightSword.strength': 4 }), []);
+
+  // Raising the pool first is the way through, and it says so in the refusal.
+  const roomy = configuredContentBundle(contentBundle, {
+    'gameConfig.equipmentRequirements.scale': 2, 'gameConfig.startingStats.lean.total': 20,
+  });
+  assert.equal(validateContent(roomy).ok, true);
+  assert.equal(sword(roomy), 4, 'with room to carry it, the raised table applies');
+});
+
+test('a requirement of zero is a requirement the card does not print', () => {
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.equipmentRequirements.scale': 0 });
+  const sword = configured.equipment.armaments.find(row => row.id === 'straightSword');
+  assert.equal(configured.equipment.equipmentRequirements.find(row => row.itemId === 'straightSword').minimum, 0,
+    'the row stays in the table, because the dial has to be able to come back up');
+  assert.equal(sword.requirements, undefined, 'but nothing is stamped on the piece, so no card says "Requires STR 0"');
+});
+
+test('a configuration exported before the default mode changed still imports whole', () => {
+  // `explicitRows` used to emit class cells for the DEFAULT mode alone, so the
+  // day the default moved every `…presets.tuned2.<class>.<attribute>` key in an
+  // exported file became unknown — and parseAdvancedConfigFile answers an
+  // unknown key by aborting the WHOLE file, taking every unrelated setting with
+  // it. The current build could even export a file it then refused to import.
+  const legacy = {
+    'gameConfig.attributeRules.presets.tuned2.reaver.strength': 11,
+    'gameConfig.attributeRules.presets.tuned2.starseer.intelligence': 9,
+    'gameConfig.progression.xpMultiplier': 2,
+  };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
+    'every key in the file round trips, the retired mode\'s cells included');
+});
+
+test('a mode no player can pick is never rewritten', async () => {
+  const { createRunState: born } = await import('../src/model/state.js');
+  // A retired mode's KEYS stay importable, but APPLYING one can only reach a
+  // save: a run written before `attributeModeSnapshot` existed is validated
+  // against the LIVE mode at the load door, and save.js ARCHIVES what fails
+  // there. Rewriting tuned2's total would archive exactly the runs tuned2 was
+  // kept in the table for.
+  const settings = { 'gameConfig.startingStats.tuned2.total': 8, 'gameConfig.balance.startingCinders': 99 };
+  const configured = configuredContentBundle(contentBundle, settings);
+  const tuned2 = configured.creationModes.find(row => row.id === 'tuned2');
+  assert.equal(tuned2.baseline * 5 + tuned2.bonusPool, 35, 'tuned2 keeps the total its saves were admitted against');
+  assert.deepEqual(configured.attributeRules.presets.tuned2, contentBundle.attributeRules.presets.tuned2);
+  assert.equal(configured.balance.startingCinders, 99, 'and the settings beside it still apply');
+  // The mode creation DOES offer still moves, in the same configuration.
+  const both = configuredContentBundle(contentBundle, { ...settings, 'gameConfig.startingStats.lean.total': 12 });
+  const lean = both.creationModes.find(row => row.id === 'lean');
+  assert.equal(lean.baseline * 5 + lean.bonusPool, 12);
+  // And a run created under the retired mode is still born on its own numbers.
+  const run = born({ registries: createRegistries(configured), classId: 'reaver', seed: 3, attributeMode: 'tuned2' });
+  assert.equal(Object.values(run.attributes).reduce((a, b) => a + b, 0), 35);
+});
+
+test('a refused baseline costs the baseline, not the points typed beside it', async () => {
+  const { advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
+  const key = (dial) => `gameConfig.startingStats.lean.${dial}`;
+  const settings = { [key('baseline')]: 0, [key('bonusPool')]: 5 };
+  const mode = configuredContentBundle(contentBundle, settings).creationModes.find(row => row.id === 'lean');
+  assert.deepEqual([mode.baseline, mode.bonusPool], [1, 5],
+    'the baseline holds at its authored value and the valid points-to-assign row still applies');
+  const [problem] = advancedConfigProblemRows(contentBundle, settings);
+  assert.deepEqual(problem.keys, [key('baseline')], 'and only the baseline row is told');
+});
+
+test('an attribute card never promises more than the rule pays', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const hpLine = (bundle) => {
+    const registries = createRegistries(bundle);
+    const run = createRunState({ registries, classId: 'reaver', seed: 5 });
+    const card = attributeCardModels(registries, run.attributes, {
+      projection: statProjection(registries, run),
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    }).find(row => row.id === 'constitution');
+    return { card, run, registries };
+  };
+  // The authored row, read against the attribute the sheet shows: four HP a
+  // point. It used to read +20, because the lean mode divided the tier by five
+  // before anything saw it (#1238); with that divisor gone the card states the
+  // row.
+  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +4 every 1 point'));
+
+  // A THRESHOLD THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. A tier of 0.6
+  // buys ONE tier for some points and two for others: `floor((con + 1) / 0.6)
+  // − floor(con / 0.6)` is 1 at the preset. The card said more than the run
+  // paid — a card that promises more than the rule pays is worse than one that
+  // says nothing. The pool no longer produces such a tier; the Advanced
+  // threshold row still can, so the property is driven by that row instead.
+  const wide = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 0.6 });
+  const { card, run, registries } = hpLine(wide);
+  const stated = /HP \+(\d+) every 1 point/.exec(card.reveal.lines.find(line => line.startsWith('HP ')))?.[1];
+  const raised = createRunState({
+    registries, classId: 'reaver', seed: 5,
+    attributes: { ...run.attributes, constitution: run.attributes.constitution + 1,
+      strength: run.attributes.strength - 1 },
+  });
+  assert.ok(Number(stated) <= raised.maxHp - run.maxHp,
+    `the card states ${stated} HP a point and the run pays ${raised.maxHp - run.maxHp}`);
 });

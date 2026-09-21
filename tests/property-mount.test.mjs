@@ -30,8 +30,8 @@ function exposureCard(registries, classId) {
   return card;
 }
 
-function fight({ registries = REG, classId = 'herald', rightHandSets = null, storage = [], enemyIds = ['wanderingSoldier'] } = {}) {
-  const run = createRunState({ seed: 4242, classId, registries });
+function fight({ registries = REG, classId = 'herald', rightHandSets = null, storage = [], enemyIds = ['wanderingSoldier'], attributes = null } = {}) {
+  const run = createRunState({ seed: 4242, classId, registries, ...(attributes ? { attributes } : {}) });
   if (rightHandSets) run.loadout.sets.rightHand = [...rightHandSets];
   run.loadout.storage = [...storage];
   const combat = createCombat({
@@ -96,7 +96,12 @@ test('a scepter-wielding player\'s own arcane break restores balance.exposure.si
 });
 
 test('after changeEquipment to a sword the same break restores 0; re-equipping mounts once, never twice', () => {
-  const { combat, card } = fight({ storage: ['straightSword'] });
+  // A HERALD WHO CAN ACTUALLY HOLD A SWORD. On the lean span the Herald's own
+  // preset leaves Strength at the baseline of 1 and the straight sword asks 2,
+  // so the changeEquipment below would be refused for a reason that has nothing
+  // to do with property mounting. Still 8 points, still inside 1–4.
+  const { combat, card } = fight({ storage: ['straightSword'],
+    attributes: { strength: 2, dexterity: 1, constitution: 1, wisdom: 3, intelligence: 1 } });
   const slot = combat.loadout.active.rightHand;
   combat.player.energy = 99;
   dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: slot, pieceId: 'straightSword' });

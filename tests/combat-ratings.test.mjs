@@ -26,7 +26,9 @@ const magical = { cardId: 'strike', type: 'attack', damageSchool: 'magic' };
 
 test('AR, DR and PR add once to their eligible effects; Poise and Ward formulas agree', () => {
   const c = fight();
-  assert.deepEqual(c.player.ratings, { ar: 5, dr: 5, pr: 10, poise: 15, ward: 15 });
+  // Poise and Ward open at a base of 1 (combatRatingDefaults): 1 + CON 10 +
+  // floor(STR 10 / 2), and 1 + WIS 10 + floor(INT 10 / 2).
+  assert.deepEqual(c.player.ratings, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 15);
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 20);
   assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 15);
@@ -198,30 +200,27 @@ test('a combat save written before the multipliers still validates and resumes',
   for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) delete legacy.ratings[id].multiplier;
   assert.deepEqual(combatRatingProblems(legacy), []);
   const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
-  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 15, ward: 15 });
+  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
   // A written multiplier is still held to its domain.
   assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
 });
 
-// THE CREATION POOL IS NOT A COEFFICIENT. A run born on a smaller pool used to
-// carry `statConversionScale`, which this receipt divided by: the Starseer's
-// INT 8 scored Ward as if it were 23, and the panel's own weights were wrong
-// by 2.92× with no row saying so.
-test('a run born on a smaller pool is rated on the attributes it shows', async () => {
+// THE CREATION POOL IS NOT A COEFFICIENT. A creation mode used to carry
+// `statConversionScale` and this receipt divided by it, so the lean span's
+// every attribute entered the formulas at five times the value on the sheet: a
+// Starseer showing INT 3 was rated as if it held 15, and the panel's own
+// weights were wrong by that factor with no row saying so.
+test('a run born on the lean pool is rated on the attributes it shows', async () => {
   const { createRunState } = await import('../src/model/state.js');
-  const { configuredContentBundle } = await import('../src/model/advancedConfig.js');
-  const small = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.tuned2.total': 12 });
-  const smallRegistries = createRegistries(small);
-  const run = createRunState({ seed: 42, classId: 'starseer', registries: smallRegistries, attributeMode: 'tuned2' });
+  const run = createRunState({ seed: 42, classId: 'starseer', registries });
   run.loadout = null; run.relics = [];
-  assert.equal(run.attributeModeSnapshot.statConversionScale, undefined);
+  assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
 
-  const rules = resolveCombatRatings({}, small);
-  const { ward } = ratingReceipt(smallRegistries, run, rules).totals;
-  const a = run.attributes;
-  const { wisdom, intelligence } = rules.ratings.ward;
-  assert.equal(ward, Math.floor(a.wisdom * wisdom) + Math.floor(a.intelligence * intelligence));
-  assert.equal(ward, 5, 'WIS 1 and INT 8 under the authored 1 and 0.5 weights, not the 29 the scale produced');
+  const rules = resolveCombatRatings({}, contentBundle);
+  const { ward } = ratingReceipt(registries, run, rules).totals;
+  const { wisdom, intelligence, base } = rules.ratings.ward;
+  assert.equal(ward, base + Math.floor(run.attributes.wisdom * wisdom) + Math.floor(run.attributes.intelligence * intelligence));
+  assert.equal(ward, 4, 'a base of 1, WIS 2 and INT 3 under the authored 1 and 0.5 weights — sixteen while the divisor stood');
 });
 
 test('armour, relic and status bonuses are additive and counted once', async () => {
