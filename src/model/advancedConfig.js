@@ -9,6 +9,7 @@ import {
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
+import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -471,7 +472,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 ]);
 
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
   return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
@@ -495,6 +496,7 @@ export function advancedConfigSnapshot(settings = {}) {
 }
 
 function cloneConfigurableBundle(bundle) {
+  bundle = materializeCardValueBonuses(bundle);
   return {
     ...bundle,
     balance: structuredClone(bundle.balance),

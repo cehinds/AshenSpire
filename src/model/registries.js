@@ -14,6 +14,7 @@ import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { projectAttackCardDamageBundle } from './attackCardDamage.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
@@ -193,7 +194,7 @@ function stampTags(bundle) {
 }
 
 export function createRegistries(contentBundle) {
-  const bundle = contentBundle || {};
+  const bundle = projectAttackCardDamageBundle(contentBundle || {});
   const registries = {};
 
   // The tag join, resolved once for every collection tagFamilies.csv names.

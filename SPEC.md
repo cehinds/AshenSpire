@@ -212,6 +212,28 @@ effects: [
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
+**Card rating values are cost-derived.** Before card definitions enter the
+registries, primary values are recalculated as:
+
+```
+floor(global × (AP × action + MP × mana + SP × stamina)
+      − statusReduction × Σ(statusMultiplier[distinct applied status]))
++ ratingCardBonus[card]
+```
+
+The result cannot fall below zero. `X`-cost attacks use one Action in the
+per-hit formula and retain one repeated hit per Action actually spent. Physical
+Attack damage uses the AR card-value formula; damage and Block
+on magic-tagged cards use PR (Potency Rating); physical Block uses DR. Physical
+and magical Attack impact use the Poise and Ward formulas respectively, and an
+explicit `poiseDamage` effect uses the matching formula. Existing conditional
+and formula-valued effects remain bonus values; only the primary/base component
+is replaced. The signed card-specific bonus is added after flooring. Each rating owns
+configurable global, AP, MP, SP, status-reduction, per-status, and per-card
+values under `balance.damage`. They are available in Advanced → Combat. A run
+snapshots those settings, so the same configuration and inputs always produce
+the same values.
+
 ### 3.5 Formulas — structured objects, not strings
 
 Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing — formulas are validatable data:
