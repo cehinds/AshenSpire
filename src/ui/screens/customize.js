@@ -1201,18 +1201,23 @@ export function mountCustomize(app, {
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
     ];
     const armour = registries.equipment.armour.find((row) => row.classId === state.classId && row.id === state.startingArmourId);
-    slots.push({ key: 'armour', label: 'Armour', node: armour ? renderEquipmentCard(registries, armour, summaryCard).card : null, empty: 'Not chosen yet' });
+    slots.push({ key: 'armour', label: 'Armour', node: armour
+      ? renderEquipmentCard(registries, armour, { ...summaryCard, identity: 'creation-summary:armour' }).card
+      : null, empty: 'Not chosen yet' });
     const handSlot = (slot, label) => {
       const piece = armament(state.startingHands[slot]);
+      const options = { ...summaryCard, identity: `creation-summary:${slot}` };
       const node = piece
-        ? renderEquipmentCard(registries, piece, summaryCard).card
-        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...summaryCard, presentation: EMPTY_HAND_PRESENTATION }).card;
+        ? renderEquipmentCard(registries, piece, options).card
+        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...options, presentation: EMPTY_HAND_PRESENTATION }).card;
       return { key: slot, label, node, unmet: piece ? handProblem(slot) : null };
     };
     slots.push(handSlot('rightHand', 'Main hand'));
     if (state.startingHands.leftHand) slots.push(handSlot('leftHand', 'Off hand'));
     const relic = registries.relics.get(state.startingRelicId);
-    slots.push({ key: 'relic', label: 'Relic', node: relic ? renderCollectibleCard(registries, relic, 'Relic', summaryCard).card : null, empty: 'None' });
+    slots.push({ key: 'relic', label: 'Relic', node: relic
+      ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
+      : null, empty: 'None' });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [
