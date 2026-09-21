@@ -10,6 +10,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { prologueSceneMs, prologueTransitionMs } from '../src/model/prologueTiming.js';
 import { prologueArtwork } from '../src/ui/assets.js';
 import { BEDS } from '../src/content/music.js';
+import * as prologueModule from '../src/model/prologue.js';
 import { settingsRowHtml } from '../src/ui/screens/settings.js';
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
@@ -647,11 +648,16 @@ test('the controls stand in a band at the bottom, whatever the words do', () => 
   // The safe-area inset is a FLOOR under the authored padding, not a value that
   // replaces it: a container padding of 0 must still be 0 under the text.
   assert.match(css, /\.prologue-controls-text \.prologue-caption\{padding-bottom:max\(var\(--prologue-box-padding,1rem\),env\(safe-area-inset-bottom\)\)\}/);
-  // A scene drawn while the page is hidden moves its CLOCK past the entrance as
-  // well as the animation — finishing the fade alone left `elapsed` at 0, and
-  // the first tick after the page came back rewound it and replayed the fade
-  // from black, which is the flash the fix was for.
-  assert.match(screen, /if \(blocked\(\)\) \{ animations\.forEach\(a=>a\.finish\(\)\); elapsed = Math\.max\(elapsed,duration\); \}/);
+  // A scene nobody is watching moves its CLOCK past the entrance, and that is
+  // ALL it moves. Finishing the animations instead left `elapsed` at 0, so the
+  // next tick rewound the fade; and it finished the camera too, which then
+  // popped backwards the moment the page came back. The clock puts every
+  // animation where that moment in the scene actually puts it.
+  assert.match(screen, /if \(paused \|\| blocked\(\)\) elapsed = Math\.max\(elapsed,duration\);/);
+  // The one place an animation is still fast-forwarded is reduced motion, where
+  // finishing it IS the setting.
+  assert.equal((screen.match(/a\.finish\(\)/g) || []).length, 1);
+  assert.match(screen, /if \(reduced\(\)\) animations\.forEach\(a=>a\.finish\(\)\)/);
 });
 
 test('every staging dial the settings offer is a property the stylesheet reads', () => {
@@ -669,7 +675,8 @@ test('every staging dial the settings offer is a property the stylesheet reads',
     lineHeight: '--prologue-line-height', letterSpacing: '--prologue-letter-spacing',
     textMaxWidth: '--prologue-measure', textFont: '--prologue-font',
     boxPadding: '--prologue-box-padding', boxRadius: '--prologue-box-radius',
-    boxBorderWidth: '--prologue-box-border', boxBorderColor: '--prologue-box-border-color', boxBlur: '--prologue-box-blur',
+    boxBorderWidth: '--prologue-box-border', boxBorderColor: '--prologue-box-border-color',
+    boxBlur: '--prologue-box-backdrop',
   };
   for (const [field, property] of Object.entries(carried)) {
     assert.ok(field in prologueConfig().presentation, `${field} has no authored default`);
@@ -698,4 +705,26 @@ test('every staging dial the settings offer is a property the stylesheet reads',
   assert.equal(staged.imageSaturation, 0, 'one scene may be grey while the rest are not');
   assert.equal(staged.textDelaySeconds, 2);
   assert.equal(prologueStaging(scene, scene.scenes[1]).imageSaturation, 1);
+});
+
+// ---- the screen only names what it imports ---------------------------------
+//
+// `PROLOGUE_DEFAULTS` was used in the renderer and never imported. `node
+// --check` sees valid syntax, every test here reads the file as TEXT, and the
+// model tests never mount the screen — so the opening threw `ReferenceError` on
+// the first scene and showed nothing but its caption, and only photographing
+// the built game caught it. This is the cheap half of that lesson: every
+// opening symbol the renderer names has to be a symbol it imported.
+test('the opening renderer imports every opening symbol it names', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  const imported = new Set([...screen.matchAll(/import \{([^}]+)\} from/g)]
+    .flatMap(match => match[1].split(',').map(name => name.trim().split(/\s+as\s+/).pop())));
+  const body = screen.slice(screen.lastIndexOf('import '));
+  const exported = new Set(Object.keys(prologueModule));
+  const named = new Set([...body.matchAll(/\b(PROLOGUE_[A-Z_]+|prologue[A-Za-z]+)\b/g)].map(match => match[1]));
+  for (const name of named) {
+    if (!exported.has(name)) continue;  // a local of the same shape is not an import
+    assert.ok(imported.has(name), `${name} is used in the renderer but never imported`);
+  }
+  assert.ok(named.has('PROLOGUE_DEFAULTS'), 'the symbol that taught this lesson is still one of them');
 });

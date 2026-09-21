@@ -3,7 +3,7 @@
     "sequence": {
       "schemaVersion": 1,
       "kind": "AshenSpire prologue art",
-      "revision": "2026-09-21-staging-v6",
+      "revision": "2026-09-21-staging-v7",
       "labels": {
         "continue": "Continue",
         "setForth": "Set forth",
@@ -286,7 +286,7 @@
         "lineHeight": 1.5,
         "letterSpacing": 0,
         "textMaxWidth": 65,
-        "textFont": "display",
+        "textFont": "body",
         "textDelaySeconds": 0,
         "boxPadding": 1,
         "boxRadius": 0,

@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json a430e8765281d3d3
+// source content/config/ui/screens/prologue.json c0e2adf1f013018e
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -772,7 +772,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-21-staging-v6",
+          "revision": "2026-09-21-staging-v7",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -1055,7 +1055,7 @@ export const uiConfig = deepFreeze({
             "lineHeight": 1.5,
             "letterSpacing": 0,
             "textMaxWidth": 65,
-            "textFont": "display",
+            "textFont": "body",
             "textDelaySeconds": 0,
             "boxPadding": 1,
             "boxRadius": 0,

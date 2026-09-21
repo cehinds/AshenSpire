@@ -85,12 +85,14 @@
    for — the wireframe the owner chose is the wireframe that is drawn. The two
    panel frames already restate their columns above, so they are unaffected. */
 @media(max-height:500px) and (orientation:landscape){
-  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
-  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
   /* The side-panel fallback puts the art beside the words; the band still runs
-     the width of the screen underneath both. */
+     the width of the screen underneath both. This rule comes FIRST: the frames
+     below state their own geometry, and a generic rule after them would win on
+     equal specificity and take it away again. */
   .prologue-screen{grid-template-rows:1fr auto}
   .prologue-bar{grid-row:2;grid-column:1/-1}
+  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
   .prologue-layout-letterbox .prologue-bar{grid-row:3}
 }
 /* A scene with no painting is a text card: the backdrop, and the words. */
@@ -130,16 +132,19 @@
 /* The picture: four dials in one filter, the mirror, the vignette over it. */
 .prologue-background{filter:var(--prologue-filter,none);transform:scale(var(--prologue-scale,1)) scaleX(var(--prologue-flip,1))}
 .prologue-plate{background:var(--prologue-backdrop,#100e0c)}
+/* The plate is `inset:0` over the whole stage, so IT is what shows beside a
+   letterboxed painting — a colour on the stage underneath could never paint. */
+.prologue-layout-letterbox .prologue-plate{background:var(--prologue-letterbox,#000)}
 .prologue-plate::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:var(--prologue-vignette,0);background:radial-gradient(ellipse at center,transparent 45%,#000 120%)}
 .prologue-layout-letterbox .prologue-stage{background:var(--prologue-letterbox,#000)}
 /* The words, part by part. */
-.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1));font-family:var(--prologue-font,var(--font-display))}
+.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
 .prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
-.prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-display))}
+.prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-body))}
 .prologue-location{color:var(--prologue-location-color,var(--gold))}
 .prologue-text-waiting .prologue-title,.prologue-text-waiting .prologue-speaker,.prologue-text-waiting .prologue-dialogue,.prologue-text-waiting .prologue-location{visibility:hidden}
 /* The container, in detail: it keeps its spacing whatever it is drawn with. */
-.prologue-has-box .prologue-caption{border-radius:var(--prologue-box-radius,0);border:var(--prologue-box-border,0) solid var(--prologue-box-border-color,transparent);backdrop-filter:blur(var(--prologue-box-blur,0))}
+.prologue-has-box .prologue-caption{border-radius:var(--prologue-box-radius,0);border:var(--prologue-box-border,0) solid var(--prologue-box-border-color,transparent);backdrop-filter:var(--prologue-box-backdrop,none)}
 .prologue-dot{display:inline-block;width:.55rem;height:.55rem;margin:0 .22rem;border-radius:50%;background:currentColor;opacity:.35}
 .prologue-dot.on{opacity:1;box-shadow:0 0 6px currentColor}
 @media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto auto}}

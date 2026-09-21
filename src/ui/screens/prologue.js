@@ -3,7 +3,7 @@ import { paintPrologueCharacter, placePrologueCharacter } from '../prologueChara
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
 import { topVeil } from '../components/veil.js';
-import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
+import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
 
 /**
  * cameraFrames(stage, scene) → the drift a scene holds on, or null for still.
@@ -80,13 +80,26 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   root.classList.add(`prologue-controls-${['compact','normal','large'].includes(p.controlsSize) ? p.controlsSize : 'normal'}`);
   root.style.setProperty('--prologue-controls-align',{left:'flex-start',right:'flex-end'}[p.controlsAlign] || 'center');
   pause.hidden = p.showPause === false;
-  skip.hidden = p.showSkip === false;
+  // `skip` doubles as the preview's Close, which is not the player-facing skip
+  // the setting is about.
+  skip.hidden = !preview && p.showSkip === false;
   host.replaceChildren(root);
   // THE STAGING IS WRITTEN AS CSS CUSTOM PROPERTIES, and written again for each
   // scene: a scene that keeps its own staging (prologueStaging) answers every
   // one of these for itself, so one scene may letterbox while the rest fill the
   // frame. The classes say which wireframe is standing; the properties fill it
   // in; both are re-applied on entry rather than once at mount.
+  // A DIAL IS WRITTEN ONLY WHEN IT IS TURNED. Writing every property on every
+  // scene made the stylesheet's own defaults unreachable — and some of those
+  // defaults are the player's, not ours: `.prologue-title{color:var(--gold)}`
+  // follows the accent theme, and a hex the owner never chose was overwriting
+  // crimson with gold. It also forced a filter and a backdrop pipeline on a
+  // full-viewport plate for a profile that had touched nothing.
+  const shipped = PROLOGUE_DEFAULTS.presentation;
+  const dial = (node, name, value, key, format = String) => {
+    if (value === undefined || value === shipped[key]) node.style.removeProperty(name);
+    else node.style.setProperty(name, format(value));
+  };
   function applyStaging(stage) {
     for (const name of Object.keys(PROLOGUE_LAYOUTS)) root.classList.toggle(`prologue-layout-${name}`, name === stage.layout);
     caption.dataset.position = String(stage.textPosition || 'bottom-center');
@@ -107,36 +120,50 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     // Fit, focus and scale go through custom properties rather than inline style
     // on the image, so a wireframe that must letterbox (which is a fact about the
     // frame, not about this setting) can still override the fit in CSS.
-    root.style.setProperty('--prologue-fit', stage.imageFit || 'cover');
-    root.style.setProperty('--prologue-focus', `${stage.imageFocusX ?? 50}% ${stage.imageFocusY ?? 50}%`);
-    root.style.setProperty('--prologue-scale', String(Number(stage.imageScale) || 1));
-    // The painting as a PICTURE — one filter, built from the four dials that
-    // describe it, plus the mirror, which is a transform and rides with scale.
-    root.style.setProperty('--prologue-filter', `brightness(${stage.imageBrightness ?? 1}) contrast(${stage.imageContrast ?? 1}) saturate(${stage.imageSaturation ?? 1}) blur(${Number(stage.imageBlur) || 0}px)`);
-    root.style.setProperty('--prologue-flip', stage.imageFlip === true ? '-1' : '1');
-    root.style.setProperty('--prologue-vignette', String(Number(stage.vignette) || 0));
-    root.style.setProperty('--prologue-backdrop', stage.backdropColor || '#100e0c');
-    root.style.setProperty('--prologue-letterbox', stage.letterboxColor || '#000000');
     // The words, part by part.
-    root.style.setProperty('--prologue-title-color', stage.titleColor || '#c9a227');
-    root.style.setProperty('--prologue-speaker-color', stage.speakerColor || '#c0b39d');
-    root.style.setProperty('--prologue-dialogue-color', stage.dialogueColor || '#eee6d5');
-    root.style.setProperty('--prologue-location-color', stage.locationColor || '#c9a227');
-    root.style.setProperty('--prologue-title-scale', String(stage.titleScale ?? 1));
-    root.style.setProperty('--prologue-speaker-scale', String(stage.speakerScale ?? 1));
-    root.style.setProperty('--prologue-line-height', String(stage.lineHeight ?? 1.5));
-    root.style.setProperty('--prologue-letter-spacing', `${Number(stage.letterSpacing) || 0}em`);
-    root.style.setProperty('--prologue-measure', `${Number(stage.textMaxWidth) || 65}ch`);
-    root.style.setProperty('--prologue-font', stage.textFont === 'body' ? 'var(--font-body)' : 'var(--font-display)');
+    dial(root, '--prologue-title-color', stage.titleColor, 'titleColor');
+    dial(root, '--prologue-speaker-color', stage.speakerColor, 'speakerColor');
+    dial(root, '--prologue-dialogue-color', stage.dialogueColor, 'dialogueColor');
+    dial(root, '--prologue-location-color', stage.locationColor, 'locationColor');
+    dial(root, '--prologue-title-scale', stage.titleScale, 'titleScale');
+    dial(root, '--prologue-speaker-scale', stage.speakerScale, 'speakerScale');
+    dial(root, '--prologue-line-height', stage.lineHeight, 'lineHeight');
+    dial(root, '--prologue-letter-spacing', stage.letterSpacing, 'letterSpacing', value => `${value}em`);
+    dial(root, '--prologue-measure', stage.textMaxWidth, 'textMaxWidth', value => `${value}ch`);
+    dial(root, '--prologue-font', stage.textFont, 'textFont', value => `var(--font-${value === 'display' ? 'display' : 'body'})`);
     // The container, in detail.
-    root.style.setProperty('--prologue-box-padding', `${Number(stage.boxPadding) || 0}rem`);
-    root.style.setProperty('--prologue-box-radius', `${Number(stage.boxRadius) || 0}px`);
-    root.style.setProperty('--prologue-box-border', `${Number(stage.boxBorderWidth) || 0}px`);
-    root.style.setProperty('--prologue-box-border-color', stage.boxBorderColor || '#c9a227');
-    root.style.setProperty('--prologue-box-blur', `${Number(stage.boxBlur) || 0}px`);
+    dial(root, '--prologue-box-padding', stage.boxPadding, 'boxPadding', value => `${value}rem`);
+    dial(root, '--prologue-box-radius', stage.boxRadius, 'boxRadius', value => `${value}px`);
+    dial(root, '--prologue-box-border', stage.boxBorderWidth, 'boxBorderWidth', value => `${value}px`);
+    dial(root, '--prologue-box-border-color', stage.boxBorderColor, 'boxBorderColor');
+    // A backdrop filter is a compositing pipeline; at zero it is written away
+    // entirely rather than left as a no-op blur over the whole caption.
+    dial(root, '--prologue-box-backdrop', stage.boxBlur, 'boxBlur', value => `blur(${value}px)`);
     title.hidden = stage.titleVisible === false;
     speaker.hidden = stage.speakerVisible === false;
     progress.hidden = stage.progressStyle === 'hidden';
+  }
+  // THE PICTURE IS THE PLATE'S, and it is written on the plate rather than on
+  // the frame: the two plates overlap for the length of a crossfade, and a
+  // property on the frame reached the OUTGOING one too — so a scene that
+  // mirrors or blurs its artwork flipped the scene before it in a single frame
+  // and then faded over the result.
+  function applyPlate(plate, stage) {
+    const picture = ['imageBrightness','imageContrast','imageSaturation','imageBlur'];
+    const filtered = picture.some(key => stage[key] !== shipped[key]);
+    if (filtered) plate.style.setProperty('--prologue-filter', `brightness(${stage.imageBrightness ?? 1}) contrast(${stage.imageContrast ?? 1}) saturate(${stage.imageSaturation ?? 1}) blur(${Number(stage.imageBlur) || 0}px)`);
+    dial(plate, '--prologue-flip', stage.imageFlip, 'imageFlip', value => value === true ? '-1' : '1');
+    dial(plate, '--prologue-vignette', stage.vignette, 'vignette');
+    dial(plate, '--prologue-backdrop', stage.backdropColor, 'backdropColor');
+    dial(plate, '--prologue-letterbox', stage.letterboxColor, 'letterboxColor');
+    // Fit, focus and scale go through custom properties rather than inline style
+    // on the image, so a wireframe that must letterbox (which is a fact about the
+    // frame, not about this setting) can still override the fit in CSS.
+    dial(plate, '--prologue-fit', stage.imageFit, 'imageFit');
+    if (stage.imageFocusX !== shipped.imageFocusX || stage.imageFocusY !== shipped.imageFocusY) {
+      plate.style.setProperty('--prologue-focus', `${stage.imageFocusX ?? 50}% ${stage.imageFocusY ?? 50}%`);
+    }
+    dial(plate, '--prologue-scale', stage.imageScale, 'imageScale');
   }
   // The scenes play in the configured ORDER, over the configured SUBSET; the
   // numbers below stay indices into the authored list, which is what a paused
@@ -201,6 +228,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (notify) onScene(sceneIndex);
     const stage_ = prologueStaging(config,scene);
     const plate = el('div',{class:'prologue-plate'});
+    applyPlate(plate,stage_);
     // The painting is the scene's CHOICE, not its name (prologueSceneArt), so
     // a resequenced opening can keep a scene's words over another's artwork —
     // and `null` is a scene with no painting at all, which is what an added
@@ -262,9 +290,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     next.textContent = position === order.length-1 ? config.labels.setForth : config.labels.continue;
     // The counter is numbers, dots, or nothing. Dots are decorative — the same
     // fact is in the label, which is what a screen reader is given.
-    progress.setAttribute('aria-label',`Scene ${position+1} of ${order.length}`);
     if (stage_.progressStyle === 'dots') {
-      progress.replaceChildren(...order.map((_,at)=>el('span',{class:`prologue-dot${at === position ? ' on' : ''}`,'aria-hidden':'true'})));
+      // A NAME ON A PARAGRAPH IS NOT READ — `aria-label` is prohibited on the
+      // paragraph role, so dots alone left an empty, unnamed element. The fact
+      // is carried as text nobody sees rather than as an attribute nobody gets.
+      progress.replaceChildren(
+        el('span',{class:'sr-only',text:`Scene ${position+1} of ${order.length}`}),
+        ...order.map((_,at)=>el('span',{class:`prologue-dot${at === position ? ' on' : ''}`,'aria-hidden':'true'})),
+      );
     } else {
       progress.textContent = `${position+1} / ${order.length}`;
     }
@@ -278,21 +311,20 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     }
     const camera = cameraFrames(stage_,scene);
     if (!reduced() && camera) animations.push(plate.animate(camera,{duration:prologueSceneMs(scene),fill:'both',easing:stage_.cameraEase || 'linear'}));
-    animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
-    // A SCENE NOBODY CAN SEE YET STILL HAS TO BE DRAWN. The entrance is paused
-    // at `elapsed` — 0 for a new scene, which is a fully transparent plate —
-    // and `tick` only advances it while the page is visible and no veil is over
-    // it. So a tab opened in the background, a screen behind a modal, or a
-    // capture tool held the artwork at opacity 0 and showed the caption over
-    // black. Nobody is watching the fade in that state; the picture matters.
+    // A SCENE NOBODY IS WATCHING STILL HAS TO BE DRAWN. The entrance is paused at
+    // `elapsed` — 0 for a new scene, which is a fully transparent plate — and
+    // `tick` only advances it while the page is visible, unveiled and unpaused.
+    // So a tab opened in the background, a screen behind a modal, a capture
+    // tool, or Continue pressed while paused held the artwork at opacity 0 and
+    // showed the caption over black.
     //
-    // THE CLOCK MOVES WITH IT, not just the animation. Finishing the entrance
-    // alone left `elapsed` at 0, so the first tick after the page came back
-    // assigned `currentTime = 0` and rewound the finished fade — the artwork
-    // snapped back to black and faded in again, which is the flash this was
-    // meant to remove. A fade that has played, seen or not, is time the scene
-    // has spent.
-    if (blocked()) { animations.forEach(a=>a.finish()); elapsed = Math.max(elapsed,duration); }
+    // THE CLOCK IS WHAT MOVES, not the animations. Finishing them instead left
+    // `elapsed` at 0 — the next tick rewound the fade it had just finished, and
+    // it finished the CAMERA too, which then popped backwards when the page
+    // came back. Advancing the clock past the entrance leaves every animation
+    // where that moment in the scene actually puts it.
+    if (paused || blocked()) elapsed = Math.max(elapsed,duration);
+    animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
     previous = plate; loading = false; next.disabled = false; last = 0;
   }
   function tick(now) {
@@ -326,7 +358,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   if (onSettings) {
     const settingsButton = button({label:config.labels.settings});
-    settingsButton.onclick = () => { if (!paused) togglePause(); onSettings(); };
+    // Only pause if there is a way back: with Pause hidden, nothing else clears
+    // it, and the opening would sit paused for the rest of the run.
+    settingsButton.onclick = () => { if (!paused && !pause.hidden) togglePause(); onSettings(); };
     controls.insertBefore(settingsButton,skip);
   }
   portrait.addEventListener('change',rotate);
