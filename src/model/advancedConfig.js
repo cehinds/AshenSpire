@@ -136,9 +136,11 @@ const BALANCE_NOTES = Object.freeze({
 // "why aren't the menus matching? … make them consistent with what I see with
 // each other."
 //
-// Advanced spoke two languages. A hand-authored row carried a Title Case
-// sentence a person wrote — "HP — base amount", "Reaver — Strength", "Straight
-// Sword — Strength required" — while a row generated from `balance` carried
+// Advanced spoke two languages. A hand-authored row carried a sentence a
+// person wrote — "HP — base amount", "Reaver — Strength", "Straight Sword —
+// Strength required": the subject in Title Case because it names a thing, the
+// leaf in sentence case because it is a phrase. A row generated from `balance`
+// carried
 // `word(<last path segment>)` and a note beginning "Authored balance value:".
 // That note is engine-speak, and the label was WORSE than short: `leafRows`
 // only ever saw the LAST segment, so `levels.enemyScaling.hp.perLevel`,
@@ -153,9 +155,16 @@ const BALANCE_NOTES = Object.freeze({
 // construction.
 //
 // So the label is built ONCE, here, with the context the leaf needs and the
-// casing the rest of the menu uses. The raw path keeps its own home in
-// `searchPath`, which is what search reads, so nothing is lost by taking the
-// engine's spelling off the player's row.
+// casing the rest of the menu uses: Title Case subjects, a sentence-case leaf,
+// measured against the hand-authored corpus rather than guessed at (1234 of
+// its leaves read as a sentence, 262 as a heading).
+//
+// Nothing is lost by taking the engine's spelling off the row. Search reads
+// the rendered row text AND the input's `data-key` (settings.js, in
+// `filterAdvancedRows`), and `data-key` is the full `gameConfig.balance.<path>`
+// — so every segment this label drops is still typeable. `searchPath` is NOT
+// what search reads; it never reaches the DOM, and its only consumer is the
+// `ui.`/legacy filter below.
 
 // Words the menu already writes as acronyms ("HP — base amount", "Reaver —
 // base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
@@ -164,13 +173,31 @@ const LABEL_ACRONYMS = new Map(Object.entries({
   hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
 }));
 
-/** One path segment as the menu writes it: `enemyScaling` → `Enemy Scaling`. */
-function labelSegment(part) {
+/**
+ * One path segment as the menu writes it.
+ *
+ * A SUBJECT is a heading — `enemyScaling` → `Enemy Scaling` — because it names
+ * a thing, and every hand-authored subject in this menu ("Straight Sword",
+ * "Wayfarer Plate", "Reaver") is written that way.
+ *
+ * A LEAF is a phrase, so it is sentence case — `perLevel` → `Per level`,
+ * `hpSmallPct` → `HP small %`. That is not a preference: the hand-authored
+ * corpus this menu has to match is 1234 sentence-case leaves ("Resistance
+ * cap", "Break threshold multiplier", "Strength required") against 262 Title
+ * Case ones. Title-casing generated leaves left three tabs — Level-up, General
+ * and Experience & rewards — showing both styles at once, which is the mismatch
+ * this block exists to end, not a new home for it.
+ *
+ * Acronyms survive either way; `LABEL_ACRONYMS` is consulted before the case
+ * rule, so `hp` is `HP` whether it opens the leaf or sits inside it.
+ */
+function labelSegment(part, sentence = false) {
   return String(part)
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .split(/[\s._-]+/)
     .filter(Boolean)
-    .map((piece) => LABEL_ACRONYMS.get(piece.toLowerCase()) || piece[0].toUpperCase() + piece.slice(1))
+    .map((piece, index) => LABEL_ACRONYMS.get(piece.toLowerCase())
+      || (sentence && index > 0 ? piece.toLowerCase() : piece[0].toUpperCase() + piece.slice(1)))
     .join(' ');
 }
 
@@ -184,9 +211,8 @@ function labelSegment(part) {
  * only reason its two siblings are now telling apart.
  */
 function balanceLabel(path) {
-  const parts = path.map(labelSegment);
-  const leaf = parts[parts.length - 1];
-  const context = parts.slice(0, -1);
+  const leaf = labelSegment(path[path.length - 1], true);
+  const context = path.slice(0, -1).map((part) => labelSegment(part));
   return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
 }
 
@@ -202,7 +228,7 @@ function leafRows(value, path = [], rows = []) {
       def: value,
       ...domain,
       label: balanceLabel(path),
-      note: BALANCE_NOTES[joined] || 'Applies to a new run.',
+      note: (Object.hasOwn(BALANCE_NOTES, joined) && BALANCE_NOTES[joined]) || 'Applies to a new run.',
       configPath: ['balance', ...path],
       searchPath: joined,
       ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),

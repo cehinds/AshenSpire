@@ -881,24 +881,48 @@ export function settingOn(settings, key) {
  *
  * The row owns its full label; a tab is a heading, and a heading repeated in
  * every line beneath it is noise. "Reaver — Strength" under the Reaver tab is
- * "Strength"; "Levels · Enemy Scaling · HP — Per Level" under Enemy scaling is
- * "HP — Per Level". Nothing is invented and nothing is recased: this only ever
- * removes whole leading subjects, and only when one of them IS the tab.
+ * "Strength"; "Levels · Enemy Scaling · HP — Per level" under Enemy scaling is
+ * "HP — Per level". Nothing is invented and nothing is recased: this only ever
+ * removes whole leading subjects, and only when they ARE the tab.
  *
- * It never returns an empty label — a row whose every subject matches its tab
- * keeps its last one, because a blank row is worse than a redundant one.
+ * A TAB NAME CAN SPAN SEVERAL SUBJECTS, and comparing one at a time missed
+ * every such tab. `Equipment drops` is one heading over rows that read
+ * "Equipment · Drops — Enabled": no single subject folds to "equipmentdrops",
+ * so all nine rows said the tab's name back to it. Rules → Skill xp and
+ * Rules → Skill class did the same. So a RUN of adjacent subjects is matched,
+ * longest reach first, which subsumes the single-subject case.
+ *
+ * A tab that renames what it covers still matches nothing, by design: Rewards
+ * → `Shop · Card prices` heads rows built from `shop.cardCost.*`, and "Card
+ * prices" is not "Card Cost". Those keep their full label rather than have
+ * this function guess.
+ *
+ * It never returns an empty label. A row whose every subject matches its tab
+ * keeps its leaf, and a leaf that is itself blank keeps the whole label,
+ * because a blank row is worse than a redundant one.
  */
 export function compactRowLabel(label, topic) {
   const text = String(label || '');
-  const split = text.split(' — ');
-  if (split.length < 2) return text;
-  const subjects = split.slice(0, -1).join(' — ').split(' · ');
-  const leaf = split[split.length - 1];
+  // The LAST em dash separates the leaf, so a leaf containing one of its own
+  // ("Enter: Bulwark — impact override" under a two-part subject) still splits
+  // where a reader would split it.
+  const cut = text.lastIndexOf(' — ');
+  if (cut < 0) return text;
+  const leaf = text.slice(cut + 3);
+  const subjects = text.slice(0, cut).split(/ · | — /);
   const fold = (value) => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
-  const matched = subjects.findIndex((subject) => fold(subject) === fold(topic));
+  const want = fold(topic);
+  if (!want) return text;
+  let matched = -1;
+  for (let end = subjects.length - 1; end >= 0 && matched < 0; end -= 1) {
+    for (let start = 0; start <= end; start += 1) {
+      if (fold(subjects.slice(start, end + 1).join(' ')) === want) { matched = end; break; }
+    }
+  }
   if (matched < 0) return text;
   const kept = subjects.slice(matched + 1);
-  return kept.length ? `${kept.join(' · ')} — ${leaf}` : leaf;
+  if (kept.length) return `${kept.join(' · ')} — ${leaf}`;
+  return leaf.trim() || text;
 }
 
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
