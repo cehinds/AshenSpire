@@ -1,4 +1,4 @@
-.prologue-screen{position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
+.prologue-screen{container-type:size;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
 .prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
 .prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
 .prologue-background{width:100%;height:100%;object-fit:cover;display:block}
@@ -49,7 +49,7 @@
 /* Text over the art: one cell, and `data-position` places the plate in it. */
 .prologue-layout-overlay{grid-template-rows:1fr}
 .prologue-layout-overlay .prologue-stage,.prologue-layout-overlay .prologue-caption{grid-row:1;grid-column:1}
-.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;height:max-content}
+.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;margin:calc(var(--prologue-inset-y,4)*1cqh) calc(var(--prologue-inset-x,4)*1cqw);height:max-content}
 .prologue-layout-overlay .prologue-caption[data-position^=top]{align-self:start}
 .prologue-layout-overlay .prologue-caption[data-position^=middle]{align-self:center}
 .prologue-layout-overlay .prologue-caption[data-position$=left]{justify-self:start;max-width:min(46rem,62%)}
@@ -87,3 +87,26 @@
   .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr}
   .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
 }
+/* A scene with no painting is a text card: the backdrop, and the words. */
+.prologue-plate-bare{background:#100e0c}
+/* The reveal: finished text, the part not yet reached drawn in transparent ink.
+   It keeps its space, so nothing reflows as the words arrive, and it keeps its
+   place in the accessibility tree, so nothing has to wait for a typewriter. */
+.prologue-unsaid{color:transparent;-webkit-text-stroke-color:transparent}
+/* ---- Advanced → Opening: the scene list and the preset slots --------------
+   The list IS the running order: one row per scene, the playing ones first and
+   numbered, anything switched off parked below them. Drag or arrow — both write
+   the same `order` keys — and the actions sit at the end of the row they act on. */
+.set-scene-trail{width:100%;min-width:0;display:grid;gap:.5rem}
+.set-scene-list{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
+.set-scene{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.45rem .6rem;border:1px solid var(--line-soft);border-radius:6px;background:var(--bg)}
+.set-scene[data-live="0"]{opacity:.65}
+.set-scene-grip{cursor:grab;color:var(--muted, #b8ac98);font-size:1.1rem;line-height:1}
+.set-scene-dragging{outline:2px dashed var(--gold);opacity:.9}
+.set-scene-name{flex:1 1 12rem;min-width:0}
+.set-scene-name em{font-style:normal;color:var(--muted, #b8ac98)}
+.set-scene-at{font-variant-numeric:tabular-nums;color:var(--muted, #b8ac98);white-space:nowrap}
+.set-scene-acts,.set-preset-acts{display:flex;flex-wrap:wrap;gap:.35rem}
+.set-scene-acts .as-btn,.set-preset-acts .as-btn{min-height:40px}
+.set-scene-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+@media(max-width:760px){.set-scene-name{flex-basis:100%}.set-scene-acts{width:100%}}

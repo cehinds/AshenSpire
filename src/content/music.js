@@ -19,6 +19,8 @@
 // doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
 // one home per medium.)
 
+import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
+
 // A real build can point these at files; missing/failed loads fall back to synth.
 export const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',
@@ -43,6 +45,13 @@ export const SCALES = {
 // stride through the scale) so variants differ in colour and contour, not just
 // key/tempo — more perceived variety from the same synth.
 export const BEDS = {
+  // DELIBERATE QUIET, SPELLED THE ONE WAY. A scene of the opening may ask for
+  // silence (Advanced → Opening → Music); it switches to this context rather
+  // than calling stopMusic(), because the engine remembers the context it is
+  // in — stopping the sound without changing the context left `music('map')`
+  // returning 'unchanged' when the opening ended, and the map stayed silent
+  // until some other screen changed the bed.
+  quiet: MUSIC_SILENCE_WORD,
   title: { drone: true, gain: 0.5, variants: [
     { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
     { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
