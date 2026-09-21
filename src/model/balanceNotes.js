@@ -29,6 +29,10 @@ const word = (value) => String(value)
   .replace(/[._-]+/g, ' ')
   .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+// "a uncommon card" is the sort of seam a reader trips on, and the noun is a
+// pattern's capture rather than a word anyone typed, so the article derives.
+const an = (noun) => `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
+
 // A POOL IS A DOOR, and the sentence reads better naming the door than the id.
 const POOL = Object.freeze({
   normal: 'a normal fight',
@@ -39,19 +43,21 @@ const POOL = Object.freeze({
   shrine: 'a shrine',
   merchant: 'a merchant',
 });
-const pool = (id) => POOL[id] || `a ${word(id).toLowerCase()} node`;
+// EVERY TABLE IS READ BY OWN PROPERTY. A bare `TABLE[key]` walks the
+// prototype chain, so a balance path or a node variable named `toString` or
+// `constructor` would answer with a function — truthy, and printed into the
+// row. Nothing in the shipped bundle is named that; a row read off authored
+// content should not have to be lucky.
+const look = (table, key) => (Object.hasOwn(table, key) ? table[key] : undefined);
+const pool = (id) => look(POOL, id) || an(`${word(id).toLowerCase()} node`);
 
 // The low/high end of an authored [min, max] band.
 const END = Object.freeze(['low end', 'high end']);
 const band = (index) => END[Number(index)] || `entry ${Number(index) + 1}`;
 
-// "a uncommon card" is the sort of seam a reader trips on, and the rarity is a
-// pattern's capture rather than a word anyone typed, so the article derives.
-const an = (noun) => `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
-
 // An enemy stat reads as the game writes it, not as the key spells it.
 const STAT = Object.freeze({ hp: 'HP', damage: 'damage', block: 'Block', poise: 'Poise' });
-const stat = (id) => STAT[id] || word(id).toLowerCase();
+const stat = (id) => look(STAT, id) || word(id).toLowerCase();
 
 // What a relic's or a talent's variable NAMES. One phrase per variable, shared
 // by both families because the vocabulary is one vocabulary — the nodes that
@@ -76,9 +82,9 @@ const EFFECT_PHRASES = Object.freeze({
   weak: 'how many stacks of Weak it applies to the foe',
   vulnerable: 'how many stacks of Vulnerable it applies to the foe',
   loseHp: 'how much HP it costs you',
-  n: 'how many cards you play between triggers',
+  n: 'how many cards you play per trigger: it fires on every Nth card of the fight, not after N quiet ones',
 });
-const effectPhrase = (variable) => EFFECT_PHRASES[variable]
+const effectPhrase = (variable) => look(EFFECT_PHRASES, variable)
   || `the ${word(variable).toLowerCase()} it uses`;
 
 // Lookups derived from the bundle, once per bundle. advancedConfigRows runs
@@ -93,7 +99,14 @@ function indexes(bundle) {
     relics: new Map((bundle.relics || []).map((relic) => [relic.id, relic])),
     nodes: new Map((bundle.nodes || []).map((node) => [node.id, node])),
     classes: new Map((bundle.classes || []).map((classDef) => [classDef.id, classDef])),
-    talents: new Map((bundle.classTree || []).map((row) => [row.nodeId, row])),
+    talents: (bundle.classTree || []).reduce((map, row) => {
+      // A LIST PER NODE, not a row per node. `new Map(rows.map(...))` let the
+      // last tree that claimed a node win in silence, so a talent shared by
+      // two classes would have named one of them and read as settled.
+      if (!map.has(row.nodeId)) map.set(row.nodeId, []);
+      map.get(row.nodeId).push(row);
+      return map;
+    }, new Map()),
   };
   INDEXES.set(bundle, built);
   return built;
@@ -103,18 +116,25 @@ const relicName = (bundle, id) => (indexes(bundle).relics.get(id) || {}).name ||
 const nodeLabel = (bundle, id) => (indexes(bundle).nodes.get(id) || {}).label || word(id);
 const className = (bundle, id) => (indexes(bundle).classes.get(id) || {}).name || word(id);
 
-/** A talent's own sentence: which class's tree it sits in, and at which tier. */
+/** A talent's own sentence: whose tree it sits in, and at which tier. */
 function talentPlace(bundle, nodeId) {
-  const row = indexes(bundle).talents.get(nodeId);
-  if (!row) return 'a class talent';
-  return `a tier-${row.tier} ${className(bundle, row.classId)} talent`;
+  const rows = indexes(bundle).talents.get(nodeId) || [];
+  if (!rows.length) return 'a class talent';
+  const names = [...new Set(rows.map((row) => className(bundle, row.classId)))];
+  const tiers = [...new Set(rows.map((row) => row.tier))];
+  const whose = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
+  return tiers.length === 1 ? `a tier-${tiers[0]} ${whose} talent` : `a ${whose} talent`;
 }
 
-// A node's blurb is the authored one-liner beside it in the tree. The relic
-// nodes share one generated blurb ("What <name> does when the fight gives it
-// its moment"), which says nothing a reader does not already have, so it is
-// dropped rather than repeated on sixty rows — the same sentence on many rows
-// is the defect this file exists to fix.
+// A node's blurb is the authored one-liner beside it in the tree, and only the
+// talent sentences read one — every talent node in the shipped tree has an
+// authored blurb, and the relic sentences ask for none. The guard below is for
+// the OTHER blurb: 52 nodes (all of them relics, today) carry one generated
+// line, "What <name> does when the fight gives it its moment", which says
+// nothing a reader does not already have. It does not fire on the shipped
+// bundle and is not claimed to; it is here so that the day a talent node
+// acquires that generated line, it does not become the one sentence on many
+// rows that this file exists to remove.
 function blurbOf(bundle, nodeId) {
   const blurb = (indexes(bundle).nodes.get(nodeId) || {}).blurb;
   if (typeof blurb !== 'string' || !blurb.trim()) return '';
@@ -122,31 +142,56 @@ function blurbOf(bundle, nodeId) {
   return blurb.trim().replace(/\.?$/, '.');
 }
 
+// A ROW NOTHING READS SAYS SO, and these two clauses are why it can be said
+// once. The failure they answer is worse than the boilerplate this file
+// replaces: a sentence that describes a dial as live invites a player to move
+// it and watch nothing happen, where "Authored balance value" at least
+// promised nothing. `balance.levels` is authored for #238 and consumed only by
+// its own validator (model/levels.js is imported by validate.js alone, and the
+// level planner is called from nowhere); `energy`, `draw` and
+// `graceRefillAtRunStart` have no reader left at all.
+const INERT_LEVELS = 'Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.';
+
+// A ROW LIKE THAT DOES NOT "APPLY TO A NEW RUN" EITHER, and every generated
+// note used to end saying it did — a clause appended unconditionally, which
+// on these sixteen rows contradicted the sentence in front of it. A rule marks
+// its sentence inert instead of the composer sniffing the text for a phrase,
+// which is the trick this file has just finished removing from settings.js.
+const inert = (text) => ({ text, inert: true });
+export const NEW_RUN_CLAUSE = 'Applies to a new run.';
+
 // ---- the families ---------------------------------------------------------
 // Ordered: the first rule whose pattern matches owns the path. `parent` is the
 // object or array the leaf sits in, so a row inside an authored list can name
 // itself by its own id, tag or label instead of by its index.
+//
+// AN AUTHORED ID IS A SEGMENT, NOT A WORD. Every capture that stands for a
+// content id reads `[^.]+`, not `\w+`: `schemas.js` types a relic id as a bare
+// string, so `sun-eater` is legal, and a `\w+` capture would have dropped it
+// through to the fallback — in a file whose whole promise is that a relic
+// added to `balance.powers` describes itself with no edit here. The dot is the
+// only character a path segment cannot hold, so it is the only one excluded.
 const PATTERNS = Object.freeze([
   [/^arcaneExposure\.schoolBuildupMultipliers\.(\w+)$/, ([, school]) =>
-    `Multiplies the Arcane Exposure a ${school} card builds on its target. 0 means ${school} damage never builds Exposure at all.`],
+    `Multiplies the Arcane Exposure ${an(`${school} card`)} builds on its target. 0 means ${school} damage never builds Exposure at all.`],
 
-  [/^powers\.(\w+)\.(\w+)$/, ([, relic, variable], { bundle }) =>
+  [/^powers\.([^.]+)\.([^.]+)$/, ([, relic, variable], { bundle }) =>
     `${relicName(bundle, relic)} — ${effectPhrase(variable)}.`],
 
-  [/^classTree\.(\w+)\.(\w+)$/, ([, node, variable], { bundle }) =>
+  [/^classTree\.([^.]+)\.([^.]+)$/, ([, node, variable], { bundle }) =>
     `${nodeLabel(bundle, node)}, ${talentPlace(bundle, node)} — ${effectPhrase(variable)}.`
     + (blurbOf(bundle, node) ? ` ${blurbOf(bundle, node)}` : '')],
 
   [/^costs\.(\w+)$/, ([, resource]) =>
-    `The ${resource} a card pays when it carries a ${resource} cost with no amount of its own.`],
+    `The ${resource} a card pays when it carries ${an(`${resource} cost`)} with no amount of its own.`],
 
   [/^rewards\.cinders\.(\w+)\.(\d+)$/, ([, kind, index]) =>
-    `The ${band(index)} of the cinders ${pool(kind)} pays.`],
+    `The ${band(index)} of the cinders that ${pool(kind)} pays.`],
 
   [/^rewards\.rarityWeights\.(\w+)\.(\w+)$/, ([, kind, rarity]) =>
     `How often ${pool(kind)} offers ${an(rarity)} card, weighed against the other rarities in its row. Classes with a table of their own use that instead.`],
 
-  [/^rewards\.rarityWeightsByClass\.(\w+)\.(\w+)\.(\w+)$/, ([, classId, kind, rarity], { bundle }) =>
+  [/^rewards\.rarityWeightsByClass\.([^.]+)\.(\w+)\.(\w+)$/, ([, classId, kind, rarity], { bundle }) =>
     `The ${className(bundle, classId)}'s own reward odds: how often ${pool(kind)} offers ${an(rarity)} card, weighed against the other rarities in its row.`],
 
   [/^shop\.(card|relic|armament|weaponArt|flask)Cost(?:\.(\w+))?\.(\d+)$/, ([, kind, rarity, index]) => {
@@ -158,7 +203,7 @@ const PATTERNS = Object.freeze([
     `How many ${word(kind).toLowerCase()}s the merchant puts on the shelf each visit.`],
 
   [/^smithing\.rewardByPool\.(\w+)$/, ([, kind]) =>
-    `Smithing Stones ${pool(kind)} pays out.`],
+    `How many Smithing Stones ${pool(kind)} pays out.`],
 
   [/^smithing\.services\.offeredAt\.(\w+)\.chance$/, ([, place]) =>
     `Percent chance ${pool(place)} offers the smith's services on a visit. 100 is always and rolls nothing; 0 is never.`],
@@ -169,13 +214,13 @@ const PATTERNS = Object.freeze([
       : 'Smithing Stones to fit a run-owned card into an open or emptied mount.'],
 
   [/^levels\.enemyScaling\.(\w+)\.perLevel$/, ([, statId]) =>
-    `How much ${stat(statId)} an enemy gains per level of enemy level.`],
+    inert(`How much ${stat(statId)} an enemy would gain per level of enemy level. ${INERT_LEVELS}`)],
 
   [/^levels\.enemyScaling\.(\w+)\.(min|max)$/, ([, statId, bound]) =>
-    `The ${bound === 'min' ? 'lowest' : 'highest'} ${stat(statId)} that scaling may produce, whatever the level.`],
+    inert(`The ${bound === 'min' ? 'lowest' : 'highest'} ${stat(statId)} that scaling may produce, whatever the level. ${INERT_LEVELS}`)],
 
   [/^xp\.kill\.(\w+)$/, ([, kind]) =>
-    `Character XP for killing an enemy from ${pool(kind)}'s pool.`],
+    `Character XP for killing an enemy out of the roster ${pool(kind)} draws from.`],
 
   [/^skill\.rarityUnlock\.(\w+)$/, ([, rarity]) =>
     `The skill-track level at which ${rarity} cards start appearing in that track's drafts.`],
@@ -190,9 +235,9 @@ const PATTERNS = Object.freeze([
     `Enemy HP multiplier for a tier-${tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1.`],
 
   [/^equipment\.roleCopies\.(\w+)$/, ([, role]) =>
-    `Copies of the ${role} card a starting deck holds. Read only when the composed starting deck is off; it must sum to the starting deck size by hand.`],
+    `Copies of the ${role} card a starting deck holds. It decides the deck only while the composed starting deck below is off, and must then sum to the starting deck size by hand; the Armoury reads it either way.`],
 
-  [/^equipment\.startingDeck\.classes\.(\w+)\.strikeBias$/, ([, classId], { bundle }) =>
+  [/^equipment\.startingDeck\.classes\.([^.]+)\.strikeBias$/, ([, classId], { bundle }) =>
     `The ${className(bundle, classId)}'s filler split: the share of its base cards that are attacks, the rest guards. 0.5 is even.`],
 
   [/^equipment\.rarityBonuses\.(\w+)\.(\w+)$/, ([, rarity, role]) =>
@@ -219,11 +264,11 @@ const PATTERNS = Object.freeze([
   [/^flaskGrowth\.(\d+)\.amount$/, (match, { parent, bundle }) => {
     const kind = parent && parent.kind === 'mana' ? 'Azure' : 'Crimson';
     const carrier = parent && parent.source === 'relic' ? relicName(bundle, parent.id) : word((parent && parent.id) || 'the carrier');
-    return `Extra ${kind} flask charges carrying ${carrier} adds to the run's capacity.`;
+    return `How many extra ${kind} flask charges carrying ${carrier} adds to the run's capacity.`;
   }],
 
   [/^poise\.onFill\.(\d+)\.stacks$/, (match, { parent }) =>
-    `Stacks of ${word((parent && parent.status) || 'the status')} applied to ${(parent && parent.target) === 'self' ? 'whoever the meter belongs to' : (parent && parent.target) || 'the target'} when a Poise meter fills.`],
+    `Stacks of ${word((parent && parent.status) || 'the status')} that ${(parent && parent.target) === 'self' ? 'an enemy takes itself' : `an enemy's fill applies to ${(parent && parent.target) || 'its target'}`} when its Poise meter fills. The player's own fill runs no row from this list — it reads Stagger · Player instead.`],
 
   [/^stagger\.player\.statuses\.(\w+)$/, ([, status]) =>
     `Stacks of ${word(status)} the player takes when their own Poise meter fills.`],
@@ -241,9 +286,9 @@ const EXPLICIT = Object.freeze({
   'exposure.resonanceSpreadPct': 'Percent of a broken foe\'s Exposure threshold that Resonance pours into every OTHER foe.',
   'exposure.buildupPerManaSpell': 'The least Arcane Exposure a card that costs Mana must build per hit, so a Mana spell always works toward a break faster than an action-only one.',
 
-  energy: 'The authored actions a turn starts with. A new run derives Actions from Dexterity instead (Progression → Stat conversions); this is the floor content with no derived-stat ruleset falls back to.',
-  draw: 'The authored cards drawn each turn. A new run derives Draw from Intelligence instead; this is the fallback for content with no derived-stat ruleset.',
-  handMax: 'The most cards you may hold. Draws past it are lost. Hand & Draw Rules override this when a run carries them.',
+  energy: inert('The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Progression › Stat conversions is the row that moves them. It survives because the engine still spells actions "energy" — that rename is its own piece of work.'),
+  draw: inert('The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Progression › Stat conversions is the row that moves it.'),
+  handMax: 'The most cards you may hold; a card drawn past it goes straight to the discard rather than being lost. A solo run carrying Hand & Draw Rules takes its capacity from those instead, and a co-op fight reads this row whatever they say.',
   flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool.',
   flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
   startingCinders: 'Cinders a new run opens with.',
@@ -286,16 +331,16 @@ const EXPLICIT = Object.freeze({
 
   'shop.removeBase': 'What the first card removal of a run costs at the merchant.',
   'shop.removeStep': 'How much each further removal adds to that price.',
-  'shop.sellFraction': 'What the merchant pays for one of your relics or flasks, as a fraction of the cheapest he would sell the same kind for — so selling always loses on the trade, and the price never rolls. 0 takes the Sell bar\'s prices to nothing.',
+  'shop.sellFraction': 'What the merchant pays for a relic, flask or armament of yours, as a fraction of the cheapest he would sell that kind for, so the same piece fetches the same cinders every visit. Below 1 selling always loses on the trade, which is the point of it; at 1 or above a relic or flask sells for at least what he charges, while armaments stop selling altogether. 0 takes every buy-back to nothing.',
 
   'rest.hpSmallPct': 'Percent of max HP a rough camp\'s small rest hands back.',
   'rest.hpPartialPct': 'Percent of max HP a shrine\'s rest hands back.',
   'rest.mana.flat': 'Mana a flat-mode rest restores, as a fixed number of points.',
-  'rest.mana.floorPct': 'The percent of max Mana a floor-mode rest tops you up TO. Already above it, you go to full instead.',
+  'rest.mana.floorPct': 'The percent of max Mana a floor-mode rest tops you up TO. Already at or above it, you go to full instead.',
 
   'atlas.townsPerActMax': 'The most towns — start and city nodes — a generated act may hold. A route over it is rejected and rolled again, so attrition between towns is the run\'s tension.',
 
-  'levels.playerStartingLevel': 'The character level a run begins at.',
+  'levels.playerStartingLevel': inert('The character level a run would begin at. Authored and not yet read: the level planner that would consult it is called from nowhere, and a climb takes its level from the levels it has earned instead.'),
   'level.xp.base': 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
   'level.xp.growth': 'The character level curve: how much dearer each step is than the one before it.',
   'level.xp.roundTo': 'The character level curve: every step cost is rounded to a multiple of this.',
@@ -307,12 +352,12 @@ const EXPLICIT = Object.freeze({
   'levelUp.tierSizeMin': 'The lowest points-per-tier those controls accept. 1 is arithmetic, not taste: the tier is floor(points ÷ tier size), so 0 divides by zero.',
   'levelUp.tierSizeMax': 'The highest points-per-tier those controls accept.',
 
-  graceRefillAtRunStart: 'Refill flask charges the moment a run starts, as though a grace had already been touched.',
+  graceRefillAtRunStart: inert('A retired flag: it once refilled flask charges the moment a run started, as though a grace had already been touched. Nothing reads it now.'),
 
   'gauntlet.healPct': 'Headless gauntlet only: percent of max HP healed between its fights.',
   'gauntlet.rewardChoices': 'Headless gauntlet only: how many cards its reward lays out.',
 
-  'coop.headcountHpFactor': 'Co-op: enemy HP is multiplied by 1 + this × (party size − 1) — ×1.6 at two players, ×2.2 at three, ×2.8 at four.',
+  'coop.headcountHpFactor': 'Co-op: enemy HP is multiplied by 1 + this × (party size − 1), so each extra body at the table adds one more share of the same fight. 0 leaves a four-hander reading exactly like a solo climb.',
   'coop.mendHealPct': 'Co-op: percent of an ally\'s max HP that Mend at a shrine restores.',
   'coop.reviveHp': 'Co-op: the HP a downed-but-not-dead member comes back at on the next floor.',
 
@@ -348,15 +393,26 @@ const EXPLICIT = Object.freeze({
 });
 
 /**
- * balanceNote(path, { bundle, parent }) → the row's description, or null.
+ * balanceNote(path, { bundle, parent }) → the row's whole description, or null
+ * for a path no rule here covers.
  *
  * `path` is the dotted balance path without the `gameConfig.balance.` prefix.
  * `parent` is the object or array the leaf sits in, which is how a row inside
  * an authored list names itself by its own id, tag or label.
+ *
+ * A rule returns its sentence, or `inert(sentence)` for a dial the game does
+ * not read — which is the whole of the difference: an inert row does not go on
+ * to promise that it applies to a new run.
  */
 export function balanceNote(path, { bundle = null, parent = null } = {}) {
   if (typeof path !== 'string' || !path) return null;
-  if (EXPLICIT[path]) return EXPLICIT[path];
+  const written = Object.hasOwn(EXPLICIT, path) ? EXPLICIT[path] : describe(path, { bundle, parent });
+  if (written == null) return null;
+  if (typeof written === 'string') return `${written} ${NEW_RUN_CLAUSE}`;
+  return written.text;
+}
+
+function describe(path, { bundle, parent }) {
   for (const [pattern, write] of PATTERNS) {
     const match = pattern.exec(path);
     if (match) return write(match, { bundle, parent, path });

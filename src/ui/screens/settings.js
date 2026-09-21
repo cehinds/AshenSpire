@@ -1639,6 +1639,39 @@ export function generalGroups(category) {
   return groups;
 }
 
+/**
+ * compactAdvancedRow(row, groupId, subgroupId) → the row as the Advanced panel
+ * draws it, where the panel's own tab already carries part of the row's name.
+ *
+ * EXPORTED SO IT CAN BE ASSERTED. It was an anonymous block inside the render
+ * expression, which meant the one line that decides whether a generated
+ * balance row keeps its description was reachable only by rendering the whole
+ * panel — so a change putting the old 'Applies to a new run.' boilerplate back
+ * could pass every test in the repo (Copilot, #1243). It is a pure function of
+ * the row and its two tab ids now, and tests/advanced-config.test.mjs holds it.
+ */
+export function compactAdvancedRow(row, groupId, subgroupId) {
+  const compact = { ...row };
+  if (groupId === 'Progression' && CLASS_TOPICS.includes(subgroupId)) {
+    compact.label = row.label.replace(/^.*? — /, '');
+    // The class's own topic already says which class this is, so the note goes
+    // — EXCEPT the sentence naming the kit floor, which is the only place the
+    // row's minimum explains itself. Dropping it left the floor a number from
+    // nowhere.
+    compact.note = row.floorNote || '';
+  } else if (row.generatedBalance) {
+    // The path IS the label here: a generated row's leaf name alone ("0",
+    // "common", "min") names nothing on its own.
+    compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
+    // THE NOTE STAYS, and this is the whole of the branch. It used to be
+    // replaced with 'Applies to a new run.' — the same five words under all
+    // 325 of these rows — because the note underneath was the path again and
+    // worth no more. model/balanceNotes.js gives each row its own sentence
+    // now, and that sentence already ends with the new-run clause.
+  }
+  return compact;
+}
+
 function categoryHtml(cat, settings, saves) {
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
@@ -1685,27 +1718,9 @@ function categoryHtml(cat, settings, saves) {
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
-            const compact = { ...row };
-            if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
-              compact.label = row.label.replace(/^.*? — /, '');
-              // The class's own topic already says which class this is, so the
-              // note goes — EXCEPT the sentence naming the kit floor, which is
-              // the only place the row's minimum explains itself. Dropping it
-              // left the floor a number from nowhere.
-              compact.note = row.floorNote || '';
-            } else if (row.generatedBalance) {
-              // The path IS the label here: a generated row's leaf name alone
-              // ("0", "common", "min") names nothing on its own.
-              compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
-              // THE NOTE STAYS. It used to be replaced with 'Applies to a new
-              // run.' — the same five words under all 325 of these rows —
-              // because the note underneath was the path again and worth no
-              // more. model/balanceNotes.js gives each row its own sentence
-              // now, and that sentence already ends with the new-run clause.
-            }
-            return settingsRowHtml(settings, compact);
-          }).join('')) + '</div>').join('') + '</section>';
+          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
+            : sub.rows.map(row => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join(''))
+          + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
       + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`

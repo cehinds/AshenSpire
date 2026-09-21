@@ -234,8 +234,14 @@ test('every generated balance row carries its own description', () => {
   assert.deepEqual(shared, [], 'these balance rows describe themselves with the same words');
 
   for (const row of generated) {
-    assert.ok(row.note.endsWith('Applies to a new run.'), `${row.searchPath} must still say when it takes effect`);
-    assert.ok(row.note.length > 'Applies to a new run.'.length + 20, `${row.searchPath} says nothing before the new-run clause`);
+    // A LIVE ROW SAYS WHEN IT TAKES EFFECT; an inert one must not, because
+    // "Applies to a new run" under "nothing reads it" is the sentence
+    // contradicting itself in its own last clause.
+    const live = row.note.endsWith('Applies to a new run.');
+    const declaredInert = /not yet read|nothing reads it|retired flag/.test(row.note);
+    assert.ok(live !== declaredInert,
+      `${row.searchPath} must either say when it takes effect or say nothing reads it, and not both: ${row.note}`);
+    assert.ok(row.note.length > 'Applies to a new run.'.length + 20, `${row.searchPath} says too little`);
   }
 });
 
@@ -246,13 +252,81 @@ test('every generated balance row carries its own description', () => {
 test('generated balance descriptions derive their names from the bundle', () => {
   const rows = new Map(advancedConfigRows(contentBundle)
     .filter((row) => row.generatedBalance).map((row) => [row.searchPath, row.note]));
+  const note = (path) => {
+    const found = rows.get(path);
+    assert.ok(found, `no generated row for ${path}`);
+    return found;
+  };
+
   const relic = (contentBundle.relics || []).find((entry) => entry.id === 'ivoryComb');
-  assert.ok(rows.get('powers.ivoryComb.n').startsWith(`${relic.name} —`));
+  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name} —`),
+    `the relic's own name should open its row: ${note('powers.ivoryComb.n')}`);
+
+  // THE TIER AND THE CLASS COME FROM THE TREE, not from this file. Hard-coding
+  // "tier-1 Reaver" would fail a content retune that moved the talent — which
+  // is the opposite of what a test about derivation should do.
   const talent = (contentBundle.nodes || []).find((node) => node.id === 'ironFooting');
-  assert.ok(rows.get('classTree.ironFooting.block').startsWith(`${talent.label}, a tier-1 `));
-  assert.match(rows.get('classTree.ironFooting.block'), /Reaver talent/);
-  assert.match(rows.get('equipment.views.0.figure'), /the grid Armoury view/);
-  assert.match(rows.get('equipment.swapCostByCategory.0.cost'), /tagged heavy/);
-  assert.match(rows.get('flaskGrowth.0.amount'), /Golden Sprout/);
-  assert.match(rows.get('poise.onFill.0.stacks'), /Staggered/);
+  const row = (contentBundle.classTree || []).find((entry) => entry.nodeId === 'ironFooting');
+  const owner = (contentBundle.classes || []).find((entry) => entry.id === row.classId);
+  assert.ok(note('classTree.ironFooting.block').startsWith(`${talent.label}, a tier-${row.tier} ${owner.name} talent`),
+    `the tree's own tier and class should open its row: ${note('classTree.ironFooting.block')}`);
+
+  // AN AUTHORED LIST IS FOUND BY ITS OWN KEY, never by an index. Both of these
+  // lists invite reordering — swapCostByCategory is documented as ordered,
+  // first match wins — and a reorder must not fail a test about naming.
+  const viewIndex = contentBundle.balance.equipment.views.findIndex((view) => view.id === 'grid');
+  assert.match(note(`equipment.views.${viewIndex}.figure`), /the grid Armoury view/);
+  const heavyIndex = contentBundle.balance.equipment.swapCostByCategory.findIndex((entry) => entry.tag === 'heavy');
+  assert.match(note(`equipment.swapCostByCategory.${heavyIndex}.cost`), /tagged heavy/);
+  const growthIndex = contentBundle.balance.flaskGrowth.findIndex((entry) => entry.id === 'goldenSprout');
+  const sprout = (contentBundle.relics || []).find((entry) => entry.id === 'goldenSprout');
+  assert.match(note(`flaskGrowth.${growthIndex}.amount`), new RegExp(sprout.name));
+  const fillIndex = contentBundle.balance.poise.onFill.findIndex((entry) => entry.status === 'staggered');
+  assert.match(note(`poise.onFill.${fillIndex}.stacks`), /Staggered/);
+});
+
+// A SENTENCE MAY NOT PROMISE A DIAL IS LIVE WHEN IT IS NOT. The rows under
+// `balance.levels` are authored for #238 and read by nothing but their own
+// validator; `energy`, `draw` and `graceRefillAtRunStart` have no reader at
+// all. A note that described them as working machinery would be worse than the
+// boilerplate it replaced, because a player would move them and watch nothing
+// happen. This is the guard on that, and it is a real one: `model/levels.js`
+// is imported by `model/validate.js` alone, for its problem reporters.
+test('a balance row nothing reads says so in its description', () => {
+  const rows = new Map(advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance).map((row) => [row.searchPath, row.note]));
+  const inert = [...rows.keys()].filter((path) => path.startsWith('levels.'))
+    .concat(['energy', 'draw', 'graceRefillAtRunStart']);
+  assert.ok(inert.length > 13, `expected the inert rows to be generated, got ${inert.length}`);
+  for (const path of inert) {
+    assert.match(rows.get(path), /not yet read|nothing reads it|retired flag/,
+      `${path} is not read by the game and its description must say so`);
+    assert.ok(!rows.get(path).endsWith('Applies to a new run.'),
+      `${path} is read by nothing, so it applies to no run either`);
+  }
+});
+
+// THE PANEL MUST KEEP THE SENTENCE, and that is a separate claim from the row
+// carrying one. The Advanced panel rewrites a generated row before drawing it
+// (the label becomes the path, because a leaf named "0" or "min" names
+// nothing), and that rewrite used to throw the note away and write 'Applies to
+// a new run.' in its place. Every other test here would pass if it started
+// doing that again, so this one holds the branch itself (Copilot, #1243).
+test('the Advanced panel keeps a generated row\'s own description', async () => {
+  const { compactAdvancedRow } = await import('../src/ui/screens/settings.js');
+  const rows = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
+  for (const row of rows.slice(0, 40)) {
+    const drawn = compactAdvancedRow(row, 'Rewards', 'Combat rewards');
+    assert.equal(drawn.note, row.note, `${row.searchPath} lost its description on the way to the panel`);
+    assert.match(drawn.label, / · |^[a-z]/i, `${row.searchPath} should be labelled by its path`);
+    assert.ok(!drawn.label.includes('gameConfig.balance.'), 'the key prefix is not part of the label');
+  }
+
+  // The class-table branch beside it still compacts, so this test cannot pass
+  // by the rewrite having been removed altogether.
+  const classRow = advancedConfigRows(contentBundle)
+    .find((row) => row.classTopic && row.floorNote);
+  const compacted = compactAdvancedRow(classRow, 'Progression', classRow.classTopic);
+  assert.equal(compacted.note, classRow.floorNote);
+  assert.ok(!compacted.label.includes(' — '), 'the class topic already names the class');
 });

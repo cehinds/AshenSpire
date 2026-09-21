@@ -1,5 +1,5 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
-import { balanceNote } from './balanceNotes.js';
+import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
@@ -146,7 +146,10 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // panel used to recognise one by the boilerplate it carried, which meant
       // giving a row a real description would have quietly changed how it drew.
       generatedBalance: true,
-      note: `${described || `Authored balance value: ${joined}.`} Applies to a new run.`,
+      // The whole note, closing clause included: a row the game does not read
+      // must not end by promising it applies to a new run, so balanceNotes.js
+      // decides that rather than this line appending it to everything.
+      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
     });
