@@ -23,6 +23,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1245"
   },
   {
+    "id": "pr-1247",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and physical or magical impact uses Poise or Ward. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing base and upgraded numbers exactly, so an untouched game keeps its balance; moving a shared multiplier recalculates the whole matching card set deterministically. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.376",
+    "pullRequest": 1247,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
+  },
+  {
     "id": "pr-1241",
     "date": "2026-09-21",
     "group": "2026-09-21",
