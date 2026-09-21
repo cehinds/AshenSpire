@@ -332,6 +332,22 @@ if (process.argv.includes('--selftest')) {
         expectRed: /P6 .*OFF THE SCREEN/,
       },
       {
+        // THE SECOND OPEN, and it needs NO shape of its own: the corpus's
+        // shared 1200x730 is only the shape the tool BOOTS at, and the
+        // second-open claim resizes to its own tight pair regardless. Caught
+        // by Copilot on #1244 before this line existed, so the plant is a
+        // defect that shipped in review rather than one invented for the
+        // corpus. Note what it is NOT: the cap does not simply persist — it is
+        // recomputed on every open. It is that placeAnchored MEASURES the
+        // capped box, so clampBox is told the menu is short and leaves it
+        // where a short menu would fit.
+        name: 'the creation menu measures the cap its LAST open wrote as this open\'s box',
+        file: 'src/ui/screens/customize.js',
+        find: "      headTools.style.maxHeight = '';",
+        replace: '      /* planted: last open\'s cap left on, and measured as this one\'s box */',
+        expectRed: /P6 .*previous open changed this one/,
+      },
+      {
         // The gap loses its home on THIS surface. A second site for the P1
         // assertion. Target the unique selector and force the computed value to
         // zero so the plant is line-ending independent and cannot accidentally
@@ -727,7 +743,53 @@ async function main() {
         else if (cz.p.left <= 4.5) ok('P6', shape, `right-alignment WAIVED — the bound moved it (menu left ${cz.p.left.toFixed(1)} is on the screen margin)`);
         else bad('P6', shape, `align: 'end' did not hold — menu right ${cz.p.right.toFixed(1)} vs button right ${cz.a.right.toFixed(1)} local px, and the menu is not against the bound`);
       }
+      // P6 AGAIN, ON THE SECOND OPEN. The menu writes its own `max-height`
+      // from the room it was bound to, and an inline cap left over from a
+      // previous open is NOT a measurement of this one: placeAnchored zeroes
+      // left/top before measuring for exactly that reason, but it cannot see a
+      // property written from outside it. A stale cap makes it read a SHORT
+      // box, and clampBox — told the menu is short — leaves it lower than it
+      // needed to and caps it there.
+      //
+      // THE HEIGHTS ARE FIXED AND NOT THE SHAPE'S, WHICH IS THE WHOLE POINT.
+      // The defect only exists where the clamp ENGAGES: given room to spare,
+      // `under` puts the menu at anchor.bottom + gap whatever height it thinks
+      // the menu is, and the cap is recomputed generously either way. Written
+      // against the shape's own height this check PASSED ON THE BROKEN BUILD
+      // at 1200x730 — 730 px is not tight. So it runs at TIGHT (the clamp
+      // engages, some of the menu is hidden) after TIGHTER (which leaves the
+      // smaller cap behind), and refuses to report a pass if TIGHT turns out
+      // not to be tight at this width. Measured at 1280 wide before the
+      // `maxHeight = ''` line: top 92.9 instead of 4, 318.4 local px of menu
+      // shown instead of 407.3 — 89 px more of it hidden with the room to
+      // show it sitting empty.
       await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`);
+      if (czOpen) {
+        const TIGHT = 260; const TIGHTER = 160;
+        const box = () => ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+          const p = document.querySelector('.cz-head-tools'); if (!p) return null; const r = p.getBoundingClientRect();
+          return { top: r.top/z, shown: r.height/z, hidden: p.scrollHeight - p.clientHeight }; })()`);
+        const at = async (h) => { await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S); await wait(400); };
+        const openIt = async () => { await ev(`document.querySelector('.cz-menu-button').click(); true`); await wait(250); return box(); };
+        const shut = async () => { await ev(`document.querySelector('.cz-head-tools')?.hidePopover?.(); true`); await wait(120); };
+        await at(TIGHT);
+        const fresh = await openIt(); await shut();
+        await at(TIGHTER); await openIt(); await shut();
+        await at(TIGHT);
+        const again = await openIt(); await shut();
+        await at(vp.h);
+        if (!fresh || !again) {
+          bad('P6', shape, `the menu left the DOM between opens at ${vp.w}x${TIGHT} — the second open was not measured`);
+        } else if (!(fresh.hidden > 0)) {
+          // NOT A PASS. If the menu fits whole at TIGHT then the clamp never
+          // engaged and this ran the motions over a defect it cannot express.
+          bad('P6', shape, `${vp.w}x${TIGHT} is not tight enough at this width — the menu fits whole (0 px hidden), so the clamp never engaged and the second-open claim measured nothing. Lower TIGHT for this width rather than reading this as green`);
+        } else if (Math.abs(again.top - fresh.top) <= 0.5 && Math.abs(again.shown - fresh.shown) <= 0.5) {
+          ok('P6', shape, `at ${vp.w}x${TIGHT} the second open matches the first — top ${again.top.toFixed(1)}, ${again.shown.toFixed(1)} of ${(again.shown + again.hidden).toFixed(1)} local px shown — after an open at ${vp.w}x${TIGHTER}`);
+        } else {
+          bad('P6', shape, `at ${vp.w}x${TIGHT} a previous open changed this one — top ${again.top.toFixed(1)} vs ${fresh.top.toFixed(1)}, ${again.shown.toFixed(1)} vs ${fresh.shown.toFixed(1)} local px shown (${again.hidden - fresh.hidden} more px of menu hidden). The cap it wrote last time is being measured as this time's box`);
+        }
+      }
     }
 
     await cdp.send('Target.closeTarget', { targetId });

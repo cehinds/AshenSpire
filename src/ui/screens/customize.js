@@ -287,6 +287,15 @@ export function mountCustomize(app, {
     menu.addEventListener('click', () => {
       headTools.togglePopover();
       if (!headTools.matches(':popover-open')) return;
+      // THE CAP FROM THE LAST OPEN IS NOT A MEASUREMENT OF THIS ONE.
+      // placeAnchored zeroes left/top before it measures, for exactly this
+      // reason ("MEASURE ITS NATURAL BOX, NOT THE ONE ITS LAST POSITION
+      // SQUEEZED IT INTO") — but it cannot know about a max-height written
+      // from outside it. Left on, a menu opened once in a short window is
+      // still clipped in a tall one, because the box placeAnchored reads is
+      // the one the previous cap squeezed it into. Clear it first, so every
+      // open is computed from the room this open actually has.
+      headTools.style.maxHeight = '';
       const view = viewportLocalBox();
       const at = placeAnchored(headTools, menu, { intent: 'under', align: 'end', view });
       // Taller than the room it has: scroll inside itself rather than pin the
