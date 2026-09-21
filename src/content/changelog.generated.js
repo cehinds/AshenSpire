@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1245",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "The character summary is a real card hand, and every stat can be read",
+    "detail": "The character card's lower numbers used to wrap as loose chips until the last line was cut through, while the armour, weapons and relic beside it had the card interaction the stat card was missing. Primary and derived stats now use the same aligned grid: HP, MP, SP and AP stay compact, six headline values fit on the face, and an ellipsis says when the full card has more. Every card in the summary now behaves alike: select it and the card moves down, leaving its information control on the layer above. The full character card keeps the normal card shape, spells out every acronym — Strength (STR), Health Points (HP), Attack Rating (AR) and the rest — and its inspection scrolls as one page instead of stretching the card or cutting the calculations off.",
+    "build": "0.7.1.371",
+    "pullRequest": 1245,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1245"
+  },
+  {
     "id": "pr-1241",
     "date": "2026-09-21",
     "group": "2026-09-21",
