@@ -3,7 +3,7 @@
     "sequence": {
       "schemaVersion": 1,
       "kind": "AshenSpire prologue art",
-      "revision": "2026-09-20-burning-v2",
+      "revision": "2026-09-20-staging-v3",
       "labels": {
         "continue": "Continue",
         "setForth": "Set forth",
@@ -44,7 +44,11 @@
           "speaker": "Hamlet witness",
           "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
           "effect": "push",
-          "character": false
+          "character": false,
+          "art": "warmth",
+          "enabled": true,
+          "order": 1,
+          "banner": false
         },
         {
           "id": "year",
@@ -53,7 +57,11 @@
           "speaker": "Hamlet witness",
           "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
           "effect": "fade",
-          "character": false
+          "character": false,
+          "art": "year",
+          "enabled": true,
+          "order": 2,
+          "banner": false
         },
         {
           "id": "carry",
@@ -74,7 +82,11 @@
               "y": 79,
               "height": 42
             }
-          }
+          },
+          "art": "carry",
+          "enabled": true,
+          "order": 3,
+          "banner": false
         },
         {
           "id": "night",
@@ -83,7 +95,11 @@
           "speaker": "Hamlet witness",
           "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
           "effect": "fade",
-          "character": false
+          "character": false,
+          "art": "night",
+          "enabled": true,
+          "order": 4,
+          "banner": false
         },
         {
           "id": "step",
@@ -105,7 +121,11 @@
               "y": 81,
               "height": 28
             }
-          }
+          },
+          "art": "step",
+          "enabled": true,
+          "order": 5,
+          "banner": false
         }
       ],
       "presentation": {
@@ -121,7 +141,23 @@
         "customTint": "#c9a227",
         "previewClass": "reaver",
         "previewScene": "warmth",
-        "shadowStrength": 0.7
+        "shadowStrength": 0.7,
+        "layout": "caption",
+        "imageScale": 1,
+        "imageFit": "cover",
+        "imageFocusX": 50,
+        "imageFocusY": 50,
+        "bannerPosition": "top",
+        "textPosition": "bottom-center",
+        "textAlign": "center",
+        "textScale": 1,
+        "textBox": true,
+        "textBoxVisible": true,
+        "textBoxOpacity": 1,
+        "textBoxColor": "#100e0c",
+        "textOutline": false,
+        "textOutlineColor": "#100e0c",
+        "textOutlineWidth": 2
       },
       "palettes": {
         "accent": {

@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json acb9ab41e1763d33
+// source content/config/ui/screens/prologue.json 37ca7db60d00f6d3
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -772,7 +772,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-20-burning-v2",
+          "revision": "2026-09-20-staging-v3",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -813,7 +813,11 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
               "effect": "push",
-              "character": false
+              "character": false,
+              "art": "warmth",
+              "enabled": true,
+              "order": 1,
+              "banner": false
             },
             {
               "id": "year",
@@ -822,7 +826,11 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
               "effect": "fade",
-              "character": false
+              "character": false,
+              "art": "year",
+              "enabled": true,
+              "order": 2,
+              "banner": false
             },
             {
               "id": "carry",
@@ -843,7 +851,11 @@ export const uiConfig = deepFreeze({
                   "y": 79,
                   "height": 42
                 }
-              }
+              },
+              "art": "carry",
+              "enabled": true,
+              "order": 3,
+              "banner": false
             },
             {
               "id": "night",
@@ -852,7 +864,11 @@ export const uiConfig = deepFreeze({
               "speaker": "Hamlet witness",
               "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
               "effect": "fade",
-              "character": false
+              "character": false,
+              "art": "night",
+              "enabled": true,
+              "order": 4,
+              "banner": false
             },
             {
               "id": "step",
@@ -874,7 +890,11 @@ export const uiConfig = deepFreeze({
                   "y": 81,
                   "height": 28
                 }
-              }
+              },
+              "art": "step",
+              "enabled": true,
+              "order": 5,
+              "banner": false
             }
           ],
           "presentation": {
@@ -890,7 +910,23 @@ export const uiConfig = deepFreeze({
             "customTint": "#c9a227",
             "previewClass": "reaver",
             "previewScene": "warmth",
-            "shadowStrength": 0.7
+            "shadowStrength": 0.7,
+            "layout": "caption",
+            "imageScale": 1,
+            "imageFit": "cover",
+            "imageFocusX": 50,
+            "imageFocusY": 50,
+            "bannerPosition": "top",
+            "textPosition": "bottom-center",
+            "textAlign": "center",
+            "textScale": 1,
+            "textBox": true,
+            "textBoxVisible": true,
+            "textBoxOpacity": 1,
+            "textBoxColor": "#100e0c",
+            "textOutline": false,
+            "textOutlineColor": "#100e0c",
+            "textOutlineWidth": 2
           },
           "palettes": {
             "accent": {
