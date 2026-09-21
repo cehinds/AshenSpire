@@ -1,4 +1,4 @@
-import { ratingReceipt, ratingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
+import { ratingReceipt, ratingValue, attackImpact, isMagicalAttack, combatRatingsVersion, COMBAT_RATINGS_VERSION } from '../model/combatRatings.js';
 import { propertyMountsOf } from './properties.js';
 
 export function refreshCombatRatings(ctx) {
@@ -65,7 +65,8 @@ export function cardRatingBonus(ctx, source, carrier, op) {
   if (!ctx.ratingsRules || !source?.ratings || !carrier?.cardId) return 0;
   const magical = isMagicalAttack(ctx, carrier);
   if (op === 'damage') return ratingValue(ctx, source, magical ? 'pr' : 'ar');
-  if (op === 'block' && (carrier.type === 'skill' || magical)) return ratingValue(ctx, source, magical ? 'pr' : 'dr');
+  if (op === 'block' && magical) return ratingValue(ctx, source, 'pr');
+  if (op === 'block' && combatRatingsVersion(ctx) < COMBAT_RATINGS_VERSION && carrier.type === 'skill') return ratingValue(ctx, source, 'dr');
   if (op === 'heal' && magical) return ratingValue(ctx, source, 'pr');
   return 0;
 }

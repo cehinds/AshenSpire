@@ -694,6 +694,27 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 (The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
+For a run carrying combat-ratings rules version 2, the rating stage is part of
+that same calculation, before the final floor. A physical card adds Attack
+Rating; a magical card effect adds Potency Rating. After the generic
+attacker/defender modifiers, each incoming hit resolves its defensive layers in
+this contractual order:
+
+```
+physical: max(0, dmg - Defence Rating) × Poise multiplier
+magical:  max(0, dmg - Defence Rating) × Poise multiplier × Ward multiplier
+```
+
+Defence Rating is the only rating layer that can make the intermediate hit
+zero. Each percentage multiplier is `1 - min(cap, rating/(rating+K))`; the cap
+is validated below 1 and clamped below 1 at calculation time. Each percentage
+stage leaves at least 1 when it receives at least 1, so neither percentage
+layer can erase a positive integer hit. Other authored tag/school modifiers
+then compose as declared and damage is floored once.
+Block absorbs the resulting integer. Ratings-rules version 1 retains its saved
+behavior: no flat Defence layer, physical uses Poise alone, magical uses Ward
+alone, and Defence Rating augments physical defensive-skill Block.
+
 **Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
@@ -2004,9 +2025,17 @@ profile playback preference, never part of gameplay RNG. Skip and Set forth
 complete presentation exactly once without selecting/resolving a node. The
 five-second default transition and per-scene holds are independent; final
 arrival waits for the player. Settings and hidden pages suspend playback.
-## Configurable stat pools, ratings, Poise and Ward
+## Configurable stat pools and layered combat ratings
 
-New runs snapshot the rating rules. Existing configuration snapshots without ratingsVersion 1 keep legacy combat arithmetic. New Settings values apply at new-run creation, not retroactively to a saved character. New combat snapshots persist ratings, both impact meters, break growth and fractional status-resistance remainders.
+New runs snapshot the rating rules. New snapshots carry `ratingsVersion:2`.
+Configuration snapshots without a ratings version keep pre-ratings arithmetic;
+version 1 retains its original Poise-or-Ward defense and Defence-to-Block
+behavior. Combat snapshots embed the resolved rules version; an embedded rules
+object without `version` is version 1. This ratings-rules bump does not require
+a combat-snapshot envelope bump because the field is optional and the version
+1 interpretation is preserved. New Settings values apply at new-run creation,
+not retroactively to a saved character. New combat snapshots persist ratings,
+both impact meters, break growth and fractional status-resistance remainders.
 
 Advanced → Progression → Assign points exposes, for the creation mode a player can pick: the starting value every attribute opens at, the points available to assign on top of it, the total a character carries, the lowest a stat may be set to, the highest it may be raised to at creation, and whether points may be taken back off a stat. Setting the starting value decides the total (baseline × attributes + points available); leaving it alone lets the total drive and derives the baseline from it. Advanced → Progression → Equipment requirements exposes one row per authored item/attribute minimum plus one multiplier for the whole table; those minima are the floor under the total, because a class must still be able to hold the kit it starts in. Whole-number allocations, floors, ceilings and class presets scale to the chosen total, and the scaling stops there: no creation mode carries a conversion scale and no formula is normalized back to an authored unit scale. Every formula reads the attribute the character sheet shows, so a smaller pool buys smaller ratings, pools and hand sizes, and moving them is a retune of the coefficients rather than a factor behind them. HP and each resource expose one base, one source attribute, one attribute multiplier, and where applicable one level multiplier. Stat-driven hand sizes read the same unscaled attribute.
 
@@ -2020,9 +2049,27 @@ example using the current character when available. A derived trait is shown as
 `base + floor(attribute multiplier × stat) + floor(level multiplier × levels after 1)`.
 Every rating is `base + floor(global multiplier × rating multiplier × Σ floor(weight × attribute))`: each attribute's contribution is floored on its own, and the product of the two multipliers and that sum is floored again so a fractional multiplier still yields a whole rating, so a weight is the rate that attribute converts at and a 0.25 weight yields nothing until the attribute reaches 4. Each shipped rating has a coefficient budget of 2. Default formulas: Attack Rating=floor(1×STR)+floor(0.5×DEX)+floor(0.25×WIS)+floor(0.25×INT); Defence Rating=floor(1×DEX)+floor(0.5×CON)+floor(0.25×STR)+floor(0.25×WIS); Potency Rating=floor(1×INT)+floor(0.5×WIS)+floor(0.25×DEX)+floor(0.25×CON); Poise=1+floor(1×CON)+floor(0.5×STR)+floor(0.25×DEX)+floor(0.25×WIS); Ward=1+floor(1×WIS)+floor(0.5×INT)+floor(0.25×CON)+floor(0.25×DEX). Poise and Ward open at a base of 1 because a vessel of nothing is not a vessel. Every formula exposes a base, attribute weights and a multiplier; a single global multiplier scales all five. Both multipliers default to 1. Equipped weapons and armour, relics, mounted properties and active status bonuses contribute additively. Physical weapon Attack Rating contributes Attack Rating; magical weapon Attack Rating contributes Potency Rating; item Defence Rating contributes Defence Rating; body-armour Poise contributes Poise. Additional per-item bonuses are configurable. Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
 
-Card damage is base plus Attack Rating for physical attacks or Potency Rating for magical attacks. Physical defensive skill Block receives Defence Rating; magical Block and healing receive Potency Rating. Magical power hooks retain their originating card so their damage, Block and healing receive Potency Rating. Resource generation, buff duration, card draw and action costs do not receive Potency Rating. Profile-level attribute scaling is disabled for these new runs to avoid adding the same attribute bonus twice. Existing authored card-specific modifiers remain applicable.
+Card damage is base plus Attack Rating for physical attacks or Potency Rating
+for magical attacks. Defence Rating is not a Block bonus under version 2: it is
+flat protection against every incoming hit. Magical Block and healing receive
+Potency Rating. Magical power hooks retain their originating card so their
+damage, Block and healing receive Potency Rating. Resource generation, buff
+duration, card draw and action costs do not receive Potency Rating.
+Profile-level attribute scaling is disabled for these new runs to avoid adding
+the same attribute bonus twice. Existing authored card-specific modifiers
+remain applicable.
 
-After additive bonuses, percentage modifiers apply. Physical damage is reduced by Poise/(Poise+K); magical damage by Ward/(Ward+K). K defaults to 100, with a configurable 80% maximum reduction. Resistance uses the rating, not accumulated impact. Enemy Poise and Ward are independently configurable and default to the enemy’s authored Poise threshold. K is an absolute rating threshold: a lower starting pool lowers the ratings that meet it, and K is retuned rather than scaled.
+After additive bonuses and generic attack modifiers, Defence Rating is
+subtracted and clamped at zero. Poise then reduces every remaining attack by
+`Poise/(Poise+physicalK)`. Magical attacks receive a further Ward layer of
+`Ward/(Ward+magicalK)`. Both K values default to 100. The shared configurable
+80% cap applies independently to each percentage layer and must remain below
+100%, so Poise or Ward alone cannot grant immunity; flat Defence may reduce the
+hit completely. Resistance uses the rating, not accumulated impact. Enemy
+Defence, Poise and Ward are independently configurable; Defence defaults to
+zero while Poise and Ward default to the enemy’s authored Poise threshold. K is
+an absolute rating threshold: a lower starting pool lowers the ratings that
+meet it, and K is retuned rather than scaled.
 
 An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. Magic defaults to 1. Physical weapon weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Unarmed physical impact defaults to 1; untyped enemy physical impact defaults to 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
 

@@ -8,7 +8,7 @@ import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
+import { COMBAT_RATINGS_VERSION, combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -400,7 +400,7 @@ export function advancedConfigSettings(settings = {}, additionalKeys = []) {
 export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
-    ratingsVersion: 1,
+    ratingsVersion: COMBAT_RATINGS_VERSION,
     overrides: advancedConfigSettings(settings),
   });
 }
@@ -509,7 +509,11 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     }
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
-  if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  if (settingsOrSnapshot.overrides) {
+    const version = settingsOrSnapshot.ratingsVersion;
+    if ([1, COMBAT_RATINGS_VERSION].includes(version)) configured.balance.combatRatings.version = version;
+    else configured.balance.combatRatings.enabled = false;
+  }
   if (configured.balance.combatRatings.enabled) {
     for (const mode of configured.creationModes) {
       mode.equipmentProfiles ||= {};

@@ -1,4 +1,6 @@
-import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
+import {
+  COMBAT_RATINGS_VERSION, combatRatingsVersion, ratingValue, ratingDamageMultiplier,
+} from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -1148,13 +1150,25 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
-        const descriptions = { ar: 'Attack Rating is added to physical attack-card damage.', dr: 'Defence Rating is added to physical defensive-skill Block.', pr: 'Potency Rating is added to magical card damage, Block and healing, including power effects.' };
+        const legacyRatings = combatRatingsVersion(combat) < COMBAT_RATINGS_VERSION;
+        const descriptions = legacyRatings
+          ? { ar: 'Attack Rating is added to physical card damage.', dr: 'Defence Rating is added to physical defensive-skill Block.', pr: 'Potency Rating is added to magical card damage, Block and healing, including power effects.' }
+          : {
+            ar: 'Attack Rating is added to physical card damage.',
+            dr: 'Defence Rating is removed from every incoming hit before percentage resistance. It may reduce a hit to zero.',
+            pr: 'Potency Rating is added to magical card damage, Block and healing, including power effects.',
+          };
         if (descriptions[bar.id]) return esc(descriptions[bar.id]);
         if (bar.id === 'poise' || bar.id === 'ward') {
           const magical = bar.id === 'ward';
           const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
           const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
-          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} fewer Actions next turn` : 'lose the next move'}.`);
+          const defence = legacyRatings
+            ? `${magical ? 'Ward' : 'Poise'} reduces ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`}`
+            : magical
+              ? `Ward additionally reduces magical attacks${percent === null ? '' : ` by ${percent}%`}, after Defence and Poise`
+              : `Poise reduces every attack${percent === null ? '' : ` by ${percent}%`}, after flat Defence`;
+          return esc(`${defence}, and resists configured status effects. Its percentage layer is capped below immunity. The bar fills with ${magical ? 'magical' : 'physical'} impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} fewer Actions next turn` : 'lose the next move'}.`);
         }
       }
       if (bar.id !== 'poise') return '';

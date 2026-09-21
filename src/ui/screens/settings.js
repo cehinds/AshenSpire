@@ -1832,17 +1832,17 @@ function ratingPreviewHtml(settings, ratingId, previewAttributes) {
   const total = rule.base + scaled;
   const expanded = terms.filter((term) => term.weight !== 0)
     .map((term) => `floor(${term.points} ${term.label} × ${term.weight})`).join(' + ') || '0 from attributes';
-  const heading = ratingId === 'poise' ? 'Poise threshold & resistance example'
-    : ratingId === 'ward' ? 'Ward threshold & resistance example'
+  const heading = ratingId === 'poise' ? 'Poise threshold & all-hit resistance example'
+    : ratingId === 'ward' ? 'Ward threshold & magic-layer resistance example'
       : `${combatRatingNames[ratingId]} example`;
   const meaning = ratingId === 'poise'
-    ? 'This total sets the opening Poise threshold and reduces incoming physical damage.'
+    ? 'This total sets the opening Poise threshold and reduces every incoming attack after flat Defence.'
     : ratingId === 'ward'
-      ? 'This total sets the opening Ward threshold and reduces incoming magical damage.'
+      ? 'This total sets the opening Ward threshold and adds a second percentage layer to magical damage after Defence and Poise.'
       : ratingId === 'ar'
         ? 'Attack Rating is added to physical card damage.'
         : ratingId === 'dr'
-          ? 'Defence Rating is added to physical defensive-skill Block.'
+          ? 'Defence Rating is removed from every incoming hit before Poise and Ward, and can reduce that hit to zero.'
           : 'Potency Rating is added to magical card damage, Block, and healing.';
   return `<div class="set-example" data-rating-example="${esc(ratingId)}">
     <div class="set-example-head"><strong>${esc(heading)}</strong><span>${esc(source)}</span></div>

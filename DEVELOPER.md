@@ -834,10 +834,16 @@ floor(level multiplier × levels after 1)`; the configuration adapter stores
 reciprocal intervals so older snapshots and imported interval-based profiles
 remain readable. Combat-rating rows spell out Attack Rating, Defence Rating,
 and Potency Rating, and each shipped rating's five attribute coefficients have a
-total budget of 2. Attack Rating augments physical card damage, Potency Rating
-augments magic-card effects, Defence Rating augments physical defensive-skill
-Block, and Poise/Ward mitigate physical/magical hits respectively while serving
-as their impact meters. Source models:
+total budget of 2. Under ratings rules version 2, Attack Rating augments
+physical card damage and Potency Rating augments magic-card damage, Block, and
+healing. Every incoming hit subtracts Defence Rating first and may reach zero;
+Poise then supplies capped percentage reduction, and magical hits receive a
+second capped Ward percentage layer. Poise and Ward still serve as the
+physical/magical impact meters. Version 1 run snapshots and combat snapshots
+whose embedded rules omit `version` keep the former Poise-or-Ward defense and
+Defence-to-physical-Block behavior. The combat snapshot envelope remains
+version 1 because the optional embedded ratings-rules version provides the
+compatibility boundary. Source models:
 src/model/startingStatConfig.js, src/model/handRules.js, and
 src/model/combatRatings.js; engine integration: src/engine/combatRatings.js and
 src/engine/handRules.js. New runs snapshot configuration; saved combat snapshots

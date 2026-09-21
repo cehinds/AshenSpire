@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { combatRatingDefaults, resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
+import {
+  COMBAT_RATINGS_VERSION, combatRatingDefaults, resolveCombatRatings, attackImpact,
+  ratingReceipt, ratingDamageMultiplier,
+} from '../src/model/combatRatings.js';
 import { createCombat, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
@@ -10,6 +13,7 @@ import { applyStatus } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle, advancedConfigSnapshot } from '../src/model/advancedConfig.js';
+import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 
 const registries = createRegistries(contentBundle);
 function fight(overrides = {}) {
@@ -31,7 +35,8 @@ test('AR, DR and PR add once to their eligible effects; Poise and Ward formulas 
   assert.deepEqual(c.player.ratings, { ar: 19, dr: 19, pr: 19, poise: 20, ward: 20 });
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 29);
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 29);
-  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 29);
+  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 10);
+  assert.equal(computeBlockGain(c, c.player, 10, { ...magical, type: 'skill' }), 29);
   assert.equal(computeBlockGain(c, c.player, 10), 10);
 });
 
@@ -54,13 +59,35 @@ test('each combat rating has a two-point coefficient budget', () => {
   );
 });
 
-test('physical and magic resistance use distinct ratings before Block', () => {
-  const c = fight(); c.player.ratings.poise = 100; c.player.ratings.ward = 0;
-  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], physical), 10);
-  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], magical), 20);
+test('layered defence applies DR then Poise, adding Ward only for magic', () => {
+  const c = fight();
+  c.player.ratings = { ...c.player.ratings, dr: 5, poise: 100, ward: 100 };
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], physical), 7,
+    'sword slash: floor((20 - 5 DR) × 50% Poise)');
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], magical), 3,
+    'magic bolt: floor((20 - 5 DR) × 50% Poise × 50% Ward)');
+  c.player.ratings.dr = 20;
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], physical), 0);
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 20, [], magical), 0);
   c.player.block = 100;
   applyAttackDamage(c, c.enemies[0], c.player, 20, [], magical);
   assert.equal(c.player.wardMeter.value, 0);
+});
+
+test('Poise and Ward each honor the below-immunity resistance cap', () => {
+  const c = fight({ 'gameConfig.combatRatings.resistance.maximum': 0.8 });
+  c.player.ratings = { ...c.player.ratings, dr: 0, poise: 999999, ward: 999999 };
+  assert.ok(ratingDamageMultiplier(c, c.player, false) > 0);
+  assert.ok(ratingDamageMultiplier(c, c.player, true) > 0);
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 100, [], physical), 20);
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 100, [], magical), 4);
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 1, [], physical), 1);
+  assert.equal(computeAttackDamage(c, c.enemies[0], c.player, 1, [], magical), 1);
+  assert.notDeepEqual(resolveCombatRatings({
+    'gameConfig.combatRatings.resistance.maximum': 1,
+  }, contentBundle).resistance.maximum, 1, 'a 100% imported cap is rejected');
+  c.ratingsRules.resistance.maximum = 1;
+  assert.ok(ratingDamageMultiplier(c, c.player, false) > 0, 'runtime clamps even an invalid in-memory cap below immunity');
 });
 
 test('magic impacts Ward, physical impacts Poise, breaks cost next-turn Actions', () => {
@@ -102,6 +129,20 @@ test('combat saves preserve rules, Ward progress, and fractional buildup', () =>
   assert.deepEqual(serializeCombatSnapshot(restored), saved);
 });
 
+test('combat snapshots without a ratings rules version retain version 1 defence', () => {
+  const c = fight();
+  c.player.ratings = { ...c.player.ratings, dr: 5, poise: 100, ward: 100 };
+  const snapshot = serializeCombatSnapshot(c);
+  delete snapshot.ratingsRules.version;
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(998), snapshot });
+  assert.equal(computeAttackDamage(restored, restored.enemies[0], restored.player, 20, [], physical), 10,
+    'legacy physical damage uses Poise but not flat DR');
+  assert.equal(computeAttackDamage(restored, restored.enemies[0], restored.player, 20, [], magical), 10,
+    'legacy magic damage uses Ward alone');
+  assert.equal(computeBlockGain(restored, restored.player, 10, { ...physical, type: 'skill' }), 15,
+    'legacy DR remains a physical skill Block bonus');
+});
+
 test('configuration exports include weights and reject invalid weight boundaries', () => {
   const settings = { 'gameConfig.combatRatings.statuses.burn.poise': 0.25, 'gameConfig.combatRatings.statuses.burn.ward': 0.75 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
@@ -111,16 +152,43 @@ test('configuration exports include weights and reject invalid weight boundaries
 
 test('old run snapshots retain the legacy rules while new runs opt into ratings', () => {
   assert.equal(configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: {} }).balance.combatRatings.enabled, false);
-  assert.equal(configuredContentBundle(contentBundle, advancedConfigSnapshot({})).balance.combatRatings.enabled, true);
+  const oldRatings = configuredContentBundle(contentBundle, { schemaVersion: 1, ratingsVersion: 1, overrides: {} }).balance.combatRatings;
+  assert.equal(oldRatings.enabled, true);
+  assert.equal(oldRatings.version, 1);
+  const current = configuredContentBundle(contentBundle, advancedConfigSnapshot({})).balance.combatRatings;
+  assert.equal(current.enabled, true);
+  assert.equal(current.version, COMBAT_RATINGS_VERSION);
+  assert.equal(advancedConfigSnapshot({}).ratingsVersion, COMBAT_RATINGS_VERSION);
+});
+
+test('non-combat rating receipts describe the active defence rules version', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const currentBundle = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(currentBundle);
+  const currentRun = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  const currentNote = playerPoiseThresholdReceipt(currentRegistries, currentRun).note;
+  assert.match(currentNote, /Defence subtracts flat damage first/);
+  assert.match(currentNote, /Poise then reduces every hit/);
+  assert.match(currentNote, /Ward adds magical-only reduction/);
+
+  const legacyBundle = configuredContentBundle(contentBundle, {
+    schemaVersion: 1, ratingsVersion: 1, overrides: {},
+  });
+  const legacyRegistries = createRegistries(legacyBundle);
+  const legacyRun = createRunState({ seed: 42, classId: 'reaver', registries: legacyRegistries });
+  assert.match(playerPoiseThresholdReceipt(legacyRegistries, legacyRun).note,
+    /Poise resists physical attacks.*Ward resists magical attacks/);
 });
 
 test('enemy defences can differ and explicit magic typing agrees with the intent preview', () => {
-  const c = fight({ 'gameConfig.combatRatings.enemyRatings.wanderingSoldier.poise': 30,
+  const c = fight({ 'gameConfig.combatRatings.enemyRatings.wanderingSoldier.dr': 4,
+    'gameConfig.combatRatings.enemyRatings.wanderingSoldier.poise': 30,
     'gameConfig.combatRatings.enemyRatings.wanderingSoldier.ward': 5,
     'gameConfig.combatRatings.enemyAttackType.wanderingSoldier:slash': 'magic' });
   const e = c.enemies[0];
+  assert.equal(e.ratings.dr, 4);
   assert.equal(e.poiseMeter.max, 30); assert.equal(e.wardMeter.max, 5);
-  c.player.ratings.poise = 100; c.player.ratings.ward = 0;
+  c.player.ratings.dr = 0; c.player.ratings.poise = 0; c.player.ratings.ward = 0;
   e.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1 };
   assert.equal(previewIntent(c, e.id).damage, 7);
   const hp = c.player.hp;
@@ -130,10 +198,10 @@ test('enemy defences can differ and explicit magic typing agrees with the intent
 });
 
 test('automatic enemy typing preserves magic authored on an effect', () => {
-  const c = fight(); c.player.ratings.ward = 0; c.player.ratings.poise = 100;
+  const c = fight(); c.player.ratings.dr = 0; c.player.ratings.ward = 0; c.player.ratings.poise = 100;
   const e = c.enemies[0], hp = c.player.hp;
   executeAction(c, { effect: { op: 'damage', target: 'player', amount: 10, damageSchool: 'magic' }, source: e, owner: e, target: c.player, meta: { moveId: 'slash' } });
-  assert.equal(hp - c.player.hp, 10); assert.equal(c.player.wardMeter.value, 1);
+  assert.equal(hp - c.player.hp, 5); assert.equal(c.player.wardMeter.value, 1);
 });
 
 test('a magical power carries PR into its later block trigger', async () => {

@@ -18,6 +18,9 @@
 //   dmg += attacker per-stack 'attackDamageAdd' modifiers
 //   dmg *= attacker 'damageDealtMult' modifiers
 //   dmg *= defender 'damageTakenMult' modifiers
+//   dmg = max(0, dmg - defender Defence Rating)
+//   dmg *= defender Poise reduction
+//   if magical: dmg *= defender Ward reduction
 //   dmg = floor(dmg); below 0 → 0
 // The engine consults the generic status model only — never a named status.
 //
@@ -37,7 +40,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
 import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDefendedDamage } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 
@@ -61,7 +64,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
-  if (target) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
+  if (target) dmg = ratingDefendedDamage(ctx, target, dmg, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply

@@ -34,11 +34,14 @@ export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
     const receipt = ratingReceipt(registries, run, registries.balance.combatRatings);
+    const layeredDefence = (registries.balance.combatRatings.version ?? 1) >= 2;
     return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
       raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
       equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
       ratings: receipt.totals, ratingSources: receipt.sources,
-      note: 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
+      note: layeredDefence
+        ? 'Defence subtracts flat damage first. Poise then reduces every hit and stagger; Ward adds magical-only reduction and resists disruption. Status resistance follows each effect’s configured weights.'
+        : 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
   }
   const levels = run.itemUpgradeLevels || {};
   // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): the derived

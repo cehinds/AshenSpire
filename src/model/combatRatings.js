@@ -2,6 +2,7 @@ import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 
 export const ratingIds = ['ar', 'dr', 'pr', 'poise', 'ward'];
+export const COMBAT_RATINGS_VERSION = 2;
 export const combatRatingNames = Object.freeze({
   ar: 'Attack Rating',
   dr: 'Defence Rating',
@@ -12,6 +13,7 @@ export const combatRatingNames = Object.freeze({
 const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const rule = (weights, base = 0) => ({ base, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
 export const combatRatingDefaults = {
+  version: COMBAT_RATINGS_VERSION,
   enabled: true,
   // EVERY RATING IS A SUM OF FLOORED ATTRIBUTE TERMS, then multiplied (owner,
   // 2026-09-21): `multiplier × <rating>.multiplier × Σ floor(weight × attribute)
@@ -60,7 +62,9 @@ export function combatRatingRows(bundle) {
     ...(typeof def === 'number' ? { type: 'number', min: 0, max: 999, step: 0.01, integer: false } : {}),
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
-  add('enabled', true, 'Enable ratings, Poise & Ward', 'General');
+  add('enabled', true, 'Enable layered combat ratings', 'General', {
+    note: 'Attack and Potency power cards; Defence is flat protection; Poise protects every hit; Ward adds protection against magic. Applies to new runs.',
+  });
   add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
     note: 'Scales the attribute total of every rating at once, before each rating’s own multiplier. 1 leaves the formulas as written.',
   });
@@ -68,18 +72,19 @@ export function combatRatingRows(bundle) {
     const ratingName = combatRatingNames[id];
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
       `${ratingName} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
-        settingSection: id === 'poise' ? 'Poise threshold & physical resistance'
-          : id === 'ward' ? 'Ward threshold & magical resistance' : undefined,
+        settingSection: id === 'poise' ? 'Poise threshold & all-hit resistance'
+          : id === 'ward' ? 'Ward threshold & magical resistance'
+            : id === 'dr' ? 'Flat defence' : undefined,
         note: field === 'base' ? 'Added after the multipliers, then equipment and other bonuses.'
           : field === 'multiplier' ? 'Scales this rating’s attribute total. 1 leaves the weights as written.'
           : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {
-    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || words(field), words(group), {
+    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Per-layer resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || words(field), words(group), {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
       max: field === 'maximum' ? 0.95 : 999,
-      note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
+      note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum reduction for each Poise, Ward, or status-resistance layer. 0.8 means 80%; 1 is forbidden so a percentage layer cannot grant immunity.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
       integer: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn',
       step: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn' ? 1 : 0.01,
     });
@@ -100,13 +105,16 @@ export function combatRatingRows(bundle) {
   }
   for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${combatRatingNames[id]}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
+    add(`enemyRatings.${enemy.id}.dr`, 0, `${enemy.name} — Defence Rating`, 'Enemy defences', {
+      integer: true, step: 1, note: 'Flat damage removed from every hit before this enemy’s percentage resistance layers. Zero leaves the authored enemy unchanged.',
+    });
     for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${words(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });
     for (const [id, move] of Object.entries(enemy.moves)) add(`enemyAttackType.${enemy.id}:${id}`, 'auto',
       `${enemy.name} — ${words(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
-        note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
+        note: 'Selects whether Ward also reduces the hit and which impact meter it fills. Poise and Defence apply to both types. Auto follows the authored type; untyped attacks are physical.',
       });
   }
   for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${card.name} — impact override`, 'Attack overrides', {
@@ -166,6 +174,7 @@ export function resolveCombatRatings(settings, bundle) {
 export function combatRatingProblems(config) {
   if (!config || typeof config !== 'object') return ['Missing combat rating rules'];
   const problems = [];
+  if (config.version !== undefined && ![1, COMBAT_RATINGS_VERSION].includes(config.version)) problems.push('Invalid combat ratings version');
   // A MULTIPLIER THIS BUILD ADDED IS ABSENT FROM EVERY SAVED FIGHT, and
   // `combatSnapshotProblems` runs this over a restored snapshot's own rules.
   // Requiring the field would have refused every in-flight combat save written
@@ -187,7 +196,9 @@ export function combatRatingProblems(config) {
   for (const bonuses of Object.values(config.bonuses || {})) if (!bonuses || Object.values(bonuses).some(n => !Number.isFinite(n) || n < 0 || n > 999)) problems.push('Invalid rating bonus');
   for (const n of [...Object.values(config.attackImpact || {}), ...Object.values(config.enemyImpact || {})]) if (!Number.isInteger(n) || n < -1 || n > 99) problems.push('Invalid impact override');
   if (Object.values(config.enemyAttackType || {}).some(v => !['auto', 'physical', 'magic'].includes(v))) problems.push('Invalid enemy attack type');
-  for (const values of Object.values(config.enemyRatings || {})) if (!values || ['poise', 'ward'].some(id => !Number.isInteger(values[id]) || values[id] < 0 || values[id] > 999)) problems.push('Invalid enemy defences');
+  for (const values of Object.values(config.enemyRatings || {})) if (!values
+    || ['poise', 'ward'].some(id => !Number.isInteger(values[id]) || values[id] < 0 || values[id] > 999)
+    || (values.dr !== undefined && (!Number.isInteger(values.dr) || values.dr < 0 || values.dr > 999))) problems.push('Invalid enemy defences');
   return problems;
 }
 
@@ -248,11 +259,44 @@ export function isMagicalAttack(ctx, carrier) {
   return tags.some(t => ['magic', 'magical', 'arcane', 'holy', 'fire', 'spell'].includes(t.split(':').at(-1))) || (def?.manaCost || 0) > 0;
 }
 
+export function combatRatingsVersion(ctx) {
+  return ctx?.ratingsRules?.version ?? 1;
+}
+
+function resistanceCap(resistance) {
+  const configured = Number(resistance?.maximum);
+  if (!Number.isFinite(configured)) return 0;
+  return Math.min(1 - Number.EPSILON, Math.max(0, configured));
+}
+
 export function ratingDamageMultiplier(ctx, target, magical) {
   if (!ctx.ratingsRules || !target?.ratings) return 1;
   const r = ctx.ratingsRules.resistance;
   const rating = ratingValue(ctx, target, magical ? 'ward' : 'poise');
-  return 1 - Math.min(r.maximum, rating / (rating + (magical ? r.magicalK : r.physicalK)));
+  const k = magical ? r.magicalK : r.physicalK;
+  const reduction = rating > 0 && k > 0 ? rating / (rating + k) : 0;
+  return Math.max(Number.EPSILON,
+    Number((1 - Math.min(resistanceCap(r), Math.max(0, reduction))).toFixed(12)));
+}
+
+/**
+ * Apply the versioned rating defence stage without rounding. The caller owns
+ * the combat pipeline's single final floor.
+ */
+export function ratingDefendedDamage(ctx, target, damage, magical) {
+  if (!ctx.ratingsRules || !target?.ratings) return damage;
+  if (combatRatingsVersion(ctx) < COMBAT_RATINGS_VERSION) {
+    return damage * ratingDamageMultiplier(ctx, target, magical);
+  }
+  let remaining = Math.max(0, damage - ratingValue(ctx, target, 'dr'));
+  if (remaining === 0) return 0;
+  const reduce = (amount, multiplier) => {
+    const reduced = amount * multiplier;
+    return amount >= 1 ? Math.max(1, reduced) : reduced;
+  };
+  remaining = reduce(remaining, ratingDamageMultiplier(ctx, target, false));
+  if (magical) remaining = reduce(remaining, ratingDamageMultiplier(ctx, target, true));
+  return remaining;
 }
 
 export function attackImpact(ctx, source, carrier) {
