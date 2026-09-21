@@ -875,6 +875,32 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
+/**
+ * compactRowLabel(label, topic) → the label with the leading subjects the tab
+ * already names taken off.
+ *
+ * The row owns its full label; a tab is a heading, and a heading repeated in
+ * every line beneath it is noise. "Reaver — Strength" under the Reaver tab is
+ * "Strength"; "Levels · Enemy Scaling · HP — Per Level" under Enemy scaling is
+ * "HP — Per Level". Nothing is invented and nothing is recased: this only ever
+ * removes whole leading subjects, and only when one of them IS the tab.
+ *
+ * It never returns an empty label — a row whose every subject matches its tab
+ * keeps its last one, because a blank row is worse than a redundant one.
+ */
+export function compactRowLabel(label, topic) {
+  const text = String(label || '');
+  const split = text.split(' — ');
+  if (split.length < 2) return text;
+  const subjects = split.slice(0, -1).join(' — ').split(' · ');
+  const leaf = split[split.length - 1];
+  const fold = (value) => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const matched = subjects.findIndex((subject) => fold(subject) === fold(topic));
+  if (matched < 0) return text;
+  const kept = subjects.slice(matched + 1);
+  return kept.length ? `${kept.join(' · ')} — ${leaf}` : leaf;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // W1a: help only where the effect is not obvious. Condition and status lines
   // are feedback, and settingsRowShowsHelp always keeps them.
@@ -1686,17 +1712,23 @@ function categoryHtml(cat, settings, saves) {
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
-            const compact = { ...row };
+            // SHORTEN WHAT THE TAB ALREADY SAYS — and only that. The label
+            // itself has ONE home (`leafRows` in model/advancedConfig.js); a
+            // branch here used to rebuild every generated balance row's label
+            // out of `row.key`, splitting camelCase without capitalising it,
+            // which is how "hand Max" and "levels · player Starting Level"
+            // came to sit two rows under "HP — base amount" in one menu. That
+            // is gone. What is left is presentation: under a tab named
+            // "Enemy scaling", a row called "Levels · Enemy Scaling · HP — Per
+            // Level" says the tab's own name back to the reader, and the class
+            // tabs have always compacted that away. Now every tab does.
+            const compact = { ...row, label: compactRowLabel(row.label, sub.id) };
             if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
-              compact.label = row.label.replace(/^.*? — /, '');
               // The class's own topic already says which class this is, so the
               // note goes — EXCEPT the sentence naming the kit floor, which is
               // the only place the row's minimum explains itself. Dropping it
               // left the floor a number from nowhere.
               compact.note = row.floorNote || '';
-            } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
-              compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
-              compact.note = 'Applies to a new run.';
             }
             return settingsRowHtml(settings, compact);
           }).join('')) + '</div>').join('') + '</section>';

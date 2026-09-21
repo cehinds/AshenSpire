@@ -259,3 +259,88 @@ test('every screen that offers a point hands the card the run it belongs to', as
   }
   assert.equal(sites, 5, 'all five attribute-card call sites are covered (a new one must state its projection too)');
 });
+
+// ---- one menu, one language (owner, 2026-09-21) ----------------------------
+//
+// "why aren't the menus matching? … make them consistent with what I see with
+// each other." Advanced spoke two: hand-authored rows carried a Title Case
+// sentence, and rows generated from `balance` were rebuilt from their KEY at
+// render time — camelCase split and never capitalised, so "hand Max" and
+// "levels · player Starting Level" sat two rows under "HP — base amount".
+
+test('every Advanced row reads like every other Advanced row', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const { compactRowLabel } = await import('../src/ui/screens/settings.js');
+  const rows = advancedConfigRows(contentBundle).filter(row => !row.retired && row.label);
+
+  for (const row of rows) {
+    // The opening character of a label is the tell: the old key-derived labels
+    // all began lower case because nothing ever capitalised them.
+    assert.match(row.label[0], /[A-Z0-9]/, `"${row.label}" (${row.key}) opens like a sentence, not like a key`);
+    // A key's own spelling never reaches the player. It has a home already —
+    // `searchPath` — which is what search reads.
+    assert.ok(!/gameConfig\./.test(row.label), `"${row.label}" does not quote its key`);
+    assert.ok(!/[a-z][A-Z]/.test(row.label.replace(/ — | · /g, ' ')), `"${row.label}" carries no unsplit camelCase`);
+  }
+
+  // The generated rows in particular: every one is Title Case with the context
+  // its leaf needs, and no two in a group collapse to the same words.
+  const generated = rows.filter(row => row.searchPath && row.configPath?.[0] === 'balance');
+  assert.ok(generated.length > 50, 'the balance table really is the bulk of this menu');
+  for (const row of generated) {
+    assert.match(row.label, /^[A-Z0-9%]/);
+    assert.equal(row.note.startsWith('Authored balance value:'), false,
+      `"${row.label}" no longer shows the engine's own spelling as its note`);
+  }
+  // `levels.enemyScaling.{hp,damage,block,poise}.perLevel` were four rows all
+  // called "Per Level" before the context was added — this is that, asserted.
+  const scaling = generated.filter(row => row.searchPath.startsWith('levels.enemyScaling.'));
+  assert.equal(new Set(scaling.map(row => row.label)).size, scaling.length,
+    'no two enemy-scaling rows share a label');
+
+  // And the tab does not say its own name back in every line beneath it.
+  assert.equal(compactRowLabel('Levels · Enemy Scaling · HP — Per Level', 'Enemy scaling'), 'HP — Per Level');
+  assert.equal(compactRowLabel('Reaver — Strength', 'Reaver'), 'Strength');
+  assert.equal(compactRowLabel('Level Up — Points Per Level Min', 'Level-up'), 'Points Per Level Min');
+  assert.equal(compactRowLabel('Starting Cinders', 'Starting values'), 'Starting Cinders', 'nothing to strip, nothing stripped');
+  assert.equal(compactRowLabel('Level · XP — Base', 'Experience & rewards'), 'Level · XP — Base', 'an unrelated tab strips nothing');
+  assert.equal(compactRowLabel('Reaver — Reaver', 'Reaver'), 'Reaver', 'a row never renders blank');
+});
+
+test('a setting that moves nothing is off the screen and still imports', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { advancedConfigRows, advancedConfigExport, parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createRunState } = await import('../src/model/state.js');
+
+  // `balance.energy` and `balance.draw` duplicated "Actions — base amount" and
+  // "Draw — base amount" in a different group, with different numbers — and
+  // nothing reads them: a run's pools come from the derived-stat rules.
+  const born = (patch) => {
+    const bundle = { ...contentBundle, balance: structuredClone(contentBundle.balance) };
+    Object.assign(bundle.balance, patch);
+    return createRunState({ registries: createRegistries(bundle), classId: 'reaver', seed: 9 });
+  };
+  const stock = born({});
+  const moved = born({ energy: 99, draw: 99 });
+  assert.deepEqual([moved.energyMax, moved.drawPerTurn], [stock.energyMax, stock.drawPerTurn],
+    'they are inert — which is why they may not sit in the menu beside the rows that are not');
+
+  const rows = advancedConfigRows(contentBundle);
+  for (const path of ['energy', 'draw']) {
+    const row = rows.find(candidate => candidate.key === `gameConfig.balance.${path}`);
+    assert.ok(row, `the ${path} key is still known, so an exported file carrying it still imports`);
+    assert.equal(row.retired, true, `and it is off the screen`);
+  }
+  // Retired, not deleted: parseAdvancedConfigFile aborts a whole file on one
+  // unknown key, so removing the row would refuse every configuration that
+  // still names it.
+  const legacy = { 'gameConfig.balance.energy': 3, 'gameConfig.balance.draw': 5 };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy);
+
+  // The row that IS read keeps its place and says what it actually governs.
+  const handMax = rows.find(candidate => candidate.key === 'gameConfig.balance.handMax');
+  assert.ok(!handMax.retired, 'handMax is read (engine/combat.js, engine/actions.js) and stays');
+  assert.match(handMax.note, /Hand & Draw/, 'and points at the row a fight actually uses');
+});

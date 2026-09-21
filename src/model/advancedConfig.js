@@ -93,6 +93,103 @@ function balanceGroup(path) {
   return 'Rules';
 }
 
+// ---- THE ROWS THAT SHOWED A SECOND, DEAD ANSWER (owner, 2026-09-21) -------
+//
+// The other half of "the menus aren't matching", and the worse half: two rows
+// in two groups claiming the same thing, with different numbers, one of which
+// does nothing at all.
+//
+// Progression → Starting values offered `energy` and `draw`; Progression →
+// Stat conversions offers "Actions — base amount" and "Draw — base amount".
+// The second pair is what a run is actually born with — `state.js` reads
+// `energy.value` and `draw.value` off the derived-stat rules and nothing in
+// src, tools or tests reads `balance.energy` or `balance.draw` at all. Setting
+// them to 99 moves neither `run.energyMax` nor `run.drawPerTurn`. They are
+// inert, and the reason nobody caught it is that the authored values AGREE
+// with the live ones (3 and 5) until you touch them: the phantom row reads
+// true right up to the moment you use it.
+//
+// RETIRED, NOT DELETED. The key stays known so a configuration file already
+// carrying it still imports whole — deleting a row makes `parseAdvancedConfig-
+// File` abort the file on an unknown key, which is the defect #1238 fixed for
+// the preset cells. `retired` is the same flag a hidden creation mode's pool
+// row carries, and settings.js filters on it.
+const RETIRED_BALANCE_PATHS = new Set([
+  'energy',
+  'draw',
+]);
+
+// A note a player can act on, for the rows whose own name is not enough. The
+// rest get "Applies to a new run.", which is what the screen used to paste
+// over the engine's spelling anyway.
+const BALANCE_NOTES = Object.freeze({
+  // `combat.js` uses this ONLY when no hand rules are handed in, and the
+  // shipped game always hands them in (`main.js` resolves them for every
+  // fight), so the live capacity is Advanced → Hand & Draw → Hand capacity.
+  // Saying so is the difference between a fallback and a second answer.
+  handMax: 'Fallback hand capacity, used only when hand rules are unavailable.'
+    + ' The capacity a fight actually uses is Hand & Draw → Hand capacity → Base hand capacity.',
+});
+
+// ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
+//
+// "why aren't the menus matching? … make them consistent with what I see with
+// each other."
+//
+// Advanced spoke two languages. A hand-authored row carried a Title Case
+// sentence a person wrote — "HP — base amount", "Reaver — Strength", "Straight
+// Sword — Strength required" — while a row generated from `balance` carried
+// `word(<last path segment>)` and a note beginning "Authored balance value:".
+// That note is engine-speak, and the label was WORSE than short: `leafRows`
+// only ever saw the LAST segment, so `levels.enemyScaling.hp.perLevel`,
+// `…damage.perLevel` and `…block.perLevel` were three rows all called "Per
+// Level", stacked in one group, indistinguishable.
+//
+// The screen's answer was to rebuild the label from the KEY at render time
+// (`settings.js`, now deleted): it recovered the missing context but split
+// camelCase without capitalising anything, so the same menu showed "HP — base
+// amount" two rows above "hand Max" and "levels · player Starting Level". One
+// fact — what this row is called — had two homes and they disagreed by
+// construction.
+//
+// So the label is built ONCE, here, with the context the leaf needs and the
+// casing the rest of the menu uses. The raw path keeps its own home in
+// `searchPath`, which is what search reads, so nothing is lost by taking the
+// engine's spelling off the player's row.
+
+// Words the menu already writes as acronyms ("HP — base amount", "Reaver —
+// base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
+// "HP", which is the very mismatch this block exists to end.
+const LABEL_ACRONYMS = new Map(Object.entries({
+  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+}));
+
+/** One path segment as the menu writes it: `enemyScaling` → `Enemy Scaling`. */
+function labelSegment(part) {
+  return String(part)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .map((piece) => LABEL_ACRONYMS.get(piece.toLowerCase()) || piece[0].toUpperCase() + piece.slice(1))
+    .join(' ');
+}
+
+/**
+ * balanceLabel(path) → the row's one label.
+ *
+ * `subject · subject — leaf`, which is the shape every hand-authored row in
+ * this menu already uses: the em dash separates what the row IS from what it
+ * belongs to, and the middle dot stacks the owners. `levels.enemyScaling.hp
+ * .perLevel` becomes "Levels · Enemy Scaling · HP — Per Level" — long, and the
+ * only reason its two siblings are now telling apart.
+ */
+function balanceLabel(path) {
+  const parts = path.map(labelSegment);
+  const leaf = parts[parts.length - 1];
+  const context = parts.slice(0, -1);
+  return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
+}
+
 function leafRows(value, path = [], rows = []) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
@@ -104,10 +201,11 @@ function leafRows(value, path = [], rows = []) {
       type: typeof value === 'number' ? 'number' : undefined,
       def: value,
       ...domain,
-      label: word(path[path.length - 1]),
-      note: `Authored balance value: ${joined}. Applies to a new run.`,
+      label: balanceLabel(path),
+      note: BALANCE_NOTES[joined] || 'Applies to a new run.',
       configPath: ['balance', ...path],
       searchPath: joined,
+      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
     });
     return rows;
   }
@@ -182,7 +280,7 @@ function explicitRows(bundle) {
       type: 'number', integer: true, step: 1,
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
-      label: `${classLabel} — base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
+      label: `${classLabel} — Base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,
     });
     for (const kind of ['hp', 'mana']) {
@@ -193,7 +291,10 @@ function explicitRows(bundle) {
         type: 'number', integer: true, step: 1,
         min: 0, max: 20, def,
         key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.startingFlaskAllocation.${kind}`,
-        label: `${classLabel} — ${kind.toUpperCase()} flasks`, note: `Starting ${kind.toUpperCase()} flask allocation for ${classLabel}. Applies to a new run.`,
+        // `HP` is an acronym and `Mana` is a word; the class tab compacts the
+        // class name away, so these sit directly beside "Strength" and have to
+        // read like it.
+        label: `${classLabel} — ${kind === 'hp' ? 'HP' : 'Mana'} flasks`, note: `Starting ${kind.toUpperCase()} flask allocation for ${classLabel}. Applies to a new run.`,
         configPath: ['classesById', classDef.id, 'startingFlaskAllocation', kind], searchPath: `class ${classDef.id} flask ${kind}`,
       });
     }
