@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-21",
     "summary": "Every stat is one calculation now, and the numbers on the settings rows are the numbers you get",
     "detail": "Every formula in the game used to divide your attributes by a conversion scale before reading them, so the character being scored was never the character on the sheet — a Starseer showing 8 Intelligence was scored as though it held 23, and Ward read 32 where the settings row that set it promised 9. That divisor is gone from the game. One calculation now answers for all of it: a base, plus each attribute's contribution rounded down on its own, times a multiplier for that stat and one for all of them. A weight of 0.25 means four points buy 1 and gives nothing before the fourth; both multipliers start at 1 and change nothing until you move them. The bases are stated where you can see and move them: HP opens at 30, Actions and your hand at 3, Mana, Stamina, Poise and Ward at 1, AR and DR at nothing — a Reaver opens the climb on 38 HP, 2 Mana, 3 Stamina, 3 Actions and a hand of 3, and every one of those numbers is a row in Settings read against the attributes on its own sheet. Three rows went with the divisor: each rating's points per increase and gain, replaced by the multipliers, and Automatically scale stat conversions, which has nothing left to switch. A configuration file carrying any of them still imports, with a note naming what was skipped. A climb already in progress keeps the rules it was born under.",
-    "build": "0.7.1.357",
+    "build": "0.7.1.363",
     "pullRequest": 1240,
     "url": "https://github.com/cehinds/AshenSpire/pull/1240"
   },
