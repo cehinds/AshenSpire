@@ -37,7 +37,7 @@ import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle,
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
-  prologueFreeSlot, PROLOGUE_PREFIX, PROLOGUE_DEFAULTS,
+  prologueFreeSlot, prologueStagedOrder, PROLOGUE_PREFIX, PROLOGUE_DEFAULTS,
 } from '../../model/prologue.js';
 
 const UI_DEFAULTS = balance.ui;
@@ -871,30 +871,43 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'sceneList') {
     const config = prologueConfig(settings);
     const playing = prologueSequence(config);
-    const parked = config.scenes.map((scene, index) => index).filter(index => !playing.includes(index));
-    const free = config.scenes.filter(scene => isPrologueSlot(scene) && scene.enabled === false && !String(scene.text || '').trim()).length;
-    const item = (index, at, live) => {
+    // THE LIST IS THE STAGING, NOT "PLAYING, THEN THE REST". Listing the parked
+    // scenes after the playing ones meant every edit renumbered them to the end
+    // — switch a scene off, move anything, switch it back on, and it came back
+    // last. A scene that is off keeps its place here and gets it back.
+    const staged = prologueStagedOrder(config);
+    const live = index => config.scenes[index].enabled !== false;
+    const anyLive = staged.some(live);
+    const free = prologueFreeSlot(config);
+    const item = (index, at) => {
       const scene = config.scenes[index];
-      return `<li class="set-scene" draggable="true" data-scene="${esc(scene.id)}" data-index="${index}" data-live="${live ? '1' : '0'}">
+      const on = live(index);
+      // Duplicate reads the scene it is beside, so the row that IS the next
+      // free slot cannot be the source: it would be both sides of the copy.
+      const canCopy = free && scene.id !== free;
+      return `<li class="set-scene" draggable="true" data-scene="${esc(scene.id)}" data-live="${on ? '1' : '0'}">
         <span class="set-scene-grip" aria-hidden="true">⠿</span>
         <span class="set-scene-name">${esc(scene.name || scene.id)}${isPrologueSlot(scene) ? ' <em>(added)</em>' : ''}</span>
-        <span class="set-scene-at">${live ? `${at + 1} / ${playing.length}` : 'not playing'}</span>
+        <span class="set-scene-at">${on ? `${at + 1} / ${playing.length}` : 'not playing'}</span>
         <span class="set-scene-acts">
-          <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${live && at === 0 ? ' disabled' : ''}>↑</button>
-          <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${live && at === playing.length - 1 ? ' disabled' : ''}>↓</button>
-          <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${live}">${live ? 'On' : 'Off'}</button>
-          <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${free ? '' : ' disabled'}>Duplicate</button>
+          <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
+          <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
+          <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
           ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
         </span>
       </li>`;
     };
-    const list = playing.map((index, at) => item(index, at, true)).join('') + parked.map(index => item(index, -1, false)).join('');
+    let at = -1;
+    const list = staged.map(index => item(index, live(index) ? ++at : -1)).join('');
+    const slotsLeft = config.scenes.filter(scene => isPrologueSlot(scene) && scene.enabled === false && !String(scene.text || '').trim()).length;
     return `${rowOpen('set-row-wide set-row-scenes')}${stack()}
       <div class="r-trail set-scene-trail">
         <ol class="set-scene-list" data-scene-list>${list}</ol>
         <div class="set-scene-tools">
           <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
-          <span class="as-status">${free} empty slot${free === 1 ? '' : 's'} left</span>
+          <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
+          ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
         </div>
       </div></div>`;
   }
@@ -2054,49 +2067,70 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // applies them the way the reset button already does — `undefined` unsets —
   // and re-renders, because the list, the counts and the per-scene topics are
   // all reading the same settings.
-  const applyPrologue = (changes) => {
+  const applyPrologue = (changes, refocus = null) => {
     for (const [key, value] of Object.entries(changes)) {
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    // A re-render replaces the button that was pressed, so reordering three
+    // places from the keyboard meant hunting for the arrow again after each
+    // press. The same control on the same scene takes the focus back.
+    if (refocus) container.querySelector(refocus)?.focus({ preventScroll: true });
   };
-  const sceneIdsInList = (list) => [...list.querySelectorAll('[data-scene]')].map(node => node.dataset.scene);
+  // THE ORDER COMES FROM THE SETTINGS, NOT FROM THE DOM. A drag that is
+  // abandoned outside the list leaves the rows rearranged with nothing saved,
+  // and reading the DOM meant the next arrow press quietly persisted that
+  // abandoned arrangement. Every action re-derives the staging and edits it.
+  const stagedIds = () => {
+    const config = prologueConfig(settings);
+    return prologueStagedOrder(config).map(index => config.scenes[index].id);
+  };
   container.querySelectorAll('[data-scene-list]').forEach(list => {
     list.querySelectorAll('[data-scene-move]').forEach(btn => btn.addEventListener('click', () => {
-      const ids = sceneIdsInList(list);
+      const ids = stagedIds();
       const from = ids.indexOf(btn.dataset.sceneId);
       const to = from + (btn.dataset.sceneMove === 'up' ? -1 : 1);
       if (from < 0 || to < 0 || to >= ids.length) return;
       ids.splice(to, 0, ...ids.splice(from, 1));
-      applyPrologue(prologueReorderChanges(ids));
+      applyPrologue(prologueReorderChanges(ids), `[data-scene-move="${btn.dataset.sceneMove}"][data-scene-id="${CSS.escape(btn.dataset.sceneId)}"]`);
     }));
     list.querySelectorAll('[data-scene-toggle]').forEach(btn => btn.addEventListener('click', () => {
       const id = btn.dataset.sceneToggle;
       const scene = prologueConfig(settings).scenes.find(row => row.id === id);
-      applyPrologue({ [prologueSettingKey(['scenes', id, 'enabled'])]: scene?.enabled === false });
+      applyPrologue({ [prologueSettingKey(['scenes', id, 'enabled'])]: scene?.enabled === false },
+        `[data-scene-toggle="${CSS.escape(id)}"]`);
     }));
     list.querySelectorAll('[data-scene-copy]').forEach(btn => btn.addEventListener('click', () => {
+      const source = btn.dataset.sceneCopy;
       const slot = prologueFreeSlot(prologueConfig(settings));
-      if (!slot) return;
-      const ids = sceneIdsInList(list).filter(id => id !== slot);
-      // A copy belongs beside the scene it copies, not at the end of the list.
-      ids.splice(ids.indexOf(btn.dataset.sceneCopy) + 1, 0, slot);
-      applyPrologue({ ...prologueSceneCopy(settings, btn.dataset.sceneCopy, slot), ...prologueReorderChanges(ids) });
+      // The free slot is never its own source — the markup disables that row's
+      // Duplicate, and this refuses it too rather than inserting at the front.
+      if (!slot || slot === source) return;
+      const ids = stagedIds().filter(id => id !== slot);
+      ids.splice(ids.indexOf(source) + 1, 0, slot);
+      applyPrologue({ ...prologueSceneCopy(settings, source, slot), ...prologueReorderChanges(ids) },
+        `[data-scene-remove="${CSS.escape(slot)}"]`);
     }));
     list.querySelectorAll('[data-scene-remove]').forEach(btn => btn.addEventListener('click', () => {
-      applyPrologue(prologueSceneClear(btn.dataset.sceneRemove));
+      applyPrologue(prologueSceneClear(btn.dataset.sceneRemove), '[data-scene-add]');
     }));
-    // Dragging is the same write as the arrows, so the arrows remain the whole
-    // feature for anyone not using a pointer.
-    let dragging = null;
+    // Dragging writes the same keys as the arrows. A drag that ends anywhere
+    // but on another row is ABANDONED: the rows are put back by a re-render,
+    // so what is on screen is always what is saved.
+    let dragging = null, dropped = false;
     list.querySelectorAll('[data-scene]').forEach(item => {
       item.addEventListener('dragstart', event => {
-        dragging = item; item.classList.add('set-scene-dragging');
+        dragging = item; dropped = false; item.classList.add('set-scene-dragging');
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', item.dataset.scene);
       });
-      item.addEventListener('dragend', () => { dragging?.classList.remove('set-scene-dragging'); dragging = null; });
+      item.addEventListener('dragend', () => {
+        dragging?.classList.remove('set-scene-dragging');
+        const moved = !dropped && dragging;
+        dragging = null;
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
         event.preventDefault();
@@ -2104,21 +2138,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         item.parentNode.insertBefore(dragging, event.clientY - box.top < box.height / 2 ? item : item.nextSibling);
       });
     });
+    list.addEventListener('dragover', event => { if (dragging) event.preventDefault(); });
     list.addEventListener('drop', event => {
       if (!dragging) return;
       event.preventDefault();
-      applyPrologue(prologueReorderChanges(sceneIdsInList(list)));
+      dropped = true;
+      applyPrologue(prologueReorderChanges([...list.querySelectorAll('[data-scene]')].map(node => node.dataset.scene)));
     });
   });
   container.querySelectorAll('[data-scene-add]').forEach(btn => btn.addEventListener('click', () => {
     const slot = prologueFreeSlot(prologueConfig(settings));
     if (!slot) return;
-    const list = container.querySelector('[data-scene-list]');
-    const ids = list ? [...sceneIdsInList(list).filter(id => id !== slot), slot] : null;
     applyPrologue({
       [prologueSettingKey(['scenes', slot, 'enabled'])]: true,
-      ...(ids ? prologueReorderChanges(ids) : {}),
-    });
+      ...prologueReorderChanges([...stagedIds().filter(id => id !== slot), slot]),
+    }, `[data-scene-remove="${CSS.escape(slot)}"]`);
   }));
   container.querySelectorAll('[data-preset-save]').forEach(btn => btn.addEventListener('click', () => {
     try {

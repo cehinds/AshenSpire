@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json f17d8cdea9f9d54b
+// source content/config/ui/screens/prologue.json e1c2d650ace2d172
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -771,7 +771,7 @@ export const uiConfig = deepFreeze({
         "sequence": {
           "schemaVersion": 1,
           "kind": "AshenSpire prologue art",
-          "revision": "2026-09-21-staging-v4",
+          "revision": "2026-09-21-staging-v5",
           "labels": {
             "continue": "Continue",
             "setForth": "Set forth",
@@ -821,30 +821,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "year",
@@ -862,30 +839,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "carry",
@@ -915,30 +869,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "night",
@@ -957,28 +888,7 @@ export const uiConfig = deepFreeze({
               "music": "keep",
               "stinger": "none",
               "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.06,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
+                "wash": 0.06
               }
             },
             {
@@ -1010,30 +920,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "extraA",
@@ -1051,30 +938,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "extraB",
@@ -1092,30 +956,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "extraC",
@@ -1133,30 +974,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             },
             {
               "id": "extraD",
@@ -1174,30 +992,7 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {
-                "layout": "caption",
-                "imageScale": 1,
-                "imageFit": "cover",
-                "imageFocusX": 50,
-                "imageFocusY": 50,
-                "camera": "auto",
-                "cameraAmount": 3.5,
-                "wash": 0.14,
-                "textPosition": "bottom-center",
-                "textAlign": "center",
-                "textScale": 1,
-                "textInsetX": 4,
-                "textInsetY": 4,
-                "textBox": true,
-                "textBoxVisible": true,
-                "textBoxOpacity": 1,
-                "textBoxColor": "#100e0c",
-                "textOutline": false,
-                "textOutlineColor": "#100e0c",
-                "textOutlineWidth": 2,
-                "reveal": "none",
-                "revealSpeed": 45
-              }
+              "stage": {}
             }
           ],
           "presentation": {
@@ -1272,9 +1067,6 @@ export const uiConfig = deepFreeze({
       },
       "sizing": {
         "mobileBreakpoint": 760
-      },
-      "motion": {
-        "zoom": 1.035
       }
     },
     "shop": {

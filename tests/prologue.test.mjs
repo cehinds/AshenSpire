@@ -2,13 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
-import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueScenePreset, prologueBoxBackground, PROLOGUE_PREFIX, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS, PROLOGUE_SLOT_IDS, PROLOGUE_STAGE_FIELDS, prologueStaging, prologueFreeSlot, prologueSceneCopy, prologueSceneClear, prologueReorderChanges, prologueSlotPayload, prologueSlotChanges } from '../src/model/prologue.js';
+import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueScenePreset, prologueBoxBackground, PROLOGUE_PREFIX, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS, PROLOGUE_SLOT_IDS, PROLOGUE_STAGE_FIELDS, prologueStaging, prologueFreeSlot, prologueSceneCopy, prologueSceneClear, prologueReorderChanges, prologueSlotPayload, prologueSlotChanges, prologueStagedOrder, PROLOGUE_MUSIC } from '../src/model/prologue.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRegistries } from '../src/model/registries.js';
 import { prologueSceneMs, prologueTransitionMs } from '../src/model/prologueTiming.js';
 import { prologueArtwork } from '../src/ui/assets.js';
+import { BEDS } from '../src/content/music.js';
+import { settingsRowHtml } from '../src/ui/screens/settings.js';
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
   const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.night.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.carry.actor.mobile.height':36};
@@ -267,7 +269,8 @@ test('the opening plays in the configured order, over the configured subset', ()
     ['gameConfig.prologue.scenes.step.order', 1],
     ['gameConfig.prologue.scenes.warmth.order', 5],
   ]));
-  assert.deepEqual(ids(none), PROLOGUE_DEFAULTS.scenes.map(scene => scene.id));
+  assert.deepEqual(ids(none), PROLOGUE_DEFAULTS.scenes.filter(scene => !PROLOGUE_SLOT_IDS.includes(scene.id)).map(scene => scene.id),
+    'the stand-in is the opening as it shipped — not four blank slots as well');
   // Ties keep authored order, so a half-numbered sequence is still stable:
   // `night` sharing position 1 with `warmth` sits behind it, not in front.
   assert.deepEqual(ids(prologueConfig({'gameConfig.prologue.scenes.night.order': 1})), ['warmth','night','year','carry','step']);
@@ -438,14 +441,18 @@ test('a scene may keep its own staging, and inherits the house style until it do
   const staged = id => prologueStaging(config, config.scenes.find(scene => scene.id === id));
   assert.equal(staged('warmth').layout, 'overlay', 'the house style');
   assert.equal(staged('step').layout, 'letterbox', 'one scene may letterbox while the rest do not');
-  // ONE TOGGLE, THE WHOLE BLOCK: a scene that answers for itself answers for
-  // every field, so its text size is its own default, not the opening's 1.4.
+  // A SCENE'S BLOCK IS ONLY WHAT IT ANSWERS FOR ITSELF. `step` set its frame and
+  // nothing else, so it still follows the opening's text size. Shipping a full
+  // copy of the house style inside every scene is what made `night` — the one
+  // scene with its own wash — silently ignore every other setting changed here.
   assert.equal(staged('warmth').textScale, 1.4);
-  assert.equal(staged('step').textScale, 1);
-  // Every staging field exists in both homes, which is what makes that true.
+  assert.equal(staged('step').textScale, 1.4, 'what a scene has not set still follows the house style');
+  assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06}, 'night answers for its wash alone');
+  const housed = prologueConfig({[`${PROLOGUE_PREFIX}presentation.layout`]: 'letterbox'});
+  for (const scene of housed.scenes) assert.equal(prologueStaging(housed, scene).layout, 'letterbox', `${scene.id} ignored the house style`);
+  assert.equal(prologueStaging(housed, housed.scenes.find(scene => scene.id === 'night')).wash, .06, 'while night keeps the one thing it answers for');
   for (const field of PROLOGUE_STAGE_FIELDS) {
     assert.ok(field.key in config.presentation, `${field.key} missing from the house style`);
-    for (const scene of config.scenes) assert.ok(field.key in scene.stage, `${field.key} missing from ${scene.id}`);
   }
   // And both homes are reachable from Settings, as rows that refuse bad values.
   const rows = new Map(prologueRows().map(row => [row.key, row]));
@@ -537,15 +544,79 @@ test('the camera, the reveal, the hold and the scene audio are all settings the 
   const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
   assert.match(screen, /scene\.effect === 'push' \? 'in' : 'none'/, 'auto is the old rule, written down');
   assert.match(screen, /!scene\.waitForInput/, 'a holding scene is never advanced automatically');
-  assert.match(screen, /audio\.music\?\.\(scene\.music\)/, 'a scene may take the music with it');
-  assert.match(screen, /audio\.sfx\?\.\(scene\.stinger\)/, 'and may open on a sound');
+  // ENTERED, not re-drawn: a rotation re-runs the scene, and an unconditional
+  // stinger fired again on every rotation.
+  assert.match(screen, /notify && audio && scene\.music/, 'the music moves when the scene is entered');
+  assert.match(screen, /notify && audio && scene\.stinger/, 'and so does the stinger');
+  // Silence is a CONTEXT, not a stop: stopping the sound without moving the
+  // engine's context left `music('map')` answering 'unchanged' when the opening
+  // ended, and the map stayed silent.
+  assert.ok(!/audio[^\n]*stopMusic/.test(screen), 'the opening never stops the music behind the engine\'s back');
+  assert.equal(BEDS.quiet, 'silence', 'deliberate quiet, spelled the one way');
+  assert.ok(Object.keys(PROLOGUE_MUSIC).filter(id => id !== 'keep').every(id => id in BEDS), 'every music choice is a real bed');
   // The reveal never removes the words from the document — it recolours them.
   assert.match(screen, /class:'prologue-unsaid'/);
   assert.ok(!/aria-hidden[^)]*unsaid/.test(screen), 'the unread part stays readable to assistive technology');
   const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
-  assert.match(css, /\.prologue-unsaid\{color:transparent\}/);
+  // Transparent FILL alone left the stroke visible, so with the text outline on
+  // every un-revealed letter was legible in outline from the first frame.
+  assert.match(css, /\.prologue-unsaid\{color:transparent;-webkit-text-stroke-color:transparent\}/);
   // Reduced motion is one branch, and it is "show everything".
   assert.match(screen, /if \(!steps \|\| reduced\(\)\) \{ dialogue\.textContent = text; return null; \}/);
   // Main passes the engine in, or the opening simply keeps whatever is playing.
   assert.match(readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'), /settings, run, audio, startScene/);
+});
+
+// ---- the list editor, as the panel actually renders it ----------------------
+//
+// `settingsRowHtml` is a pure function of the settings, so the row the owner
+// sees can be asserted without a browser. Every claim below is one the review
+// of #1237 caught the first cut getting wrong.
+test('the scene list shows the staging, and never claims a scene is playing when it is not', () => {
+  const row = prologueRows().find(entry => entry.type === 'sceneList');
+  const scenes = html => [...html.matchAll(/data-scene="(\w+)"/g)].map(match => match[1]);
+  const shipped = PROLOGUE_DEFAULTS.scenes.map(scene => scene.id);
+  // A scene that is switched off KEEPS ITS PLACE in the list, or every edit
+  // would renumber it to the end: switch one off, move anything, switch it back
+  // on, and it used to come back last.
+  const parked = settingsRowHtml({[`${PROLOGUE_PREFIX}scenes.year.enabled`]: false}, row, {});
+  assert.deepEqual(scenes(parked), shipped);
+  assert.match(parked, /data-scene="year"[^>]*data-live="0"/);
+  assert.match(parked, /data-scene="carry"[^>]*data-live="1"/);
+  // The row that IS the next free slot cannot duplicate itself — it would be
+  // both sides of the copy, and the insert landed at the front of the opening.
+  assert.match(parked, /data-scene-copy="extraA" disabled/);
+  assert.ok(!/data-scene-copy="warmth" disabled/.test(parked));
+  // With every scene off, nothing is playing, the list says so, and it does not
+  // render nine "On" buttons over a profile that has them all switched off.
+  const none = settingsRowHtml(Object.fromEntries(shipped.map(id => [`${PROLOGUE_PREFIX}scenes.${id}.enabled`, false])), row, {});
+  assert.equal((none.match(/data-live="1"/g) || []).length, 0);
+  assert.equal((none.match(/aria-pressed="true"/g) || []).length, 0);
+  assert.match(none, /falls back to the five scenes it shipped with/);
+  // The ends of the staging are the ends of the list, whatever is switched on.
+  assert.match(parked, /data-scene-move="up" data-scene-id="warmth"[^>]*disabled/);
+  assert.match(parked, /data-scene-move="down" data-scene-id="extraD"[^>]*disabled/);
+  // The order every action edits comes from the SETTINGS, not from the rows on
+  // screen: an abandoned drag leaves the DOM rearranged with nothing saved, and
+  // reading it back persisted that arrangement on the next button press.
+  const panel = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(panel, /const stagedIds = \(\) => \{/);
+  assert.ok(!/sceneIdsInList/.test(panel), 'no action reads the running order out of the DOM');
+  assert.match(panel, /if \(moved\) renderSettings/, 'and an abandoned drag puts the rows back');
+  assert.match(panel, /if \(!slot \|\| slot === source\) return;/, 'a slot is never its own source');
+});
+
+test('the first frame is already staged, and the inset measures the axis it names', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  // applyStaging used to run only after the painting decoded — up to eight
+  // seconds on a missing file — so the opening drew its first scene in the
+  // shipped caption layout and jumped into the chosen one when the art landed.
+  const mount = screen.indexOf('applyStaging(prologueStaging(config,config.scenes[sceneIndex]));');
+  assert.ok(mount > 0 && mount < screen.indexOf('showScene(position); raf = requestAnimationFrame'), 'the frame is up before the artwork');
+  // A percentage margin measures the container's WIDTH on both axes, so the
+  // vertical inset is multiplied by a height unit instead.
+  assert.match(screen, /String\(Number\(stage\.textInsetY\) \|\| 0\)/, 'the property carries a bare number');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.match(css, /calc\(var\(--prologue-inset-y,4\)\*1cqh\) calc\(var\(--prologue-inset-x,4\)\*1cqw\)/);
+  assert.match(css, /\.prologue-screen\{container-type:size/, 'and the screen is the container those units measure');
 });

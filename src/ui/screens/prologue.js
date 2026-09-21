@@ -73,9 +73,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // one of these for itself, so one scene may letterbox while the rest fill the
   // frame. The classes say which wireframe is standing; the properties fill it
   // in; both are re-applied on entry rather than once at mount.
-  let staged = prologueStaging(config,config.scenes[0]);
   function applyStaging(stage) {
-    staged = stage;
     for (const name of Object.keys(PROLOGUE_LAYOUTS)) root.classList.toggle(`prologue-layout-${name}`, name === stage.layout);
     caption.dataset.position = String(stage.textPosition || 'bottom-center');
     root.classList.toggle('prologue-has-box', stage.textBox !== false);
@@ -86,8 +84,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     root.style.setProperty('--prologue-box', prologueBoxBackground(stage));
     root.style.setProperty('--prologue-outline-color', stage.textOutlineColor || '#100e0c');
     root.style.setProperty('--prologue-outline-width', `${Number(stage.textOutlineWidth) || 0}px`);
-    root.style.setProperty('--prologue-inset-x', `${Number(stage.textInsetX) || 0}%`);
-    root.style.setProperty('--prologue-inset-y', `${Number(stage.textInsetY) || 0}%`);
+    // BARE NUMBERS, because a percentage margin measures the container's WIDTH
+    // on both axes — 40% "top and bottom" was 40% of the width, which pushed
+    // the plate off a wide screen. The stylesheet multiplies them by container
+    // query units, so each axis measures the axis it names.
+    root.style.setProperty('--prologue-inset-x', String(Number(stage.textInsetX) || 0));
+    root.style.setProperty('--prologue-inset-y', String(Number(stage.textInsetY) || 0));
     // Fit, focus and scale go through custom properties rather than inline style
     // on the image, so a wireframe that must letterbox (which is a fact about the
     // frame, not about this setting) can still override the fit in CSS.
@@ -203,12 +205,15 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     // finished narration, and nothing has to be re-typed when the scene is
     // resumed after a pause, a rotation or a tab switch.
     reveal = startReveal(copy.text,stage_);
-    // A scene may take the music with it, and may open on a sound.
-    if (audio && scene.music && scene.music !== 'keep') {
-      if (scene.music === 'silence') audio.stopMusic?.();
-      else audio.music?.(scene.music);
-    }
-    if (audio && scene.stinger && scene.stinger !== 'none') audio.sfx?.(scene.stinger);
+    // A scene may take the music with it, and may open on a sound — but only
+    // when the scene is actually being ENTERED. `notify` is false when the same
+    // scene is re-drawn in place (a rotation, a breakpoint change), and a
+    // stinger that fired again on every rotation was the scene announcing
+    // itself twice. Silence is the `quiet` context, never stopMusic(): the
+    // engine remembers where it is, and stopping without moving left the map
+    // silent after the opening.
+    if (notify && audio && scene.music && scene.music !== 'keep') audio.music?.(scene.music);
+    if (notify && audio && scene.stinger && scene.stinger !== 'none') audio.sfx?.(scene.stinger);
     next.textContent = position === order.length-1 ? config.labels.setForth : config.labels.continue;
     progress.textContent = `${position+1} / ${order.length}`;
     stage.append(plate);
@@ -253,6 +258,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);
+  // THE FRAME IS UP BEFORE THE ARTWORK IS. `showScene` applies the staging when
+  // it appends the plate, which waits on the painting decoding (up to eight
+  // seconds when the file is missing) — so the opening used to draw its first
+  // scene in the shipped caption layout and jump into the chosen one later.
+  applyStaging(prologueStaging(config,config.scenes[sceneIndex]));
   showScene(position); raf = requestAnimationFrame(tick); next.focus({preventScroll:true});
   return cleanup;
 }

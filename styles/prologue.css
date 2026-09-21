@@ -1,4 +1,4 @@
-.prologue-screen{position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
+.prologue-screen{container-type:size;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto;min-height:100%;height:100dvh;background:#100e0c;color:#eee6d5;overflow:auto}
 .prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
 .prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
 .prologue-background{width:100%;height:100%;object-fit:cover;display:block}
@@ -49,7 +49,7 @@
 /* Text over the art: one cell, and `data-position` places the plate in it. */
 .prologue-layout-overlay{grid-template-rows:1fr}
 .prologue-layout-overlay .prologue-stage,.prologue-layout-overlay .prologue-caption{grid-row:1;grid-column:1}
-.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:var(--prologue-inset-y,4%) var(--prologue-inset-x,4%);height:max-content}
+.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;margin:calc(var(--prologue-inset-y,4)*1cqh) calc(var(--prologue-inset-x,4)*1cqw);height:max-content}
 .prologue-layout-overlay .prologue-caption[data-position^=top]{align-self:start}
 .prologue-layout-overlay .prologue-caption[data-position^=middle]{align-self:center}
 .prologue-layout-overlay .prologue-caption[data-position$=left]{justify-self:start;max-width:min(46rem,62%)}
@@ -92,7 +92,7 @@
 /* The reveal: finished text, the part not yet reached drawn in transparent ink.
    It keeps its space, so nothing reflows as the words arrive, and it keeps its
    place in the accessibility tree, so nothing has to wait for a typewriter. */
-.prologue-unsaid{color:transparent}
+.prologue-unsaid{color:transparent;-webkit-text-stroke-color:transparent}
 /* ---- Advanced → Opening: the scene list and the preset slots --------------
    The list IS the running order: one row per scene, the playing ones first and
    numbered, anything switched off parked below them. Drag or arrow — both write

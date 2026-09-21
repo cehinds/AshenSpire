@@ -78,7 +78,10 @@ export const PROLOGUE_REVEALS = {
 /** The music beds a scene may call for, beyond keeping what is playing. */
 export const PROLOGUE_MUSIC = {
   keep: 'Keep what is playing',
-  silence: 'Silence',
+  // `quiet` is a real music context whose bed is the silence word, not the
+  // absence of one: switching to it leaves the engine knowing where it is, so
+  // the screen after the opening starts its own bed again.
+  quiet: 'Silence',
   title: 'Title', map: 'The road', rest: 'Shrine', shop: 'Merchant',
   combat: 'Combat', elite: 'Elite', boss: 'Boss', victory: 'Victory',
 };
@@ -163,6 +166,12 @@ export function prologueStaging(config, scene) {
   const base = config.presentation;
   if (!scene?.ownStaging || !scene.stage) return base;
   const staged = { ...base };
+  // A SCENE'S BLOCK HOLDS ONLY WHAT IT ANSWERS FOR ITSELF. It shipped as a full
+  // copy of the house style, which quietly opted `night` — the one scene that
+  // needs its own wash — out of every other staging setting the owner changed:
+  // turning the opening's wireframe to letterbox moved four scenes of five.
+  // Anything the scene has not set follows the house style, as the toggle's own
+  // label ("Use its own staging") promises for the things it has set.
   for (const field of PROLOGUE_STAGE_FIELDS) {
     if (scene.stage[field.key] !== undefined) staged[field.key] = scene.stage[field.key];
   }
@@ -231,7 +240,11 @@ export function prologueRows() {
   const add = (path, label, topic, options = {}) => rows.push({
     cat: 'Advanced', advancedGroup: 'Opening', prologueTopic: topic,
     key: prologueSettingKey(path), prologuePath: path,
-    def: get(PROLOGUE_DEFAULTS, path), label,
+    // A scene's staging block is sparse — it holds only what that scene answers
+    // for itself — so a row with nothing authored under it shows the house
+    // style's value, which is what the scene is drawn in until it is edited.
+    def: get(PROLOGUE_DEFAULTS, path) ?? (path[0] === 'scenes' && path[2] === 'stage' ? PROLOGUE_DEFAULTS.presentation[path[3]] : undefined),
+    label,
     note: 'Saved with your configuration. Applies to previews and new openings.', ...options,
   });
   const number = (min, max, step = .1) => ({ type: 'number', min, max, step, integer: false });
@@ -350,12 +363,22 @@ export function prologueSequence(config) {
   // running order nobody chose to watch, since every scene in it is switched
   // off. The stand-in is the sequence as shipped, and it is returned before the
   // order is consulted at all.
-  if (!kept.length) return config.scenes.map((scene, index) => index);
-  return stagedOrder(config).filter((index) => config.scenes[index].enabled !== false);
+  // THE STAND-IN IS THE OPENING AS IT SHIPPED — the five authored scenes, in
+  // authored order. Standing in every scene meant the four empty slots played
+  // too: four blank text cards, and a progress readout of nine.
+  if (!kept.length) return config.scenes.map((scene, index) => index).filter((index) => !isPrologueSlot(config.scenes[index]));
+  return prologueStagedOrder(config).filter((index) => config.scenes[index].enabled !== false);
 }
 
-/** Every scene, in the order they WOULD play — the staging before inclusion. */
-function stagedOrder(config) {
+/**
+ * Every scene, in the order they WOULD play — the staging before inclusion.
+ *
+ * Exported because the list editor shows exactly this: the opening as staged,
+ * with the scenes that are switched off still standing in their own places. A
+ * list of "playing, then everything else" would renumber every parked scene to
+ * the end the first time anything else moved.
+ */
+export function prologueStagedOrder(config) {
   return config.scenes
     .map((scene, index) => ({ index, at: Number.isFinite(scene.order) ? scene.order : index + 1 }))
     .sort((a, b) => a.at - b.at || a.index - b.index)
@@ -382,7 +405,7 @@ export function prologueResumePosition(config, sceneIndex) {
   const order = prologueSequence(config);
   const at = order.indexOf(sceneIndex);
   if (at >= 0) return at;
-  const staged = stagedOrder(config);
+  const staged = prologueStagedOrder(config);
   const from = staged.indexOf(sceneIndex);
   if (from < 0) return 0;
   for (let step = from + 1; step < staged.length; step += 1) {

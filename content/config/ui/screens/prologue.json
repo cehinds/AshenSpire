@@ -3,7 +3,7 @@
     "sequence": {
       "schemaVersion": 1,
       "kind": "AshenSpire prologue art",
-      "revision": "2026-09-21-staging-v4",
+      "revision": "2026-09-21-staging-v5",
       "labels": {
         "continue": "Continue",
         "setForth": "Set forth",
@@ -53,30 +53,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "year",
@@ -94,30 +71,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "carry",
@@ -147,30 +101,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "night",
@@ -189,28 +120,7 @@
           "music": "keep",
           "stinger": "none",
           "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.06,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
+            "wash": 0.06
           }
         },
         {
@@ -242,30 +152,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "extraA",
@@ -283,30 +170,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "extraB",
@@ -324,30 +188,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "extraC",
@@ -365,30 +206,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         },
         {
           "id": "extraD",
@@ -406,30 +224,7 @@
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {
-            "layout": "caption",
-            "imageScale": 1,
-            "imageFit": "cover",
-            "imageFocusX": 50,
-            "imageFocusY": 50,
-            "camera": "auto",
-            "cameraAmount": 3.5,
-            "wash": 0.14,
-            "textPosition": "bottom-center",
-            "textAlign": "center",
-            "textScale": 1,
-            "textInsetX": 4,
-            "textInsetY": 4,
-            "textBox": true,
-            "textBoxVisible": true,
-            "textBoxOpacity": 1,
-            "textBoxColor": "#100e0c",
-            "textOutline": false,
-            "textOutlineColor": "#100e0c",
-            "textOutlineWidth": 2,
-            "reveal": "none",
-            "revealSpeed": 45
-          }
+          "stage": {}
         }
       ],
       "presentation": {
@@ -504,8 +299,5 @@
   },
   "sizing": {
     "mobileBreakpoint": 760
-  },
-  "motion": {
-    "zoom": 1.035
   }
 }
