@@ -63,6 +63,14 @@ export function serializeCombatSnapshot(combat) {
     enemies: combat.enemies,
     loadout: combat.loadout,
     attributes: combat.attributes,
+    // THE RULE THE FIGHT WAS PRICED UNDER, AND IT HAS TO RIDE. The Poise
+    // vessel is RE-DERIVED on restore (see below), and it is derived from this
+    // snapshot — leaving it out meant a resumed fight re-priced the meter on
+    // the AUTHORED table. That was invisible while every creation mode
+    // converted one-for-one; the lean mode converts at a fifth, so the same
+    // Constitution was suddenly worth a fifth of the vessel the moment a
+    // player saved and came back.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
@@ -124,6 +132,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
+    // A snapshot written before this field existed carries null, which is
+    // exactly what the restore door read from an absent field before.
+    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || null,
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,

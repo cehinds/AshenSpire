@@ -1,4 +1,5 @@
 const PREFIX = 'gameConfig.startingStats.';
+const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
 
 // ---- ONE DRIVER FOR STARTING STATS (owner, 2026-09-20) ---------------------
@@ -10,15 +11,45 @@ const TOTAL_MAX = 495;
 // "changing class defaults and starting stats seem to be in multiple menus
 // instead of having just one driver."
 //
-// So the pool is now TWO NUMBERS IN HIS WORDS, on the mode creation actually
-// offers: how many points are AVAILABLE TO ASSIGN, and the TOTAL a character
-// carries. Everything else — the per-attribute baseline, the floor, the
-// ceiling, each class's preset — is derived from those two and sits under the
-// same topic. The keys are unchanged (`…<modeId>.total`), but the row's FLOOR
-// is not: it moved from the attribute count to the kit floor (12), so an older
+// So the pool is now A HANDFUL OF NUMBERS IN HIS WORDS, on the mode creation
+// actually offers. The keys are unchanged (`…<modeId>.total`), but the row's
+// FLOOR is not: it moved from the attribute count to the kit floor, so an older
 // export carrying a smaller total is clamped to that floor with a named notice
 // — see `raisedFloor` below and `parseAdvancedConfigFile`. The rest of the file
 // still imports; before that, one stale total refused every other setting in it.
+//
+// ---- THE REFRAME (owner, 2026-09-20, second pass) --------------------------
+//
+// "I'd like the default stats to be low, with everyone having a total pool of
+// points starting off. the default stat for each stat is 1 and assign allows a
+// user to assign 3 points … Also, I'd like to have more stat customization
+// options in general to be able to make this change in the settings."
+//
+// The shipped default is now the `lean` mode (content/attributes.js) and the
+// topic is stated the way he states it — THE BASELINE IS THE FIRST NUMBER,
+// because it is the one he named first and the one he wanted to type:
+//
+//   Starting value for every attribute   `…<modeId>.baseline`       (new)
+//   Points available to assign           `…<modeId>.bonusPool`
+//   Total points on a character          `…<modeId>.total`
+//   Lowest a stat may be set to          `…<modeId>.minimum`        (new)
+//   Highest a stat may be set to         `…<modeId>.maximum`        (new)
+//   Points may be taken back off a stat  `…<modeId>.belowBaseline`  (new)
+//
+// BASELINE AND TOTAL ARE THE SAME FACT SAID TWO WAYS, so one of them has to
+// win or the pair is a coin toss. The baseline wins WHEN IT IS SET: total is
+// then `baseline × attributes + points available`, which is the arithmetic in
+// his sentence. With no baseline typed, the total drives and the baseline is
+// derived from it exactly as it always was — every configuration exported
+// before this reframe therefore resolves to the same numbers it always did.
+//
+// EQUIPMENT REQUIREMENTS BELONG TO THIS TOPIC TOO, and that is why they are in
+// this file rather than a new one. They are already the FLOOR under every dial
+// here (`kitAttributeMinimums`): the total cannot go below what the starting
+// kits ask for, so a stat scale and the numbers gating equipment are one
+// question. `equipmentRequirementRows` puts each authored minimum on screen
+// beside the scale that has to clear it, plus one multiplier for the whole
+// table — his "across the board".
 
 /**
  * kitAttributeMinimums(bundle) → { [classId]: { [attributeId]: {minimum, itemId, kit} } }
@@ -44,7 +75,7 @@ export function kitAttributeMinimums(bundle) {
     const need = byClass[kit.classId] ||= {};
     for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
       for (const row of requirements) {
-        if (row?.itemId !== itemId || !Number.isInteger(row.minimum)) continue;
+        if (row?.itemId !== itemId || !Number.isInteger(row.minimum) || row.minimum <= 0) continue;
         if (!need[row.attributeId] || need[row.attributeId].minimum < row.minimum) {
           need[row.attributeId] = { minimum: row.minimum, itemId, kit: kit.label || kit.id };
         }
@@ -57,6 +88,126 @@ export function kitAttributeMinimums(bundle) {
 /** The kit minimum for one class/attribute, as a plain number (0 when free). */
 export function kitMinimum(needs, classId, attributeId) {
   return needs?.[classId]?.[attributeId]?.minimum || 0;
+}
+
+// ---- EQUIPMENT REQUIREMENTS AS DIALS ---------------------------------------
+
+/** Every piece that can carry a requirement, by id, for labelling a row. */
+function equipmentPieceNames(bundle) {
+  const names = {};
+  for (const piece of [...(bundle?.equipment?.armaments || []), ...(bundle?.equipment?.armour || [])]) {
+    if (piece?.id && !names[piece.id]) names[piece.id] = piece.name || piece.id;
+  }
+  return names;
+}
+
+/**
+ * equipmentRequirementRows(bundle) → one row per authored item/attribute
+ * minimum, plus the across-the-board multiplier.
+ *
+ * THE MULTIPLIER IS NOT A SECOND HOME FOR THE SAME NUMBER. It multiplies the
+ * AUTHORED value and an explicit row overrides the product, so the two compose
+ * in one direction only: scale the table, then correct the rows you disagree
+ * with. `resolveEquipmentRequirements` is the single reader of both.
+ */
+export function equipmentRequirementRows(bundle) {
+  const rows = [];
+  const names = equipmentPieceNames(bundle);
+  const labels = Object.fromEntries((bundle?.attributes || []).map((row) => [row.id, row.label || row.id]));
+  rows.push({
+    cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
+    type: 'number', integer: false, step: 0.05, min: 0, max: 10, def: 1,
+    key: `${REQUIREMENT_PREFIX}scale`,
+    label: 'Equipment requirement multiplier',
+    searchPath: 'equipment requirements multiplier scale across the board',
+    note: 'Multiply every authored attribute minimum below at once, rounded to whole points. 1 keeps the authored table. Set a row below to override the product for that one item. Lowering this lowers the least a character can carry, because a class must still be able to hold the kit it starts in. Applies to a new run.',
+  });
+  for (const row of bundle?.equipment?.equipmentRequirements || []) {
+    if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
+      type: 'number', integer: true, step: 1, min: 0, max: TOTAL_MAX, def: row.minimum,
+      key: `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`,
+      label: `${names[row.itemId] || row.itemId} — ${labels[row.attributeId] || row.attributeId} required`,
+      searchPath: `equipment requirement ${row.itemId} ${row.attributeId}`,
+      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Overrides the multiplier above for this item. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
+    });
+  }
+  return rows;
+}
+
+/**
+ * resolveEquipmentRequirements(bundle, settings) → the requirement table a new
+ * run is born under, or null when nothing was changed.
+ *
+ * Returning null rather than a copy is what lets `configuredContentBundle`
+ * leave `bundle.equipment` shared by reference in the ordinary case — the
+ * table is large and every run pays for a clone of it.
+ */
+export function resolveEquipmentRequirements(bundle, settings = {}) {
+  const authored = bundle?.equipment?.equipmentRequirements || [];
+  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
+  const scale = Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
+    ? Number(rawScale) : 1;
+  let changed = false;
+  const next = authored.map((row) => {
+    if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) return row;
+    const raw = settings[`${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`];
+    const explicit = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    const minimum = explicit ?? Math.max(0, Math.min(TOTAL_MAX, Math.round(row.minimum * scale)));
+    if (minimum === row.minimum) return row;
+    changed = true;
+    return { ...row, minimum };
+  });
+  return changed ? next : null;
+}
+
+/**
+ * bundleWithConfiguredEquipment(bundle, settings) → the bundle whose kit floors
+ * the dials above must be measured against.
+ *
+ * EVERY FLOOR IN THIS FILE READS `bundle.equipment.equipmentRequirements`, and
+ * the owner can now move those numbers. Measuring a total against the AUTHORED
+ * table after he has halved it would refuse a total his own settings make
+ * legal — the same class of defect as the floor that was never read at all.
+ */
+export function bundleWithConfiguredEquipment(bundle, settings = {}) {
+  const equipmentRequirements = resolveEquipmentRequirements(bundle, settings);
+  if (!equipmentRequirements) return bundle;
+  return { ...bundle, equipment: { ...bundle.equipment, equipmentRequirements } };
+}
+
+/**
+ * applyEquipmentRequirementConfig(configured, authored, settings)
+ *
+ * The table AND the copy of it each piece carries. `content/equipment.js`
+ * folds the rows onto every armament and outfit as `requirements.attributes`,
+ * and that copy is what the equip door, the item card and smithing read — a
+ * configured table that left it behind would show one number and enforce
+ * another.
+ */
+export function applyEquipmentRequirementConfig(configured, authored, settings = {}) {
+  const equipmentRequirements = resolveEquipmentRequirements(authored, settings);
+  if (!equipmentRequirements) return;
+  const byItem = {};
+  for (const row of equipmentRequirements) {
+    if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    (byItem[row.itemId] ||= {})[row.attributeId] = row.minimum;
+  }
+  const restate = (piece) => {
+    const attributes = byItem[piece?.id];
+    if (!attributes && !piece?.requirements) return piece;
+    const next = { ...piece };
+    if (attributes) next.requirements = { ...piece.requirements, attributes: { ...attributes } };
+    else delete next.requirements;
+    return next;
+  };
+  configured.equipment = {
+    ...authored.equipment,
+    equipmentRequirements,
+    armaments: (authored.equipment?.armaments || []).map(restate),
+    armour: (authored.equipment?.armour || []).map(restate),
+  };
 }
 
 /**
@@ -106,6 +257,22 @@ export function visibleCreationModes(bundle) {
   return (bundle.creationModes || []).filter((mode) => ids.has(mode.id));
 }
 
+// The row label for each dial, in one place: the refusal sentences address a
+// row by the words on it, and a second copy of these strings is a caption that
+// can disagree with the screen.
+const DIAL_LABELS = Object.freeze({
+  baseline: 'Starting value for every attribute',
+  bonusPool: 'Points available to assign',
+  total: 'Total points on a character',
+  minimum: 'Lowest a stat may be set to',
+  maximum: 'Highest a stat may be set to',
+  belowBaseline: 'Points may be taken back off a stat',
+});
+
+function dialLabel(key) {
+  return DIAL_LABELS[key.slice(key.lastIndexOf('.') + 1)] || key;
+}
+
 export function startingStatRows(bundle) {
   const rows = [];
   const add = (key, def, label, topic, extra = {}) => rows.push({
@@ -124,30 +291,56 @@ export function startingStatRows(bundle) {
     // place. See visibleCreationModes above.
     const retired = visible.has(mode.id) ? {} : { retired: true };
     const prefix = named ? `${mode.label} — ` : '';
+    // HIS FIRST SENTENCE IS THE FIRST ROW. "the default stat for each stat is
+    // 1" is a number he wants to type, not one he wants to arrive at by
+    // dividing a total. When it is set it DECIDES the total; left alone, the
+    // total decides it, which is what every configuration exported before this
+    // row existed relies on.
+    add(PREFIX + mode.id + '.baseline', mode.baseline,
+      `${prefix}${DIAL_LABELS.baseline}`, 'Assign points', {
+        integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
+        note: `What every attribute opens at before a single point is assigned. Setting this decides the total: baseline × ${ids.length} attributes, plus the points available to assign. Leave it alone and it is derived from the total instead. Applies to a new run.`,
+      });
     add(PREFIX + mode.id + '.bonusPool', mode.bonusPool,
-      `${prefix}Points available to assign`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.bonusPool}`, 'Assign points', {
         integer: true, step: 1, min: 0, max: TOTAL_MAX - ids.length, ...retired,
-        note: `How many of the character's points are yours to place at creation. The rest is the baseline every attribute opens at — (total − available) ÷ ${ids.length} attributes, rounded down, with any remainder joining the points you assign. Applies to a new run.`,
+        note: `How many of the character's points are yours to place at creation, on top of the starting value above. Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.total', total,
-      `${prefix}Total points on a character`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.total}`, 'Assign points', {
         integer: true, step: 1, min: bounds.min, max: bounds.max, ...retired,
         // The floor moved from the attribute count to the kit floor after
         // schema version 1 shipped. An older export carrying a smaller total
         // is clamped with a notice rather than taking the whole file down.
         raisedFloor: bounds.min > ids.length ? { was: ids.length, clamp: true } : undefined,
         // WHY THE FLOOR IS WHERE IT IS, as a sentence a refusal can borrow.
-        // A typed 8 clamps to 12; the row has to be able to say which class
-        // and which kit put 12 there, or the clamp is a number from nowhere.
+        // A typed 4 clamps to the kit floor; the row has to be able to say
+        // which class and which kit put it there, or the clamp is a number
+        // from nowhere.
         boundsNote: floorSentence(bundle, bounds).trim(),
-        note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
+        note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Ignored while a starting value is set above, which decides it instead. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
+      });
+    add(PREFIX + mode.id + '.minimum', mode.minimum,
+      `${prefix}${DIAL_LABELS.minimum}`, 'Assign points', {
+        integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
+        note: 'The floor a stat can be dragged down to at creation, and the limit on how many points can be reclaimed from it. It can never exceed the starting value above. Applies to a new run.',
+      });
+    add(PREFIX + mode.id + '.maximum', mode.maximum,
+      `${prefix}${DIAL_LABELS.maximum}`, 'Assign points', {
+        integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
+        note: 'The most a single stat may be raised to AT CREATION. It caps the character screen, not the character: levelling raises it by the points levelled. It can never fall below the starting value, nor below what a starting kit asks for. Applies to a new run.',
+      });
+    add(PREFIX + mode.id + '.belowBaseline', mode.belowBaseline !== 'forbid',
+      `${prefix}${DIAL_LABELS.belowBaseline}`, 'Assign points', {
+        ...retired,
+        note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
   add(PREFIX + 'autoScale', true, 'Automatically scale stat conversions', 'Assign points', {
     // "Pool" now names the OTHER row. The ratio is total ÷ old total, so
     // moving only the points available to assign leaves it at 1 and the
     // conversions do not move at all.
-    note: 'On: conversion thresholds follow each mode’s total points relative to its original total. Off: use the conversion values below unchanged. Changing only the points available to assign leaves the total, and so the thresholds, unmoved. Whole-number attributes can still cause rounding differences. Applies to new runs.',
+    note: 'On: conversion thresholds follow each mode’s total points relative to its original total, composing with any scale the mode already ships with. Off: use the conversion values below, and the mode’s own shipped scale, unchanged. Whole-number attributes can still cause rounding differences. Applies to new runs.',
   });
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
@@ -161,7 +354,7 @@ export function startingStatRows(bundle) {
       });
     }
   }
-  return rows;
+  return [...rows, ...equipmentRequirementRows(bundle)];
 }
 
 /**
@@ -191,12 +384,10 @@ function redistribute(values, total, minimums, maximum) {
   return result;
 }
 
-function storedTotal(settings, mode) {
-  return settings[PREFIX + mode.id + '.total'];
-}
-
-function storedPool(settings, mode) {
-  return settings[PREFIX + mode.id + '.bonusPool'];
+/** A dial's stored value, or undefined when the owner has not typed one. */
+function stored(settings, mode, dial) {
+  const raw = settings[PREFIX + mode.id + '.' + dial];
+  return raw === undefined || raw === null || raw === '' ? undefined : raw;
 }
 
 /**
@@ -208,41 +399,116 @@ function storedPool(settings, mode) {
  * costs that row and nothing else. Before this, `redistribute` threw or the
  * bundle failed validation and `rebuildRegistries` discarded EVERY configured
  * value the owner had set.
+ *
+ * `authored` is expected to already carry the CONFIGURED equipment table
+ * (`bundleWithConfiguredEquipment`), because every floor below is read off it.
  */
 export function resolveStartingStatMode(authored, mode, settings = {}) {
   const ids = (authored.attributes || []).map((attribute) => attribute.id);
   const oldTotal = mode.baseline * ids.length + mode.bonusPool;
   const bounds = startingStatBounds(authored, mode.id);
   const refusals = [];
-  const rawTotal = storedTotal(settings, mode);
+  const refuse = (dial, value, dialBounds, kept, extra = {}) => refusals.push({
+    key: PREFIX + mode.id + '.' + dial, value, bounds: dialBounds, kept, ...extra,
+  });
+
+  // ---- the two numbers that decide the arithmetic -------------------------
+  //
+  // BASELINE FIRST WHEN IT IS TYPED, TOTAL FIRST WHEN IT IS NOT. The second
+  // branch is the code this function has always run, unchanged to the letter,
+  // so a configuration written before the baseline row existed resolves to the
+  // numbers it always did.
+  const rawBaseline = stored(settings, mode, 'baseline');
+  const rawPool = stored(settings, mode, 'bonusPool');
+  const rawTotal = stored(settings, mode, 'total');
+  let baseline = null;
   let total = oldTotal;
-  if (rawTotal !== undefined && rawTotal !== null && rawTotal !== '') {
-    if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;
-    else refusals.push({ key: PREFIX + mode.id + '.total', value: rawTotal, bounds, kept: oldTotal });
+  let pool = mode.bonusPool;
+
+  if (rawBaseline !== undefined) {
+    const poolCeiling = TOTAL_MAX - ids.length;
+    if (rawPool !== undefined) {
+      if (Number.isInteger(rawPool) && rawPool >= 0 && rawPool <= poolCeiling) pool = rawPool;
+      else refuse('bonusPool', rawPool, { min: 0, max: poolCeiling }, pool);
+    }
+    const baselineCeiling = Math.max(1, Math.floor((bounds.max - pool) / ids.length));
+    if (Number.isInteger(rawBaseline) && rawBaseline >= 1 && rawBaseline <= baselineCeiling
+      && rawBaseline * ids.length + pool >= bounds.min) {
+      baseline = rawBaseline;
+      total = baseline * ids.length + pool;
+    } else {
+      // The baseline is refused on ITS OWN ROW even when it is the kit floor
+      // that refuses it, because that is the number he typed. The floor
+      // sentence travels with the refusal so the message can still name the
+      // class and the kit.
+      refuse('baseline', rawBaseline, {
+        min: Math.max(1, Math.ceil((bounds.min - pool) / ids.length)), max: baselineCeiling,
+      }, mode.baseline, { kitBounds: bounds });
+      total = Math.max(bounds.min, Math.min(bounds.max, oldTotal));
+      pool = Math.min(mode.bonusPool, Math.max(0, total - ids.length));
+    }
+  } else {
+    if (rawTotal !== undefined) {
+      if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;
+      else refuse('total', rawTotal, bounds, oldTotal);
+    }
+    const poolMax = total - ids.length;
+    pool = Math.min(mode.bonusPool, Math.max(0, poolMax));
+    if (rawPool !== undefined) {
+      if (Number.isInteger(rawPool) && rawPool >= 0 && rawPool <= poolMax) pool = rawPool;
+      else refuse('bonusPool', rawPool, { min: 0, max: poolMax }, pool);
+    }
   }
-  const poolMax = total - ids.length;
-  const rawPool = storedPool(settings, mode);
-  let pool = Math.min(mode.bonusPool, Math.max(0, poolMax));
-  if (rawPool !== undefined && rawPool !== null && rawPool !== '') {
-    if (Number.isInteger(rawPool) && rawPool >= 0 && rawPool <= poolMax) pool = rawPool;
-    else refusals.push({ key: PREFIX + mode.id + '.bonusPool', value: rawPool, bounds: { min: 0, max: poolMax }, kept: pool });
-  }
-  if (total === oldTotal && pool === mode.bonusPool) return { mode: null, presets: null, refusals };
 
   const needs = mode.id === authored.attributeRules?.defaultMode ? kitAttributeMinimums(authored) : {};
   const kitCeiling = Math.max(0, ...Object.values(needs).flatMap((need) => Object.values(need).map((entry) => entry.minimum)));
   const ratio = total / oldTotal;
-  const baseline = Math.max(1, Math.floor((total - pool) / ids.length));
-  // ONLY THE FOUR NUMBERS THIS DIAL OWNS. Spreading the authored mode would
-  // alias its `equipmentProfiles` object into the configured bundle, and the
-  // combat-ratings block below writes through that reference.
+  const resolvedBaseline = baseline ?? Math.max(1, Math.floor((total - pool) / ids.length));
+
+  // ---- the three limits, each overridable ---------------------------------
+  let minimum = Math.max(1, Math.min(resolvedBaseline, Math.floor(mode.minimum * ratio)));
+  let maximum = Math.min(bounds.max, Math.max(resolvedBaseline, Math.ceil(mode.maximum * ratio), kitCeiling));
+  let belowBaseline = mode.belowBaseline;
+  let limitsMoved = false;
+
+  const rawMinimum = stored(settings, mode, 'minimum');
+  if (rawMinimum !== undefined) {
+    // A floor above the baseline is the one shape `attributeContentProblems`
+    // refuses outright ("minimum N exceeds baseline M"), so the row is bounded
+    // by the baseline in force rather than letting it reach the content door.
+    if (Number.isInteger(rawMinimum) && rawMinimum >= 1 && rawMinimum <= resolvedBaseline) {
+      limitsMoved ||= rawMinimum !== minimum;
+      minimum = rawMinimum;
+    } else refuse('minimum', rawMinimum, { min: 1, max: resolvedBaseline }, minimum);
+  }
+  const rawMaximum = stored(settings, mode, 'maximum');
+  if (rawMaximum !== undefined) {
+    const ceilingFloor = Math.max(resolvedBaseline, kitCeiling);
+    if (Number.isInteger(rawMaximum) && rawMaximum >= ceilingFloor && rawMaximum <= bounds.max) {
+      limitsMoved ||= rawMaximum !== maximum;
+      maximum = rawMaximum;
+    } else refuse('maximum', rawMaximum, { min: ceilingFloor, max: bounds.max }, maximum);
+  }
+  const rawBelow = stored(settings, mode, 'belowBaseline');
+  if (typeof rawBelow === 'boolean') {
+    const next = rawBelow ? 'allow' : 'forbid';
+    limitsMoved ||= next !== belowBaseline;
+    belowBaseline = next;
+  }
+
+  if (total === oldTotal && pool === mode.bonusPool && !limitsMoved) return { mode: null, presets: null, refusals };
+
+  // ONLY THE NUMBERS THIS DIAL OWNS. Spreading the authored mode would alias
+  // its `equipmentProfiles` object into the configured bundle, and the
+  // combat-ratings block in advancedConfig.js writes through that reference.
   const next = {
-    baseline,
-    bonusPool: total - baseline * ids.length,
-    minimum: Math.max(1, Math.min(baseline, Math.floor(mode.minimum * ratio))),
-    maximum: Math.min(bounds.max, Math.max(baseline, Math.ceil(mode.maximum * ratio), kitCeiling)),
+    baseline: resolvedBaseline,
+    bonusPool: total - resolvedBaseline * ids.length,
+    minimum,
+    maximum,
+    belowBaseline,
   };
-  const floor = mode.belowBaseline === 'forbid' ? Math.max(next.minimum, next.baseline) : next.minimum;
+  const floor = next.belowBaseline === 'forbid' ? Math.max(next.minimum, next.baseline) : next.minimum;
   const presets = {};
   const authoredPresets = authored.attributeRules?.presets?.[mode.id] || {};
   for (const [classId, preset] of Object.entries(authoredPresets)) {
@@ -251,7 +517,8 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       return {
         mode: null, presets: null,
         refusals: [...refusals, {
-          key: PREFIX + mode.id + '.total', value: total, bounds, kept: oldTotal,
+          key: PREFIX + mode.id + (rawBaseline !== undefined ? '.baseline' : '.total'),
+          value: rawBaseline !== undefined ? rawBaseline : total, bounds, kept: oldTotal,
           classId, minimum: minimums.reduce((a, b) => a + b, 0),
         }],
       };
@@ -262,19 +529,29 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
     } catch {
       return {
         mode: null, presets: null,
-        refusals: [...refusals, { key: PREFIX + mode.id + '.total', value: total, bounds, kept: oldTotal, classId }],
+        refusals: [...refusals, {
+          key: PREFIX + mode.id + (rawBaseline !== undefined ? '.baseline' : '.total'),
+          value: rawBaseline !== undefined ? rawBaseline : total, bounds, kept: oldTotal, classId,
+        }],
       };
     }
   }
-  if (settings[PREFIX + 'autoScale'] !== false && ratio !== 1) next.statConversionScale = ratio;
+  // THE MODE'S OWN SHIPPED SCALE IS A FACTOR, NOT A DEFAULT TO OVERWRITE. The
+  // `lean` mode ships one (8/35) so the authored pools mean what they meant on
+  // the tuned2 span; a retune here has to COMPOSE with it, or turning the total
+  // up to 16 would replace a 0.23 with a 2 and quadruple every derived pool.
+  if (settings[PREFIX + 'autoScale'] !== false && ratio !== 1) {
+    next.statConversionScale = (Number.isFinite(mode.statConversionScale) ? mode.statConversionScale : 1) * ratio;
+  }
   return { mode: next, presets, refusals };
 }
 
 export function applyStartingStatConfig(configured, authored, settings) {
+  const source = bundleWithConfiguredEquipment(authored, settings);
   for (let index = 0; index < configured.creationModes.length; index += 1) {
-    const original = authored.creationModes.find((m) => m.id === configured.creationModes[index].id);
+    const original = source.creationModes.find((m) => m.id === configured.creationModes[index].id);
     if (!original) continue;
-    const { mode, presets } = resolveStartingStatMode(authored, original, settings);
+    const { mode, presets } = resolveStartingStatMode(source, original, settings);
     if (!mode) continue;
     Object.assign(configured.creationModes[index], mode);
     for (const [classId, preset] of Object.entries(presets)) {
@@ -292,13 +569,14 @@ export function applyStartingStatConfig(configured, authored, settings) {
  */
 export function startingStatPoolProblems(bundle, settings = {}) {
   const problems = [];
-  const needs = kitAttributeMinimums(bundle);
-  const classNames = Object.fromEntries((bundle.classes || []).map((row) => [row.id, row.name || row.id]));
-  const attributeNames = Object.fromEntries((bundle.attributes || []).map((row) => [row.id, row.label || row.id]));
-  for (const mode of visibleCreationModes(bundle)) {
-    for (const refusal of resolveStartingStatMode(bundle, mode, settings).refusals) {
-      const isTotal = refusal.key.endsWith('.total');
-      const label = isTotal ? 'Total points on a character' : 'Points available to assign';
+  const source = bundleWithConfiguredEquipment(bundle, settings);
+  const needs = kitAttributeMinimums(source);
+  const classNames = Object.fromEntries((source.classes || []).map((row) => [row.id, row.name || row.id]));
+  const attributeNames = Object.fromEntries((source.attributes || []).map((row) => [row.id, row.label || row.id]));
+  for (const mode of visibleCreationModes(source)) {
+    for (const refusal of resolveStartingStatMode(source, mode, settings).refusals) {
+      const label = dialLabel(refusal.key);
+      const sizes = /\.(total|baseline)$/.test(refusal.key);
       // Two shapes, because they are two different refusals and one wording
       // for both would be a lie in one of them: a number OUTSIDE the row's
       // range, and a number inside it that no set of class tables can fit.
@@ -308,7 +586,7 @@ export function startingStatPoolProblems(bundle, settings = {}) {
           + ` to hold ${Object.entries(needs[refusal.classId] || {}).map(([id, entry]) => `${entry.minimum} ${attributeNames[id]}`).join(' and ') || 'its starting kit'}`
           + ` for its ${(Object.values(needs[refusal.classId] || {})[0] || {}).kit || 'starting kit'}.`
         : `is outside ${refusal.bounds.min}–${refusal.bounds.max} and was refused.`
-          + (isTotal ? floorSentence(bundle, refusal.bounds) : '');
+          + (sizes ? floorSentence(source, refusal.kitBounds || refusal.bounds) : '');
       problems.push({
         keys: [refusal.key],
         message: `${label}: ${JSON.stringify(refusal.value)} ${why} The value in use is ${refusal.kept}; every other setting you changed is still applied.`,

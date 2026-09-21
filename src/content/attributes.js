@@ -29,6 +29,101 @@ export const attributes = [
 ];
 
 export const creationModes = [
+  // ---- THE LEAN SCALE (owner, 2026-09-20) ---------------------------------
+  //
+  // His words: "I'd like the default stats to be low, with everyone having a
+  // total pool of points starting off. the default stat for each stat is 1 and
+  // assign allows a user to assign 3 points."
+  //
+  // So the mode IS those two sentences and nothing more:
+  //   baseline 1      "the default stat for each stat is 1"
+  //   bonusPool 3     "assign allows a user to assign 3 points"
+  //   minimum 1       a stat cannot be worth less than existing
+  //   maximum 4       1 + 3 — pouring the whole pool into one attribute is the
+  //                   ceiling, so no cell can be typed that the pool cannot pay
+  //   total 8         5 x 1 + 3, which is what every class carries at creation
+  //
+  // A NEW MODE, NOT AN EDIT TO tuned2 — the same reason tuned2 was a new mode
+  // and not an edit to tuned. Every in-flight save is validated at the load
+  // door against the total of the mode it was created under, and save.js
+  // ARCHIVES what fails there. tuned2 stays in this table, and leaves creation
+  // through characterCreation.visibleModeIds.
+  {
+    id: 'lean',
+    label: 'Lean',
+    baseline: 1,
+    bonusPool: 3,
+    minimum: 1,
+    maximum: 4,
+    // 'allow' is the reclaim clause: a point placed can be taken back off a
+    // stat down to `minimum`. At baseline 1 there is nothing below to reclaim
+    // to — it matters the moment the baseline is raised in Settings, which is
+    // now a dial (gameConfig.startingStats.lean.baseline).
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
+    // THE POOLS ARE NOT THE STATS, AND THIS IS THE LINE THAT KEEPS THEM APART.
+    // derivedStatRules is authored in ruleset-5 units — Mana IS Wisdom, Stamina
+    // IS Constitution, HP is 20 + 4 x CON — every coefficient read off the
+    // tuned2 span 3-12. Carried onto a 1-4 span unchanged, a Starseer would
+    // climb the Spire on 2 Mana and a Reaver on 28 HP: the same coefficient
+    // against a fifth of the points. This is the same field the settings pool
+    // row has always written when a total is retuned, authored here so the
+    // SHIPPED default gets the treatment a tuned one does. It divides every
+    // rule's pointsPerTier at the run door (model/state.js).
+    //
+    // WHY A FIFTH AND NOT 8/35. 8/35 is the ratio of the two TOTALS, and it is
+    // the right answer when a pool is retuned inside one scale. It is the wrong
+    // answer here, because it holds the total steady and lets the BASELINE
+    // drift: a stock character's Actions fell from 3 to 2 and its draw from 5
+    // to 4 — a third of the action economy, for a change nobody asked for. A
+    // fifth is the ratio of the two BASELINES (tuned2's 5 to lean's 1), which
+    // states the scale in one sentence: ONE LEAN POINT IS ONE TUNED TIER OF
+    // FIVE. A character who assigns nothing is exactly the character tuned2
+    // opened with — 40 HP, 3 Actions, 5 draw, Mana and Stamina of 5 — and each
+    // of the three assignable points is worth a whole tier of the old scale,
+    // which is what makes a point worth spending on a pool this small.
+    statConversionScale: 1 / 5,
+    // THE SAME AUTHORITY tuned2 CARRIES, RESTATED FOR THIS SPAN. Strike and
+    // Defend scale off an attribute rather than off the weapon alone, and a
+    // profile is read as `baseValue + floor(stat / pointsPerTier) × gainPerTier`.
+    //
+    // Carried over unchanged (gain 1 per point), the whole of Strike would live
+    // between 4 and 7, because four points is the whole span — the basic attack
+    // would stop answering to the attribute it scales off. So the GAIN carries
+    // the rebase here, the way statConversionScale carries it for the pools:
+    // two per lean point, opening at 3.
+    //
+    //   STR 1 → 5    STR 2 → 7    STR 3 → 9    STR 4 → 11
+    //
+    // which lands on tuned2's own numbers where it matters: the Reaver's Strike
+    // is the 9 it was, its Defend the 5 the tuned2 comment below fought for
+    // (at -3 a Reaver's guard fell to 3 and the simulator read it — the tier-1
+    // boss band collapsed), the Herald's sceptre the 9 it was, and the ceiling
+    // 11 is tuned2's ceiling. Dropping this block would silently take attribute
+    // scaling off every basic attack.
+    equipmentProfiles: {
+      unarmedAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      bladeAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      daggerPierceAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      bowPierceAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      staffMagicAttack: { baseValue: 3, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      sceptreArcaneAttack: { baseValue: 3, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      unarmedGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      weaponGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      shieldGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      staffGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      sceptreGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
+      // THE ONE PROFILE tuned2 LEFT ALONE, AND WHY LEAN CANNOT. An unrestated
+      // profile keeps its authored five-point tier, which on a 1-4 span means
+      // floor(stat / 5) is ZERO for every character alive: the shield's own
+      // attack would stop answering to Strength entirely and sit flat at its
+      // base. On tuned2's span the same row still moved (2 at STR 3, 4 at STR
+      // 12), so leaving it out would be a silent loss rather than a choice.
+      // A two-point tier is the closest whole-number restatement of that
+      // slower curve: 3 at the baseline, 5 with the whole pool in Strength.
+      shieldAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 2, rounding: 'floor', gainPerTier: 1 },
+    },
+  },
   // THE REBASED SCALE (plan phase 9). Ten was never a floor a player chose —
   // it was the middle of a d20 habit this game does not otherwise keep. Five
   // is the baseline, ten points are yours to place, and the span 3–12 is wide
@@ -139,8 +234,22 @@ export const creationModes = [
 // standard preset with the five extra points laid along each class's grain.
 // The player reshapes them; nothing here is a recommendation.
 export const attributeRules = {
-  defaultMode: 'tuned2',
+  defaultMode: 'lean',
   presets: {
+    // ---- LEAN ------------------------------------------------------------
+    // Baseline 1 in every cell, plus the three assignable points laid along
+    // each class's grain. Every row therefore sums to 8 and sits inside 1–4,
+    // and every row can hold the kit its class starts in after the equipment
+    // table was restated for this span (content/source/equipmentRequirements.csv):
+    // the Reaver's Iron Vanguard sword asks 2 Strength, the Starseer's Ash
+    // Focus staff 3 Intelligence, the Rogue's knife 2 Dexterity.
+    // attributeContentProblems and validate.js refuse any row that fails either.
+    lean: {
+      reaver: { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 },
+      starseer: { strength: 1, dexterity: 1, constitution: 1, wisdom: 2, intelligence: 3 },
+      herald: { strength: 1, dexterity: 1, constitution: 2, wisdom: 3, intelligence: 1 },
+      rogue: { strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 },
+    },
     // Each row sums to the mode's total (5 × 5 + 10 = 35) and sits inside
     // 3–12; attributeContentProblems refuses any that does not, by name.
     tuned2: {

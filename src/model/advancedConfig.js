@@ -6,7 +6,7 @@ import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migra
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
-  startingStatPoolProblems,
+  startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
@@ -345,6 +345,11 @@ function setPath(target, path, value) {
 export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const settings = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
   const configured = cloneConfigurableBundle(bundle);
+  // EQUIPMENT REQUIREMENTS RESOLVE FIRST, because every floor the starting-stat
+  // dials are measured against is read off that table (kitAttributeMinimums).
+  // Resolving them second would bound his pool by numbers his own settings had
+  // already moved.
+  applyEquipmentRequirementConfig(configured, bundle, settings);
   applyStartingStatConfig(configured, bundle, settings);
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
@@ -384,7 +389,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     // default and not the authored 35-point table — and the kit floor is
     // checked HERE because validateContent checks it in main.js, where a
     // failure discarded every configured value the owner had set.
-    const needs = kitAttributeMinimums(bundle);
+    const needs = kitAttributeMinimums(configured);
     const expected = mode.baseline * configured.attributes.length + mode.bonusPool;
     const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
     for (const classDef of configured.classes) {
@@ -437,7 +442,10 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
   if (!mode) return problems;
-  const needs = kitAttributeMinimums(bundle);
+  // The floor a class cell is judged against is the CONFIGURED one: he can now
+  // lower what a starting kit asks for, and a cell refused against the authored
+  // table would be refused for a requirement no run would ever enforce.
+  const needs = kitAttributeMinimums(bundleWithConfiguredEquipment(bundle, settings));
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
   const cellKey = (classId, attributeId) => `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classId}.${attributeId}`;

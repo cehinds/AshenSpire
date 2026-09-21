@@ -30,7 +30,7 @@ test('weapon and armour are told apart by their own fields, never by id', () => 
 test('WC2a1 weapon: hand / requirements, then the granted card package with its modifiers', () => {
   const sword = equipment(armament('straightSword'));
   assert.deepEqual([...sword.families], ['WC2', 'WC2a', 'WC2a1']);
-  assert.equal(sword.requirement, 'Requires STR 5', 'the authored requirement holds row one');
+  assert.equal(sword.requirement, 'Requires STR 2', 'the authored requirement holds row one');
   assert.ok(sword.omitted.some((o) => o.id === 'WC2a1.body.detail2' && o.part === 'hand'));
   const free = possessionVariant(r, { ...armament('straightSword'), requirements: undefined }, { kind: 'equipment' });
   assert.equal(free.requirement, 'Either hand', 'with no requirement the authored hand is the row');
