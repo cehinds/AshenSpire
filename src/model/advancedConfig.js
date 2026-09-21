@@ -8,7 +8,7 @@ import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -392,6 +392,10 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // Resolving them second would bound his pool by numbers his own settings had
   // already moved.
   applyEquipmentRequirementConfig(configured, bundle, settings);
+  // THE ITEM'S RATINGS RIDE ON THE ITEM, and they are written after the
+  // requirement table because that pass restates both equipment arrays: writing
+  // the columns first would hand them to a map that replaces the rows.
+  applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
   applyStartingStatConfig(configured, bundle, settings);
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
@@ -638,7 +642,12 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(file.overrides)), warnings), rows, warnings)) {
+  // A file exported before the per-item rows became the item's own ratings
+  // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
+  // reads each as the value it used to make. Done HERE, at the door, because
+  // the next line refuses an unknown key by aborting the whole file.
+  const overrides = migrateCombatRatingSettings(file.overrides, bundle);
+  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;

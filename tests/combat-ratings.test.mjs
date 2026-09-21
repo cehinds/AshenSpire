@@ -262,3 +262,66 @@ test('armour, relic and status bonuses are additive and counted once', async () 
   applyStatus(c, c.player, 'strength', 2, c.player);
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
 });
+
+// THE ROW IS THE ITEM'S NUMBER, NOT A PLUS ON TOP OF IT (owner, 2026-09-21:
+// "if I edit the AR in the settings for straight sword to 2 then it should show
+// 2 on the card and in combat + AR bonuses"). One setting, and every reader —
+// the item card, the rating receipt, the fight — says 2.
+test('an item rating setting IS the item’s rating, on the card and in combat', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { equipmentCardModel } = await import('../src/model/equipmentCard.js');
+  const settings = { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 2 };
+  const authored = contentBundle.equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(authored.attackRating, 5, 'the authored sword is the thing being moved');
+
+  const configured = configuredContentBundle(contentBundle, settings);
+  const sword = configured.equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 2, 'the column the card prints carries the configured number');
+  const tuned = createRegistries(configured);
+  assert.equal(equipmentCardModel(tuned, sword).facts.find(f => f.label === 'Attack').value, 2);
+
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
+  const rules = resolveCombatRatings(settings, contentBundle);
+  const receipt = ratingReceipt(tuned, run, rules);
+  assert.equal(receipt.sources.find(s => s.name === 'Straight Sword').ar, 2, 'not 5, and not 5 + 2');
+  const attributes = receipt.sources.find(s => s.name === 'Attributes').ar;
+  assert.equal(receipt.totals.ar, attributes + 2, 'the item’s own AR, with the attribute bonus on top');
+});
+
+// "if a staff says PR of 1 then my wizard with a +2 to PR should have a PR of
+// +3 for all cards that scale off PR" — the magical weapon's Attack Rating is
+// PR, so the PR row is the one that moves its column.
+test('a magical weapon’s PR row is its Attack Rating, and attribute PR adds to it', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const settings = { 'gameConfig.combatRatings.itemRatings.armament:ashStaff.pr': 1 };
+  const configured = configuredContentBundle(contentBundle, settings);
+  const staff = configured.equipment.armaments.find(p => p.id === 'ashStaff');
+  assert.equal(staff.attackRating, 1);
+  const tuned = createRegistries(configured);
+  const run = createRunState({ seed: 7, classId: 'starseer', registries: tuned });
+  run.loadout.sets.rightHand[0] = 'ashStaff';
+  run.attributes = { ...run.attributes, wisdom: 2, intelligence: 2 };
+  const rules = resolveCombatRatings(settings, contentBundle);
+  const receipt = ratingReceipt(tuned, run, rules);
+  assert.equal(receipt.sources.find(s => s.name === 'Ash Staff').pr, 1);
+  assert.equal(receipt.totals.pr, 3, 'WIS 2 and INT 2 at 0.5 each is +2, and the staff says 1');
+});
+
+// A rating no item column can hold is still the item's rating: it travels in
+// the run's rules instead of on the piece, and the receipt adds it once.
+test('a rating with no item column is carried by the rules, not lost', () => {
+  const rules = resolveCombatRatings({ 'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4 }, contentBundle);
+  assert.deepEqual(rules.itemRatings['armament:straightSword'], { ward: 4 });
+  assert.equal(rules.itemRatings['armament:straightSword'].ar, undefined, 'AR has a column and is not kept twice');
+});
+
+// A configuration exported before the rows became values still imports, and
+// what it meant — authored plus the plus — is what it lands as.
+test('a stored per-item bonus is read as the value it used to make', () => {
+  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: legacy });
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle),
+    { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 8 });
+  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 8, '5 authored + the 3 the old dial added');
+});
