@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1240",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Your ratings, pools and hand now read the attributes on your character sheet",
+    "detail": "If you had lowered the total attribute points a character carries, the game was quietly converting every attribute back up to the scale it was written for before any formula read it. A Starseer showing 8 Intelligence was scored as though it held 23: Ward read 32 where the settings row that set it promised 9, and there was no row anywhere saying so. That conversion is gone. A rating is now the sum of its attribute terms, each one rounded down on its own — a weight of 0.25 means four points buy 1, and gives nothing before the fourth — plus the rating's base, plus what your weapons, armour, relics and statuses add, exactly as they always did. Each rating also has a multiplier, and one more scales all five at once; both start at 1 and change nothing until you move them. HP, Mana, Stamina, Actions, Draw and stat-driven hand size read the same unconverted attribute, so a smaller pool now buys smaller numbers — which is what shrinking it says. Three settings rows went with the conversion: each rating's points per increase and gain, replaced by the multipliers, and Automatically scale stat conversions, which has nothing left to switch. A configuration file carrying any of them still imports, with a note naming what was skipped. A climb already in progress keeps the rules it was born under.",
+    "build": "0.7.1.357",
+    "pullRequest": 1240,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1240"
+  },
+  {
     "id": "pr-1235",
     "date": "2026-09-21",
     "group": "2026-09-21",
