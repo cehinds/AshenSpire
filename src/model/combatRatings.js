@@ -197,6 +197,7 @@ export function combatRatingProblems(config) {
 export function ratingReceipt(registries, run, config) {
   const totals = Object.fromEntries(ratingIds.map(id => [id, 0]));
   const sources = [];
+  const attributeReceipts = {};
   const add = (name, values, kind, sourceId = null) => {
     sources.push({ name, kind, ...(sourceId ? { sourceId } : {}), ...values });
     for (const id of ratingIds) totals[id] += Number(values[id]) || 0;
@@ -216,7 +217,8 @@ export function ratingReceipt(registries, run, config) {
   // formulas entirely; a smaller pool now means smaller ratings, which is what
   // shrinking it says.
   for (const id of ratingIds) {
-    stat[id] = attributeRatingReceipt(config, run.attributes, id).value;
+    attributeReceipts[id] = attributeRatingReceipt(config, run.attributes, id);
+    stat[id] = attributeReceipts[id].value;
   }
   add('Attributes', stat, 'attribute');
   if (run.loadout) for (const piece of equippedPieces(registries, run.loadout, run.class || run.player?.classId, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
@@ -239,7 +241,7 @@ export function ratingReceipt(registries, run, config) {
     for (const statId of ratingIds) values[statId] = (values[statId] || 0) + (relic.passives?.[`${statId}Bonus`] || 0);
     add(relic.name, values, 'relic', id);
   }
-  return { totals, sources };
+  return { totals, sources, attributeReceipts };
 }
 
 export function ratingValue(ctx, entity, id) {

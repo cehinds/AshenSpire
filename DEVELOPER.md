@@ -833,8 +833,10 @@ player-facing formula `base + floor(attribute multiplier × stat) +
 floor(level multiplier × levels after 1)`; the configuration adapter stores
 reciprocal intervals so older snapshots and imported interval-based profiles
 remain readable. Combat-rating rows spell out Attack Rating, Defence Rating,
-and Potency Rating, and each shipped rating's five attribute coefficients have a
-total budget of 2. Under ratings rules version 2, Attack Rating augments
+and Potency Rating. Each rating adds its base to the floored sum of its
+individually floored attribute terms, scaled by the single global rating
+multiplier; the shipped direct formulas live in `src/model/ratingFormula.js`.
+Under ratings rules version 2, Attack Rating augments
 physical card damage and Potency Rating augments magic-card damage, Block, and
 healing. Every incoming hit subtracts Defence Rating first and may reach zero;
 Poise then supplies capped percentage reduction, and magical hits receive a

@@ -38,7 +38,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
     return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
       raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
       equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
-      ratings: receipt.totals, ratingSources: receipt.sources,
+      ratings: receipt.totals, ratingSources: receipt.sources, ratingAttributes: receipt.attributeReceipts,
       note: layeredDefence
         ? 'Defence subtracts flat damage first. Poise then reduces every hit and stagger; Ward adds magical-only reduction and resists disruption. Status resistance follows each effect’s configured weights.'
         : 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
