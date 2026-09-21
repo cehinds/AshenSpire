@@ -123,8 +123,21 @@ function leafRows(value, path = [], rows = []) {
 function explicitRows(bundle) {
   const rows = [];
   const modeId = bundle.attributeRules?.defaultMode || 'tuned';
-  const tuned = bundle.attributeRules?.presets?.[modeId] || {};
   const needs = kitAttributeMinimums(bundle);
+  // EVERY MODE WITH A PRESET TABLE GETS ROWS, AND ONLY THE DEFAULT ONE IS ON
+  // SCREEN. `startingStatRows` has always done this with the pool keys, and
+  // this table had to learn it the day the default mode changed: an exported
+  // configuration holds `…presets.<old default>.<class>.<attribute>` keys, and
+  // `parseAdvancedConfigFile` refuses an UNKNOWN key by aborting the whole
+  // file — so one retired key took every unrelated setting in it down, and the
+  // current build could even export a file it then refused to import. The
+  // retired rows keep the keys importable and stay off the screen (`retired`,
+  // the same filter settings.js applies to a retired pool row).
+  const modeIds = Object.keys(bundle.attributeRules?.presets || {})
+    .sort((a, b) => Number(b === modeId) - Number(a === modeId));
+  for (const presetModeId of modeIds) {
+  const retired = presetModeId === modeId ? {} : { retired: true };
+  const tuned = bundle.attributeRules?.presets?.[presetModeId] || {};
   for (const classDef of bundle.classes || []) {
     const classLabel = classDef.name || word(classDef.id);
     for (const attribute of bundle.attributes || []) {
@@ -134,17 +147,19 @@ function explicitRows(bundle) {
       // a preset that cannot hold the kit its class starts in; a row whose
       // domain started at 1 let him type a number that failed at boot and took
       // the whole configuration down with it.
-      const need = needs[classDef.id]?.[attribute.id];
+      // The kit floor is validate.js's rule for the DEFAULT mode only, so a
+      // retired mode's cells keep the bare floor of 1 they were admitted under.
+      const need = presetModeId === modeId ? needs[classDef.id]?.[attribute.id] : undefined;
       rows.push({
-        cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
+        cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel, ...retired,
         type: 'number', integer: true, step: 1,
         min: Math.max(1, need?.minimum || 0), max: 495, def,
         // The floor MOVED UP after schema version 1 shipped, so a configuration
         // exported before it holds values this row no longer accepts. Refusing
         // them is right; refusing his whole file over them is not.
-        floorGroup: `attributeRules.presets.${modeId}.${classDef.id}`,
-        raisedFloor: need ? { group: `attributeRules.presets.${modeId}.${classDef.id}` } : undefined,
-        key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classDef.id}.${attribute.id}`,
+        floorGroup: `attributeRules.presets.${presetModeId}.${classDef.id}`,
+        raisedFloor: need ? { group: `attributeRules.presets.${presetModeId}.${classDef.id}` } : undefined,
+        key: `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${presetModeId}.${classDef.id}.${attribute.id}`,
         label: `${classLabel} — ${attribute.label}`,
         // The floor sentence is its OWN field as well as part of the note: the
         // class topics compact a row's note away (the label already names the
@@ -154,10 +169,14 @@ function explicitRows(bundle) {
         note: `Starting ${attribute.label.toLowerCase()} for ${classLabel}. The class's attributes must total the character's points, set under Assign points.`
           + (need ? ` It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '')
           + ' Applies to a new run.',
-        configPath: ['attributeRules', 'presets', modeId, classDef.id, attribute.id],
+        configPath: ['attributeRules', 'presets', presetModeId, classDef.id, attribute.id],
         searchPath: `class ${classDef.id} starting ${attribute.id}`,
       });
     }
+  }
+  }
+  for (const classDef of bundle.classes || []) {
+    const classLabel = classDef.name || word(classDef.id);
     rows.push({
       cat: 'Advanced', advancedGroup: 'Progression', classTopic: classLabel,
       type: 'number', integer: true, step: 1,

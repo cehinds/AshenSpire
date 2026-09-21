@@ -635,8 +635,16 @@ export function mountCustomize(app, {
     const mode = pointbuyMode();
     const rowsNow = () => {
       const remaining = remainingPoints();
-      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
-      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
+      // THE PREVIEW RUN'S OWN PROJECTION, for the reason the shrine's card
+      // needs one (rest.js): the point-buy modal is where the points are
+      // placed, and without a projection the card reads the authored tier
+      // rather than the one the creation mode actually converts at.
+      const preview = previewRun();
+      const rules = preview.equipmentProfileRuleSnapshot?.profiles;
+      const cards = new Map(attributeCardModels(registries, state.attributes, {
+        projection: statProjection(registries, preview),
+        equipmentProfiles: rules,
+      }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
         label: def.label,

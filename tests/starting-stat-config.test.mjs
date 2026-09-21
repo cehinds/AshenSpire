@@ -6,33 +6,48 @@ import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
 
-const poolKey = 'gameConfig.startingStats.pointbuy.total';
+// The pool dial is exercised through the mode creation OFFERS. It used to be
+// driven here through `pointbuy`, which is retired — and a retired mode is no
+// longer rewritten at all, because the only thing that rewrite can reach is a
+// save (see 'a mode no player can pick is never rewritten' below).
+const poolKey = 'gameConfig.startingStats.lean.total';
+const legacyPoolKey = 'gameConfig.startingStats.pointbuy.total';
 test('pool changes redistribute every class exactly and leave authored content alone', () => {
-  for (const total of [5, 10, 60, 100, 495]) {
+  // 7 is the kit floor; below it no class can hold what it starts in.
+  for (const total of [7, 10, 60, 100, 495]) {
     const configured = configuredContentBundle(contentBundle, { [poolKey]: total });
     assert.deepEqual(attributeContentProblems(configured), []);
-    for (const preset of Object.values(configured.attributeRules.presets.pointbuy)) assert.equal(Object.values(preset).reduce((a,b) => a+b, 0), total);
+    for (const preset of Object.values(configured.attributeRules.presets.lean)) assert.equal(Object.values(preset).reduce((a,b) => a+b, 0), total);
   }
-  assert.equal(contentBundle.creationModes.find(m => m.id === 'pointbuy').bonusPool, 10);
+  assert.equal(contentBundle.creationModes.find(m => m.id === 'lean').bonusPool, 3);
 });
 
 test('automatic scaling changes thresholds; manual mode keeps configured thresholds', () => {
   const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
   const auto = configuredContentBundle(contentBundle, settings);
   const manual = configuredContentBundle(contentBundle, { ...settings, 'gameConfig.startingStats.autoScale': false });
-  assert.equal(auto.creationModes.find(m => m.id === 'pointbuy').statConversionScale, 1/6);
-  assert.equal(manual.creationModes.find(m => m.id === 'pointbuy').statConversionScale, undefined);
+  // THE RETUNE COMPOSES WITH THE MODE'S OWN SCALE, IT DOES NOT REPLACE IT.
+  // `lean` ships a fifth; 10 points against its authored 8 is a ratio of 1.25,
+  // so automatic scaling lands on a quarter. Switching it off leaves the
+  // mode's shipped fifth exactly where it was authored — the point of the
+  // switch is the RETUNE, not the mode.
+  assert.equal(auto.creationModes.find(m => m.id === 'lean').statConversionScale, 0.25);
+  assert.equal(manual.creationModes.find(m => m.id === 'lean').statConversionScale, 1 / 5);
   assert.equal(manual.derivedStatRules.rules.hp.pointsPerTier, 2);
-  const a = createRunState({ registries: createRegistries(auto), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
-  const b = createRunState({ registries: createRegistries(manual), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
+  const a = createRunState({ registries: createRegistries(auto), classId: 'reaver', seed: 42, attributeMode: 'lean' });
+  const b = createRunState({ registries: createRegistries(manual), classId: 'reaver', seed: 42, attributeMode: 'lean' });
   assert.equal(Object.values(a.attributes).reduce((x,y) => x+y), 10);
-  assert(a.maxHp > b.maxHp);
+  // A wider tier is fewer tiers: automatically scaling UP to a quarter buys
+  // less per point than the shipped fifth the manual run keeps. The direction
+  // is not the property — that the two differ, and that each run carries the
+  // threshold it was born with, is.
+  assert(b.maxHp > a.maxHp);
 });
 
 test('pool and conversion settings round trip and reject impossible budgets', () => {
   const settings = { [poolKey]: 10, 'gameConfig.startingStats.autoScale': false };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
-  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [poolKey]: 2 }), contentBundle));
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [legacyPoolKey]: 2 }), contentBundle));
 });
 
 
@@ -141,12 +156,12 @@ test('a refused value is named on its own row and costs nothing but itself', asy
 
 test('the new points-available key round trips, and a retired mode key still imports', () => {
   const settings = {
-    'gameConfig.startingStats.tuned2.total': 50,
-    'gameConfig.startingStats.tuned2.bonusPool': 25,
+    'gameConfig.startingStats.lean.total': 50,
+    'gameConfig.startingStats.lean.bonusPool': 25,
   };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   const configured = configuredContentBundle(contentBundle, settings);
-  const mode = configured.creationModes.find(row => row.id === 'tuned2');
+  const mode = configured.creationModes.find(row => row.id === 'lean');
   assert.deepEqual([mode.baseline, mode.bonusPool], [5, 25],
     'the baseline is what is left of the total once the assignable points are taken out');
 
@@ -290,4 +305,137 @@ test('every new dial and requirement row survives export and import', () => {
     'gameConfig.equipmentRequirements.greatsword.strength': 4,
   };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
+});
+
+// ---- what the review of #1238 found, as properties -------------------------
+//
+// Every case below was a way for one dial to cost the owner something other
+// than itself. They are the whole point of this driver, so each gets a test.
+
+test('a raised equipment requirement never costs the owner his whole configuration', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  const { advancedConfigProblems } = await import('../src/model/advancedConfig.js');
+  const sword = (bundle) => bundle.equipment.equipmentRequirements.find(row => row.itemId === 'straightSword').minimum;
+
+  // THE DEFECT THIS ANSWERS. validateContent refuses a preset that cannot hold
+  // its class's kit, and rebuildRegistries answers a failed validation by
+  // falling back to AUTHORED DEFAULTS — so a requirement raised past what the
+  // presets carry discarded every other value he had tuned.
+  for (const raise of [
+    { 'gameConfig.equipmentRequirements.scale': 2 },
+    { 'gameConfig.equipmentRequirements.scale': 10 },
+    { 'gameConfig.equipmentRequirements.ashStaff.intelligence': 40 },
+  ]) {
+    const settings = { ...raise, 'gameConfig.balance.startingCinders': 99 };
+    const configured = configuredContentBundle(contentBundle, settings);
+    assert.equal(validateContent(configured).ok, true, `${JSON.stringify(raise)} still produces a bundle a run can be born from`);
+    assert.equal(configured.balance.startingCinders, 99, 'and the unrelated setting beside it survives');
+    assert.equal(sword(configured), 2, 'the authored table holds when the raise cannot be worn');
+    assert.ok(advancedConfigProblems(contentBundle, settings).some(message => /Equipment requirements:/.test(message)),
+      'and the refusal says so by name rather than falling back in silence');
+  }
+
+  // A raise the classes CAN be fitted around is applied, and the presets move
+  // with it — this is the case the early return used to skip, because no
+  // starting-stat dial had moved.
+  const fitted = configuredContentBundle(contentBundle, { 'gameConfig.equipmentRequirements.straightSword.strength': 4 });
+  assert.equal(validateContent(fitted).ok, true);
+  assert.equal(sword(fitted), 4);
+  assert.equal(fitted.attributeRules.presets.lean.reaver.strength, 4, 'the Reaver is re-fitted around its own kit');
+  assert.deepEqual(advancedConfigProblems(contentBundle, { 'gameConfig.equipmentRequirements.straightSword.strength': 4 }), []);
+
+  // Raising the pool first is the way through, and it says so in the refusal.
+  const roomy = configuredContentBundle(contentBundle, {
+    'gameConfig.equipmentRequirements.scale': 2, 'gameConfig.startingStats.lean.total': 20,
+  });
+  assert.equal(validateContent(roomy).ok, true);
+  assert.equal(sword(roomy), 4, 'with room to carry it, the raised table applies');
+});
+
+test('a requirement of zero is a requirement the card does not print', () => {
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.equipmentRequirements.scale': 0 });
+  const sword = configured.equipment.armaments.find(row => row.id === 'straightSword');
+  assert.equal(configured.equipment.equipmentRequirements.find(row => row.itemId === 'straightSword').minimum, 0,
+    'the row stays in the table, because the dial has to be able to come back up');
+  assert.equal(sword.requirements, undefined, 'but nothing is stamped on the piece, so no card says "Requires STR 0"');
+});
+
+test('a configuration exported before the default mode changed still imports whole', () => {
+  // `explicitRows` used to emit class cells for the DEFAULT mode alone, so the
+  // day the default moved every `…presets.tuned2.<class>.<attribute>` key in an
+  // exported file became unknown — and parseAdvancedConfigFile answers an
+  // unknown key by aborting the WHOLE file, taking every unrelated setting with
+  // it. The current build could even export a file it then refused to import.
+  const legacy = {
+    'gameConfig.attributeRules.presets.tuned2.reaver.strength': 11,
+    'gameConfig.attributeRules.presets.tuned2.starseer.intelligence': 9,
+    'gameConfig.progression.xpMultiplier': 2,
+  };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
+    'every key in the file round trips, the retired mode\'s cells included');
+});
+
+test('a mode no player can pick is never rewritten', async () => {
+  const { createRunState: born } = await import('../src/model/state.js');
+  // A retired mode's KEYS stay importable, but APPLYING one can only reach a
+  // save: a run written before `attributeModeSnapshot` existed is validated
+  // against the LIVE mode at the load door, and save.js ARCHIVES what fails
+  // there. Rewriting tuned2's total would archive exactly the runs tuned2 was
+  // kept in the table for.
+  const settings = { 'gameConfig.startingStats.tuned2.total': 8, 'gameConfig.balance.startingCinders': 99 };
+  const configured = configuredContentBundle(contentBundle, settings);
+  const tuned2 = configured.creationModes.find(row => row.id === 'tuned2');
+  assert.equal(tuned2.baseline * 5 + tuned2.bonusPool, 35, 'tuned2 keeps the total its saves were admitted against');
+  assert.deepEqual(configured.attributeRules.presets.tuned2, contentBundle.attributeRules.presets.tuned2);
+  assert.equal(configured.balance.startingCinders, 99, 'and the settings beside it still apply');
+  // The mode creation DOES offer still moves, in the same configuration.
+  const both = configuredContentBundle(contentBundle, { ...settings, 'gameConfig.startingStats.lean.total': 12 });
+  const lean = both.creationModes.find(row => row.id === 'lean');
+  assert.equal(lean.baseline * 5 + lean.bonusPool, 12);
+  // And a run created under the retired mode is still born on its own numbers.
+  const run = born({ registries: createRegistries(configured), classId: 'reaver', seed: 3, attributeMode: 'tuned2' });
+  assert.equal(Object.values(run.attributes).reduce((a, b) => a + b, 0), 35);
+});
+
+test('a refused baseline costs the baseline, not the points typed beside it', async () => {
+  const { advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
+  const key = (dial) => `gameConfig.startingStats.lean.${dial}`;
+  const settings = { [key('baseline')]: 0, [key('bonusPool')]: 5 };
+  const mode = configuredContentBundle(contentBundle, settings).creationModes.find(row => row.id === 'lean');
+  assert.deepEqual([mode.baseline, mode.bonusPool], [1, 5],
+    'the baseline holds at its authored value and the valid points-to-assign row still applies');
+  const [problem] = advancedConfigProblemRows(contentBundle, settings);
+  assert.deepEqual(problem.keys, [key('baseline')], 'and only the baseline row is told');
+});
+
+test('an attribute card never promises more than the rule pays', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const hpLine = (bundle) => {
+    const registries = createRegistries(bundle);
+    const run = createRunState({ registries, classId: 'reaver', seed: 5 });
+    const card = attributeCardModels(registries, run.attributes, {
+      projection: statProjection(registries, run),
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    }).find(row => row.id === 'constitution');
+    return { card, run, registries };
+  };
+  // The shipped fifth: a point is five tiers of four HP.
+  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +20 every 1 point'));
+
+  // A SCALE THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. At a total of 24 the
+  // ratio is 3 and the tier becomes 0.6, where one point buys ONE tier, not
+  // two: `floor((con + 1) / 0.6) - floor(con / 0.6)` is 1 at the preset. The
+  // card said +8 while the run paid +4 — a card that promises more than the
+  // rule pays is worse than one that says nothing.
+  const wide = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.total': 24 });
+  const { card, run, registries } = hpLine(wide);
+  const stated = /HP \+(\d+) every 1 point/.exec(card.reveal.lines.find(line => line.startsWith('HP ')))?.[1];
+  const raised = createRunState({
+    registries, classId: 'reaver', seed: 5,
+    attributes: { ...run.attributes, constitution: run.attributes.constitution + 1,
+      strength: run.attributes.strength - 1 },
+  });
+  assert.ok(Number(stated) <= raised.maxHp - run.maxHp,
+    `the card states ${stated} HP a point and the run pays ${raised.maxHp - run.maxHp}`);
 });

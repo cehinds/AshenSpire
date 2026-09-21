@@ -235,3 +235,27 @@ test('the class topics are derived from the content bundle, not transcribed', as
   assert.deepEqual([...new Set(rows.map(row => row.classTopic))].sort(), [...CLASS_TOPICS].sort(),
     'every class topic a row declares is one of them');
 });
+
+// Every screen that SPENDS a point must price it from the run, not the table.
+// The creation brief, the character sheet and the Armoury already passed a
+// projection; the point-buy modal and the shrine's level-up modal did not, so
+// on a scale of a fifth they under-reported every gain by five.
+test('every screen that offers a point hands the card the run it belongs to', async () => {
+  const { readFileSync } = await import('node:fs');
+  // A SCAN, NOT A PARSE, and bounded on purpose: `attributeCardModels` takes
+  // its options object as the third argument, so `projection:` either appears
+  // within the call or the call does not pass one. 300 characters is longer
+  // than every call site in the tree and shorter than the gap to the next one.
+  let sites = 0;
+  for (const file of ['customize.js', 'rest.js', 'equipment.js']) {
+    const source = readFileSync(new URL(`../src/ui/screens/${file}`, import.meta.url), 'utf8');
+    for (let at = source.indexOf('attributeCardModels(registries'); at >= 0;
+      at = source.indexOf('attributeCardModels(registries', at + 1)) {
+      sites += 1;
+      // `projection,` (shorthand) and `projection: …` both count.
+      assert.match(source.slice(at, at + 300), /projection\s*[,:]/,
+        `${file}: the attribute card at offset ${at} is priced from a run projection, not the authored table`);
+    }
+  }
+  assert.equal(sites, 5, 'all five attribute-card call sites are covered (a new one must state its projection too)');
+});

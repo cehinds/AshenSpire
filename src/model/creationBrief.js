@@ -185,14 +185,26 @@ export function attributeCardModels(registries, attributes, { projection = null,
         const row = projected.get(id);
         const authoredPoints = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
         const resolvedPoints = Number.isFinite(row?.pointsPerTier) ? row.pointsPerTier : authoredPoints;
-        // A class-field gain (hp) is a different number per class, so it is
-        // read off the projection's own receipt rather than restated here.
-        const perTier = gain == null ? row?.gainPerTier : gain;
+        // THE PROJECTION WINS ON THE GAIN TOO, for the same reason it wins on
+        // the tier: it is the run's own derivation. A class-field gain (hp) has
+        // no authored number at all and was always read here; an authored one
+        // that disagrees with the run's snapshot — a settings override, or a
+        // save born under an older table — is the copy that goes stale.
+        const perTier = Number.isFinite(row?.gainPerTier) ? row.gainPerTier : gain;
         // A TIER SMALLER THAN A POINT IS RESTATED AS WHAT A POINT BUYS. "+4 HP
         // every 0.2 points" is arithmetic homework; the player is asking what
-        // one point does, and one point is `1 / pointsPerTier` tiers of it.
+        // one point does.
+        //
+        // FLOOR, NOT ROUND, BECAUSE THE RULE FLOORS. A tier is counted
+        // `floor(points / pointsPerTier)`, so a point buys `floor(1 /
+        // pointsPerTier)` tiers at worst and never more on the first point.
+        // Rounding said "+8 HP per pt" at a tier of 0.6 where the measured gain
+        // is +4 — a card that promises more than the rule pays. The epsilon is
+        // for the same binary float the run door rounds away: 1 / 0.2 is
+        // 5.000000000000001 and must not floor to 4.
         if (Number.isFinite(perTier) && resolvedPoints > 0 && resolvedPoints < 1) {
-          return { label: presentation[id].label, perTier: perTier * Math.round(1 / resolvedPoints), points: 1 };
+          const tiersPerPoint = Math.max(1, Math.floor(1 / resolvedPoints + 1e-9));
+          return { label: presentation[id].label, perTier: perTier * tiersPerPoint, points: 1 };
         }
         return { label: presentation[id].label, perTier, points: resolvedPoints };
       });

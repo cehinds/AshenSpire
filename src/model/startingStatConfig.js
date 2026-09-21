@@ -163,6 +163,41 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
 }
 
 /**
+ * defaultModeHoldsItsKits(bundle, settings) → can the mode creation offers
+ * still dress every class, with THIS requirement table in force?
+ *
+ * THE DIAL THAT COULD THROW AWAY EVERY OTHER DIAL. `validateContent` refuses a
+ * preset that cannot hold the kit its class starts in, and `rebuildRegistries`
+ * answers a failed validation by falling back to AUTHORED DEFAULTS — dropping
+ * every value the owner has tuned. Lowering a requirement can never do that;
+ * RAISING one can, and the requirement rows admit 0–495 and a multiplier up to
+ * 10. So a raise is admitted only when the mode can still be fitted around it,
+ * and refused whole otherwise — the cost of a bad number is that number.
+ */
+function defaultModeHoldsItsKits(bundle, settings) {
+  const modeId = bundle.attributeRules?.defaultMode;
+  const mode = (bundle.creationModes || []).find((row) => row.id === modeId);
+  const authoredPresets = bundle.attributeRules?.presets?.[modeId];
+  if (!mode || !authoredPresets) return true;
+  const ids = (bundle.attributes || []).map((attribute) => attribute.id);
+  const needs = kitAttributeMinimums(bundle);
+  const resolved = resolveStartingStatMode(bundle, mode, settings);
+  if (resolved.refusals.some((refusal) => refusal.classId)) return false;
+  const ceiling = resolved.mode ? resolved.mode.maximum : mode.maximum;
+  for (const [classId, authored] of Object.entries(authoredPresets)) {
+    // `resolved.presets` are already fitted to the needs; when nothing else
+    // moved there are none, and the AUTHORED table is what a run would be born
+    // with — which is exactly the case a raised floor breaks.
+    const values = resolved.presets?.[classId] || authored;
+    for (const id of ids) {
+      const value = values[id];
+      if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
+    }
+  }
+  return true;
+}
+
+/**
  * bundleWithConfiguredEquipment(bundle, settings) → the bundle whose kit floors
  * the dials above must be measured against.
  *
@@ -170,11 +205,44 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
  * the owner can now move those numbers. Measuring a total against the AUTHORED
  * table after he has halved it would refuse a total his own settings make
  * legal — the same class of defect as the floor that was never read at all.
+ *
+ * A table the default mode cannot be dressed in is refused whole and the
+ * authored one stands; `equipmentRequirementProblems` says so by name.
  */
 export function bundleWithConfiguredEquipment(bundle, settings = {}) {
   const equipmentRequirements = resolveEquipmentRequirements(bundle, settings);
   if (!equipmentRequirements) return bundle;
-  return { ...bundle, equipment: { ...bundle.equipment, equipmentRequirements } };
+  const candidate = { ...bundle, equipment: { ...bundle.equipment, equipmentRequirements } };
+  return defaultModeHoldsItsKits(candidate, settings) ? candidate : bundle;
+}
+
+/**
+ * equipmentRequirementProblems(bundle, settings) → [{ keys, message }]
+ *
+ * One sentence per refused requirement change, naming the class that cannot be
+ * dressed in it. A refusal that fell back in silence is the defect this whole
+ * driver exists to answer.
+ */
+export function equipmentRequirementProblems(bundle, settings = {}) {
+  const candidateRows = resolveEquipmentRequirements(bundle, settings);
+  if (!candidateRows) return [];
+  const candidate = { ...bundle, equipment: { ...bundle.equipment, equipmentRequirements: candidateRows } };
+  if (defaultModeHoldsItsKits(candidate, settings)) return [];
+  const authoredBy = new Map((bundle.equipment?.equipmentRequirements || [])
+    .map((row) => [`${row.itemId}:${row.attributeId}`, row.minimum]));
+  const names = equipmentPieceNames(bundle);
+  const labels = Object.fromEntries((bundle.attributes || []).map((row) => [row.id, row.label || row.id]));
+  const raised = candidateRows.filter((row) => row.minimum > (authoredBy.get(`${row.itemId}:${row.attributeId}`) ?? 0));
+  const keys = [`${REQUIREMENT_PREFIX}scale`,
+    ...raised.map((row) => `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`)];
+  const asks = raised.map((row) => `${names[row.itemId] || row.itemId} ${row.minimum} ${labels[row.attributeId] || row.attributeId}`).join(', ');
+  return [{
+    keys,
+    message: `Equipment requirements: the raised table (${asks || 'the multiplier above'}) asks for more than a character can carry, `
+      + 'so no class could be dressed in the kit it starts in and the whole change was refused. '
+      + 'Raise Total points on a character first, or lower the requirement; the authored minimums are in use, '
+      + 'and every other setting you changed is still applied.',
+  }];
 }
 
 /**
@@ -187,11 +255,19 @@ export function bundleWithConfiguredEquipment(bundle, settings = {}) {
  * another.
  */
 export function applyEquipmentRequirementConfig(configured, authored, settings = {}) {
-  const equipmentRequirements = resolveEquipmentRequirements(authored, settings);
-  if (!equipmentRequirements) return;
+  // ONE DECISION, ONE READER: whatever `bundleWithConfiguredEquipment` admits
+  // is what a run is born under. Resolving the rows a second time here would
+  // let the bundle carry a table the floors were never measured against.
+  const source = bundleWithConfiguredEquipment(authored, settings);
+  if (source === authored) return;
+  const equipmentRequirements = source.equipment.equipmentRequirements;
   const byItem = {};
   for (const row of equipmentRequirements) {
-    if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    // ZERO IS "ANYONE MAY HOLD IT", AND THE CARD HAS TO SAY SO BY SAYING
+    // NOTHING. The row stays in the table (validate.js admits 0 and the dial
+    // has to be able to come back up), but stamping it onto the piece made the
+    // item card print "Requires STR 0" for an item the note calls free.
+    if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum) || row.minimum <= 0) continue;
     (byItem[row.itemId] ||= {})[row.attributeId] = row.minimum;
   }
   const restate = (piece) => {
@@ -444,8 +520,19 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       refuse('baseline', rawBaseline, {
         min: Math.max(1, Math.ceil((bounds.min - pool) / ids.length)), max: baselineCeiling,
       }, mode.baseline, { kitBounds: bounds });
-      total = Math.max(bounds.min, Math.min(bounds.max, oldTotal));
-      pool = Math.min(mode.bonusPool, Math.max(0, total - ids.length));
+      // A REFUSED ROW COSTS THAT ROW. The baseline falls back to the authored
+      // one, and the points-to-assign row he typed BESIDE it — already
+      // validated above — still applies. Overwriting `pool` here dropped a
+      // valid number because its neighbour was wrong, which is the behaviour
+      // every refusal in this file is written to avoid.
+      const fallback = mode.baseline * ids.length + pool;
+      if (fallback >= bounds.min && fallback <= bounds.max) {
+        baseline = mode.baseline;
+        total = fallback;
+      } else {
+        total = Math.max(bounds.min, Math.min(bounds.max, oldTotal));
+        pool = Math.min(mode.bonusPool, Math.max(0, total - ids.length));
+      }
     }
   } else {
     if (rawTotal !== undefined) {
@@ -496,7 +583,16 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
     belowBaseline = next;
   }
 
-  if (total === oldTotal && pool === mode.bonusPool && !limitsMoved) return { mode: null, presets: null, refusals };
+  // A MOVED KIT FLOOR IS A REASON TO RE-FIT, EVEN WHEN NO POOL DIAL MOVED.
+  // The equipment rows can raise what a class must carry without touching a
+  // single starting-stat number; returning early there left the AUTHORED
+  // presets standing under a floor they no longer clear, and validateContent
+  // answers that by discarding every configured value the owner has set.
+  const authoredFits = Object.entries(authored.attributeRules?.presets?.[mode.id] || {}).every(
+    ([classId, preset]) => ids.every((id) => (preset[id] || 0) >= kitMinimum(needs, classId, id)));
+  if (total === oldTotal && pool === mode.bonusPool && !limitsMoved && authoredFits) {
+    return { mode: null, presets: null, refusals };
+  }
 
   // ONLY THE NUMBERS THIS DIAL OWNS. Spreading the authored mode would alias
   // its `equipmentProfiles` object into the configured bundle, and the
@@ -548,9 +644,18 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
 
 export function applyStartingStatConfig(configured, authored, settings) {
   const source = bundleWithConfiguredEquipment(authored, settings);
+  // A MODE NO PLAYER CAN PICK IS NEVER REWRITTEN, and this line is what makes
+  // `visibleCreationModes`' own sentence true: "a dial whose only reachable
+  // effect is to invalidate an old save". A retired mode's KEYS stay, so an
+  // exported configuration still imports and the row stays off screen as
+  // `retired` — but APPLYING one can only reach a save. A run written before
+  // `attributeModeSnapshot` existed is validated against the LIVE mode at the
+  // load door, and save.js ARCHIVES what fails there, so rewriting tuned2's
+  // total would archive exactly the runs tuned2 was kept in the table for.
+  const applicable = new Set(visibleCreationModes(source).map((mode) => mode.id));
   for (let index = 0; index < configured.creationModes.length; index += 1) {
     const original = source.creationModes.find((m) => m.id === configured.creationModes[index].id);
-    if (!original) continue;
+    if (!original || !applicable.has(original.id)) continue;
     const { mode, presets } = resolveStartingStatMode(source, original, settings);
     if (!mode) continue;
     Object.assign(configured.creationModes[index], mode);
@@ -568,7 +673,7 @@ export function applyStartingStatConfig(configured, authored, settings) {
  * started on stock numbers and every other tuned value went with it.
  */
 export function startingStatPoolProblems(bundle, settings = {}) {
-  const problems = [];
+  const problems = [...equipmentRequirementProblems(bundle, settings)];
   const source = bundleWithConfiguredEquipment(bundle, settings);
   const needs = kitAttributeMinimums(source);
   const classNames = Object.fromEntries((source.classes || []).map((row) => [row.id, row.name || row.id]));
