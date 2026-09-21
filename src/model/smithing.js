@@ -154,7 +154,7 @@ export function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
   const after = resolveCard(registries, { ...instance, upgraded: false, smithingLevel: nextLevel });
   const liveProfile = (registries.equipment.basicCardProfiles || []).find((row) => row.id === instance.profileId);
   const profile = run.equipmentProfileRuleSnapshot?.profiles?.[instance.profileId] || liveProfile || null;
-  const scaling = profile ? Object.freeze({
+  const scaling = profile && profile.gainPerTier !== 0 ? Object.freeze({
     attributeId: profile.scalingStat,
     label: registries.attributes.get(profile.scalingStat).shortLabel,
     actual: Number.isFinite(run.attributes?.[profile.scalingStat]) ? run.attributes[profile.scalingStat] : null,

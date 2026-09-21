@@ -139,7 +139,7 @@ function foldedSummary(sense) {
 function equipmentScalingLines(registries, attributeId, profiles) {
   const lines = new Set();
   for (const [id, profile] of Object.entries(profiles || {})) {
-    if (!profile || profile.scalingStat !== attributeId) continue;
+    if (!profile || profile.scalingStat !== attributeId || profile.gainPerTier === 0) continue;
     const source = (registries.equipment.basicCardProfiles || []).find((row) => row.id === id) || profile;
     const role = source.role || profile.role;
     const school = source.damageSchool || profile.damageSchool;

@@ -190,6 +190,27 @@ test('every rating is the sum of its floored attribute terms, times its multipli
   assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 18);
 });
 
+test('current weapon-card receipts omit the retired attribute tier', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
+  const { renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
+  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
+  const currentRegistries = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
+  const surface = equipmentSurfaceReceipt(currentRegistries, run);
+
+  for (const row of surface.roles) {
+    assert.equal(row.receipt.tier, undefined, `${row.role} has no attribute-derived tier`);
+    assert.equal(row.receipt.gainPerTier, undefined, `${row.role} has no zero-gain tier term`);
+    assert.equal(row.receipt.value, row.receipt.base + row.receipt.rarityBonus);
+  }
+
+  const html = renderRoleCopies(surface);
+  assert.doesNotMatch(html, /\btier\b/i);
+  assert.doesNotMatch(html, /x 0|× 0/);
+  assert.match(html, /5 base \+ 0 rarity =/);
+});
+
 // A SAVED FIGHT PREDATES THE MULTIPLIERS. `combatSnapshotProblems` validates a
 // restored snapshot's own rating rules, so a field this build added must read
 // as 1 when it is absent rather than refuse the run.

@@ -1089,16 +1089,33 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const profile = row.profile;
   const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
   if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-  const tier = deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
+  // Ratings-enabled runs retire equipment-card attribute tiers by snapshotting
+  // gainPerTier as zero. Do not derive or expose a meaningless "stat tier x 0"
+  // term: the card keeps its authored base/rarity while AR/PR/DR/Poise/Ward
+  // apply their direct weighted-attribute formula in combatRatings.js.
+  const tier = rule.gainPerTier === 0
+    ? null
+    : deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  const raw = rule.baseValue + tier.value + rarityBonus;
+  const raw = rule.baseValue + (tier?.value || 0) + rarityBonus;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
   if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
-  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
+  return {
+    role: row.role,
+    profileId: profile.id,
+    pieceId: row.piece && row.piece.id,
+    base: rule.baseValue,
+    rarity,
+    rarityBonus,
+    ...(tier || {}),
+    raw,
+    cap: rule.cap,
+    value,
+  };
 }
 
-/** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
+/** Calculation receipts; legacy nonzero tier arithmetic is owned by derivedStats.js. */
 export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
   const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));

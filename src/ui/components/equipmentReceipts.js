@@ -73,7 +73,10 @@ export function renderRoleCopies(surface) {
     attrs: ` data-role="${esc(row.role)}"`,
     nameHtml: `${esc(row.profile.displayName)} <em class="as-pill role-copy-count">x${row.copies}</em>`,
     hintHtml: `${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}`,
-    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier} + ${row.receipt.rarityBonus} rarity =`, `<strong>${row.receipt.value}</strong>`),
+    valuesHtml: pairHtml(Number.isFinite(row.receipt.tier)
+      ? `${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier} + ${row.receipt.rarityBonus} rarity =`
+      : `${row.receipt.base} base + ${row.receipt.rarityBonus} rarity =`,
+    `<strong>${row.receipt.value}</strong>`),
   })).join('');
 }
 
