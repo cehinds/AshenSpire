@@ -8,7 +8,7 @@ import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings } from './combatRatings.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -72,6 +72,34 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
 
 export function currentAdvancedKey(key) {
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
+}
+
+/**
+ * normalizeAdvancedSettings(settings, bundle) → the same object, holding only
+ * keys this build knows.
+ *
+ * ONE NUMBER, ONE ROW, WHEREVER IT IS READ (Copilot, on #1242). The per-item
+ * rating migration is value-bearing — it reads the item's authored rating to
+ * turn an old plus into the value it used to make — so it cannot live in the
+ * static key map above, and a reader that skipped it saw a different number
+ * from a reader that did: the item card took the migrated 8 while the settings
+ * row still opened on the authored 5, and typing in that row overwrote the 8.
+ * Rewriting the profile ITSELF, once, at boot, leaves every reader — the row,
+ * the export, the configured bundle, the fight — looking at one key.
+ *
+ * In place, because the profile object is shared (`main.js` holds
+ * `activeMeta.settings` by reference and saves it); the return value is the
+ * same object, for callers that would rather read than mutate.
+ */
+export { hasLegacyItemRatingSettings };
+
+export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
+  if (!settings || typeof settings !== 'object' || !bundle) return settings;
+  const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
+  if (migrated === settings) return settings;
+  for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
+  Object.assign(settings, migrated);
+  return settings;
 }
 
 // A DIAL THIS BUILD RETIRED, so an older export still imports. `parseAdvanced-
@@ -392,10 +420,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // Resolving them second would bound his pool by numbers his own settings had
   // already moved.
   applyEquipmentRequirementConfig(configured, bundle, settings);
-  // THE ITEM'S RATINGS RIDE ON THE ITEM, and they are written after the
-  // requirement table because that pass restates both equipment arrays: writing
-  // the columns first would hand them to a map that replaces the rows.
-  applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
   applyStartingStatConfig(configured, bundle, settings);
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
@@ -450,6 +474,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
+  // switched on. Written HERE, after that decision, for two reasons: the
+  // requirement pass above restates both equipment arrays, so columns written
+  // before it would be handed to a map that replaces the rows; and a set's
+  // Poise threshold is also its WEIGHT, so a run with ratings off — a fresh
+  // one, or an older snapshot the line above disables — would otherwise have
+  // its equip load moved by a dial that changes nothing else (review, #1242).
+  if (configured.balance.combatRatings.enabled) {
+    applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
+  }
   if (configured.balance.combatRatings.enabled) {
     for (const mode of configured.creationModes) {
       mode.equipmentProfiles ||= {};
@@ -646,7 +680,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
-  const overrides = migrateCombatRatingSettings(file.overrides, bundle);
+  const overrides = migrateCombatRatingSettings(file.overrides, bundle, warnings);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);

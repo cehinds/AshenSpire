@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-21",
     "summary": "Every weapon's and every set's ratings are yours to set, and the number you type is the number the card shows",
     "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so a straight sword set to 2 fought at 7, the item card still said 5, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 2 and it is a 2-Attack sword that your Strength still improves; give a staff 1 and a caster carrying +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports. A climb already in progress keeps the rules it was born under.",
-    "build": "0.7.1.367",
+    "build": "0.7.1.371",
     "pullRequest": 1242,
     "url": "https://github.com/cehinds/AshenSpire/pull/1242"
   },
