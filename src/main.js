@@ -2103,7 +2103,6 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const cm = combatMods(enc.pool);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
     ratingsRules: registries.balance.combatRatings || null,
-    ratingAttributeScale: run.attributeModeSnapshot?.statConversionScale || 1,
     handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
     registries,
     rng,

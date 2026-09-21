@@ -283,17 +283,18 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  let modeModifiers = modeProfiles
+  // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
+  // A smaller starting pool used to multiply every `pointsPerTier` by the
+  // ratio, which is the same as handing each formula an inflated attribute:
+  // 12 points on the authored 35-point scale meant CON 1 bought the HP of CON
+  // 2.92. The row now reads the attribute the sheet shows — `base +
+  // gainPerTier × floor(attribute ÷ pointsPerTier)` — and a pool worth fewer
+  // points buys fewer pools, which is what a smaller pool means. Runs already
+  // carrying a scaled snapshot keep it: a climb is priced by the rules it was
+  // born under, and `existing` below is still the authority.
+  const modeModifiers = modeProfiles
     ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
     : derivedStatOptions.modeModifiers;
-  const scale = run.attributeModeSnapshot?.statConversionScale;
-  if (Number.isFinite(scale) && scale > 0 && scale !== 1) {
-    const resolved = resolveDerivedStatRules(registries.derivedStatRules, derivedOptions(registries, { ...derivedStatOptions, modeModifiers }));
-    modeModifiers = { ...modeModifiers, rules: { ...modeModifiers?.rules } };
-    for (const [id, rule] of Object.entries(resolved.rules)) {
-      modeModifiers.rules[id] = { ...modeModifiers.rules[id], pointsPerTier: rule.pointsPerTier * scale };
-    }
-  }
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);

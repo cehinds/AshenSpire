@@ -143,12 +143,6 @@ export function startingStatRows(bundle) {
         note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
       });
   }
-  add(PREFIX + 'autoScale', true, 'Automatically scale stat conversions', 'Assign points', {
-    // "Pool" now names the OTHER row. The ratio is total ÷ old total, so
-    // moving only the points available to assign leaves it at 1 and the
-    // conversions do not move at all.
-    note: 'On: conversion thresholds follow each mode’s total points relative to its original total. Off: use the conversion values below unchanged. Changing only the points available to assign leaves the total, and so the thresholds, unmoved. Whole-number attributes can still cause rounding differences. Applies to new runs.',
-  });
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
     for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
@@ -266,7 +260,15 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       };
     }
   }
-  if (settings[PREFIX + 'autoScale'] !== false && ratio !== 1) next.statConversionScale = ratio;
+  // NO `statConversionScale` IS WRITTEN ANY MORE (owner, 2026-09-21). The mode
+  // used to record `total ÷ oldTotal` here, and every formula downstream
+  // DIVIDED by it: ratings, derived pools and hand sizes all read an attribute
+  // multiplied by the inverse, so a 12-point character was priced as a
+  // 35-point one and the settings panel's own weights described arithmetic the
+  // game did not do. The ratio still shapes the FLOOR, CEILING and PRESETS
+  // above — where it is visible as whole attribute points on the sheet — and
+  // stops there. A smaller pool now means smaller numbers, which is what
+  // shrinking it says.
   return { mode: next, presets, refusals };
 }
 

@@ -136,6 +136,94 @@ test('explicit Poise damage respects configured break rules without legacy penal
   assert.equal(c.player.statuses.vulnerable, undefined);
 });
 
+// ---- the shape of a rating (owner, 2026-09-21) ----------------------------
+//
+// "all calculations should be sum(floor(statmult*stat)) + equipment bonus",
+// with the multipliers present and shipping at 1. Each attribute term is
+// floored ON ITS OWN, so a weight is the rate that attribute converts at: a
+// 0.25 weight is four points to the rating, whatever the other four stats are
+// doing. The old formula pooled the weighted points and floored the total,
+// which let four stats each short of their own threshold add up to a rating
+// nobody's weights had promised — and divided that pool by the creation scale
+// besides.
+test('every rating is the sum of its floored attribute terms, times its multipliers', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const run = createRunState({ seed: 42, classId: 'reaver', registries });
+  run.loadout = null; run.relics = [];
+  run.attributes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 8 };
+
+  const rules = resolveCombatRatings({
+    'gameConfig.combatRatings.ratings.ar.strength': 1,
+    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
+    'gameConfig.combatRatings.ratings.ar.constitution': 0,
+    'gameConfig.combatRatings.ratings.ar.wisdom': 0.25,
+    'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
+  }, contentBundle);
+  // floor(1×1) + floor(0.5×1) + 0 + floor(0.25×1) + floor(0.25×8) = 1 + 0 + 0 + 0 + 2
+  assert.equal(ratingReceipt(registries, run, rules).totals.ar, 3);
+
+  // A NON-EMPTY POOL IS NOT A TERM. Three attributes at 1 under a 0.5 weight
+  // contribute nothing each and nothing together.
+  const halves = resolveCombatRatings({
+    'gameConfig.combatRatings.ratings.ar.strength': 0.5,
+    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
+    'gameConfig.combatRatings.ratings.ar.constitution': 0.5,
+    'gameConfig.combatRatings.ratings.ar.wisdom': 0,
+    'gameConfig.combatRatings.ratings.ar.intelligence': 0,
+  }, contentBundle);
+  assert.equal(ratingReceipt(registries, run, halves).totals.ar, 0);
+
+  // Both multipliers ship at 1 and neither changes a rating until it is moved.
+  assert.equal(resolveCombatRatings({}, contentBundle).multiplier, 1);
+  assert.equal(resolveCombatRatings({}, contentBundle).ratings.ar.multiplier, 1);
+  const scaled = resolveCombatRatings({
+    'gameConfig.combatRatings.multiplier': 2,
+    'gameConfig.combatRatings.ratings.ar.multiplier': 3,
+    'gameConfig.combatRatings.ratings.ar.strength': 1,
+    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
+    'gameConfig.combatRatings.ratings.ar.constitution': 0,
+    'gameConfig.combatRatings.ratings.ar.wisdom': 0.25,
+    'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
+  }, contentBundle);
+  assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 18);
+});
+
+// A SAVED FIGHT PREDATES THE MULTIPLIERS. `combatSnapshotProblems` validates a
+// restored snapshot's own rating rules, so a field this build added must read
+// as 1 when it is absent rather than refuse the run.
+test('a combat save written before the multipliers still validates and resumes', async () => {
+  const { combatRatingProblems } = await import('../src/model/combatRatings.js');
+  const legacy = resolveCombatRatings({}, contentBundle);
+  delete legacy.multiplier;
+  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) delete legacy.ratings[id].multiplier;
+  assert.deepEqual(combatRatingProblems(legacy), []);
+  const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
+  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 15, ward: 15 });
+  // A written multiplier is still held to its domain.
+  assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
+});
+
+// THE CREATION POOL IS NOT A COEFFICIENT. A run born on a smaller pool used to
+// carry `statConversionScale`, which this receipt divided by: the Starseer's
+// INT 8 scored Ward as if it were 23, and the panel's own weights were wrong
+// by 2.92× with no row saying so.
+test('a run born on a smaller pool is rated on the attributes it shows', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { configuredContentBundle } = await import('../src/model/advancedConfig.js');
+  const small = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.tuned2.total': 12 });
+  const smallRegistries = createRegistries(small);
+  const run = createRunState({ seed: 42, classId: 'starseer', registries: smallRegistries, attributeMode: 'tuned2' });
+  run.loadout = null; run.relics = [];
+  assert.equal(run.attributeModeSnapshot.statConversionScale, undefined);
+
+  const rules = resolveCombatRatings({}, small);
+  const { ward } = ratingReceipt(smallRegistries, run, rules).totals;
+  const a = run.attributes;
+  const { wisdom, intelligence } = rules.ratings.ward;
+  assert.equal(ward, Math.floor(a.wisdom * wisdom) + Math.floor(a.intelligence * intelligence));
+  assert.equal(ward, 5, 'WIS 1 and INT 8 under the authored 1 and 0.5 weights, not the 29 the scale produced');
+});
+
 test('armour, relic and status bonuses are additive and counted once', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { equippedPieces } = await import('../src/model/loadout.js');

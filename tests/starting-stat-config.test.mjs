@@ -5,6 +5,7 @@ import { configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile 
 import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
+import { deriveStat } from '../src/model/derivedStats.js';
 
 const poolKey = 'gameConfig.startingStats.pointbuy.total';
 test('pool changes redistribute every class exactly and leave authored content alone', () => {
@@ -16,31 +17,67 @@ test('pool changes redistribute every class exactly and leave authored content a
   assert.equal(contentBundle.creationModes.find(m => m.id === 'pointbuy').bonusPool, 10);
 });
 
-test('automatic scaling changes thresholds; manual mode keeps configured thresholds', () => {
+// ---- the pool no longer normalizes anything (owner, 2026-09-21) -----------
+//
+// "why are the stats so high?" — a 12-point character was scoring the ratings
+// of a 35-point one. The mode recorded `total ÷ oldTotal` and every formula
+// downstream DIVIDED by it, so an attribute entered each formula at 2.92× the
+// value on the sheet. The ratio still shapes floors, ceilings and presets,
+// where it is visible as whole points; it reaches no formula.
+test('a smaller pool lowers the pools it buys instead of normalizing them', () => {
   const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
-  const auto = configuredContentBundle(contentBundle, settings);
-  const manual = configuredContentBundle(contentBundle, { ...settings, 'gameConfig.startingStats.autoScale': false });
-  assert.equal(auto.creationModes.find(m => m.id === 'pointbuy').statConversionScale, 1/6);
-  assert.equal(manual.creationModes.find(m => m.id === 'pointbuy').statConversionScale, undefined);
-  assert.equal(manual.derivedStatRules.rules.hp.pointsPerTier, 2);
-  const a = createRunState({ registries: createRegistries(auto), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
-  const b = createRunState({ registries: createRegistries(manual), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
-  assert.equal(Object.values(a.attributes).reduce((x,y) => x+y), 10);
-  assert(a.maxHp > b.maxHp);
+  const small = configuredContentBundle(contentBundle, settings);
+  const large = configuredContentBundle(contentBundle, { ...settings, [poolKey]: 60 });
+  assert.equal(small.creationModes.find(m => m.id === 'pointbuy').statConversionScale, undefined,
+    'no conversion scale is written for any pool');
+  assert.equal(small.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
+
+  const registries = createRegistries(small);
+  const run = bundle => createRunState({ registries: createRegistries(bundle), classId: 'reaver', seed: 42, attributeMode: 'pointbuy' });
+  const a = run(small);
+  const b = run(large);
+  assert.equal(Object.values(a.attributes).reduce((x, y) => x + y), 10);
+  assert(a.maxHp < b.maxHp, 'fewer points buy less HP');
+  // THE THRESHOLD THE RUN WAS BORN WITH IS THE ONE THAT WAS CONFIGURED. It
+  // used to be multiplied by the pool ratio on its way into the snapshot, so
+  // the row a save carried was never the row the panel showed.
+  const row = a.derivedStatRuleSnapshot.rules.rules.hp;
+  assert.equal(row.pointsPerTier, 2);
+  const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
+    { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
+  assert.equal(receipt.value, row.base + row.gainPerTier * Math.floor(a.attributes.constitution / row.pointsPerTier));
 });
 
-test('pool and conversion settings round trip and reject impossible budgets', () => {
-  const settings = { [poolKey]: 10, 'gameConfig.startingStats.autoScale': false };
+test('pool settings round trip, reject impossible budgets, and tolerate the retired scaling dial', () => {
+  const settings = { [poolKey]: 10 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [poolKey]: 2 }), contentBundle));
+
+  // AN OLDER EXPORT STILL IMPORTS. `parseAdvancedConfigFile` refuses an unknown
+  // key outright, which would have made the owner's own exported file
+  // unimportable the day its dial was removed.
+  const stale = JSON.stringify({
+    schemaVersion: JSON.parse(advancedConfigExport(settings)).schemaVersion,
+    game: 'Ashen Spire',
+    overrides: { ...settings, 'gameConfig.startingStats.autoScale': false, 'gameConfig.combatRatings.ratings.ar.gain': 2 },
+  });
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(stale, contentBundle, {}, [], warnings), settings);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /multipliers/);
 });
 
 
-test('stat-driven hand sizes use normalized attributes when auto scaling is enabled', async () => {
-  const { scaledCards } = await import('../src/model/handRules.js');
+test('stat-driven hand sizes read the attribute the sheet shows', async () => {
+  const { scaledCards, handRuleSummary, resolveHandRules } = await import('../src/model/handRules.js');
   const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
-  assert.equal(scaledCards(rule, { intelligence: 2 }, 0.2), 5);
   assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
+  assert.equal(scaledCards(rule, { intelligence: 10 }), 5);
+  // handRuleSummary never had a scale to pass, so it described a hand the
+  // engine did not deal whenever one was in force. One reading, one hand.
+  const rules = resolveHandRules({}, contentBundle.attributes);
+  const attributes = { strength: 12, dexterity: 12, constitution: 12, wisdom: 12, intelligence: 12 };
+  assert.ok(handRuleSummary(rules, attributes).startsWith(`${Math.min(scaledCards(rules.capacity, attributes), scaledCards(rules.starting, attributes))} starting cards`));
 });
 
 // ---- the owner's report, as two properties (2026-09-20) --------------------

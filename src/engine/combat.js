@@ -63,7 +63,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, ratingAttributeScale = 1,
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
 }) {
   const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -96,7 +96,7 @@ export function createCombat({
       }).value
       : 0);
   const combat = {
-    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules), ratingAttributeScale } : ratingAttributeScale !== 1 ? { ratingAttributeScale } : {}),
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
@@ -125,7 +125,7 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: handRules ? scaledCards(handRules.capacity, player.attributes, ratingAttributeScale || 1) : (bal.handMax != null ? bal.handMax : 10),
+    handMax: handRules ? scaledCards(handRules.capacity, player.attributes) : (bal.handMax != null ? bal.handMax : 10),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,

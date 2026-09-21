@@ -24,7 +24,6 @@ test('Progression is the one driver: pool first, then each class, and the tier s
   assert.deepEqual(assign.rows.map(row => row.label), [
     'Points available to assign',
     'Total points on a character',
-    'Automatically scale stat conversions',
   ]);
   assert.ok(!assign.rows.some(row => row.key === 'statTierSize'), 'points, not tiers');
 

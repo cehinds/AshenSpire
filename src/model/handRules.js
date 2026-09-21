@@ -79,8 +79,17 @@ export function handRulesSettingsProblems(settings = {}) {
   });
 }
 
-export function scaledCards(rule, attributes = {}, statScale = 1) {
-  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) / statScale - rule.baseline) / rule.pointsPerCard) : 0;
+/**
+ * scaledCards(rule, attributes) → the card count this rule states.
+ *
+ * THE ATTRIBUTE ARRIVES AS THE SHEET SHOWS IT (owner, 2026-09-21). A third
+ * argument used to divide it by the creation-scale ratio, so a 12-point
+ * character drew the cards of a 35-point one and `handRuleSummary` — which
+ * never passed the argument — described a hand the engine did not deal. One
+ * reading of an attribute, one hand size.
+ */
+export function scaledCards(rule, attributes = {}) {
+  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) - rule.baseline) / rule.pointsPerCard) : 0;
   return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
 }
 

@@ -74,6 +74,29 @@ export function currentAdvancedKey(key) {
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
 
+// A DIAL THIS BUILD RETIRED, so an older export still imports. `parseAdvanced-
+// ConfigFile` refuses an unknown key OUTRIGHT — "Nothing was imported" — which
+// is right for a typo and wrong for a key this build itself removed: the
+// owner's own exported file would refuse to come back. These are dropped with
+// a named warning instead, and the file lands.
+//
+//   ratings.<id>.pointsPerIncrease / .gain  superseded by `<id>.multiplier`
+//                                           and the global `multiplier`
+//                                           (model/combatRatings.js).
+//   startingStats.autoScale                 the creation scale no longer
+//                                           reaches any formula, so the dial
+//                                           that switched it off has nothing
+//                                           left to switch.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain))$/;
+
+function withoutRetired(entries, warnings) {
+  const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
+  if (kept.length !== entries.length) {
+    warnings.push('Rating points-per-increase and gain are now per-rating multipliers, and automatic conversion scaling was removed. Those entries were skipped; everything else in the file was imported.');
+  }
+  return kept;
+}
+
 function withoutSupersededLegacy(entries) {
   const present = new Set(entries.map(([key]) => key));
   // The opening's per-scene keys used to be POSITIONAL, and the scenes moved.
@@ -588,7 +611,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of tolerateRaisedFloors(withoutSupersededLegacy(Object.entries(file.overrides)), rows, warnings)) {
+  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(file.overrides)), warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
