@@ -439,10 +439,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       ]));
       // THE RUN'S OWN PROJECTION, NOT THE AUTHORED TABLE. This is the screen
       // where a point is actually spent, so the card that says what a point
-      // buys has to say what THIS run's point buys: a creation mode carries a
-      // conversion scale, and without the projection `attributeCardModels`
-      // falls back to the authored row — five times under on the lean scale,
-      // on the one screen where the number decides the choice.
+      // buys has to say what THIS run's point buys: a climb keeps the
+      // derived-stat rows it was BORN under, and without the projection
+      // `attributeCardModels` falls back to the live authored row — which a
+      // Settings edit mid-climb, or a save from an older table, makes a
+      // different number, on the one screen where the number decides the
+      // choice.
       const cards = new Map(attributeCardModels(registries, values, {
         projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,

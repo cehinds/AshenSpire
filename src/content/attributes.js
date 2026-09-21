@@ -64,16 +64,20 @@ export const creationModes = [
     // NO CONVERSION SCALE, AND THE POOLS ARE SMALLER FOR IT (owner,
     // 2026-09-21: "all calculations should be sum(floor(statmult*stat)) +
     // equipment bonus"). This mode shipped `statConversionScale: 1/5` so the
-    // ruleset-5 coefficients — Mana IS Wisdom, HP is 20 + 4 × CON, every one
+    // ruleset-5 coefficients — Mana IS Wisdom, HP is 30 + 4 × CON, every one
     // read off the tuned2 span 3-12 — would land on tuned2's own pools when
     // the span became 1-4. The cost was that no formula read the attribute on
     // the character sheet: every one of them divided by the fifth first, and
     // the settings rows the player tunes described arithmetic the game did not
     // do. The divisor is gone from the codebase; what a coefficient says is
-    // what it does. THE POOLS THIS MODE OPENS ON ARE THEREFORE A FIFTH OF WHAT
-    // #1238 SHIPPED — a stock Reaver climbs on 28 HP, not 70 — and moving them
-    // is a retune of `derivedStatRules` and the rating weights, in the open,
-    // not a scale hidden behind them.
+    // what it does. THE POOLS THIS MODE OPENS ON ARE THEREFORE WELL UNDER WHAT
+    // #1238 SHIPPED — a stock Reaver climbs on 48 HP where it climbed on 70,
+    // both figures counting the Forsaken Medallion's flat ten — and moving
+    // them is a retune of `derivedStatRules` and the rating weights, in the
+    // open, not a scale hidden behind them. The bases carry part of that
+    // restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
+    // Poise and Ward → 1), which is why it is not the bare fifth the divisor
+    // would have made it.
     // THE SAME AUTHORITY tuned2 CARRIES, RESTATED FOR THIS SPAN. Strike and
     // Defend scale off an attribute rather than off the weapon alone, and a
     // profile is read as `baseValue + floor(stat / pointsPerTier) × gainPerTier`.

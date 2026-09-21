@@ -104,13 +104,31 @@ export function combatRatingRows(bundle) {
   return rows;
 }
 
+/**
+ * onGrid(value, row) → the value the row could actually have produced.
+ *
+ * THE PANEL'S STEP IS THE DOMAIN, AND THE IMPORT DOOR DOES NOT ENFORCE IT.
+ * `parseAdvancedConfigFile` checks finite/min/max/integer and nothing else, so
+ * a hand-edited configuration can carry a weight of 0.9999999999 on a row
+ * whose step is 0.01 — a number no player could type here. `ratingReceipt`
+ * floors with a 1e-9 epsilon (which is what makes 0.29 × 100 land on 29
+ * instead of 28.999999999999996), and that epsilon would read such a weight as
+ * a clean 1: the receipt would pay a point the config does not state. Snapping
+ * to the row's own step closes it at the door instead of loosening the floor,
+ * so the number the receipt uses is the number the panel would show.
+ */
+function onGrid(value, row) {
+  if (!Number.isFinite(value) || !Number.isFinite(row.step) || row.step <= 0) return value;
+  return Number((Math.round(value / row.step) * row.step).toFixed(6));
+}
+
 export function resolveCombatRatings(settings, bundle) {
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   for (const row of combatRatingRows(bundle)) {
     const raw = settings[row.key] ?? (row.type === 'choice' || row.key.includes('.enemyRatings.') ? row.def : undefined);
     if (raw === undefined) continue;
-    const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : Number(raw);
+    const value = row.type === 'choice' ? raw : typeof row.def === 'boolean' ? raw === true : onGrid(Number(raw), row);
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
     if (typeof value === 'number' && (!Number.isFinite(value) || value < row.min || value > row.max || (row.integer && !Number.isInteger(value)))) continue;
     const path = row.key.slice(prefix.length).split('.');
