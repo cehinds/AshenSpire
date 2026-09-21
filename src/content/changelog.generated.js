@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1238",
+    "id": "pr-1239",
     "date": "2026-09-21",
     "group": "2026-09-21",
     "summary": "The opening's buttons stay at the bottom, and thirty more things about a scene are yours to set",
     "detail": "Continue and its neighbours used to live inside the caption, so choosing a wireframe that floats the words over the artwork floated the buttons into the middle of the picture with them. They now sit in a band along the bottom of the screen — wherever the words go — with the scene counter beside them, and you can set their alignment, their size, whether Pause and Skip opening appear at all, whether clicking the picture continues, or put them back under the text if you preferred that. Everything else is new range on what a scene looks like, and all of it can be set for the whole opening or for one scene on its own: the painting's brightness, contrast, colour and blur, mirrored or not, with a vignette, a backdrop colour and a letterbox bar colour; a transition length per scene instead of one for the whole opening, with easing for it and for the camera; the title, speaker and location shown or hidden, each with its own colour, with separate title and speaker sizes, line spacing, letter spacing, line length, a choice of typeface, and a pause before the words arrive at all; and for the container behind the text, padding, corner radius, border, and a blur that frosts the artwork behind the words instead of covering it. The scene counter can be numbers, dots or nothing. One fix found by photographing the opening for the first time: a scene reached while the game sat in a background tab was drawn as words over black, because its artwork was still waiting to fade in — it is drawn finished now.",
-    "build": "0.7.1.359",
-    "pullRequest": 1238,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1238"
+    "build": "0.7.1.360",
+    "pullRequest": 1239,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1239"
   },
   {
     "id": "pr-1235",
