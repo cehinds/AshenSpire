@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1248",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Every combat rating now shows its complete calculation",
+    "detail": "AR, DR, PR, Poise and Ward used to stop at a total, leaving no way to tell which attribute, weapon, shield, armour or relic produced it. Open Show calculations on the character review or in the Armoury and each rating now names the attribute values it read, their weights, each contribution rounded down on its own, the global multiplier, the base, every named equipment or relic addition, and the final result. A Reaver's AR now reads Strength 3 × 0.5 → floor = 1, then 0 base + floor(1 global × 1) + 2 Straight Sword = 3; DR, PR, Poise and Ward follow the same receipt instead of asking the player to trust five unexplained numbers. A configuration with no weighted attributes says so plainly and calculates from zero instead of printing an empty formula.",
+    "build": "0.7.1.376",
+    "pullRequest": 1248,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1248"
+  },
+  {
     "id": "pr-1246",
     "date": "2026-09-21",
     "group": "2026-09-21",
