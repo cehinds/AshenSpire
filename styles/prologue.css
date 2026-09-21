@@ -126,7 +126,7 @@
 .prologue-controls{justify-content:var(--prologue-controls-align,center)}
 .prologue-controls-compact .prologue-controls button{min-height:40px;padding-block:.35rem;font-size:.95em}
 .prologue-controls-large .prologue-controls button{min-height:60px;padding-inline:1.4rem;font-size:1.15em}
-.prologue-controls-text .prologue-caption{padding-bottom:max(1rem,env(safe-area-inset-bottom))}
+.prologue-controls-text .prologue-caption{padding-bottom:max(var(--prologue-box-padding,1rem),env(safe-area-inset-bottom))}
 /* The picture: four dials in one filter, the mirror, the vignette over it. */
 .prologue-background{filter:var(--prologue-filter,none);transform:scale(var(--prologue-scale,1)) scaleX(var(--prologue-flip,1))}
 .prologue-plate{background:var(--prologue-backdrop,#100e0c)}

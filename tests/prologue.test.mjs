@@ -644,6 +644,14 @@ test('the controls stand in a band at the bottom, whatever the words do', () => 
     assert.match(css, rows, 'a wireframe that states its rows leaves one for the band');
   }
   assert.equal(prologueConfig().presentation.controlsPosition, 'bar');
+  // The safe-area inset is a FLOOR under the authored padding, not a value that
+  // replaces it: a container padding of 0 must still be 0 under the text.
+  assert.match(css, /\.prologue-controls-text \.prologue-caption\{padding-bottom:max\(var\(--prologue-box-padding,1rem\),env\(safe-area-inset-bottom\)\)\}/);
+  // A scene drawn while the page is hidden moves its CLOCK past the entrance as
+  // well as the animation — finishing the fade alone left `elapsed` at 0, and
+  // the first tick after the page came back rewound it and replayed the fade
+  // from black, which is the flash the fix was for.
+  assert.match(screen, /if \(blocked\(\)\) \{ animations\.forEach\(a=>a\.finish\(\)\); elapsed = Math\.max\(elapsed,duration\); \}/);
 });
 
 test('every staging dial the settings offer is a property the stylesheet reads', () => {

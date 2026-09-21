@@ -325,7 +325,7 @@ export function prologueRows() {
   add(['presentation', 'controlsAlign'], 'Button alignment', 'Controls', choice(['left','center','right'], {left:'Left',center:'Centred',right:'Right'}));
   add(['presentation', 'controlsSize'], 'Button size', 'Controls', choice(['compact','normal','large'], {compact:'Compact',normal:'Normal',large:'Large'}));
   add(['presentation', 'showPause'], 'Show Pause', 'Controls');
-  add(['presentation', 'showSkip'], 'Show Skip opening', 'Controls', {note:'The opening can still be skipped from the pause menu when this is off.'});
+  add(['presentation', 'showSkip'], 'Show Skip opening', 'Controls', {note:'With this off the opening has no skip button and plays through to Set forth. Playback → Show opening turns the whole opening off instead.'});
   add(['presentation', 'advanceOnClick'], 'Click the artwork to continue', 'Controls', {note:'Anywhere on the picture advances the scene, as well as the Continue button.'});
   for (const [index, scene] of PROLOGUE_DEFAULTS.scenes.entries()) {
     const path = ['scenes', String(index)];

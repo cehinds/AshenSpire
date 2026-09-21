@@ -285,7 +285,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     // it. So a tab opened in the background, a screen behind a modal, or a
     // capture tool held the artwork at opacity 0 and showed the caption over
     // black. Nobody is watching the fade in that state; the picture matters.
-    if (blocked()) animations.forEach(a=>a.finish());
+    //
+    // THE CLOCK MOVES WITH IT, not just the animation. Finishing the entrance
+    // alone left `elapsed` at 0, so the first tick after the page came back
+    // assigned `currentTime = 0` and rewound the finished fade — the artwork
+    // snapped back to black and faded in again, which is the flash this was
+    // meant to remove. A fade that has played, seen or not, is time the scene
+    // has spent.
+    if (blocked()) { animations.forEach(a=>a.finish()); elapsed = Math.max(elapsed,duration); }
     previous = plate; loading = false; next.disabled = false; last = 0;
   }
   function tick(now) {

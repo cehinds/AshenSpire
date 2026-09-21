@@ -1,12 +1,23 @@
 # AshenSpire component catalog
 
-`prologue-screen` composes six text-free WebP paintings, a class item layer,
-motif wash, live narration and playback controls. `src/model/prologue.js`
-projects Advanced → Opening sequence settings; `src/ui/screens/prologue.js`
-is shared by new games and the settings preview. Text, five-second total scene durations,
-entrance transitions, class memory paintings, effects and desktop/mobile character placement
-are included in configuration exports. Interrupted saves resume at a scene
-boundary; Set forth reveals the first playable map.
+`prologue-screen` composes text-free WebP paintings, a class item layer, motif
+wash, live narration, and a control band that is the frame's own last row — the
+buttons and the scene counter stay at the bottom whichever wireframe is standing
+(caption below the art, text over it, letterbox, or a side panel), unless
+`controlsPosition` puts them back under the text. `src/model/prologue.js`
+projects Advanced → Opening settings; `src/ui/screens/prologue.js` is shared by
+new games and the settings preview. The opening is nine authored scenes — five
+shipped and four empty slots a scene can be added into — played in a configured
+order over a configured subset, each with its own artwork, banner, hold, music
+and stinger. Staging (`PROLOGUE_STAGE_FIELDS`) is answered by the opening or by
+a single scene that sets `ownStaging`: wireframe, artwork scale/fit/focus and
+picture treatment, camera, wash, every part of the text and its container, the
+reveal, and the transition. All of it rides in configuration exports, in a scene
+file of its own, and in three named preset slots. Interrupted saves resume at a
+scene boundary — on the next scene still in the opening when the one they
+stopped on has been switched off; Set forth reveals the first playable map.
+`node tools/screenshot.mjs --only prologue` photographs it (`?shot=prologue`,
+staged with `?shotSettings={…}`).
 
 `equipment-animation-reference` derives the active presentation from class,
 armour, ordered right/left weapon groups and optional grip. Its model is
