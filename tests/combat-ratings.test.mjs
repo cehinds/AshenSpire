@@ -187,12 +187,27 @@ test('every rating is the sum of its floored attribute terms times one global mu
     'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
   }, contentBundle);
   assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 6);
+
+  const zeroWeights = resolveCombatRatings(Object.fromEntries(
+    ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
+      .map(id => [`gameConfig.combatRatings.ratings.ar.${id}`, 0]),
+  ), contentBundle);
+  const zeroReceipt = ratingReceipt(registries, run, zeroWeights);
+  const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
+  const zeroHtml = renderPlayerPoise({
+    ratings: zeroReceipt.totals,
+    ratingSources: zeroReceipt.sources,
+    ratingAttributes: zeroReceipt.attributeReceipts,
+    note: '',
+  });
+  assert.match(zeroHtml, /data-rating-id="ar"[\s\S]*?No weighted attributes[\s\S]*?global × \(<b>0<\/b>\)/);
+  assert.doesNotMatch(zeroHtml, /global × \(\)/);
 });
 
 test('weapon cards add their source equipment rating without a tier', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
-  const { renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
+  const { renderPlayerPoise, renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
   const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
   const currentRegistries = createRegistries(configured);
   const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
@@ -222,6 +237,16 @@ test('weapon cards add their source equipment rating without a tier', async () =
   assert.doesNotMatch(html, /pointsPerTier/);
   assert.match(html, /5 base \+ 3 AR \(weapon\) \+ 0 rarity =/);
   assert.match(html, /3 base \+ 5 DR \(shield\) \+ 0 rarity =/);
+
+  const ratingHtml = renderPlayerPoise(surface.poise);
+  assert.deepEqual(surface.poise.ratingAttributes.ar.values,
+    { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 });
+  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
+  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>3<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Dexterity <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?= <strong>7<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>0<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>12<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
 
 test('an equipment card uses only its source item rating', () => {

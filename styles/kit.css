@@ -1888,6 +1888,14 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .customize .cc-equip-group :is(.sr-name, .as-statpair) { white-space: normal; }
 .customize .cc-equip-group .sr-vals { flex: 1 1 100%; text-align: left; justify-content: flex-start; }
 .customize .cc-equip-group .sp-k { letter-spacing: normal; text-transform: none; }
+.rating-calculations { display:grid; gap:10px; margin-top:8px; }
+.rating-calculation { display:grid; gap:5px; padding:9px 0 0; border-top:1px solid color-mix(in srgb,var(--gold,#c9a227) 32%,transparent); min-width:0; }
+.rating-calculation-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; color:var(--gold,#c9a227); letter-spacing:.12em; }
+.rating-calculation-head strong { color:var(--ink,#f6eed8); font-size:1.08em; letter-spacing:normal; }
+.rating-attributes,.rating-formula { color:var(--ink,#f6eed8); line-height:1.5; overflow-wrap:anywhere; }
+.rating-line-label { display:block; color:var(--muted,#b9aa8e); font-size:.78em; letter-spacing:.12em; text-transform:uppercase; }
+.rating-separator { color:var(--muted,#b9aa8e); }
+.rating-term,.rating-source { white-space:normal; }
 .customize .as-pane-head { flex-wrap: wrap; }
 .customize .as-pane-head > .r-trail { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
 .customize .disc-face :is(.ob, .r-trail) { min-width: 0; }
