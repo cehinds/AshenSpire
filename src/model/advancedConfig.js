@@ -631,24 +631,31 @@ function balanceOwnRows(bundle) {
 // accepting a number that does nothing.
 const RATINGS_SWITCH = `${ADVANCED_CONFIG_PREFIX}combatRatings.enabled`;
 const DECK_SWITCH = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.enabled`;
-const SWAP_RULE_IDS = ['flat', 'gear', 'category'];
-function enableGates(key) {
+// Drops that stay live with drops off: `consolationCinders` (paid for every
+// boss once nothing drops), `requireFound` (ownership) and `permanentOnFind`
+// (trader purchases) are read whether or not drops are on (review, #1260), so
+// only the roll itself is gated.
+const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights|preferUnfound)(\.|$)/;
+function enableGates(key, swapRuleIds = []) {
   const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
   if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
   // The older poise meter, and the derived Poise rule, run only with ratings off.
   if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
-  for (const leaf of ['equipment.drops', 'equipment.cardMounts.extraMounts']) {
-    if (key.startsWith(`${balance}${leaf}.`) && key !== `${balance}${leaf}.enabled`) return [{ key: `${balance}${leaf}.enabled` }];
-  }
+  if (DROP_ROLL.test(key)) return [{ key: `${balance}equipment.drops.enabled` }];
+  const mounts = `${balance}equipment.cardMounts.extraMounts`;
+  if (key.startsWith(`${mounts}.`) && key !== `${mounts}.enabled`) return [{ key: `${mounts}.enabled` }];
   if (key.startsWith(`${balance}equipment.startingDeck.`) && key !== DECK_SWITCH) return [{ key: DECK_SWITCH }];
   if (key.startsWith(`${balance}equipment.roleCopies.`)) return [{ key: DECK_SWITCH, when: false }];
   if (key.startsWith(`${balance}equipment.swapCostByCategory.`)) return [{ key: 'swapCostRule', when: 'category' }];
+  // The rule a `swapCostRules.<n>` row belongs to is read from the content by
+  // index, so reordering the rules cannot gate the wrong row (review, #1260).
   const rule = key.match(/^gameConfig\.balance\.equipment\.swapCostRules\.(\d+)\./);
-  if (rule && SWAP_RULE_IDS[Number(rule[1])]) return [{ key: 'swapCostRule', when: SWAP_RULE_IDS[Number(rule[1])] }];
+  if (rule && swapRuleIds[Number(rule[1])]) return [{ key: 'swapCostRule', when: swapRuleIds[Number(rule[1])] }];
   return [];
 }
 
-function withGates(rows) {
+function withGates(rows, bundle) {
+  const swapRuleIds = (bundle.balance?.equipment?.swapCostRules || []).map((rule) => rule.id);
   const owns = rows.filter((row) => row.own);
   const inheritedKey = (key) => {
     const rarity = key.match(/^gameConfig\.balance\.rewards\.rarityWeightsByClass\.[^.]+\.(.+)$/);
@@ -662,10 +669,10 @@ function withGates(rows) {
     // deck rules are off, a Poise switch nothing while ratings are on (Codex,
     // on #1260).
     if (row.own) {
-      const gates = [...(row.gates || []), ...enableGates(row.own.member)];
+      const gates = [...(row.gates || []), ...enableGates(row.own.member, swapRuleIds)];
       return gates.length ? { ...row, gates } : row;
     }
-    const gates = [...(row.gate ? [row.gate] : []), ...enableGates(row.key)];
+    const gates = [...(row.gate ? [row.gate] : []), ...enableGates(row.key, swapRuleIds)];
     const owner = owns.find((toggle) => toggle.own.dropPath && (row.key === toggle.own.member || row.key.startsWith(`${toggle.own.member}.`)));
     if (owner) gates.unshift({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });
     return gates.length ? { ...row, gates } : row;
@@ -674,12 +681,18 @@ function withGates(rows) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated]);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
 }
 
-/** Every override switch's `own`, for the readers that must honour them. */
+/**
+ * Every override switch's `own`, for the readers that must honour them.
+ * Cached per bundle: `configuredContentBundle` asks on every call, and
+ * rebuilding every row for it doubled that call's cost (review, #1260).
+ */
+const OWNS_BY_BUNDLE = new WeakMap();
 export function advancedConfigOwns(bundle) {
-  return advancedConfigRows(bundle).filter((row) => row.own).map((row) => row.own);
+  if (!OWNS_BY_BUNDLE.has(bundle)) OWNS_BY_BUNDLE.set(bundle, advancedConfigRows(bundle).filter((row) => row.own).map((row) => row.own));
+  return OWNS_BY_BUNDLE.get(bundle);
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {

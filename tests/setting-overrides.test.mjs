@@ -198,3 +198,42 @@ test('an override switch is disabled while the rows it governs do nothing', () =
   assert.ok(closedGate(shared, row(poise)), 'ratings on: the derived Poise rule is not used');
   assert.equal(closedGate({ ...shared, 'gameConfig.combatRatings.enabled': false }, row(poise)), null);
 });
+
+// Review of #1260 (a separate Claude session), each confirmed before fixing.
+test('drop settings that stay live with drops off are not greyed out', () => {
+  const off = { 'gameConfig.balance.equipment.drops.enabled': false };
+  for (const live of ['consolationCinders', 'requireFound', 'permanentOnFind']) {
+    assert.equal(closedGate(off, row(`gameConfig.balance.equipment.drops.${live}`)), null, `${live} is read whether or not drops are on`);
+  }
+  for (const roll of ['chance.elite', 'rarityWeights.boss.rare', 'preferUnfound']) {
+    assert.ok(closedGate(off, row(`gameConfig.balance.equipment.drops.${roll}`)), `${roll} is the roll itself`);
+  }
+});
+
+test('an item switched on with nothing typed uses its authored requirement, as the row shows', () => {
+  const key = 'gameConfig.equipmentRequirements.greatsword.strength';
+  const own = `gameConfig.own.${key.slice('gameConfig.'.length)}`;
+  const scaled = { 'gameConfig.equipmentRequirements.scale': 0.5 };
+  const minimum = (settings) => (resolveEquipmentRequirements(contentBundle, settings) || contentBundle.equipment.equipmentRequirements)
+    .find((candidate) => candidate.itemId === 'greatsword' && candidate.attributeId === 'strength').minimum;
+  assert.equal(minimum(scaled), 2, 'off: authored 3 × 0.5, rounded');
+  assert.equal(minimum({ ...scaled, [own]: true }), 3, 'on, untouched: the authored 3 the enabled row shows');
+  assert.equal(minimum({ ...scaled, [own]: true, [key]: 4 }), 4);
+});
+
+test('a configuration file carrying the dial under its snapshot spelling agrees with the profile', () => {
+  const file = { 'gameConfig.derivedStatRules.defaults.pointsPerTier': 1, [HP_TIER]: 2 };
+  assert.equal(row(OWN_HP).resolve(file), false, 'the shared mode is on for it, so HP follows until switched');
+  assert.equal(configuredContentBundle(contentBundle, file).derivedStatRules.rules.hp.pointsPerTier, 1,
+    'and the configured bundle does not apply HP\'s stored 2 behind a switch that reads off');
+});
+
+test('a swap-cost rule row is gated by the rule it belongs to, read from the content', () => {
+  const rules = contentBundle.balance.equipment.swapCostRules;
+  rules.forEach((rule, index) => {
+    const key = `gameConfig.balance.equipment.swapCostRules.${index}.gear`;
+    assert.equal(closedGate({ swapCostRule: rule.id }, row(key)), null, `${rule.id} row open under ${rule.id}`);
+    const other = rules.find((candidate) => candidate.id !== rule.id).id;
+    assert.ok(closedGate({ swapCostRule: other }, row(key)), `${rule.id} row closed under ${other}`);
+  });
+});

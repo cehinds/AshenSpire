@@ -18,8 +18,10 @@ export function sharedRateFlag(bundle) {
   const shipped = bundle.derivedStatRules.defaults.pointsPerTier;
   return {
     key: SHARED_RATE_KEY,
+    // Reads the profile dial AND its configuration-file / snapshot spelling,
+    // so a file imported mid-session agrees with the profile (review, #1260).
     defaultOn: (settings) => {
-      const dial = Number(settings.statTierSize);
+      const dial = Number(settings.statTierSize ?? settings['gameConfig.derivedStatRules.defaults.pointsPerTier']);
       return Number.isFinite(dial) && dial !== shipped;
     },
   };
@@ -206,7 +208,12 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
     const raw = settings[key];
     // A pinned value whose switch was turned off is kept in the profile but
     // not used: the multiplier decides again.
-    const explicit = settings[ownKey(key)] !== false && Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    // Switched ON with nothing typed yet: the item's own requirement is its
+    // authored one, which is what the enabled row shows (review and Codex, on
+    // #1260 — the multiplier used to keep applying until the field was edited).
+    const pinned = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    const explicit = settings[ownKey(key)] === false ? null
+      : pinned ?? (settings[ownKey(key)] === true ? row.minimum : null);
     const minimum = explicit ?? scaledRequirement(row.minimum, settings);
     if (minimum === row.minimum) return row;
     changed = true;

@@ -1518,7 +1518,10 @@ export function derivedStatDialOptions(settings) {
   for (const own of advancedConfigOwns(contentBundle)) {
     const stat = own.member.match(/^gameConfig\.derivedStatRules\.rules\.([^.]+)\.pointsPerTier$/);
     if (!stat || ownOn(settings, own)) continue;
-    if (contentBundle.derivedStatRules.rules[stat[1]]?.pointsPerTier !== size) rules[stat[1]] = { pointsPerTier: size };
+    // Every follower is patched, not only those whose SHIPPED value differs:
+    // a configured value could differ from the shipped one (review, #1260).
+    // With the switch off there are no followers, so a default run is still {}.
+    if (contentBundle.derivedStatRules.rules[stat[1]]) rules[stat[1]] = { pointsPerTier: size };
   }
   return Object.keys(rules).length ? { explicitOverride: { rules } } : {};
 }
