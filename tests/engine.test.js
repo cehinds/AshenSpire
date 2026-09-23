@@ -9810,6 +9810,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the Reaver falls back to its authored attributes');
     assert(validateContent(booted).ok,
       `and the configured bundle still validates: ${validateContent(booted).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    // A RAISED OUTFIT MINIMUM is held at the same door as a raised kit one: the
+    // authored preset (Strength 3) cannot wear vigil at 4, and falling back to
+    // it cannot help, so the raise is refused whole and the bundle validates.
+    const raised = configuredContentBundle(armourBundle, { 'gameConfig.equipmentRequirements.vigil.strength': 4 });
+    eq(raised.equipment.equipmentRequirements.find((row) => row.itemId === 'vigil').minimum, 3,
+      'a raise the preset cannot wear is refused');
+    assert(validateContent(raised).ok,
+      `and the bundle it leaves still validates: ${validateContent(raised).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    const raisedSaid = advancedConfigProblems(armourBundle, { 'gameConfig.equipmentRequirements.vigil.strength': 4 });
+    assert(raisedSaid.length > 0, `and Settings says so: ${raisedSaid.join(' | ') || '(nothing)'}`);
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.

@@ -1,3 +1,4 @@
+import { presetGearProblems } from './attributes.js';
 const PREFIX = 'gameConfig.startingStats.';
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
@@ -164,7 +165,8 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
 
 /**
  * defaultModeHoldsItsKits(bundle, settings) → can the mode creation offers
- * still dress every class, with THIS requirement table in force?
+ * still dress every class — its kit and the outfits creation offers it —
+ * with THIS requirement table in force?
  *
  * THE DIAL THAT COULD THROW AWAY EVERY OTHER DIAL. `validateContent` refuses a
  * preset that cannot hold the kit its class starts in, and `rebuildRegistries`
@@ -193,6 +195,17 @@ function defaultModeHoldsItsKits(bundle, settings) {
       const value = values[id];
       if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
     }
+    // The OUTFITS creation offers the class are held to the same door: a raise
+    // the preset cannot wear fails validateContent just as a kit raise does,
+    // and a class falling back to its authored preset cannot rescue it, since
+    // that preset is the one the raise was measured against (Codex, #1255).
+    if (presetGearProblems({
+      presets: { [modeId]: { [classId]: values } },
+      defaultMode: modeId,
+      startingKits: [],
+      equipmentRequirements: bundle.equipment?.equipmentRequirements || [],
+      creationClasses: bundle.characterCreation?.classes || {},
+    }).length) return false;
   }
   return true;
 }
