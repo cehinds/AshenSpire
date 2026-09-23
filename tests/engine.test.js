@@ -9401,7 +9401,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE CAMP: a small rest, the same Mana mode, no refill and no services.
     const campRun = fresh();
     const camp = visitTo(campRun, 'camp');
-    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false }), 'the camp offers nothing');
+    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false, questBoard: false }), 'the camp offers nothing');
     eq(arriveAt(camp).refill, null, 'no refill rule, no receipt');
     eq(campRun.flaskCharges.hpCurrent, 0, 'the camp refills no flask');
     restAt(camp);
