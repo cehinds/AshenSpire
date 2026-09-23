@@ -1094,6 +1094,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-example-lines dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .set-example-total { color: var(--gold); white-space: nowrap; }
 .set-example-hint { margin: .35rem 0 0; color: var(--muted); font-style: italic; }
+.set-example-refused { margin: 0 0 .35rem; padding: .3rem .5rem; border-left: 3px solid var(--danger); color: var(--parchment); }
 .set-example-problem { border-left-color: var(--blood); }
 @media (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
 .set-subsection-heading { margin: .9rem .2rem .3rem; color: var(--gold); font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }

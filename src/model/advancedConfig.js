@@ -189,7 +189,8 @@ function balanceGroup(path) {
 // does nothing at all.
 //
 // Progression → Starting values offered `energy` and `draw`; Progression →
-// Stat conversions offers "Actions — base amount" and "Draw — base amount".
+// Stat conversions offered "Actions — base amount" and "Draw — base amount"
+// (now Stats → Actions and Stats → Draw & hand).
 // The second pair is what a run is actually born with — `state.js` reads
 // `energy.value` and `draw.value` off the derived-stat rules and nothing in
 // src, tools or tests reads `balance.energy` or `balance.draw` at all. Setting
@@ -455,7 +456,7 @@ function explicitRows(bundle) {
       label: `${classLabel} — Base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
       // RETIRED (owner, 2026-09-23). `createRunState` writes this into maxHp and
       // `initializeRunDerivedStats` overwrites it a few lines later with the
-      // derived HP rule (Stat conversions → HP), so the row moved nothing. The
+      // derived HP rule (Stats → HP), so the row moved nothing. The
       // key stays so an exported configuration carrying it still imports.
       retired: true, inert: true,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,

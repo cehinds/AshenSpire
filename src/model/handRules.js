@@ -134,7 +134,7 @@ export function handRulesSettingsProblems(settings = {}) {
  *
  * THE ATTRIBUTE ARRIVES AS THE SHEET SHOWS IT (owner, 2026-09-21). A third
  * argument used to divide it by the creation-scale ratio, so a 12-point
- * character drew the cards of a 35-point one and `handRuleSummary` — which
+ * character drew the cards of a 35-point one and the old hand summary — which
  * never passed the argument — described a hand the engine did not deal. One
  * reading of an attribute, one hand size.
  */
@@ -152,11 +152,4 @@ export function scaledCardsReceipt(rule, attributes = {}) {
     base: rule.base, bonus, raw, minimum: rule.minimum, maximum: rule.maximum,
     value: Math.min(rule.maximum, Math.max(rule.minimum, raw)),
   };
-}
-
-export function handRuleSummary(rules, attributes = {}) {
-  const capacity = scaledCards(rules.capacity, attributes);
-  const opening = Math.min(capacity, scaledCards(rules.starting, attributes));
-  const turn = rules.drawMode === 'fill' ? 'Fill to capacity each turn' : `Draw up to ${scaledCards(rules.turn, attributes)} each turn`;
-  return `${opening} starting cards · ${capacity} maximum · ${turn}. ${rules.retain ? 'Keep unplayed cards.' : 'Discard unplayed cards.'}${rules.retain && rules.promptDiscard ? ' Choose optional discards at turn end.' : ''}`;
 }

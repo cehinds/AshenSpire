@@ -14,7 +14,8 @@
 
 import { contentBundle } from '../../content/index.js';
 import { configuredContentBundle } from '../../model/advancedConfig.js';
-import { deriveStat, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
+import { derivedStatFloorProblems } from '../../model/startingStatConfig.js';
+import { deriveStat, derivedStatRuleProblems, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
 import { resolveHandRules, scaledCardsReceipt } from '../../model/handRules.js';
 import { resolveCombatRatings } from '../../model/combatRatings.js';
 import { attributeRatingReceipt, ratingAttributeIds } from '../../model/ratingFormula.js';
@@ -28,7 +29,9 @@ const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'energy', 'Draw & hand': 'draw
 const RATING_BY_TOPIC = Object.freeze({ 'Attack rating (AR)': 'ar', 'Defence rating (DR)': 'dr', 'Power rating (PR)': 'pr', Poise: 'poise', Ward: 'ward' });
 const RATING_LABELS = Object.freeze({ ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward' });
 
-const num = (value) => String(Number(Number(value).toFixed(2)));
+// Four places, so a typed weight such as 0.125 or 0.9999 is shown as the
+// number that was multiplied, not a rounding of it.
+const num = (value) => String(Number(Number(value).toFixed(4)));
 const plural = (count, one, many = `${one}s`) => `${num(count)} ${count === 1 ? one : many}`;
 
 /** The classes an out-of-run example can be read from, in content order. */
@@ -63,22 +66,54 @@ function attributeList(subject) {
 // Everything an example reads, resolved once per preview: the configured
 // bundle, whose attributes, and the three rule sets built from it.
 function previewContext(settings, previewAttributes, previewLevel) {
-  const configured = configuredContentBundle(contentBundle, settings);
+  // THE BUNDLE A RUN WOULD ACTUALLY GET. A configuration the game refuses is
+  // not applied: `main.js` `rebuildRegistries` keeps the authored content until
+  // the values form a valid configuration. The example does the same and says
+  // why, rather than showing a number no run has, or going blank over a
+  // refusal on another tab. The full `validateContent` pass costs more than
+  // the example itself, so this checks the two refusals a stat edit can
+  // cause (the rule table and the Mana floor) up front, and anything else
+  // when the example run is born (`newRun` below).
+  let configured = configuredContentBundle(contentBundle, settings);
+  let refused = null;
+  const ruleProblem = derivedStatRuleProblems(configured.derivedStatRules, {
+    attributeIds: (configured.attributes || []).map((attribute) => attribute.id),
+    classFields: ['maxHp'],
+  })[0];
+  const floorProblem = derivedStatFloorProblems(configured)[0];
+  if (ruleProblem || floorProblem) {
+    refused = ruleProblem ? `${ruleProblem.path}: ${ruleProblem.msg}` : floorProblem.message;
+    configured = contentBundle;
+  }
+  // A NEW CHARACTER IS BORN BY THE REAL DOOR. `createRunState` folds the
+  // class's starting relics into its derived rules (a Reaver's Forsaken
+  // Medallion is +10 HP), so an example read off the raw table would show a
+  // number no new Reaver has. The run's own rule snapshot is what it uses.
+  // Born first, because a refusal at that door decides which bundle every
+  // other example reads.
+  let newRun = null;
+  if (!previewAttributes) {
+    const classOf = (bundle) => statsExampleSubject(settings, null, bundle).classId;
+    const born = (bundle) => createRunState({ seed: 0, classId: classOf(bundle), registries: createRegistries(bundle) });
+    try {
+      newRun = born(configured);
+    } catch (error) {
+      if (configured === contentBundle) throw error;
+      refused = error.message;
+      configured = contentBundle;
+      newRun = born(configured);
+    }
+  }
   const subject = statsExampleSubject(settings, previewAttributes, configured, previewLevel);
   const lazy = (build) => { let value; let done = false; return () => { if (!done) { value = build(); done = true; } return value; }; };
   return {
-    configured, subject, settings,
+    configured, subject, settings, refused,
     derived: lazy(() => resolveDerivedStatRules(configured.derivedStatRules, {
       attributeIds: (configured.attributes || []).map((attribute) => attribute.id),
       classFields: ['maxHp', 'maxMana'],
     })),
     ratings: lazy(() => resolveCombatRatings(settings, configured)),
-    // A NEW CHARACTER IS BORN BY THE REAL DOOR. `createRunState` folds the
-    // class's starting relics into its derived rules (a Reaver's Forsaken
-    // Medallion is +10 HP), so an example read off the raw table would show a
-    // number no new Reaver has. The run's own rule snapshot is what it uses.
-    newRun: lazy(() => (subject.current ? null
-      : createRunState({ seed: 0, classId: subject.classId, registries: createRegistries(configured) }))),
+    newRun: () => newRun,
     hand: lazy(() => resolveHandRules(settings, configured.attributes)),
   };
 }
@@ -138,7 +173,11 @@ function derivedExample(ctx, statId) {
   const relicTerm = relicFlat ? ` + ${num(relicFlat)} from ${relicNames.join(' and ') || 'starting relics'}` : '';
   const expression = `${num(receipt.base - relicFlat)} base${relicTerm}${attributePart}${levelTerm(receipt)}`;
   const capped = (entry) => (entry.cap !== null && entry.raw > entry.cap ? entry.cap : null);
-  const lines = [{ label: `${label} at level ${now}`, expression, total: receipt.value, capped: capped(receipt) }];
+  // A character always has at least 1 HP (`state.js` clamps the maximum), so
+  // a formula that sums to less says so instead of showing a 0 no run has.
+  const floor = (entry) => (statId === 'hp' && entry.value < 1 ? 1 : entry.value);
+  const floorNote = (entry) => (floor(entry) !== entry.value ? `, raised to 1 (a character always has at least 1 HP)` : '');
+  const lines = [{ label: `${label} at level ${now}`, expression: expression + floorNote(receipt), total: floor(receipt), capped: capped(receipt) }];
   // The next level at which the floored level term moves, if it ever does.
   if (perLevel > 0) {
     let next = null;
@@ -147,7 +186,7 @@ function derivedExample(ctx, statId) {
     }
     if (next) {
       const later = at(next);
-      lines.push({ label: `${label} at level ${next}`, expression: `${num(later.value - later.levelBonus)}${levelTerm(later)}`, total: later.value, capped: capped(later) });
+      lines.push({ label: `${label} at level ${next}`, expression: `${num(later.raw - later.levelBonus)}${levelTerm(later)}${floorNote(later)}`, total: floor(later), capped: capped(later) });
     }
   }
   const steps = tiered ? [] : used
@@ -298,5 +337,6 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
     attributes: attributeList(subject),
     examples,
     problem: null,
+    refused: ctx.refused ? `These settings are refused (${ctx.refused}), so a new run keeps the authored rules until they are corrected. The example shows those rules.` : null,
   };
 }

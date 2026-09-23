@@ -745,6 +745,18 @@ export function activeAdvancedGroup(settings) {
   return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
 }
 
+// The Stats topic a migrated profile lands on: where the rows it was last
+// looking at went, not Overview.
+const MIGRATED_STATS_TOPICS = Object.freeze({ 'Hand & Draw': 'Draw & hand', Poise: 'Poise', Stagger: 'Poise', Mana: 'Mana' });
+
+/** storedAdvancedTopic(settings, groupId) → the topic id a tab opens on, or undefined for its first. */
+export function storedAdvancedTopic(settings, groupId) {
+  const stored = settings?.[`settingsAdvancedSubgroup.${groupId}`];
+  if (stored !== undefined || groupId !== 'Stats') return stored;
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[settings?.[`settingsAdvancedSubgroup.${raw}`]];
+}
+
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 
 // The groups the General tab's first picker offers, in the order it offers
@@ -1737,7 +1749,19 @@ export function compactAdvancedRow(row, groupId, subgroupId) {
 // Computed by models/StatsPreviewModel.js from the same configured bundle a new
 // run is born from, and redrawn after every edit (`refreshStatsPreviews`), so
 // the numbers under a dial are the ones the dial produces.
+// The last example drawn, keyed by everything it reads, so the render that
+// paints the panel and the refresh that follows it compute it once.
+let lastStatsPreview = { key: null, html: '' };
+
 export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null) {
+  const key = JSON.stringify([topic, previewAttributes, previewLevel, settings]);
+  if (key === lastStatsPreview.key) return lastStatsPreview.html;
+  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel);
+  lastStatsPreview = { key, html };
+  return html;
+}
+
+function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel) {
   const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel);
   if (!preview) return '';
   if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
@@ -1751,6 +1775,7 @@ export function statsTopicPreviewHtml(settings, topic, previewAttributes = null,
     + (example.hint ? `<p class="set-example-hint">${esc(example.hint)}</p>` : '')
     + '</div>').join('');
   return `<div class="set-example" aria-live="polite"><div class="set-example-head"><strong>Worked example</strong>${who}</div>`
+    + (preview.refused ? `<p class="set-example-refused" role="status">${esc(preview.refused)}</p>` : '')
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
@@ -1792,7 +1817,7 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
           + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
       }
       const subgroups = advancedSubgroups(h.rows, group.id);
-      const selected = settings[`settingsAdvancedSubgroup.${group.id}`];
+      const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
@@ -1995,13 +2020,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // reaches `settings`, so the model has nothing to report. Keyed by row, so a
   // legal re-entry clears exactly the message it replaced.
   const typedRefusals = new Map();
+  // Only the topic on screen draws its example. A search can open several
+  // topics at once; they show their rows without an example until it clears.
+  const drawnPreviews = new WeakMap();
   const refreshStatsPreviews = () => {
-    container.querySelectorAll('.set-advanced-group:not([hidden]) .set-topic-panel:not([hidden]) [data-stats-preview]').forEach((node) => {
-      node.innerHTML = statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel);
+    const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
+    container.querySelectorAll('[data-stats-preview]').forEach((node) => {
+      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel) : '';
+      if (drawnPreviews.get(node) === html) return;
+      node.innerHTML = html;
+      drawnPreviews.set(node, html);
       node.querySelector('[data-stats-example-class]')?.addEventListener('change', (event) => {
         settings[STATS_EXAMPLE_CLASS_KEY] = event.target.value;
         onChange({ [STATS_EXAMPLE_CLASS_KEY]: event.target.value });
         refreshStatsPreviews();
+        // The picker was redrawn under the focus; hand it back.
+        node.querySelector('[data-stats-example-class]')?.focus();
       });
     });
   };
@@ -2131,6 +2166,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const count = section.querySelector('[data-config-count]');
     if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
     syncSubsectionHeadings();
+    refreshStatsPreviews();
   };
   if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
   container.querySelectorAll('.set-advanced-group').forEach(section => {
@@ -2172,7 +2208,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings);
       const groups = advancedSubgroups(ROWS, currentGroup);
-      const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
+      const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]

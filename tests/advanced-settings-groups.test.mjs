@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryHandler, statsTopicPreviewHtml, activeAdvancedGroup } from '../src/ui/screens/settings.js';
+import { categoryHandler, statsTopicPreviewHtml, activeAdvancedGroup, storedAdvancedTopic } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups, statsSection, CLASS_TOPICS, STATS_TOPICS } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { statsTopicPreview } from '../src/ui/models/StatsPreviewModel.js';
 
@@ -627,6 +627,12 @@ test('a profile last on a merged tab opens on Stats', () => {
   }
   assert.equal(activeAdvancedGroup({ settingsAdvancedCategory: 'Progression', 'settingsAdvancedSubgroup.Progression': 'Level-up' }), 'Progression',
     'a topic that stayed keeps its tab');
+  // And opens on the topic its rows went to, not Overview.
+  assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Hand & Draw' }, 'Stats'), 'Draw & hand');
+  assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Combat', 'settingsAdvancedSubgroup.Combat': 'Poise' }, 'Stats'), 'Poise');
+  assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Rules', 'settingsAdvancedSubgroup.Rules': 'Mana' }, 'Stats'), 'Mana');
+  assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Hand & Draw', 'settingsAdvancedSubgroup.Stats': 'HP' }, 'Stats'), 'HP',
+    'a topic chosen on Stats itself wins');
 });
 
 test('the worked example recomputes from the edited values and shows the whole sum', async () => {
@@ -714,4 +720,40 @@ test('the worked example recomputes from the edited values and shows the whole s
   const off = statsTopicPreview({ 'gameConfig.combatRatings.enabled': false }, 'Poise', { constitution: 2 });
   assert.deepEqual(off.examples.map(entry => entry.kind), ['derived']);
   assert.equal(statsTopicPreview({}, 'Status bonuses'), null, 'a table topic has no example');
+});
+
+// Review of the rebuilt #1252: the example is the one a run gets, even when a
+// setting elsewhere is refused.
+test('a refused configuration is named, and the example shows the rules a run keeps', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { contentBundle } = await import('../src/content/index.js');
+  const authored = (classId) => createRunState({ seed: 0, classId, registries: createRegistries(contentBundle) });
+  // A refusal on another tab no longer blanks every example.
+  const flasks = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, settingsStatsExampleClass: 'reaver' }, 'HP');
+  assert.match(flasks.refused, /flask/i);
+  assert.equal(flasks.examples[0].kind, 'derived');
+  assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);
+  assert.match(statsTopicPreviewHtml({ 'gameConfig.balance.flaskCapacity': 9 }, 'HP'), /set-example-refused/);
+  // A Mana table the game refuses shows the Mana a run keeps, not 0.
+  const zero = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.mana.base': 0, 'gameConfig.derivedStatRules.rules.mana.wisdom': 0, settingsStatsExampleClass: 'herald' }, 'Mana');
+  assert.match(zero.refused, /Mana would be 0/);
+  assert.equal(zero.examples[0].lines[0].total, authored('herald').maxMana);
+  assert.equal(statsTopicPreview({}, 'HP').refused, null);
+});
+
+test('the example shows what a run is born with at the edges', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { configuredContentBundle } = await import('../src/model/advancedConfig.js');
+  const { contentBundle } = await import('../src/content/index.js');
+  // HP is at least 1, as the run door clamps it.
+  const settings = { 'gameConfig.derivedStatRules.rules.hp.base': 0, 'gameConfig.derivedStatRules.rules.hp.constitution': 0, settingsStatsExampleClass: 'rogue' };
+  const line = statsTopicPreview(settings, 'HP').examples[0].lines[0];
+  assert.equal(line.total, createRunState({ seed: 0, classId: 'rogue', registries: createRegistries(configuredContentBundle(contentBundle, settings)) }).maxHp);
+  assert.equal(line.total, 1);
+  assert.match(line.expression, /raised to 1/);
+  // A typed weight is shown as the number that was multiplied.
+  const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
+  assert.match(eighth.examples[1].lines[0].expression, /8 levels × 0\.125 → 1/);
 });
