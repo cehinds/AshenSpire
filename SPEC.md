@@ -1184,7 +1184,10 @@ keeps the same state and focus contract without meaningful animation.
   Continue at the bottom-right; phones stack these areas. Title strips fit their text.
   Continue names the next equipment section. Automatic advancement remains optional and
   defaults off. Flavor occupies one line with an ellipsis on overflow, and its complete
-  text remains available through inspection. These are presentation rules; starting-deck
+  text remains available through inspection. In card and equipment inspection, lore is
+  one identity line (the flavor text's first paragraph); when more follows, the line is a
+  control that opens the lore modal over the inspection with the whole text. Its typeface,
+  size, spacing and slant are presentation settings under Advanced → Text & lore. These are presentation rules; starting-deck
   composition and unarmed fallback mechanics remain as defined above. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
   choices. A new character defaults to the Animated sprite style while preserving any explicit

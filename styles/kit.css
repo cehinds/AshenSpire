@@ -3930,9 +3930,60 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:var(--card-ratio); min-width:0; margin:0; transform:none; }
 .equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
 .cc-starting-card .card-info-button { top:-44px; }
-.inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
-.inspection-lore summary { cursor:pointer; }
-.inspection-lore p { font-style:italic; margin:8px 0 0; white-space:pre-line; line-height:1.55; max-width:62ch; }
+/* CARD LORE — the identity line in inspection and the lore modal behind it
+   (components/loreLine.js). The player picks the face, size, spacing and slant
+   under Advanced → Text & lore; models/LoreTypeModel.js writes the choice on
+   <html> as data-lore-* words and the rules below turn words into type. The
+   faces are bundled (assets/fonts/, CREDITS.md) under their own "AS Lore"
+   names, so none of them changes the game's headings or body text. Sizes are
+   rem against the 62.5% root (1rem = 10px at Text M), so Text size scales them. */
+@font-face { font-family:'AS Lore Fell'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Fell'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cinzel'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cinzel-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-italic.woff2') format('woff2'); }
+:root { --lore-font:'AS Lore Fell', Georgia, serif; --lore-size:1.7rem; --lore-leading:1.6; --lore-tracking:0em; --lore-slant:italic; --lore-identity-slant:italic; }
+:root[data-lore-face="fell"] { --lore-font:'AS Lore Fell', Georgia, serif; }
+:root[data-lore-face="garamond"] { --lore-font:'AS Lore Garamond', Georgia, serif; }
+:root[data-lore-face="cormorant"] { --lore-font:'AS Lore Cormorant', Georgia, serif; }
+:root[data-lore-face="crimson"] { --lore-font:'AS Lore Crimson', Georgia, serif; }
+:root[data-lore-face="spectral"] { --lore-font:'AS Lore Spectral', Georgia, serif; }
+:root[data-lore-face="baskerville"] { --lore-font:'AS Lore Baskerville', Georgia, serif; }
+:root[data-lore-face="cinzel"] { --lore-font:'AS Lore Cinzel', Georgia, serif; }
+:root[data-lore-face="inter"] { --lore-font:'AS Lore Inter', 'Segoe UI', system-ui, sans-serif; }
+:root[data-lore-face="georgia"] { --lore-font:Georgia, 'Times New Roman', serif; }
+:root[data-lore-size="S"] { --lore-size:1.5rem; }
+:root[data-lore-size="M"] { --lore-size:1.7rem; }
+:root[data-lore-size="L"] { --lore-size:1.9rem; }
+:root[data-lore-size="XL"] { --lore-size:2.2rem; }
+:root[data-lore-leading="tight"] { --lore-leading:1.4; }
+:root[data-lore-leading="normal"] { --lore-leading:1.6; }
+:root[data-lore-leading="loose"] { --lore-leading:1.85; }
+:root[data-lore-tracking="tight"] { --lore-tracking:-0.01em; }
+:root[data-lore-tracking="normal"] { --lore-tracking:0em; }
+:root[data-lore-tracking="wide"] { --lore-tracking:0.04em; }
+:root[data-lore-slant="upright"] { --lore-slant:normal; }
+:root[data-lore-identity-slant="upright"] { --lore-identity-slant:normal; }
+.inspection-lore-line { display:flex; align-items:baseline; gap:12px; width:100%; box-sizing:border-box; margin:12px 0 0; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--parchment); text-align:left; font:inherit; }
+button.inspection-lore-line { cursor:pointer; }
+button.inspection-lore-line:hover { border-color:var(--gold); }
+button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-size) - 0.2rem); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; }
+.inspection-lore-line .lore-read { flex:none; font-size:1.2rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+.lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
+.lore-modal-text p { margin:0; }
+.lore-modal-text .lore-identity { font-size:calc(var(--lore-size) + 0.2rem); font-style:var(--lore-identity-slant); }
+.lore-modal-text .lore-closing { margin-top:4px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
 /* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
    is worn and held in the order the sections ask for it — with the receipts
@@ -5130,8 +5181,7 @@ button[data-button-size] {
 .customize .cc-item-heading .inspection-facts { display:flex; gap:6px; margin:0; }
 .customize .cc-compact-details { display:flex; flex-direction:column; gap:8px; }
 .customize .cc-compact-details .inspection-effect,.customize .cc-compact-details .inspection-requirement { margin:0; font-size:14px; }
-.customize .cc-compact-details .inspection-lore { margin:0; border:0; padding:0; }
-.customize .cc-compact-details .inspection-lore summary { padding:4px 0; font-size:12px; }
+.customize .cc-compact-details .inspection-lore-line { margin:0; padding:6px 8px; }
 .customize .cc-single-tags { display:flex; flex-wrap:nowrap; gap:5px; min-width:0; width:100%; }
 .customize .cc-single-tags > .inspection-tag { flex:none; white-space:nowrap; font-size:12px; padding:5px 7px; }
 .cc-single-tags > [hidden] { display:none!important; }

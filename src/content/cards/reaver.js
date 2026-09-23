@@ -18,7 +18,7 @@ export const reaverCards = [
   {
     // Shared basic (all three classes start with Strikes/Defends — colorless).
     id: 'strike', name: 'Strike', class: 'colorless', rarity: 'starter', cost: 1, type: 'attack',
-    flavor: "The first cut the hamlets teach, made with whatever edge the hamlet owns. Marl's Hollow sends one climber a winter, chosen by the elders at the well, and the one chosen spends the last evening at the whetting post learning this and nothing more. The elders say a Forsaken needs only the one cut, since the marked learned a thousand and it did them no good.\n\n— Marl's Hollow elders",
+    flavor: "First cut of the hamlets.\n\nMade with whatever edge the hamlet owns. Marl's Hollow sends one climber each winter, chosen at the well, and the chosen spends the last evening at the whetting post learning this and nothing more.\n\nThe marked learned a thousand cuts. It did them no good.",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
     textTemplate: 'Deal {damage} damage.',
@@ -26,7 +26,7 @@ export const reaverCards = [
   },
   {
     id: 'defend', name: 'Defend', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
-    flavor: "The first guard of the road, marked on cairn stones by climbers for climbers: two crossed lines, meaning hold. The mark does not say what to hold against, or for how long. The hamlets say it was cut by the first Forsaken to climb, before the Burning, when the ring was closed to them. Who those first climbers were, and what they climbed toward, the hamlets cannot agree.\n\n— told at the Grave of the Nameless",
+    flavor: "First guard of the road.\n\nTwo crossed lines upon a cairn stone: hold. Cut by climbers for climbers, before the Burning, when the ring was closed to the unmarked.\n\nThe mark does not say what to hold against, nor for how long.",
     keywords: [], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 5 }],
     textTemplate: 'Gain {block} Block.',
@@ -34,7 +34,7 @@ export const reaverCards = [
   },
   {
     id: 'technique', name: 'Footwork', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
-    flavor: "Steps cut into the road by those who came before, and the way of moving that goes with them. The steps are too even to be natural and too worn to be recent. Climbers credit them to the Forsaken. They run on past the farthest point any Forsaken is known to have reached, and some lead out onto the viaducts, which are older than the kingdom.\n\nClimbers before you cut steps. Use them.\n— cairn-scratch",
+    flavor: "Steps cut into the road.\n\nToo even to be natural, too worn to be recent. The Forsaken credit them to the climbers before. They run past the farthest point any Forsaken is known to have reached, and some lead onto the viaducts, older than the kingdom.\n\nClimbers before you cut steps. Use them.",
     keywords: [], icon: '✧',
     effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Draw {draw} card.',
@@ -47,7 +47,7 @@ export const reaverCards = [
   // Weight Class the player stands in (mechanics.json), not by this cost.
   {
     id: 'evasiveGuard', name: 'Evasive Guard', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
-    flavor: "The ice-fishers' way of giving ground: a step sideways onto ice that will hold one person and not two. The lakes of the Pale Marches have not thawed since the Burning, and the fishers say the ice cracks all year round and gives only under a second pair of feet. They learned to trust the sound. Widow Arne of Sallow Lake says the sound changed last winter, and she has stopped fishing.\n\n— ice-fishers' talk",
+    flavor: "Sidestep of the Pale Marches ice-fishers.\n\nThe lakes have not thawed since the Burning. The ice cracks all the year round, and gives only beneath a second pair of feet; the fishers learned to trust the sound.\n\nWidow Arne of Sallow Lake says the sound changed last winter. She fishes no longer.",
     keywords: [], icon: '🌀',
     effects: [{ op: 'block', target: 'self', amount: 1 }, { op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.',
@@ -55,7 +55,7 @@ export const reaverCards = [
   },
   {
     id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
-    flavor: "A tumble across a shifting deck, learned from the ship-breakers of the Grave of Ships, who work on hulls that move with each tide. Gull-Bet's gang teaches it to anyone who pays. She says the hulls were already rotting at anchor when the trade stopped, and that on the night of the Burning every hold went warm at once. Her gang opened the holds the next spring, and she has not told anyone what was in them.\n\n— ship-breakers' talk",
+    flavor: "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
@@ -67,7 +67,7 @@ export const reaverCards = [
   },
   {
     id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
-    flavor: "First cut of the Bastion's hired blades, set down in the years when the Wardens had more gates than sworn men to hold them. The drill has the edge wetted from the wielder's own forearm before the watch, so the steel goes out already red. The book calls this discipline, and adds that a sworn Warden never needed it. The page naming who first taught it is torn away below the words \"the old sergeant\".\n\n— Warden's field-book",
+    flavor: "Art of the sellswords of the Bastion.\n\nThe hired blades who held the Fell Courtyard wetted their steel with their own blood before each watch, for the Gorefire takes more readily to a blade already red.\n\nThe Wardens called it discipline. The sellswords knew it as a price, paid in advance.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -85,7 +85,7 @@ export const reaverCards = [
   // ---- Commons ---------------------------------------------------------------
   {
     id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, staminaCost: 1, type: 'attack',
-    flavor: "A wide, low cut for a gate choked with bodies, entered by the Fell Courtyard watch on the night the Bastion burned. The entry says the dead came up the Muster Stair in numbers the watch had no word for, and that this cut was the only one that answered them. It lists the watch as whole at the bell. The hand that wrote it changes halfway down the page.\n\n— Fell Courtyard gate log",
+    flavor: "Wide cut of the Fell Courtyard watch.\n\nTaught for a gate choked with bodies. On the night the Bastion burned, the dead came up the Muster Stair in numbers the watch had no word for, and this was the only answer it had.\n\nThe gate log names the watch whole at the bell. Its hand changes halfway down the page.",
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 8 },
@@ -101,7 +101,7 @@ export const reaverCards = [
   },
   {
     id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
-    flavor: "Rim-work from the Wardens' shield line, drilled in the years when neighbours came to the Bastion's gate to argue the price of a spring. The book prefers the rim to the face, the face being gilded with the crest and too costly to dent. It notes that envoys of the Northern Holds were struck with it twice, and that both times the Holds paid. It does not say what they were paying for.\n\n— Warden's field-book",
+    flavor: "Rim-strike of the Wardens' shield line.\n\nDrilled in the years of the Spring Wars, when envoys of the Northern Holds came to the Bastion gate to haggle the price of a spring. The Wardens struck with the rim, for the face bore the gilded crest.\n\nTwice the Holds were struck. Twice they paid.",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -117,7 +117,7 @@ export const reaverCards = [
   },
   {
     id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "Short, flat steps for courtyard stone slick with moss, the way the Bastion's hired blades learned to move once the green came up between the flags and would not stop. Sellswords say the Wardens never taught it, because Wardens were never posted where the footing was worst. The steps are counted to the old dawn peal, which the Bell Keeper rings at an hour that no longer matches the light.\n\n— as the sellswords tell it",
+    flavor: "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn.",
     keywords: [], icon: '👣',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -133,7 +133,7 @@ export const reaverCards = [
   },
   {
     id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
-    flavor: "A Warden's answer to a blow already caught on the guard. The book teaches it as the proper order of things: the enemy commits, the Bastion replies, and the reply is always the larger. Wardens said the same of the Spring Wars, in which they claim never to have struck first. A copyist has added, in a smaller hand, that the Holds would tell it differently.\n\n— Warden's field-book",
+    flavor: "Riposte of the sworn Wardens.\n\nThe enemy commits; the Bastion answers, and its answer is always the greater. So the Wardens taught the drill, and so they told of the Spring Wars, in which they claimed never to have struck first.\n\nThe Northern Holds remember it otherwise.",
     keywords: [], icon: '↩',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
@@ -149,7 +149,7 @@ export const reaverCards = [
   },
   {
     id: 'ironResolve', name: 'Iron Resolve', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "The standing order read out at the muster peal: a Warden holds until relieved, and relief comes from the bell. The bell-roll lists the names of those who held. After the Burning the list runs on for several pages in a hand the scribes did not know, and the names on those pages are ones the roll has no record of enlisting.\n\n— Bastion bell-roll",
+    flavor: "Standing order of the Bastion.\n\nRead at the muster peal: a Warden holds until relieved, and relief comes by the bell. The bell-roll kept the names of all who held.\n\nAfter the Burning, the roll runs on for many pages, in a hand no scribe knew, bearing names no Warden ever enlisted.",
     keywords: [], icon: '⛨',
     effects: [
       { op: 'block', target: 'self', amount: 5, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
@@ -165,7 +165,7 @@ export const reaverCards = [
   },
   {
     id: 'serratedBlade', name: 'Serrated Blade', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
-    flavor: "A saw-backed blade from the forges under the Bastion ridge, made for clearing briar and taken up by the Wardens when the Blight came out of the weald. The smiths say they filed the teeth for thornwood, not for men, and that the Wardens never paid for the change of use. How the briar learned to bleed is a question the smiths decline to take up.\n\n— weald smiths' talk",
+    flavor: "Saw-backed blade from the forges beneath the Bastion ridge.\n\nWeald smiths filed its teeth for clearing briar, and the Wardens took it up when the Blight came out of the woods. The smiths were never paid for the change of use.\n\nHow the briar learned to bleed, the smiths will not speak of.",
     keywords: [], icon: '🪚',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
@@ -181,7 +181,7 @@ export const reaverCards = [
   },
   {
     id: 'enterGorefire', name: 'Enter: Gorefire', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "The breaking stance, first of the two the Wardens taught. The book describes it as holding the flame in the blade. Its margins say more than its text: burns dressed, a sergeant's warning that the stance takes the hand if held too long, and a note that sellswords held it longer than Wardens, which the note gives as proof of their greed. The last line in the margin is smudged past reading.\n\n— Warden's field-book",
+    flavor: "The breaking stance, first of the Wardens' two.\n\nThe drill is to hold the flame in the blade, not the hand. Sergeants warned that the stance takes the hand if held too long. Sellswords held it longest of all, which the Wardens took for greed.\n\nHold the flame in the blade; it still takes the hand.",
     keywords: [], icon: '🔥',
     effects: [
       { op: 'enterStance', stance: 'gorefire' },
@@ -192,7 +192,7 @@ export const reaverCards = [
   },
   {
     id: 'enterBulwark', name: 'Enter: Bulwark', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "The holding stance, second of the two. The Wardens called the gate a wall a man could carry, and taught this as the way to carry it: low, square, shield set against the hinge side. The book claims that no gate held in this stance ever fell. The passage was written well before the Burning, and whether anyone has thought to correct it since is not clear from the ink.\n\n— Warden's field-book",
+    flavor: "The holding stance, second of the Wardens' two.\n\nLow and square, shield set to the hinge side. The Wardens called the gate a wall a man could carry, and held that no gate kept in this stance had ever fallen.\n\nThat teaching was set down before the Burning, and was never amended.",
     keywords: [], icon: '🛡',
     effects: [{ op: 'enterStance', stance: 'bulwark' }],
     textTemplate: 'Enter Bulwark Stance.',
@@ -206,7 +206,7 @@ export const reaverCards = [
   },
   {
     id: 'riposte', name: 'Riposte', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
-    flavor: "A return taken off the guard, which the Citadel's fencing-masters claimed as their own and called too fine for field-born hands. The manual's example bout is fought on the bridges in the first year of the Mark Trade, between a Knight and an unnamed Warden. The text says the Knight won. The illustration beside it shows him on his back.\n\n— Citadel fencing manual",
+    flavor: "Return off the guard, as the Citadel fencing-masters taught it.\n\nThe Court held it too fine for field-born hands. Its manual shows a bout upon the bridges in the first year of the Mark Trade, a Knight against an unnamed Warden, and declares the Knight victorious.\n\nIn the illustration, the Knight lies upon his back.",
     keywords: [], icon: '⚔',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -222,7 +222,7 @@ export const reaverCards = [
   },
   {
     id: 'rend', name: 'Rend', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
-    flavor: "A tearing cut for things of the weald that bleed black and stay standing. The entry is a late one, written after the Burning by whoever keeps the book now. It advises cutting the rot out of hounds and hamlet folk alike, and states that the rot came into the weald from outside, up the river road with the Court's traders. The ink is fresh and the hand is unsteady.\n\n— Warden's field-book, late entry",
+    flavor: "Tearing cut for the rot of the weald.\n\nWritten into the field-book after the Burning, by whoever keeps it now. It bids the reader cut the rot from hound and hamlet folk alike, for the rot came up the river road with the Court's traders.\n\nThe ink is fresh. The hand shakes.",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -240,7 +240,7 @@ export const reaverCards = [
   },
   {
     id: 'cleavingBlow', name: 'Cleaving Blow', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
-    flavor: "A heavy sweep taught in the weald hamlets for the winters when blight-hounds come down out of the lanternwood in packs. The elders say they learned it by watching the Wardens from outside the walls, since no Warden would teach a Forsaken anything. The Wardens called the weald their charge. The hamlets remember paying for that charge in spring grain, and remember what it bought.\n\n— Marl's Hollow elders",
+    flavor: "Heavy sweep of the weald hamlets.\n\nLearned by watching the Wardens from beyond the walls, for no Warden would teach the unmarked. It is swung in the winters when blight-hounds come down out of the lanternwood in packs.\n\nThe Wardens called the weald their charge. The hamlets paid for that charge in spring grain.",
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 7 },
@@ -258,7 +258,7 @@ export const reaverCards = [
   // ---- Uncommons --------------------------------------------------------------
   {
     id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
-    flavor: "A heel brought down on a fallen enemy's chest, which the Wardens called unworthy and used regardless. Sellswords learned it in the Fell Courtyard, where the fallen seldom stayed down. They say the Wardens objected not to the blow but to being seen to deliver it. Several of the Bastion's older helms carry a heel-shaped dent, though whose heel is anyone's guess.\n\n— sellswords' talk",
+    flavor: "Heel-strike of the Fell Courtyard.\n\nThe Wardens named it unworthy and used it all the same, for in the courtyard the fallen seldom stayed down. Sellswords held that the Wardens objected only to being seen at it.\n\nMany an old Bastion helm bears the dent of a heel.",
     keywords: [], icon: '🦶',
     effects: [
       { op: 'damage', target: 'enemy', amount: 12 },
@@ -274,7 +274,7 @@ export const reaverCards = [
   },
   {
     id: 'rallyingStandard', name: 'Rallying Standard', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
-    flavor: "The Wardens' banner of the muster, raised when the bell rang the line into place. The book gives the drill in plain terms: raise the standard, sound the bell, log that the line held. The log of the last muster reads that the line held. The same page gives the hour as dawn, and the Bastion has not seen a dawn since the Burning.\n\n— Warden's field-book",
+    flavor: "Banner of the Bastion muster.\n\nRaised when the bell rang the line into place. The drill ends thus: raise the standard, sound the bell, log that the line held.\n\nThe final muster is logged as held, at dawn. The Bastion has seen no dawn since the Burning.",
     keywords: [], icon: '⚑',
     effects: [{ op: 'applyStatus', target: 'self', status: 'rallyingStandard', stacks: one }],
     textTemplate: 'At the start of your turn, gain 1 Strength and take 1 damage.',
@@ -285,7 +285,7 @@ export const reaverCards = [
   },
   {
     id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "The field practice of the Bastion's surgeon-wardens, who stitched wounds on the wall rather than below it. Their rule was that a Warden stitched standing remained a Warden, and one carried down to the stool was struck from the roll. The book credits them with a better record than the Chapel's physicians. The Chapel's own figures for those years burned with the Chapel.\n\n— Warden's field-book",
+    flavor: "Field practice of the Bastion's surgeon-wardens.\n\nThey stitched wounds upon the wall, never below it, for a Warden stitched standing remained a Warden, and one carried to the stool was struck from the roll. The Wardens claimed their surgeons outdid the Chapel's physicians.\n\nThe Chapel's own figures burned with the Chapel.",
     keywords: ['exhaust'], icon: '⚕',
     effects: [
       {
@@ -306,7 +306,7 @@ export const reaverCards = [
   },
   {
     id: 'hemorrhage', name: 'Hemorrhage', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
-    flavor: "A second cut laid into a wound already open. The Court's surgeons, who studied such matters, recorded that Wardens bled longer than anyone else under the knife, and put it down to field-born blood running thin. The casebook gives no count of cases, only the conclusion, which the surgeons signed as a body in the ninth year of the Mark Trade.\n\n— Court surgeons' casebook",
+    flavor: "Second cut, laid into an open wound.\n\nThe Court's surgeons, who studied such matters, recorded that Wardens bled longer than other men beneath the knife, and blamed the thinness of field-born blood. The finding was signed by the surgeons as one body.\n\nNo cases were attached to it.",
     keywords: ['exhaust'], icon: '🩸',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: { f: 'stacks', status: 'bleed', of: 'target' } },
@@ -319,7 +319,7 @@ export const reaverCards = [
   },
   {
     id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
-    flavor: "Two short blades worked in turn, the habit of weald sellswords who could not afford a shield and would not carry a Warden's. The Bastion hired them for its narrow gates. Sellswords say part of their pay came as a mark on the wrist in place of coin, a right to the city's warmth. Those who took it are not around to confirm the story. Those who refused tell it often.\n\n— sellswords' talk",
+    flavor: "Two short blades, worked in turn, as the weald's sellswords used them.\n\nToo poor for a shield and too proud to carry a Warden's, they were hired for the Bastion's narrow gates. It is said part of their wage was paid in marks rather than coin: a right to the city's warmth.\n\nThose who refused the mark are the ones who tell of it.",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
@@ -327,7 +327,7 @@ export const reaverCards = [
   },
   {
     id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'skill',
-    flavor: "Rims locked edge to edge across the Fell Courtyard, the formation the Wardens were proudest of. The book credits it with holding the Bastion gate through three hungry winters of the Spring Wars, when Hold petitioners camped below the walls. It enters the price of the spring harvest in the same column as the petitioners it turned away.\n\n— Warden's field-book",
+    flavor: "Formation of the Bastion's shield line.\n\nRim locked to rim across the Fell Courtyard. The Wardens credited it with holding the gate through three hungry winters of the Spring Wars, when Hold petitioners camped below the walls.\n\nThe field-book enters the price of spring in the same column as the petitioners turned away.",
     keywords: [], icon: '🧱',
     effects: [
       { op: 'block', target: 'self', amount: 12 },
@@ -343,7 +343,7 @@ export const reaverCards = [
   },
   {
     id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'attack',
-    flavor: "A boot to the chest that sends an enemy back down the Muster Stair. Sellswords learned it on those steps, which are steep enough that the fall does most of the work. They say the Wardens forbade it as common and had copied it within a season. What climbs the stair now tends to climb it again, and the sellswords who remain have stopped counting how often.\n\n— sellswords' talk",
+    flavor: "Boot-strike of the Muster Stair.\n\nSellswords learned it upon steps steep enough that the fall does the killing. The Wardens forbade it as common, and had adopted it within a season.\n\nWhat is kicked from the stair now climbs it again.",
     keywords: ['exhaust'], icon: '🥾',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -361,7 +361,7 @@ export const reaverCards = [
   },
   {
     id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "A guarded step forward that ends in the breaking stance, taught as the moment to stop holding and start taking ground. The book says a Warden should know the moment by the bell. After the Bellfoundry bell cracked, a new line was added beneath: know it by the smell of the courtyard. What that smell is supposed to be, the entry leaves to the reader.\n\n— Warden's field-book",
+    flavor: "Guarded advance into the breaking stance.\n\nTaught as the moment to cease holding and begin taking ground. The Warden was to know that moment by the bell. When the Bellfoundry bell cracked, a new line was added beneath.\n\nKnow it by the smell of the courtyard.",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 8 },
@@ -377,7 +377,7 @@ export const reaverCards = [
   },
   {
     id: 'impale', name: 'Impale', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
-    flavor: "A thrust that pins a fallen enemy to the ground. The weald hamlets learned it for the things that came out of the drowned hamlet in the first winter of the Blight, which got up again when left lying. Hamlet folk say a pinned thing stops. The Wardens would once have burned them, but the fire went into the Wardens that winter, and the hamlets never had any to spare.\n\n— weald hamlet saying",
+    flavor: "Pinning thrust of the weald hamlets.\n\nLearned in the first winter of the Blight, against what rose from the drowned hamlet and would not stay down. A pinned thing stops, the hamlets say. The Wardens would once have burned such things.\n\nBut the fire went into the Wardens that winter.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },
@@ -393,7 +393,7 @@ export const reaverCards = [
   },
   {
     id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'skill',
-    flavor: "The bell-roll shouted aloud where the bell could not be heard, a custom of the gates farthest from the Bellfoundry. The Wardens held that the roll had a power of its own, so long as it was read in order. Sellswords, who were not on it, learned to shout it anyway. The Bell Keeper is said to answer when he hears it, with the bell, which is cracked.\n\n— Bastion bell-roll, marginal note",
+    flavor: "The bell-roll, shouted.\n\nA custom of the gates farthest from the Bellfoundry, where the bell could not be heard. The Wardens held that the roll bore power of its own if read in order. Sellswords, who were not on it, shouted it all the same.\n\nIt is said the Bell Keeper answers, with a cracked bell.",
     keywords: ['exhaust'], icon: '📣',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
@@ -409,7 +409,7 @@ export const reaverCards = [
   // ---- Rares -------------------------------------------------------------------
   {
     id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack',
-    flavor: "A finishing blow as the Fell Warden taught it, before his leg went the way of the weald and his blade was ground down into a cane. The book gives his instruction in full and his reasons not at all. It states that he never struck a man already kneeling. The last page in his hand, dated the night of the Burning, is a list of kneeling men.\n\n— Warden's field-book",
+    flavor: "Finishing blow of the Fell Warden.\n\nTaught before his leg went the way of the weald and his blade was ground into a cane. The field-book holds that he never struck a man already kneeling.\n\nThe last page in his hand, dated the night of the Burning, is a list of kneeling men.",
     keywords: [], icon: '⚰',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: { p: 'hasStatus', of: 'target', status: 'staggered' } } },
@@ -425,7 +425,7 @@ export const reaverCards = [
   },
   {
     id: 'goreblood', name: "Goreblood", class: 'reaver', rarity: 'rare', cost: 3, type: 'power',
-    flavor: "The Wardens' word for the state a fighter reaches when enough of their own blood is on the ground that fear stops mattering. The book treats it as a virtue in sworn men and a vice in sellswords, though it describes the two in identical terms. It claims the state can be taught. The only instruction it offers is to keep standing.\n\n— Warden's field-book",
+    flavor: "The Wardens' name for blood-madness.\n\nThe state in which a fighter has spilled enough of their own blood that fear no longer holds. In sworn men the Wardens called it virtue; in sellswords, vice. The two are described in the same words.\n\nIts only instruction: keep standing.",
     keywords: [], icon: '♛',
     effects: [{ op: 'applyStatus', target: 'self', status: 'goreblood', stacks: one }],
     textTemplate: 'Poise thresholds no longer increase after filling.',
@@ -433,7 +433,7 @@ export const reaverCards = [
   },
   {
     id: 'unbreakable', name: 'Unbreakable', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
-    flavor: "The order to hold the Fell Courtyard gate until relieved, as it stands in the gate log: dated, signed, and never countermanded. The entries go on past the Burning in the second hand, at the same hour each night. Who relieved the writer, or whether anyone came to, the log does not record.\n\n— Fell Courtyard gate log",
+    flavor: "Order to hold the Fell Courtyard gate.\n\nDated, signed and never countermanded. The gate log continues past the Burning in a second hand, one entry each night, at the same hour.\n\nNo relief is recorded.",
     keywords: [], icon: '⬟',
     effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakable', stacks: one }],
     textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 30.)',
@@ -444,7 +444,7 @@ export const reaverCards = [
   },
   {
     id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', staminaCost: 1, type: 'attack',
-    flavor: "A way of swinging a weapon lashed to the arm, copied from the Court's knights after their surgeons sewed them to their swords. The Citadel's record calls the stitching an honour: a knight's word made flesh, never to be set down. The record was written by the surgeons, and it treats the question of whether the knights were asked as settled.\n\n— Citadel surgeons' record",
+    flavor: "Swordwork of the Court's stitched knights.\n\nAfter the Court Flame died, the surgeons sewed the knights to their swords, that no oath might be set down. The Citadel's record names it an honour: a knight's word made flesh.\n\nThe record was written by the surgeons.",
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
     textTemplate: 'Deal {damage} damage to a random enemy, scaling with Energy spent.',
@@ -455,7 +455,7 @@ export const reaverCards = [
   },
   {
     id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "The last entry in the Fell Courtyard gate log before the handwriting changes. One gate, one man, it reads, and the man is not named. The entry is written as though the writer expected nobody to need it. The count of the dead is given twice on the page, and the two counts do not agree.\n\n— Fell Courtyard gate log",
+    flavor: "Final entry of the Fell Courtyard gate log.\n\nOne gate, one man, it reads. The man is not named, as though the writer thought none would need it.\n\nThe dead are counted twice upon the page, and the counts do not agree.",
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
     textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 20).',
@@ -466,7 +466,7 @@ export const reaverCards = [
   },
   {
     id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
-    flavor: "The contract read to sellswords hired for the Fell Courtyard: hold the gate until relieved, pay in advance. Weald sellswords treated a paid contract as sacred, having few other sacred things, and the Wardens thought them mercenary for it. The last contract on the roll was signed the week before the Burning. The space for the date of release is blank.\n\n— Bastion hiring roll",
+    flavor: "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank.",
     keywords: ['innate', 'exhaust'], icon: '📜',
     effects: [{ op: 'enterStance', stance: 'gorefire' }],
     textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
@@ -480,7 +480,7 @@ export const reaverCards = [
   },
   {
     id: 'ruinousBlow', name: 'Ruinous Blow', class: 'reaver', rarity: 'rare', cost: 3, type: 'attack',
-    flavor: "The whole weight of the body brought down through the blade, which the book reserves for a gate where all else has failed. It calls this a Warden's last argument. It does not describe what becomes of the Warden afterward. The pages here are stained through, and the drill's final step can only be guessed at from what shows at the edges.\n\n— Warden's field-book",
+    flavor: "Whole-body blow of the Wardens.\n\nReserved for a gate where all else has failed, and called a Warden's last argument. What becomes of the Warden who makes it, the drill does not say.\n\nThe pages that follow are stained through.",
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 20 },
@@ -496,7 +496,7 @@ export const reaverCards = [
   },
   {
     id: 'bloodhuntersStrike', name: "Bloodhunter's Strike", class: 'reaver', rarity: 'rare', cost: 1, type: 'attack',
-    flavor: "A strike aimed where the quarry is already bleeding, taught by the Bastion's kennelmaster before the hounds turned. The kennel book calls them the finest hounds in the three cities, trained on the scent of blood alone, and credits the Wardens with never setting them on the weald's own people. The hamlets' dogs, which were never trained, were found in those same kennels after the Burning.\n\n— Bastion kennel book",
+    flavor: "Strike of the Bastion kennels.\n\nTaught by the kennelmaster before the hounds turned. The kennel book names them the finest in the three cities, trained upon the scent of blood alone, and never loosed on the weald's own people.\n\nAfter the Burning, the hamlets' dogs were found in those same kennels.",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -512,7 +512,7 @@ export const reaverCards = [
   },
   {
     id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
-    flavor: "A soldier's bargain sworn at the Bastion's lesser shrine: blood spilled from an enemy is sworn to the one who spilled it. The Wardens held it a harmless custom of the field-born, like the harvest tithe. The Chapel called it a mockery of the Writing and fined the shrine. The fine is entered as paid, and the shrine was in use on the night of the Burning.\n\n— Warden's field-book",
+    flavor: "Soldier's bargain of the Bastion's lesser shrine.\n\nBlood spilled from an enemy is sworn to the one who spilled it. The Wardens thought it a harmless field-born custom, like the harvest tithe. The Chapel called it a mockery of the Writing, and fined the shrine.\n\nThe fine was paid. The shrine was in use the night of the Burning.",
     keywords: [], icon: '🩸',
     effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
     textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
@@ -525,7 +525,7 @@ export const reaverCards = [
   // and a Poise-scaling finisher) — rounding the pool to 36.
   {
     id: 'goreslash', name: 'Goreslash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
-    flavor: "A short, deep cut from the Bastion's hired blades, who had no patience for the long forms of the Wardens' drill. Sellswords say a long cut belongs in songs, and that the songs about the Bastion were paid for by the Wardens. They sing their own verse about the Fell Courtyard. Most of its words are lost, but the tune is known on both sides of the wall.\n\n— sellswords' talk",
+    flavor: "Short cut of the Bastion's hired blades.\n\nThe sellswords had no patience for the Wardens' long forms. A long cut belongs in songs, they said, and the songs of the Bastion were paid for by the Wardens.\n\nThe sellswords kept a verse of their own. Only its tune survives.",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -541,7 +541,7 @@ export const reaverCards = [
   },
   {
     id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "Feet planted, shield braced against the Bastion's own wall: the stance recruits learned before they were trusted with either of the two proper ones. Drillmaster Hask, whom the book quotes at length, taught it for thirty winters. Her entries end the spring before the Burning with a list of recruits, a line drawn through every name but one, and that one scraped away.\n\n— Warden's field-book",
+    flavor: "First stance of the Bastion recruit.\n\nFeet planted, shield braced against the Bastion's own wall, before either true stance was taught. Drillmaster Hask taught it thirty winters.\n\nHer last entry is a roll of recruits, every name struck through but one, and that one scraped away.",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -557,7 +557,7 @@ export const reaverCards = [
   },
   {
     id: 'flameToBlade', name: 'Flame to Blade', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
-    flavor: "Lanternwood oil run along the edge and set alight, a practice the Wardens adopted late, once their plain steel no longer frightened what came out of the weald. The book is wary of it. It warns that the oil takes the sleeve before the enemy, and that the Chapel disapproved of Wardens carrying fire they had not been given. The warning about the sleeve is underlined twice.\n\n— Warden's field-book",
+    flavor: "Lanternwood oil, set alight upon the edge.\n\nA late practice of the Wardens, adopted when plain steel no longer frightened what came out of the weald. The Chapel frowned upon Wardens bearing fire they had not been given.\n\nMind the sleeve; the oil takes it before the enemy.",
     keywords: [], icon: '🔥',
     effects: [
       { op: 'damage', target: 'enemy', amount: 8 },
@@ -575,7 +575,7 @@ export const reaverCards = [
   },
   {
     id: 'ironVowCard', name: 'Iron Vow', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'power',
-    flavor: "The oath a Warden swore to the Bastion, sword hand on the gate. Sworn Wardens were marked at birth like any field-born citizen, and the oath was understood as a second promise laid over the first. Sellswords swore it without the first promise, and the Wardens held that this left them less bound. What it left them on the night of the Burning, the book does not say.\n\n— Warden's field-book",
+    flavor: "Oath of the Wardens, sworn with the sword hand upon the gate.\n\nSworn Wardens bore the flame-mark from birth, and the oath was laid over it as a second promise. Sellswords swore it with no first promise beneath, and so the Wardens held them less bound.\n\nWhat that meant on the night of the Burning, no oath foretold.",
     keywords: [], icon: '⛓',
     effects: [{ op: 'applyStatus', target: 'self', status: 'ironVow', stacks: one }],
     textTemplate: 'Whenever you lose HP, gain 3 Block.',
@@ -583,7 +583,7 @@ export const reaverCards = [
   },
   {
     id: 'bloodTithe', name: 'Blood Tithe', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
-    flavor: "The harvest tithe of the weald, paid in blood at the Bastion's field-shrine in years when the grain failed. The Wardens administered it and called it voluntary. The tithe-roll records amounts and villages but no names, which the Wardens explained as a courtesy to the givers. The roll grows longer each year of the Mark Trade, and the villages it lists grow fewer.\n\n— weald tithe-roll",
+    flavor: "Harvest tithe of the weald, paid in blood.\n\nGiven at the Bastion's field-shrine in years the grain failed. The Wardens called it voluntary, and kept no names, as a courtesy to the givers.\n\nThe tithe-roll lengthens with each year of the Mark Trade, and the villages it lists grow fewer.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -599,7 +599,7 @@ export const reaverCards = [
   },
   {
     id: 'poiseBreaker', name: 'Poise Breaker', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
-    flavor: "Two blows to the knee, which Drillmaster Hask taught as the answer to anything larger than a Warden. Her notes say a knight and a kennel hound bend in the same place, and she drew both. Beside them, in later ink, someone has drawn a third figure grown out of briar, and given it a name the book uses nowhere else.\n\n— Warden's field-book",
+    flavor: "Knee-strike of Drillmaster Hask.\n\nHer answer to anything larger than a Warden: a knight and a kennel hound, she wrote, bend at the same place. She drew them both.\n\nBeside them, in later ink, a third figure grown of briar, under a name found nowhere else in the book.",
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 11 },
@@ -619,7 +619,7 @@ export const reaverCards = [
   // ---- Content-pass additions (round 4) --------------------------------------
   {
     id: 'rondelParry', name: 'Rondel Parry', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "A parry on the guard of a rondel dagger, favoured by the Bastion's older sellswords, who carried the short blade long after the Wardens stopped issuing it. They claim the rondels came from the Northern Holds as part of a year's tribute, and were worth more than the Bastion paid them in a season. The daggers are stamped with a crest the ring's heralds never recorded.\n\n— sellswords' talk",
+    flavor: "Parry upon the guard of a rondel dagger.\n\nFavoured by the Bastion's older sellswords, who kept the short blade long after the Wardens ceased to issue it. The rondels came from the Northern Holds as tribute, and were worth more than a season's wage.\n\nThey bear a crest no herald of the ring recorded.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -635,7 +635,7 @@ export const reaverCards = [
   },
   {
     id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
-    flavor: "A blow meant to split plate at the joints. The book says the Wardens designed it during the Mark Trade with the Court's knights in mind, \"in case the Court forgets which flame keeps it fed\". It records no occasion on which it was used. The entry is kept all the same, beside a sketch of a knight's gorget with the Court's crest scratched out.\n\n— Warden's field-book",
+    flavor: "Joint-splitting blow of the Wardens.\n\nDevised in the years of the Mark Trade with the Court's knights in mind, lest the Court forget which flame kept it fed. No occasion of its use is recorded.\n\nBeside the drill, a knight's gorget, its crest scratched out.",
     keywords: [], icon: '⚒',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },
@@ -656,7 +656,7 @@ export const reaverCards = [
   // stance that holds the line; leaving it hits harder (stances.js brace).
   {
     id: 'brace', name: 'Brace', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
-    flavor: "The crouch taught before either stance: knees bent, weight low, the body made ready to be struck. The book gives it the first page of the drill and calls it the one lesson all Wardens learned alike, sworn or hired, marked or not. It is among the few passages that treats sellswords as equals. A later hand has corrected it.\n\n— Warden's field-book",
+    flavor: "The crouch before either stance.\n\nKnees bent, weight low, the body made ready to be struck. The field-book gives it the first page, and calls it the one lesson all Wardens learned alike, sworn or hired, marked or not.\n\nA later hand has corrected it.",
     keywords: [], icon: '🦶',
     effects: [{ op: 'enterStance', stance: 'brace' }],
     textTemplate: 'Enter Brace Stance.',

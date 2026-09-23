@@ -470,10 +470,18 @@ of rule text. The card schema accepts an optional `flavor` string on every card
 folded **Flavor** disclosure, which keeps paragraph breaks, so a description has
 room to tell a story; the playable face keeps only rules.
 
-The first two passes shipped twelve-word fragments. The third pass replaces
-every one of them with a full description: each card in `src/content/cards/`
-and each basic profile is told by one witness from one faction, about one
-moment in the kingdom's history, and is signed with its source. They are
+The first passes shipped twelve-word fragments, then signed single-witness
+accounts. The current pass writes each card's lore the way the Souls games
+write an item description, in three parts separated by blank lines:
+
+1. **The identity line** — one short line naming what the thing is and whose:
+   *Art of the sellswords of the Bastion.* This is all card inspection shows.
+2. **The history** — two or three plain sentences: who used it, where, what
+   happened. This is where the world is told.
+3. **The closing line** — set apart, the one quiet turn: an implication, a
+   consequence, a line of liturgy. Never a joke.
+
+Pressing the identity line opens the lore modal with all three. They are
 authored directly beside their cards.
 
 The seed lines below are writing prompts, not verbatim shipping copy: fit them
@@ -484,37 +492,36 @@ lore does not imply those systems have shipped.
 
 ### Rules
 
-- **One witness per card.** Each description is a single perspective: a
-  field-book, a gate log, a surgeon's receipt, a chart margin, a rubric, a
-  sermon, the merchant, a hamlet council. It never sets two accounts side by
-  side. The last line names the source ("— Warden's field-book").
-- **Roughly seventy, ten, twenty.** About seventy percent of what a witness
-  says is true; about ten percent is that faction's bias (the Wardens blame the
-  Saints, the Court blames the Wardens, the Chapel calls the rite a gift, the
-  Starwatch calls it a star finishing, the docks call the Court hypocrites, the
-  hamlets resent the marked); about twenty percent is left open — a torn page,
-  a date that does not fit, a name scraped out, a question the witness will not
-  answer. The world never marks which is which.
+- **Three parts, forty to eighty words.** Identity line of twelve words or
+  fewer; history of two or three sentences; closing line set apart.
+  Afflictions and basic profiles may run shorter.
+- **The voice is the record's.** A plain, formal archive voice that never
+  cites itself and never speaks as a character: no "— source" signature, no
+  "the log does not say". A liturgy line or a scratched cairn mark may be
+  quoted as the closing line.
+- **Perspective lives in the wording.** Each pool's faction frames what it
+  describes in its own terms — the Chapel's "Writing" and "promise", the
+  Wardens' gate and bell, the Starwatch's charts and measures, the docks'
+  plain cynicism. Roughly seventy percent is true, ten percent is that
+  faction's bias, and twenty percent is left open; the world never marks
+  which is which.
 - **Pin it to a time.** Each card touches one age from
-  [LORE-WORLD.md](LORE-WORLD.md) §1 — the Fall, the Cinderwrights, the
-  Founding, the Marking, the Spring Wars, the Mark Trade, the Spire, the
-  Burning, the Long Winter — so that the set, read together, is a history.
-- **Plain, vague, rich.** Forty to ninety words, usually one paragraph, in
-  plain declarative sentences. Name things you could pick up. No run of short
-  fragments, no closing aphorism on every card, no "ancient," "eldritch,"
-  "eternal." Say less than the witness knows.
+  [LORE-WORLD.md](LORE-WORLD.md) §1, so the set reads as a history.
+- **Restraint.** No conversational idiom, no wry punchline, no run of short
+  fragments. At most one hedge ("It is said…") per card. Name things you could
+  pick up; avoid "ancient," "eldritch," "eternal."
 - **Never explain the rule.** Lore may show what happens in the fiction; it may
-  not teach the card. No numbers and no game terms used as mechanics. A player
-  who skips every description loses nothing.
+  not teach the card. No numbers and no game terms used as mechanics.
 - **The reveal boundary holds.** No card states plainly that names feed the
   fire, that the Spire burns the unwritten, or what the Ember is or whether a
-  star fell ([LORE-EMBER.md](LORE-EMBER.md) §12–13). Faith creeds ("a name
-  written is a name kept") may be quoted as creeds.
+  star fell ([LORE-EMBER.md](LORE-EMBER.md) §12–13).
 - **Invented people and places** are allowed when they contradict nothing here
   or in [LORE-CAST.md](LORE-CAST.md) and [LORE-WORLD.md](LORE-WORLD.md), and
-  should recur across cards rather than appear once.
+  should recur across cards.
 - **No borrowed names.** The Souls games set the craft, not the vocabulary: no
   proper noun or coined term from them ([IP-SCRUB.md](IP-SCRUB.md)).
+- **How it is read** is the player's: typeface, size, spacing and slant are set
+  under Advanced → Text & lore.
 
 ### Four voices
 
