@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1258",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now carries its own piece of the world's history",
+    "detail": "Open a card and unfold its Flavor panel: all 195 combat cards and the 17 basic weapon cards — the Strikes, Guards and Techniques your weapon gives you — now have a short description told by someone who was there. A Warden's field-book, a Fell Courtyard gate log, a Court surgeon's receipt, the Astronomer's chart margins, a Chapel rubric, a sermon of the Feral Ember, the Tollmouth fence, a hamlet council: each speaks for itself, signs its name, and is mostly right, partly partisan and partly silent. Read together they span the kingdom from the Cinderwrights to the Long Winter, and they disagree. The panel now keeps paragraph breaks. No card's rules or numbers changed.",
+    "build": "0.7.1.405",
+    "pullRequest": 1258,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1258"
+  },
+  {
     "id": "pr-1255",
     "date": "2026-09-23",
     "group": "2026-09-23",
