@@ -226,14 +226,18 @@ per-hit formula and retain one repeated hit per Action actually spent. Physical
 Attack damage uses the AR card-value formula; damage and Block
 on magic-tagged cards use PR (Potency Rating); physical Block uses DR. Physical
 and magical Attack impact use the Poise and Ward formulas respectively, except
-that a physical hit a weapon lends keeps its weapon's weight category (§13.4),
-and an explicit `poiseDamage` effect uses the matching formula. A card a
-basic-card profile moves across the physical/magical line (a staff's Strike,
-Defend or technique) is projected on both sides, and resolves through the
-formulas of the school it resolves in. Existing conditional and formula-valued
-effects remain bonus values; only the primary/base component is replaced, and
-a face whose only amount is a formula gains the cost-derived base in front of
-it, which its text names (`{damage}`/`{block}`). The signed card-specific bonus is added after flooring. Each rating owns
+that a physical hit carrying its source weapon keeps that weapon's weight
+category (§13.4). An explicit `poiseDamage` effect uses the matching formula,
+and a card that authors one carries its impact there: it gets no second
+per-hit value, and its hit keeps the category default. A card a basic-card
+profile moves across the physical/magical line (a staff's Strike, Defend or
+technique, or a card a staff's weapon package deals) is projected on both
+sides, and resolves through the formulas of the school it resolves in.
+Existing conditional and formula-valued effects remain bonus values; only the
+primary/base component is replaced. A face whose only amount is a formula
+(Last Stand's missing HP) keeps it exactly as authored and has no bonus row:
+a base in front of it would be a second effect, and every per-effect addition
+would land twice. The signed card-specific bonus is added after flooring. Each rating owns
 configurable global, AP, MP, SP, status-reduction, per-status, and per-card
 values under `balance.damage`. They are available in Advanced → Combat. A run
 snapshots those settings, so the same configuration and inputs always produce
@@ -2043,7 +2047,7 @@ Card damage is base plus AR for physical attacks or PR for magical attacks. Phys
 
 After additive bonuses, percentage modifiers apply. Physical damage is reduced by Poise/(Poise+K); magical damage by Ward/(Ward+K). K defaults to 100, with a configurable 80% maximum reduction. Resistance uses the rating, not accumulated impact. Enemy Poise and Ward are independently configurable and default to the enemy’s authored Poise threshold. K is an absolute rating threshold: a lower starting pool lowers the ratings that meet it, and K is retuned rather than scaled.
 
-An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. A physical hit a weapon lends is as heavy as the weapon: weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Any other card hit uses the card's own Poise or Ward value (§3.4). An attack that carries no card value keeps the defaults: magic 1, unarmed physical 1, untyped enemy physical 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
+An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. A physical hit that carries its source weapon (the Strike and package cards a weapon deals) is as heavy as the weapon: weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Any other card hit, weapon arts included, uses the card's own Poise or Ward value (§3.4). An attack that carries no card value keeps the defaults: magic 1, unarmed physical 1, untyped enemy physical 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
 
 Poise break is Stagger; Ward break is Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move. The meter keeps overflow and grows its threshold by 25%, rounded upward. Breaks do not additionally apply Weak or Vulnerable under the new rules. Meter recovery defaults to 0 and is configurable per player turn.
 

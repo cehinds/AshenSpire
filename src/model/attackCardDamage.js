@@ -101,18 +101,12 @@ function projectOperation(face, effects, op, baseValue, authoredReference) {
     return;
   }
 
-  // Only formula-valued amounts remain (Blight Nova, Last Stand). SPEC §3.4:
-  // they stay bonus values, and the cost-derived base is added in front of
-  // them — which the card's text has to say ("{block} Block plus …").
-  const first = effects.find((effect) => effect.op === op);
-  if (first) {
-    effects.unshift({
-      op,
-      target: first.target,
-      amount: adjustedBase,
-      ...(first.tags ? { tags: [...first.tags] } : {}),
-    });
-  }
+  // Only formula-valued amounts remain (Last Stand's missing HP, Blight
+  // Nova's Crimson Blight). They are the card's whole value as its text
+  // states it, and they stay exactly as authored: a cost-derived base in
+  // front of them would be a SECOND effect, and every per-effect addition —
+  // DR or PR on Block and damage, impact per hit — would land twice
+  // (#1247 review). eligibleCards gives such a face no row for this operation.
 }
 
 function projectEffects(face, configs, references) {
@@ -138,6 +132,12 @@ function projectEffects(face, configs, references) {
 
 function ratingValues(face, configs) {
   if (face.type !== 'attack') return undefined;
+  // A card that authors its own poise damage already carries its impact in
+  // that effect, which the matching formula projects (projectEffects). A
+  // per-hit value on top would count it twice: Poise Breaker's 10 became
+  // 10 + 10 (#1247 review). Its hit keeps the category default, as it always
+  // has, and the explicit effect stays additional impact (SPEC §13.4).
+  if ((face.effects || []).some((effect) => effect.op === 'poiseDamage')) return undefined;
   const magical = cardIsMagical(face);
   return {
     [magical ? 'ward' : 'poise']: attackCardBaseDamage(
@@ -178,10 +178,25 @@ function projectFaces(card, configs, tags, school) {
  */
 function profileSchools(bundle) {
   const schools = new Map();
-  for (const profile of bundle.equipment?.basicCardProfiles || []) {
-    if (!profile?.baseCardId || typeof profile.damageSchool !== 'string') continue;
-    if (!schools.has(profile.baseCardId)) schools.set(profile.baseCardId, []);
-    schools.get(profile.baseCardId).push(profile.damageSchool);
+  const profiles = bundle.equipment?.basicCardProfiles || [];
+  const add = (cardId, profile) => {
+    if (!cardId || typeof profile?.damageSchool !== 'string') return;
+    if (!schools.has(cardId)) schools.set(cardId, []);
+    schools.get(cardId).push(profile.damageSchool);
+  };
+  for (const profile of profiles) add(profile.baseCardId, profile);
+  // A weapon package deals its priority cards under a profile too — the ref's
+  // own, else the package's filler (model/loadout.js WeaponCardPackageModel) —
+  // so a staff listing a card there makes that card magical as well.
+  const byId = new Map(profiles.map((profile) => [profile?.id, profile]));
+  for (const piece of bundle.equipment?.armaments || []) {
+    const pack = piece?.weaponCardPackage;
+    if (!pack || typeof pack !== 'object' || !Array.isArray(pack.priorityAttackRefs)) continue;
+    const filler = pack.fillerAttackProfileId;
+    for (const raw of pack.priorityAttackRefs) {
+      const ref = typeof raw === 'string' ? { cardId: raw } : raw;
+      add(ref?.cardId, byId.get(ref?.profileId || filler));
+    }
   }
   return schools;
 }
@@ -263,8 +278,9 @@ export function projectAttackCardDamageBundle(source = {}) {
 
 function eligibleCards(bundle, configName) {
   const eligible = [];
+  // A NUMERIC amount, because that is all projectOperation moves.
   const has = (card, op) => [card.effects, card.upgrade?.effects]
-    .some((effects) => (effects || []).some((effect) => effect.op === op));
+    .some((effects) => (effects || []).some((effect) => effect.op === op && typeof effect.amount === 'number'));
   const schools = profileSchools(bundle);
   for (const card of bundle.cards || []) {
     const tags = authoredCardTags(bundle, card.id);
@@ -272,7 +288,7 @@ function eligibleCards(bundle, configName) {
     const other = alternateSchool(card, tags, schools);
     const sides = other ? [authored, !authored] : [authored];
     const fits = (magical) => (
-      (configName === 'attackCards' && card.type === 'attack' && !magical)
+      (configName === 'attackCards' && card.type === 'attack' && !magical && has(card, 'damage'))
       || (configName === 'potencyCards' && magical && (has(card, 'damage') || has(card, 'block')))
       || (configName === 'defenseCards' && !magical && has(card, 'block'))
       || (configName === 'poiseCards' && card.type === 'attack' && !magical)

@@ -433,10 +433,10 @@ export const reaverCards = [
     flavor: "The Fell Courtyard: one gate, one man, still one man. — Warden's field-book",
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
-    textTemplate: 'Ethereal. Gain {block} Block plus Block equal to your missing HP (max 20).',
+    textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 20).',
     upgrade: {
       effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 30 } }],
-      textTemplate: 'Ethereal. Gain {block} Block plus Block equal to your missing HP (max 30).',
+      textTemplate: 'Ethereal. Gain Block equal to your missing HP (max 30).',
     },
   },
   {

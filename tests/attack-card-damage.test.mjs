@@ -61,6 +61,9 @@ test('registry projection recalculates every fixed-cost attack and both card fac
         .filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
       const authoredFace = faceAmounts.find((effect) => !effect.if)?.amount
         ?? (faceAmounts.length ? Math.min(...faceAmounts.map((effect) => effect.amount)) : null);
+      // A face whose only damage is a formula keeps it as authored (no base is
+      // invented in front of it); the all-effects test below pins that.
+      if (authoredFace === null) continue;
       const expectedWithAuthoredDelta = expected
         + (authoredBase !== null && authoredFace !== null ? authoredFace - authoredBase : 0);
       assert(primary || conditional.length, `${authored.id}: projected base damage`);
@@ -152,38 +155,61 @@ test('Poise and Ward card values drive physical and magical impact', async () =>
   );
 });
 
-// A FORMULA-ONLY EFFECT GETS A BASE, AND THE CARD SAYS SO (#1247 review).
-// SPEC §3.4 keeps formula-valued effects as bonuses on top of the
-// cost-derived base, so projection puts a numeric base in front of them.
-// Blight Nova's text was rewritten to name it; Last Stand's was not, and its
-// card said "Gain Block equal to your missing HP" while it gained 2 more.
-// Every face that gets an invented base must print it.
-test('a formula-only effect gets a cost-derived base, and the card text names it', async () => {
-  const { computeTokenBindings } = await import('../src/model/validate.js');
+// UNTOUCHED DEFAULTS CHANGE NO CARD, ANYWHERE IN ITS EFFECTS (#1247 review).
+// The numeric-only check above could not see a whole NEW effect: a formula-
+// only face (Last Stand's missing HP, Blight Nova's Crimson Blight) used to
+// gain a cost-derived base as a second effect, and every per-effect addition —
+// DR or PR, impact per hit — then landed twice. Every face, every effect.
+test('untouched defaults leave every card face’s effects exactly as authored', () => {
   const registries = createRegistries(contentBundle);
-  const seen = [];
   for (const authored of contentBundle.cards) {
     for (const upgraded of [false, true]) {
       if (upgraded && !authored.upgrade) continue;
-      const authoredEffects = upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects;
-      for (const op of ['damage', 'block', 'poiseDamage']) {
-        const matching = (authoredEffects || []).filter((effect) => effect.op === op);
-        if (!matching.length || matching.some((effect) => typeof effect.amount === 'number')) continue;
-        const face = resolveCard(registries, { cardId: authored.id, upgraded });
-        const label = `${authored.id}${upgraded ? '+' : ''}/${op}`;
-        const base = face.effects.findIndex((effect) => effect.op === op);
-        assert.equal(typeof face.effects[base].amount, 'number', `${label}: a numeric base leads`);
-        const binding = computeTokenBindings(face.effects).find((row) => row.index === base && row.field === 'amount');
-        assert.ok(binding && face.textTemplate.includes(`{${binding.token}}`),
-          `${label}: "${face.textTemplate}" must print the base it gains`);
-        seen.push(label);
-      }
+      const face = resolveCard(registries, { cardId: authored.id, upgraded });
+      const expected = upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects;
+      assert.deepEqual(face.effects, expected, `${authored.id}${upgraded ? '+' : ''}`);
     }
   }
-  // Named, so a content change that removes them is noticed rather than
-  // quietly making this test vacuous.
-  for (const label of ['lastStand/block', 'lastStand+/block', 'blightNova/damage', 'blightNova+/damage']) {
-    assert.ok(seen.includes(label), `${label} is still formula-only`);
+  // A formula-only face has no bonus row that pretends to move it.
+  const damage = registries.balance.damage;
+  assert.ok(!('lastStand' in damage.defenseCards.cardBonuses));
+  assert.ok(!('blightNova' in damage.potencyCards.cardBonuses));
+});
+
+// THE SAME, IN A FIGHT: Last Stand at 20 missing HP with DR 5 gains 25, as on
+// dev — not 2 + 5 + 20 + 5 from a second Block effect.
+test('Last Stand adds DR once to its missing-HP Block', async () => {
+  const { createCombat, dispatch } = await import('../src/engine/combat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
+  const registries = createRegistries(contentBundle);
+  const c = createCombat({
+    registries, rng: createRng(998), ratingsRules: resolveCombatRatings({}, contentBundle),
+    player: { classId: 'reaver', maxHp: 100, hp: 80, maxMana: 10, maxStamina: 10, stamina: 10, energyMax: 3, drawPerTurn: 3,
+      attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
+      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `l${i}`, cardId: 'lastStand', upgraded: false })), relicIds: [] },
+    enemyIds: ['wanderingSoldier'],
+  });
+  c.player.ratings.dr = 5;
+  const before = c.player.block || 0;
+  dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId });
+  assert.equal((c.player.block || 0) - before, 20 + 5);
+});
+
+// A CARD THAT AUTHORS ITS OWN POISE DAMAGE CARRIES ITS IMPACT THERE (#1247
+// review). Its per-hit value used to be seeded from that same effect, so
+// Poise Breaker's 10 landed as 10 + 10. The hit keeps the category default.
+test('an explicit poiseDamage card does not add a second impact of the same size', async () => {
+  const { attackImpact } = await import('../src/model/combatRatings.js');
+  const registries = createRegistries(contentBundle);
+  const ctx = { registries, ratingsRules: { attackImpact: {}, impact: { unarmed: 1, magic: 1, enemyPhysical: 2 } } };
+  const explicit = contentBundle.cards.filter((card) => card.type === 'attack'
+    && (card.effects || []).some((effect) => effect.op === 'poiseDamage'));
+  assert.ok(explicit.some((card) => card.id === 'poiseBreaker'), 'Poise Breaker authors its own poise damage');
+  for (const card of explicit) {
+    const def = registries.cards.get(card.id);
+    assert.equal(def.cardRatingValues, undefined, `${card.id} carries no per-hit value`);
+    assert.equal(attackImpact(ctx, null, { cardId: card.id, damageSchool: 'physical' }), 1, `${card.id}: the unarmed default`);
   }
 });
 
@@ -301,4 +327,56 @@ test('a malformed status or bonus container is reported by name', () => {
     assert.ok(problems.includes(`balance.damage.attackCards.${key}`), `${key} = ${JSON.stringify(value)}: ${problems.join(', ') || 'none'}`);
   }
   assert.deepEqual(attackCardDamageConfigProblems(contentBundle), []);
+});
+
+// CO-OP CARRIES THE RESOLVED FACE TOO (#1247 review): its action carrier is
+// built separately from solo's, so it needs the same Ward value.
+test('a staff Strike played in co-op lands its configured Ward impact', async () => {
+  const { createCoopCombat, playCard } = await import('../src/engine/coopCombat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
+  const settings = { 'gameConfig.balance.damage.wardCards.globalMultiplier': 3 };
+  const registries = createRegistries(configuredContentBundle(contentBundle, settings));
+  const instance = { cardId: 'strike', profileId: 'staffMagicAttack', damageSchool: 'magic', exposureBuildupPerHit: 0, upgraded: false };
+  const C = createCoopCombat({
+    registries, rng: createRng(998), ratingsRules: resolveCombatRatings(settings, contentBundle),
+    players: [{ id: 'p1', classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
+      energyMax: 3, drawPerTurn: 3, attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
+      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `k${i}`, ...instance })), relicIds: [] }],
+    enemyIds: ['wanderingSoldier'],
+  });
+  const enemy = C.enemies[0];
+  enemy.poiseMeter = { value: 0, max: 999 };
+  enemy.wardMeter = { value: 0, max: 999 };
+  const seen = [];
+  const emit = C.emit;
+  C.emit = (type, payload) => { if (type === 'ratingImpact') seen.push(payload); return emit(type, payload); };
+  const seat = C.players.get('p1');
+  playCard(C, 'p1', seat.piles.hand[0].instanceId, enemy.id);
+  const ward = resolveCard(registries, instance).cardRatingValues.ward;
+  assert.ok(ward > (registries.balance.combatRatings?.impact?.magic ?? 1), 'the Ward value differs from the magic default');
+  assert.deepEqual(seen.map((row) => [row.meter, row.amount]), [['ward', ward]]);
+});
+
+// A WEAPON PACKAGE'S PRIORITY CARDS ARE DEALT UNDER A PROFILE TOO (#1247
+// review): a staff that listed Stomp would deal it magical, so Stomp needs its
+// magical face, and a row on the magical side, like the staff's own Strike.
+test('a card a staff package deals resolves through the magical formulas', () => {
+  const staff = contentBundle.equipment.armaments.find((piece) => piece.attackProfile === 'staffMagicAttack');
+  const armaments = contentBundle.equipment.armaments.map((piece) => (piece === staff ? {
+    ...piece,
+    weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'staffMagicAttack', priorityAttackRefs: ['stomp'] },
+  } : piece));
+  const bundle = { ...contentBundle, equipment: { ...contentBundle.equipment, armaments } };
+  const registries = createRegistries(bundle);
+  const dealt = resolveCard(registries, { cardId: 'stomp', profileId: 'staffMagicAttack' });
+  assert.equal(cardIsMagical(dealt), true);
+  assert.ok('stomp' in registries.balance.damage.potencyCards.cardBonuses);
+  const authored = contentBundle.cards.find((card) => card.id === 'stomp');
+  assert.deepEqual(dealt.effects.map((effect) => effect.amount), authored.effects.map((effect) => effect.amount),
+    'untouched defaults keep its numbers on the magical side');
+  const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));
+  assert.notEqual(resolveCard(tuned, { cardId: 'stomp', profileId: 'staffMagicAttack' }).effects[0].amount, authored.effects[0].amount,
+    'the PR formula moves it');
+  assert.equal(resolveCard(tuned, { cardId: 'stomp' }).effects[0].amount, authored.effects[0].amount, 'and not its physical face');
 });

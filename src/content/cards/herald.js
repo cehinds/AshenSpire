@@ -388,12 +388,12 @@ export const heraldCards = [
     effects: [
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
     ],
-    textTemplate: "Deal {damage} base damage plus twice the target's Crimson Blight.",
+    textTemplate: "Deal damage equal to twice the target's Crimson Blight.",
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
       ],
-      textTemplate: "Deal {damage} base damage plus three times the target's Crimson Blight.",
+      textTemplate: "Deal damage equal to three times the target's Crimson Blight.",
     },
   },
   {
