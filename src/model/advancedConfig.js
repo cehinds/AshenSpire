@@ -669,12 +669,15 @@ function withGates(rows, bundle) {
     // deck rules are off, a Poise switch nothing while ratings are on (Codex,
     // on #1260).
     if (row.own) {
-      const gates = [...(row.gates || []), ...enableGates(row.own.member, swapRuleIds)];
+      const gates = [...enableGates(row.own.member, swapRuleIds), ...(row.gates || [])];
       return gates.length ? { ...row, gates } : row;
     }
-    const gates = [...(row.gate ? [row.gate] : []), ...enableGates(row.key, swapRuleIds)];
+    // THE SUBSYSTEM FIRST. When both are closed the screen names the first,
+    // and "turn on its own switch" is the wrong advice while the whole feature
+    // is off — that switch is itself disabled (Codex, on #1260).
+    const gates = [...enableGates(row.key, swapRuleIds), ...(row.gate ? [row.gate] : [])];
     const owner = owns.find((toggle) => toggle.own.dropPath && (row.key === toggle.own.member || row.key.startsWith(`${toggle.own.member}.`)));
-    if (owner) gates.unshift({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });
+    if (owner) gates.push({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });
     return gates.length ? { ...row, gates } : row;
   });
 }

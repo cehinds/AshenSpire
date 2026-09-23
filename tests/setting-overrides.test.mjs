@@ -287,3 +287,14 @@ test('a stored out-of-range every-stat number is read the same way by the previe
     assert.equal(preview.maxHp, run.maxHp, `statTierSize ${statTierSize}`);
   }
 });
+
+// Codex, on #1260: with the whole feature off, the note names the feature's
+// switch, not the row's own switch (which is itself disabled then).
+test('a row closed by both its feature and its own switch names the feature', () => {
+  const settings = { [SHARED_RATE_KEY]: true };
+  const poise = row('gameConfig.derivedStatRules.rules.poise.pointsPerTier');
+  assert.match(gateSentence(closedGate(settings, poise), settings), /Enable ratings, Poise & Ward” is off/);
+  const deckOff = { 'gameConfig.balance.equipment.startingDeck.enabled': false, 'gameConfig.own.balance.equipment.startingDeck.classes.reaver.strikeBias': false };
+  const strike = row('gameConfig.balance.equipment.startingDeck.classes.reaver.strikeBias');
+  assert.match(gateSentence(closedGate(deckOff, strike), deckOff), /Starting Deck — Enabled” is on/);
+});
