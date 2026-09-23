@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1251",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Each class's starting armour is told apart from the set piece it shares a name with",
+    "detail": "Under Ratings & Resistance → Armour bonuses, every class listed its armour twice under one name: the Reaver starts in a plain Wayfarer Plate with no bonuses, and the Wayfarer Plate set (+2 Block, +4 max HP) is a different item any class can earn — but both rows read Wayfarer Plate (reaver), so there was no telling which one a change went to. The starting one now says so: Wayfarer Plate (Reaver, starting armour) beside Wayfarer Plate (Reaver), and the class is spelled the way the rest of the menu spells it. No setting changed its value or key.",
+    "build": "0.7.1.382",
+    "pullRequest": 1251,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1251"
+  },
+  {
     "id": "pr-1250",
     "date": "2026-09-21",
     "group": "2026-09-21",
