@@ -4,13 +4,53 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1242",
-    "date": "2026-09-21",
-    "group": "2026-09-21",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
     "summary": "Every weapon's and every set's ratings are yours to set, and the number you type is the number the card shows",
-    "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so a straight sword set to 2 fought at 7, the item card still said 5, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 2 and it is a 2-Attack sword that your Strength still improves; give a staff 1 and a caster carrying +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports. A climb already in progress keeps the rules it was born under.",
-    "build": "0.7.1.371",
+    "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so typing 3 into the straight sword's row made it fight at 5 while its card still said 2, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 4 and it is a 4-Attack sword that your Strength still improves, on the card it prints and on every Strike it lends; a staff at 1 carried by a caster with +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports — and where it cannot be kept exactly (a fraction, or armour Poise, which is also what a set weighs) the game says so. These rows only apply while ratings are switched on. A climb already in progress keeps the rules it was born under.",
+    "build": "0.7.1.378",
     "pullRequest": 1242,
     "url": "https://github.com/cehinds/AshenSpire/pull/1242"
+  },
+  {
+    "id": "pr-1248",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Every combat rating now shows its complete calculation",
+    "detail": "AR, DR, PR, Poise and Ward used to stop at a total, leaving no way to tell which attribute, weapon, shield, armour or relic produced it. Open Show calculations on the character review or in the Armoury and each rating now names the attribute values it read, their weights, each contribution rounded down on its own, the global multiplier, the base, every named equipment or relic addition, and the final result. A Reaver's AR now reads Strength 3 × 0.5 → floor = 1, then 0 base + floor(1 global × 1) + 2 Straight Sword = 3; DR, PR, Poise and Ward follow the same receipt instead of asking the player to trust five unexplained numbers. A configuration with no weighted attributes says so plainly and calculates from zero instead of printing an empty formula.",
+    "build": "0.7.1.376",
+    "pullRequest": 1248,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1248"
+  },
+  {
+    "id": "pr-1246",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Weapon cards now show and deal one direct calculation, with no hidden equipment tiers",
+    "detail": "Slashing Strike, Shield Defend and weapon techniques now read exactly as card base + that weapon or shield's rating + rarity: a straight sword with 3 AR makes Slashing Strike 5 + 3 + 0 = 8, while a shield with 5 DR makes Shield Defend 3 + 5 + 0 = 8. The removed tier and points-per-tier layer can no longer inflate, suppress or obscure those numbers, and another equipped item cannot lend its rating to the wrong card. Weapon AR now lives in the intended 0–4 range, every technique explicitly names the rating it uses, and the same result is preserved in previews, live combat, co-op, capped profiles, customized profile snapshots and older saves.",
+    "build": "0.7.1.374",
+    "pullRequest": 1246,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1246"
+  },
+  {
+    "id": "pr-1245",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "The character summary is a real card hand, and every stat can be read",
+    "detail": "The character card's lower numbers used to wrap as loose chips until the last line was cut through, while the armour, weapons and relic beside it had the card interaction the stat card was missing. Primary and derived stats now use the same aligned grid: HP, MP, SP and AP stay compact, six headline values fit on the face, and an ellipsis says when the full card has more. Every card in the summary now behaves alike: select it and the card moves down, leaving its information control on the layer above. The full character card keeps the normal card shape, spells out every acronym — Strength (STR), Health Points (HP), Attack Rating (AR) and the rest — and its inspection scrolls as one page instead of stretching the card or cutting the calculations off.",
+    "build": "0.7.1.372",
+    "pullRequest": 1245,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1245"
+  },
+  {
+    "id": "pr-1241",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Advanced settings read as one menu again",
+    "detail": "Half the rows in Advanced were named by a person — HP — base amount, Reaver — Strength — and the other half were named by the game, out of the setting's own internal spelling, so hand Max and levels · player Starting Level sat two rows under HP — base amount in the same list. Worse, twelve rows under Enemy scaling were all called Per Level, because only the last word of the name was ever used and the screen was patching the rest back in afterwards. Every row is now named once, in one place, and in the voice the hand-written ones always used: the thing a row belongs to is a heading — Levels · Enemy Scaling — and the row itself is a phrase — Hand max, Starting cinders, HP — Per level — which is how Resistance cap and Strength required have always read. A group no longer repeats its own name in every line beneath it, whether that name is one word or three: the Reaver tab simply lists Strength, Dexterity, Base HP, Equipment drops lists Enabled and Chance — Treasure, and Skill xp lists Base and Growth. Poise and Ward are spelled like the words they are instead of shouting POISE and WARD across seven hundred rows. Two rows have left the screen: energy and draw under Starting values, which looked like they set your actions and your opening hand and set nothing at all — the rows that really do are Actions and Draw under Stat conversions, a group away, which is why the two never agreed. Retiring them also takes them out of Reset this group, so a profile that already stored one keeps it, invisible and inert. A settings file that still names the old two loads exactly as before.",
+    "build": "0.7.1.367",
+    "pullRequest": 1241,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1241"
   },
   {
     "id": "pr-1240",

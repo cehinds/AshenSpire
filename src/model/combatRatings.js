@@ -1,31 +1,15 @@
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
+import { attributeRatingReceipt, defaultRatingFormula, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
 
-export const ratingIds = ['ar', 'dr', 'pr', 'poise', 'ward'];
-const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
-const rule = (weights, base = 0) => ({ base, multiplier: 1, ...Object.fromEntries(attributes.map(id => [id, weights[id] || 0])) });
+export { ratingIds };
+const attributes = ratingAttributeIds;
 export const combatRatingDefaults = {
   enabled: true,
-  // EVERY RATING IS A SUM OF FLOORED ATTRIBUTE TERMS, then multiplied (owner,
-  // 2026-09-21): `multiplier × <rating>.multiplier × Σ floor(weight × attribute)
-  // + base`. Both multipliers ship at 1 — they are the handle for scaling a
-  // rating, or every rating, without editing five weights, and the weight
-  // itself is the rate a point converts at. The pair `pointsPerIncrease`/`gain`
-  // they replace divided the SUMMED points, which made a 0.25 weight mean
-  // nothing on its own and hid a second rate behind a first.
-  multiplier: 1,
-  ratings: {
-    ar: rule({ strength: 0.5 }), dr: rule({ dexterity: 0.5 }),
-    pr: rule({ wisdom: 0.5, intelligence: 0.5 }),
-    // POISE AND WARD OPEN AT 1 (owner, 2026-09-21: "poise, mp, sp, ward are
-    // base 1"). A vessel of nothing is not a vessel: with every attribute term
-    // floored on its own, a character who put no points in the stats these
-    // read would carry a meter of zero, and the break rules floor it to 1
-    // anyway. Stating it on the row is the same number where a player can see
-    // and move it. AR and DR stay at 0 — they are damage terms, not vessels.
-    poise: rule({ constitution: 1, strength: 0.5 }, 1),
-    ward: rule({ wisdom: 1, intelligence: 0.5 }, 1),
-  },
+  // One rating formula: base + global multiplier times the sum of attribute
+  // terms floored independently. Equipment, relic and status bonuses are
+  // added afterward by their owning receipts.
+  ...defaultRatingFormula,
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
     lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
@@ -39,6 +23,18 @@ export const combatRatingDefaults = {
 };
 const prefix = 'gameConfig.combatRatings.';
 const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+
+/**
+ * ratingLabel(id) → what a PLAYER calls this rating.
+ *
+ * AR, DR and PR are acronyms; Poise and Ward are words. The tab name below has
+ * always known that ("Poise formula", not "POISE formula") — the ROWS did not,
+ * so one menu carried "POISE — Base" and "Straight Sword — additional WARD"
+ * beside a tab spelling the same two the ordinary way, across some seven
+ * hundred rows. One reader now, so the tab and its rows cannot disagree
+ * (owner, 2026-09-21: "make them consistent with what I see with each other").
+ */
+const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
 
 export function ratingSourceKey(piece) {
   return piece.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : `armament:${piece.id}`;
@@ -60,10 +56,6 @@ function itemByRatingSource(bundle) {
 // The ceiling a rating row has always had, named once so the row, the
 // validator and the legacy migration cannot drift.
 const ITEM_RATING_MAX = 999;
-
-// AR, DR and PR are said as initials; Poise and Ward are words, exactly as the
-// formula rows say them.
-const ratingLabel = id => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
 
 function isMagicalPiece(equipment, piece) {
   const profile = (equipment?.basicCardProfiles || []).find(row => row.id === piece.attackProfile);
@@ -246,13 +238,12 @@ export function combatRatingRows(bundle) {
   });
   add('enabled', true, 'Enable ratings, Poise & Ward', 'General');
   add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
-    note: 'Scales the attribute total of every rating at once, before each rating’s own multiplier. 1 leaves the formulas as written.',
+    note: 'Scales the floored attribute total of every rating at once. 1 leaves the formulas as written.',
   });
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${id.toUpperCase()} — ${words(field)}`, `${id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase()} formula`, {
-        note: field === 'base' ? 'Added after the multipliers, then equipment and other bonuses.'
-          : field === 'multiplier' ? 'Scales this rating’s attribute total. 1 leaves the weights as written.'
+      `${ratingLabel(id)} — ${words(field)}`, `${ratingLabel(id)} formula`, {
+        note: field === 'base' ? 'Added after the global multiplier, then equipment and other bonuses.'
           : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
       });
   }
@@ -267,11 +258,11 @@ export function combatRatingRows(bundle) {
   }
   for (const status of bundle.statuses) {
     for (const id of ['poise', 'ward']) add(`statuses.${status.id}.${id}`, combatRatingDefaults.statuses[status.id]?.[id] || 0,
-      `${status.name} — ${words(id)} weight`, 'Status resistance', {
+      `${status.name} — ${ratingLabel(id)} weight`, 'Status resistance', {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${id.toUpperCase()} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     const authored = authoredItemRatings(bundle.equipment, piece);
@@ -285,9 +276,9 @@ export function combatRatingRows(bundle) {
           + ' Applies to a new run.',
       });
   }
-  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${id.toUpperCase()}`, 'Relic bonuses');
+  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
-    for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${words(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
+    for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${ratingLabel(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });
@@ -373,8 +364,7 @@ export function combatRatingProblems(config) {
   if (config.multiplier !== undefined && (!Number.isFinite(config.multiplier) || config.multiplier < 0)) problems.push('Invalid rating multiplier');
   for (const id of ratingIds) {
     const r = config.ratings?.[id];
-    if (!r || [...attributes, 'base'].some(k => !Number.isFinite(r[k]) || r[k] < 0)
-      || (r.multiplier !== undefined && (!Number.isFinite(r.multiplier) || r.multiplier < 0))) problems.push(`Invalid ${id} formula`);
+    if (!r || [...attributes, 'base'].some(k => !Number.isFinite(r[k]) || r[k] < 0)) problems.push(`Invalid ${id} formula`);
   }
   if (!config.resistance || ['physicalK', 'magicalK', 'statusK'].some(k => !(config.resistance[k] > 0)) || !(config.resistance.maximum >= 0 && config.resistance.maximum < 1)) problems.push('Invalid resistance curve');
   const impact = config.impact;
@@ -394,7 +384,11 @@ export function combatRatingProblems(config) {
 export function ratingReceipt(registries, run, config) {
   const totals = Object.fromEntries(ratingIds.map(id => [id, 0]));
   const sources = [];
-  const add = (name, values) => { sources.push({ name, ...values }); for (const id of ratingIds) totals[id] += Number(values[id]) || 0; };
+  const attributeReceipts = {};
+  const add = (name, values, kind, sourceId = null) => {
+    sources.push({ name, kind, ...(sourceId ? { sourceId } : {}), ...values });
+    for (const id of ratingIds) totals[id] += Number(values[id]) || 0;
+  };
   const stat = {};
   // EACH ATTRIBUTE TERM IS FLOORED ON ITS OWN, and the multipliers scale what
   // they add up to (owner, 2026-09-21): a weight IS the rate that attribute
@@ -410,11 +404,10 @@ export function ratingReceipt(registries, run, config) {
   // formulas entirely; a smaller pool now means smaller ratings, which is what
   // shrinking it says.
   for (const id of ratingIds) {
-    const r = config.ratings[id];
-    const points = attributes.reduce((n, a) => n + Math.floor((run.attributes?.[a] || 0) * r[a] + 1e-9), 0);
-    stat[id] = r.base + Math.floor(points * (config.multiplier ?? 1) * (r.multiplier ?? 1) + 1e-9);
+    attributeReceipts[id] = attributeRatingReceipt(config, run.attributes, id);
+    stat[id] = attributeReceipts[id].value;
   }
-  add('Attributes', stat);
+  add('Attributes', stat, 'attribute');
   if (run.loadout) for (const piece of equippedPieces(registries, run.loadout, run.class || run.player?.classId, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
     // The piece is the configured, upgraded one, so its columns already ARE the
     // ratings the settings panel and the item card show.
@@ -429,21 +422,41 @@ export function ratingReceipt(registries, run, config) {
     // `migrateCombatRatingSettings` has already put authored + plus on the
     // piece above. Adding `config.bonuses[<item>]` on top of that would score
     // the plus twice and hand a resumed fight authored + 2 × plus.
-    add(piece.name, values);
+    // The rating a card sourced from THIS piece reads (`sourceRatingValue`)
+    // is the same item value: an override where the owner set one, the
+    // column the item authors where they did not.
+    values.effectiveRatings = Object.fromEntries(ratingIds.map((id) => [
+      id,
+      Number.isFinite(configured[id]) ? configured[id] : equipmentRatingBase(piece, id, { ratingId: id }),
+    ]));
+    add(piece.name, values, 'equipment', piece.id);
   }
   for (const id of run.relics || run.player?.relicIds || []) {
     const relic = resolveUpgradedRelic(registries, `relic/${id}`, run.itemUpgradeLevels?.[`relic/${id}`] || 0);
     const values = { ...config.bonuses?.[`relic:${id}`] };
     values.poise = (values.poise || 0) + (relic.passives?.poiseThresholdAdd || 0);
     for (const statId of ratingIds) values[statId] = (values[statId] || 0) + (relic.passives?.[`${statId}Bonus`] || 0);
-    add(relic.name, values);
+    add(relic.name, values, 'relic', id);
   }
-  return { totals, sources };
+  return { totals, sources, attributeReceipts };
 }
 
 export function ratingValue(ctx, entity, id) {
   let value = entity?.ratings?.[id] || 0;
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  return Math.max(0, value);
+}
+
+export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
+  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
+  let value = 0;
+  for (const source of entity.ratingSources) {
+    if (source.kind !== 'equipment') value += Number(source[id]) || 0;
+    else if (sourceArmamentId && source.sourceId === sourceArmamentId) value += Number(source.effectiveRatings?.[id] ?? source[id]) || 0;
+  }
+  for (const [status, instance] of Object.entries(entity.statuses || {})) {
+    value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  }
   return Math.max(0, value);
 }
 
