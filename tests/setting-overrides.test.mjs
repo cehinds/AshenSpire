@@ -263,3 +263,14 @@ test('importing a file with the older dial writes the shared switch in the same 
   const plain = parseAdvancedConfigFile(advancedConfigExport({ [HP_TIER]: 2 }), contentBundle, {}, screenRows);
   assert.equal(Object.hasOwn(plain, SHARED_RATE_KEY), false, 'a file without the dial adds nothing');
 });
+
+// Codex, on #1260: the shared switch turned on with the every-stat number
+// left at its default still reaches the preview.
+test('an untouched every-stat number is its default for the preview too', () => {
+  const settings = { [SHARED_RATE_KEY]: true };
+  const registries = createRegistries(configuredContentBundle(contentBundle, settings));
+  const preview = createRunState({ seed: 7, classId: 'reaver', registries });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries, derivedStatOptions: derivedStatDialOptions(settings) });
+  assert.equal(hpRule(preview), 5);
+  assert.equal(preview.maxHp, run.maxHp);
+});

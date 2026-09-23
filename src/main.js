@@ -897,8 +897,15 @@ function applyRestoredSettings(restored) {
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
   // A restored profile is brought forward like a booted one (Codex, on #1260):
-  // an older dial gets its shared switch written, and saved, here too.
-  if (migrateSharedRate(activeSettings, contentBundle)) saves.saveMeta(activeMeta);
+  // an older dial gets its shared switch written, and saved, here too — into
+  // the RESTORED profile read back from storage. `activeMeta` is still the
+  // profile that was open before the restore, and saving it would write that
+  // profile's progress over the one just restored (Codex, on #1260).
+  if (migrateSharedRate(activeSettings, contentBundle)) {
+    const restoredMeta = saves.loadMeta();
+    restoredMeta.settings = { ...activeSettings };
+    saves.saveMeta(restoredMeta);
+  }
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);

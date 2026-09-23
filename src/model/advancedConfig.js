@@ -779,9 +779,13 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
+  const storedDial = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
+  if (Number.isInteger(storedDial) && storedDial > 0) configured.derivedStatRules.defaults.pointsPerTier = storedDial;
+  // An untouched dial is its shipped default, the number the settings row
+  // shows and `derivedStatDialOptions` applies — so a switch turned on with
+  // the dial left alone still reaches the preview (Codex, on #1260).
+  const pointsPerTier = Number.isInteger(storedDial) && storedDial > 0 ? storedDial : bundle.derivedStatRules.defaults.pointsPerTier;
   if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) {
-    configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
     // THE EVERY-STAT NUMBER IS WRITTEN INTO THE TABLE for every stat that
     // follows it, so every reader of the configured bundle — character
     // creation's preview, the stat projection, the run — sees one number.
