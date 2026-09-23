@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
     "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
-    "build": "0.7.1.405",
+    "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1258",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now carries its own piece of the world's history",
+    "detail": "Open a card and unfold its Flavor panel: all 195 combat cards and the 17 basic weapon cards — the Strikes, Guards and Techniques your weapon gives you — now have a short description told by someone who was there. A Warden's field-book, a Fell Courtyard gate log, a Court surgeon's receipt, the Astronomer's chart margins, a Chapel rubric, a sermon of the Feral Ember, the Tollmouth fence, a hamlet council: each speaks for itself, signs its name, and is mostly right, partly partisan and partly silent. Read together they span the kingdom from the Cinderwrights to the Long Winter, and they disagree. The panel now keeps paragraph breaks. No card's rules or numbers changed.",
+    "build": "0.7.1.405",
+    "pullRequest": 1258,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1258"
   },
   {
     "id": "pr-1255",
