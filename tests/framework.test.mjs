@@ -761,24 +761,30 @@ function grantFixtureRegistries(packagesById) {
     : piece));
   return createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments } });
 }
+// The fixtures override only the sword's package; the Reaver's round shield
+// keeps its shipped combat kit (SPEC §3.8 "Complete armament kits", #904), so
+// its three item-owned instances compose beside the fixture's.
+const ROUND_SHIELD_KIT = ['kit:roundShield:attack', 'kit:roundShield:guard', 'weaponArt:roundShield:shieldBash'];
 
-test('two non-starter armaments carry unique arts; the baseline starter deck remains unchanged', () => {
+// SPEC §3.8 "Complete armament kits" (#904, 0.6.0.115): EVERY shipped
+// hand-equipped armament authors a combatKit and lends one Strike, one Guard
+// and one signature Art — no longer only the katana and greatsword.
+test('every armament installs exactly its kit\'s signature art; the baseline Reaver start composes both kits', () => {
   const { WeaponCardPackageModel } = compositionDoor;
-  const expected = { katana: ['katanaDrawCut'], greatsword: ['greatswordSunderingHew'] };
-  const seen = [];
   for (const piece of contentBundle.equipment.armaments) {
     const pkg = WeaponCardPackageModel.fromPiece(LEGACY_REG, piece);
-    if (pkg) {
-      eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing`);
-      eq([...pkg.weaponArtDefaults], expected[piece.id] || [], `${piece.id} installs only its authored art`);
-      seen.push(...pkg.weaponArtDefaults);
-    }
+    eq(Boolean(pkg && pkg.combatKit), true, `${piece.id} authors a combat kit`);
+    eq(pkg.grantedCards.length, 0, `${piece.id} grants nothing beyond its kit`);
+    eq([...pkg.weaponArtDefaults], [pkg.combatKit.artCardId], `${piece.id} installs only its authored signature art`);
   }
-  eq(seen.length, 2, 'two live source arts');
-  eq(new Set(seen).size, 2, 'distinct identities');
-  // The baseline Reaver sword/shield kit still receives no additional art.
+  // The baseline Reaver sword/shield start: each hand lends its kit Strike and
+  // Guard (kit:<item>:attack|guard) and its signature Art — and nothing else.
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
-  eq(run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').length, 0, 'no shipped grants compose');
+  const owned = run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').map((c) => c.instanceId).sort();
+  eq(owned, [
+    'kit:roundShield:attack', 'kit:roundShield:guard', 'kit:straightSword:attack', 'kit:straightSword:guard',
+    'weaponArt:roundShield:shieldBash', 'weaponArt:straightSword:guardCounter',
+  ], 'the starting kits compose exactly the two kits and their signature arts');
 });
 
 test('grants and weapon arts compose at creation and reconcile through equip transitions', () => {
@@ -792,8 +798,8 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
     .map((c) => c.instanceId).sort();
   eq(composed(), [
     'granted:straightSword:quickstep:0', 'granted:straightSword:quickstep:1',
-    'weaponArt:straightSword:crimsonCleave',
-  ], 'creation composes grants and the default art with deterministic ids');
+    ...ROUND_SHIELD_KIT, 'weaponArt:straightSword:crimsonCleave',
+  ].sort(), 'creation composes grants and the default art with deterministic ids');
   const art = run.deck.find((c) => c.instanceId === 'weaponArt:straightSword:crimsonCleave');
   eq(art.damageSchool, 'physical', 'a composed instance is carrier-stamped by the same authoritative pass, not left raw');
 
@@ -807,7 +813,7 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
   reconcileGrantedCards(REG2, run);
   // The sword's grants leave with it; the hand it left is EMPTY beside the
   // shield, and an empty hand carries the Dodge Roll (the owner's rule).
-  eq(composed(), ['weaponArt:unarmed:right:dodgeRoll'], 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
+  eq(composed(), [...ROUND_SHIELD_KIT, 'weaponArt:unarmed:right:dodgeRoll'].sort(), 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
   run.loadout.sets.rightHand = savedSets.rightHand;
   reconcileGrantedCards(REG2, run);
   eq(composed(), before, 're-equip restores them exactly');
@@ -846,7 +852,8 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   reconcileGrantedCardsInCombat(REG2, run, piles);
   eq(piles.hand.length, 0, 'the stale grant leaves the hand with its armament');
   eq(piles.draw.map((c) => c.instanceId), ['i1', 'granted:straightSword:quickstep:0'], 'a present wanted grant stays put, not duplicated');
-  eq(piles.discard.map((c) => c.instanceId), ['weaponArt:straightSword:crimsonCleave'], 'the missing art lands in the discard pile');
+  eq(piles.discard.map((c) => c.instanceId).sort(), ['weaponArt:straightSword:crimsonCleave', ...ROUND_SHIELD_KIT].sort(), 'the missing art (and the shield kit the piles lacked) lands in the discard pile');
+  eq(piles.discard[0].instanceId, 'weaponArt:straightSword:crimsonCleave', 'the right hand reconciles first');
   eq(piles.discard[0].upgraded, false, 'a reconciled instance carries the boolean upgraded field combat saves require');
   const snapshot = structuredClone(piles);
   reconcileGrantedCardsInCombat(REG2, run, piles);
@@ -878,7 +885,7 @@ test('a mid-combat swap keeps what the smith did: an emptied art mount stays a D
   const inPlace = piles.draw.find((c) => c.instanceId === artKey);
   eq(inPlace && inPlace.cardId, dodge, 'the mount keeps its key and shows the Dodge Roll, in place in the draw pile');
   eq(inPlace.damageSchool, undefined, 'and it is a FRESH instance, not the old card wearing a new id — the pile stamp will stamp it');
-  eq(piles.discard.length, 0, 'nothing landed in the discard pile — the mount was already held');
+  eq(piles.discard.map((c) => c.instanceId).sort(), [...ROUND_SHIELD_KIT].sort(), 'nothing of the sword landed in the discard pile — the mount was already held (only the shield kit the piles lacked)');
   // The same run WITHOUT the mounts is the defect: the authoring wins.
   const stale = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false }], discard: [], exhaust: [] };
   reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout }, stale);
@@ -923,16 +930,19 @@ test('a granted instance is never a removal candidate', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries: REG2 });
   run.deck = run.deck.filter((c) => c.grantedBy || c.cardId !== 'quickstep');
   const grantedCount = () => run.deck.filter((c) => c.grantedBy).length;
+  // Two fixture quickstep grants plus the round shield's kit Strike, Guard and Art.
+  eq(grantedCount(), 2 + ROUND_SHIELD_KIT.length, 'the fixture grants and the shield kit are item-owned');
+  const granted = grantedCount();
 
   // Targeted by cardId: only the granted copies carry quickstep — nothing removable.
   executeAction({ registries: REG2, run, emit: () => {} }, { effect: { op: 'removeCardFromDeck', card: 'quickstep' } });
-  eq(grantedCount(), 2, 'a targeted removal never takes an equipment-granted instance');
+  eq(grantedCount(), granted, 'a targeted removal never takes an equipment-granted instance');
 
   // Random with an rng landing on the tail, where the granted instances sit:
   // the candidate pool excludes them, so an ordinary card leaves instead.
   const before = run.deck.length;
   executeAction({ registries: REG2, run, rng: { float: () => 0.999 }, emit: () => {} }, { effect: { op: 'removeCardFromDeck', random: true } });
-  eq(grantedCount(), 2, 'a random removal never takes an equipment-granted instance');
+  eq(grantedCount(), granted, 'a random removal never takes an equipment-granted instance');
   eq(run.deck.length, before - 1, 'the random removal still removes an ordinary card');
 });
 
@@ -1010,7 +1020,11 @@ test('one empty hand composes the Dodge Roll beside the armed hand\'s technique,
   const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
   eq(dodge.length, 1, `the empty left hand carries one Dodge Roll (arts: ${arts.map((c) => c.cardId).join(',') || 'none'})`);
   eq(dodge[0] && dodge[0].grantedBy, 'unarmed:left', 'attributed to the empty hand');
-  eq(techniques.length > 0 && techniques.every((id) => id !== 'dodgeRoll'), true, `the armed hand's technique slot stays its own (${techniques.join(',')})`);
+  // Since #904 (SPEC §3.8 "Complete armament kits": "New armed starting decks
+  // omit the redundant global technique grant") the armed hand's technique is
+  // its kit's signature Art, not a technique filler slot.
+  eq(techniques.every((id) => id !== 'dodgeRoll'), true, `no technique slot turns into the Dodge Roll (${techniques.join(',')})`);
+  eq(arts.filter((c) => c.grantedBy === 'straightSword').map((c) => c.cardId), ['guardCounter'], `the armed hand's signature art stays its own (arts: ${arts.map((c) => c.cardId).join(',')})`);
   run.loadout.sets.leftHand = leftBefore;
   stampDeck(LEGACY_REG, run);
   eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'filling the hand takes the dodge away');

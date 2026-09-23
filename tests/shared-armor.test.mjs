@@ -73,8 +73,14 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   }
   const card = equipmentCardModel(r, piece);
   assert.match(card.type, /All classes/);
-  assert.match(card.requirement, /12/);
-  assert.equal(card.bonuses.length, 2);
+  // SPEC §13.4m (lean scale, 2026-09-20): every outfit minimum rebased to 3 on the 1–4 scale.
+  assert.equal(minimum, 3);
+  assert.match(card.requirement, new RegExp(`\\b${minimum}\\b`));
+  // An armour's additive Defend Block is shown as the card's DR fact, not as a
+  // bonus row (src/model/equipmentCard.js; same rule as tests/equipmentCard.test.mjs).
+  const blockMods = piece.mods.filter(raw => /^defend\.block=[+-]/.test(raw));
+  assert.equal(card.bonuses.length, 2 - blockMods.length);
+  assert.equal(card.facts.find(f => f.label === 'DR').value, blockMods.reduce((n, raw) => n + Number(raw.split('=')[1]), 0));
   assert.equal(card.tags.length, 2);
   assert.ok(existsSync(armourMenuAsset(cls, id)));
   const visual = paintedOutfit(cls, id);
