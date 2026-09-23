@@ -1857,6 +1857,7 @@ function worldLocationAction(action) {
     if (!questBoardPointAt(registries, action.ownerId)) throw Error('No quest board here');
     // Stay in the town across a reload while the board or an exchange is open.
     j.inspectNodeId = j.currentNodeId;
+    persist();
     return showQuestBoard(action.ownerId, () => { j.inspectNodeId = j.currentNodeId; persist(); showMap(); });
   }
   if (action.kind === 'local') {
