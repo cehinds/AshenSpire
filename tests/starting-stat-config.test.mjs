@@ -562,3 +562,24 @@ test('a ruleset-6 table refuses a legacy per-row gain layer by name', async () =
     { ...options, explicitOverride: { defaults: { pointsPerTier: 2 } } });
   assert.equal(divided.rules.hp.pointsPerIncrease, 2);
 });
+
+// A run's own snapshot decides which card a stat is on. Moving HP from
+// Constitution to Strength in Settings after a run started must not move the
+// line on that run's cards (Codex, #1253).
+test('a run lists a stat on the card its own snapshot scales it with', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 13 });
+  const moved = createRegistries(configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.hp.constitution': 0,
+    'gameConfig.derivedStatRules.rules.hp.strength': 4,
+  }));
+  const cards = attributeCardModels(moved, run.attributes, { projection: statProjection(moved, run) });
+  const lines = (id) => cards.find((card) => card.id === id).reveal.lines;
+  assert.ok(lines('constitution').includes('HP +4 every 1 point'), lines('constitution').join(' | '));
+  assert.ok(!lines('strength').some((line) => line.startsWith('HP ')), lines('strength').join(' | '));
+  // With no run, the live table is what a card can describe.
+  const preview = attributeCardModels(moved, run.attributes).find((card) => card.id === 'strength').reveal.lines;
+  assert.ok(preview.includes('HP +4 every 1 point'), preview.join(' | '));
+});

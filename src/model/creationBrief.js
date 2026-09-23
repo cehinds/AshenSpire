@@ -193,7 +193,13 @@ export function attributeCardModels(registries, attributes, { projection = null,
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single
       // `sourceStat` this filter used to read could never express.
-      .filter(([, rule]) => ruleWeights({ ...defaults, ...rule }).some(([id]) => id === def.id))
+      // THE RUN'S WEIGHTS DECIDE WHICH CARD A STAT IS ON, not the live table:
+      // a player who moves HP from Constitution to Strength in Settings after
+      // starting a run still has a climb whose HP scales with Constitution
+      // (Codex, #1253). The authored row answers only when there is no run.
+      .filter(([id, rule]) => (projected.get(id)?.weights
+        ? Object.entries(projected.get(id).weights).filter(([, weight]) => weight > 0)
+        : ruleWeights({ ...defaults, ...rule })).some(([attrId]) => attrId === def.id))
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
         // THE RUN'S RULE, NOT THE TABLE'S. A run carries the derived-stat rows
