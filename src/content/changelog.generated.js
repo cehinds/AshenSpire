@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every weapon's and every set's ratings are yours to set, and the number you type is the number the card shows",
     "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so typing 3 into the straight sword's row made it fight at 5 while its card still said 2, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 4 and it is a 4-Attack sword that your Strength still improves, on the card it prints and on every Strike it lends; a staff at 1 carried by a caster with +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports — and where it cannot be kept exactly (a fraction, or armour Poise, which is also what a set weighs) the game says so. These rows only apply while ratings are switched on. A climb already in progress keeps the rules it was born under.",
-    "build": "0.7.1.378",
+    "build": "0.7.1.380",
     "pullRequest": 1242,
     "url": "https://github.com/cehinds/AshenSpire/pull/1242"
+  },
+  {
+    "id": "pr-1249",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Settings rows the game names for itself now read like the ones written by hand",
+    "detail": "Three tabs under Ratings & Resistance spoke in two voices at once. Break threshold multiplier sat two rows from Poise Action Loss and Recovery Per Turn; Magic impact sat beside Enemy Physical. The difference was not a decision anyone made — a row named by a person got a sentence, and a row the game named for itself got every word capitalised, and both kinds share these lists. Enemy attack types was the worst of it, because seventy of the enemy moves have no written-out name at all, so the internal spelling is the label: Halberd Sweep type next to Slash type, with nothing but how the move happened to be typed deciding which. Now the thing a row belongs to is still a name — Wyrm Aspirant — and the row itself is a phrase: Poise action loss, Recovery per turn, Enemy physical, Wyrm Aspirant — Halberd sweep type. Nothing else moved: an acronym stays an acronym, and no setting changed its value, its key or where it lives.",
+    "build": "0.7.1.378",
+    "pullRequest": 1249,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1249"
   },
   {
     "id": "pr-1248",

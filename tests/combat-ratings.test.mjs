@@ -772,3 +772,45 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
   // And the three that ARE acronyms are never softened into words.
   assert.ok(!rows.some(row => /\b(Ar|Dr|Pr)\b/.test(row.label)), 'AR, DR and PR stay acronyms');
 });
+
+// A NAME IS A HEADING; A PHRASE IS A SENTENCE. `words()` capitalises every
+// word, which is right for "Wandering Soldier" and wrong for "Poise Action
+// Loss" — and Breaks carried both at once, the hand-written "Break threshold
+// multiplier" two rows from the key-derived "Recovery Per Turn". Enemy attack
+// types did the same: 70 of the game's move ids are multi-word and none of
+// them carries an authored display name, so "Halberd Sweep type" sat beside
+// "Slash type" with nothing but the id's own camelCase deciding which.
+//
+// The general Advanced-label test cannot catch this either — "Recovery Per
+// Turn" opens with a capital and carries no unsplit camelCase, so it passes
+// whichever way it is cased.
+test('a key-derived label reads like the hand-written one beside it', async () => {
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const rows = combatRatingRows(contentBundle);
+  const labelOf = (key) => rows.find(row => row.key.endsWith(key))?.label;
+
+  // The four that were shouted, spelled out. Each sits in a tab whose other
+  // rows are hand-written sentences, named here so the comparison is explicit.
+  assert.equal(labelOf('breaks.poiseActionLoss'), 'Poise action loss');
+  assert.equal(labelOf('breaks.wardActionLoss'), 'Ward action loss');
+  assert.equal(labelOf('breaks.recoveryPerTurn'), 'Recovery per turn');
+  assert.equal(labelOf('breaks.thresholdGrowth'), 'Break threshold multiplier');
+  assert.equal(labelOf('impact.enemyPhysical'), 'Enemy physical');
+  assert.equal(labelOf('impact.magic'), 'Magic impact');
+  assert.equal(labelOf('enemyAttackType.wyrmAspirant:halberdSweep'), 'Wyrm Aspirant — Halberd sweep type');
+  assert.equal(labelOf('enemyAttackType.wanderingSoldier:slash'), 'Wandering Soldier — Slash type');
+
+  // The rule, not the eight examples: in each of these tabs no leaf shouts a
+  // second word. A SUBJECT still may — "Wyrm Aspirant" is a name — so this
+  // reads only what follows the em dash.
+  for (const topic of ['Breaks', 'Impact', 'Enemy attack types']) {
+    for (const row of rows.filter(r => r.statTopic === topic)) {
+      const cut = row.label.lastIndexOf(' — ');
+      const leaf = cut < 0 ? row.label : row.label.slice(cut + 3);
+      for (const word of leaf.split(' ').slice(1)) {
+        assert.ok(/^[a-z0-9]/.test(word) || /^(AR|DR|PR|HP|Poise|Ward)$/.test(word),
+          `${topic}: "${row.label}" reads as a phrase, not a heading — "${word}" is capitalised`);
+      }
+    }
+  }
+});

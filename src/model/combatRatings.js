@@ -36,6 +36,19 @@ const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.to
  */
 const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
 
+/**
+ * phrase(id) → a key-derived label that reads like the ones beside it.
+ *
+ * `words()` splits camelCase and capitalises every word, which is right for a
+ * NAME and wrong for a phrase. In this file it produced "Poise Action Loss"
+ * and "Recovery Per Turn" directly beside the hand-written "Break threshold
+ * multiplier" in the same tab, and "Halberd Sweep type" beside "Slash type" —
+ * the same one-fact-two-voices split the Advanced menu had everywhere else.
+ * Only the first word is capitalised here; nothing else is touched, so an
+ * acronym or a proper noun already written in the id survives.
+ */
+const phrase = (id) => words(id).replace(/(?!^)\b([A-Z])(?=[a-z])/g, (letter) => letter.toLowerCase());
+
 export function ratingSourceKey(piece) {
   return piece.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : `armament:${piece.id}`;
 }
@@ -248,7 +261,7 @@ export function combatRatingRows(bundle) {
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {
-    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || words(field), words(group), {
+    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || phrase(field), words(group), {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
       max: field === 'maximum' ? 0.95 : 999,
       note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
@@ -283,7 +296,7 @@ export function combatRatingRows(bundle) {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });
     for (const [id, move] of Object.entries(enemy.moves)) add(`enemyAttackType.${enemy.id}:${id}`, 'auto',
-      `${enemy.name} — ${words(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
+      `${enemy.name} — ${phrase(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
         note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
       });
   }
