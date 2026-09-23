@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-23
+
+- **HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings** ([#1253](https://github.com/cehinds/AshenSpire/pull/1253), `0.7.1.380`). Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then **Stats & resources**, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. A climb already in progress keeps the numbers it started with.
+
 ## 2026-09-21
 
 - **Settings rows the game names for itself now read like the ones written by hand** ([#1249](https://github.com/cehinds/AshenSpire/pull/1249), `0.7.1.378`). Three tabs under Ratings & Resistance spoke in two voices at once. *Break threshold multiplier* sat two rows from *Poise Action Loss* and *Recovery Per Turn*; *Magic impact* sat beside *Enemy Physical*. The difference was not a decision anyone made — a row named by a person got a sentence, and a row the game named for itself got every word capitalised, and both kinds share these lists. Enemy attack types was the worst of it, because seventy of the enemy moves have no written-out name at all, so the internal spelling *is* the label: *Halberd Sweep type* next to *Slash type*, with nothing but how the move happened to be typed deciding which. Now the thing a row belongs to is still a name — *Wyrm Aspirant* — and the row itself is a phrase: *Poise action loss*, *Recovery per turn*, *Enemy physical*, *Wyrm Aspirant — Halberd sweep type*. Nothing else moved: an acronym stays an acronym, and no setting changed its value, its key or where it lives.
