@@ -158,7 +158,7 @@ export const heraldCards = [
   },
   {
     id: 'cullTheWeak', name: 'Cull the Weak', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
-    flavor: "Rite of gathering the failing.\n\nPerformed in the sick-wards of the crown-born, that the dying need not linger. The Wandering Physician, who served in those wards, kept his own list of those gathered.\n\nMany he had expected to recover.",
+    flavor: "Rite of gathering the failing.\n\nPerformed in the sick-wards of the crown-born, that the dying need not linger. The Wandering Physician, who served in those wards, kept his own list of those gathered. The ward rolls name none of them.\n\nMany he had expected to recover.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },

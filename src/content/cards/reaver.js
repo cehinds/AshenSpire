@@ -433,7 +433,7 @@ export const reaverCards = [
   },
   {
     id: 'unbreakable', name: 'Unbreakable', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
-    flavor: "Order to hold the Fell Courtyard gate.\n\nDated, signed and never countermanded. The gate log continues past the Burning in a second hand, one entry each night, at the same hour.\n\nNo relief is recorded.",
+    flavor: "Order to hold the Fell Courtyard gate.\n\nDated, signed and never countermanded. The gate log continues past the Burning in a second hand, one entry each night, at the same hour. The gate still stands; the wall on either side does not.\n\nNo relief is recorded.",
     keywords: [], icon: '⬟',
     effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakable', stacks: one }],
     textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 30.)',

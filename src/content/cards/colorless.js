@@ -20,7 +20,7 @@ export const colorlessCards = [
   },
   {
     id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
-    flavor: "Hew of a Court knight's greatsword.\n\nToo heavy to carry far. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight.",
+    flavor: "Hew of a Court knight's greatsword.\n\nToo heavy to carry far, and too dear to leave. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight.",
     keywords: [], icon: '⚒',
     effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
@@ -137,7 +137,7 @@ export const colorlessCards = [
   },
   {
     id: 'quickGuard', name: 'Quick Guard', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "Arm raised upon the viaduct.\n\nThe viaducts are older than the kingdom, and have no rails. Climbers say they were built to carry heat, not people.\n\nThe stone has never learned to expect feet.",
+    flavor: "Arm raised upon the viaduct.\n\nThe viaducts are older than the kingdom, and have no rails. Climbers say they were built to carry heat, not people. Those who cross learn to keep one arm raised against the wind.\n\nThe stone has never learned to expect feet.",
     keywords: ['exhaust'], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },

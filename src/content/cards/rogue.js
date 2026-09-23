@@ -317,7 +317,7 @@ export const rogueCards = [
   // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
   {
     id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
-    flavor: "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit.\n\nThe fires on the Citadel side burn more than wood.",
+    flavor: "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit. A borrowed fire is a debt, and the docks collect.\n\nThe fires on the Citadel side burn more than wood.",
     keywords: ['exhaust'], icon: '◈',
     effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],
     textTemplate: 'Become Prepared. Exhaust.',

@@ -6,10 +6,13 @@ import { LORE_FACES, LORE_SIZES, LORE_TYPE_DEFAULTS, loreParts, resolveLoreType,
 
 // Card lore is written in three parts (LORE.md §7): an identity line, the
 // history, and a closing line. Card inspection shows only the identity line,
-// so it has to be short enough to sit on one line there.
+// so it has to be short enough to sit on one line there. Afflictions (status
+// and curse cards) and basic profiles may run under the forty-word floor.
+const AFFLICTION_TYPES = new Set(['status', 'curse']);
 const lore = [
-  ...contentBundle.cards.filter((card) => card.flavor).map((card) => [card.id, card.flavor]),
-  ...basicCardProfiles.map((profile) => [profile.id, profile.flavor]),
+  ...contentBundle.cards.filter((card) => card.flavor)
+    .map((card) => [card.id, card.flavor, !AFFLICTION_TYPES.has(card.type)]),
+  ...basicCardProfiles.map((profile) => [profile.id, profile.flavor, false]),
 ];
 
 test('every card and basic profile carries lore', () => {
@@ -18,12 +21,14 @@ test('every card and basic profile carries lore', () => {
   assert.ok(basicCardProfiles.every((profile) => profile.flavor), 'a basic profile has no lore');
 });
 
-test('each identity line is twelve words or fewer and the whole stays within eighty', () => {
-  for (const [id, text] of lore) {
+test('each identity line is twelve words or fewer and the whole runs forty to eighty', () => {
+  for (const [id, text, floored] of lore) {
     const { identity } = loreParts(text);
     assert.ok(identity, `${id}: no identity line`);
     assert.ok(identity.split(/\s+/).length <= 12, `${id}: identity line "${identity}" is over twelve words`);
-    assert.ok(text.split(/\s+/).length <= 80, `${id}: lore is over eighty words`);
+    const words = text.split(/\s+/).length;
+    assert.ok(words <= 80, `${id}: lore is over eighty words`);
+    if (floored) assert.ok(words >= 40, `${id}: lore is under forty words (${words})`);
   }
 });
 
