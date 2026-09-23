@@ -43,7 +43,11 @@ for (const replaceEnemies of [false, true]) {
     assert.deepEqual(withoutLabels(loaded.mapGraph), withoutLabels(run.mapGraph));
     assert.deepEqual(loaded.streamCounters, run.streamCounters);
     assert.equal(loaded.mapNodeId, id);
-    assert.equal(JSON.stringify(run), before);
+    // saveRun stamps `savedAt` on the run when the write lands (W1l–W1r,
+    // engine/save.js); that stamp is the only change the save may make, and
+    // loading/refreshing labels must not touch the caller's run at all.
+    assert.equal(typeof run.savedAt, 'string');
+    assert.equal(JSON.stringify({ ...run, savedAt: undefined }), before);
 
     const host = createSession({ registries: original, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
     host.addMember({ id: 'p1', name: 'Label tester', classId: 'reaver' }); host.start();

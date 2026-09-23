@@ -141,8 +141,21 @@ node tools/config-build.mjs --check    # drift gate: the generated UI config is 
 
 # tests (22 assertions, SPEC §8)
 node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
+node tests/run-node.mjs --no-selftests    # the fast half: engine suite, every *.test.mjs, tool verdicts
+node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftest known-bad corpus
 # or open tests/index.html in a browser — same suite, green/red list
+```
 
+Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
+(skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
+than `.github`) and hands them to one `node --test`. A new test file needs no
+registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
+map with the reason. `.github/workflows/tests.yml` runs the two halves as two
+Linux jobs on every pull request into `dev` and every push to `dev`; the
+bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes)
+run as their own step in the self-test job.
+
+```
 # what raises the red failure banner, and what must not
 node --test tests/debug-banner.test.mjs
 ```
