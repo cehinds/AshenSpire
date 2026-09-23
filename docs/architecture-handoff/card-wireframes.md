@@ -1,8 +1,10 @@
-# Card wireframes — WC0, child cards, and child-of-child cards
+# Card wireframes — proposed WC0 family
 
-**WC0 shared geometry:** header 10%, art 40%, body 40%, footer 10% of card height (not viewport height). Art includes meaningful tag badges; body includes rules and blocker. All drawings show selected state: outline follows the lifted card; (i) is centered above it and fades in after 1000ms of continuous selection. Info opens W1w. Card footer contains supplementary metadata; commands belong to the owning host. All cards share aspect ratio 5:8 (proposed token), with clamped width and derived height; viewport equivalents use labeled reference viewports. See CARD-SELECTION-CONTRACT.md.
+**Current playing cards:** [live glance, focus, and inspect wireframes](current-card-wireframes.md). The drawings below are a proposed refactor, not the current renderer.
 
-Every card inherits WC0 bones/effects and adds components through validated tag rules. This is a design/specification artifact, not implemented game code. Proposed tag IDs below are illustrative vocabulary to map against the existing tag registry in the specification task; they are not claimed to exist. Read CARD-CONSTRUCTION-CONTRACT.md before implementation.
+**WC0 proposed shared geometry:** header 10%, art 40%, body 40%, footer 10% of card height. These four bands describe the proposed full face. The current WC1 card uses a 5:7 face, with absent regions reclaiming their space; see the live wireframes for current fields and sizes.
+
+Every card in this proposal inherits WC0 bones/effects and adds components through validated tag rules. Proposed tags are illustrative; see CARD-CONSTRUCTION-CONTRACT.md before implementation.
 
 Names use `WCid.region.component`; named detail rows include their semantic sub-name in the size table. Width/height values are nominal **vh/vw of the visible game viewport**, not percentages of the card. Reference viewports: wide 1600×1000, compact 1000×800, portrait 400×800; actual runtime height is width / aspectRatio, never independently clamped. Children subdivide their card envelope; do not add their heights to the envelope. Actual cards are hosted in hands/grids/pickers: use container allocation, readable minimums, and explicit overflow/paging rather than shrinking content. See COMPONENT-SIZING.md.
 
