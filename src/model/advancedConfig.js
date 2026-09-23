@@ -9,6 +9,7 @@ import {
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
+import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -55,6 +56,12 @@ function numberDomain(value) {
 // that validation caps at 100, a cap that must be positive. The row says so,
 // so a value the editor accepts is a value a run can start on.
 const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
+// A card-value bonus is SIGNED (SPEC §3.4: "The signed card-specific bonus is
+// added after flooring"), and validation accepts any finite number. Read off
+// the shipped value alone, a bonus that ships at 0 or above would floor at 0,
+// and a card could never be made weaker than its cost says.
+const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
+const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
@@ -137,12 +144,26 @@ function withoutSupersededLegacy(entries) {
     .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
 
+// ONE TAB PER SUBJECT (owner, 2026-09-23: "settings duplicated in multiple
+// sections making it hard to tell which does what"). The catch-all "Rules" tab
+// held skills, talents, relics, XP, rest and co-op side by side, each of which
+// has a real home elsewhere; it is gone, and anything not named here falls to
+// Combat, the tab for rules of play.
+//   - the legacy poise meter sits in Stats & Defence beside the ratings rows
+//     that replace it while ratings are on;
+//   - the fallback hand size sits in Hand & Draw beside the capacity in force;
+//   - character XP, skills and talents are Progression;
+//   - equipment and relic values are one Equipment tab;
+//   - how a run is built — rest, the atlas, seats, run modifiers, gauntlet,
+//     co-op, endless — is World.
 function balanceGroup(path) {
-  if (/^(level|starting|energy$|draw$|handMax$)/.test(path)) return 'Progression';
-  if (/^(rewards|shop|smith|equipment|customMods|graceRefill|flask)/.test(path)) return 'Rewards';
-  if (/^(map|floors|act|seat|event|treasure|journey|node)/.test(path)) return 'World';
-  if (/^(combat|poise|enemy|boss|status|exposure|arcane|damage|block|guard|proc)/.test(path)) return 'Combat';
-  return 'Rules';
+  if (/^(poise|stagger)\./.test(path)) return 'Ratings & Resistance';
+  if (path === 'handMax') return 'Hand & Draw';
+  if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
+  if (/^(equipment|powers)\./.test(path)) return 'Equipment';
+  if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
+  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
+  return 'Combat';
 }
 
 // ---- THE ROWS THAT SHOWED A SECOND, DEAD ANSWER (owner, 2026-09-21) -------
@@ -169,6 +190,24 @@ function balanceGroup(path) {
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',
+  // THE SAME TEST, APPLIED TO THE REST OF THE MENU (owner, 2026-09-23: "multiple
+  // settings changing the same setting"). Each of these moved nothing:
+  //   - the level-up and tier-size bounds are read once, from the AUTHORED
+  //     content, as the min/max of Progression's "Level-up value" and "Stat
+  //     points per tier" rows (settings.js `LEVEL_DEFAULTS`); an override here
+  //     never reached those rows, so the menu showed three dials for one number
+  //     and two of them were decoration;
+  //   - enemy level scaling is inert #238 content — `levelScalingReceipt` has
+  //     no caller in src (balance.js says so above the table);
+  //   - the per-turn swap allowance is consulted only when `swapCostKind` is
+  //     'allowance', which is authored text and has no row.
+  'levelUp.pointsPerLevelMin',
+  'levelUp.pointsPerLevelMax',
+  'levelUp.tierSizeMin',
+  'levelUp.tierSizeMax',
+  ...['hp', 'damage', 'block', 'poise'].flatMap((stat) => ['perLevel', 'min', 'max']
+    .map((leaf) => `levels.enemyScaling.${stat}.${leaf}`)),
+  'equipment.swapAllowancePerTurn',
 ]);
 
 // A note a player can act on, for the rows whose own name is not enough. The
@@ -181,6 +220,26 @@ const BALANCE_NOTES = Object.freeze({
   // Saying so is the difference between a fallback and a second answer.
   handMax: 'Fallback hand capacity, used only when hand rules are unavailable.'
     + ' The capacity a fight actually uses is Hand & Draw → Hand capacity → Base hand capacity.',
+  // THE LEGACY POISE METER. `dealPoiseDamage` hands every hit to the ratings
+  // path while combat ratings are on (engine/actions.js), so these rows are
+  // live only with Stats & Defence → General → "Enable ratings, Poise & Ward"
+  // off. They sit beside the rows that replace them, and say which.
+  'stagger.player.actionLoss': 'Only while combat ratings are off. With ratings on, Breaks → Poise action loss sets this.',
+  'stagger.player.statuses.vulnerable': 'Only while combat ratings are off. With ratings on, a break costs actions and applies no status.',
+  'stagger.player.statuses.weak': 'Only while combat ratings are off. With ratings on, a break costs actions and applies no status.',
+  'poise.growthMult': 'Only while combat ratings are off. With ratings on, Breaks → Break threshold multiplier sets this.',
+  'poise.playerImpactPerHit': 'Only while combat ratings are off. With ratings on, the Impact rows set how much each hit fills the meter.',
+  'poise.onFill.0.stacks': 'Only while combat ratings are off. With ratings on, a break skips the enemy’s next turn instead.',
+  // THE SWAP-COST NUMBERS the "Weapon swap cost" picker chooses between. The
+  // picker is the control; these say which rule each number belongs to, so
+  // turning a `gear` flag is not mistaken for picking a rule.
+  'equipment.swapCost': 'Base swap cost under the Flat and Talisman & relic rules, and for a weapon no category matches. The rule itself is “Weapon swap cost” above.',
+  'equipment.swapCostRules.0.gear': 'Flat rule: also apply talisman and relic modifiers. On makes Flat the same as Talisman & relic — pick the rule with “Weapon swap cost” instead.',
+  'equipment.swapCostRules.1.gear': 'Talisman & relic rule: apply talisman and relic modifiers. Off makes it the same as Flat.',
+  'equipment.swapCostRules.2.gear': 'Weapon category rule: also apply talisman and relic modifiers.',
+  'equipment.swapCostByCategory.0.cost': 'Swap cost for a heavy weapon, under the Weapon category rule only.',
+  'equipment.swapCostByCategory.1.cost': 'Swap cost for a flourish weapon, under the Weapon category rule only.',
+  flaskCapacity: 'Each class’s HP flasks plus Mana flasks (Progression → the class) must add up to this; if they do not, the whole Advanced configuration is set aside and authored defaults are used. Applies to a new run.',
 });
 
 // ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
@@ -271,7 +330,7 @@ function balanceLabel(path) {
 function leafRows(value, path = [], rows = []) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -283,7 +342,9 @@ function leafRows(value, path = [], rows = []) {
       note: (Object.hasOwn(BALANCE_NOTES, joined) && BALANCE_NOTES[joined]) || 'Applies to a new run.',
       configPath: ['balance', ...path],
       searchPath: joined,
-      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
+      // `inert` as well as `retired`: nothing reads it, so a stored value is
+      // never applied — see `configuredContentBundle`.
+      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true, inert: true } : {}),
     });
     return rows;
   }
@@ -359,6 +420,11 @@ function explicitRows(bundle) {
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
       label: `${classLabel} — Base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
+      // RETIRED (owner, 2026-09-23). `createRunState` writes this into maxHp and
+      // `initializeRunDerivedStats` overwrites it a few lines later with the
+      // derived HP rule (Stat conversions → HP), so the row moved nothing. The
+      // key stays so an exported configuration carrying it still imports.
+      retired: true, inert: true,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,
     });
     for (const kind of ['hp', 'mana']) {
@@ -485,10 +551,12 @@ function progressionRows(bundle) {
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
-      cat: 'Advanced', advancedGroup: 'Progression', type: 'number', integer: false, step: 0.05,
+      // Cinders only — it never touched XP, whatever its old label said — so it
+      // is filed with the Cinders it multiplies (Rewards → Combat rewards).
+      cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.05,
       min: 0, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`,
-      label: 'Cinder / experience gain multiplier',
+      label: 'Cinder gain multiplier',
       note: 'Multiply Cinders earned from combat rewards. 1 keeps authored rewards. Applies to a new run.',
       specialKey: 'rewardMultiplier', searchPath: 'progression experience exp cinder reward gain multiplier',
     },
@@ -500,7 +568,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 ]);
 
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
   return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
@@ -524,6 +592,7 @@ export function advancedConfigSnapshot(settings = {}) {
 }
 
 function cloneConfigurableBundle(bundle) {
+  bundle = materializeCardValueBonuses(bundle);
   return {
     ...bundle,
     balance: structuredClone(bundle.balance),
@@ -555,7 +624,12 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
-    if (!row?.configPath) continue;
+    // AN INERT ROW IS NEVER APPLIED (review, #1256). It moved nothing, but a
+    // stored value still landed in the bundle, where the structural walk could
+    // refuse the WHOLE configuration over it (tierSizeMin 15 over tierSizeMax
+    // 3) — naming a row no longer on screen. Retired preset cells are not
+    // inert: a non-default mode's cells are still validated and applied.
+    if (!row?.configPath || row.inert) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'

@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1256",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Advanced settings: every setting has one home, and rows that did nothing are gone",
+    "detail": "Advanced had sixteen tabs, and several settings showed up in two places or quietly overrode each other. It now has thirteen. Rules, Gameplay and Tuning are gone, and each of their settings moved to the subject it changes. Skills, talents and experience are under Character & progression. Relic values join equipment in a new Equipment & relics tab. Rest, co-op, gauntlet and endless are in Run & world. Formation and movement have their own Battlefield tab. Card sizes and the settings window sit with the wireframe choices in Layout. Where two settings still touch the same number, they now sit together and each says which one wins. The older poise settings are next to the Stats & Defence rows that replace them while ratings are on. The fallback hand size is under Hand & Draw. Stat points per tier leads the per-stat tiers it overrides. The weapon swap-cost rule sits with its costs. Settings that changed nothing are off the screen: class Base HP (a new run's HP comes from the HP stat conversion), the level-up and tier-size limits, enemy level scaling, the per-turn swap allowance, and Seed in map header. Cinder / experience gain multiplier is now Cinder gain multiplier, because it never changed experience. No working setting changed its value or key, and a configuration file you exported before today still imports.",
+    "build": "0.7.1.392",
+    "pullRequest": 1256,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1256"
+  },
+  {
+    "id": "pr-1247",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing damage, Block and poise-damage numbers exactly, base and upgraded; moving a shared multiplier recalculates the whole matching card set deterministically. What an untouched game does change is impact: a card hit now lands its Poise or Ward value instead of a flat 1, so a cheap card or one that applies statuses can land none, while a weapon's hit keeps its weight and a card that deals its own poise damage keeps the old default beside it. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.390",
+    "pullRequest": 1247,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
+  },
+  {
     "id": "pr-1251",
     "date": "2026-09-23",
     "group": "2026-09-23",
