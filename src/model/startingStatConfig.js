@@ -499,13 +499,13 @@ export function derivedStatFloorProblems(bundle) {
 // and the note is where the row says which one is in force, so nobody sets
 // both and wonders why one did nothing:
 //   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
-//     solo fight — draws by Hand & Draw → Turn draws instead.
+//     solo fight — draws by the hand rules' turn draws instead.
 //   - Poise is the threshold only while combat ratings are off; with them on,
 //     the Poise rating formula sets it.
 // (The "Stat points per tier" sentence #1256 carried here is gone with the
 // dial itself — ruleset 6 has no tier, #1253.)
 function derivedRowNote(id) {
-  if (id === 'draw') return ' Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.';
+  if (id === 'draw') return ' Only for fights without hand rules (co-op and older saves); solo fights use the turn draws above.';
   if (id === 'poise') return ' Only while combat ratings are off; otherwise the Poise rating formula sets the threshold.';
   return '';
 }
@@ -580,16 +580,17 @@ export function startingStatRows(bundle) {
   // they are way too separated."
   //
   // So every resource and stat — HP, Mana, Stamina, Actions, draw, Poise, and
-  // the AR/DR/PR/Poise/Ward ratings — is one block of rows under ONE topic,
-  // with the same three kinds of dial, in the order a rating row has them:
+  // the AR/DR/PR/Poise/Ward ratings — is written with the same three kinds of
+  // dial, in the order a rating row has them:
   //
   //   base               what it opens at
   //   <each attribute>   that attribute's decimal contribution per point
   //   growth per level   his decimal
   //
-  // The rating rows come from combatRatings.js and are filed into this same
-  // topic there, so the two tables are read side by side rather than a tab
-  // apart.
+  // and each trait is ONE topic of Advanced → Stats ("stat conversion should
+  // be its own section under stats, and have sub sections for actions, draw,
+  // hp, stamina mana, etc", owner 2026-09-21), beside its rating formula from
+  // combatRatings.js and everything else that decides it.
   const derivedDefaults = bundle.derivedStatRules.defaults || {};
   const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
   for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
@@ -600,13 +601,15 @@ export function startingStatRows(bundle) {
     const face = presentation.faceLabel || presentation.label;
     const label = RATING_NAMES.includes(id) ? `${face} pool` : face;
     const rule = { ...derivedDefaults, ...authored };
+    // Labels name the trait and what one unit of the row buys, so a search
+    // that finds every "per level" row still tells them apart.
     const fields = [
-      ['base', 'Base', 0, 1,
+      ['base', `${label} — Base`, 0, 1,
         'What this is worth before a single attribute point is spent, and before equipment, relics and level.'],
-      ...attributeRows.map((attribute) => [attribute.id, attribute.label, 0, 0.05,
-        `Gained from each point of ${attribute.label}, floored on its own exactly as a rating's is: 0.2 gives nothing until ${attribute.label} reaches 5, then one more every five. 0 ignores ${attribute.label}.`]),
-      ['perLevel', 'Per level', 0, 0.05,
-        'Gained per character level, as a decimal and floored: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
+      ...attributeRows.map((attribute) => [attribute.id, `${label} per ${attribute.label} point`, 0, 0.05,
+        `Gained from each point of ${attribute.label}, rounded down on its own exactly as a rating's is: 0.2 gives nothing until ${attribute.label} reaches 5, then one more every five. 0 ignores ${attribute.label}.`]),
+      ['perLevel', `${label} per level`, 0, 0.05,
+        'Gained per character level after the first, as a decimal and rounded down: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
     ];
     for (const [field, title, min, step, note] of fields) {
       // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
@@ -614,8 +617,12 @@ export function startingStatRows(bundle) {
       // for it would overwrite the reference with one value for every class.
       const value = field === 'base' ? rule.base : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stats & resources', {
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
         min, step,
+        // Filed under this trait's own topic of Advanced → Stats, under the
+        // subsection the row's term belongs to (models/AdvancedSettingsGroups.js).
+        advancedGroup: 'Stats', derivedStatId: id,
+        settingSection: field === 'perLevel' ? 'Level growth' : 'Formula',
         // Whole points only: every other term is floored, so a fractional base
         // would be the one way a pool stopped being a whole number.
         ...(field === 'base' ? { integer: true } : {}),

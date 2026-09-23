@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { resolveHandRules, scaledCards, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
+import { handRulesRows, resolveHandRules, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
@@ -129,4 +129,20 @@ test('saved rules reject malformed formulas, and old snapshots retain legacy beh
   dispatch(legacy, { type: 'endTurn' });
   assert.equal(legacy.piles.hand.length, 5);
   assert.equal(legacy.piles.discard.length, 3);
+});
+
+test('settings present each hand-rule subsection once, in the order a turn reads them', () => {
+  const sections = handRulesRows(contentBundle.attributes)
+    .map(row => row.settingSection)
+    .filter((section, index, all) => index === 0 || section !== all[index - 1]);
+  assert.deepEqual(sections, ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards']);
+});
+
+test('the hand receipt is the arithmetic scaledCards does', () => {
+  const rule = { base: 3, statEnabled: true, stat: 'intelligence', baseline: 4, pointsPerCard: 3, minimum: 1, maximum: 5 };
+  for (const intelligence of [0, 4, 7, 10, 40]) {
+    const receipt = scaledCardsReceipt(rule, { intelligence });
+    assert.equal(receipt.value, scaledCards(rule, { intelligence }));
+    assert.equal(receipt.bonus, Math.floor(Math.max(0, intelligence - 4) / 3));
+  }
 });
