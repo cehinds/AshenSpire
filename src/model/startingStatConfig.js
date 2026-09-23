@@ -349,6 +349,26 @@ function dialLabel(key) {
   return DIAL_LABELS[key.slice(key.lastIndexOf('.') + 1)] || key;
 }
 
+// ONE ANSWER PER NUMBER (owner, 2026-09-23: "multiple settings changing the
+// same setting"). Three of these rows share their quantity with another row,
+// and the note is where the row says which one is in force, so nobody sets
+// both and wonders why one did nothing.
+//   - Every `pointsPerTier` is replaced by Progression → Stat conversions →
+//     "Stat points per tier" whenever that dial is off its default
+//     (`derivedStatDialOptions` hands the engine a `defaults` layer, and a
+//     layer's defaults are copied onto every rule).
+//   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
+//     solo fight — draws by Hand & Draw → Turn draws instead.
+//   - Poise is the threshold only while combat ratings are off; with them on,
+//     Stats & Defence → Poise formula sets it.
+function derivedRowNote(id, field, sourceStat) {
+  const parts = [`Uses ${sourceStat}. Applies to a new run.`];
+  if (field === 'pointsPerTier') parts.push('Replaced for every stat by "Stat points per tier" whenever that dial is not at its default.');
+  if (id === 'draw') parts.push('Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.');
+  if (id === 'poise') parts.push('Only while combat ratings are off; otherwise Stats & Defence → Poise formula sets the threshold.');
+  return parts.join(' ');
+}
+
 export function startingStatRows(bundle) {
   const rows = [];
   const add = (key, def, label, topic, extra = {}) => rows.push({
@@ -425,7 +445,7 @@ export function startingStatRows(bundle) {
         // panel no longer has. A note describing a retired mechanism is worse
         // than none: it tells a player the number they typed is not the number
         // in force, which is exactly backwards now.
-        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
+        note: derivedRowNote(id, field, rule.sourceStat),
       });
     }
   }

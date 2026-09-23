@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every combat card now carries a line of flavor",
     "detail": "Inspect any card and its Flavor disclosure has something in it: 150 more fragments join the 45 already written, in the voice of the pool the card belongs to — the Warden's field-book for the Reaver, frozen-dock cant for the Rogue, the Astronomer's chart margins for the Starseer, Chapel liturgy for the Herald, and scratches left on the cairn by climbers before you for colorless cards and armament Arts. Each line is someone's claim about the old world, never an explanation of the card; skipping every one of them costs you nothing. No card's rules or numbers changed.",
-    "build": "0.7.1.392",
+    "build": "0.7.1.394",
     "pullRequest": 1258,
     "url": "https://github.com/cehinds/AshenSpire/pull/1258"
+  },
+  {
+    "id": "pr-1256",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Advanced settings: every setting has one home, and rows that did nothing are gone",
+    "detail": "Advanced had sixteen tabs, and several settings showed up in two places or quietly overrode each other. It now has thirteen. Rules, Gameplay and Tuning are gone, and each of their settings moved to the subject it changes. Skills, talents and experience are under Character & progression. Relic values join equipment in a new Equipment & relics tab. Rest, co-op, gauntlet and endless are in Run & world. Formation and movement have their own Battlefield tab. Card sizes and the settings window sit with the wireframe choices in Layout. Where two settings still touch the same number, they now sit together and each says which one wins. The older poise settings are next to the Stats & Defence rows that replace them while ratings are on. The fallback hand size is under Hand & Draw. Stat points per tier leads the per-stat tiers it overrides. The weapon swap-cost rule sits with its costs. Settings that changed nothing are off the screen: class Base HP (a new run's HP comes from the HP stat conversion), the level-up and tier-size limits, enemy level scaling, the per-turn swap allowance, and Seed in map header. Cinder / experience gain multiplier is now Cinder gain multiplier, because it never changed experience. No working setting changed its value or key, and a configuration file you exported before today still imports.",
+    "build": "0.7.1.392",
+    "pullRequest": 1256,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1256"
   },
   {
     "id": "pr-1247",
