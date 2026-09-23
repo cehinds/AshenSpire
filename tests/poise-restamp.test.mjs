@@ -129,6 +129,16 @@ test('the run\'s derived-stat rules survive a save and load of the fight', () =>
     fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
   });
   assert.deepEqual(healed.derivedStatRuleSnapshot, run.derivedStatRuleSnapshot);
+  // A fight's copy that is present but malformed is refused by name, never
+  // preferred over the run's and never read for whatever it happens to lack
+  // (Codex, #1255).
+  for (const broken of [{}, { ...saved.derivedStatRuleSnapshot, rules: {} }]) {
+    const damaged = { ...structuredClone(saved), derivedStatRuleSnapshot: broken };
+    assert.throws(() => restoreCombatSnapshot({
+      registries, rng: createRng(99), snapshot: damaged,
+      fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
+    }), /derivedStatRuleSnapshot/);
+  }
 });
 
 test('a run born before ruleset 5 keeps the Constitution term phase 8 priced it by', () => {
