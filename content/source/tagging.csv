@@ -1870,6 +1870,7 @@ location,,inn,restHpFull
 location,,inn,restManaFull
 location,,inn,restFlasks
 location,,inn,levelUp
+location,,inn,questBoard
 location,,chapel,restHpPartial
 location,,chapel,restMana
 location,,chapel,restFlasks

@@ -1425,6 +1425,15 @@ export const tags = [
     "blurb": "The place is where waiting attribute points are assigned."
   },
   {
+    "id": "questBoard",
+    "domain": "property",
+    "label": "Quest board",
+    "color": "C9A227",
+    "glyph": "✉",
+    "visibility": "",
+    "blurb": "The place keeps a quest board: the quests offered in this town, and a journal of the run's quests."
+  },
+  {
     "id": "warlord",
     "domain": "property",
     "label": "Warlord",

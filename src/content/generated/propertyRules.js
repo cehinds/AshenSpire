@@ -429,6 +429,12 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "questBoard",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
     "tag": "warlord",
     "requires": "",
     "excludes": [

@@ -54,6 +54,9 @@ export const SERVICE_TAGS = Object.freeze({
   smith: 'smith',
   levelUp: 'levelUp',
   flasks: 'restFlasks',
+  // Plan phase 10b: the place keeps a quest board — the atlas quests offered
+  // in its town and a journal of the run's quests (ui/screens/questBoard.js).
+  questBoard: 'questBoard',
 });
 
 /** The classic node types the door opens a visit at (main.js enterNode). */
@@ -145,7 +148,42 @@ export function locationServices(registries, tags) {
     smith: held.has(SERVICE_TAGS.smith),
     levelUp: held.has(SERVICE_TAGS.levelUp),
     flasks: held.has(SERVICE_TAGS.flasks),
+    questBoard: held.has(SERVICE_TAGS.questBoard),
   });
+}
+
+/**
+ * restLocationAtPoint(registries, pointId, atlas) → the location an atlas
+ * point's rest service opens: the point's own tagging row, else its rest
+ * service type's, or null when the point offers no rest or neither is tagged
+ * (the door falls back to the Shrine). Resolved from the point every time,
+ * never stored, so a tagging row removed between save and load cannot refuse
+ * the save.
+ */
+export function restLocationAtPoint(registries, pointId, atlas = ATLAS) {
+  const services = (atlas && atlas.services) || {};
+  const serviceTypes = (atlas && atlas.serviceTypes) || {};
+  const offered = (((atlas && atlas.nodeServices) || {})[pointId] || [])
+    .map((row) => services[row.serviceId])
+    .find((service) => service && serviceTypes[service.serviceTypeId]?.handlerId === 'rest');
+  if (!offered) return null;
+  return resolveLocationId(registries, { nodeId: pointId, serviceTypeId: offered.serviceTypeId });
+}
+
+/**
+ * questBoardPointAt(registries, ownerNodeId, atlas) → the id of the first
+ * point in the owner's local map whose place carries `questBoard` (plan
+ * phase 10b), or null. The atlas's own quest list opens the board where the
+ * town has one, and keeps its inline buttons where it has none.
+ */
+export function questBoardPointAt(registries, ownerNodeId, atlas = ATLAS) {
+  const local = atlas && atlas.localByOwner ? atlas.localByOwner[ownerNodeId] : null;
+  const points = (local && atlas.localPoints[local.mapId]) || [];
+  for (const point of points) {
+    const locationId = restLocationAtPoint(registries, point.nodeId, atlas);
+    if (locationId && locationTags(registries, locationId).includes(SERVICE_TAGS.questBoard)) return point.nodeId;
+  }
+  return null;
 }
 
 /**
