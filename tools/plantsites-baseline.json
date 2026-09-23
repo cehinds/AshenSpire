@@ -241,8 +241,8 @@
       "digest": "c36293eabaf8a2d6"
     },
     "tools/placement.mjs": {
-      "count": 8,
-      "digest": "b57e6a9496fd3591"
+      "count": 10,
+      "digest": "24200c44130a678b"
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
