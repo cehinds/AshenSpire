@@ -49,17 +49,26 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
   // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
   // not been written yet; reading it from two places would be the copy Law 1
-  // forbids. A run whose own snapshot predates the row falls through to the
-  // live table, which is what a headless fixture and a creation preview need;
-  // a run that HAS the row is priced by its own, below.
+  // forbids.
   // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
-  // fallback for a caller that carries no run (a headless fixture, a
-  // creation preview). A run born under an Advanced tier-size override
-  // records that override in its snapshot, and reading the authored row
-  // instead would price its meter by numbers that run never agreed to
+  // fallback for a caller that carries no snapshot at all (a headless
+  // fixture, a creation preview). A run born under an Advanced tier-size
+  // override records that override in its snapshot, and reading the authored
+  // row instead would price its meter by numbers that run never agreed to
   // (Codex, #1217).
-  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
-    || registries.derivedStatRules?.rules?.poise;
+  // A SNAPSHOT WITHOUT THE ROW IS AN ANSWER, NOT A GAP. Poise joined the
+  // derived table in ruleset 5; a run born under 1–4 never had the row, so
+  // its attribute term is ZERO and stays zero however the live row is later
+  // retuned. Falling through to the live table here would price a legacy save
+  // by a rule it was never born under — the very thing §13.4l and the line
+  // above forbid — and it read as harmless only because today's authored row
+  // happens to equal the coefficient phase 8 retired. statProjection keeps
+  // Poise off those same runs' character sheets for the same reason
+  // (review, #1217).
+  const ownSnapshot = run.derivedStatRuleSnapshot?.rules?.rules;
+  const poiseRule = ownSnapshot
+    ? ownSnapshot.poise || null
+    : (registries.derivedStatRules?.rules?.poise || null);
   const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
     : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
   const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;

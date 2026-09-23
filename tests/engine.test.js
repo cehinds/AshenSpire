@@ -122,6 +122,7 @@ import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.j
 import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
 import { levelProblems } from '../src/model/state.js';
 import { playerLevel } from '../src/model/levels.js';
+import { advancedConfigProblems } from '../src/model/advancedConfig.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
@@ -9756,8 +9757,40 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       presets: { ...contentBundle.attributeRules.presets, lean: { ...contentBundle.attributeRules.presets.lean,
         starseer: { ...contentBundle.attributeRules.presets.lean.starseer, intelligence: 2, strength: 2 } } } } };
     const kitSaid = validateContent(kitBreak).errors.map((e) => `${e.path}: ${e.msg}`);
-    assert(kitSaid.some((e) => /cannot hold the kit it starts in/.test(e)),
+    assert(kitSaid.some((e) => /baseline kit item 'ashStaff'.*cannot hold the gear it starts in/.test(e)),
       `and a preset that cannot is refused at the content door, by name: ${kitSaid.slice(0, 2).join(' | ')}`);
+    // THE SAME QUESTION AT THE SETTINGS DOOR (review, #1217): a preset edit in
+    // Advanced that every cell-range and total check admits, but the boot then
+    // refuses — throwing away the WHOLE game configuration behind a generic
+    // notice — is refused where it is made instead.
+    const settingMode = contentBundle.attributeRules.defaultMode;
+    const settingCells = { strength: 1, dexterity: 2, constitution: 2, wisdom: 2, intelligence: 1 };
+    const settingEdit = Object.fromEntries(Object.entries(settingCells)
+      .map(([id, value]) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value]));
+    eq(Object.values(settingCells).reduce((a, b) => a + b, 0), 8,
+      'the edit totals the mode pool, so only the gear rule can refuse it');
+    const settingSaid = advancedConfigProblems(contentBundle, settingEdit);
+    assert(settingSaid.some((line) => /straightSword/.test(line) && /Strength 1/.test(line)),
+      `and Advanced settings refuses the same edit, by name: ${settingSaid.join(' | ') || '(nothing)'}`);
+    eq(advancedConfigProblems(contentBundle, {}).length, 0, 'while the authored presets pass it');
+    // AND THE ARMOUR HALF, which the per-cell kit floor does not reach: it
+    // reads the baseline kit's two hands only. No outfit creation offers
+    // carries a minimum today, so the case is built rather than found — a
+    // door that covers half of what it claims goes quiet on the other half.
+    const armourBundle = {
+      ...contentBundle,
+      characterCreation: {
+        ...contentBundle.characterCreation,
+        classes: {
+          ...contentBundle.characterCreation.classes,
+          reaver: { ...contentBundle.characterCreation.classes.reaver, armourIds: ['wayfarerPlate'] },
+        },
+      },
+    };
+    const armourSaid = advancedConfigProblems(armourBundle, settingEdit);
+    assert(armourSaid.some((line) => /wayfarerPlate/.test(line) && /starting armour/.test(line)),
+      `the starting armour is asked for too: ${armourSaid.join(' | ') || '(nothing)'}`);
+    eq(advancedConfigProblems(armourBundle, {}).length, 0, 'while the authored presets still pass it');
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.

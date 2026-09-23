@@ -95,3 +95,69 @@ test('paced player Poise follows each shipped impact, including fill overflow an
   assert.deepEqual(second.poiseMeter, { value: 1, max: 4 }, 'fill carries overflow and grown max');
   assert.deepEqual(first.poiseMeter, { value: 2, max: 3 }, 'earlier receipt remains immutable');
 });
+
+test('the run\'s derived-stat rules survive a save and load of the fight', () => {
+  // A run born under an Advanced tier-size override carries that override in
+  // its own snapshot. createCombat hands the rule to the fight; the SNAPSHOT
+  // has to carry it too, or a quit-and-load silently re-prices the vessel from
+  // the live authored table — a CON 9 Reaver read 9 on the sheet and was
+  // stamped 17 on reload (review, #1217).
+  const run = createRunState({ seed: 4242, classId: 'reaver', registries });
+  run.derivedStatRuleSnapshot = structuredClone(run.derivedStatRuleSnapshot);
+  run.derivedStatRuleSnapshot.rules.rules.poise.pointsPerTier = 5;
+  const owed = playerPoiseThresholdReceipt(registries, run).value;
+  const combat = createCombat({ registries, rng: createRng(99), player: {
+    classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
+    maxMana: run.maxMana, mana: run.mana, energyMax: run.energyMax,
+    drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout,
+    derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
+  }, enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.player.poiseMeter.max, owed);
+  const saved = serializeCombatSnapshot(combat);
+  assert.ok(saved.derivedStatRuleSnapshot, 'the snapshot carries the run\'s rules');
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(99), snapshot: saved });
+  assert.deepEqual(restored.derivedStatRuleSnapshot, run.derivedStatRuleSnapshot);
+  restored.player.energy = 99;
+  dispatch(restored, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+  assert.equal(restored.player.poiseMeter.max, owed, 'and the restored fight restamps from them');
+  // A fight saved BEFORE the field existed reads the run's own snapshot, the
+  // way fallbackAttackSlotCount does — never the live table.
+  const legacy = structuredClone(saved);
+  delete legacy.derivedStatRuleSnapshot;
+  const healed = restoreCombatSnapshot({
+    registries, rng: createRng(99), snapshot: legacy,
+    fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
+  });
+  assert.deepEqual(healed.derivedStatRuleSnapshot, run.derivedStatRuleSnapshot);
+});
+
+test('a run born before ruleset 5 has no Poise attribute term at all', () => {
+  // Poise joined the derived table in ruleset 5. A run born under 1-4 never
+  // had the row, so its attribute term is ZERO and stays zero however the
+  // live row is later retuned — falling through to the authored table would
+  // price a legacy save by a rule it was never born under (review, #1217).
+  const run = createRunState({ seed: 7, classId: 'reaver', registries });
+  const withRow = playerPoiseThresholdReceipt(registries, run);
+  const legacy = structuredClone(run);
+  legacy.derivedStatRuleSnapshot = structuredClone(run.derivedStatRuleSnapshot);
+  legacy.derivedStatRuleSnapshot.rulesetVersion = 4;
+  delete legacy.derivedStatRuleSnapshot.rules.rules.poise;
+  const without = playerPoiseThresholdReceipt(registries, legacy);
+  assert.equal(without.attribute, 0);
+  assert.equal(without.value, withRow.value - withRow.attribute);
+  assert.ok(withRow.attribute > 0, 'while a ruleset-5 run keeps its Constitution term');
+  // A caller with NO snapshot at all — a headless fixture, a creation preview
+  // — still reads the live table, which is what it is for, and the run's own
+  // rules cannot move it. Since the lean mode converts a Constitution point at
+  // a fifth, the two no longer agree by coincidence the way they did while
+  // every mode converted one-for-one: that difference IS the fix.
+  const headless = { loadout: run.loadout, class: run.class, relics: [], attributes: run.attributes };
+  const live = playerPoiseThresholdReceipt(registries, headless).attribute;
+  assert.ok(live > 0, 'the live table still prices a headless caller');
+  const moved = structuredClone(run);
+  moved.derivedStatRuleSnapshot.rules.rules.poise.pointsPerTier = 0.01;
+  assert.notEqual(playerPoiseThresholdReceipt(registries, moved).attribute, live,
+    'the run reads its own rules');
+  assert.equal(playerPoiseThresholdReceipt(registries, headless).attribute, live,
+    'while the headless caller is untouched by them');
+});

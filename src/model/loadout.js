@@ -237,13 +237,21 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}, 
   const authored = (piece.requirements && piece.requirements.attributes) || {};
   const requirements = [];
   const failures = [];
-  const namespaced = itemUpgradeLevels?.[`armament/${piece.id}`];
+  // EACH HALF OF THE WARDROBE UNDER ITS OWN REF. Upgrade levels are keyed
+  // `armament/<id>` for weapons and `armor/<classId>/<id>` for outfits
+  // (itemUpgradeChanges.csv, loadout's own equippedPieces), and this read
+  // used the weapon form for both — so an armour minimum could never be
+  // lowered by a smithing tier, however the tier was authored. Invisible
+  // while only weapons carried minima; visible the moment canEquip started
+  // resolving armour candidates too (review, #1217).
+  const itemRef = piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
+  const namespaced = itemUpgradeLevels?.[itemRef];
   const level = Number.isInteger(namespaced) ? namespaced
-    : Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
+    : piece.kind !== 'armor' && Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
   for (const [attributeId, required] of Object.entries(authored)) {
     if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
     if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
-    const delta = cumulativeRequirementDelta(registries, `armament/${piece.id}`, attributeId, level);
+    const delta = cumulativeRequirementDelta(registries, itemRef, attributeId, level);
     const effectiveRequired = Math.max(0, required + delta);
     const actual = attributes && attributes[attributeId];
     const row = { attributeId, baseRequired: required, reduction: -delta, required: effectiveRequired, actual: Number.isFinite(actual) ? actual : null };
@@ -3198,8 +3206,13 @@ export function canEquip(registries, slotId, ctx) {
     // armaments, and a gate that searched only the weapons would have left
     // every armour minimum unenforced while reading as though it enforced
     // them — worse than no gate, because the table says otherwise.
+    // ARMOUR IDS REPEAT PER CLASS (outfits.csv carries four `wayfarerPlate`
+    // rows), so the armour half is resolved against the run's own class when
+    // the caller names one; without a class the first row still answers, as
+    // equipPiece's own read does.
     const eq = registries.equipment || {};
     const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
+      || (eq.armour || []).find((row) => row.id === ctx.itemId && (!ctx.classId || row.classId === ctx.classId))
       || (eq.armour || []).find((row) => row.id === ctx.itemId);
     if (piece) {
       // THE SAME INPUTS THE MUTATION'S OWN CHECK USES. equipPiece has read

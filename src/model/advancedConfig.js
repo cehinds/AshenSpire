@@ -1,4 +1,5 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
+import { presetGearProblems } from './attributes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
@@ -611,10 +612,12 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
   const cellKey = (classId, attributeId) => `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classId}.${attributeId}`;
+  const edited = {};
   for (const classDef of bundle.classes) {
     const values = bundle.attributes.map((attribute) => {
       return Number(settings[cellKey(classDef.id, attribute.id)] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
     });
+    edited[classDef.id] = Object.fromEntries(bundle.attributes.map((attribute, index) => [attribute.id, values[index]]));
     const outside = bundle.attributes.filter((attribute, index) => !Number.isInteger(values[index])
       || values[index] < floor || values[index] > mode.maximum);
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -637,6 +640,29 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
         keys: [cellKey(classDef.id, attribute.id)],
         message: `${classDef.name}: ${attribute.label} ${values[index]} is below the ${need.minimum} the ${need.kit} kit ('${need.itemId}') this class starts in asks for. ${classDef.name} keeps its authored attributes until it can hold its own kit; every other setting you changed is still applied.`,
       });
+    });
+  }
+  // THE SAME QUESTION THE BOOT ASKS, for the half the kit floor above does
+  // not reach. kitAttributeMinimums reads the baseline kit's two hands;
+  // validateContent also refuses a preset that cannot hold the ARMOUR
+  // creation offers that class, and main.js answers that refusal by throwing
+  // away the WHOLE game configuration — every unrelated Advanced setting with
+  // it — behind a generic "unchanged" notice, while this row read as applied.
+  // Asking it here means the edit is refused where it is made, in words. The
+  // kits are passed empty so the hands are said once, by the cell check above
+  // (review, #1217).
+  const byName = new Map(bundle.classes.map((row) => [row.id, row.name || row.id]));
+  for (const problem of presetGearProblems({
+    presets: { [modeId]: edited },
+    defaultMode: modeId,
+    startingKits: [],
+    equipmentRequirements: (bundle.equipment || {}).equipmentRequirements || [],
+    creationClasses: (bundle.characterCreation || {}).classes || {},
+  })) {
+    const [, , , classId, attributeId] = problem.path.split('.');
+    problems.push({
+      keys: [cellKey(classId, attributeId)],
+      message: `${byName.get(classId) || classId}: ${problem.msg.replace(/^is /, 'a starting attribute is ')}. Authored defaults stay active until the set is valid.`,
     });
   }
   return [...problems, ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];
