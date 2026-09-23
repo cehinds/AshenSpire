@@ -29,7 +29,7 @@ export const colorlessCards = [
   // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
   {
     id: 'honedEdge', name: 'Honed Edge', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "Whetstone left on the cairn. Take it. Leave one. — Cairn-scratch",
+    flavor: "Whetstone left on the cairn. Take it, and leave one. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🔩',
     effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
     textTemplate: 'Gain {strength} Strength. Exhaust.',

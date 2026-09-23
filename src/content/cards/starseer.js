@@ -461,7 +461,7 @@ export const starseerCards = [
   },
   {
     id: 'starcaller', name: 'Starcaller', class: 'starseer', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
-    flavor: "The apprentices chanted in rhythm. Eleven falls that night. He noted both. — Astronomer's chart margin",
+    flavor: "The apprentices chanted in rhythm; eleven falls that night. He noted both. — Astronomer's chart margin",
     keywords: [], icon: '⭐',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6, hits: { f: 'energySpent' } },

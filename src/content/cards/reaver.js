@@ -18,7 +18,7 @@ export const reaverCards = [
   {
     // Shared basic (all three classes start with Strikes/Defends — colorless).
     id: 'strike', name: 'Strike', class: 'colorless', rarity: 'starter', cost: 1, type: 'attack',
-    flavor: "Never marked. Never promised. Never warm. — Cairn-scratch",
+    flavor: "Never marked, never promised, never warm. — Cairn-scratch",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
     textTemplate: 'Deal {damage} damage.',
