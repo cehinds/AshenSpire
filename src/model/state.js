@@ -20,6 +20,7 @@ import {
   restoreDerivedStatRuleSnapshot,
   resolveDerivedStatRules,
   deriveStat,
+  ruleTierSize,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
@@ -456,7 +457,10 @@ export function initializeRunDerivedStats(run, registries, {
     derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
-    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+    // The granularity a relic term has to match is the row's points-per-
+    // increase divided by the weight it puts on its one attribute, which is the
+    // same number `pointsPerTier` used to be for a single-stat row.
+    Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
     attributes: run.attributes,

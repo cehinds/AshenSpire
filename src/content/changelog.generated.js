@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1261",
+    "id": "pr-1253",
     "date": "2026-09-23",
     "group": "2026-09-23",
-    "summary": "Towns keep a quest board, and taking or turning in a quest is a conversation",
-    "detail": "Every town's inn now has a Quest board beside its rest: it lists the quests posted anywhere in town, whether each can be taken, is under way, is ready to hand in or is done, and a journal of the quests your run has started and finished — the Grave of the Nameless as well as the wardens' surveys. The warden's spot on the town map opens the same board. Taking a quest or turning one in is no longer a button press: the Road Warden speaks, and you answer — Accept the quest or Not now, and on your return, after the report of what you found, Collect 25 cinders. A quest pays its reward once, even across a reload, and shows as done on the board afterwards. Reading the board costs nothing; the inn's rest is still waiting when you close it.",
+    "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
+    "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
     "build": "0.7.1.407",
-    "pullRequest": 1261,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1261"
+    "pullRequest": 1253,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1253"
   },
   {
     "id": "pr-1258",

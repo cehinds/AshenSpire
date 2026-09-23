@@ -5,6 +5,7 @@
 // value. The host resolves these rows once before stamping run/combat state.
 
 import { DAMAGE_SCHOOLS } from './schemas.js';
+import { ruleTierSize } from './derivedStats.js';
 
 export const RELIC_RESOURCE_IDS = Object.freeze(['hp', 'mana', 'stamina']);
 
@@ -36,10 +37,12 @@ function tierSizeFor(registries, resource, row, tierSizes) {
   if (Number.isFinite(row.pointsPerTier) && row.pointsPerTier > 0) return row.pointsPerTier;
   if (tierSizes && Number.isFinite(tierSizes[resource]) && tierSizes[resource] > 0) return tierSizes[resource];
   const table = registries.derivedStatRules || {};
-  const authored = (table.rules || {})[resource] || {};
-  const per = Number.isFinite(authored.pointsPerTier)
-    ? authored.pointsPerTier
-    : (table.defaults || {}).pointsPerTier;
+  const authored = (table.rules || {})[resource];
+  // SINCE RULESET 6 A ROW STATES WHAT ONE POINT OF AN ATTRIBUTE IS WORTH, so
+  // the granularity is `pointsPerIncrease / weight` — `ruleTierSize` reads that
+  // off either vocabulary, which is what lets this door read the AUTHORED table
+  // whatever version it is written in.
+  const per = authored ? ruleTierSize({ ...(table.defaults || {}), ...authored }) : null;
   if (!Number.isFinite(per) || per <= 0) {
     throw new Error(`relic modifier on '${resource}' states no pointsPerTier and none could be derived`);
   }

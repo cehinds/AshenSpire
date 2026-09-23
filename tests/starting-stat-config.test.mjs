@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
 import { deriveStat } from '../src/model/derivedStats.js';
+import { derivedStatFloorProblems } from '../src/model/startingStatConfig.js';
 
 // The pool dial is exercised through the mode creation OFFERS. It used to be
 // driven here through `pointbuy`, which is retired — and a retired mode is no
@@ -33,11 +34,11 @@ test('pool changes redistribute every class exactly and leave authored content a
 // whole attribute points; it reaches no formula. A configured threshold is now
 // the threshold a run is born with, whatever pool it was born on.
 test('a retuned pool moves the presets and leaves every threshold alone', () => {
-  const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
+  const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.constitution': 2 };
   const wide = configuredContentBundle(contentBundle, settings);
   assert.equal(wide.creationModes.find(m => m.id === 'lean').statConversionScale, undefined,
     'no mode carries a conversion scale, shipped or retuned');
-  assert.equal(wide.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
+  assert.equal(wide.derivedStatRules.rules.hp.constitution, 2, 'the configured weight is the one used');
 
   const registries = createRegistries(wide);
   const a = createRunState({ registries, classId: 'reaver', seed: 42, attributeMode: 'lean' });
@@ -47,10 +48,10 @@ test('a retuned pool moves the presets and leaves every threshold alone', () => 
   // used to be multiplied by the mode's scale on its way into the snapshot, so
   // the row a save carried was never the row the panel showed.
   const row = a.derivedStatRuleSnapshot.rules.rules.hp;
-  assert.equal(row.pointsPerTier, 2);
+  assert.equal(row.constitution, 2);
   const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
     { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
-  assert.equal(receipt.value, row.base + row.gainPerTier * Math.floor(a.attributes.constitution / row.pointsPerTier));
+  assert.equal(receipt.value, row.base + Math.floor(a.attributes.constitution * row.constitution));
 
   // A bigger pool buys more, which is the whole of what a pool now does.
   const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
@@ -237,10 +238,11 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   const run = createRunState({ registries, classId: 'reaver', seed: 7, attributeMode: 'lean' });
   assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
   const rules = contentBundle.derivedStatRules.rules;
-  const pool = (id, attribute) => rules[id].base + rules[id].gainPerTier * Math.floor(attribute / rules[id].pointsPerTier);
-  assert.equal(run.energyMax, pool('energy', run.attributes.dexterity));
-  assert.equal(run.drawPerTurn, pool('draw', run.attributes.intelligence));
-  assert.equal(run.maxMana, pool('mana', run.attributes.wisdom));
+  // Ruleset 6: base plus each attribute's own floored term, as a rating reads.
+  const pool = (id, attributeId) => rules[id].base + Math.floor(run.attributes[attributeId] * rules[id][attributeId] + 1e-9);
+  assert.equal(run.energyMax, pool('energy', 'dexterity'));
+  assert.equal(run.drawPerTurn, pool('draw', 'intelligence'));
+  assert.equal(run.maxMana, pool('mana', 'wisdom'));
   // The numbers those rows now state, on the lean span: Mana is its base of 1
   // plus Wisdom, and Actions and draw sit at their base of 3 until a point
   // clears a five-point tier no lean character can reach.
@@ -480,4 +482,151 @@ test('an attribute card never promises more than the rule pays', async () => {
   });
   assert.ok(Number(stated) <= raised.maxHp - run.maxHp,
     `the card states ${stated} HP a point and the run pays ${raised.maxHp - run.maxHp}`);
+});
+
+// ---- ruleset 6 review findings (Codex, #1253) ------------------------------
+
+// A card states the cadence the floors PAY. Under a divisor of 3, HP's weight
+// of 4 pays +1, +1, +2 across three Constitution points; "+1.33 every 1" was
+// an average no single point ever delivered.
+test('an attribute card states the floored cadence, not an average rate', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 11,
+    derivedStatOptions: { explicitOverride: { defaults: { pointsPerIncrease: 3 } } } });
+  const card = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
+    .find((row) => row.id === 'constitution');
+  assert.ok(card.reveal.lines.includes('HP +4 every 3 points'), card.reveal.lines.join(' | '));
+  assert.ok(!card.reveal.lines.some((line) => /\d\.\d/.test(line) && line.startsWith('HP')), 'no fractional HP promise');
+  // And the shipped rule, with no divisor, reads point for point.
+  const stock = createRunState({ registries, classId: 'reaver', seed: 11 });
+  const stockCard = attributeCardModels(registries, stock.attributes, { projection: statProjection(registries, stock) })
+    .find((row) => row.id === 'constitution');
+  assert.ok(stockCard.reveal.lines.includes('HP +4 every 1 point'), stockCard.reveal.lines.join(' | '));
+});
+
+// The Poise pool's per-level growth reaches the meter, not only the sheet.
+test('the Poise pool grows with the level on the meter as on the sheet', async () => {
+  const { playerPoiseThresholdReceipt, statProjection } = await import('../src/model/statProjection.js');
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.poise.perLevel': 1 });
+  const registries = createRegistries({ ...configured, balance: { ...configured.balance,
+    combatRatings: { ...configured.balance.combatRatings, enabled: false } } });
+  const run = createRunState({ registries, classId: 'reaver', seed: 12 });
+  const atOne = playerPoiseThresholdReceipt(registries, run).attribute;
+  run.level = { ...run.level, level: 4 };
+  assert.equal(playerPoiseThresholdReceipt(registries, run).attribute, atOne + 3, 'three levels, three points');
+  assert.equal(statProjection(registries, run).derived.find((row) => row.id === 'poise').levelBonus, 3,
+    'and the sheet says the same');
+});
+
+// ---- ruleset 6 review findings (internal review, #1253) --------------------
+
+// A v2 snapshot restored once is handed back as v3 and written to the next
+// save. Its normalized defaults had no `perLevel`, which the v3 validator
+// requires, so the SECOND load refused the save and archived the run.
+test('a restored v2 snapshot restores again as v3', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { restoreDerivedStatRuleSnapshot } = await import('../src/model/derivedStats.js');
+  const save = JSON.parse(readFileSync(new URL('./fixtures/run-save-hp-5597166.json', import.meta.url), 'utf8'));
+  const options = { attributeIds: contentBundle.attributes.map((row) => row.id), classFields: ['maxHp'], damageSchools: [] };
+  const once = restoreDerivedStatRuleSnapshot(save.derivedStatRuleSnapshot, options);
+  assert.equal(once.snapshotVersion, 3);
+  const twice = restoreDerivedStatRuleSnapshot(structuredClone(once), options);
+  const thrice = restoreDerivedStatRuleSnapshot(structuredClone(twice), options);
+  assert.deepEqual(thrice, twice, 'from the second restore on, a restore changes nothing');
+  const attributes = save.attributes;
+  const classDef = contentBundle.classes.find((row) => row.id === save.class);
+  for (const id of Object.keys(once.rules.rules)) {
+    assert.equal(deriveStat(twice.rules, id, { attributes, classDef, level: 7 }).value,
+      deriveStat(once.rules, id, { attributes, classDef, level: 7 }).value, `${id} prices the same`);
+  }
+});
+
+// A normalized `{ every, gain }` cadence pays `steps × gain` unrounded, as it
+// always did; only the ruleset-6 decimal is floored.
+test('a legacy level cadence is not rounded, a ruleset-6 decimal is', async () => {
+  const { levelBonus } = await import('../src/model/derivedStats.js');
+  assert.equal(levelBonus({ perLevel: 0.5, perLevelEvery: 5 }, 6), 0.5, 'legacy: one step of 0.5');
+  assert.equal(levelBonus({ perLevel: { every: 5, gain: 0.5 } }, 11), 1, 'retired shape read directly');
+  assert.equal(levelBonus({ perLevel: 0.2 }, 5), 0, 'decimal: four fifths is not yet a point');
+  assert.equal(levelBonus({ perLevel: 0.2 }, 6), 1, 'decimal: five fifths is one');
+});
+
+// `gainPerTier` / `sourceStat` describe a single-stat TIERED row; on a
+// ruleset-6 row whose weight already carries the coefficient they would
+// multiply it twice, so a layer that spells them is refused by name.
+test('a ruleset-6 table refuses a legacy per-row gain layer by name', async () => {
+  const { resolveDerivedStatRules } = await import('../src/model/derivedStats.js');
+  const options = { attributeIds: contentBundle.attributes.map((row) => row.id), classFields: ['maxHp'] };
+  assert.throws(() => resolveDerivedStatRules(contentBundle.derivedStatRules,
+    { ...options, explicitOverride: { rules: { hp: { pointsPerTier: 1, gainPerTier: 4 } } } }), /gainPerTier/);
+  // A table-wide legacy divisor still means what it did.
+  const divided = resolveDerivedStatRules(contentBundle.derivedStatRules,
+    { ...options, explicitOverride: { defaults: { pointsPerTier: 2 } } });
+  assert.equal(divided.rules.hp.pointsPerIncrease, 2);
+});
+
+// A run's own snapshot decides which card a stat is on. Moving HP from
+// Constitution to Strength in Settings after a run started must not move the
+// line on that run's cards (Codex, #1253).
+test('a run lists a stat on the card its own snapshot scales it with', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 13 });
+  const moved = createRegistries(configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.hp.constitution': 0,
+    'gameConfig.derivedStatRules.rules.hp.strength': 4,
+  }));
+  const cards = attributeCardModels(moved, run.attributes, { projection: statProjection(moved, run) });
+  const lines = (id) => cards.find((card) => card.id === id).reveal.lines;
+  assert.ok(lines('constitution').includes('HP +4 every 1 point'), lines('constitution').join(' | '));
+  assert.ok(!lines('strength').some((line) => line.startsWith('HP ')), lines('strength').join(' | '));
+  // With no run, the live table is what a card can describe.
+  const preview = attributeCardModels(moved, run.attributes).find((card) => card.id === 'strength').reveal.lines;
+  assert.ok(preview.includes('HP +4 every 1 point'), preview.join(' | '));
+});
+
+// Codex (#1253): a fractional Actions/draw base made a run the run door
+// refuses, and zeroing every Mana input made one with 0 Mana, which no save
+// can hold. Both are refused where they are set, by name.
+test('a stat base is whole points, and Mana cannot be configured to zero', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  const { advancedConfigProblemRows, advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const said = (bundle) => validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+
+  const fractional = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.energy.base': 3.5 });
+  assert.match(said(fractional), /rules\.energy\.base: must be a whole number/);
+  const row = advancedConfigRows(contentBundle).find((r) => r.key === 'gameConfig.derivedStatRules.rules.energy.base');
+  assert.equal(row.integer, true, 'the row takes whole numbers only');
+
+  const zero = { 'gameConfig.derivedStatRules.rules.mana.base': 0, 'gameConfig.derivedStatRules.rules.mana.wisdom': 0 };
+  assert.match(said(configuredContentBundle(contentBundle, zero)), /derivedStatRules\.rules\.mana: Mana would be 0/);
+  const problems = advancedConfigProblemRows(contentBundle, zero);
+  const mana = problems.find((p) => /Mana would be 0/.test(p.message));
+  assert.ok(mana && mana.keys.includes('gameConfig.derivedStatRules.rules.mana.base'), 'and the Settings rows say so');
+  // One point of Mana from the weakest allocation is enough.
+  assert.ok(!advancedConfigProblemRows(contentBundle, { 'gameConfig.derivedStatRules.rules.mana.base': 0 })
+    .some((p) => /Mana would be/.test(p.message)), 'base 0 with WIS 1 still yields 1');
+  assert.ok(validateContent(contentBundle).ok, 'the shipped table passes both');
+});
+
+// Codex (#1253): the floor is the weakest character creation ALLOWS, not every
+// attribute at its minimum. Lean spends all eight points, so at Mana base 0
+// and every weight 0.5 the all-ones character (0 Mana) cannot be made, and
+// every legal one has at least 2 — that configuration is safe and must pass.
+test('the Mana floor prices only characters creation can make', async () => {
+  const { advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
+  const ids = contentBundle.attributes.map((row) => row.id);
+  const key = (field) => `gameConfig.derivedStatRules.rules.mana.${field}`;
+  const halves = Object.fromEntries([[key('base'), 0], ...ids.map((id) => [key(id), 0.5])]);
+  const floorOf = (overrides) => derivedStatFloorProblems(configuredContentBundle(contentBundle, overrides));
+  assert.deepEqual(floorOf(halves), [], 'every legal lean character has Mana');
+  assert.ok(!advancedConfigProblemRows(contentBundle, halves).some((p) => /Mana would be/.test(p.message)));
+  // A real zero is still refused, and the message names the character that has it.
+  const thin = Object.fromEntries([[key('base'), 0], ...ids.map((id) => [key(id), id === 'wisdom' ? 0.2 : 0])]);
+  const [problem] = floorOf(thin);
+  assert.match(problem.message, /Mana would be 0/);
+  assert.match(problem.message, /wisdom 1/);
 });
