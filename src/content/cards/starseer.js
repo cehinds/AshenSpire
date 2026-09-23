@@ -382,8 +382,11 @@ export const starseerCards = [
     flavor: "The last chart predicted light enough to burn the paper. — Astronomer's chart margin",
     keywords: [], icon: '💥',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 8, hits: { f: 'energySpent' } }, GAIN_CHARGE],
-    textTemplate: 'Deal {damage} damage to ALL enemies once per Energy spent.',
-    upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 10, hits: { f: 'energySpent' } }, GAIN_CHARGE] },
+    textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent.',
+    upgrade: {
+      effects: [{ op: 'damage', target: 'allEnemies', amount: 10, hits: { f: 'energySpent' } }, GAIN_CHARGE],
+      textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent.',
+    },
   },
   {
     id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
@@ -445,13 +448,14 @@ export const starseerCards = [
       { op: 'damage', target: 'enemy', amount: 8, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Deal {damage} damage once per Energy spent. Starstone: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage, scaling with Energy spent. Starstone: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8, hits: { f: 'energySpent' } },
         { op: 'damage', target: 'enemy', amount: 10, if: CHARGED },
         GAIN_CHARGE,
       ],
+      textTemplate: 'Deal {damage} damage, scaling with Energy spent. Starstone: deal {damage.2} more.',
     },
   },
   {

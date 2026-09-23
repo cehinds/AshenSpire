@@ -51,6 +51,7 @@ import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttribut
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
+import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -333,6 +334,7 @@ function collectContentProblems(bundle, errors = []) {
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
     }
   }
+  for (const problem of attackCardDamageConfigProblems(b)) err(problem.path, problem.msg);
 
   // Quest steps (E12): an event-level history gate must name a shipped event,
   // carry a well-formed requirement (model/quests.js is the one grammar), and

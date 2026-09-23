@@ -14,6 +14,7 @@ import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { cardForSchool, projectAttackCardDamageBundle } from './attackCardDamage.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
@@ -193,7 +194,7 @@ function stampTags(bundle) {
 }
 
 export function createRegistries(contentBundle) {
-  const bundle = contentBundle || {};
+  const bundle = projectAttackCardDamageBundle(contentBundle || {});
   const registries = {};
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
@@ -547,12 +548,18 @@ export function resolveCard(registries, instanceOrRef) {
   const hit = cache.get(key);
   if (hit) return hit;
 
-  let result = base;
-  if (instanceOrRef.upgraded) result = mergeUpgrade(base);
-  if (profileId) {
-    const profile = ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId);
-    result = applyBasicCardProfile(result, profile);
-  }
+  const profile = profileId
+    ? ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId)
+    : null;
+  // The school this card resolves in decides which formulas projected it: a
+  // staff's Strike is magical, so its damage is PR's and its impact Ward's
+  // (model/attackCardDamage.js cardForSchool). Chosen before the upgrade merge
+  // so both faces come from the same side.
+  const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
+  let result = cardForSchool(base, school);
+  if (result !== base) result = deepFreeze(result);
+  if (instanceOrRef.upgraded) result = mergeUpgrade(result);
+  if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(
