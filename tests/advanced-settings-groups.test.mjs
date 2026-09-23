@@ -389,16 +389,30 @@ test('no tab renders two rows a player cannot tell apart', async () => {
       }
     }
   }
-  // Armour ratings (Armour bonuses until #1242) used to show each class's starting armour twice (20 rows):
-  // `armor:<class>:default` and the "All classes" set piece of the same name
-  // were both labelled "<name> (<class>)". The starting piece now says so.
-  //
-  // STILL OPEN, AND NOT ARMOUR: Attack overrides pairs two cards that share a
-  // name (`enterBulwark`/`guardianBulwark`, `hamstring`/`hamstringRogue`).
-  // Pinned so the day this number moves for a different reason, it fails here.
-  for (const line of collisions) assert.match(line, /Attack overrides/, line);
-  assert.equal(collisions.length, 2,
-    'the only indistinguishable rows left are the two Attack overrides pairs');
+  // There used to be 22: each class's starting armour shown twice under one
+  // name (20), and two pairs of cards sharing a name in Attack overrides (2).
+  // Both now say which item or card they are, so the menu has none.
+  assert.deepEqual(collisions, [], 'no tab shows two rows a player cannot tell apart');
+});
+
+// Two cards can share a name — the Reaver's "Enter: Bulwark" and the one the
+// Guardian shield creates for any class; the Rogue's "Hamstring" attack and the
+// colorless "Hamstring" skill. Their impact-override rows must say whose card
+// each is. A card whose name is its own keeps its plain label.
+test('an attack override names one card', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const rows = combatRatingRows(contentBundle).filter(row => row.statTopic === 'Attack overrides');
+  const labelOf = (id) => rows.find(row => row.key === `gameConfig.combatRatings.attackImpact.${id}`)?.label;
+
+  assert.equal(labelOf('enterBulwark'), 'Enter: Bulwark (Reaver) — impact override');
+  assert.equal(labelOf('guardianBulwark'), 'Enter: Bulwark (All classes) — impact override');
+  assert.equal(labelOf('hamstringRogue'), 'Hamstring (Rogue) — impact override');
+  assert.equal(labelOf('hamstring'), 'Hamstring (All classes) — impact override');
+  assert.equal(labelOf('strike'), 'Strike — impact override', 'a name no other card uses stays plain');
+
+  assert.equal(new Set(rows.map(row => row.label)).size, rows.length, 'every override row names one card');
+  assert.equal(rows.length, contentBundle.cards.length, 'one row per card, none dropped');
 });
 
 // A player editing an armour rating has to know WHICH armour. Each class starts
