@@ -288,7 +288,7 @@ const EXPLICIT = Object.freeze({
 
   energy: inert('The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Progression › Stat conversions is the row that moves them. It survives because the engine still spells actions "energy" — that rename is its own piece of work.'),
   draw: inert('The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Progression › Stat conversions is the row that moves it.'),
-  handMax: 'The most cards you may hold; a card drawn past it goes straight to the discard rather than being lost. A solo run carrying Hand & Draw Rules takes its capacity from those instead, and a co-op fight reads this row whatever they say.',
+  handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Hand & Draw → Hand capacity → Base hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
   flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool.',
   flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
   startingCinders: 'Cinders a new run opens with.',

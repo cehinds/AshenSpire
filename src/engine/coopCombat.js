@@ -42,6 +42,7 @@ import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { refreshCombatRatings } from './combatRatings.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -57,9 +58,10 @@ export function coopHpMult(headcount, factor = 0.6) {
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {} }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const bal = registries.balance || {};
   const C = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     rng,
@@ -113,6 +115,13 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
       damageResistanceBySchool: def.damageResistanceBySchool,
     }));
   });
+  if (C.ratingsRules) {
+    for (const enemy of C.enemies) {
+      const values = C.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
+  }
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
@@ -131,6 +140,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    if (C.ratingsRules) refreshCombatRatings(C);
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -171,6 +181,9 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.ratingId ? { ratingId: c.ratingId } : {}),
+    ...(Number.isFinite(c.ratingValue) ? { ratingValue: c.ratingValue } : {}),
+    ...(Number.isFinite(c.ratingCap) ? { ratingCap: c.ratingCap } : {}),
     ...(c.kitRole ? { kitRole: c.kitRole } : {}),
     ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
@@ -213,6 +226,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    if (C.ratingsRules) refreshCombatRatings(C);
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {
@@ -426,6 +440,11 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
   const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
   const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+    ratingId: inst.ratingId,
+    ratingValue: inst.ratingValue,
+    ratingCap: inst.ratingCap,
+    equipmentRole: inst.equipmentRole,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,

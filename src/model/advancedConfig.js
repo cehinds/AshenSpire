@@ -81,19 +81,20 @@ export function currentAdvancedKey(key) {
 // owner's own exported file would refuse to come back. These are dropped with
 // a named warning instead, and the file lands.
 //
-//   ratings.<id>.pointsPerIncrease / .gain  superseded by `<id>.multiplier`
+//   ratings.<id>.pointsPerIncrease / .gain / .multiplier
+//                                           superseded by the one global multiplier
 //                                           and the global `multiplier`
 //                                           (model/combatRatings.js).
 //   startingStats.autoScale                 the creation scale no longer
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain))$/;
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Rating points-per-increase and gain are now per-rating multipliers, and automatic conversion scaling was removed. Those entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -115,6 +116,124 @@ function balanceGroup(path) {
   if (/^(map|floors|act|seat|event|treasure|journey|node)/.test(path)) return 'World';
   if (/^(combat|poise|enemy|boss|status|exposure|arcane|damage|block|guard|proc)/.test(path)) return 'Combat';
   return 'Rules';
+}
+
+// ---- THE ROWS THAT SHOWED A SECOND, DEAD ANSWER (owner, 2026-09-21) -------
+//
+// The other half of "the menus aren't matching", and the worse half: two rows
+// in two groups claiming the same thing, with different numbers, one of which
+// does nothing at all.
+//
+// Progression → Starting values offered `energy` and `draw`; Progression →
+// Stat conversions offers "Actions — base amount" and "Draw — base amount".
+// The second pair is what a run is actually born with — `state.js` reads
+// `energy.value` and `draw.value` off the derived-stat rules and nothing in
+// src, tools or tests reads `balance.energy` or `balance.draw` at all. Setting
+// them to 99 moves neither `run.energyMax` nor `run.drawPerTurn`. They are
+// inert, and the reason nobody caught it is that the authored values AGREE
+// with the live ones (3 and 5) until you touch them: the phantom row reads
+// true right up to the moment you use it.
+//
+// RETIRED, NOT DELETED. The key stays known so a configuration file already
+// carrying it still imports whole — deleting a row makes `parseAdvancedConfig-
+// File` abort the file on an unknown key, which is the defect #1238 fixed for
+// the preset cells. `retired` is the same flag a hidden creation mode's pool
+// row carries, and settings.js filters on it.
+const RETIRED_BALANCE_PATHS = new Set([
+  'energy',
+  'draw',
+]);
+
+// THE NOTES LIVE IN model/balanceNotes.js. A `BALANCE_NOTES` table sat here
+// with one entry (`handMax`) and gave every other generated row "Applies to a
+// new run." — the same five words under 325 rows, which is the complaint that
+// file answers. Its one sentence moved there, merged with what that file
+// already said about the co-op fight, which reads this row whatever the hand
+// rules say.
+
+// ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
+//
+// "why aren't the menus matching? … make them consistent with what I see with
+// each other."
+//
+// Advanced spoke two languages. A hand-authored row carried a sentence a
+// person wrote — "HP — base amount", "Reaver — Strength", "Straight Sword —
+// Strength required": the subject in Title Case because it names a thing, the
+// leaf in sentence case because it is a phrase. A row generated from `balance`
+// carried
+// `word(<last path segment>)` and a note beginning "Authored balance value:".
+// That note is engine-speak, and the label was WORSE than short: `leafRows`
+// only ever saw the LAST segment, so `levels.enemyScaling.hp.perLevel`,
+// `…damage.perLevel` and `…block.perLevel` were three rows all called "Per
+// Level", stacked in one group, indistinguishable.
+//
+// The screen's answer was to rebuild the label from the KEY at render time
+// (`settings.js`, now deleted): it recovered the missing context but split
+// camelCase without capitalising anything, so the same menu showed "HP — base
+// amount" two rows above "hand Max" and "levels · player Starting Level". One
+// fact — what this row is called — had two homes and they disagreed by
+// construction.
+//
+// So the label is built ONCE, here, with the context the leaf needs and the
+// casing the rest of the menu uses: Title Case subjects, a sentence-case leaf,
+// measured against the hand-authored corpus rather than guessed at (1234 of
+// its leaves read as a sentence, 262 as a heading).
+//
+// Nothing is lost by taking the engine's spelling off the row. Search reads
+// the rendered row text AND the input's `data-key` (settings.js, in
+// `filterAdvancedRows`), and `data-key` is the full `gameConfig.balance.<path>`
+// — so every segment this label drops is still typeable. `searchPath` is NOT
+// what search reads; it never reaches the DOM, and its only consumer is the
+// `ui.`/legacy filter below.
+
+// Words the menu already writes as acronyms ("HP — base amount", "Reaver —
+// base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
+// "HP", which is the very mismatch this block exists to end.
+const LABEL_ACRONYMS = new Map(Object.entries({
+  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+}));
+
+/**
+ * One path segment as the menu writes it.
+ *
+ * A SUBJECT is a heading — `enemyScaling` → `Enemy Scaling` — because it names
+ * a thing, and every hand-authored subject in this menu ("Straight Sword",
+ * "Wayfarer Plate", "Reaver") is written that way.
+ *
+ * A LEAF is a phrase, so it is sentence case — `perLevel` → `Per level`,
+ * `hpSmallPct` → `HP small %`. That is not a preference: the hand-authored
+ * corpus this menu has to match is 1234 sentence-case leaves ("Resistance
+ * cap", "Break threshold multiplier", "Strength required") against 262 Title
+ * Case ones. Title-casing generated leaves left three tabs — Level-up, General
+ * and Experience & rewards — showing both styles at once, which is the mismatch
+ * this block exists to end, not a new home for it.
+ *
+ * Acronyms survive either way; `LABEL_ACRONYMS` is consulted before the case
+ * rule, so `hp` is `HP` whether it opens the leaf or sits inside it.
+ */
+function labelSegment(part, sentence = false) {
+  return String(part)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .map((piece, index) => LABEL_ACRONYMS.get(piece.toLowerCase())
+      || (sentence && index > 0 ? piece.toLowerCase() : piece[0].toUpperCase() + piece.slice(1)))
+    .join(' ');
+}
+
+/**
+ * balanceLabel(path) → the row's one label.
+ *
+ * `subject · subject — leaf`, which is the shape every hand-authored row in
+ * this menu already uses: the em dash separates what the row IS from what it
+ * belongs to, and the middle dot stacks the owners. `levels.enemyScaling.hp
+ * .perLevel` becomes "Levels · Enemy Scaling · HP — Per Level" — long, and the
+ * only reason its two siblings are now telling apart.
+ */
+function balanceLabel(path) {
+  const leaf = labelSegment(path[path.length - 1], true);
+  const context = path.slice(0, -1).map((part) => labelSegment(part));
+  return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
 }
 
 // EVERY GENERATED ROW SAYS WHAT IT DOES. This used to read `Authored balance
@@ -141,7 +260,7 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       type: typeof value === 'number' ? 'number' : undefined,
       def: value,
       ...domain,
-      label: word(path[path.length - 1]),
+      label: balanceLabel(path),
       // The flag, not the sentence, is what marks a generated row: the Advanced
       // panel used to recognise one by the boilerplate it carried, which meant
       // giving a row a real description would have quietly changed how it drew.
@@ -152,6 +271,7 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
+      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
     });
     return rows;
   }
@@ -226,7 +346,7 @@ function explicitRows(bundle) {
       type: 'number', integer: true, step: 1,
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
-      label: `${classLabel} — base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
+      label: `${classLabel} — Base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,
     });
     for (const kind of ['hp', 'mana']) {
@@ -237,7 +357,10 @@ function explicitRows(bundle) {
         type: 'number', integer: true, step: 1,
         min: 0, max: 20, def,
         key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.startingFlaskAllocation.${kind}`,
-        label: `${classLabel} — ${kind.toUpperCase()} flasks`, note: `Starting ${kind.toUpperCase()} flask allocation for ${classLabel}. Applies to a new run.`,
+        // `HP` is an acronym and `Mana` is a word; the class tab compacts the
+        // class name away, so these sit directly beside "Strength" and have to
+        // read like it.
+        label: `${classLabel} — ${kind === 'hp' ? 'HP' : 'Mana'} flasks`, note: `Starting ${kind.toUpperCase()} flask allocation for ${classLabel}. Applies to a new run.`,
         configPath: ['classesById', classDef.id, 'startingFlaskAllocation', kind], searchPath: `class ${classDef.id} flask ${kind}`,
       });
     }
@@ -467,14 +590,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
-  if (configured.balance.combatRatings.enabled) {
-    for (const mode of configured.creationModes) {
-      mode.equipmentProfiles ||= {};
-      for (const profile of configured.equipment.basicCardProfiles) {
-        mode.equipmentProfiles[profile.id] = { ...mode.equipmentProfiles[profile.id], baseValue: profile.baseValue, gainPerTier: 0 };
-      }
-    }
-  }
   return configured;
 }
 
