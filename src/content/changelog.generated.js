@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every setting in Advanced now says what it does, and the sentence sits beside its number",
     "detail": "The 792 balance rows under Advanced had readable names, but the line under each name was still the same five words, Applies to a new run, on nearly every one. That includes the 486 card-value rows — what each Action, Mana and Stamina a card costs is worth, the weight of each status it applies, and each card's own bonus — which now say which of a card's numbers they set: a physical attack's damage, a physical card's Block, a magic card's damage and Block, or an attack's impact. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The six legacy Poise and stagger rows say they only work while combat ratings are off, and name the rating row that takes over when they are on. The swap-cost numbers say which rule they price, and that choosing the rule is Weapon swap cost's job, not theirs. Two rows say plainly that nothing reads them, rather than promising to apply to a new run. The sentences are written beside their numbers in the balance table itself, so whoever changes a number reads what it does in the same place, and a test fails if a number is renamed and its sentence left behind. Names come from the game: renaming a relic renames its rows, and a new relic describes itself.",
-    "build": "0.7.1.393",
+    "build": "0.7.1.395",
     "pullRequest": 1243,
     "url": "https://github.com/cehinds/AshenSpire/pull/1243"
+  },
+  {
+    "id": "pr-1259",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Two cards that share a name are told apart in settings",
+    "detail": "Under Stats & Defence → Attack overrides, the Reaver's own Enter: Bulwark and the one the Guardian shield makes for any class had rows with the same name, and so did the Rogue's Hamstring attack and the Hamstring skill anyone can take — so there was no telling which card a change went to. Where two cards share a name the row now says whose each is: Enter: Bulwark (Reaver) beside Enter: Bulwark (All classes), Hamstring (Rogue) beside Hamstring (All classes). Every other card keeps its plain name, and no setting changed its value or key. With this, no two rows anywhere in Advanced read the same.",
+    "build": "0.7.1.394",
+    "pullRequest": 1259,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1259"
   },
   {
     "id": "pr-1256",
