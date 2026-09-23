@@ -621,6 +621,12 @@ test('each Stats subsection is one unbroken run, so its heading is drawn once', 
 test('a profile last on a merged tab opens on Stats', () => {
   assert.equal(activeAdvancedGroup({ settingsAdvancedCategory: 'Ratings & Resistance' }), 'Stats');
   assert.equal(activeAdvancedGroup({ settingsAdvancedCategory: 'Hand & Draw' }), 'Stats');
+  // A topic that moved out of a tab that still exists follows it (Codex, #1252).
+  for (const [tab, topic] of [['Progression', 'Stat conversions'], ['Progression', 'Stats & resources'], ['Combat', 'Poise'], ['Rules', 'Mana']]) {
+    assert.equal(activeAdvancedGroup({ settingsAdvancedCategory: tab, [`settingsAdvancedSubgroup.${tab}`]: topic }), 'Stats', `${tab} → ${topic}`);
+  }
+  assert.equal(activeAdvancedGroup({ settingsAdvancedCategory: 'Progression', 'settingsAdvancedSubgroup.Progression': 'Level-up' }), 'Progression',
+    'a topic that stayed keeps its tab');
 });
 
 test('the worked example recomputes from the edited values and shows the whole sum', async () => {

@@ -727,12 +727,21 @@ export function formationLayoutRows() {
     .find((group) => group.id === 'Formation layout')?.rows || [];
 }
 
-// Tabs merged into Stats. A profile whose last-open tab was one of them opens
-// on Stats rather than on the first tab.
+// Tabs merged into Stats, and topics that moved there out of tabs that still
+// exist. A profile last left on one of them opens on Stats rather than on the
+// first tab, or on an unrelated first topic of the tab it was in (Codex, on
+// #1252).
 const MERGED_ADVANCED_GROUPS = Object.freeze({ 'Ratings & Resistance': 'Stats', 'Hand & Draw': 'Stats' });
+const MOVED_ADVANCED_TOPICS = Object.freeze({
+  Progression: ['Stat conversions', 'Stats & resources'],
+  Combat: ['Poise', 'Stagger', 'Mana'],
+  Rules: ['Poise', 'Stagger', 'Mana'],
+});
 
 export function activeAdvancedGroup(settings) {
-  const stored = MERGED_ADVANCED_GROUPS[settings?.[ADVANCED_CAT_KEY]] || settings?.[ADVANCED_CAT_KEY];
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
+  const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
   return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
 }
 
