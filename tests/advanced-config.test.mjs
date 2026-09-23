@@ -230,3 +230,11 @@ test('an export naming a retired stat tier imports, skipping only that entry', (
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /direct attribute weights/);
 });
+
+// Codex (#1253): only the six real stat ids are retired. A misspelt id is a
+// typo, and a typo must still refuse the whole file rather than be skipped.
+test('a misspelt stat id under a retired tier key is refused, not skipped', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  file.overrides['gameConfig.derivedStatRules.rules.hhp.pointsPerTier'] = 2;
+  assert.throws(() => parseAdvancedConfigFile(JSON.stringify(file), contentBundle, {}, [], []), /hhp/);
+});

@@ -123,7 +123,10 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier,
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier — <id> is one
+//                                           of the six stat ids, never a
+//                                           wildcard, so a typo such as `hhp`
+//                                           is still refused as unknown,
 //   derivedStatRules.defaults.pointsPerTier,
 //   balance.levelUp.tierSizeMin / .tierSizeMax
 //                                           ruleset 6 (owner, 2026-09-21): HP,
@@ -133,7 +136,7 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
 //                                           have no row left to land on, and
 //                                           the "Stat points per tier" dial
 //                                           and its bounds retired with them.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.[^.]+\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
