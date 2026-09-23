@@ -78,46 +78,6 @@ export const creationModes = [
     // restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
     // Poise and Ward → 1), which is why it is not the bare fifth the divisor
     // would have made it.
-    // THE SAME AUTHORITY tuned2 CARRIES, RESTATED FOR THIS SPAN. Strike and
-    // Defend scale off an attribute rather than off the weapon alone, and a
-    // profile is read as `baseValue + floor(stat / pointsPerTier) × gainPerTier`.
-    //
-    // Carried over unchanged (gain 1 per point), the whole of Strike would live
-    // between 4 and 7, because four points is the whole span — the basic attack
-    // would stop answering to the attribute it scales off. So the GAIN carries
-    // the rebase here, in the open and on the row that states it:
-    // two per lean point, opening at 3.
-    //
-    //   STR 1 → 5    STR 2 → 7    STR 3 → 9    STR 4 → 11
-    //
-    // which lands on tuned2's own numbers where it matters: the Reaver's Strike
-    // is the 9 it was, its Defend the 5 the tuned2 comment below fought for
-    // (at -3 a Reaver's guard fell to 3 and the simulator read it — the tier-1
-    // boss band collapsed), the Herald's sceptre the 9 it was, and the ceiling
-    // 11 is tuned2's ceiling. Dropping this block would silently take attribute
-    // scaling off every basic attack.
-    equipmentProfiles: {
-      unarmedAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      bladeAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      daggerPierceAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      bowPierceAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      staffMagicAttack: { baseValue: 3, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      sceptreArcaneAttack: { baseValue: 3, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      unarmedGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      weaponGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      shieldGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      staffGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      sceptreGuard: { baseValue: 3, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 2 },
-      // THE ONE PROFILE tuned2 LEFT ALONE, AND WHY LEAN CANNOT. An unrestated
-      // profile keeps its authored five-point tier, which on a 1-4 span means
-      // floor(stat / 5) is ZERO for every character alive: the shield's own
-      // attack would stop answering to Strength entirely and sit flat at its
-      // base. On tuned2's span the same row still moved (2 at STR 3, 4 at STR
-      // 12), so leaving it out would be a silent loss rather than a choice.
-      // A two-point tier is the closest whole-number restatement of that
-      // slower curve: 3 at the baseline, 5 with the whole pool in Strength.
-      shieldAttack: { baseValue: 3, scalingStat: 'strength', pointsPerTier: 2, rounding: 'floor', gainPerTier: 1 },
-    },
   },
   // THE REBASED SCALE (plan phase 9). Ten was never a floor a player chose —
   // it was the middle of a d20 habit this game does not otherwise keep. Five
@@ -140,28 +100,6 @@ export const creationModes = [
     maximum: 12,
     belowBaseline: 'allow',
     redistribution: 'fixedTotal',
-    // THE SAME AUTHORITY THE OLD TUNED MODE CARRIED, REBASED. Strike and
-    // Defend scale off an attribute rather than off the weapon alone, and the
-    // baseline hand must still land where it always did. DEFEND IS WHY THE
-    // NUMBER IS -1: it scales off Dexterity, the stat the rebase compressed
-    // hardest, and at -3 a Reaver's guard fell from 5 to 3 and the simulator
-    // read it — the tier-1 boss band collapsed. At -1 the baseline guard is
-    // the 5 it always was.
-    // Dropping this block would have quietly taken
-    // attribute scaling off every basic attack the moment the baseline moved.
-    equipmentProfiles: {
-      unarmedAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bladeAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      daggerPierceAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bowPierceAttack: { baseValue: -1, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffMagicAttack: { baseValue: -1, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreArcaneAttack: { baseValue: -1, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      unarmedGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      weaponGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      shieldGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreGuard: { baseValue: -1, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-    },
   },
   {
     id: 'tuned',
@@ -172,19 +110,6 @@ export const creationModes = [
     maximum: 15,
     belowBaseline: 'allow',
     redistribution: 'fixedTotal',
-    equipmentProfiles: {
-      unarmedAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bladeAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      daggerPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      bowPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffMagicAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreArcaneAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      unarmedGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      weaponGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      shieldGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      staffGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-      sceptreGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
-    },
   },
   {
     id: 'standard',

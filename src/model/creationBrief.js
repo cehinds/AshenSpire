@@ -53,6 +53,7 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
+import { defaultRatingFormula } from './ratingFormula.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -136,19 +137,19 @@ function foldedSummary(sense) {
   return sentence || text;
 }
 
-function equipmentScalingLines(registries, attributeId, profiles) {
-  const lines = new Set();
-  for (const [id, profile] of Object.entries(profiles || {})) {
-    if (!profile || profile.scalingStat !== attributeId) continue;
-    const source = (registries.equipment.basicCardProfiles || []).find((row) => row.id === id) || profile;
-    const role = source.role || profile.role;
-    const school = source.damageSchool || profile.damageSchool;
-    const label = role === 'guard'
-      ? 'Guard'
-      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}AR`;
-    lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
-  }
-  return [...lines];
+function ratingWeightFacts(registries, attributeId) {
+  const config = registries.balance?.combatRatings || defaultRatingFormula;
+  const short = registries.attributes.get(attributeId).shortLabel;
+  if (!config?.ratings) return [];
+  return Object.entries(config.ratings)
+    .filter(([, rule]) => Number(rule[attributeId]) > 0)
+    .map(([id, rule]) => {
+      const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      return {
+        line: `${label}: floor(${rule[attributeId]} × ${short}), then × ${config.multiplier ?? 1} global`,
+        summary: `${label} weight ${rule[attributeId]}`,
+      };
+    });
 }
 
 /**
@@ -209,7 +210,8 @@ export function attributeCardModels(registries, attributes, { projection = null,
         return { label: presentation[id].label, perTier, points: resolvedPoints };
       });
     const unlocks = unlockLines(registries, def.id);
-    const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const ratingFacts = ratingWeightFacts(registries, def.id);
+    const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
       : `${label} scales with ${def.label}`));
@@ -225,22 +227,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
-    // An attribute whose only reader is the equipment profile (Strength feeds
-    // attack scaling, not a derived stat) still has a fact to state — read from
-    // its own authored line rather than left to flavour.
-    // Two equipped profiles can scale off one attribute at DIFFERENT rates and
-    // carry the same label ("Physical AR" for a sword and a staff), so the
-    // face states each label once, at its most frequent gain — the fold below
-    // still lists every rate, which is where a player compares them.
-    const scalingFacts = faceFacts.length ? [] : [...scaling
-      .map((line) => line.match(/^(.*) \+(\d+) every (\d+) points?$/))
-      .filter(Boolean)
-      .reduce((best, [, label, gain, points]) => {
-        const seen = best.get(label);
-        if (!seen || Number(points) < seen.points) best.set(label, { gain: Number(gain), points: Number(points) });
-        return best;
-      }, new Map())]
-      .map(([label, { gain, points }]) => `+${gain} ${label} ${cadence(points)}`);
+    const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];

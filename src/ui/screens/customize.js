@@ -40,6 +40,7 @@ import {
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
 import { relicText, renderCard, scheduleCardFits } from '../components/card.js';
+import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
@@ -65,6 +66,26 @@ import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
+
+const CREATION_DERIVED_LABELS = Object.freeze({
+  hp: 'HP',
+  mana: 'MP',
+  stamina: 'SP',
+  energy: 'AP',
+});
+const CREATION_INSPECTION_LABELS = Object.freeze({
+  hp: 'Health Points (HP)',
+  mana: 'Mana Points (MP)',
+  stamina: 'Stamina Points (SP)',
+  energy: 'Action Points (AP)',
+  ar: 'Attack Rating (AR)',
+  dr: 'Defense Rating (DR)',
+  pr: 'Power Rating (PR)',
+});
+
+function creationDerivedLabel(entry) {
+  return CREATION_DERIVED_LABELS[entry.id] || entry.faceLabel;
+}
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
  *  author display rules beat the UA `[hidden]` rule (disclosure.js measured it). */
@@ -571,7 +592,7 @@ export function mountCustomize(app, {
     // different numbers (Codex, #1217).
     const resources = projection.derived
       .filter(entry => entry.id !== 'poise')
-      .map(entry => ({ ...entry, faceLabel: { hp: 'HP', mana: 'MP', stamina: 'SP' }[entry.id] || entry.faceLabel }));
+      .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
   }
@@ -1110,21 +1131,107 @@ export function mountCustomize(app, {
   // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
   const summaryBody = el('div', { class: 'as-stack cc-summary' });
   let summaryFold = null;
-  function characterSummaryCard(run, projection) {
+  function characterSummaryResources(projection, poise) {
+    const resources = projection.derived
+      .filter(entry => entry.id !== 'poise')
+      .map(entry => ({
+        id: entry.id,
+        label: creationDerivedLabel(entry),
+        inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.faceLabel,
+        value: entry.value,
+        explanation: entry.formula,
+      }));
+    resources.push({
+      id: 'poise',
+      label: 'Poise',
+      inspectionLabel: 'Poise',
+      value: poise.value,
+      explanation: poise.note,
+    });
+    if (poise.ratings) {
+      for (const id of ['ward', 'ar', 'dr', 'pr']) {
+        resources.push({
+          id,
+          label: id === 'ward' ? 'Ward' : id.toUpperCase(),
+          inspectionLabel: CREATION_INSPECTION_LABELS[id] || 'Ward',
+          value: poise.ratings[id],
+          explanation: null,
+        });
+      }
+    }
+    return resources;
+  }
+  function characterSummaryGrid(rows, ariaLabel, { limit = Infinity, expanded = false } = {}) {
+    const visible = rows.slice(0, limit);
+    const pairs = visible.map((entry) => {
+      const pair = statPair({
+        key: expanded ? entry.inspectionLabel || entry.label : entry.label,
+        value: String(entry.value),
+        attrs: { role: 'listitem', dataset: { stat: entry.id } },
+      });
+      if (entry.explanation) attachTooltip(pair, () => esc(entry.explanation));
+      return pair;
+    });
+    if (visible.length < rows.length) {
+      pairs.push(el('span', {
+        class: 'cc-summary-more',
+        role: 'listitem',
+        'aria-label': `${rows.length - visible.length} more stats available in Information`,
+        text: '…',
+      }));
+    }
+    return el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': ariaLabel }, pairs);
+  }
+  function characterSummaryCard(run, projection, inspection = false) {
     const cls = registries.classes.get(state.classId);
-    const stats = el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': 'Primary stats' },
-      orderedAttributes(registries).map((def) => statPair({
-        key: def.shortLabel, value: String(run.attributes[def.id]),
-        attrs: { role: 'listitem', dataset: { stat: def.id } },
-      })));
-    return el('article', { class: 'cc-summary-character', 'aria-label': `${state.name} character card` }, [
+    const name = state.name || 'Forsaken';
+    const attributes = orderedAttributes(registries).map((def) => ({
+      id: def.id,
+      label: def.shortLabel,
+      inspectionLabel: `${def.label} (${def.shortLabel})`,
+      value: run.attributes[def.id],
+    }));
+    const resources = characterSummaryResources(
+      projection,
+      playerPoiseThresholdReceipt(registries, run),
+    );
+    const card = el('article', {
+      class: 'cc-summary-character',
+      'aria-label': `${name} character card`,
+      dataset: { summaryLevel: inspection ? 'inspect' : 'glance' },
+    }, [
       el('span', { class: 'cc-summary-eyebrow', text: cls.name }),
-      el('p', { class: 'cc-summary-name', text: state.name || 'Forsaken' }),
+      el('p', { class: 'cc-summary-name', text: name }),
       hairline(),
-      stats,
+      characterSummaryGrid(attributes, 'Primary stats', inspection ? { expanded: true } : undefined),
       hairline(),
-      resourceStrip(projection.derived, playerPoiseThresholdReceipt(registries, run)),
+      characterSummaryGrid(resources, 'Derived resources', inspection
+        ? { expanded: true }
+        : { limit: 6 }),
     ]);
+    if (!inspection) {
+      bindCardInspection(card, {
+        title: `${name} — ${cls.name}`,
+        identity: 'creation-character-summary',
+        open: opener => {
+          const explained = resources.filter((entry) => entry.explanation);
+          const details = el('div', { class: 'cc-summary-inspection-details' }, [
+            el('h3', { text: 'Derived stat calculations' }),
+            el('dl', {}, explained.map((entry) => [
+              el('dt', { text: `${entry.inspectionLabel || entry.label} ${entry.value}` }),
+              el('dd', { text: entry.explanation }),
+            ])),
+          ]);
+          return openCardInspection({
+            title: `${name} — ${cls.name}`,
+            card: characterSummaryCard(run, projection, true),
+            details,
+            opener,
+          });
+        },
+      });
+    }
+    return card;
   }
   function fillSummary(host = summaryBody) {
     const run = previewRun();
@@ -1137,24 +1244,29 @@ export function mountCustomize(app, {
     // `footer`) and show the same regions the chip you picked did. Omitting it
     // would have made the summary a quieter card than its own picker for no
     // reason anyone authored.
-    const inert = { interactive: false, inspection: false, level: 'glance', surface: 'creation' };
+    const summaryCard = { interactive: false, level: 'glance', surface: 'creation' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
     ];
     const armour = registries.equipment.armour.find((row) => row.classId === state.classId && row.id === state.startingArmourId);
-    slots.push({ key: 'armour', label: 'Armour', node: armour ? renderEquipmentCard(registries, armour, inert).card : null, empty: 'Not chosen yet' });
+    slots.push({ key: 'armour', label: 'Armour', node: armour
+      ? renderEquipmentCard(registries, armour, { ...summaryCard, identity: 'creation-summary:armour' }).card
+      : null, empty: 'Not chosen yet' });
     const handSlot = (slot, label) => {
       const piece = armament(state.startingHands[slot]);
+      const options = { ...summaryCard, identity: `creation-summary:${slot}` };
       const node = piece
-        ? renderEquipmentCard(registries, piece, inert).card
-        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...inert, presentation: EMPTY_HAND_PRESENTATION }).card;
+        ? renderEquipmentCard(registries, piece, options).card
+        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...options, presentation: EMPTY_HAND_PRESENTATION }).card;
       return { key: slot, label, node, unmet: piece ? handProblem(slot) : null };
     };
     slots.push(handSlot('rightHand', 'Main hand'));
     if (state.startingHands.leftHand) slots.push(handSlot('leftHand', 'Off hand'));
     const relic = registries.relics.get(state.startingRelicId);
-    slots.push({ key: 'relic', label: 'Relic', node: relic ? renderCollectibleCard(registries, relic, 'Relic', inert).card : null, empty: 'None' });
+    slots.push({ key: 'relic', label: 'Relic', node: relic
+      ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
+      : null, empty: 'None' });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [

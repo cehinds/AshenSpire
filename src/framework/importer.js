@@ -57,14 +57,6 @@ const TARGET_PROPERTY = Object.freeze({
   ally: 'targeting.ally',
 });
 
-const SCALING_PROPERTY = Object.freeze({
-  strength: 'scaling.strength',
-  dexterity: 'scaling.dexterity',
-  constitution: 'scaling.constitution',
-  intelligence: 'scaling.intelligence',
-  wisdom: 'scaling.wisdom',
-});
-
 const PROFILE_ROLE_PROPERTY = Object.freeze({
   attack: 'classification.strike',
   guard: 'classification.guard',
@@ -254,9 +246,6 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
     if (profile.damageSchool) {
       properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, profile.damageSchool, `profile ${profile.id} damageSchool`), source: 'AUTHORED' });
     }
-    if (profile.scalingStat) {
-      properties.push({ propertyId: mapped(SCALING_PROPERTY, profile.scalingStat, `profile ${profile.id} scalingStat`), source: 'AUTHORED' });
-    }
     addEntity({
       id,
       kind: 'CARD',
@@ -268,9 +257,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         baseCardId: profile.baseCardId,
         role: profile.role,
         baseValue: profile.baseValue,
-        pointsPerTier: profile.pointsPerTier,
-        gainPerTier: profile.gainPerTier,
-        rounding: profile.rounding,
+        ratingId: profile.ratingId,
         cap: profile.cap,
         icon: profile.icon,
         tags: tagsOf('basicCardProfile', profile),

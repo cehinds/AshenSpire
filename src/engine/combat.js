@@ -224,6 +224,9 @@ export function createCombat({
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.ratingId ? { ratingId: c.ratingId } : {}),
+    ...(Number.isFinite(c.ratingValue) ? { ratingValue: c.ratingValue } : {}),
+    ...(Number.isFinite(c.ratingCap) ? { ratingCap: c.ratingCap } : {}),
     ...(c.kitRole ? { kitRole: c.kitRole } : {}),
     ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
@@ -929,6 +932,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
     sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+    ratingId: inst.ratingId,
+    ratingValue: inst.ratingValue,
+    ratingCap: inst.ratingCap,
+    equipmentRole: inst.equipmentRole,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
@@ -1086,6 +1093,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
+      sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+      ratingId: inst.ratingId,
+      ratingValue: inst.ratingValue,
+      ratingCap: inst.ratingCap,
+      equipmentRole: inst.equipmentRole,
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
       // The kind tag and the grip's derived tags, as the live play reads them
       // (above) — a preview that disagreed with the play would lie.
@@ -1154,7 +1166,10 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'heal':
-        entry.value = evalPreview(combat, action, eff.amount, primary) + cardRatingBonus(combat, p, action.card, 'heal');
+        {
+          const amount = evalPreview(combat, action, eff.amount, primary);
+          entry.value = amount + cardRatingBonus(combat, p, action.card, 'heal', amount);
+        }
         break;
       case 'loseHp':
       case 'draw':
