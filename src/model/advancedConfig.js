@@ -232,7 +232,7 @@ const BALANCE_NOTES = Object.freeze({
   'equipment.swapCostRules.2.gear': 'Weapon category rule: also apply talisman and relic modifiers.',
   'equipment.swapCostByCategory.0.cost': 'Swap cost for a heavy weapon, under the Weapon category rule only.',
   'equipment.swapCostByCategory.1.cost': 'Swap cost for a flourish weapon, under the Weapon category rule only.',
-  flaskCapacity: 'Each class’s HP flasks plus Mana flasks (Progression → the class) must add up to this, or a new run is refused. Applies to a new run.',
+  flaskCapacity: 'Each class’s HP flasks plus Mana flasks (Progression → the class) must add up to this; if they do not, the whole Advanced configuration is set aside and authored defaults are used. Applies to a new run.',
 });
 
 // ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
@@ -335,7 +335,9 @@ function leafRows(value, path = [], rows = []) {
       note: (Object.hasOwn(BALANCE_NOTES, joined) && BALANCE_NOTES[joined]) || 'Applies to a new run.',
       configPath: ['balance', ...path],
       searchPath: joined,
-      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
+      // `inert` as well as `retired`: nothing reads it, so a stored value is
+      // never applied — see `configuredContentBundle`.
+      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true, inert: true } : {}),
     });
     return rows;
   }
@@ -415,7 +417,7 @@ function explicitRows(bundle) {
       // `initializeRunDerivedStats` overwrites it a few lines later with the
       // derived HP rule (Stat conversions → HP), so the row moved nothing. The
       // key stays so an exported configuration carrying it still imports.
-      retired: true,
+      retired: true, inert: true,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,
     });
     for (const kind of ['hp', 'mana']) {
@@ -614,7 +616,12 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
-    if (!row?.configPath) continue;
+    // AN INERT ROW IS NEVER APPLIED (review, #1256). It moved nothing, but a
+    // stored value still landed in the bundle, where the structural walk could
+    // refuse the WHOLE configuration over it (tierSizeMin 15 over tierSizeMax
+    // 3) — naming a row no longer on screen. Retired preset cells are not
+    // inert: a non-default mode's cells are still validated and applied.
+    if (!row?.configPath || row.inert) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'

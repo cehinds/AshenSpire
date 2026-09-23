@@ -470,6 +470,15 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     'and no longer claims to multiply experience');
   assert.equal(where('shopSell'), 'Rewards → Shop stock & services');
   assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
+
+  // The formation editor is mounted with the rows of its topic, wherever that
+  // topic is filed. It looked under Interface after the topic moved to
+  // Battlefield and got none (Codex, on #1256).
+  const { formationLayoutRows } = await import('../src/ui/screens/settings.js');
+  const formation = advancedSubgroups(rows, 'Battlefield').find(group => group.id === 'Formation layout');
+  assert.ok(formation && formation.rows.length > 0, 'Battlefield opens on the formation layout');
+  assert.deepEqual(formationLayoutRows().map(row => row.key), formation.rows.map(row => row.key),
+    'the editor is handed exactly the rows its topic shows');
 });
 
 test('a row that moved nothing is retired: off the screen, still importable', async () => {
@@ -494,4 +503,15 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   const legacy = { 'gameConfig.balance.levelUp.tierSizeMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
     'an exported file naming a retired key still imports');
+
+  // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
+  // land in the bundle and refuse the whole configuration over a row no longer
+  // on screen.
+  const { configuredContentBundle, advancedConfigStructuralProblems } = await import('../src/model/advancedConfig.js');
+  const stale = { 'gameConfig.balance.levelUp.tierSizeMin': 15, 'gameConfig.balance.levelUp.tierSizeMax': 3, 'gameConfig.classes.reaver.maxHp': 500 };
+  assert.deepEqual(advancedConfigStructuralProblems(contentBundle, stale), [], 'an inert value cannot refuse the configuration');
+  const configured = configuredContentBundle(contentBundle, stale);
+  assert.equal(configured.balance.levelUp.tierSizeMin, contentBundle.balance.levelUp.tierSizeMin);
+  assert.equal(configured.classes.find(classDef => classDef.id === 'reaver').maxHp,
+    contentBundle.classes.find(classDef => classDef.id === 'reaver').maxHp);
 });

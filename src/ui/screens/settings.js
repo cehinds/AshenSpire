@@ -99,6 +99,7 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -346,10 +347,11 @@ const ROWS = [
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
     note: 'Show your relic icons in the map header bar.' },
-  // RETIRED (owner, 2026-09-23). The map header never draws the seed — the
-  // header model receives it and prints nothing — and no stylesheet reads the
-  // `hide-header-seed` class main.js sets, so this switch moved nothing. The
-  // key stays so a settings file that names it still imports.
+  // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
+  // the header model receives it and prints nothing — and the co-op header's
+  // `.mh-seed` has no rule under the `hide-header-seed` class main.js sets, so
+  // this switch moved nothing anywhere. The key stays so a settings file that
+  // names it still imports.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true, retired: true,
     note: 'Show the run seed in the map header bar.' },
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
@@ -612,7 +614,7 @@ const ROWS = [
     // an existing save shows NOTHING. It is written on the row because the
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Set to anything but 5, it replaces every "stat points per increase" row below. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Set to anything but 5, it replaces every stat’s own "stat points per increase" — the rows below, and the Draw and Poise ones filed under Hand & Draw and Stats & Defence. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -724,6 +726,18 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
  * last-open tab was that one met it on first launch of the new build.
  */
 export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
+
+/**
+ * formationLayoutRows() → the rows the formation editor edits, found by TOPIC
+ * in whichever tab files them. The mount named its tab ('Interface') and the
+ * topic moved to Battlefield under it, handing the editor no rows: every
+ * number threw on `row.max` and Apply saved nothing (Codex, on #1256). Asking
+ * every tab means the next move cannot do that again.
+ */
+export function formationLayoutRows() {
+  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(ROWS, id))
+    .find((group) => group.id === 'Formation layout')?.rows || [];
+}
 
 export function activeAdvancedGroup(settings) {
   const stored = settings?.[ADVANCED_CAT_KEY];
@@ -1913,8 +1927,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     else container.querySelector('.set-panel')?.prepend(sections);
   };
   const wire = () => {
-  mountFormationSettings(container, settings, onChange,
-    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
+  mountFormationSettings(container, settings, onChange, formationLayoutRows());
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -2110,7 +2123,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const currentGroup = activeAdvancedGroup(settings);
       const groups = advancedSubgroups(ROWS, currentGroup);
       const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
-      const rows = button.dataset.resetConfig === 'all' ? ROWS
+      // Reset all also clears inert retired keys: they are off the screen, so
+      // this is the only door that can take a stale one out of a profile.
+      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
