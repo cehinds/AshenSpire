@@ -16,7 +16,7 @@ import { createLocationVisit, leaveLocation } from '../src/engine/locations.js';
 import { recordEventChoice } from '../src/model/quests.js';
 import { SERVICE_TAGS, questBoardPointAt, restLocationAtPoint, locationTags } from '../src/model/locations.js';
 import { ATLAS, generateJourney, completeJourneyNode } from '../src/model/worldAtlas.js';
-import { boardQuestIds, questBoardModel, questExchange, questJournal } from '../src/ui/models/QuestBoardModel.js';
+import { BOARD_STATES, boardQuestIds, questBoardModel, questExchange, questJournal } from '../src/ui/models/QuestBoardModel.js';
 import { createDialogueState, dialogueModel, dialogueStep } from '../src/ui/models/DialogueModel.js';
 
 const registries = createRegistries(contentBundle);
@@ -48,7 +48,11 @@ function runWithOpenQuest() {
   throw new Error('no journey in the fixture sweep reaches a posted quest');
 }
 const completions = (run) => run.history.filter((row) => row && row.kind === 'questCompleted');
-const offerOf = (run, ownerId, questId) => questBoardModel({ registries, run, ownerNodeId: ownerId }).offers.find((o) => o.questId === questId);
+const offerOf = (run, ownerId, questId) => {
+  const offer = questBoardModel({ registries, run, ownerNodeId: ownerId }).offers.find((o) => o.questId === questId);
+  assert.ok(BOARD_STATES.includes(offer.state), `'${offer.state}' is a board state`);
+  return offer;
+};
 
 test('the inn carries the questBoard service; the shrine, the chapel and the camp do not', () => {
   assert.equal(SERVICE_TAGS.questBoard, 'questBoard');
