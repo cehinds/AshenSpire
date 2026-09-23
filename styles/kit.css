@@ -4087,6 +4087,9 @@ button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outli
 .inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * max(16px, calc(16px / var(--ui-zoom, 1)))); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* ONE LINE, like creation flavor (SPEC): a long identity ends in an ellipsis;
    the whole of it opens in the lore modal from this same line. */
+/* A line with nothing behind it (an equipment blurb) has no modal to open,
+   so it wraps in full rather than hide words a touch player cannot reach. */
+p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; text-overflow:clip; }
 .inspection-lore-line .lore-read { flex:none; font-size:calc(0.75 * max(16px, calc(16px / var(--ui-zoom, 1)))); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
 .lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
 .lore-modal-text p { margin:0; }
