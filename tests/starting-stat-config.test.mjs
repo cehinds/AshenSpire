@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { attributeContentProblems } from '../src/model/attributes.js';
 import { createRunState } from '../src/model/state.js';
 import { deriveStat } from '../src/model/derivedStats.js';
+import { derivedStatFloorProblems } from '../src/model/startingStatConfig.js';
 
 // The pool dial is exercised through the mode creation OFFERS. It used to be
 // driven here through `pointbuy`, which is retired — and a retired mode is no
@@ -609,4 +610,23 @@ test('a stat base is whole points, and Mana cannot be configured to zero', async
   assert.ok(!advancedConfigProblemRows(contentBundle, { 'gameConfig.derivedStatRules.rules.mana.base': 0 })
     .some((p) => /Mana would be/.test(p.message)), 'base 0 with WIS 1 still yields 1');
   assert.ok(validateContent(contentBundle).ok, 'the shipped table passes both');
+});
+
+// Codex (#1253): the floor is the weakest character creation ALLOWS, not every
+// attribute at its minimum. Lean spends all eight points, so at Mana base 0
+// and every weight 0.5 the all-ones character (0 Mana) cannot be made, and
+// every legal one has at least 2 — that configuration is safe and must pass.
+test('the Mana floor prices only characters creation can make', async () => {
+  const { advancedConfigProblemRows } = await import('../src/model/advancedConfig.js');
+  const ids = contentBundle.attributes.map((row) => row.id);
+  const key = (field) => `gameConfig.derivedStatRules.rules.mana.${field}`;
+  const halves = Object.fromEntries([[key('base'), 0], ...ids.map((id) => [key(id), 0.5])]);
+  const floorOf = (overrides) => derivedStatFloorProblems(configuredContentBundle(contentBundle, overrides));
+  assert.deepEqual(floorOf(halves), [], 'every legal lean character has Mana');
+  assert.ok(!advancedConfigProblemRows(contentBundle, halves).some((p) => /Mana would be/.test(p.message)));
+  // A real zero is still refused, and the message names the character that has it.
+  const thin = Object.fromEntries([[key('base'), 0], ...ids.map((id) => [key(id), id === 'wisdom' ? 0.2 : 0])]);
+  const [problem] = floorOf(thin);
+  assert.match(problem.message, /Mana would be 0/);
+  assert.match(problem.message, /wisdom 1/);
 });

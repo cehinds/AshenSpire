@@ -1,3 +1,4 @@
+import { presetGearProblems } from './attributes.js';
 import { ratingIds } from './ratingFormula.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 
@@ -170,7 +171,8 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
 
 /**
  * defaultModeHoldsItsKits(bundle, settings) → can the mode creation offers
- * still dress every class, with THIS requirement table in force?
+ * still dress every class — its kit and the outfits creation offers it —
+ * with THIS requirement table in force?
  *
  * THE DIAL THAT COULD THROW AWAY EVERY OTHER DIAL. `validateContent` refuses a
  * preset that cannot hold the kit its class starts in, and `rebuildRegistries`
@@ -198,6 +200,31 @@ function defaultModeHoldsItsKits(bundle, settings) {
     for (const id of ids) {
       const value = values[id];
       if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
+    }
+    // The OUTFITS creation offers the class are held to the same door: a raise
+    // the preset cannot wear fails validateContent just as a kit raise does
+    // (Codex, #1255). The class survives it either way it can be born: in the
+    // preset it falls back to, or in the per-cell edit made alongside the
+    // raise, when that edit is itself a whole allocation that holds its kit —
+    // raising Vigil and giving the Reaver the Strength to wear it is one
+    // change, not two (Codex, #1255).
+    const wearsOutfits = (preset) => !presetGearProblems({
+      presets: { [modeId]: { [classId]: preset } },
+      defaultMode: modeId,
+      startingKits: [],
+      equipmentRequirements: bundle.equipment?.equipmentRequirements || [],
+      creationClasses: bundle.characterCreation?.classes || {},
+    }).length;
+    if (!wearsOutfits(values)) {
+      const edited = Object.fromEntries(ids.map((id) => [id,
+        Number(settings[`gameConfig.attributeRules.presets.${modeId}.${classId}.${id}`] ?? values[id])]));
+      const inForce = resolved.mode || mode;
+      const expected = inForce.baseline * ids.length + inForce.bonusPool;
+      const floor = inForce.belowBaseline === 'forbid' ? Math.max(inForce.minimum, inForce.baseline) : inForce.minimum;
+      const whole = ids.every((id) => Number.isInteger(edited[id]) && edited[id] >= Math.max(floor, kitMinimum(needs, classId, id))
+        && edited[id] <= ceiling)
+        && ids.reduce((sum, id) => sum + edited[id], 0) === expected;
+      if (!whole || !wearsOutfits(edited)) return false;
     }
   }
   return true;
@@ -362,30 +389,70 @@ function dialLabel(key) {
  * `maxMana <= 0`, and since ruleset 6 every input to Mana is a dial: a base and
  * a weight per attribute. Set them all to zero and a new run is born invalid —
  * it cannot be saved or restored (Codex, #1253). So Mana is priced here for the
- * weakest character creation allows — every attribute at the mode's floor, at
- * level 1 — and refused by name if that is below one. HP is clamped to 1 at the
- * run door and Stamina, Actions and draw may be 0, so Mana is the only row.
+ * weakest character creation allows, at level 1, and refused by name if that
+ * is below one. HP is clamped to 1 at the run door and Stamina, Actions and
+ * draw may be 0, so Mana is the only row.
+ *
+ * THE WEAKEST LEGAL CHARACTER, NOT EVERY ATTRIBUTE AT ITS FLOOR. A fixedTotal
+ * mode spends its whole pool, so "every attribute at the floor" is a character
+ * no one can make: under lean, weights of 0.5 price that {1,1,1,1,1} at 0 Mana
+ * while every legal eight-point character has at least 2 (Codex, #1253). Each
+ * attribute's term is floored on its own, so Mana is a sum of one
+ * non-decreasing term per attribute, and the minimum over allocations that
+ * spend exactly the mode's total is a small knapsack over the points.
  */
 export function derivedStatFloorProblems(bundle) {
   const table = bundle?.derivedStatRules;
   const rule = table?.rules?.mana;
   const mode = (bundle?.creationModes || []).find((row) => row.id === bundle?.attributeRules?.defaultMode);
   if (!rule || !mode || !Array.isArray(bundle.attributes)) return [];
+  const ids = bundle.attributes.map((row) => row.id);
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
-  const attributes = Object.fromEntries(bundle.attributes.map((row) => [row.id, floor]));
+  const ceiling = mode.maximum;
+  if (![floor, ceiling].every(Number.isInteger) || ceiling < floor) return [];
+  const fixedTotal = mode.redistribution === 'fixedTotal';
+  const total = mode.baseline * ids.length + mode.bonusPool;
   let value;
+  let weakest;
   try {
-    const resolved = resolveDerivedStatRules(table, { attributeIds: bundle.attributes.map((row) => row.id), classFields: ['maxHp'] });
-    value = deriveStat(resolved, 'mana', { attributes, classDef: {}, level: 1 }).value;
+    const resolved = resolveDerivedStatRules(table, { attributeIds: ids, classFields: ['maxHp'] });
+    const zero = Object.fromEntries(ids.map((id) => [id, 0]));
+    const at = (attributes) => deriveStat(resolved, 'mana', { attributes, classDef: {}, level: 1 }).value;
+    const constant = at(zero);
+    // term(id, points): what `points` of one attribute adds on its own.
+    const term = (id, points) => at({ ...zero, [id]: points }) - constant;
+    // best[s] = the least Mana the attributes placed so far can make while
+    // spending exactly s points, with the allocation that makes it.
+    let best = new Map([[0, { mana: 0, allocation: {} }]]);
+    for (const id of ids) {
+      const next = new Map();
+      for (let points = floor; points <= ceiling; points += 1) {
+        const add = term(id, points);
+        for (const [spent, entry] of best) {
+          const key = spent + points;
+          const mana = entry.mana + add;
+          if (!next.has(key) || mana < next.get(key).mana) {
+            next.set(key, { mana, allocation: { ...entry.allocation, [id]: points } });
+          }
+        }
+      }
+      best = next;
+    }
+    const candidates = fixedTotal ? [best.get(total)].filter(Boolean) : [...best.values()];
+    if (!candidates.length) return []; // no legal character: the mode's own check names that
+    const least = candidates.reduce((a, b) => (b.mana < a.mana ? b : a));
+    value = constant + least.mana;
+    weakest = least.allocation;
   } catch {
     return []; // a malformed table is the schema's to name, not this check's
   }
   if (value >= 1) return [];
-  const keys = ['base', ...bundle.attributes.map((row) => row.id)].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
+  const keys = ['base', ...ids].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
+  const shown = ids.map((id) => `${id} ${weakest[id]}`).join(', ');
   return [{
     path: 'derivedStatRules.rules.mana',
     keys,
-    message: `Mana would be ${value} for a character at the lowest starting value (${floor} in every attribute), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
+    message: `Mana would be ${value} for the weakest character creation allows (${shown}), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
   }];
 }
 
