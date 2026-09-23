@@ -1004,21 +1004,9 @@ export const balance = {
     // takes everything, picking at random where there is a choice; OFF gives
     // only what was chosen, no nagging".
     //
-    // `auto` is the default, and the reason is which mistake costs more: under
-    // auto a distracted Continue still banks the cinders and the relic (an
-    // explicit SKIP on a row is respected — deck discipline survives the
-    // setting); under manual a distracted Continue walks away from everything.
-    // Losing rewards you never saw is the worse silence. The cost of the
-    // default, stated: auto's card pick adds a card a deliberate player may
-    // not have wanted — one tap (Skip on the card row) prevents it.
-    //
-    // NO SETTINGS ROW DERIVES FROM THIS YET, ON PURPOSE — settings.js is under
-    // E3's live claim (#248); adding the row later is a data edit there, not a
-    // redesign (the handLayout precedent, three rows down). Until then the
-    // dial is this row and meta.settings.rewardCollect overrides it when a
-    // row exists to write it.
+    // Manual collection is the default; stored preferences can still select auto.
     rewardCollect: {
-      def: 'auto',
+      def: 'manual',
       modes: ['auto', 'manual'],
     },
     // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.

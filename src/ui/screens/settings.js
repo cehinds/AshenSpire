@@ -292,9 +292,8 @@ const ROWS = [
   // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
   // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
   // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. Conservative default, as his own
-  // data-driven instruction for an unsettled 'maybe' asks.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+  // cinders, and leave when you choose.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: true, label: 'Multi-use Shrines',
     note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
@@ -306,7 +305,7 @@ const ROWS = [
   // settings bag reaches it.
   { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
     note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: true, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
@@ -348,43 +347,8 @@ const ROWS = [
     note: 'Show your relic icons in the map header bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true,
     note: 'Show the run seed in the map header bar.' },
-  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
-  //
-  //   "rotating to horizontal should work again. I hate that it tells me to
-  //    rerotate to verticle. revert that back, or make that a configurable
-  //    setting."
-  //
-  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
-  // gate was protecting, a row keeps it reachable. So this is one row in a table
-  // of about forty, and it is deliberately NOT the Settings layout act (E3).
-  //
-  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
-  // MINE — with the measurement that decided it, because his sentence points the
-  // other way and a reader is owed the reason I did not simply follow it.
-  // `node tools/uprightgate.mjs`, 844x390, this tree:
-  //
-  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
-  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
-  //
-  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
-  // again."** It replaces a legible refusal with an illegible wall: the board
-  // draws, and the button that ends the turn is off screen inside a container
-  // that scrolls programmatically and never by hand. Defaulting it off would
-  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
-  // a third composition and it is still owed** (upright.js's header sets out why
-  // it is not one change) — this row is the switch he asked for and the honest
-  // half of the answer, not the whole of it.
-  //
-  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
-  // token, no other line in the tree. The default is the only part of this row I
-  // am holding for him.
-  //
-  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
-  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
-  // one is found by a player who has just been refused, mid-annoyance, on a phone
-  // — and the gate's own copy now points at it by name. A switch you need because
-  // something is in your way does not live in the debugging surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: true, label: 'Short-screen warning',
+  // Short-screen warning is optional on narrow landscape screens.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
