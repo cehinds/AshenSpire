@@ -376,13 +376,14 @@ test('no tab renders two rows a player cannot tell apart', async () => {
     }
   }
   // PRE-EXISTING, AND NOT THIS CHANGE'S TO FIX. `combatRatings.js` keys an
-  // armour bonus by both `armor:<class>:default` and `armor:<class>:<piece>`
-  // and labels both with `piece.name`, so Armour bonuses shows each of the
+  // armour rating by both `armor:<class>:default` and `armor:<class>:<piece>`
+  // and labels both with `piece.name`, so Armour ratings (Armour bonuses
+  // until #1242 made them the item's own values) shows each of the
   // four class sets twice (20 rows), and Attack overrides pairs two cards that
   // share a name (2 rows). Compaction creates none of them: every one of these
   // rows collides on its UNCOMPACTED label too. That is asserted, so the day
   // this number moves for a different reason, it fails here.
-  for (const line of collisions) assert.match(line, /Armour bonuses|Attack overrides/, line);
+  for (const line of collisions) assert.match(line, /Armour ratings|Attack overrides/, line);
   assert.equal(collisions.length, 22,
     'the only indistinguishable rows left are the 22 that were already indistinguishable');
 });
