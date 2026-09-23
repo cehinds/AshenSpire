@@ -1,7 +1,7 @@
 // One read model for character stats on every non-combat comparison surface.
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
-import { deriveStat } from './derivedStats.js';
+import { deriveStat, deriveStatIncrease, resolvedRuleRow, ruleWeights } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
@@ -58,14 +58,21 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // records that override in its snapshot, and reading the authored row
   // instead would price its meter by numbers that run never agreed to
   // (Codex, #1217).
-  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
-    || registries.derivedStatRules?.rules?.poise;
-  const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
-    : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
-  const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
-  const poiseBase = Number.isFinite(poiseRule?.base) ? poiseRule.base : 0;
-  const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
-  const attribute = poiseRule ? poiseBase + Math.floor(con / (perTier || 1)) * gain : 0;
+  // ONE EVALUATOR, NOT A SECOND COPY OF THE FORMULA. The snapshot's row is
+  // ruleset-6 shaped whatever table the run was born under (model/
+  // derivedStats.js normalizes at the door), so the Poise vessel is priced by
+  // the same arithmetic every other row is — weights included, which is what
+  // lets the row answer to more than Constitution the day it is authored to.
+  const poiseRule = resolvedRuleRow(run.derivedStatRuleSnapshot?.rules, 'poise')
+    || resolvedRuleRow(registries.derivedStatRules, 'poise');
+  // A run handed without attributes (a headless fixture) has no attribute term,
+  // so every attribute the row names reads 0 rather than refusing the fixture.
+  const poiseAttributes = Object.fromEntries(ruleWeights(poiseRule || {})
+    .map(([id]) => [id, Number.isFinite(run.attributes?.[id]) ? run.attributes[id] : 0]));
+  const attribute = poiseRule
+    ? (Number.isFinite(poiseRule.base) ? poiseRule.base : 0)
+      + deriveStatIncrease(poiseRule, { attributes: poiseAttributes, statId: 'poise' }).value
+    : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
@@ -84,7 +91,11 @@ export function playerPoiseThresholdReceipt(registries, run) {
     id: 'poiseThreshold',
     label: 'Poise threshold',
     sources: [
-      ...(attribute > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      // THE ATTRIBUTES THE ROW ACTUALLY ANSWERS TO. This named Constitution
+      // outright while a row could only have one source stat; since ruleset 6
+      // it may be weighted across several, and a receipt that names the wrong
+      // one is worse than a receipt that names none.
+      ...(attribute > 0 ? [{ kind: 'attribute', id: ruleWeights(poiseRule || {}).map(([id]) => id).join('+') || 'attributes', value: attribute }] : []),
       ...pieceSources, ...relicSources,
     ],
     attribute,
@@ -206,7 +217,13 @@ export function statProjection(registries, run) {
       adjustment,
       // Every term the value has, so the arithmetic shown equals the result
       // shown: the level's own term (plan phase 6) joins once it is non-zero.
-      formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+      // THE ONE FORMAT, READ BACK: base, then each attribute's own floored
+      // term by its short label ("30 + 12 CON"), exactly as a rating receipt
+      // reads. A run born under ruleset 5 or earlier still carries a tier and
+      // its gain (model/derivedStats.js), and is shown the way it is priced.
+      formula: `${receipt.base} + ${receipt.pointsPerIncrease === 1 && receipt.gain === 1
+        ? (Object.entries(receipt.terms).map(([attrId, term]) => `${term} ${registries.attributes.get(attrId)?.shortLabel || attrId}`).join(' + ') || '0')
+        : `${receipt.tier} × ${receipt.gain}`}`
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,

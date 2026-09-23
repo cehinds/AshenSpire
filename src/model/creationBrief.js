@@ -54,6 +54,7 @@ import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
 import { defaultRatingFormula } from './ratingFormula.js';
+import { ruleWeights } from './derivedStats.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -163,6 +164,7 @@ function ratingWeightFacts(registries, attributeId) {
  */
 export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
+  const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
   return orderedAttributes(registries).map((authored) => {
@@ -171,43 +173,34 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // the fold's line and the face's summary are the same numbers — the rules
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
-      .filter(([, rule]) => rule.sourceStat === def.id)
+      // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
+      // attribute feeds" is every row that puts a non-zero weight on it — a row
+      // may now feed two attributes and appear on both cards, which the single
+      // `sourceStat` this filter used to read could never express.
+      .filter(([, rule]) => ruleWeights({ ...defaults, ...rule }).some(([id]) => id === def.id))
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
-        const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
-        // THE RUN'S TIER, NOT THE TABLE'S. A run carries the derived-stat rows
+        // THE RUN'S RULE, NOT THE TABLE'S. A run carries the derived-stat rows
         // it was BORN under — a settings override tunes the live table while a
         // climb in progress keeps its own snapshot — so the authored row can
-        // say "every 1 point" while the character on screen was priced by a
-        // different one. The projection is the run's own derivation and
-        // already carries the resolved tier; reading the authored row here is
-        // the copy-that-nothing-syncs the card exists to avoid (Law 1 clause
-        // 2).
+        // say one thing while the character on screen was priced by another.
+        // The projection is the run's own derivation; reading the authored row
+        // here is the copy-that-nothing-syncs the card exists to avoid (Law 1
+        // clause 2). The authored row answers only when there is no run.
         const row = projected.get(id);
-        const authoredPoints = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
-        const resolvedPoints = Number.isFinite(row?.pointsPerTier) ? row.pointsPerTier : authoredPoints;
-        // THE PROJECTION WINS ON THE GAIN TOO, for the same reason it wins on
-        // the tier: it is the run's own derivation. A class-field gain (hp) has
-        // no authored number at all and was always read here; an authored one
-        // that disagrees with the run's snapshot — a settings override, or a
-        // save born under an older table — is the copy that goes stale.
-        const perTier = Number.isFinite(row?.gainPerTier) ? row.gainPerTier : gain;
-        // A TIER SMALLER THAN A POINT IS RESTATED AS WHAT A POINT BUYS. "+4 HP
-        // every 0.2 points" is arithmetic homework; the player is asking what
-        // one point does.
-        //
-        // FLOOR, NOT ROUND, BECAUSE THE RULE FLOORS. A tier is counted
-        // `floor(points / pointsPerTier)`, so a point buys `floor(1 /
-        // pointsPerTier)` tiers at worst and never more on the first point.
-        // Rounding said "+8 HP per pt" at a tier of 0.6 where the measured gain
-        // is +4 — a card that promises more than the rule pays. The epsilon is
-        // for the same binary float the run door rounds away: 1 / 0.2 is
-        // 5.000000000000001 and must not floor to 4.
-        if (Number.isFinite(perTier) && resolvedPoints > 0 && resolvedPoints < 1) {
-          const tiersPerPoint = Math.max(1, Math.floor(1 / resolvedPoints + 1e-9));
-          return { label: presentation[id].label, perTier: perTier * tiersPerPoint, points: 1 };
-        }
-        return { label: presentation[id].label, perTier, points: resolvedPoints };
+        const weight = Number.isFinite(row?.weights?.[def.id]) ? row.weights[def.id]
+          : ruleWeights({ ...defaults, ...rule }).find(([attrId]) => attrId === def.id)?.[1];
+        const perIncrease = Number.isFinite(row?.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+        const gain = Number.isFinite(row?.gain) ? row.gain : 1;
+        if (!Number.isFinite(weight) || weight <= 0) return { label: presentation[id].label, perTier: null, points: 1 };
+        // WHAT ONE OF *MY* POINTS BUYS, said the way the player asks it. A
+        // weight of 4 is "+4 every 1 point"; a weight of 0.2 is "+1 every 5
+        // points", never "+0.2 per point" — the term is floored, so a fifth
+        // of a point is nothing until five of them arrive. The epsilon is the
+        // same one the rule's floor takes: 1 / 0.2 is 5.000000000000001.
+        const rate = (weight * gain) / perIncrease;
+        if (rate >= 1) return { label: presentation[id].label, perTier: Math.round(rate * 100) / 100, points: 1 };
+        return { label: presentation[id].label, perTier: 1, points: Math.round((1 / rate) * 100 + 1e-9) / 100 };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id);

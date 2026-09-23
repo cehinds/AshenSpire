@@ -15,6 +15,20 @@ export function advancedSection(row) {
   return row.advancedGroup || 'Gameplay';
 }
 
+// ---- ONE READING ORDER FOR THE WHOLE CLIMB (owner, 2026-09-21) -------------
+//
+// "I want level up and starting stats to be together too", and the stat and
+// resource formulas with them: what a character opens with, what a level adds,
+// and what every point of every attribute is worth — in that order, with
+// nothing between them. The floors and the per-class tables follow, because
+// they are bounded by the three above rather than read alongside them.
+const PROGRESSION_TOPIC_ORDER = Object.freeze([
+  'Assign points',
+  'Level-up',
+  'Stats & resources',
+  'Equipment requirements',
+]);
+
 /**
  * The class topics, in the order the content bundle lists its classes.
  *
@@ -130,14 +144,23 @@ export function advancedSubgroups(rows, section) {
   }
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
-    // rescaled by it. Equipment requirements come second because they are the
-    // FLOOR under it — the least a character can carry is whatever the starting
-    // kits ask for — so the two are read together, and only then the class
-    // tables they bound. A topic not named here keeps its discovered order,
-    // after the named ones.
-    const order = ['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
+    // rescaled by it. Level-up next, because a level spends the same points on
+    // the same rows; then the rows themselves, in the one format; then the
+    // equipment floor under all of it — the least a character can carry is
+    // whatever the starting kits ask for — and only then the class tables they
+    // bound. A topic not named here keeps its discovered order, after the
+    // named ones.
+    const order = [...PROGRESSION_TOPIC_ORDER, ...CLASS_TOPICS, 'General'];
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
+    // The pools he named first ("mp hp and every resource"), then the ratings
+    // they now read like — each block in its own authored order.
+    const stats = result.find((group) => group.id === 'Stats & resources');
+    if (stats) {
+      const pool = (row) => (row.key.startsWith('gameConfig.derivedStatRules.') ? 0 : 1);
+      stats.rows = stats.rows.map((row, index) => [row, index])
+        .sort(([a, i], [b, j]) => pool(a) - pool(b) || i - j).map(([row]) => row);
+    }
   }
   return result;
 }

@@ -33,11 +33,11 @@ test('pool changes redistribute every class exactly and leave authored content a
 // whole attribute points; it reaches no formula. A configured threshold is now
 // the threshold a run is born with, whatever pool it was born on.
 test('a retuned pool moves the presets and leaves every threshold alone', () => {
-  const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 2 };
+  const settings = { [poolKey]: 10, 'gameConfig.derivedStatRules.rules.hp.constitution': 2 };
   const wide = configuredContentBundle(contentBundle, settings);
   assert.equal(wide.creationModes.find(m => m.id === 'lean').statConversionScale, undefined,
     'no mode carries a conversion scale, shipped or retuned');
-  assert.equal(wide.derivedStatRules.rules.hp.pointsPerTier, 2, 'the configured threshold is the one used');
+  assert.equal(wide.derivedStatRules.rules.hp.constitution, 2, 'the configured weight is the one used');
 
   const registries = createRegistries(wide);
   const a = createRunState({ registries, classId: 'reaver', seed: 42, attributeMode: 'lean' });
@@ -47,10 +47,10 @@ test('a retuned pool moves the presets and leaves every threshold alone', () => 
   // used to be multiplied by the mode's scale on its way into the snapshot, so
   // the row a save carried was never the row the panel showed.
   const row = a.derivedStatRuleSnapshot.rules.rules.hp;
-  assert.equal(row.pointsPerTier, 2);
+  assert.equal(row.constitution, 2);
   const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
     { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
-  assert.equal(receipt.value, row.base + row.gainPerTier * Math.floor(a.attributes.constitution / row.pointsPerTier));
+  assert.equal(receipt.value, row.base + Math.floor(a.attributes.constitution * row.constitution));
 
   // A bigger pool buys more, which is the whole of what a pool now does.
   const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
@@ -234,10 +234,11 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   const run = createRunState({ registries, classId: 'reaver', seed: 7, attributeMode: 'lean' });
   assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
   const rules = contentBundle.derivedStatRules.rules;
-  const pool = (id, attribute) => rules[id].base + rules[id].gainPerTier * Math.floor(attribute / rules[id].pointsPerTier);
-  assert.equal(run.energyMax, pool('energy', run.attributes.dexterity));
-  assert.equal(run.drawPerTurn, pool('draw', run.attributes.intelligence));
-  assert.equal(run.maxMana, pool('mana', run.attributes.wisdom));
+  // Ruleset 6: base plus each attribute's own floored term, as a rating reads.
+  const pool = (id, attributeId) => rules[id].base + Math.floor(run.attributes[attributeId] * rules[id][attributeId] + 1e-9);
+  assert.equal(run.energyMax, pool('energy', 'dexterity'));
+  assert.equal(run.drawPerTurn, pool('draw', 'intelligence'));
+  assert.equal(run.maxMana, pool('mana', 'wisdom'));
   // The numbers those rows now state, on the lean span: Mana is its base of 1
   // plus Wisdom, and Actions and draw sit at their base of 3 until a point
   // clears a five-point tier no lean character can reach.

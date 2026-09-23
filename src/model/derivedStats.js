@@ -10,6 +10,41 @@
 
 import { disclosureProblem } from './disclosure.js';
 
+// ---- ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21) ------------
+//
+// His words: "make mp hp and every resource now a similar calculation to AR,
+// PR, DR, etc. I'll just use decimal values to set the growth per level, in
+// fact I'd like all the resources and stats to be in the same format so that
+// there was no confusion to include the base values and everything because
+// they are way too separated."
+//
+// RULESET 6 IS THAT FORMAT. A row is the combat-rating row (model/
+// ratingFormula.js — AR, DR, PR, Poise, Ward) with a level term on it, and
+// nothing else:
+//
+//   base           what the row is worth before a single point is spent
+//   <attributeId>  this attribute's DECIMAL contribution per point, floored on
+//                  its own exactly as a rating's term is. Absent is 0, so a
+//                  row names only the attributes it answers to.
+//   perLevel       DECIMAL growth per character level — his sentence
+//   cap            as before
+//
+// value = base + Σ floor(attribute × weight) + floor((level − 1) × perLevel)
+//
+// NO TIERS, NO GAIN. A ruleset-6 row cannot state `pointsPerIncrease`, `gain`,
+// `rounding` or `perLevelEvery`. Those four exist only as CARRIERS: a
+// ruleset 1–5 save's `{ sourceStat, pointsPerTier, gainPerTier, perLevel:
+// { every, gain } }` normalizes onto them so its maxima do not move a point
+// (the run door refuses a save whose persisted maximum disagrees with its
+// snapshot), and the Advanced "Stat points per tier" dial still arrives as a
+// layer that sets `pointsPerIncrease` on every row. An authored row that spells
+// one is refused by name.
+//
+// EVERY ROW THIS ENGINE HANDS OUT IS RULESET-6 SHAPED, whatever version it was
+// authored or saved in. Rulesets 1–5 are read at the door (their own shape,
+// their own validator) and normalized ONCE, here, so no consumer downstream
+// carries a second vocabulary — which is the whole of "they are way too
+// separated" said in code.
 export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana', 'poise']);
 // POISE BECAME A DERIVED ROW IN RULESET 5 (plan phase 9). Every ruleset before
 // it snapshotted five rows, and those snapshots are restored through this same
@@ -21,17 +56,38 @@ export function derivedStatIdsFor(rulesetVersion) {
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5]);
-export const DERIVED_STAT_SNAPSHOT_VERSION = 2;
-export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6]);
+/** The first ruleset written in the one format above. */
+export const UNIFIED_RULESET_VERSION = 6;
+export const DERIVED_STAT_SNAPSHOT_VERSION = 3;
+export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2, 3]);
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
 const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
 const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap', 'perLevel'];
+// The ruleset-6 vocabulary. Attribute weights are NOT listed: they are the
+// attribute ids themselves, exactly as a combat-rating row states them, and the
+// validator is handed the legal set so a typo is still refused by name.
+const UNIFIED_DEFAULT_FIELDS = ['perLevel', 'cap'];
+const UNIFIED_RULE_FIELDS = ['base', 'perLevel', 'cap'];
+// Legal only on a snapshot row or an override layer — see the header.
+const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery'];
+// Every key a row may carry that is NOT an attribute weight — the legacy
+// spellings included, because a normalized row is built by stripping these.
+const NON_WEIGHT_FIELDS = Object.freeze([...new Set([...RULE_FIELDS, ...UNIFIED_RULE_FIELDS, ...CARRIER_FIELDS])]);
 const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
 const BASE_FIELDS = ['strategy', 'field'];
+// A tier is counted by division and division is where binary float lies:
+// 0.2 x 15 is 3.0000000000000004 and 1 / 0.2 is 5.000000000000001. The same
+// epsilon combatRatings.js uses, for the same reason.
+const EPSILON = 1e-9;
+
+/** True for a table (or snapshot envelope) written in the one format. */
+export function isUnifiedRuleset(rulesetVersion) {
+  return (Number(rulesetVersion) || 0) >= UNIFIED_RULESET_VERSION;
+}
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const own = (v, key) => Object.hasOwn(v, key);
 const problem = (out, path, msg) => out.push({ path, msg });
@@ -104,19 +160,75 @@ function validatePerLevel(out, value, path) {
   if (!Number.isFinite(value.gain) || value.gain < 0) problem(out, `${path}.gain`, 'must be a finite number >= 0');
 }
 
-function validateDefaults(out, value, path, { partial }) {
+function validateDefaults(out, value, path, { partial, unified, carriers = false }) {
   if (!plainObject(value)) {
     problem(out, path, 'must be a plain object');
     return;
   }
-  unknownFields(out, value, DEFAULT_FIELDS, path);
-  for (const key of DEFAULT_FIELDS) if (!partial && !own(value, key)) problem(out, `${path}.${key}`, 'missing');
-  validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, !partial);
-  validateRounding(out, value.rounding, `${path}.rounding`, !partial);
+  const fields = unified ? UNIFIED_DEFAULT_FIELDS : DEFAULT_FIELDS;
+  unknownFields(out, value, unified && carriers ? [...fields, ...CARRIER_FIELDS] : fields, path);
+  for (const key of fields) if (!partial && !own(value, key)) problem(out, `${path}.${key}`, 'missing');
+  if (unified) {
+    validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, !partial);
+    validatePoints(out, value.pointsPerIncrease, `${path}.pointsPerIncrease`, false);
+    validateGain(out, value.gain, `${path}.gain`, false, []);
+    validateRounding(out, value.rounding, `${path}.rounding`, false);
+  } else {
+    validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, !partial);
+    validateRounding(out, value.rounding, `${path}.rounding`, !partial);
+  }
   validateCap(out, value.cap, `${path}.cap`, !partial);
 }
 
+/**
+ * Ruleset 6's level term, and it is ONE DECIMAL — "I'll just use decimal
+ * values to set the growth per level". `perLevel: 0.2` is a fifth of a point
+ * of the row per level, which is the same climb ruleset 5 wrote as
+ * `{ every: 5, gain: 1 }` and reads at every level rather than only at five.
+ */
+function validatePerLevelGrowth(out, value, path, required) {
+  if (value === undefined && !required) return;
+  if (!Number.isFinite(value) || value < 0) problem(out, path, 'must be a finite number >= 0');
+}
+
+/**
+ * A ruleset-6 row: base, a decimal weight per attribute it answers to, and the
+ * three dials AR/DR/PR already had. `attributeIds` is the legal weight set, so
+ * a misspelt attribute is refused by name instead of silently weighing nothing.
+ */
+function validateUnifiedRule(out, value, path, options, partial) {
+  if (!plainObject(value)) {
+    problem(out, path, 'must be a plain object');
+    return;
+  }
+  unknownFields(out, value, [...UNIFIED_RULE_FIELDS, ...options.attributeIds,
+    // Only a snapshot row or a layer may carry these; an authored ruleset-6
+    // table that spells one is refused by name (see the header).
+    ...(options.carriers ? CARRIER_FIELDS : [])], path);
+  if (value.perLevelEvery !== undefined
+    && (!Number.isInteger(value.perLevelEvery) || value.perLevelEvery <= 0)) {
+    problem(out, `${path}.perLevelEvery`, 'must be a positive integer number of levels');
+  }
+  if (!partial && !own(value, 'base')) problem(out, `${path}.base`, 'missing');
+  validateBase(out, value.base, `${path}.base`, { required: !partial, classFields: options.classFields });
+  validatePoints(out, value.pointsPerIncrease, `${path}.pointsPerIncrease`, false);
+  validateGain(out, value.gain, `${path}.gain`, false, options.classFields);
+  validateRounding(out, value.rounding, `${path}.rounding`, false);
+  validateCap(out, value.cap, `${path}.cap`, false);
+  validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, false);
+  for (const id of options.attributeIds) {
+    if (value[id] === undefined) continue;
+    if (!Number.isFinite(value[id]) || value[id] < 0) {
+      problem(out, `${path}.${id}`, 'must be a finite number >= 0 — the contribution of one point of this attribute');
+    }
+  }
+}
+
 function validateRule(out, value, path, options, partial) {
+  if (options.unified) {
+    validateUnifiedRule(out, value, path, options, partial);
+    return;
+  }
   if (!plainObject(value)) {
     problem(out, path, 'must be a plain object');
     return;
@@ -148,19 +260,106 @@ function normalizedOptions(options = {}) {
     attributeIds: Array.isArray(options.attributeIds) ? [...options.attributeIds] : [],
     classFields: Array.isArray(options.classFields) ? [...options.classFields] : ['maxHp', 'maxMana'],
     damageSchools: Array.isArray(options.damageSchools) ? [...options.damageSchools] : [],
+    // Which vocabulary the TABLE BEING READ is written in. A caller never sets
+    // this: the version says it, and a snapshot envelope says it for a snapshot
+    // whose rows were normalized before they were saved.
+    unified: !!options.unified,
+    // Whether the carrier fields (header) are legal: on a snapshot row and an
+    // override layer, never on an authored table.
+    carriers: !!options.carriers,
   };
+}
+
+// ---- THE ONE NORMALIZATION (rulesets 1-5 -> the format above) ---------------
+//
+// It runs at the two doors and nowhere else — `resolveDerivedStatRules` and
+// `restoreDerivedStatRuleSnapshot` — so a second vocabulary can never reach a
+// consumer. Every conversion below is EXACT: the same arithmetic, said the
+// shipped way.
+
+/** A legacy `{ base, sourceStat, pointsPerTier, gainPerTier, perLevel }` row as a ruleset-6 row. */
+function normalizeRule(row) {
+  if (!plainObject(row)) return row;
+  const out = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (key === 'sourceStat' || key === 'pointsPerTier' || key === 'gainPerTier' || key === 'perLevel') continue;
+    out[key] = value;
+  }
+  if (typeof row.sourceStat === 'string') out[row.sourceStat] = 1;
+  if (own(row, 'pointsPerTier')) out.pointsPerIncrease = row.pointsPerTier;
+  if (own(row, 'gainPerTier')) out.gain = row.gainPerTier;
+  if (plainObject(row.perLevel)) {
+    // THE OLD CURVE, TO THE POINT. `{ every: 5, gain: 5 }` is +5 every five
+    // levels and stays that — a save's maximum may not move because the table
+    // it was born under was restated. A ruleset-6 row leaves `perLevelEvery`
+    // at 1 and the decimal does the whole of the work.
+    out.perLevel = row.perLevel.gain;
+    out.perLevelEvery = row.perLevel.every;
+  } else if (own(row, 'perLevel')) {
+    out.perLevel = row.perLevel;
+  }
+  return out;
+}
+
+/** A layer's `defaults` patch in ruleset-6 words — only the keys it stated. */
+function normalizeDefaultsPatch(patch) {
+  if (!plainObject(patch)) return patch;
+  const out = {};
+  for (const [key, value] of Object.entries(patch)) {
+    if (key === 'pointsPerTier') out.pointsPerIncrease = value;
+    else out[key] = value;
+  }
+  return out;
+}
+
+/** A layer's per-row patch in ruleset-6 words — only the keys it stated. */
+function normalizeRulePatch(patch, attributeIds) {
+  if (!plainObject(patch)) return patch;
+  const out = normalizeRule(patch);
+  // A patch that renames the source stat replaces the weights outright; a
+  // half-rewritten row would answer to two attributes nobody authored.
+  if (typeof patch.sourceStat === 'string') {
+    for (const id of attributeIds) if (id !== patch.sourceStat) out[id] = 0;
+  }
+  return out;
+}
+
+/**
+ * resolvedRuleRow(table, statId) → one row in ruleset-6 words, with the table's
+ * defaults under it. The run door keeps a save's snapshot byte-for-byte when it
+ * is current (model/state.js returns early), so a v2 snapshot can still reach a
+ * reader in the retired vocabulary; every reader goes through here instead of
+ * indexing `rules` itself.
+ */
+export function resolvedRuleRow(table, statId) {
+  const row = table && table.rules && table.rules[statId];
+  if (!plainObject(row)) return null;
+  return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row });
+}
+
+/** Every attribute this row answers to, as `[id, weight]`, weight non-zero. */
+export function ruleWeights(row) {
+  if (!plainObject(row)) return [];
+  return Object.entries(row)
+    .filter(([key, value]) => !NON_WEIGHT_FIELDS.includes(key) && Number.isFinite(value) && value !== 0);
 }
 
 /** Returns named schema problems; it never throws and never repairs input. */
 export function derivedStatRuleProblems(source, options = {}) {
   const out = [];
-  const opts = normalizedOptions(options);
   if (!plainObject(source)) return [{ path: 'derivedStatRules', msg: 'must be a plain object' }];
+  // THE VERSION SAYS WHICH VOCABULARY, and only a snapshot envelope overrides
+  // it: a ruleset-5 save whose rows were normalized before they were written
+  // is read back in ruleset-6 words, which is what its envelope version says.
+  const opts = normalizedOptions({
+    ...options,
+    unified: options.unified === undefined ? isUnifiedRuleset(source.rulesetVersion) : options.unified,
+  });
   unknownFields(out, source, ROOT_FIELDS, 'derivedStatRules');
   if (!Number.isInteger(source.rulesetVersion) || !DERIVED_STAT_RULESET_VERSIONS.includes(source.rulesetVersion)) {
     problem(out, 'rulesetVersion', `must be one of ${DERIVED_STAT_RULESET_VERSIONS.join(', ')}`);
   }
-  validateDefaults(out, source.defaults, 'defaults', { partial: false });
+  validateDefaults(out, source.defaults, 'defaults', { partial: false, unified: opts.unified, carriers: opts.carriers });
   if (!plainObject(source.rules)) {
     problem(out, 'rules', 'must be a plain object');
     return out;
@@ -223,16 +422,26 @@ export function derivedStatPresentationProblems(source) {
   return out;
 }
 
+/**
+ * A mode/run/debug layer, validated AFTER normalization and therefore always in
+ * ruleset-6 words. A layer may still be WRITTEN in the retired vocabulary — an
+ * exported configuration from before this format, a `pointsPerTier` dial — and
+ * it means exactly what it always meant; it is simply read once, here, rather
+ * than carried as a second spelling into the resolved table.
+ */
 function overrideProblems(value, path, options) {
   const out = [];
   if (!plainObject(value)) return [{ path, msg: 'must be a plain object' }];
   unknownFields(out, value, OVERRIDE_FIELDS, path);
-  if (value.defaults !== undefined) validateDefaults(out, value.defaults, `${path}.defaults`, { partial: true });
+  const unifiedOptions = { ...options, unified: true, carriers: true };
+  if (value.defaults !== undefined) {
+    validateDefaults(out, normalizeDefaultsPatch(value.defaults), `${path}.defaults`, { partial: true, unified: true, carriers: true });
+  }
   if (value.rules !== undefined) {
     if (!plainObject(value.rules)) problem(out, `${path}.rules`, 'must be a plain object');
     else for (const [id, row] of Object.entries(value.rules)) {
       if (!DERIVED_STAT_IDS.includes(id)) problem(out, `${path}.rules.${id}`, `unknown derived-stat row '${id}'`);
-      else validateRule(out, row, `${path}.rules.${id}`, options, true);
+      else validateRule(out, normalizeRulePatch(row, options.attributeIds), `${path}.rules.${id}`, unifiedOptions, true);
     }
   }
   return out;
@@ -244,7 +453,10 @@ function throwProblems(label, problems) {
 
 /** Resolve authored rows plus mode/run/debug layers into a self-contained table. */
 export function resolveDerivedStatRules(source, options = {}) {
-  const opts = normalizedOptions(options);
+  // The TABLE's own version decides its vocabulary, so the caller's options go
+  // through untouched and `derivedStatRuleProblems` reads it off the source.
+  // Normalizing first would have pinned every table to `unified: false`.
+  const opts = normalizedOptions({ ...options, unified: isUnifiedRuleset(source && source.rulesetVersion) });
   throwProblems('derivedStatRules', derivedStatRuleProblems(source, opts));
   const layers = [
     ['modeModifiers', options.modeModifiers],
@@ -258,14 +470,19 @@ export function resolveDerivedStatRules(source, options = {}) {
   }
   // A defaults override affects every row that was not explicitly patched by
   // the same or a later layer. Resolve layer-by-layer to keep that fact true.
+  //
+  // NORMALIZED ONCE, HERE. Every row this function returns is ruleset-6 shaped
+  // whatever version the table was authored in, which is what lets the run
+  // door, the relic fold, the settings rows and every projection read ONE set
+  // of field names.
   const replayed = {
     rulesetVersion: source.rulesetVersion,
-    defaults: { ...source.defaults },
+    defaults: normalizeDefaultsPatch({ ...source.defaults }),
     // ONLY THE ROWS THE TABLE ACTUALLY CARRIES. Mapping the whole id list
     // would invent a baseless row for a version that never had one.
     rules: Object.fromEntries(DERIVED_STAT_IDS
       .filter((id) => own(source.rules, id))
-      .map((id) => [id, { ...source.defaults, ...structuredClone(source.rules[id]) }])),
+      .map((id) => [id, normalizeRule({ ...source.defaults, ...structuredClone(source.rules[id]) })])),
   };
   for (const [, layer] of layers) {
     if (!layer) continue;
@@ -274,13 +491,14 @@ export function resolveDerivedStatRules(source, options = {}) {
     // list carries, and patching it blindly threw an unnamed TypeError —
     // exactly what the Advanced stat-tier dial hands in (a `defaults` layer).
     if (layer.defaults) {
-      Object.assign(replayed.defaults, layer.defaults);
-      for (const id of DERIVED_STAT_IDS) if (replayed.rules[id]) Object.assign(replayed.rules[id], layer.defaults);
+      const patch = normalizeDefaultsPatch(layer.defaults);
+      Object.assign(replayed.defaults, patch);
+      for (const id of DERIVED_STAT_IDS) if (replayed.rules[id]) Object.assign(replayed.rules[id], patch);
     }
     if (layer.rules) {
       for (const [id, patch] of Object.entries(layer.rules)) {
         if (!replayed.rules[id]) throw new Error(`Derived-stat override patches '${id}', which this ruleset ${replayed.rulesetVersion} table does not carry`);
-        Object.assign(replayed.rules[id], patch);
+        Object.assign(replayed.rules[id], normalizeRulePatch(patch, opts.attributeIds));
       }
     }
   }
@@ -294,10 +512,10 @@ function baseValue(base, classDef, statId) {
   return value;
 }
 
-function gainValue(gain, classDef, statId) {
+function gainValue(gain, classDef, statId, field = 'gain') {
   if (Number.isFinite(gain)) return gain;
   const value = classDef && gain && classDef[gain.field];
-  if (!Number.isFinite(value)) throw new Error(`${statId}.gainPerTier: class field '${gain && gain.field}' is not a finite number`);
+  if (!Number.isFinite(value)) throw new Error(`${statId}.${field}: class field '${gain && gain.field}' is not a finite number`);
   return value;
 }
 
@@ -312,7 +530,7 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
   const points = attributes && attributes[sourceStat];
   if (!Number.isFinite(points)) throw new Error(`sourceStat '${sourceStat}' is not a finite number`);
   if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error('pointsPerTier must be a finite number > 0');
-  const gainPerTier = gainValue(rule.gainPerTier, classDef, statId);
+  const gainPerTier = gainValue(rule.gainPerTier, classDef, statId, 'gainPerTier');
   const round = Math[rule.rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rule.rounding}' is not executable`);
   const tier = round(points / rule.pointsPerTier);
@@ -328,15 +546,79 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
 }
 
 /**
- * levelBonus(row, level) → what the row's `perLevel` term adds at a character
- * level: `floor((level − 1) / every) × gain`; 0 for a row without the term,
- * for no level, or for level 1.
+ * levelBonus(row, level) → what the row's level term adds at a character level.
+ *
+ * ONE DECIMAL, HIS WORDS: `perLevel` is what the row gains per level, so
+ * `perLevel: 0.2` climbs a point every five levels and `perLevel: 1` climbs
+ * one every level. `perLevelEvery` is the retired `{ every, gain }` cadence a
+ * ruleset-4/5 save normalizes to and defaults to 1 — a row a player can author
+ * never states it, and a save that carries one keeps the exact curve it was
+ * born under rather than being smoothed underneath a live character.
+ *
+ * `round` is the row's own rounding, so the level term and the attribute term
+ * never disagree about which way a half goes. 0 for no level, for level 1, and
+ * for a row with no term at all.
  */
 export function levelBonus(row, level) {
-  const term = row && row.perLevel;
-  if (!plainObject(term) || !Number.isInteger(level) || level <= 1) return 0;
-  if (!Number.isInteger(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
-  return Math.floor((level - 1) / term.every) * term.gain;
+  if (!plainObject(row) || !Number.isInteger(level) || level <= 1) return 0;
+  const term = row.perLevel;
+  // The retired shape, still read so a direct caller holding an un-normalized
+  // authored row gets the answer that row means.
+  if (plainObject(term)) {
+    if (!Number.isInteger(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
+    return Math.floor((level - 1) / term.every) * term.gain;
+  }
+  if (!Number.isFinite(term) || term === 0) return 0;
+  const every = Number.isInteger(row.perLevelEvery) && row.perLevelEvery > 0 ? row.perLevelEvery : 1;
+  const steps = Math.floor((level - 1) / every);
+  const round = typeof Math[row.rounding] === 'function' ? Math[row.rounding] : Math.floor;
+  const raw = steps * term;
+  return round === Math.floor ? Math.floor(raw + EPSILON) : round(raw);
+}
+
+/**
+ * deriveStatIncrease(row, …) → the ATTRIBUTE term of a row, as a receipt:
+ * `{ weights, terms, points, pointsPerIncrease, tier, gain, value }`.
+ *
+ * THIS IS THE RATINGS' ARITHMETIC (model/ratingFormula.js), because it is the
+ * calculation he pointed at: every attribute's `value × weight` is floored ON
+ * ITS OWN and the floored terms are summed, so a weight of 0.2 gives nothing
+ * until the attribute reaches 5 — on HP exactly as on AR.
+ *
+ * The CARRIERS then apply, and for a ruleset-6 row they are the identity
+ * (`pointsPerIncrease` 1, `gain` 1). They carry a ruleset 1–5 row's tier and
+ * gain unchanged: its one weight is 1, so its term is the whole attribute and
+ * `round(attribute / pointsPerTier) × gainPerTier` is what comes out, to the
+ * bit — the division takes no epsilon, because those maxima are persisted and
+ * the run door refuses a save whose maximum moves.
+ */
+export function deriveStatIncrease(row, { attributes, classDef, statId = 'derivedStat' } = {}) {
+  if (!plainObject(row)) throw new Error('Derived-stat rule must be a resolved rule row');
+  const pointsPerIncrease = Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+  if (pointsPerIncrease <= 0) throw new Error('pointsPerIncrease must be a finite number > 0');
+  const weights = ruleWeights(row);
+  const terms = {};
+  let points = 0;
+  for (const [id, weight] of weights) {
+    const value = attributes && attributes[id];
+    if (!Number.isFinite(value)) throw new Error(`attribute '${id}' is not a finite number`);
+    terms[id] = Math.floor(value * weight + EPSILON);
+    points += terms[id];
+  }
+  const gain = row.gain === undefined ? 1 : gainValue(row.gain, classDef, statId);
+  const rounding = row.rounding === undefined ? 'floor' : row.rounding;
+  const round = Math[rounding];
+  if (typeof round !== 'function') throw new Error(`rounding '${rounding}' is not executable`);
+  const tier = pointsPerIncrease === 1 ? points : round(points / pointsPerIncrease);
+  return {
+    weights: Object.fromEntries(weights),
+    terms,
+    points,
+    pointsPerIncrease,
+    tier,
+    gain,
+    value: tier * gain,
+  };
 }
 
 /**
@@ -346,33 +628,95 @@ export function levelBonus(row, level) {
  * leaves it out and reads the attribute term alone.
  */
 export function deriveStat(resolved, statId, { attributes, classDef, level = undefined } = {}) {
-  const row = resolved && resolved.rules && resolved.rules[statId];
+  const row = resolvedRuleRow(resolved, statId);
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
-  const { points, tier } = tierReceipt;
+  const increase = deriveStatIncrease(row, { attributes, classDef, statId });
   const base = baseValue(row.base, classDef, statId);
   const bonus = levelBonus(row, level);
-  const raw = base + tier * tierReceipt.gainPerTier + bonus;
-  const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, level: Number.isInteger(level) ? level : null, levelBonus: bonus, raw, cap: row.cap, value };
+  const raw = base + increase.value + bonus;
+  const cap = row.cap === undefined ? null : row.cap;
+  const value = cap === null ? raw : Math.min(raw, cap);
+  return {
+    id: statId,
+    // EVERY TERM THE VALUE HAS, in the one vocabulary: which attributes the row
+    // answers to and by how much, what an increase costs and pays, what the
+    // level adds. No `sourceStat` — a row may answer to several attributes now,
+    // and naming one of them would be the half-truth the old field became.
+    weights: increase.weights,
+    terms: increase.terms,
+    points: increase.points,
+    pointsPerIncrease: increase.pointsPerIncrease,
+    tier: increase.tier,
+    base,
+    gain: increase.gain,
+    perLevel: Number.isFinite(row.perLevel) ? row.perLevel : 0,
+    level: Number.isInteger(level) ? level : null,
+    levelBonus: bonus,
+    raw,
+    cap,
+    value,
+  };
 }
 
-/** One compatibility contract for folding an authored relic tier into a rule. */
+/**
+ * ruleTierSize(rule) → how many points of the rule's ONE attribute buy one
+ * unit of its `gain`, or null when the row answers to more than one (or none),
+ * or when its weight is not a whole number of units per point.
+ *
+ * A ruleset-6 row reads `floor(attribute × weight)`, so a whole weight is one
+ * unit per point (size 1) and the relic term folds into the WEIGHT; a
+ * normalized ruleset 1–5 row keeps its weight at 1 and its size in
+ * `pointsPerIncrease`, and the term folds into `gain` as it always did.
+ */
+export function ruleTierSize(rule) {
+  const row = normalizeRule(rule);
+  const weights = ruleWeights(row);
+  if (weights.length !== 1) return null;
+  const perIncrease = Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+  if (perIncrease !== 1 || (row.gain !== undefined && row.gain !== 1)) return weights[0][1] === 1 ? perIncrease : null;
+  return Number.isInteger(weights[0][1]) ? 1 : null;
+}
+
+/** Where a foldable term lands on this row: its `gain` (a tiered row) or its weight. */
+export function relicFoldTarget(rule) {
+  const row = normalizeRule(rule);
+  const perIncrease = Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+  return perIncrease !== 1 || (row.gain !== undefined && row.gain !== 1) ? 'gain' : 'weight';
+}
+
+/**
+ * One compatibility contract for folding an authored relic tier into a rule.
+ *
+ * A relic term says "+N of this resource per P points of one attribute". It is
+ * only the same arithmetic as the rule when the rule counts that one attribute
+ * at the same granularity (`ruleTierSize` above). A row weighted across two
+ * attributes has no single tier to fold into, and says so.
+ */
 export function relicAttributeTierFoldProblems(term, rule) {
   const problems = [];
   if (!term || !rule) return [{ field: null, msg: 'requires a resolved target resource rule' }];
-  if (term.sourceStat !== rule.sourceStat) {
-    problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
+  const row = normalizeRule(rule);
+  const weights = ruleWeights(row);
+  if (weights.length !== 1) {
+    problems.push({ field: null, msg: weights.length
+      ? `cannot fold into a rule weighted across ${weights.map(([id]) => id).join(' and ')}; attribute-tier modifiers need a rule that answers to one attribute`
+      : 'cannot fold into a rule that answers to no attribute' });
+  } else if (term.sourceStat !== weights[0][0]) {
+    problems.push({ field: 'sourceStat', msg: `must match the attribute the target rule answers to, '${weights[0][0]}'` });
   }
   // AN UNSTATED GRANULARITY INHERITS THE RULE IT FOLDS INTO and can never
   // mismatch it (Law 0 clause 1). A STATED one must still match exactly: "+1 HP
   // per 5 CON" genuinely cannot be added to a per-1 rule, and that refusal is
   // the arithmetic protecting itself, not a rule to relax.
-  if (term.pointsPerTier !== undefined && term.pointsPerTier !== rule.pointsPerTier) {
-    problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
+  const size = ruleTierSize(row);
+  if (weights.length === 1 && size === null) {
+    problems.push({ field: null, msg: `cannot fold into a fractional weight of ${weights[0][1]}; the rule must count whole points` });
+  } else if (term.pointsPerTier !== undefined && size !== null && term.pointsPerTier !== size) {
+    problems.push({ field: 'pointsPerTier', msg: `must match the target rule's ${size} point(s) per increase` });
   }
-  if (rule.rounding !== 'floor') {
-    problems.push({ field: null, msg: `cannot fold into target rule rounding '${rule.rounding}'; attribute-tier modifiers require 'floor'` });
+  const rounding = row.rounding === undefined ? 'floor' : row.rounding;
+  if (rounding !== 'floor') {
+    problems.push({ field: null, msg: `cannot fold into target rule rounding '${rounding}'; attribute-tier modifiers require 'floor'` });
   }
   return problems;
 }
@@ -382,7 +726,7 @@ function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitO
   const out = structuredClone(rules);
   for (const [statId, row] of Object.entries(out.rules)) {
     row.base = baseValue(row.base, classDef, statId);
-    row.gainPerTier = gainValue(row.gainPerTier, classDef, statId);
+    if (row.gain !== undefined) row.gain = gainValue(row.gain, classDef, statId);
   }
   const resources = relicModifierReceipt && relicModifierReceipt.resources || {};
   for (const [statId, bonus] of Object.entries(resources)) {
@@ -391,12 +735,17 @@ function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitO
     if (!row) throw new Error(`Relic modifier targets unknown derived resource '${statId}'`);
     const explicitRow = explicitOverride && explicitOverride.rules && explicitOverride.rules[statId] || {};
     if (explicitRow.base === undefined) row.base += bonus.flat || 0;
-    if (explicitRow.gainPerTier === undefined) {
+    if (explicitRow.gain === undefined && explicitRow.gainPerTier === undefined
+      && ruleWeights(row).every(([id]) => explicitRow[id] === undefined)) {
       for (const term of bonus.attributeTiers || []) {
         if (relicAttributeTierFoldProblems(term, row).length) {
-          throw new Error(`Relic ${statId} attribute tier ${term.sourceStat}/${term.pointsPerTier} cannot fold into host rule ${row.sourceStat}/${row.pointsPerTier}/${row.rounding}`);
+          const answers = ruleWeights(row).map(([id, weight]) => `${id}x${weight}`).join('+') || 'nothing';
+          throw new Error(`Relic ${statId} attribute tier ${term.sourceStat}/${term.pointsPerTier} cannot fold into host rule ${answers}/${row.pointsPerIncrease ?? 1}/${row.rounding ?? 'floor'}`);
         }
-        row.gainPerTier += term.amountPerTier;
+        // A whole weight is one unit per point, so "+N per point" IS N more
+        // weight; a tiered (normalized legacy) row still takes it on `gain`.
+        if (relicFoldTarget(row) === 'gain') row.gain += term.amountPerTier;
+        else row[term.sourceStat] += term.amountPerTier;
       }
     }
   }
@@ -435,14 +784,20 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   if (!plainObject(snapshot.rules) || snapshot.rules.rulesetVersion !== snapshot.rulesetVersion) {
     throw new Error('Derived-stat snapshot rulesetVersion disagrees with its rules');
   }
-  // Reconstitute an authored-shape table, validate it through the same door,
-  // and resolve it without any live overrides. Resolved rows contain defaults;
-  // those extra row keys are all legal authored override keys.
+  // THE ENVELOPE SAYS WHICH VOCABULARY THE ROWS ARE IN, not the ruleset. Every
+  // snapshot written from now on holds ruleset-6-shaped rows whatever table the
+  // run was born under, because that is what the host resolved; v2 and v1
+  // envelopes hold the retired shape and are normalized below, which is exactly
+  // the arithmetic they always meant.
   const source = structuredClone(snapshot.rules);
-  if (snapshot.snapshotVersion === 2) {
+  const rowsAreUnified = snapshot.snapshotVersion >= 3;
+  if (snapshot.snapshotVersion >= 2) {
     for (const [id, row] of Object.entries(source.rules || {})) {
-      if (!Number.isFinite(row.base) || !Number.isFinite(row.gainPerTier)) {
-        throw new Error(`Derived-stat snapshot v2 '${id}' must carry numeric base and gainPerTier`);
+      // A ruleset-6 row has no gain unless it was normalized from an older
+      // one; when it carries one, it must be the number the host resolved.
+      const gain = rowsAreUnified ? (row.gain === undefined ? 1 : row.gain) : row.gainPerTier;
+      if (!Number.isFinite(row.base) || !Number.isFinite(gain)) {
+        throw new Error(`Derived-stat snapshot v${snapshot.snapshotVersion} '${id}' must carry numeric base and ${rowsAreUnified ? 'gain' : 'gainPerTier'}`);
       }
     }
     const modifiers = snapshot.relicModifiers;
@@ -459,18 +814,31 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
       if (legalSchools.length && !legalSchools.includes(school)) {
         throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} is not a legal damage school`);
       }
-      if (!Number.isFinite(value) || value < 0) throw new Error(`Derived-stat snapshot v2 relicModifiers.damageBySchoolAdd.${school} must be a non-negative finite number`);
+      if (!Number.isFinite(value) || value < 0) throw new Error(`Derived-stat snapshot v${snapshot.snapshotVersion} relicModifiers.damageBySchoolAdd.${school} must be a non-negative finite number`);
     }
   }
-  const expectedEnvelope = snapshot.rulesetVersion >= 3 ? 2 : 1;
-  if (snapshot.snapshotVersion !== expectedEnvelope) {
-    throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelope}`);
+  // A ruleset that pre-dates the persisted, host-owned snapshot keeps its v1
+  // envelope; every ruleset from 3 on may arrive in either the v2 envelope it
+  // was written in before the one format, or the v3 envelope written since.
+  const expectedEnvelopes = snapshot.rulesetVersion >= 3 ? [2, 3] : [1];
+  if (!expectedEnvelopes.includes(snapshot.snapshotVersion)) {
+    throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelopes.join(' or ')}`);
   }
-  throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, normalizedOptions(options)));
+  throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, { ...options, unified: rowsAreUnified, carriers: true }));
+  const rules = {
+    rulesetVersion: source.rulesetVersion,
+    defaults: normalizeDefaultsPatch({ ...source.defaults }),
+    rules: Object.fromEntries(Object.entries(source.rules)
+      .map(([id, row]) => [id, normalizeRule({ ...source.defaults, ...row })])),
+  };
   return {
-    snapshotVersion: snapshot.snapshotVersion,
+    // RE-STAMPED AT THE ENVELOPE THE ROWS ARE NOW IN. The restored table is
+    // handed straight back to the run, written to the next save and sent over
+    // a co-op handshake; saying v2 over ruleset-6-shaped rows would refuse the
+    // save it just produced.
+    snapshotVersion: snapshot.rulesetVersion >= 3 ? DERIVED_STAT_SNAPSHOT_VERSION : snapshot.snapshotVersion,
     rulesetVersion: snapshot.rulesetVersion,
-    rules: source,
+    rules,
     ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
   };
 }

@@ -1,4 +1,9 @@
+import { ratingIds } from './ratingFormula.js';
+
 const PREFIX = 'gameConfig.startingStats.';
+// A pool that shares a rating's name is labelled as a pool so the two rows
+// cannot read alike.
+const RATING_NAMES = ratingIds;
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
 
@@ -412,20 +417,51 @@ export function startingStatRows(bundle) {
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
-  for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
-    const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
-    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
-      const value = rule[field] ?? bundle.derivedStatRules.defaults[field];
+  // ---- ONE FORMAT, ONE PLACE (owner, 2026-09-21) --------------------------
+  //
+  // "I'd like all the resources and stats to be in the same format so that
+  // there was no confusion to include the base values and everything because
+  // they are way too separated."
+  //
+  // So every resource and stat — HP, Mana, Stamina, Actions, draw, Poise, and
+  // the AR/DR/PR/Poise/Ward ratings — is one block of rows under ONE topic,
+  // with the same three kinds of dial, in the order a rating row has them:
+  //
+  //   base               what it opens at
+  //   <each attribute>   that attribute's decimal contribution per point
+  //   growth per level   his decimal
+  //
+  // The rating rows come from combatRatings.js and are filed into this same
+  // topic there, so the two tables are read side by side rather than a tab
+  // apart.
+  const derivedDefaults = bundle.derivedStatRules.defaults || {};
+  const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
+    const presentation = bundle.derivedStatRules.presentation[id];
+    // POISE IS BOTH A POOL AND A RATING, and they now share this topic. The
+    // rating keeps its name (combatRatings.js); the pool says it is one, so no
+    // two rows on this screen read the same.
+    const face = presentation.faceLabel || presentation.label;
+    const label = RATING_NAMES.includes(id) ? `${face} pool` : face;
+    const rule = { ...derivedDefaults, ...authored };
+    const fields = [
+      ['base', 'Base', 0, 1,
+        'What this is worth before a single attribute point is spent, and before equipment, relics and level.'],
+      ...attributeRows.map((attribute) => [attribute.id, attribute.label, 0, 0.05,
+        `Gained from each point of ${attribute.label}, floored on its own exactly as a rating's is: 0.2 gives nothing until ${attribute.label} reaches 5, then one more every five. 0 ignores ${attribute.label}.`]),
+      ['perLevel', 'Per level', 0, 0.05,
+        'Gained per character level, as a decimal and floored: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
+    ];
+    for (const [field, title, min, step, note] of fields) {
+      // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
+      // 'classField' }`, which resolves per class at the run door; a number row
+      // for it would overwrite the reference with one value for every class.
+      const value = field === 'base' ? rule.base : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
-        min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stats & resources', {
+        min, step,
         configPath: ['derivedStatRules', 'rules', id, field],
-        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
-        // scaling adjusted the points required — the behaviour this row's own
-        // panel no longer has. A note describing a retired mechanism is worse
-        // than none: it tells a player the number they typed is not the number
-        // in force, which is exactly backwards now.
-        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
+        note: `${note} The value you set is the value a new run is born with; nothing rescales it.`,
       });
     }
   }

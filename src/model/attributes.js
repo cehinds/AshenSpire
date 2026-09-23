@@ -21,6 +21,9 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
+    // Read only by the retired-name check: a dead attribute id coming back as
+    // a derived-stat weight is refused there by name.
+    derivedStatRules: source && source.derivedStatRules,
   };
 }
 
@@ -205,8 +208,16 @@ export function migrateRetiredAttributeNames(run, source) {
     const allocationDead = plainObject(run.attributes) && Object.hasOwn(run.attributes, dead);
     const allocationHeir = plainObject(run.attributes) && Object.hasOwn(run.attributes, heir);
     const sourceRows = rules ? Object.entries(rules).filter(([, rule]) => plainObject(rule)) : [];
-    const snapshotDead = sourceRows.filter(([, rule]) => rule.sourceStat === dead).map(([id]) => id);
-    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir).map(([id]) => id);
+    // A ROW SPELLS A SEAT EITHER WAY: as the retired `sourceStat`, or — since
+    // ruleset 6 — as a weight key. Both are witnesses for the DEAD name.
+    const spells = (rule, id) => rule.sourceStat === id || Object.hasOwn(rule, id);
+    const snapshotDead = sourceRows.filter(([, rule]) => spells(rule, dead)).map(([id]) => id);
+    // THE HEIR IS A WITNESS ONLY WHERE THE DEAD NAME COULD HAVE STOOD INSTEAD.
+    // Every live ruleset-6 row carries a `constitution` weight, so counting
+    // that as a competing claim would refuse to heal any save at all; the
+    // genuine ambiguity is a row that carries BOTH spellings of one seat.
+    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir
+      || (Object.hasOwn(rule, heir) && spells(rule, dead))).map(([id]) => id);
     const deadPaths = [
       ...(allocationDead ? [`attributes.${dead}`] : []),
       ...snapshotDead.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
@@ -236,7 +247,17 @@ export function migrateRetiredAttributeNames(run, source) {
     if (rules) {
       const moved = [];
       for (const [id, rule] of Object.entries(rules)) {
-        if (plainObject(rule) && rule.sourceStat === dead) { rule.sourceStat = heir; moved.push(id); }
+        if (!plainObject(rule)) continue;
+        let carried = false;
+        if (rule.sourceStat === dead) { rule.sourceStat = heir; carried = true; }
+        // A ruleset-6 snapshot spells the seat as a WEIGHT KEY. No save written
+        // in the three-day window can carry one, but a snapshot restored from
+        // such a save and re-written in the one format would, so the heal walks
+        // both spellings rather than one and a promise. The preflight above has
+        // already refused a row that carries the heir as well, so this can
+        // never overwrite a live weight.
+        if (Object.hasOwn(rule, dead)) { rule[heir] = rule[dead]; delete rule[dead]; carried = true; }
+        if (carried) moved.push(id);
       }
       if (moved.length) {
         note(run, {
@@ -329,6 +350,18 @@ export function attributeContentProblems(source) {
   for (const [dead, heir] of Object.entries(retiredNames(t))) {
     if (liveIds.includes(dead)) out.push({ path: `attributes.${dead}`, msg: `'${dead}' is a retired attribute id (heir '${heir}') and may not return as a row` });
     if (!liveIds.includes(heir)) out.push({ path: `attributeRules.retired.${dead}`, msg: `heir '${heir}' is not a live attribute id` });
+    // THE THIRD CONTENT HOME THE DEAD NAME HAD, and since ruleset 6 it is a
+    // WEIGHT KEY rather than a `sourceStat`. The derived-stat validator would
+    // refuse it as an unknown field; that is true but says nothing about why,
+    // and the whole point of the retired map is that the refusal names the
+    // retirement.
+    const rules = plainObject(t.derivedStatRules) && plainObject(t.derivedStatRules.rules)
+      ? t.derivedStatRules.rules : {};
+    for (const [id, rule] of Object.entries(rules)) {
+      if (!plainObject(rule)) continue;
+      if (Object.hasOwn(rule, dead)) out.push({ path: `derivedStatRules.rules.${id}.${dead}`, msg: `'${dead}' is a retired attribute id (its heir is '${heir}')` });
+      if (rule.sourceStat === dead) out.push({ path: `derivedStatRules.rules.${id}.sourceStat`, msg: `'${dead}' is a retired attribute id (its heir is '${heir}')` });
+    }
   }
   const modeIds = t.creationModes.map((m) => m && m.id).filter((id) => typeof id === 'string');
   const classIds = t.classes.map((c) => c && c.id).filter((id) => typeof id === 'string');

@@ -17,7 +17,17 @@ test('grouping keeps every Advanced option reachable exactly once', () => {
 // points rather than tiers, and the tier size sits under General.
 test('Progression is the one driver: pool first, then each class, and the tier size under General', () => {
   const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Progression');
-  assert.deepEqual(groups.map(group => group.id).slice(0, 6), ['Assign points', 'Equipment requirements', ...CLASS_TOPICS]);
+  // 2026-09-21: "I want level up and starting stats to be together too", and
+  // every stat and resource in one format beside them — so the three read in a
+  // row, before the floors and the class tables they bound.
+  assert.deepEqual(groups.map(group => group.id).slice(0, 8),
+    ['Assign points', 'Level-up', 'Stats & resources', 'Equipment requirements', ...CLASS_TOPICS]);
+  const stats = groups.find(group => group.id === 'Stats & resources');
+  for (const key of ['gameConfig.derivedStatRules.rules.hp.base', 'gameConfig.derivedStatRules.rules.hp.constitution',
+    'gameConfig.derivedStatRules.rules.mana.perLevel', 'gameConfig.combatRatings.ratings.ar.strength',
+    'gameConfig.combatRatings.ratings.ward.base']) {
+    assert.ok(stats.rows.some(row => row.key === key), `${key} sits under Stats & resources`);
+  }
   assert.equal(advancedSection({ key: 'statTierSize' }), 'Progression', 'the tier size left the Classes tab with it');
 
   const assign = groups.find(group => group.id === 'Assign points');

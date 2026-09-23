@@ -157,8 +157,8 @@ check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trou
 
 check('Mana authority is base-zero WIS data and gameplay uses small-unit costs/restores', () => {
   equal(derivedStatRules.rules.mana.base, 0, 'Mana base');
-  equal(derivedStatRules.rules.mana.sourceStat, 'wisdom', 'Mana source');
-  equal(derivedStatRules.rules.mana.cap, null, 'Mana cap');
+  equal(derivedStatRules.rules.mana.wisdom, 1, 'Mana source (ruleset 6: a weight on wisdom)');
+  equal(derivedStatRules.rules.mana.cap ?? derivedStatRules.defaults.cap, null, 'Mana cap');
   for (const id of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
     equal(contentBundle.cards.find((card) => card.id === id)?.manaCost, 1, `${id} Mana cost`);
   }

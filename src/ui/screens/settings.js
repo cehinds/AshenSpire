@@ -22,7 +22,6 @@ import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
-import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
@@ -87,10 +86,11 @@ let panelSettings = null;
 let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
-// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
-// value the engine actually resolves rows against, so the row that turns it
-// reads it from there and a copy cannot drift.
-const DERIVED_DEFAULTS = derivedStatRules.defaults;
+// RULESET 6 HAS NO TIER (content/derivedStats.js): every row states a decimal
+// weight per attribute. The tier dial survives as a divisor over those weights
+// (an override layer on `pointsPerIncrease`), so its shipping value is 1 — the
+// weights as written — and at 1 it adds no layer at all.
+const STAT_TIER_IDENTITY = 1;
 // `retired: true` is a row that keeps its KEY so an exported configuration
 // still imports and still applies, and stays off the screen because nothing a
 // player can reach depends on it — today, the creation pools of the modes
@@ -568,9 +568,8 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
   // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
-  // `derivedStatRules.defaults` — its one home, one import away, so this row
-  // cannot drift from the rule it turns.
+  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS THE IDENTITY (1) — the
+  // ruleset-6 weights as written, see STAT_TIER_IDENTITY.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -599,7 +598,7 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: STAT_TIER_IDENTITY,
     min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
     label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
@@ -608,7 +607,7 @@ const ROWS = [
     // an existing save shows NOTHING. It is written on the row because the
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+    note: 'Divides what every point buys across HP, Mana, Stamina, Actions, draw and Poise — type any whole number from 1 to 20. 1 uses the weights under Stats & resources exactly as written; 2 makes every stat need twice the points for the same step. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -1393,8 +1392,8 @@ export function resolveStatTierSize(settings) {
  */
 export function derivedStatDialOptions(settings) {
   const size = resolveStatTierSize(settings);
-  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
-  return { explicitOverride: { defaults: { pointsPerTier: size } } };
+  if (size === STAT_TIER_IDENTITY) return {};
+  return { explicitOverride: { defaults: { pointsPerIncrease: size } } };
 }
 
 export function resolveTapSize(settings) {

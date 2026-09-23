@@ -20,7 +20,7 @@ function fight() {
   // tiers of the Poise row the run was born with — read it off the run's own
   // snapshot instead of assuming a point is a point.
   const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
-  const perPoint = Math.round(poiseRow.gainPerTier / poiseRow.pointsPerTier) || 1;
+  const perPoint = Math.floor(poiseRow.constitution + 1e-9) || 1;
   run.attributes.constitution += Math.round((13 - receipt.value) / perPoint);
   return createCombat({ registries, rng: createRng(99), player: {
     classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,

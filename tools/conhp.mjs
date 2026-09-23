@@ -81,11 +81,11 @@ check('the retired-name door migrates Vigour to Constitution, never the reverse'
 check('HP and Stamina consume Constitution; HP follows the resolved per-point rule', () => {
   const hp = contentBundle.derivedStatRules.rules.hp;
   const stamina = contentBundle.derivedStatRules.rules.stamina;
-  eq(hp.sourceStat, 'constitution', 'HP source');
+  eq(hp.constitution, 4, 'HP source (ruleset 6: four per point of constitution)');
   eq(hp.base, 30, 'HP base');
   eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 1, 'HP points per tier');
   eq(hp.gainPerTier, 2, 'HP gain per tier');
-  eq(stamina.sourceStat, 'constitution', 'Stamina source');
+  eq(stamina.constitution, 1, 'Stamina source (ruleset 6: a weight on constitution)');
 });
 
 
@@ -302,9 +302,9 @@ check('new host snapshots carry the resolved data-owned HP rule', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xc00, classId: 'herald', registries });
   const hp = run.derivedStatRuleSnapshot.rules.rules.hp;
-  eq(hp.sourceStat, 'constitution', 'snapshot source');
+  eq(hp.constitution, 4, 'snapshot source (ruleset 6: four per point of constitution)');
   assert(Number.isFinite(hp.base), 'snapshot HP base must be host-resolved numeric data');
-  assert(Number.isFinite(hp.gainPerTier), 'snapshot HP coefficient must be host-resolved numeric data');
+  assert(Number.isFinite(hp.constitution), 'snapshot HP coefficient must be host-resolved numeric data');
   eq(run.maxHp, expectedHp(registries, run), 'host-stamped maxHp');
 });
 

@@ -68,7 +68,11 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
   assert.equal(contentBundle.balance.xp.combatWin, 50);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
-  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
+  // The tier dial's key still imports, and does not write the table: a
+  // ruleset-6 table has no tier, so the dial reaches a run as an override layer
+  // (settings.js derivedStatDialOptions) and the configured table stays valid.
+  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, undefined);
+  assert.deepEqual(configured.derivedStatRules.defaults, contentBundle.derivedStatRules.defaults);
 });
 
 test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {

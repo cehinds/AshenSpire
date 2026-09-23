@@ -88,12 +88,18 @@ export function currentAdvancedKey(key) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier
+//                                           ruleset 6 (owner, 2026-09-21): HP,
+//                                           Mana and every pool read as the
+//                                           ratings do — a decimal weight per
+//                                           attribute — so a tier and its gain
+//                                           have no row left to land on.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.rules\.[^.]+\.(pointsPerTier|gainPerTier))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -550,8 +556,11 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
+  // THE TIER DIAL DOES NOT WRITE THE TABLE. A ruleset-6 table has no tier to
+  // write (content/derivedStats.js) and refuses a `pointsPerTier` by name, so
+  // setting it here would fail validation and throw every other configured
+  // value away. The dial reaches a new run as an override LAYER instead —
+  // `derivedStatDialOptions` in settings.js, handed to run creation by main.js.
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was

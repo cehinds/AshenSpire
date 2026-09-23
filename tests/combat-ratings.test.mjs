@@ -539,8 +539,11 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
   const rows = combatRatingRows(contentBundle);
 
   for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
-    const formula = rows.filter(row => row.statTopic === `${expected} formula`);
-    assert.ok(formula.length >= 3, `${expected} has a formula group of its own`);
+    // Since ruleset 6 the five formulas sit beside the pools they now read
+    // like (Advanced → Progression → Stats & resources), one block per rating.
+    const formula = rows.filter(row => row.statTopic === 'Stats & resources' && row.key.includes(`.ratings.${id}.`));
+    assert.ok(formula.length >= 3, `${expected} has a formula block of its own`);
+    assert.ok(formula.every(row => row.advancedGroup === 'Progression'), `${expected} sits with the pools`);
     assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
     assert.ok(rows.some(row => row.key.endsWith(`.${id}`) && / — additional /.test(row.label)
       && row.label.endsWith(expected)), `an equipment bonus row spells ${id} as "${expected}"`);
