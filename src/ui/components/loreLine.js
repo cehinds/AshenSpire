@@ -48,6 +48,7 @@ export function loreLine({ text, title = '', eyebrow = 'Lore' } = {}) {
   const words = document.createElement('span');
   words.className = 'lore-identity';
   words.textContent = identity;
+  words.title = identity;
   line.append(words);
   if (!more) return line;
   line.type = 'button';
