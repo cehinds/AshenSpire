@@ -131,26 +131,28 @@ test('the run\'s derived-stat rules survive a save and load of the fight', () =>
   assert.deepEqual(healed.derivedStatRuleSnapshot, run.derivedStatRuleSnapshot);
 });
 
-test('a run born before ruleset 5 has no Poise attribute term at all', () => {
-  // Poise joined the derived table in ruleset 5. A run born under 1-4 never
-  // had the row, so its attribute term is ZERO and stays zero however the
-  // live row is later retuned — falling through to the authored table would
-  // price a legacy save by a rule it was never born under (review, #1217).
+test('a run born before ruleset 5 keeps the Constitution term phase 8 priced it by', () => {
+  // Poise joined the derived table in ruleset 5. A run born under 1-4 was
+  // priced by phase 8's balance.poise.playerPerConstitution, shipped as 1, so
+  // its attribute term is its Constitution one-for-one — not zero, and not
+  // whatever the live row is later retuned to (review, #1217 and #1255).
   const run = createRunState({ seed: 7, classId: 'reaver', registries });
   const withRow = playerPoiseThresholdReceipt(registries, run);
   const legacy = structuredClone(run);
   legacy.derivedStatRuleSnapshot = structuredClone(run.derivedStatRuleSnapshot);
   legacy.derivedStatRuleSnapshot.rulesetVersion = 4;
   delete legacy.derivedStatRuleSnapshot.rules.rules.poise;
-  const without = playerPoiseThresholdReceipt(registries, legacy);
-  assert.equal(without.attribute, 0);
-  assert.equal(without.value, withRow.value - withRow.attribute);
-  assert.ok(withRow.attribute > 0, 'while a ruleset-5 run keeps its Constitution term');
+  const before = playerPoiseThresholdReceipt(registries, legacy);
+  assert.equal(before.attribute, run.attributes.constitution, 'Constitution one-for-one, as phase 8 shipped it');
+  assert.equal(before.value, withRow.value - withRow.attribute + before.attribute);
+  const liveTable = registries.derivedStatRules;
+  const retuned = { ...registries, derivedStatRules: { ...liveTable,
+    rules: { ...liveTable.rules, poise: { ...liveTable.rules.poise, gainPerTier: 7 } } } };
+  assert.equal(playerPoiseThresholdReceipt(retuned, legacy).attribute, before.attribute,
+    'and a retuned live row cannot move it');
   // A caller with NO snapshot at all — a headless fixture, a creation preview
   // — still reads the live table, which is what it is for, and the run's own
-  // rules cannot move it. Since the lean mode converts a Constitution point at
-  // a fifth, the two no longer agree by coincidence the way they did while
-  // every mode converted one-for-one: that difference IS the fix.
+  // rules cannot move it, whatever those rules say.
   const headless = { loadout: run.loadout, class: run.class, relics: [], attributes: run.attributes };
   const live = playerPoiseThresholdReceipt(registries, headless).attribute;
   assert.ok(live > 0, 'the live table still prices a headless caller');

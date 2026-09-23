@@ -593,11 +593,13 @@ Three quieter ones landed with them: the equipment screen's seal now reads
 `armamentLevels` like the mutation it seals, so it cannot refuse in words an
 item an upgrade made holdable; `equipmentRequirementReceipt` resolves an
 outfit's upgrade level under `armor/<classId>/<id>` rather than the weapon
-namespace, which is the difference between an armour minimum a smithing tier
-can lower and one it never could; and a run whose snapshot predates ruleset 5
-now reads a Poise attribute term of **0** instead of falling through to the
-live row, which read as harmless only because today's authored row happens to
-equal the coefficient phase 8 retired. Snapshots of ruleset 1 and 2 are
+namespace, so an outfit no longer reads a same-named weapon's smithing level
+(no armour tier can author a requirement delta yet — `itemUpgradeTagMatchesKind`
+admits only `equipmentPoise` for armour — so this is the right key, not a live
+reduction); and a run whose snapshot predates ruleset 5 keeps the Poise
+attribute term phase 8 priced it by — Constitution one-for-one, the shipped
+`balance.poise.playerPerConstitution` — instead of falling through to the live
+row (#1255 corrected an earlier version of this fix that zeroed the term). Snapshots of ruleset 1 and 2 are
 migration inputs and now migrate onto 5 rather than 4, so such a save's pools
 change; 3 and 4 are preserved verbatim. `docs/BALANCE.md` is regenerated: the tier-1 boss band moved UP across the
 board — Reaver 78/80/72 → 95/98/94, Rogue and Herald at or near 100 with ten to

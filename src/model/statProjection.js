@@ -30,6 +30,10 @@ function presentationRows(registries) {
  * alone. `active` stays false until a combat rule consumes it — the day the
  * player-poise mechanics land, that flip is theirs to make, with the note.
  */
+// Phase 8's player Poise: Constitution × balance.poise.playerPerConstitution,
+// shipped as 1. The rule a run born before derived-stat ruleset 5 keeps.
+const LEGACY_PLAYER_POISE_RULE = Object.freeze({ base: 0, pointsPerTier: 1, gainPerTier: 1 });
+
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
@@ -57,17 +61,14 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // row instead would price its meter by numbers that run never agreed to
   // (Codex, #1217).
   // A SNAPSHOT WITHOUT THE ROW IS AN ANSWER, NOT A GAP. Poise joined the
-  // derived table in ruleset 5; a run born under 1–4 never had the row, so
-  // its attribute term is ZERO and stays zero however the live row is later
-  // retuned. Falling through to the live table here would price a legacy save
-  // by a rule it was never born under — the very thing §13.4l and the line
-  // above forbid — and it read as harmless only because today's authored row
-  // happens to equal the coefficient phase 8 retired. statProjection keeps
-  // Poise off those same runs' character sheets for the same reason
-  // (review, #1217).
+  // derived table in ruleset 5; a run born under 1–4 was priced by phase 8's
+  // `balance.poise.playerPerConstitution`, which shipped as 1 — Constitution
+  // one-for-one. That coefficient is frozen here as the rule such a run was
+  // born under, so its meter neither loses the Constitution term nor follows
+  // the live row when that row is retuned (review, #1217 and #1255).
   const ownSnapshot = run.derivedStatRuleSnapshot?.rules?.rules;
   const poiseRule = ownSnapshot
-    ? ownSnapshot.poise || null
+    ? ownSnapshot.poise || LEGACY_PLAYER_POISE_RULE
     : (registries.derivedStatRules?.rules?.poise || null);
   const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
     : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);

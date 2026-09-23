@@ -240,10 +240,12 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}, 
   // EACH HALF OF THE WARDROBE UNDER ITS OWN REF. Upgrade levels are keyed
   // `armament/<id>` for weapons and `armor/<classId>/<id>` for outfits
   // (itemUpgradeChanges.csv, loadout's own equippedPieces), and this read
-  // used the weapon form for both — so an armour minimum could never be
-  // lowered by a smithing tier, however the tier was authored. Invisible
-  // while only weapons carried minima; visible the moment canEquip started
-  // resolving armour candidates too (review, #1217).
+  // used the weapon form for both, so an outfit sharing an id with a weapon
+  // read THAT weapon's smithing level. No armour tier can lower a minimum
+  // today — itemUpgradeTagMatchesKind admits only equipmentPoise deltas for
+  // armour — so the armour ref finds no requirement rows; it is the right
+  // key for the day that vocabulary is widened, not a live reduction
+  // (review, #1217 and #1255).
   const itemRef = piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
   const namespaced = itemUpgradeLevels?.[itemRef];
   const level = Number.isInteger(namespaced) ? namespaced
@@ -3543,9 +3545,14 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return changed;
   }
   // Armour ids repeat across classes; the class gate is armourById's, and this
-  // one only asks whether the piece may live in this slot at all.
+  // one only asks whether the piece may live in this slot at all. The row it
+  // reads is still the WEARER's when the caller names a class, as canEquip's
+  // is: the requirement receipt keys an outfit's smithing level by
+  // `armor/<classId>/<id>`, and reading another class's row would price the
+  // act differently from the seal (review, #1255).
   const piece = slot.kinds.includes('armor')
-    ? (eq.armour || []).find((o) => o.id === itemId)
+    ? ((eq.armour || []).find((o) => o.id === itemId && ctx.classId && o.classId === ctx.classId)
+      || (eq.armour || []).find((o) => o.id === itemId))
     : (eq.armaments || []).find((a) => a.id === itemId);
   if (!piece || !fitsSlot(slot, piece)) return false;
   if (!owned || typeof owned.has !== 'function') {

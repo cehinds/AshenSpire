@@ -689,9 +689,13 @@ export function mountCustomize(app, {
    */
   function openPointBuy({ fresh = true } = {}) {
     closePointBuy({ restoreFocus: false });
-    if (fresh || !state.attributes) resetAttributes();
+    // Taken BEFORE the reset below, which fills a null allocation in: read
+    // after it, a revision opened on no allocation (the catalogue's
+    // preselected mode) looked like a fresh one and Cancel then left the
+    // baseline with points unplaced (review, #1255).
     const priorMode = state.attributeMode;
-    const priorAttributes = fresh || !state.attributes ? null : { ...state.attributes };
+    const priorAttributes = state.attributes ? { ...state.attributes } : null;
+    if (fresh || !state.attributes) resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
@@ -796,7 +800,7 @@ export function mountCustomize(app, {
         // over. A REVISION puts back the allocation it opened, so looking at
         // your own stats and changing your mind costs nothing (review,
         // #1217).
-        if (priorAttributes) {
+        if (!fresh) {
           state.attributeMode = priorMode;
           state.attributes = priorAttributes;
         } else {
