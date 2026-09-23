@@ -1,6 +1,7 @@
 import { presetGearProblems } from './attributes.js';
 import { ratingIds } from './ratingFormula.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
+import { ownKey } from './settingOverrides.js';
 
 const PREFIX = 'gameConfig.startingStats.';
 // A pool that shares a rating's name is labelled as a pool so the two rows
@@ -131,13 +132,30 @@ export function equipmentRequirementRows(bundle) {
   });
   for (const row of bundle?.equipment?.equipmentRequirements || []) {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const piece = names[row.itemId] || row.itemId;
+    // An item's own requirement wins over the multiplier only while its switch
+    // is on; off, the row shows (and the game uses) authored × multiplier.
+    // Off by default, and on for any item a profile already pinned.
+    const own = { member: key, defaultOn: false };
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
+      key: ownKey(key), def: false, own,
+      label: `${piece} — own ${labels[row.attributeId] || row.attributeId} requirement`,
+      searchPath: `equipment requirement ${row.itemId} ${row.attributeId} override`,
+      note: `On: the number below is ${piece}'s requirement, whatever the multiplier says. Off: it is the authored ${row.minimum} × the multiplier. Applies to a new run.`,
+    });
     rows.push({
       cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
       type: 'number', integer: true, step: 1, min: 0, max: TOTAL_MAX, def: row.minimum,
-      key: `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`,
+      key,
+      // The value shown while the switch is off is the one a new run uses: the
+      // scaled table when it is admitted, the authored one when the multiplier
+      // asks for more than a character can carry and is refused (Codex, #1260).
+      gate: { key: ownKey(key), own, inherited: (settings) => admittedRequirement(bundle, row, settings) },
       label: `${names[row.itemId] || row.itemId} — ${labels[row.attributeId] || row.attributeId} required`,
       searchPath: `equipment requirement ${row.itemId} ${row.attributeId}`,
-      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Overrides the multiplier above for this item. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
+      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Used only while the switch above is on. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
     });
   }
   return rows;
@@ -151,17 +169,37 @@ export function equipmentRequirementRows(bundle) {
  * leave `bundle.equipment` shared by reference in the ordinary case — the
  * table is large and every run pays for a clone of it.
  */
+function requirementScale(settings = {}) {
+  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
+  return Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
+    ? Number(rawScale) : 1;
+}
+
+function scaledRequirement(minimum, settings) {
+  return Math.max(0, Math.min(TOTAL_MAX, Math.round(minimum * requirementScale(settings))));
+}
+
+function admittedRequirement(bundle, row, settings) {
+  const table = bundleWithConfiguredEquipment(bundle, settings).equipment?.equipmentRequirements || [];
+  return table.find((entry) => entry.itemId === row.itemId && entry.attributeId === row.attributeId)?.minimum ?? row.minimum;
+}
+
 export function resolveEquipmentRequirements(bundle, settings = {}) {
   const authored = bundle?.equipment?.equipmentRequirements || [];
-  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
-  const scale = Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
-    ? Number(rawScale) : 1;
   let changed = false;
   const next = authored.map((row) => {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) return row;
-    const raw = settings[`${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`];
-    const explicit = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
-    const minimum = explicit ?? Math.max(0, Math.min(TOTAL_MAX, Math.round(row.minimum * scale)));
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const raw = settings[key];
+    // A pinned value whose switch was turned off is kept in the profile but
+    // not used: the multiplier decides again.
+    // Switched ON with nothing typed yet: the item's own requirement is its
+    // authored one, which is what the enabled row shows (review and Codex, on
+    // #1260 — the multiplier used to keep applying until the field was edited).
+    const pinned = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    const explicit = settings[ownKey(key)] === false ? null
+      : pinned ?? (settings[ownKey(key)] === true ? row.minimum : null);
+    const minimum = explicit ?? scaledRequirement(row.minimum, settings);
     if (minimum === row.minimum) return row;
     changed = true;
     return { ...row, minimum };

@@ -1,5 +1,6 @@
 import { contentBundle } from '../../content/index.js';
 import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
+import { memberOfOwnKey } from '../../model/settingOverrides.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./g, ' ').replace(/^./, c => c.toUpperCase());
@@ -16,6 +17,8 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // model group, Interface, spans three tabs.
 const BATTLEFIELD = /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/;
 export function advancedSection(row) {
+  // An override switch files with the row it governs.
+  row = row.own ? { ...row, key: memberOfOwnKey(row.key) } : row;
   if (row.key === 'creationAutoAdvance') return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
   if (BATTLEFIELD.test(row.key)) return 'Battlefield';
@@ -130,8 +133,9 @@ function talentTopic(path) {
 }
 
 function topic(row, section) {
-  if (section === 'Stats') return statsTopic(row);
-  const key = row.key;
+  // A row's own-value switch (#1260) is filed where the row it gates is.
+  const key = row.own ? memberOfOwnKey(row.key) : row.key;
+  if (section === 'Stats') return statsTopic(key === row.key ? row : { ...row, key });
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
@@ -217,6 +221,16 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
+  // An override switch sits directly above the first row it governs, wherever
+  // generation put it, so the switch and its number read as one control.
+  for (const group of result) {
+    for (const toggle of group.rows.filter((row) => row.own)) {
+      const member = memberOfOwnKey(toggle.key);
+      const rest = group.rows.filter((row) => row !== toggle);
+      const at = rest.findIndex((row) => row.key === member || row.key.startsWith(`${member}.`));
+      if (at >= 0) group.rows = [...rest.slice(0, at), toggle, ...rest.slice(at)];
+    }
+  }
   // A topic not named in an order keeps its discovered order, after the named
   // ones.
   const byOrder = (order) => {
@@ -230,8 +244,12 @@ export function advancedSubgroups(rows, section) {
     // stable sort keeps the authored order inside a subsection.
     const rank = (id) => (STATS_SECTIONS.indexOf(id) < 0 ? STATS_SECTIONS.length : STATS_SECTIONS.indexOf(id));
     for (const group of result) {
+      // An override switch (#1260) ranks with the row it governs, so the
+      // re-sort cannot pull it away from the number it gates.
+      const governed = (row) => (row.own ? group.rows.find((other) => !other.own
+        && (other.key === memberOfOwnKey(row.key) || other.key.startsWith(`${memberOfOwnKey(row.key)}.`))) || row : row);
       group.rows = group.rows
-        .map((row, index) => ({ row, index, at: rank(statsSection(row)) }))
+        .map((row, index) => ({ row, index, at: rank(statsSection(governed(row))) }))
         .sort((a, b) => a.at - b.at || a.index - b.index)
         .map(({ row }) => row);
     }
