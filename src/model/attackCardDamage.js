@@ -178,7 +178,9 @@ function projectFaces(card, configs, tags, school) {
  */
 function profileSchools(bundle) {
   const schools = new Map();
-  const profiles = bundle.equipment?.basicCardProfiles || [];
+  // Malformed tables are validate.js's to name; this reads only what is well formed.
+  const list = (value) => (Array.isArray(value) ? value : []);
+  const profiles = list(bundle.equipment?.basicCardProfiles);
   const add = (cardId, profile) => {
     if (!cardId || typeof profile?.damageSchool !== 'string') return;
     if (!schools.has(cardId)) schools.set(cardId, []);
@@ -189,7 +191,7 @@ function profileSchools(bundle) {
   // own, else the package's filler (model/loadout.js WeaponCardPackageModel) —
   // so a staff listing a card there makes that card magical as well.
   const byId = new Map(profiles.map((profile) => [profile?.id, profile]));
-  for (const piece of bundle.equipment?.armaments || []) {
+  for (const piece of list(bundle.equipment?.armaments)) {
     const pack = piece?.weaponCardPackage;
     if (!pack || typeof pack !== 'object' || !Array.isArray(pack.priorityAttackRefs)) continue;
     const filler = pack.fillerAttackProfileId;

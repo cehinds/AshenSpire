@@ -7,10 +7,30 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-23",
     "group": "2026-09-23",
     "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
-    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing base and upgraded numbers exactly, apart from Blight Nova and Last Stand, whose scaling now sits on top of a small cost-derived base that both cards print; moving a shared multiplier recalculates the whole matching card set deterministically. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
-    "build": "0.7.1.384",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing damage, Block and poise-damage numbers exactly, base and upgraded; moving a shared multiplier recalculates the whole matching card set deterministically. What an untouched game does change is impact: a card hit now lands its Poise or Ward value instead of a flat 1, so a cheap card or one that applies statuses can land none, while a weapon's hit keeps its weight and a card that deals its own poise damage keeps the old default beside it. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.390",
     "pullRequest": 1247,
     "url": "https://github.com/cehinds/AshenSpire/pull/1247"
+  },
+  {
+    "id": "pr-1251",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Each class's starting armour is told apart from the set piece it shares a name with",
+    "detail": "Under Ratings & Resistance → Armour ratings, every class listed its armour twice under one name: the Reaver starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block, +4 max HP) is a different item any class can earn — but both rows read Wayfarer Plate (reaver), so there was no telling which one a change went to. The starting one now says so: Wayfarer Plate (Reaver, starting armour) beside Wayfarer Plate (Reaver), and the class is spelled the way the rest of the menu spells it. No setting changed its value or key.",
+    "build": "0.7.1.386",
+    "pullRequest": 1251,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1251"
+  },
+  {
+    "id": "pr-1244",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
+    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "build": "0.7.1.384",
+    "pullRequest": 1244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
   },
   {
     "id": "pr-1242",
