@@ -42,10 +42,15 @@ const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.to
  * `words()` splits camelCase and capitalises every word, which is right for a
  * NAME and wrong for a phrase. In this file it produced "Poise Action Loss"
  * and "Recovery Per Turn" directly beside the hand-written "Break threshold
- * multiplier" in the same tab, and "Halberd Sweep type" beside "Slash type" —
- * the same one-fact-two-voices split the Advanced menu had everywhere else.
- * Only the first word is capitalised here; nothing else is touched, so an
- * acronym or a proper noun already written in the id survives.
+ * multiplier" in the same tab — the same one-fact-two-voices split the
+ * Advanced menu had everywhere else. Only the first word keeps its capital.
+ * An all-caps acronym survives ("poiseDamageAR" → "Poise damage AR"); a
+ * proper noun spelled in camelCase does not ("wyrmLord" → "Wyrm lord"), so
+ * this is for field names, never for anything the game shows as a name.
+ *
+ * An enemy MOVE is a name. Combat shows it as one — "Halberd Sweep" on the
+ * move card, the intent and the history (enemyMoveCards.js, combat.js) — so
+ * its settings row uses the same spelling, not this.
  */
 const phrase = (id) => words(id).replace(/(?!^)\b([A-Z])(?=[a-z])/g, (letter) => letter.toLowerCase());
 
@@ -296,7 +301,7 @@ export function combatRatingRows(bundle) {
       min: -1, max: 99, integer: true, step: 1, note: '-1 uses the default enemy impact. Set 1, 2, 3 or 4 to match this enemy’s weapon class. Magical hits use the magic value.',
     });
     for (const [id, move] of Object.entries(enemy.moves)) add(`enemyAttackType.${enemy.id}:${id}`, 'auto',
-      `${enemy.name} — ${phrase(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
+      `${enemy.name} — ${move.name || words(id)} type`, 'Enemy attack types', { type: 'choice', dropdown: true, choices: ['auto', 'physical', 'magic'],
         note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
       });
   }

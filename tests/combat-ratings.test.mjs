@@ -776,10 +776,7 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
 // A NAME IS A HEADING; A PHRASE IS A SENTENCE. `words()` capitalises every
 // word, which is right for "Wandering Soldier" and wrong for "Poise Action
 // Loss" — and Breaks carried both at once, the hand-written "Break threshold
-// multiplier" two rows from the key-derived "Recovery Per Turn". Enemy attack
-// types did the same: 70 of the game's move ids are multi-word and none of
-// them carries an authored display name, so "Halberd Sweep type" sat beside
-// "Slash type" with nothing but the id's own camelCase deciding which.
+// multiplier" two rows from the key-derived "Recovery Per Turn".
 //
 // The general Advanced-label test cannot catch this either — "Recovery Per
 // Turn" opens with a capital and carries no unsplit camelCase, so it passes
@@ -797,13 +794,11 @@ test('a key-derived label reads like the hand-written one beside it', async () =
   assert.equal(labelOf('breaks.thresholdGrowth'), 'Break threshold multiplier');
   assert.equal(labelOf('impact.enemyPhysical'), 'Enemy physical');
   assert.equal(labelOf('impact.magic'), 'Magic impact');
-  assert.equal(labelOf('enemyAttackType.wyrmAspirant:halberdSweep'), 'Wyrm Aspirant — Halberd sweep type');
-  assert.equal(labelOf('enemyAttackType.wanderingSoldier:slash'), 'Wandering Soldier — Slash type');
 
-  // The rule, not the eight examples: in each of these tabs no leaf shouts a
+  // The rule, not the six examples: in each of these tabs no leaf shouts a
   // second word. A SUBJECT still may — "Wyrm Aspirant" is a name — so this
   // reads only what follows the em dash.
-  for (const topic of ['Breaks', 'Impact', 'Enemy attack types']) {
+  for (const topic of ['Breaks', 'Impact']) {
     for (const row of rows.filter(r => r.statTopic === topic)) {
       const cut = row.label.lastIndexOf(' — ');
       const leaf = cut < 0 ? row.label : row.label.slice(cut + 3);
@@ -813,4 +808,30 @@ test('a key-derived label reads like the hand-written one beside it', async () =
       }
     }
   }
+});
+
+// AN ENEMY MOVE IS A NAME, and combat already spells it as one: "Halberd
+// Sweep" on the move card, the current intent and the history. #1249 briefly
+// sentence-cased the settings row to "Halberd sweep type", which put the same
+// move in two spellings on two screens — the complaint the whole label pass
+// answers. So the row is tied to what combat shows, move by move, rather than
+// to a casing rule of its own: whatever the move card calls a move, the
+// settings row calls it too.
+test('an enemy attack-type row names the move the way combat does', async () => {
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const { enemyMoveCards } = await import('../src/model/enemyMoveCards.js');
+  const labels = new Map(combatRatingRows(contentBundle).map(row => [row.key, row.label]));
+
+  let checked = 0;
+  for (const enemy of contentBundle.enemies) {
+    for (const card of enemyMoveCards(enemy)) {
+      const key = `gameConfig.combatRatings.enemyAttackType.${enemy.id}:${card.moveId}`;
+      assert.equal(labels.get(key), `${enemy.name} — ${card.name} type`,
+        `${enemy.name}'s ${card.moveId} is spelled the same in settings as on its move card`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked > 70, 'every move, including the multi-word ones, is compared');
+  assert.equal(labels.get('gameConfig.combatRatings.enemyAttackType.wyrmAspirant:halberdSweep'),
+    'Wyrm Aspirant — Halberd Sweep type');
 });
