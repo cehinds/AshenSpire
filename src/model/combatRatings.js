@@ -282,10 +282,25 @@ export function combatRatingRows(bundle) {
       });
     for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
+  // WHO WEARS IT, AND WHICH ONE IT IS. Every class owns a free starting
+  // armour that shares its name with an "All classes" set piece — the Reaver
+  // starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block,
+  // +4 max HP, STR 3) is a different item any class can earn. They are two
+  // sources, `armor:reaver:default` and `armor:reaver:wayfarerPlate`, and their
+  // rows used to both read "Wayfarer Plate (reaver)". The starting
+  // piece is picked out the way loadout.js picks it (free, not a shared set),
+  // and the class is named the way the rest of the menu names it.
+  const classNames = new Map((bundle.classes || []).map((c) => [c.id, c.name || words(c.id)]));
+  const ownerOf = (piece) => {
+    if (!piece.classId) return '';
+    const owner = classNames.get(piece.classId) || words(piece.classId);
+    const starting = piece.kind === 'armor' && piece.unlock === '' && !piece.sharedSet;
+    return ` (${owner}${starting ? ', starting armour' : ''})`;
+  };
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     const authored = authoredItemRatings(bundle.equipment, piece);
     for (const id of ratingIds) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
-      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
+      `${piece.name}${ownerOf(piece)} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
         integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
         note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
           + `Attributes, relics and status bonuses are added to it.${itemRatingColumn(bundle.equipment, piece, id) ? ' The item card shows this number.' : ` ${piece.name} has no authored ${ratingLabel(id)} column, so this one is carried as a rating only and the item card does not print it.`}`

@@ -383,17 +383,44 @@ test('no tab renders two rows a player cannot tell apart', async () => {
       }
     }
   }
-  // PRE-EXISTING, AND NOT THIS CHANGE'S TO FIX. `combatRatings.js` keys an
-  // armour rating by both `armor:<class>:default` and `armor:<class>:<piece>`
-  // and labels both with `piece.name`, so Armour ratings (Armour bonuses
-  // until #1242 made them the item's own values) shows each of the
-  // four class sets twice (20 rows), and Attack overrides pairs two cards that
-  // share a name (2 rows). Compaction creates none of them: every one of these
-  // rows collides on its UNCOMPACTED label too. That is asserted, so the day
-  // this number moves for a different reason, it fails here.
-  for (const line of collisions) assert.match(line, /Armour ratings|Attack overrides/, line);
-  assert.equal(collisions.length, 22,
-    'the only indistinguishable rows left are the 22 that were already indistinguishable');
+  // Armour ratings (Armour bonuses until #1242) used to show each class's starting armour twice (20 rows):
+  // `armor:<class>:default` and the "All classes" set piece of the same name
+  // were both labelled "<name> (<class>)". The starting piece now says so.
+  //
+  // STILL OPEN, AND NOT ARMOUR: Attack overrides pairs two cards that share a
+  // name (`enterBulwark`/`guardianBulwark`, `hamstring`/`hamstringRogue`).
+  // Pinned so the day this number moves for a different reason, it fails here.
+  for (const line of collisions) assert.match(line, /Attack overrides/, line);
+  assert.equal(collisions.length, 2,
+    'the only indistinguishable rows left are the two Attack overrides pairs');
+});
+
+// A player editing an armour rating has to know WHICH armour. Each class starts
+// in a free outfit that shares its name with an "All classes" set piece — the
+// Reaver's plain Wayfarer Plate and the Wayfarer Plate set (+2 Block, +4 max HP,
+// STR 3) are different items with different keys, and both rows used to read
+// "Wayfarer Plate (reaver)".
+test('every armour rating row names one piece of armour', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const rows = combatRatingRows(contentBundle).filter(row => row.statTopic === 'Armour ratings');
+  assert.ok(rows.length > 0);
+
+  const byLabel = new Map();
+  for (const row of rows) {
+    assert.ok(!byLabel.has(row.label), `"${row.label}" names two keys: ${byLabel.get(row.label)} and ${row.key}`);
+    byLabel.set(row.label, row.key);
+  }
+
+  const labelOf = (key) => rows.find(row => row.key === `gameConfig.combatRatings.itemRatings.${key}`)?.label;
+  assert.equal(labelOf('armor:reaver:default.ar'), 'Wayfarer Plate (Reaver, starting armour) — AR');
+  assert.equal(labelOf('armor:reaver:wayfarerPlate.ar'), 'Wayfarer Plate (Reaver) — AR');
+  assert.equal(labelOf('armor:starseer:default.ward'), 'Nightweave (Starseer, starting armour) — Ward');
+  // A class is named the way the rest of the menu names it, never by its id.
+  assert.ok(!rows.some(row => /\((reaver|starseer|herald|rogue)[,)]/.test(row.label)), 'no row names a class by its lower-case id');
+  // Exactly one starting armour per class, the same rule loadout.js enforces.
+  assert.equal(rows.filter(row => row.key.endsWith('.ar') && / starting armour\)/.test(row.label)).length,
+    contentBundle.classes.length);
 });
 
 test('a setting that moves nothing is off the screen and still imports', async () => {
@@ -470,6 +497,15 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     'and no longer claims to multiply experience');
   assert.equal(where('shopSell'), 'Rewards → Shop stock & services');
   assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
+
+  // The formation editor is mounted with the rows of its topic, wherever that
+  // topic is filed. It looked under Interface after the topic moved to
+  // Battlefield and got none (Codex, on #1256).
+  const { formationLayoutRows } = await import('../src/ui/screens/settings.js');
+  const formation = advancedSubgroups(rows, 'Battlefield').find(group => group.id === 'Formation layout');
+  assert.ok(formation && formation.rows.length > 0, 'Battlefield opens on the formation layout');
+  assert.deepEqual(formationLayoutRows().map(row => row.key), formation.rows.map(row => row.key),
+    'the editor is handed exactly the rows its topic shows');
 });
 
 test('a row that moved nothing is retired: off the screen, still importable', async () => {
@@ -494,4 +530,15 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   const legacy = { 'gameConfig.balance.levelUp.tierSizeMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
     'an exported file naming a retired key still imports');
+
+  // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
+  // land in the bundle and refuse the whole configuration over a row no longer
+  // on screen.
+  const { configuredContentBundle, advancedConfigStructuralProblems } = await import('../src/model/advancedConfig.js');
+  const stale = { 'gameConfig.balance.levelUp.tierSizeMin': 15, 'gameConfig.balance.levelUp.tierSizeMax': 3, 'gameConfig.classes.reaver.maxHp': 500 };
+  assert.deepEqual(advancedConfigStructuralProblems(contentBundle, stale), [], 'an inert value cannot refuse the configuration');
+  const configured = configuredContentBundle(contentBundle, stale);
+  assert.equal(configured.balance.levelUp.tierSizeMin, contentBundle.balance.levelUp.tierSizeMin);
+  assert.equal(configured.classes.find(classDef => classDef.id === 'reaver').maxHp,
+    contentBundle.classes.find(classDef => classDef.id === 'reaver').maxHp);
 });

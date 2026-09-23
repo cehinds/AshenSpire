@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every setting in Advanced now says what it does, and the sentence sits beside its number",
     "detail": "The 306 balance rows under Advanced had readable names, but the line under each name was still the same five words, Applies to a new run, on nearly every one. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The six legacy Poise and stagger rows say they only work while combat ratings are off, and name the rating row that takes over when they are on. The swap-cost numbers say which rule they price, and that choosing the rule is Weapon swap cost's job, not theirs. Two rows say plainly that nothing reads them, rather than promising to apply to a new run. The sentences are written beside their numbers in the balance table itself, so whoever changes a number reads what it does in the same place, and a test fails if a number is renamed and its sentence left behind. Names come from the game: renaming a relic renames its rows, and a new relic describes itself.",
-    "build": "0.7.1.385",
+    "build": "0.7.1.389",
     "pullRequest": 1243,
     "url": "https://github.com/cehinds/AshenSpire/pull/1243"
   },
@@ -18,9 +18,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Advanced settings: every setting has one home, and rows that did nothing are gone",
     "detail": "Advanced had sixteen tabs, and several settings showed up in two places or quietly overrode each other. It now has thirteen. Rules, Gameplay and Tuning are gone, and each of their settings moved to the subject it changes. Skills, talents and experience are under Character & progression. Relic values join equipment in a new Equipment & relics tab. Rest, co-op, gauntlet and endless are in Run & world. Formation and movement have their own Battlefield tab. Card sizes and the settings window sit with the wireframe choices in Layout. Where two settings still touch the same number, they now sit together and each says which one wins. The older poise settings are next to the Stats & Defence rows that replace them while ratings are on. The fallback hand size is under Hand & Draw. Stat points per tier leads the per-stat tiers it overrides. The weapon swap-cost rule sits with its costs. Settings that changed nothing are off the screen: class Base HP (a new run's HP comes from the HP stat conversion), the level-up and tier-size limits, enemy level scaling, the per-turn swap allowance, and Seed in map header. Cinder / experience gain multiplier is now Cinder gain multiplier, because it never changed experience. No working setting changed its value or key, and a configuration file you exported before today still imports.",
-    "build": "0.7.1.384",
+    "build": "0.7.1.388",
     "pullRequest": 1256,
     "url": "https://github.com/cehinds/AshenSpire/pull/1256"
+  },
+  {
+    "id": "pr-1251",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Each class's starting armour is told apart from the set piece it shares a name with",
+    "detail": "Under Ratings & Resistance → Armour ratings, every class listed its armour twice under one name: the Reaver starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block, +4 max HP) is a different item any class can earn — but both rows read Wayfarer Plate (reaver), so there was no telling which one a change went to. The starting one now says so: Wayfarer Plate (Reaver, starting armour) beside Wayfarer Plate (Reaver), and the class is spelled the way the rest of the menu spells it. No setting changed its value or key.",
+    "build": "0.7.1.386",
+    "pullRequest": 1251,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1251"
+  },
+  {
+    "id": "pr-1244",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
+    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "build": "0.7.1.384",
+    "pullRequest": 1244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
   },
   {
     "id": "pr-1242",
