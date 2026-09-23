@@ -10,10 +10,27 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // gone and everything that decides the points a new character opens with —
 // the creation pool, each class's table, level-up, the tier size — is filed
 // under Progression, in that reading order.
+//
+// ONE HOME PER SETTING (owner, 2026-09-23). The model files each row
+// (`advancedGroup`); the exceptions below are the presentation rows whose one
+// model group, Interface, spans three tabs.
+const BATTLEFIELD = /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/;
 export function advancedSection(row) {
   if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
-  return row.advancedGroup || 'Gameplay';
+  if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
+  if (BATTLEFIELD.test(row.key)) return 'Battlefield';
+  // The legacy draw and poise conversions share their quantity with a whole
+  // tab each; they are filed beside the rows that win (see `topic`).
+  if (/^gameConfig\.derivedStatRules\.rules\.draw\./.test(row.key)) return 'Hand & Draw';
+  if (/^gameConfig\.derivedStatRules\.rules\.poise\./.test(row.key)) return 'Ratings & Resistance';
+  return row.advancedGroup || 'Interface';
 }
+
+// The topic that holds every row whose quantity another row replaces while a
+// switch is on. Named once: `topic` files into it and `advancedSubgroups`
+// sorts it last.
+export const WITHOUT_RATINGS = 'Without ratings (legacy poise)';
+export const DRAW_FALLBACK = 'Co-op & legacy fallback';
 
 /**
  * The class topics, in the order the content bundle lists its classes.
@@ -27,83 +44,99 @@ export const CLASS_TOPICS = Object.freeze((contentBundle.classes || [])
   .map((classDef) => classDef.name
     || String(classDef.id).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())));
 
+function relicTopic(path) {
+  const effect = path.split('.').at(-1);
+  if (/heal|restore/.test(effect)) return 'Relics · recovery';
+  if (/block/.test(effect)) return 'Relics · defence';
+  if (/draw|gainEnergy|^n$/.test(effect)) return 'Relics · resources';
+  if (/strength|damage|poiseDamage/.test(effect)) return 'Relics · damage';
+  return 'Relics · effects';
+}
+
+function talentTopic(path) {
+  if (/ironFooting|bloodTempo|ashenReserve|grimHarvest|warlord|bulwarkKing/.test(path)) return 'Talents · Reaver';
+  if (/attunedMind|starlitFocus|lodestarCap|arcaneDraw|conduit|reservoir/.test(path)) return 'Talents · Starseer';
+  if (/warmth|vigil|sealOfPlenty|wakingRot|martyr|saint/.test(path)) return 'Talents · Herald';
+  return 'Talents · Rogue';
+}
+
 function topic(row, section) {
+  const key = row.key;
+  const path = key.replace(/^gameConfig\.(balance\.)?/, '');
+  // Rows that share a quantity with another tab's rows are filed together,
+  // before any row's own topic is consulted.
+  if (section === 'Hand & Draw' && (path === 'handMax' || /^derivedStatRules\.rules\.draw\./.test(path))) return DRAW_FALLBACK;
+  if (section === 'Ratings & Resistance' && (/^(poise|stagger)\./.test(path) || /^derivedStatRules\.rules\.poise\./.test(path))) return WITHOUT_RATINGS;
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
   if (row.wireframeTopic) return row.wireframeTopic;
+  if (row.cardSizeTopic) return 'Card size';
+  if (row.debugTopic) return 'Diagnostics';
   if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
   if (row.handTopic) return row.handTopic;
-  const key = row.key;
-  const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
-    // His words, verbatim: "the assign points should be about how many points
-    // should be available and the total amount of points on a character, not
-    // how many stat points per tier. That should be under General."
-    if (['statTierSize', 'creationAutoAdvance'].includes(key)) return 'General';
-    if (/enemyScaling/.test(key)) return 'Enemy scaling';
-    // The tier size's own bounds go where the tier size went. Leaving them
-    // under Level-up would put one dial and its limits in two tabs, which is
-    // the complaint this whole change answers.
-    if (/tierSize/.test(key)) return 'General';
-    if (/levelUp/.test(key)) return 'Level-up';
-    if (/xp|Multiplier/.test(key)) return 'Experience & rewards';
-    return 'Starting values';
+    // The tier dial replaces every stat's own "stat points per increase" while
+    // it is off its default, so it leads the rows it overrides rather than
+    // sitting a topic away from them.
+    if (key === 'statTierSize') return 'Stat conversions';
+    if (key === 'creationAutoAdvance') return 'General';
+    if (/^skill\.xp\./.test(path)) return 'Skill xp';
+    if (/^skill\.class\./.test(path)) return 'Skill class';
+    if (/^skill\./.test(path)) return 'Skill unlocks';
+    if (/^classTree\./.test(path)) return talentTopic(path);
+    if (/levelUp|playerStartingLevel/.test(key)) return 'Level-up';
+    return 'Experience';
   }
-  if (section === 'Interface') {
+  if (section === 'Battlefield') {
     if (/movement|Activation|selectionColor/.test(key)) return 'Movement';
     if (/row[A-F]|front|back|formation|groundTilt|groundSkew|gridShape|showFormationGrid/.test(key)) return 'Formation layout';
     if (/Spawn|SpriteScale/.test(key)) return 'Characters';
-    if (/Grid|grid/.test(key)) return 'Formation grid';
+    return 'Formation grid';
+  }
+  if (section === 'Wireframes') return 'Window';
+  if (section === 'Export') return 'Configuration file';
+  if (section === 'Interface') {
     if (/map|walked/.test(key)) return 'Map & HUD';
-    if (/settings.*Percent|uprightGate/.test(key)) return 'Window';
+    if (/holdConfirm|rewardCollect|controlHints/.test(key)) return 'Controls';
     return 'Appearance';
   }
-  if (section === 'Combat') return /poise/.test(key) ? 'Poise' : 'Exposure';
+  if (section === 'Combat') {
+    if (/^(arcaneE|e)xposure\./.test(path)) return 'Exposure';
+    if (/^(deck\.|startingDeckSize)/.test(path)) return 'Deck';
+    if (/^(costs|mana)\./.test(path)) return 'Actions & costs';
+    return words(path.split('.')[0]);
+  }
+  if (section === 'World') {
+    if (/^rest\.|shrineMultiUse/.test(path)) return 'Rest & shrines';
+    if (/^(atlas|seatTiers)/.test(path)) return 'Atlas & seats';
+    if (/^customMods/.test(path)) return 'Run modifiers';
+    if (/^coop/.test(path)) return 'Co-op';
+    return words(path.split('.')[0]);
+  }
+  if (section === 'Equipment') {
+    if (key === 'swapCostRule') return 'Equipment swapping';
+    if (/^powers\./.test(path)) return relicTopic(path);
+    if (/drops.rarityWeights/.test(path)) return 'Drop rarity';
+    if (/drops/.test(path)) return 'Equipment drops';
+    if (/starting|roleCopies/.test(path)) return 'Starting equipment';
+    if (/rarityBonuses|cardMounts|limits/.test(path)) return 'Equipment balance';
+    if (/swap|allowChanges|restamp/.test(path)) return 'Equipment swapping';
+    return 'Equipment general';
+  }
   if (section === 'Rewards') {
-    if (/^(flask|grace)|rewards.flask/.test(path)) return 'Flasks';
+    if (/^(flask|grace)|rewards.flask|useRestorativeFlasks/.test(path)) return 'Flasks';
+    if (key === 'shopSell') return 'Shop stock & services';
     if (/^shop\./.test(path)) {
       if (/Cost/.test(path)) return `Shop · ${words(path.split('.')[1].replace('Cost', ' prices'))}`;
       return 'Shop stock & services';
     }
-    if (/^equipment\./.test(path)) {
-      if (/drops.rarityWeights/.test(path)) return 'Drop rarity';
-      if (/drops/.test(path)) return 'Equipment drops';
-      if (/starting|roleCopies/.test(path)) return 'Starting equipment';
-      if (/rarityBonuses|cardMounts|limits/.test(path)) return 'Equipment balance';
-      if (/swap|allowChanges|restamp/.test(path)) return 'Equipment swapping';
-      return 'Equipment general';
-    }
     if (/rarityWeightsByClass/.test(path)) return `Rarity · ${words(path.split('.')[2])}`;
     if (/rarityWeights/.test(path)) return 'Reward rarity';
-    if (/^rewards/.test(path)) return 'Combat rewards';
-    if (/customMods/.test(path)) return 'Run modifiers';
+    if (/^(rewards|startingCinders|progression\.rewardMultiplier)/.test(path)) return 'Combat rewards';
     return words(path.split('.')[0]);
-  }
-  if (section === 'Rules' && path.startsWith('powers.')) {
-    const effect = path.split('.').at(-1);
-    if (/heal|restore/.test(effect)) return 'Relics · recovery';
-    if (/block/.test(effect)) return 'Relics · defence';
-    if (/draw|gainEnergy|^n$/.test(effect)) return 'Relics · resources';
-    if (/strength|damage|poiseDamage/.test(effect)) return 'Relics · damage';
-    return 'Relics · effects';
-  }
-  if (section === 'Rewards' || section === 'Rules') {
-    const parts = path.split('.');
-    if (['equipment', 'rewards', 'shop', 'skill', 'classTree'].includes(parts[0])) {
-      if (parts[0] === 'classTree') {
-        if (/ironFooting|bloodTempo|ashenReserve|grimHarvest|warlord|bulwarkKing/.test(path)) return 'Talents · Reaver';
-        if (/attunedMind|starlitFocus|lodestarCap|arcaneDraw|conduit|reservoir/.test(path)) return 'Talents · Starseer';
-        if (/warmth|vigil|sealOfPlenty|wakingRot|martyr|saint/.test(path)) return 'Talents · Herald';
-        return 'Talents · Rogue';
-      }
-      if (parts[0] === 'skill' && !['xp', 'class'].includes(parts[1])) return 'Skill unlocks';
-      if (parts[0] === 'shop') return /Cost|armamentCost|remove/.test(path) ? 'Shop prices' : 'Shop stock';
-      return words(parts.slice(0, 2).join('.'));
-    }
-    return words(parts[0]);
   }
   return 'General';
 }
@@ -116,18 +149,38 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
-  if (section === 'Hand & Draw') {
-    const order = ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards'];
-    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  // The tier dial leads the per-stat rows it overrides.
+  for (const group of result) {
+    if (group.id === 'Stat conversions') group.rows.sort((a, b) => Number(b.key === 'statTierSize') - Number(a.key === 'statTierSize'));
   }
-  if (section === 'Interface') result.sort((a, b) => Number(b.id === 'Formation layout') - Number(a.id === 'Formation layout'));
+  // A topic not named in an order keeps its discovered order, after the named
+  // ones.
+  const byOrder = (order) => {
+    const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
+    result.sort((a, b) => rank(a.id) - rank(b.id));
+  };
+  if (section === 'Hand & Draw') byOrder(['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards', DRAW_FALLBACK]);
+  if (section === 'Battlefield') byOrder(['Formation layout', 'Formation grid', 'Characters', 'Movement']);
+  // The rows a switch turns off go last, after every row that is in force.
+  if (section === 'Ratings & Resistance') result.sort((a, b) => Number(a.id === WITHOUT_RATINGS) - Number(b.id === WITHOUT_RATINGS));
   // Modals, then Menus, then Scenes: outermost surface first, and the order the
   // catalogue itself is written in — discovered, not restated, so the two
-  // cannot disagree about which family comes first.
-  if (section === 'Wireframes') {
-    const order = WIREFRAME_CHOICE_GROUPS.map((group) => group.label);
-    result.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  // cannot disagree about which family comes first. Cards and the settings
+  // window follow.
+  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.label), 'Card size', 'Window']);
+  if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
+  if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);
+  if (section === 'Equipment') {
+    byOrder(['Starting equipment', 'Equipment general', 'Equipment balance', 'Equipment swapping', 'Equipment drops', 'Drop rarity',
+      'Relics · damage', 'Relics · defence', 'Relics · recovery', 'Relics · resources', 'Relics · effects']);
   }
+  // What a fight pays, then what it is spent on, then what carries between.
+  if (section === 'Rewards') {
+    const shop = result.filter((group) => group.id.startsWith('Shop · ')).map((group) => group.id);
+    byOrder(['Combat rewards', 'Reward rarity', ...result.filter((group) => group.id.startsWith('Rarity · ')).map((group) => group.id),
+      'Shop stock & services', ...shop, 'Smithing', 'Flasks']);
+  }
+  if (section === 'Combat') byOrder(['Actions & costs', 'Deck', 'Exposure']);
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
     // rescaled by it. Equipment requirements come second because they are the
@@ -135,9 +188,8 @@ export function advancedSubgroups(rows, section) {
     // kits ask for — so the two are read together, and only then the class
     // tables they bound. A topic not named here keeps its discovered order,
     // after the named ones.
-    const order = ['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'General', 'Stat conversions'];
-    const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
-    result.sort((a, b) => rank(a.id) - rank(b.id));
+    byOrder(['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'Experience', 'Stat conversions',
+      'Skill xp', 'Skill class', 'Skill unlocks', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
   }
   return result;
 }
