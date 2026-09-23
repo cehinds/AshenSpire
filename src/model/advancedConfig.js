@@ -784,7 +784,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // An untouched dial is its shipped default, the number the settings row
   // shows and `derivedStatDialOptions` applies — so a switch turned on with
   // the dial left alone still reaches the preview (Codex, on #1260).
-  const pointsPerTier = Number.isInteger(storedDial) && storedDial > 0 ? storedDial : bundle.derivedStatRules.defaults.pointsPerTier;
+  // Normalized exactly as the settings row resolves it (`resolveStatTierSize`
+  // → `normalizeTunedNumber`: unset or unreadable is the default, otherwise
+  // floored and clamped to the authored bounds), so a stored 0 or 2.7 means
+  // the same number to the preview as to the run (Codex, on #1260).
+  const rawDial = settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize;
+  const dialNumber = typeof rawDial === 'string' ? Number(rawDial.trim()) : Number(rawDial);
+  const { tierSizeMin = 1, tierSizeMax = 20 } = bundle.balance?.levelUp || {};
+  const pointsPerTier = rawDial === '' || rawDial === null || rawDial === undefined || !Number.isFinite(dialNumber)
+    ? bundle.derivedStatRules.defaults.pointsPerTier
+    : Math.min(tierSizeMax, Math.max(tierSizeMin, Math.floor(dialNumber)));
   if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) {
     // THE EVERY-STAT NUMBER IS WRITTEN INTO THE TABLE for every stat that
     // follows it, so every reader of the configured bundle — character

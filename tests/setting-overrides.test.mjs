@@ -274,3 +274,16 @@ test('an untouched every-stat number is its default for the preview too', () => 
   assert.equal(hpRule(preview), 5);
   assert.equal(preview.maxHp, run.maxHp);
 });
+
+// Codex, on #1260: an out-of-domain stored dial means the same number to the
+// preview (configured registries) as to the run (derivedStatDialOptions).
+test('a stored out-of-range every-stat number is read the same way by the preview and the run', () => {
+  for (const statTierSize of [0, 2.7, 99, 'lots']) {
+    const settings = { [SHARED_RATE_KEY]: true, statTierSize };
+    const registries = createRegistries(configuredContentBundle(contentBundle, settings));
+    const preview = createRunState({ seed: 7, classId: 'reaver', registries });
+    const run = createRunState({ seed: 7, classId: 'reaver', registries, derivedStatOptions: derivedStatDialOptions(settings) });
+    assert.equal(hpRule(preview), hpRule(run), `statTierSize ${statTierSize}`);
+    assert.equal(preview.maxHp, run.maxHp, `statTierSize ${statTierSize}`);
+  }
+});
