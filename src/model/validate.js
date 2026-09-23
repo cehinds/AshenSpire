@@ -21,6 +21,7 @@ import {
   SCHEMAS,
   OPCODES,
   EFFECT_SPECS,
+  RUN_LEVEL_EVENTS,
   TARGETS,
   TRIGGER_EVENTS,
   PREDICATES,
@@ -34,15 +35,22 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
+  NODE_RELATIONS,
+  VARIABLE_SCOPES,
+  CARD_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
+import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
+import { REST_MANA_MODES, locationTaggingProblems } from './locations.js';
+import { wornZoneOf, handZoneOf } from './zones.js';
+import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
-import { eventChoiceRequirementProblems } from './quests.js';
+import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -95,6 +103,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'scripts',
   'equipment',
   'unlocks',
+  'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -102,10 +111,26 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tagFamilies', // what can be tagged: its collection, and how its id is keyed
   'tagFamilyDomains', // family x domain — which words each family may carry
   'tagging', // family, scope, objectId, tagId — the only home a tag is written
+  'propertyRules', // what each `property` tag confers (content/propertyRules.js)
+  // THE TREE the five tag tables and the property rules are views of
+  // (content/source/nodes.csv and companions; treeProblems checks it).
+  'nodes', // id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
+  'nodeRelations', // sourceId, relation, targetId, precedence
+  'familyNodes', // family × subtree root — who may carry what
+  'nodeTerms', // nodeId → playerTermId, tooltipTermId, template
+  'nodeVariables', // the variables a conferring node exposes
+  'variableBindings', // what each variable reads, per scope — balance paths, never numbers
+  'nodeEffects', // { [nodeId]: { passives?, triggers? } } naming variables
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
   'eventHistoryRequirements', // quest steps (E12): event-level history gates
+  // Plan phase 10a: quest chains, who speaks each step, and the rows they name.
+  'eventChoiceIds', // the durable choice ids a completion ref names
+  'questChains', // { [questId]: { steps, completes } }
+  'eventSpeakers', // { [eventId]: speakerId }
+  'speakers', // content/source/speakers.csv
+  'atlasQuests', // worldAtlas.json quests rows, for their speakerId
 ]);
 
 /**
@@ -155,8 +180,12 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * cross-module mutable, and loadout.js was already resetting it defensively at
  * three call sites. Each caller gets its own.
  */
-export const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
-export const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
+// The grammar lives in model/tokens.js (a leaf, so tree.js can read it without
+// importing this file back); re-exported here as plain consts because
+// tools/bundle.mjs inlines `export const` and does not read `export … from`.
+import { TOKEN_PATTERN as TOKEN_PATTERN_, tokenRe as tokenRe_ } from './tokens.js';
+export const TOKEN_PATTERN = TOKEN_PATTERN_;
+export const tokenRe = tokenRe_;
 
 function relicModifierTokenBindings(def) {
   const counts = {};
@@ -175,7 +204,7 @@ function relicModifierTokenBindings(def) {
   return out;
 }
 
-export function relicTokens(def) {
+export function relicTokens(def, rules = [], registries = null) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
   // relics built from DECLARED vocabulary rendering a raw token, with a green
@@ -187,6 +216,16 @@ export function relicTokens(def) {
   // What this function is FOR is the other half: a card carries a flat
   // `effects` array and a relic carries ops spread across `triggers[].do`. So
   // this flattens, and the grammar stays where it already lived.
+  //
+  // `rules` is the relic's property rules (model/registries.js
+  // relicPropertyRules) and `registries` the registries they came from, passed
+  // by every caller that has them. Since plan phase 2 a relic's triggers live in
+  // its rules, and since the tag tree a rule's numbers are VARIABLES: the
+  // sentence binds them BY NAME (tree.js nodeTokens — `{poiseDamage}` reads the
+  // variable poiseDamage), not by counting ops. Only the relic's own passives
+  // and effects, which are not nodes, are still bound by op position. A caller
+  // with no registries gets those alone and leaves `{poiseDamage}` standing —
+  // the same honest degrade an unresolvable token has always had.
   const ops = [];
   for (const t of def.triggers || []) for (const op of t.do || []) ops.push(op);
   for (const op of def.effects || []) ops.push(op);
@@ -198,6 +237,9 @@ export function relicTokens(def) {
   }
   for (const binding of relicModifierTokenBindings(def)) {
     if (typeof binding.value === 'number') tokens[binding.token] = binding.value;
+  }
+  if (registries) {
+    for (const rule of rules || []) Object.assign(tokens, nodeTokens(registries, rule.tag));
   }
   return tokens;
 }
@@ -272,6 +314,16 @@ function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
+  // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
+  // bundle carrying no events section at all is a BUILD fault, not a content
+  // fault. The cross-reference rules below read the shipped event list, and an
+  // absent section read as "zero shipped events" makes every event-referencing
+  // row look wrong — a flood of false refusals that never names the one thing
+  // actually missing, and that steals the door from its owner. So when the door
+  // is open we skip the cross-references ONLY: every shape rule below still
+  // runs, and an events section that SHIPS is cross-referenced exactly as before.
+  const eventsDoorOpen = b.events == null;
+
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
@@ -293,13 +345,90 @@ function collectContentProblems(bundle, errors = []) {
     } else {
       const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
       for (const [eventId, requirement] of Object.entries(eventGates)) {
-        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        if (!eventsDoorOpen && !eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
         for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
         for (const group of ['all', 'any', 'none']) {
           for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
             if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
-            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+            if (ref && !eventsDoorOpen && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
           }
+        }
+      }
+    }
+  }
+
+  // Quest chains and speakers (plan phase 10a). Each refusal is named, and
+  // tests/quest-dialogue.test.mjs asserts every name:
+  //   'is not a shipped event'           a chain step that no event answers
+  //   'does not resolve to a shipped choice'  a completes ref with no such choice
+  //   'is not a step of this chain'      a completes ref outside the chain
+  //   'a Leave choice may not complete a quest'
+  //   'names no speaker'                 a chain step without eventSpeakers
+  //   'unknown speaker'                  an event or atlas quest naming no row
+  //   'unknown portrait key'             a speaker whose art does not ship
+  {
+    const eventList = Array.isArray(b.events) ? b.events : [];
+    const eventById = new Map(eventList.filter(Boolean).map((e) => [e.id, e]));
+    const choiceIdsOf = (eventId) => (b.eventChoiceIds && Array.isArray(b.eventChoiceIds[eventId]) ? b.eventChoiceIds[eventId] : []);
+    const enemyIds = new Set((Array.isArray(b.enemies) ? b.enemies : []).map((e) => e && e.id));
+    const speakerIds = new Set();
+    (Array.isArray(b.speakers) ? b.speakers : []).forEach((row, index) => {
+      if (!row || typeof row.id !== 'string' || !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(row.id)) {
+        err(`speakers[${index}].id`, 'a speaker needs a stable id');
+        return;
+      }
+      if (speakerIds.has(row.id)) err(`speakers.${row.id}`, 'duplicate speaker id');
+      speakerIds.add(row.id);
+      if (typeof row.name !== 'string' || !row.name.trim()) err(`speakers.${row.id}.name`, 'a speaker needs a name for its caption and name plate');
+      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null && !enemyIds.has(row.portraitKey)) {
+        err(`speakers.${row.id}.portraitKey`, `unknown portrait key '${row.portraitKey}': no shipped art answers to it (leave it blank for the name plate)`);
+      }
+    });
+    const eventSpeakers = b.eventSpeakers || {};
+    for (const [eventId, speakerId] of Object.entries(eventSpeakers)) {
+      if (!eventsDoorOpen && !eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
+      if (!speakerIds.has(speakerId)) err(`eventSpeakers.${eventId}`, `unknown speaker '${speakerId}'`);
+    }
+    (Array.isArray(b.atlasQuests) ? b.atlasQuests : []).forEach((quest, index) => {
+      if (!quest) return;
+      if (!speakerIds.has(quest.speakerId)) err(`atlasQuests.${quest.questId || index}.speakerId`, `unknown speaker '${quest.speakerId}'`);
+    });
+    const chains = b.questChains;
+    if (chains !== undefined) {
+      if (!chains || typeof chains !== 'object' || Array.isArray(chains)) {
+        err('questChains', 'must be an object keyed by quest id');
+      } else {
+        for (const [questId, chain] of Object.entries(chains)) {
+          const at = `questChains.${questId}`;
+          if (!validQuestId(questId)) err(at, 'a quest needs a stable id');
+          for (const key of Object.keys(chain || {})) {
+            if (key !== 'steps' && key !== 'completes') err(`${at}.${key}`, `unknown quest chain field '${key}'`);
+          }
+          const steps = Array.isArray(chain && chain.steps) ? chain.steps : [];
+          if (!steps.length) err(`${at}.steps`, 'a quest chain needs at least one step');
+          steps.forEach((eventId, index) => {
+            if (!eventsDoorOpen && !eventById.has(eventId)) err(`${at}.steps[${index}]`, `quest chain step '${eventId}' is not a shipped event`);
+            else if (!eventSpeakers[eventId]) err(`${at}.steps[${index}]`, `chain event '${eventId}' names no speaker (eventSpeakers)`);
+          });
+          const completes = Array.isArray(chain && chain.completes) ? chain.completes : [];
+          if (!completes.length) err(`${at}.completes`, 'a quest chain needs at least one completing choice');
+          completes.forEach((ref, index) => {
+            const where = `${at}.completes[${index}]`;
+            const ids = choiceIdsOf(ref && ref.eventId);
+            const choiceIndex = ref ? ids.indexOf(ref.choiceId) : -1;
+            const event = ref && eventById.get(ref.eventId);
+            // With the events door open the event half of this ref is unknowable;
+            // eventChoiceIds still ships, so the choice half is still proven.
+            if ((!eventsDoorOpen && !event) || choiceIndex < 0) {
+              err(where, `quest completion ref '${ref && ref.eventId}/${ref && ref.choiceId}' does not resolve to a shipped choice`);
+              return;
+            }
+            if (!steps.includes(ref.eventId)) err(where, `quest completion ref '${ref.eventId}/${ref.choiceId}' is not a step of this chain`);
+            const choice = event && Array.isArray(event.choices) ? event.choices[choiceIndex] : null;
+            if (ref.choiceId === 'leave' || (choice && String(choice.label).trim().toLowerCase() === 'leave')) {
+              err(where, `a Leave choice may not complete a quest ('${ref.eventId}/${ref.choiceId}')`);
+            }
+          });
         }
       }
     }
@@ -321,7 +450,7 @@ function collectContentProblems(bundle, errors = []) {
     const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
     for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
       if (!relic || relic.pool !== 'quest') continue;
-      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (!eventsDoorOpen && !granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
       if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
     }
   }
@@ -368,6 +497,21 @@ function collectContentProblems(bundle, errors = []) {
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
     }
+    // MANA IS THE THIRD COST LINE (plan phase 8, proposal §7.1): a card that
+    // costs Mana costs at least balance.mana.minActionCost action and
+    // minStaminaCost stamina — base and upgrade alike, each field inheriting
+    // the base's when the upgrade leaves it unsaid. Refused BY NAME.
+    const manaFloor = b.balance && b.balance.mana;
+    if (card && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
+      const faces = [['', card], ['.upgrade', card.upgrade ? { cost: card.cost, manaCost: card.manaCost, staminaCost: card.staminaCost, ...card.upgrade } : null]];
+      for (const [suffix, face] of faces) {
+        if (!face || !(Number.isInteger(face.manaCost) && face.manaCost > 0)) continue;
+        const action = face.cost === 'X' ? Infinity : face.cost;
+        const stamina = Number.isInteger(face.staminaCost) ? face.staminaCost : 0;
+        if (!(Number.isFinite(action) ? action >= manaFloor.minActionCost : true)) err(`cards.${card.id || '?'}${suffix}.cost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minActionCost} action (balance.mana.minActionCost); it costs ${face.cost}`);
+        if (stamina < manaFloor.minStaminaCost) err(`cards.${card.id || '?'}${suffix}.staminaCost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minStaminaCost} stamina (balance.mana.minStaminaCost); it costs ${stamina}`);
+      }
+    }
   }
   const flaskCapacity = b.balance && b.balance.flaskCapacity;
   if (!Number.isInteger(flaskCapacity) || flaskCapacity <= 0) err('balance.flaskCapacity', 'must be a positive integer');
@@ -380,11 +524,246 @@ function collectContentProblems(bundle, errors = []) {
   // always did) but when authored it must be whole, and the tag it names as
   // "extractable" must be a registered card-domain tag — otherwise nothing
   // could ever carry it and every mount would be sealed in silence.
+  // The deck's floor (plan phase 3b): balance.deck is read by model/loadout.js
+  // deckMinimum and nowhere else; the shape is held here so a retune that
+  // types a fraction or a negative is refused by name, never clamped.
+  // The character level (plan phase 6): the curve, the awards and what a
+  // level grants — each a closed set, each number refused by name.
+  // What a rest restores (plan phase 7): the location rules read these rows
+  // through their variable bindings, the door reads the mode. A retune that
+  // names an unknown mode or a percent off the scale is refused by name.
+  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
+  // journey door reads balance.atlas at run start, so a bundle without them
+  // would pass here and throw there.
+  if (b.balance) {
+    const rest = b.balance.rest;
+    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
+    else {
+      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      for (const key of ['hpSmallPct', 'hpPartialPct']) {
+        if (!(Number.isInteger(rest[key]) && rest[key] >= 0 && rest[key] <= 100)) err(`balance.rest.${key}`, `must be an integer percent 0–100, got ${JSON.stringify(rest[key])}`);
+      }
+      const mana = rest.mana;
+      if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.rest.mana', 'must be an object { mode, flat, floorPct }');
+      else {
+        for (const key of Object.keys(mana)) if (!['mode', 'flat', 'floorPct'].includes(key)) err(`balance.rest.mana.${key}`, 'Unknown field');
+        if (!REST_MANA_MODES.includes(mana.mode)) err('balance.rest.mana.mode', `must be one of ${REST_MANA_MODES.join(', ')}, got ${JSON.stringify(mana.mode)}`);
+        if (!(Number.isInteger(mana.flat) && mana.flat >= 0)) err('balance.rest.mana.flat', `must be a non-negative integer, got ${JSON.stringify(mana.flat)}`);
+        if (!(Number.isInteger(mana.floorPct) && mana.floorPct >= 0 && mana.floorPct <= 100)) err('balance.rest.mana.floorPct', `must be an integer percent 0–100, got ${JSON.stringify(mana.floorPct)}`);
+      }
+    }
+  }
+  if (b.balance) {
+    const atlas = b.balance.atlas;
+    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
+    else {
+      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
+      // Positive: every seeded route stops at its hub city, so a cap of 0
+      // would refuse every journey at run start rather than here.
+      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
+    }
+  }
+  // Plan phase 8: the Mana cost floor, the player stagger's payload and the
+  // player poise coefficient — each required, each number refused by name.
+  if (b.balance) {
+    const mana = b.balance.mana;
+    if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
+    else {
+      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of ['minActionCost', 'minStaminaCost']) {
+        if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
+      }
+    }
+    const stagger = b.balance.stagger;
+    const player = stagger && typeof stagger === 'object' && !Array.isArray(stagger) ? stagger.player : undefined;
+    if (!stagger || typeof stagger !== 'object' || Array.isArray(stagger)) err('balance.stagger', 'must be an object { player } — the player poise meter reads it (plan phase 8)');
+    else {
+      for (const key of Object.keys(stagger)) if (!['player'].includes(key)) err(`balance.stagger.${key}`, 'Unknown field');
+      if (!player || typeof player !== 'object' || Array.isArray(player)) err('balance.stagger.player', 'must be an object { actionLoss, statuses }');
+      else {
+        for (const key of Object.keys(player)) if (!['actionLoss', 'statuses'].includes(key)) err(`balance.stagger.player.${key}`, 'Unknown field');
+        if (!(Number.isInteger(player.actionLoss) && player.actionLoss >= 0)) err('balance.stagger.player.actionLoss', `must be a non-negative integer, got ${JSON.stringify(player.actionLoss)}`);
+        if (!player.statuses || typeof player.statuses !== 'object' || Array.isArray(player.statuses)) err('balance.stagger.player.statuses', 'must be an object { <statusId>: stacks }');
+        else {
+          const statusIds = new Set((Array.isArray(b.statuses) ? b.statuses : []).map((s) => s && s.id));
+          for (const [status, stacks] of Object.entries(player.statuses)) {
+            if (!statusIds.has(status)) err(`balance.stagger.player.statuses.${status}`, `unknown status '${status}'`);
+            if (!(Number.isInteger(stacks) && stacks > 0)) err(`balance.stagger.player.statuses.${status}`, `must be a positive integer, got ${JSON.stringify(stacks)}`);
+          }
+        }
+      }
+    }
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S KIT (plan phase 9). The
+    // rebase moved every attribute and every equipment minimum at once, and
+    // nothing cross-read the two: the Starseer's preset lost the Intelligence
+    // its own staff asks for, so creation refused the character the table had
+    // just authored. Summing to the mode total is not enough — the kit the
+    // class starts in has to be wearable by the points the class starts with.
+    const presetTables = (b.attributeRules || {}).presets;
+    const kitRows = ((b.equipment || {}).startingKits) || [];
+    const reqRows = ((b.equipment || {}).equipmentRequirements) || [];
+    if (presetTables && typeof presetTables === 'object' && kitRows.length && reqRows.length) {
+      const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
+      const defaultMode = (b.attributeRules || {}).defaultMode;
+      const byClass = presetTables[defaultMode];
+      if (byClass && typeof byClass === 'object') {
+        for (const kit of kitRows) {
+          if (!kit || !kit.baseline) continue;
+          const allocation = byClass[kit.classId];
+          if (!allocation) continue;
+          for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
+            for (const row of minimaFor(itemId)) {
+              const have = allocation[row.attributeId];
+              if (Number.isInteger(row.minimum) && Number.isInteger(have) && have < row.minimum) {
+                err(`attributeRules.presets.${defaultMode}.${kit.classId}.${row.attributeId}`,
+                  `is ${have}, but the class's baseline kit item '${itemId}' asks ${row.minimum} — the preset cannot hold the kit it starts in`);
+              }
+            }
+          }
+        }
+      }
+    }
+    const poise = b.balance.poise;
+    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
+    else {
+      if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
+      if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
+    }
+    const exposure = b.balance.exposure;
+    if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
+      if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
+      if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
+    }
+  }
+  if (b.balance?.rewards?.rarityWeightsByClass !== undefined) {
+    const overrides = b.balance.rewards.rarityWeightsByClass;
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const root = 'balance.rewards.rarityWeightsByClass';
+    if (!object(overrides)) err(root, 'must be an object keyed by class id');
+    else for (const [classId, pools] of Object.entries(overrides)) {
+      const path = `${root}.${classId}`;
+      if (!(b.classes || []).some(cls => cls.id === classId)) err(path, 'unknown class id');
+      if (!object(pools)) { err(path, 'must be an object keyed by reward pool'); continue; }
+      for (const [pool, weights] of Object.entries(pools)) {
+        const poolPath = `${path}.${pool}`;
+        if (!['normal', 'elite', 'boss'].includes(pool)) err(poolPath, 'unknown reward pool');
+        if (!object(weights)) { err(poolPath, 'must be a rarity weight object'); continue; }
+        for (const rarity of Object.keys(weights)) if (!['common', 'uncommon', 'rare'].includes(rarity)) err(`${poolPath}.${rarity}`, 'unknown reward rarity');
+        for (const rarity of ['common', 'uncommon', 'rare']) {
+          if (!Number.isFinite(weights[rarity]) || weights[rarity] < 0) err(`${poolPath}.${rarity}`, 'must be a finite non-negative weight');
+        }
+        if (!(weights.common + weights.uncommon + weights.rare > 0)) err(poolPath, 'must have a positive total weight');
+      }
+    }
+  }
+
+  if (b.balance && b.balance.level !== undefined) {
+    const lv = b.balance.level;
+    if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
+    else {
+      for (const key of Object.keys(lv)) if (!['xp'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      const xp = lv.xp;
+      if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
+      else {
+        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        if (!(Number.isFinite(xp.base) && xp.base > 0)) err('balance.level.xp.base', `must be a positive number, got ${JSON.stringify(xp.base)}`);
+        if (!(Number.isFinite(xp.growth) && xp.growth >= 1)) err('balance.level.xp.growth', `must be a number of at least 1, got ${JSON.stringify(xp.growth)}`);
+        if (!(Number.isInteger(xp.roundTo) && xp.roundTo > 0)) err('balance.level.xp.roundTo', `must be a positive integer, got ${JSON.stringify(xp.roundTo)}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.xp !== undefined) {
+    const xp = b.balance.xp;
+    if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, kill, quest }');
+    else {
+      for (const key of Object.keys(xp)) if (!['combatWin', 'kill', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
+      if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
+      else {
+        for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
+        for (const key of ['normal', 'elite', 'boss']) if (!(Number.isInteger(xp.kill[key]) && xp.kill[key] >= 0)) err(`balance.xp.kill.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp.kill[key])}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.levelUp !== undefined) {
+    const lu = b.balance.levelUp;
+    if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
+    else {
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
+      if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
+    }
+  }
+  if (b.balance && b.balance.deck !== undefined) {
+    const deck = b.balance.deck;
+    if (!deck || typeof deck !== 'object' || Array.isArray(deck)) err('balance.deck', 'must be an object { minimum, minimumStepLevels, minimumPerStep }');
+    else {
+      for (const key of Object.keys(deck)) if (!['minimum', 'minimumStepLevels', 'minimumPerStep'].includes(key)) err(`balance.deck.${key}`, 'Unknown field');
+      if (!Number.isInteger(deck.minimum) || deck.minimum < 0) err('balance.deck.minimum', `must be a non-negative integer, got ${JSON.stringify(deck.minimum)}`);
+      if (!Number.isInteger(deck.minimumStepLevels) || deck.minimumStepLevels < 1) err('balance.deck.minimumStepLevels', `must be a positive integer, got ${JSON.stringify(deck.minimumStepLevels)}`);
+      if (!Number.isInteger(deck.minimumPerStep) || deck.minimumPerStep < 0) err('balance.deck.minimumPerStep', `must be a non-negative integer, got ${JSON.stringify(deck.minimumPerStep)}`);
+    }
+  }
+  // The skill tracks' numbers (plan phase 4a): the curve and the award rows
+  // model/skills.js and engine/skillXp.js read. Refused by name, never clamped.
+  if (b.balance && b.balance.skill !== undefined) {
+    const skill = b.balance.skill;
+    const posInt = (v) => Number.isInteger(v) && v > 0;
+    const nonNeg = (v) => Number.isFinite(v) && v >= 0;
+    const curve = (row, path) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) { err(path, 'must be an object { base, growth, roundTo, … }'); return; }
+      if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
+      if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
+      if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+    };
+    if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
+    else {
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'upgradeAt', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
+      if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
+      // The draft rows (plan phase 4b), each present and refused by name.
+      for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt']) {
+        if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
+      }
+      if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {
+        err('balance.skill.rarityUnlock', 'must be an object { <rarity>: level }');
+      } else {
+        for (const [rarity, level] of Object.entries(skill.rarityUnlock)) {
+          if (!CARD_RARITIES.includes(rarity)) err(`balance.skill.rarityUnlock.${rarity}`, `'${rarity}' is not a card rarity (${CARD_RARITIES.join(', ')})`);
+          if (!Number.isInteger(level) || level < 1) err(`balance.skill.rarityUnlock.${rarity}`, `must be a positive integer level, got ${JSON.stringify(level)}`);
+        }
+        if (!Object.keys(skill.rarityUnlock).length) err('balance.skill.rarityUnlock', 'names no rarity — no draft could ever offer a card');
+      }
+      curve(skill.xp, 'balance.skill.xp');
+      if (skill.xp && typeof skill.xp === 'object') {
+        for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
+        for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
+        if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+      }
+      if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
+      else {
+        for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
+        curve(skill.class.xp, 'balance.skill.class.xp');
+        if (skill.class.xp && typeof skill.class.xp === 'object') {
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          // The class XP sources (plan phase 5b), each present and non-negative.
+          for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
+        }
+        // The class levels the tree's tiers open at (plan phase 5b): one per
+        // tier, rising, the first at level 1 or above.
+        const tierAt = skill.class.tierAt;
+        if (!Array.isArray(tierAt) || !tierAt.length || tierAt.some((n) => !posInt(n)) || tierAt.some((n, i) => i > 0 && n <= tierAt[i - 1])) {
+          err('balance.skill.class.tierAt', `must be a rising list of positive integer levels, one per tier, got ${JSON.stringify(tierAt)}`);
+        }
+      }
+    }
+  }
   if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
       const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
-      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a node under the card root in nodes.csv`);
       else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
       for (const [kind, spec] of Object.entries(rules.kinds)) {
         for (const accepted of spec.accepts) {
@@ -403,7 +782,69 @@ function collectContentProblems(bundle, errors = []) {
       err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
     }
   }
+  // THE CLASS TREE (plan phase 5b, content/source/classTree.csv): every row
+  // names a class and a property node, sits in a tier the balance rows open,
+  // a node sits in one class, and the top tier's nodes exclude one another
+  // by a relation row — the subclass is a choice, never a stack.
+  {
+    const rows = Array.isArray(b.classTree) ? b.classTree : [];
+    const classIds = new Set((Array.isArray(b.classes) ? b.classes : []).map((c) => c && c.id));
+    const nodesById = new Map((Array.isArray(b.nodes) ? b.nodes : []).map((n) => [n && n.id, n]));
+    const rootOf = (id) => { let n = nodesById.get(id); let guard = 0; while (n && n.parentId && guard++ < 64) n = nodesById.get(n.parentId); return n ? n.id : null; };
+    const tiers = ((((b.balance || {}).skill || {}).class || {}).tierAt) || [];
+    const tierCount = Array.isArray(tiers) ? tiers.length : 0;
+    const relations = Array.isArray(b.nodeRelations) ? b.nodeRelations : [];
+    const conflicts = (x, y) => relations.some((r) => r && r.relation === 'CONFLICTS_WITH' && ((r.sourceId === x && r.targetId === y) || (r.sourceId === y && r.targetId === x)));
+    const seenNode = new Map();
+    const byClassTier = new Map();
+    rows.forEach((row, i) => {
+      const path = `classTree[${i}]`;
+      if (!row || typeof row !== 'object') { err(path, 'must be { classId, nodeId, tier }'); return; }
+      if (!classIds.has(row.classId)) err(`${path}.classId`, `unknown class '${row.classId}'`);
+      const node = nodesById.get(row.nodeId);
+      if (!node) err(`${path}.nodeId`, `'${row.nodeId}' is not a node`);
+      else if (rootOf(row.nodeId) !== 'property') err(`${path}.nodeId`, `'${row.nodeId}' is not a property node — a tree node confers behaviour`);
+      const tier = Number(row.tier);
+      if (!Number.isInteger(tier) || tier < 1 || (tierCount && tier > tierCount)) err(`${path}.tier`, `must be a tier 1..${tierCount || '?'} (balance.skill.class.tierAt names one level per tier), got ${JSON.stringify(row.tier)}`);
+      if (seenNode.has(row.nodeId)) err(`${path}.nodeId`, `'${row.nodeId}' already sits in class '${seenNode.get(row.nodeId)}' — a node sits in one class`);
+      else seenNode.set(row.nodeId, row.classId);
+      const key = `${row.classId}\u0000${tier}`;
+      if (!byClassTier.has(key)) byClassTier.set(key, []);
+      byClassTier.get(key).push(row.nodeId);
+    });
+    if (tierCount) {
+      for (const [key, ids] of byClassTier) {
+        const [classId, tier] = key.split('\u0000');
+        if (Number(tier) !== tierCount) continue;
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+          if (!conflicts(ids[i], ids[j])) err(`classTree.${classId}`, `tier ${tier} nodes '${ids[i]}' and '${ids[j]}' do not exclude one another — the subclass is a choice: add a CONFLICTS_WITH row in nodeRelations.csv`);
+        }
+      }
+    }
+  }
+  // The class card's leaning (plan phase 5a): a class carrying `favored`
+  // names at least one item type in the class domain, else the property
+  // multiplies nothing and the row is decoration.
+  {
+    const itemTypeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).filter((n) => n && n.parentId === 'itemType').map((n) => n.id));
+    const rows = Array.isArray(b.tagging) ? b.tagging : [];
+    for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+      if (!cls || !cls.id) continue;
+      const tags = rows.filter((r) => r && r.family === 'class' && r.objectId === cls.id).map((r) => r.tagId);
+      if (tags.includes('favored') && !tags.some((t) => itemTypeIds.has(t))) {
+        err(`tagging.class.${cls.id}`, "carries 'favored' but names no item type — the leaning has no group to favour");
+      }
+    }
+    // Only a class carries the leaning: on any other carrier its scope is
+    // empty and it multiplies nothing, silently.
+    for (const r of rows) {
+      if (r && r.tagId === 'favored' && r.family !== 'class') err(`tagging.${r.family}.${r.objectId}`, "'favored' is the class card's leaning — no other carrier scopes it");
+    }
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    // The kit relic rides beside the starting relic (plan phase 5a); naming
+    // the same relic twice would drop silently to one.
+    if (cls && cls.kitRelic && cls.kitRelic === cls.startingRelic) err(`classes.${cls.id}.kitRelic`, `'${cls.kitRelic}' is already the starting relic — the kit relic is a second relic`);
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
       || a.hp + a.mana !== flaskCapacity) {
@@ -425,9 +866,14 @@ function collectContentProblems(bundle, errors = []) {
   // nothing else, so the normalised constraint was not actually the constraint.
   const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
   // Creature identity is the creature domain of that same registry, so adding
-  // a kind is a row in tags.csv rather than an edit to a frozen array.
+  // a kind is a node in nodes.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');
-  const vctx = { ids, err, tagIds };
+  // Every node of the tree, for the predicate that may ask about any of them.
+  const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
+  // The skill tracks, derived (model/skills.js): the ids a progression gate
+  // may name are exactly the ones the ledger can hold.
+  const skillIds = new Set(skillTracks(b).map((t) => t.id));
+  const vctx = { ids, err, tagIds, nodeIds, skillIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -503,7 +949,6 @@ function collectContentProblems(bundle, errors = []) {
       if (seenProfiles.has(id)) err(`equipment.basicCardProfiles.${id}`, `Duplicate profile id '${id}'`);
       seenProfiles.add(id);
       if (profile && Number.isFinite(profile.baseValue) && profile.baseValue < 0) err(`equipment.basicCardProfiles.${id}.baseValue`, 'must be non-negative');
-      if (profile && Number.isFinite(profile.pointsPerTier) && profile.pointsPerTier <= 0) err(`equipment.basicCardProfiles.${id}.pointsPerTier`, 'must be > 0');
       if (profile && Number.isFinite(profile.cap) && profile.cap < 0) err(`equipment.basicCardProfiles.${id}.cap`, 'must be non-negative');
       if (!Number.isInteger(profile && profile.exposureBuildupPerHit) || profile.exposureBuildupPerHit < 0) err(`equipment.basicCardProfiles.${id}.exposureBuildupPerHit`, 'must be a non-negative integer');
       if (profile && profile.cap !== '' && profile.cap != null && !Number.isFinite(profile.cap)) err(`equipment.basicCardProfiles.${id}.cap`, 'must be blank or finite');
@@ -537,6 +982,18 @@ function collectContentProblems(bundle, errors = []) {
         if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
         if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
         if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+        // A Mana spell works toward a break faster than an action-only one
+        // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
+        const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
+        const schoolMult = ((b.balance || {}).arcaneExposure || {}).schoolBuildupMultipliers || {};
+        // EITHER FACE COSTING MANA BINDS THE ROW. An upgrade that adds a Mana
+        // line was slipping past the floor while its buildup stayed at the
+        // base's (Codex, #1203); the row is one per card, so one face is enough.
+        const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
+        const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
+        if (row && Number.isInteger(floor) && costsMana && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
+          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${row.exposureBuildupPerHit}`);
+        }
       }
     }
   }
@@ -653,6 +1110,17 @@ function collectContentProblems(bundle, errors = []) {
         seen.add(key);
       }
     }
+    // EVERY SLOT ROW IS A ZONE THE RUN CAN CARRY (plan phase 3b). zones.js is
+    // the one home of "which slot fills which zone"; a row here that it does
+    // not name would take a piece the player equipped and give it nowhere to
+    // ride in the save's `zones`, so it is refused by name at boot rather than
+    // discovered as a null in a projection.
+    for (const slot of Array.isArray(equipment.slots) ? equipment.slots : []) {
+      if (!slot || typeof slot.id !== 'string') continue;
+      const held = typeof slot.hand === 'string' && slot.hand !== '';
+      if (held && !handZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a hand slot that no hands zone names (model/zones.js HAND_SLOT_IDS) — the run could not carry what is put in it`);
+      if (!held && !wornZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a worn slot that no worn zone names (model/zones.js WORN_SLOT_IDS) — the run could not carry what is put in it`);
+    }
     if (!Array.isArray(equipment.cardTagging)) err('equipment.cardTagging', 'Missing required registered cardTagging array');
   }
 
@@ -702,6 +1170,7 @@ function collectContentProblems(bundle, errors = []) {
     events: SCHEMAS.event,
     flasks: SCHEMAS.flask,
     classes: SCHEMAS.class,
+    seats: SCHEMAS.seat,
   };
   for (const type of REGISTRY_TYPES) {
     // A registry that is present but not an array was SILENTLY SKIPPED here —
@@ -717,6 +1186,23 @@ function collectContentProblems(bundle, errors = []) {
       walkSchema(def, typeToSchema[type], path, vctx);
     });
   }
+  propertyRuleProblems(b, vctx);
+  // The tree the tag tables and the property rules are derived from: parents,
+  // cycles, edges, families, variables against bindings, kinds against
+  // collections (model/tree.js says what each refusal is).
+  // A combat source hooked on a run-level event (arrived, rested) would never
+  // fire: only the location visit emits them, outside any fight.
+  for (const [collection, field] of [['statuses', 'hooks'], ['stances', 'hooks'], ['enemies', 'phases']]) {
+    for (const def of Array.isArray(b[collection]) ? b[collection] : []) {
+      (def && Array.isArray(def[field]) ? def[field] : []).forEach((hook, i) => {
+        if (hook && RUN_LEVEL_EVENTS.includes(hook.on)) err(`${collection}.${def.id}.${field}[${i}].on`, `'${hook.on}' is a run-level event (the location visit's) that no ${collection.slice(0, -1)} hook can hear`);
+      });
+    }
+  }
+  for (const p of treeProblems(b)) err(p.path, p.message);
+  // Locations (plan phase 7): a `location` tagging row names a map id, every
+  // rest-mana mode has its rule, and a restDenied filter names a carried tag.
+  for (const p of locationTaggingProblems(b)) err(p.path, p.message);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -744,8 +1230,7 @@ function collectContentProblems(bundle, errors = []) {
       const path = `creationModes.${mode.id}.equipmentProfiles.${profileId}`;
       if (!equipmentProfileIds.has(profileId)) err(path, `unknown equipment profile '${profileId}'`);
       if (patch.baseValue !== undefined && !Number.isFinite(patch.baseValue)) err(`${path}.baseValue`, 'must be finite');
-      if (patch.pointsPerTier !== undefined && (!Number.isFinite(patch.pointsPerTier) || patch.pointsPerTier <= 0)) err(`${path}.pointsPerTier`, 'must be finite and > 0');
-      if (patch.gainPerTier !== undefined && !Number.isFinite(patch.gainPerTier)) err(`${path}.gainPerTier`, 'must be finite');
+      if (patch.ratingId !== undefined && !['ar', 'dr', 'pr', 'poise', 'ward'].includes(patch.ratingId)) err(`${path}.ratingId`, 'must be a known rating');
       if (patch.cap !== undefined && patch.cap !== null && (!Number.isFinite(patch.cap) || patch.cap < 0)) err(`${path}.cap`, 'must be null or finite and >= 0');
     }
   }
@@ -864,6 +1349,50 @@ function collectContentProblems(bundle, errors = []) {
       if (encounter[field] == null) continue;
       for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {
         err(problem.path, problem.msg);
+      }
+    }
+  }
+
+  // ---- Seats (SPEC §13) ------------------------------------------------------
+  // Three rules the schema cannot say: baselines are one per seat and cover
+  // 1..N; the null seat is exactly one boss row; every seat can be climbed —
+  // it has a normal, an elite and a boss row, or a map for it cannot be built.
+  {
+    const seats = Array.isArray(b.seats) ? b.seats.filter(Boolean) : [];
+    const encounters = Array.isArray(b.encounters) ? b.encounters.filter(Boolean) : [];
+    const tiers = seats.map((seat) => seat.baseTier).sort((x, y) => x - y);
+    if (seats.length && tiers.some((tier, i) => tier !== i + 1)) {
+      err('seats', `baseTier values must be exactly 1..${seats.length}, one per seat (got ${JSON.stringify(tiers)})`);
+    }
+    const nullSeat = encounters.filter((encounter) => encounter.seat === null);
+    if (encounters.length && nullSeat.length !== 1) {
+      err('encounters', `exactly one encounter may carry seat: null — the final tier's extra terminal (got ${nullSeat.length}: ${nullSeat.map((e) => e.id).join(', ') || 'none'})`);
+    }
+    for (const encounter of nullSeat) {
+      if (encounter.pool !== 'boss') err(`encounters.${encounter.id}.seat`, 'the null-seat encounter must be a boss');
+    }
+    for (const seat of seats) {
+      for (const pool of ['normal', 'elite', 'boss']) {
+        if (!encounters.some((encounter) => encounter.seat === seat.id && encounter.pool === pool)) {
+          err(`seats.${seat.id}`, `no '${pool}' encounter is bound to this seat; a map for it cannot be built`);
+        }
+      }
+    }
+    const table = b.balance && b.balance.seatTiers;
+    const cycle = b.balance && b.balance.endless && b.balance.endless.actsPerCycle;
+    if (b.balance !== undefined) {
+      if (!isPlainObject(table)) {
+        err('balance.seatTiers', 'must be an object keyed by tier (1..actsPerCycle) with a positive multiplier each');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const mult = table[tier];
+          if (typeof mult !== 'number' || !(mult > 0)) err(`balance.seatTiers.${tier}`, `tier ${tier} needs a positive multiplier (got ${JSON.stringify(mult)})`);
+        }
+        if (table[1] !== 1) err('balance.seatTiers.1', `tier 1 is the definition of scale 1 and must be exactly 1 (got ${JSON.stringify(table[1])})`);
+        for (const key of Object.keys(table)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
       }
     }
   }
@@ -1235,8 +1764,16 @@ function collectContentProblems(bundle, errors = []) {
     validateCardTemplates(card, path, err);
   }
 
+  const relicTagsByRelic = relicPropertyTagIndex(b);
+  const propertyRulesByTag = new Map(
+    (Array.isArray(b.propertyRules) ? b.propertyRules : [])
+      .filter((rule) => rule && typeof rule.tag === 'string')
+      .map((rule) => [rule.tag, rule]));
   for (const relic of b.relics || []) {
-    validateRelicTemplate(relic, `relics.${relic.id}`, err);
+    validateRelicTemplate(relic, `relics.${relic.id}`, err, propertyRulesByTag, relicTagsByRelic, b);
+    if (Array.isArray(relic.triggers) && relic.triggers.length) {
+      err(`relics.${relic.id}.triggers`, `authors triggers on the relic, which no longer reads them — a relic's triggers are its property rule now: register a '${relic.id}' tag in content/source/tags.csv with domain 'property', move these to content/source/propertyRuleEffects.json under that tag, and add 'relic,,${relic.id},${relic.id}' to content/source/tagging.csv`);
+    }
     const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
     if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
       err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
@@ -1594,6 +2131,9 @@ function walkSchema(value, node, path, vctx) {
       err(path, `Value ${describe(value)} matched no allowed variant`);
       return;
     }
+    case 'null':
+      if (value !== null) err(path, `Expected null, got ${describe(value)}`);
+      return;
     case 'ref':
       if (typeof value !== 'string') {
         err(path, `Expected ${node.reg} id string, got ${describe(value)}`);
@@ -1677,7 +2217,30 @@ export function validateEffects(effects, path, vctx) {
     if (eff.target !== undefined && !TARGETS.includes(eff.target)) {
       err(`${p}.target`, `Unknown target '${eff.target}' (closed set: ${TARGETS.join(', ')})`);
     }
-    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat']) {
+    // swapClass is `{ classId } | { random: true }` — one selector, never
+    // neither (the door would swap to nothing) nor both (one would be ignored).
+    if (eff.op === 'swapClass') {
+      const named = eff.classId !== undefined;
+      const random = eff.random !== undefined;
+      if (random && eff.random !== true) err(`${p}.random`, `'random' must be true on opcode 'swapClass' (omit it for a named swap)`);
+      if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
+      else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
+    }
+    // restoreMana restores BY an amount or TO a floor (plan phase 7) — one
+    // selector, never neither (nothing to restore) nor both (one ignored).
+    if (eff.op === 'restoreMana') {
+      const by = eff.amount !== undefined;
+      const to = eff.toFloorPct !== undefined;
+      if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
+    }
+    // arcaneBuildup pours BY an amount or a percent OF the target's threshold
+    // (plan phase 8) — one selector, never neither nor both.
+    if (eff.op === 'arcaneBuildup') {
+      const by = eff.amount !== undefined;
+      const pct = eff.pct !== undefined;
+      if (by === pct) err(p, `Opcode 'arcaneBuildup' takes exactly one of 'amount' or 'pct'`);
+    }
+    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }
     if (eff.if !== undefined) validatePredicate(eff.if, `${p}.if`, vctx);
@@ -1764,13 +2327,18 @@ const PREDICATE_FIELDS = {
   firstCardThisTurn: [],
   firstAttackThisCombat: [],
   cardTypeIs: ['type'],
+  cardTagIs: ['tag'],
   everyNthCardThisCombat: ['n'],
   random: ['pct'],
   eventIsAttack: [],
   hpDamagePositive: [],
+  healPositive: [],
+  manaPositive: [],
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],
+  skillLevelAtLeast: ['skill', 'level'],
+  classLevelAtLeast: ['level'],
   all: ['preds'],
   any: ['preds'],
   not: ['pred'],
@@ -1809,11 +2377,31 @@ export function validatePredicate(pred, path, vctx) {
     case 'cardTypeIs':
       if (!CARD_TYPES.includes(pred.type)) err(`${path}.type`, `Unknown card type '${pred.type}'`);
       break;
+    case 'cardTagIs':
+      // Any node of the tree may be asked about: a card's authored tags and
+      // the grip's derived framework tags (equipment.dualWield) alike.
+      if (typeof pred.tag !== 'string' || !vctx.nodeIds || !vctx.nodeIds.has(pred.tag)) {
+        err(`${path}.tag`, `Unknown tag '${pred.tag}' — not a node in content/source/nodes.csv`);
+      }
+      break;
     case 'everyNthCardThisCombat':
       if (!Number.isInteger(pred.n) || pred.n < 1) err(`${path}.n`, 'n must be a positive integer');
       break;
     case 'random':
       if (typeof pred.pct !== 'number') err(`${path}.pct`, 'pct must be a number');
+      break;
+    // The skill id is one of the derived tracks (model/skills.js): a gate on
+    // a name the ledger never holds would be false forever, silently.
+    case 'skillLevelAtLeast':
+      if (typeof pred.skill !== 'string' || !pred.skill) {
+        err(`${path}.skill`, `skillLevelAtLeast names a skill track id, got ${describe(pred.skill)}`);
+      } else if (vctx.skillIds && !vctx.skillIds.has(pred.skill)) {
+        err(`${path}.skill`, `Unknown skill track '${pred.skill}' — the tracks are ${[...vctx.skillIds].join(', ')}`);
+      }
+      if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
+      break;
+    case 'classLevelAtLeast':
+      if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;
     case 'all':
     case 'any':
@@ -1833,6 +2421,7 @@ const FORMULA_FIELDS = {
   mul: ['args'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
+  missingMana: ['of', 'min', 'max'],
   stacks: ['status', 'of', 'per', 'min', 'max'],
   energySpent: ['per', 'min', 'max'],
   blockOf: ['of', 'min', 'max'],
@@ -1871,7 +2460,7 @@ export function validateFormula(value, path, vctx) {
     }
     if (value.of === undefined) err(`${path}.of`, "'stacks' requires 'of'");
   }
-  if (['percentMaxHp', 'missingHp', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
+  if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {
@@ -1911,13 +2500,168 @@ function validateCardTemplates(card, path, err) {
   }
 }
 
-function validateRelicTemplate(relic, path, err) {
-  if (typeof relic.textTemplate !== 'string' || !Array.isArray(relic.triggers)) return;
+function validateRelicTemplate(relic, path, err, rulesByTag = null, taggingByObject = null, bundle = null) {
+  if (typeof relic.textTemplate !== 'string') return;
+  // A relic's sentence covers the whole relic, and since plan phase 2 the whole
+  // relic is two homes: the passives it still owns, and the triggers that moved
+  // into its property rules. Both are read here, so "every number a player sees
+  // is derived from the entry that produces it" survives the move intact.
   const effects = [];
-  for (const trig of relic.triggers) {
+  for (const trig of relic.triggers || []) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
-  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
+  // The rules' half binds BY NAME: one binding per variable the relic's nodes
+  // declare (tree.js nodeVariableBindings), carrying the op that reads it so
+  // the "every player-visible number is stated" rule below is asked of a
+  // variable exactly as it was of an op position.
+  const byName = [];
+  for (const tag of (taggingByObject && taggingByObject.get(relic.id)) || []) byName.push(...nodeVariableBindings(bundle, tag));
+  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, [...relicModifierTokenBindings(relic), ...byName]);
+}
+
+/**
+ * The triggers a relic's property rules carry, flattened in tagging order.
+ *
+ * READS THE TAGGING ROWS, NOT `propertyTags`: that field is stamped onto a
+ * definition when the registries are built (model/registries.js), and the
+ * validator runs on the RAW content bundle, where it does not exist yet. Taking
+ * it from the bundle's own join is also the more honest read — this is the same
+ * table the mount path resolves against.
+ */
+function relicRuleTriggers(relic, rulesByTag, taggingByObject) {
+  if (!rulesByTag || !taggingByObject) return [];
+  const out = [];
+  for (const tag of taggingByObject.get(relic.id) || []) {
+    const rule = rulesByTag.get(tag);
+    for (const trig of (rule && rule.triggers) || []) out.push(trig);
+  }
+  return out;
+}
+
+/** relic id → the property tags tagging.csv hands it, in file order. */
+function relicPropertyTagIndex(b) {
+  const propertyTags = new Set(tagIdsInDomain(b, 'property'));
+  const index = new Map();
+  for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
+    if (!row || row.family !== 'relic' || !propertyTags.has(row.tagId)) continue;
+    const list = index.get(row.objectId) || [];
+    list.push(row.tagId);
+    index.set(row.objectId, list);
+  }
+  return index;
+}
+
+// ---------------------------------------------------------------------------
+// Property rules (docs/proposal-progression-and-property-system.md §3)
+// ---------------------------------------------------------------------------
+
+function balanceRefsIn(value, path, out = []) {
+  if (Array.isArray(value)) value.forEach((v, i) => balanceRefsIn(v, `${path}[${i}]`, out));
+  else if (isPlainObject(value)) {
+    if (Object.keys(value).length === 1 && typeof value.balance === 'string') out.push({ path, ref: value.balance });
+    else for (const [k, v] of Object.entries(value)) balanceRefsIn(v, `${path}.${k}`, out);
+  }
+  return out;
+}
+
+/**
+ * Every refusal here names its row: a property tag with no rule, or two; a rule
+ * for a tag outside the property domain; requires/excludes that name no
+ * property tag; a requires cycle; and a sidecar number naming no balance row.
+ *
+ * WHAT IS NO LONGER REFUSED: the family. Property tags were restricted to four
+ * carriers, with the card named in the refusal. That gate is gone — a property
+ * tag is how the game is told what an object is and how it may be used, so
+ * every family carries them (schemas.js, where the list used to be).
+ */
+/** The tagging rows that hand a property tag to a holder. Any family may. */
+function carriersOf(b, tag) {
+  return (Array.isArray(b.tagging) ? b.tagging : []).filter((row) => row && row.tagId === tag);
+}
+
+function propertyRuleProblems(b, vctx) {
+  const { err } = vctx;
+  const rules = b.propertyRules === undefined ? [] : b.propertyRules;
+  if (!Array.isArray(rules)) {
+    err('propertyRules', `must be an array of property rule rows (got ${describe(rules)})`);
+    return;
+  }
+  const propertyTags = new Set(tagIdsInDomain(b, 'property'));
+  const byTag = new Map();
+  rules.forEach((rule, i) => {
+    const tag = rule && typeof rule.tag === 'string' ? rule.tag : `#${i}`;
+    const path = `propertyRules.${tag}`;
+    walkSchema(rule, SCHEMAS.propertyRule, path, vctx);
+    if (!isPlainObject(rule) || typeof rule.tag !== 'string') return;
+    if (byTag.has(rule.tag)) {
+      err(path, `duplicate rule for property tag '${rule.tag}' — a property tag has exactly one rule; a stronger version is a second tag ('${rule.tag}2'), not a second row`);
+      return;
+    }
+    byTag.set(rule.tag, rule);
+    if (!propertyTags.has(rule.tag)) {
+      err(path, `'${rule.tag}' is not a property tag — register it as a node under the property root in content/source/nodes.csv, or delete this rule`);
+    }
+    for (const field of ['requires', 'excludes']) {
+      for (const ref of Array.isArray(rule[field]) ? rule[field] : []) {
+        if (!propertyTags.has(ref)) err(`${path}.${field}`, `${field} '${ref}', which is not a property tag — every entry names a node under the property root`);
+      }
+    }
+    const excludes = Array.isArray(rule.excludes) ? rule.excludes : [];
+    if (excludes.includes(rule.tag)) err(`${path}.excludes`, `'${rule.tag}' excludes itself, so it could never mount`);
+    for (const ref of Array.isArray(rule.requires) ? rule.requires : []) {
+      if (excludes.includes(ref)) err(`${path}.requires`, `'${ref}' is both required and excluded, so the rule could never mount`);
+    }
+    for (const { path: at, ref } of balanceRefsIn(rule, path)) {
+      err(at, `names balance row '${ref}', which is not a number in src/content/balance.js — add the row or fix the path`);
+    }
+    // A RULE EITHER STATES ITSELF OR ITS CARRIER STATES IT, and either way every
+    // number reaches a reader. A rule with its own sentence is checked against
+    // it. A rule with an EMPTY sentence is deferred to the carriers holding the
+    // tag — today that is a relic, whose own textTemplate has covered the whole
+    // relic since before its triggers moved (plan phase 2), and which is checked
+    // against both halves in validateRelicTemplate. A rule with an empty
+    // sentence that NOBODY carries would state its numbers nowhere at all, so
+    // that is the one shape refused here.
+    if (typeof rule.textTemplate === 'string' && Array.isArray(rule.triggers)) {
+      const effects = rule.triggers.flatMap((trig) => (trig && Array.isArray(trig.do) ? trig.do : []));
+      if (rule.textTemplate.trim()) {
+        // Bound by NAME — the rule's sentence reads the node's variables — and
+        // by op position for a rule authored straight into `propertyRules` with
+        // literal numbers and no node (a fixture; shipped rules are derived
+        // from nodes and carry balance refs, which bind nothing here).
+        checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err, nodeVariableBindings(b, rule.tag));
+      } else if (effects.length && !carriersOf(b, rule.tag).length) {
+        err(`${path}.textTemplate`, `is empty and no carrier holds '${rule.tag}', so the numbers in its triggers are stated nowhere — give the rule its own sentence, or add the tagging row for the carrier whose text already covers it`);
+      }
+    }
+  });
+  for (const tag of propertyTags) {
+    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — a property node's rule is derived from the tree by tools/content-build.mjs — put the node under the property root in nodes.csv and rebuild`);
+  }
+
+  // No requires cycles: a rule that (transitively) requires itself is a
+  // carrier nobody can author.
+  const state = new Map();
+  const reported = new Set();
+  const visit = (tag, stack) => {
+    state.set(tag, 1);
+    stack.push(tag);
+    for (const next of byTag.get(tag).requires || []) {
+      if (!byTag.has(next)) continue;
+      if (state.get(next) === 1) {
+        const cycle = [...stack.slice(stack.indexOf(next)), next];
+        const key = [...new Set(cycle)].sort().join('|');
+        if (!reported.has(key)) {
+          reported.add(key);
+          err(`propertyRules.${next}.requires`, `requires cycle ${cycle.join(' → ')} — no carrier could ever satisfy it`);
+        }
+      } else if (!state.has(next)) visit(next, stack);
+    }
+    stack.pop();
+    state.set(tag, 2);
+  };
+  for (const tag of byTag.keys()) if (!state.has(tag)) visit(tag, []);
+
 }
 
 // ---------------------------------------------------------------------------

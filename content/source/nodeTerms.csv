@@ -1,0 +1,92 @@
+# content/source/nodeTerms.csv — the player-facing words a node has, if any
+#
+# Split from nodes.csv because most nodes have none: a term row only where the
+# node reaches the player. playerTermId/tooltipTermId are ids into
+# content/framework/terms.json (the framework's words for a card property);
+# template is a conferring node's own sentence, whose {tokens} are its
+# variables (nodeVariables.csv) — {poiseDamage} reads the variable poiseDamage.
+#
+# columns: nodeId, playerTermId, tooltipTermId, template
+nodeId,playerTermId,tooltipTermId,template
+classification.attack,term.attack,term.tooltip.attack,
+classification.strike,term.strike,term.tooltip.strike,
+classification.guard,term.guard,term.tooltip.guard,
+classification.weaponArt,term.weaponArt,term.tooltip.weaponArt,
+classification.skill,term.skill,term.tooltip.skill,
+classification.power,term.power,term.tooltip.power,
+classification.curse,term.curse,term.tooltip.curse,
+classification.statusCard,term.statusCard,term.tooltip.statusCard,
+damage.physical,term.physical,term.tooltip.physical,
+damage.magic,term.magic,term.tooltip.magic,
+damage.arcane,term.arcane,term.tooltip.arcane,
+damage.blade,term.blade,term.tooltip.blade,
+damage.blunt,term.blunt,term.tooltip.blunt,
+damage.piercing,term.piercing,term.tooltip.piercing,
+scaling.strength,term.strength,term.tooltip.strength,
+scaling.dexterity,term.dexterity,term.tooltip.dexterity,
+scaling.constitution,term.constitution,term.tooltip.constitution,
+scaling.intelligence,term.intelligence,term.tooltip.intelligence,
+scaling.wisdom,term.wisdom,term.tooltip.wisdom,
+cost.action,term.action,term.tooltip.action,
+cost.stamina,term.stamina,term.tooltip.stamina,
+cost.mana,term.mana,term.tooltip.mana,
+cost.alternative,term.alternativeCost,term.tooltip.alternativeCost,
+lifecycle.innate,term.innate,term.tooltip.innate,
+lifecycle.retain,term.retain,term.tooltip.retain,
+lifecycle.recall,term.recall,term.tooltip.recall,
+lifecycle.recall.afterUse,term.recallAfterUse,term.tooltip.recallAfterUse,
+lifecycle.recall.afterTurnDraw,term.recallAfterTurnDraw,term.tooltip.recallAfterTurnDraw,
+lifecycle.recall.afterCardPlay,term.recallAfterCardPlay,term.tooltip.recallAfterCardPlay,
+lifecycle.exhaust,term.exhaust,term.tooltip.exhaust,
+lifecycle.seal,term.seal,term.tooltip.seal,
+lifecycle.ethereal,term.ethereal,term.tooltip.ethereal,
+equipment.bound,term.equipmentBound,term.tooltip.equipmentBound,
+equipment.mainHand,term.mainHand,term.tooltip.mainHand,
+equipment.offHand,term.offHand,term.tooltip.offHand,
+equipment.twoHanded,term.twoHanded,term.tooltip.twoHanded,
+equipment.shield,term.shield,term.tooltip.shield,
+equipment.parryTool,term.parryTool,term.tooltip.parryTool,
+utility.evasion,term.evasion,term.tooltip.evasion,
+utility.conduit,term.conduit,term.tooltip.conduit,
+utility.manaCharge,term.manaCharge,term.tooltip.manaCharge,
+targeting.self,term.targetSelf,term.tooltip.targetSelf,
+targeting.enemy,term.targetEnemy,term.tooltip.targetEnemy,
+targeting.allEnemies,term.targetAllEnemies,term.tooltip.targetAllEnemies,
+targeting.randomEnemy,term.targetRandomEnemy,term.tooltip.targetRandomEnemy,
+targeting.ally,term.targetAlly,term.tooltip.targetAlly,
+internal.unplayable,term.unplayable,term.tooltip.unplayable,
+siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
+overcharge,,,Your hits build Arcane Exposure faster.
+staggerBreak,,,"Breaking a foe's Arcane Exposure deals {poiseDamage} Poise damage to it."
+resonance,,,"Breaking a foe's Arcane Exposure builds {spreadPct}% of its threshold on every other foe."
+ironFooting,,,"Entering a stance grants {block} Block."
+bloodTempo,,,"The first stance you enter each turn draws {draw} card."
+ashenReserve,,,"At the start of your turn, recover {restoreStamina} Stamina."
+grimHarvest,,,"Whenever an enemy dies, heal {heal}."
+warlord,,,"Begin each combat with {strength} Strength."
+bulwarkKing,,,"At the start of your turn, gain {block} Block."
+attunedMind,,,"The first time you restore Mana each turn, draw {draw} card."
+starlitFocus,,,"Begin each combat with {starstoneCharge} Starstone Charge."
+lodestarCap,,,"Begin each combat with {restoreMana} more Mana."
+arcaneDraw,,,"The first Arcane break each combat draws {draw} cards."
+conduit,,,"At the start of your turn, recover {restoreStamina} Stamina."
+reservoir,,,"At the start of your turn, restore {restoreMana} Mana."
+warmth,,,"Whenever you heal, gain {block} Block."
+vigil,,,"At the start of your turn, heal {heal}."
+sealOfPlenty,,,"The first time you heal each combat, restore {restoreMana} Mana."
+wakingRot,,,"Your attacks apply {crimsonBlight} Crimson Blight."
+martyr,,,"Whenever you lose HP, gain {block} Block."
+saint,,,"Begin each combat healing {heal}."
+quickHands,,,"Begin each combat with {prepared} Prepared."
+secondWind,,,"The first card you exhaust each turn draws {draw} card."
+honedEdge,,,"Your attacks while Prepared apply {bleed} Bleed."
+poisonedPouch,,,"Your attacks while Prepared apply {venom} Venom."
+assassin,,,"When an enemy staggers, gain {prepared} Prepared and draw {draw} card."
+shadow,,,"At the start of your turn, gain {block} Block."
+restHpSmall,,,"Resting restores {pct}% of your max HP."
+restHpPartial,,,"Resting restores {pct}% of your max HP."
+restHpFull,,,"Resting restores your HP to full."
+restManaFlat,,,"Resting restores {restoreMana} Mana."
+restManaFloor,,,"Resting restores Mana to {floorPct}% of max, or to full if already there."
+restManaFull,,,"Resting restores your Mana to full."
+restFlasks,,,"Arriving refills your flask charges."

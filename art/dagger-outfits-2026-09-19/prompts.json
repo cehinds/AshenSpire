@@ -1,0 +1,260 @@
+{
+  "generator": "built-in image_gen",
+  "useCase": "identity-preserve",
+  "baseCommit": "72a44b0c52cedb564a0555149bc7272fb5601b74",
+  "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue/STANCE-READY.webp",
+  "source": "sources/rogue-default.png",
+  "original": "C:/Users/suprbludude/.codex/generated_images/01a0bc8e-8f50-7ed2-b72b-baabc5f37e69/exec-99440eb4-484e-4238-b1e9-963eb73db23d.png",
+  "prompt": "Use case: identity-preserve. Asset: production painted dark-fantasy game sprite reference atlas, true transparent RGBA background, 2048x2048. Reference image is the approved Rogue default Gutter Leathers identity: preserve hood, hidden face, charcoal/olive layered leather, worn bronze fittings, belts, boots, cloak, proportions and brushwork. Replace sword and shield with EXACTLY ONE short straight steel dagger with small brass guard in anatomical RIGHT hand, forward grip, blade emerging thumb side. Anatomical LEFT hand always empty, visibly open or relaxed, never gripping another weapon. No sheath weapons. Face and torso consistently toward screen RIGHT, three-quarter view. Generate complete suite together in strict FOUR columns by FOUR rows, 16 separate cells, same body scale and camera, generous transparent gutters, every blade and foot within own cell. Reading order: row1 READY neutral low guard, ATK01 subtle crouched anticipation dagger near waist, ATK02 elbow pulled back compact thrust windup, ATK03 forward step beginning thrust; row2 ATK04 extending thrust, ATK05 fully extended forward horizontal stabbing impact, ATK06 bent-elbow withdrawal/recovery, ATK07 return near ready; row3 DEFEND dagger raised diagonally across chest with empty left open guard, HURT torso recoils while retaining right-hand dagger, CAST empty left palm extended forward with right dagger held low, AGGRESSIVE low forward stalking stance; row4 DEFENSIVE cautious backward lean right dagger guarding chest, BUFF quiet focused posture empty left palm near chest and right dagger low, PORTRAIT waist-up identity portrait, CONVERSATION full body relaxed communicative empty left palm open. All 15 full bodies same scale, only portrait close-up. Exactly two arms/two hands/two legs per figure, anatomically readable wrists, no crossed grip ambiguity, consistent one dagger length under forearm length, no sword. Left hand empty in EVERY pose. NO aura, particles, glow, magic, rings, trails, smoke, floor, shadows, scenery, text, labels, borders, gridlines, numbers, checkerboard or watermark. Separate all figures with transparent space. Labels added outside artwork later. Preserve reference character identity; new compact single-dagger thrust choreography rather than sword swing.",
+  "referenceSha256": "f9845b7eb73d91cc7b60be3cf7b651697a0d1e4c94256fa798c4016300dbc193",
+  "variants": [
+    {
+      "id": "herald-emberhabit",
+      "record": "sources/herald-emberhabit.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "4b45c73f707f1a4adaf0433ad69d043e149e32f7ea22cb8a45b58d9f0794a6e7"
+      ]
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "record": "sources/herald-gutterLeathers.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "512f90309694d60739a01bf4b9ccb8ac01444539bd79ee24245dbbc64e51f395"
+      ]
+    },
+    {
+      "id": "herald-nightweave",
+      "record": "sources/herald-nightweave.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "753d80706d008c27ea5717564e5d98aa1fa3405cce047f478b920a5dc85478fa"
+      ]
+    },
+    {
+      "id": "herald-ossuary",
+      "record": "sources/herald-ossuary.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "236c71c53384df48b0004bd49265665b6e3eb30c125749d8a9e9b07429ad4bb1"
+      ]
+    },
+    {
+      "id": "herald-pilgrim",
+      "record": "sources/herald-pilgrim.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "887b88ded13b78fcfb718b63a33c201c27fd855d190a16c3872a0ed3400f411c"
+      ]
+    },
+    {
+      "id": "herald-riteVestments",
+      "record": "sources/herald-riteVestments.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "7a7b457d071aac40e4e5cfd89889bda57e2bf49989ac6a92e397e3ee8f7bcf28"
+      ]
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "record": "sources/herald-wayfarerPlate.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "12b5d94fbac768d974d6d7216ea540b54b94c723debe29ba17366399c4763b81"
+      ]
+    },
+    {
+      "id": "herald",
+      "record": "sources/herald.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "9ac2e5108365a3fcab1de0d262740c0c1ef1e2324a190271feff485c0d5eb5b1"
+      ]
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "record": "sources/reaver-gutterLeathers.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "eb1179c7f3b079d968995930158aee0666bd52027b3c94ad5a17c1c0cb48aea6"
+      ]
+    },
+    {
+      "id": "reaver-nightweave",
+      "record": "sources/reaver-nightweave.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "8889871dede80e679ba8d36c67d6e9170464d9f4120936f8c99ab51a2ef10130"
+      ]
+    },
+    {
+      "id": "reaver-oathsworn",
+      "record": "sources/reaver-oathsworn.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "81cd1287b7510e6ba1cbc1158c4aa2babec7c7d892db0d4cfe1bc17dd7388ae8"
+      ]
+    },
+    {
+      "id": "reaver-riteVestments",
+      "record": "sources/reaver-riteVestments.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "056ee54d6269b49445db82ab5b8c119e74d4d90e6ab56e635e09fc1c60947320"
+      ]
+    },
+    {
+      "id": "reaver-vigil",
+      "record": "sources/reaver-vigil.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "1268e68f8105dd942fb085e54a800218726ca07ec775dcad0185bf4165fd9f3a"
+      ]
+    },
+    {
+      "id": "reaver-warden",
+      "record": "sources/reaver-warden.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "77dfb204cb3336317f6e3995d143bec00ee73c65ad8b94ca78d3e2430c5187fc"
+      ]
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "record": "sources/reaver-wayfarerPlate.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "99b9793ac6eead26f4ce51df65bd7dff3d34f0f44a8b1a69b5ef86f50ff5b914"
+      ]
+    },
+    {
+      "id": "reaver",
+      "record": "sources/reaver.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "9f9a3b272e41dce3ab7cd93939b222d1bb82185ab31d52d103aed5518b494d45"
+      ]
+    },
+    {
+      "id": "rogue-duelist",
+      "record": "sources/rogue-duelist.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "558753980e14afb88b32e9f296668dada3c4092eebbd29bd7a0489a40f9a31e0"
+      ]
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "record": "sources/rogue-gutterLeathers.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "77ab38acc89753fdba3db7736db13efb05c0c9bdd70127bbfdee9aa5404fcc33"
+      ]
+    },
+    {
+      "id": "rogue-nightveil",
+      "record": "sources/rogue-nightveil.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "c0432cc52194b9683d8b93c7ffb3fbe88e939a45b20145d104f954a74deec22e"
+      ]
+    },
+    {
+      "id": "rogue-nightweave",
+      "record": "sources/rogue-nightweave.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "3030b683fad7d9d131a597c0fbccfaf6ca929234f9c7f426146c27f5aa4f8e45"
+      ]
+    },
+    {
+      "id": "rogue-riteVestments",
+      "record": "sources/rogue-riteVestments.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "3714a6aec5ec48338873ab29dcfd052a1def6cd7016efe08c4a635bc161cb423"
+      ]
+    },
+    {
+      "id": "rogue-shadow",
+      "record": "sources/rogue-shadow.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "b5e181dae7a77a76a346d4c26d71541596d98d0f00425697b258286129625d5a"
+      ]
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "record": "sources/rogue-wayfarerPlate.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "6cef23b383bd5fdc6f83fbce6ce0172b34cf5ae78c041b8f64bf59ed74e8fe3b"
+      ]
+    },
+    {
+      "id": "starseer-astral",
+      "record": "sources/starseer-astral.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "a0671bde96d8210bc6d8f2fefa67294804aed617a0732b24ed9fe66e6b3361fc"
+      ]
+    },
+    {
+      "id": "starseer-eclipse",
+      "record": "sources/starseer-eclipse.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "a29f26e1876c5355a0b4ef99f2d6f2a985b28978c4a18946a66ca553b9d6e32d"
+      ]
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "record": "sources/starseer-gutterLeathers.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "320b4f605dba573352924995c53b6ce0e0c24129a808a465b446609b9a34f5e9"
+      ]
+    },
+    {
+      "id": "starseer-nightweave",
+      "record": "sources/starseer-nightweave.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "d48d6f6ebc745331cae637aa269f23318e15acdc5ff182e32bce00c0f6c05243"
+      ]
+    },
+    {
+      "id": "starseer-riteVestments",
+      "record": "sources/starseer-riteVestments.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "84e139d442d84a0207581197a59f500cc65f309815c6eb27fff3c1bacee0a628"
+      ]
+    },
+    {
+      "id": "starseer-starlit",
+      "record": "sources/starseer-starlit.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "2645d49bea491839be341fcb1f8f7fa46dbd9a3bad5c7af612d3dbf9a635fdf3"
+      ]
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "record": "sources/starseer-wayfarerPlate.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "5357a6235dd87f86b1120bf0a97b3d96ba9e72245c94fc009f852c7b863b91f7"
+      ]
+    },
+    {
+      "id": "starseer",
+      "record": "sources/starseer.prompt.json",
+      "referenceSha256": [
+        "4398ff8911a660f4f0f76d8d2a6e91f6c97d192c24e9ffdabcaccdc4bc8be614",
+        "cb0ced591e46646d324ce27c69c361fc75f249dd263eea0cbc1b583ade541f4f"
+      ]
+    }
+  ]
+}

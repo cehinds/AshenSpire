@@ -1,0 +1,53 @@
+{
+  "generator": "built-in image_gen",
+  "items": [
+    {
+      "id": "weapon-straightSword",
+      "catalogId": "straightSword",
+      "name": "Straight Sword",
+      "group": "Weapons / swords",
+      "detail": "One practical straight double-edged sword, pointed steel blade with subtle fuller, aged warm silver metal B8B0A0, small antique gold C9A227 crossguard and pommel, dark brown worn leather grip. Diagonal lower-left pommel to upper-right tip. Honest simple proportions, visibly sharpened edge, restrained ornament.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One practical straight double-edged sword, pointed steel blade with subtle fuller, aged warm silver metal B8B0A0, small antique gold C9A227 crossguard and pommel, dark brown worn leather grip. Diagonal lower-left pommel to upper-right tip. Honest simple proportions, visibly sharpened edge, restrained ornament."
+    },
+    {
+      "id": "shield-kiteShield",
+      "catalogId": "kiteShield",
+      "name": "Kite Shield",
+      "group": "Weapons / shields",
+      "detail": "One elongated medieval kite shield, front three-quarter view, pointed bottom, broad curved shoulders. Weathered charcoal iron 8E8678 plates with antique gold C9A227 border and rivets, restrained central raised rib. Heavy protective silhouette, subtle dents and scratches.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One elongated medieval kite shield, front three-quarter view, pointed bottom, broad curved shoulders. Weathered charcoal iron 8E8678 plates with antique gold C9A227 border and rivets, restrained central raised rib. Heavy protective silhouette, subtle dents and scratches."
+    },
+    {
+      "id": "armor-reaver-default",
+      "catalogId": "reaver/default",
+      "name": "Wayfarer Plate",
+      "group": "Armor / reaver",
+      "detail": "One empty wearable torso armor ensemble, frontal slight three-quarter view, no person or limbs: broad articulated pauldrons attached to breastplate and waist tassets. Oxidized muted green plate 3E6157, worn 64907F edges, brown 4B3522 straps, dark 332A1E undercloth visible at joints. Buried weathered knight armor, small antique gold buckles. Hollow neck opening clearly empty.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One empty wearable torso armor ensemble, frontal slight three-quarter view, no person or limbs: broad articulated pauldrons attached to breastplate and waist tassets. Oxidized muted green plate 3E6157, worn 64907F edges, brown 4B3522 straps, dark 332A1E undercloth visible at joints. Buried weathered knight armor, small antique gold buckles. Hollow neck opening clearly empty."
+    },
+    {
+      "id": "armor-starseer-default",
+      "catalogId": "starseer/default",
+      "name": "Nightweave",
+      "group": "Armor / starseer",
+      "detail": "One empty full-length mage robe garment with attached hood and sleeves, presented as an inventory clothing cutout, no wearer or mannequin. Deep muted indigo cloth 17294F and 26406E highlights, dark brown leather belt 4B3522, subtle antique gold star embroidery around cuffs and hood, tattered layered hem. Hollow hood and empty cuffs, readable gathered cloth silhouette.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One empty full-length mage robe garment with attached hood and sleeves, presented as an inventory clothing cutout, no wearer or mannequin. Deep muted indigo cloth 17294F and 26406E highlights, dark brown leather belt 4B3522, subtle antique gold star embroidery around cuffs and hood, tattered layered hem. Hollow hood and empty cuffs, readable gathered cloth silhouette."
+    },
+    {
+      "id": "armor-herald-default",
+      "catalogId": "herald/default",
+      "name": "Rite Vestments",
+      "group": "Armor / herald",
+      "detail": "One empty full-length ritual vestment garment with cowl and sleeves, presented as inventory clothing cutout without wearer or mannequin. Plain muted burgundy cloth 2E1F1F, soft 3A2A2A highlights, brown 4B3522 belt, dark 241413 underlayers, small antique brass clasp. Plain cloth plainly kept, austere layered stole, worn stitched hem, empty neck and cuffs.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One empty full-length ritual vestment garment with cowl and sleeves, presented as inventory clothing cutout without wearer or mannequin. Plain muted burgundy cloth 2E1F1F, soft 3A2A2A highlights, brown 4B3522 belt, dark 241413 underlayers, small antique brass clasp. Plain cloth plainly kept, austere layered stole, worn stitched hem, empty neck and cuffs."
+    },
+    {
+      "id": "armor-rogue-default",
+      "catalogId": "rogue/default",
+      "name": "Gutter Leathers",
+      "group": "Armor / rogue",
+      "detail": "One empty fitted leather torso armor coat with short shoulder cape, attached sleeves and split skirt, no wearer or mannequin. Muted charcoal olive leather 303A35 with worn 52665D edges, brown 3C2E25 straps and dark 1D211F undercloth. Quiet practical rogue clothing, stitched panels, slim antique brass buckles, subtle scuffs, hollow empty neck opening.",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire standalone inventory item illustration, square 1024x1024. Dark fantasy hand-painted realism, tactile weathered materials, restrained antique-gold detailing, charcoal shadows, crisp readable silhouette at 128px, soft upper-left light. Genuinely transparent RGBA background, no backdrop, no floor, no cast shadow outside object, no text, no labels, no border, no human, no mannequin. Entire single item inside frame with 10% transparent margin. Subject: One empty fitted leather torso armor coat with short shoulder cape, attached sleeves and split skirt, no wearer or mannequin. Muted charcoal olive leather 303A35 with worn 52665D edges, brown 3C2E25 straps and dark 1D211F undercloth. Quiet practical rogue clothing, stitched panels, slim antique brass buckles, subtle scuffs, hollow empty neck opening."
+    }
+  ]
+}

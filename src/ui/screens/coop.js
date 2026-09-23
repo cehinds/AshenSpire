@@ -57,6 +57,8 @@ import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { iconTray, trayIcon } from '../components/iconTray.js';
+import { t } from '../strings.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
@@ -92,8 +94,15 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
@@ -161,7 +170,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'cardPlayed' && member) {
         const definition = resolveCard(registries, { cardId: event.cardId, profileId: event.profileId, upgraded: event.upgraded });
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
-        plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId));
+        const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
+        const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, action });
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
         plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
@@ -194,7 +205,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     },
     onClose: () => {
       teardown();
-      const leave = button({ label: 'Leave', weight: 'primary', id: 'coop-leave' });
+      const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
       app.innerHTML = '';
       app.appendChild(el('div', { class: 'screen coop-scene' }, pageDoor({
         eyebrow: 'Forsaken Together', title: 'The fire went out', size: 'sm', className: 'coop-door',
@@ -485,23 +496,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
+  // The shared icon tray, as on the solo card (components/iconTray.js): the
+  // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
   function statusRow(statuses) {
-    const row = document.createElement('div');
-    row.className = 'statuses';
+    const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
-      const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
-      const el = document.createElement('div');
-      el.className = 'status-icon';
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      const el = trayIcon({
+        glyph: def.icon || '?', count: presentation.valueText, tone: def.tint || 'var(--muted)', // status-pip accent (data: status def)
+        label: semanticAttrs['aria-label'], attrs: { class: 'status-icon' },
+        tip: () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`,
+        yieldTap: () => !!armedFriendlyCard || armedFlask != null,
+      });
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
-      el.setAttribute('aria-label', semanticAttrs['aria-label']);
-      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`, { tapToExplain: () => !armedFriendlyCard && armedFlask == null });
       row.appendChild(el);
     }
     return row;
@@ -541,8 +552,25 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'Block', value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
+      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) : null;
+      // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
+      // solo reads off `entity.performedMoves`. The snapshot now carries the
+      // field, so an enemy that has acted lists what it did and one that has
+      // not says so; before this the section could only say `unknown`, which
+      // reads as "not revealed" and is a different claim entirely.
+      // Names and details come from the move cards already built above — one
+      // source for both, so the history and the move set cannot word a move
+      // two different ways. Indexed once: this runs on every inspector open,
+      // and a scan per entry is a needless m×n in a path a player waits on.
+      const cardsByMoveId = moveCards && new Map(moveCards.map((c) => [c.moveId, c]));
+      const history = def && Array.isArray(entity.performedMoves)
+        ? entity.performedMoves.map((moveId) => {
+          const card = cardsByMoveId.get(moveId);
+          return { name: card ? card.name : moveId, detail: card ? card.detail : '' };
+        })
+        : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards: enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) }
+        ? { moveCards, history }
         : { abilities }) };
       openModal({ title: name, size: 'md', className: 'combatant-door', opener,
         bodyClassName: 'combatant-inspector-body',
@@ -585,7 +613,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }))}
           <div class="hud-top">
             <div class="resbars-host"></div>
-            <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
+            <span class="fight-label">${esc(actTitle(snap.actNumber, snap.seatName || null))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>
@@ -637,7 +665,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
@@ -804,7 +832,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         line: throwing ? 'Click a hero seat to give it.' : 'Choose a highlighted hero.',
         attrs: { class: 'floating coop-arm', role: 'status' },
       });
-      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
+      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', role: 'exit', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
       ahost.replaceWith(card);
     }
 
@@ -845,8 +873,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
       const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
-      if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration:420,actor:anchor,localBox:anchorLocalBox});
-      stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
+      const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+      const duration = stage?.actionTiming?.(pose)?.totalMs || 420;
+      if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
+      stage?.play(pose, duration, plan.aura);
     }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
@@ -904,6 +934,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // this sit.
       act: {
         seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        // The map title is `ACT <tier> — <SEAT>` (SPEC §13.2). The board has
+        // read `act.seatName` since seats landed; this screen never passed it,
+        // so co-op's map plate said a bare "ACT II" while solo named the seat.
+        // Null for an older host that does not send it — actTitle() already
+        // falls back to the bare plate rather than printing "undefined".
+        seatName: snap.seatName || null,
         startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.
@@ -987,7 +1023,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // + ornament, Flavour for a note, the shared renderCard row, OptionCards
   // for the ways on), and Leave on the foot's ladder. One shell, five scenes.
   function sceneDoor({ title, eyebrow: eb = 'Forsaken Together', children = [], note = '' }) {
-    const leave = button({ label: 'Leave', id: 'coop-leave' });
+    const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
     const door = pageDoor({
       eyebrow: eb, title, size: 'md', className: 'coop-door',
       body: decide({ title, children: [note ? flavour(note, { class: 'coop-note' }) : null, ...children] }),
@@ -1037,12 +1073,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const smith = snap.scene.smithing?.[me];
     const candidates = smith?.candidates || [];
     const stones = mm?.smithingStones || 0;
+    // The host's word on this member's Rest (tools/session.mjs restView): what
+    // it restores here, or the relic that forbids it — the option is disabled
+    // with the reason rather than sent to be refused.
+    const rest = snap.scene.rest?.[me] || null;
+    const restDenied = rest?.denied || '';
+    const restCopy = rest && !restDenied ? `Heal ${rest.heal} HP${rest.mana > 0 ? ` and restore ${rest.mana} Mana` : ''}.` : 'Heal yourself.';
     sceneDoor({
       title: 'Shrine of Emberlight',
       children: done ? [waiting('Waiting for the party…')] : [options([
-        choice({ glyph: '✚', name: 'Rest', description: 'Heal yourself.', attrs: { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: '✚', name: 'Rest', description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
         choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
         ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+        // A denied Rest is not a way on: the member leaves instead, and the
+        // host counts the leave as their choice (as the solo screen's LEAVE).
+        ...(restDenied ? [choice({ glyph: '→', name: 'Leave', description: 'Take nothing here and move on with the party.', attrs: { dataset: { shrine: 'leave' } } })] : []),
       ], { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
@@ -1476,3 +1521,4 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   if (conn.open) send({ t: 'resync' });
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

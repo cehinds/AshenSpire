@@ -20,7 +20,7 @@
 //   · the RENDERER reorders (`categoryHtml`'s `h.rows.map(...)`), leaving
 //     `categoryHandler().rows` untouched;
 //   · CSS hides the first row — it is still first in the array, and the first
-//     control a player can SEE is Combat pacing;
+//     control a player can SEE is the one behind it;
 //   · CSS reverses the visual order of a DOM that never moved (`column-reverse`
 //     / `order:`), which is the same shape as a box that "never moved" because
 //     what moved was its parent.
@@ -509,6 +509,11 @@ const READ = `(() => {
   return {
     panel: true,
     tab: (document.querySelector('.set-tab.on') || { dataset: {} }).dataset.member,
+    // THE SUBJECT'S NAME NOW TAKES TWO WORDS. Display is a GROUP inside the
+    // General tab, so the tab alone no longer says which panel was measured:
+    // reading only the selected tab would call Audio's rows a Display reading.
+    // (No backticks in here — this block is inside a template literal.)
+    group: (document.querySelector('[data-general-select]') || {}).value || null,
     domKeys: rows.map((r) => r.key),
     visibleKeys: visible.map((r) => r.key),
     first: visible.length ? visible[0] : null,
@@ -613,13 +618,45 @@ function connectCdp(wsUrl) {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Open Settings and select Display, THROUGH THE CONTROLS A PLAYER USES.
+//
+// ⚠ DISPLAY IS NOT A TAB AND HAS NOT BEEN ONE SINCE `c9d78115d`. This door
+// clicked `.set-tab[data-member="Display"]` for as long as that tab existed and
+// kept clicking for it afterwards, so every cell reported
+// `door=unreachable — no Display tab`, D0 refused to measure, and the gate was
+// TWELVE FINDINGS RED on a screen with nothing wrong with it. That is the
+// silence this whole file exists to prevent, in the file itself: an instrument
+// that stops reaching its subject says `unknown`, and unknown reads as noise
+// until someone runs it. ci.yml's job is manual, so nobody did.
+//
+// THE PLAYER'S ROUTE TODAY is the General tab, then Display in the group picker
+// the panel draws (`[data-general-select]`, `categoryHtml` in
+// src/ui/screens/settings.js). Both steps are the controls a player uses, which
+// is this door's standing rule — the select is driven by assignment plus a real
+// `change` event because that is what the panel listens for.
+//
+// THE TOPIC PICKER IS DELIBERATELY NOT TOUCHED. Display draws one topic at a
+// time and opens on the first one, which is the group holding Fullscreen; a
+// probe that FORCED a topic would decide the question D1 is asking. Plant 1
+// moves Fullscreen and the rendered first row must change on its own.
+const OPEN_DISPLAY = `
+  const tab = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'General');
+  if (!tab) return { err: 'no General tab in the settings panel' };
+  tab.click(); await new Promise((r) => setTimeout(r, 500));
+  const group = document.querySelector('[data-general-select]');
+  if (!group) return { err: 'no group picker in the General settings panel' };
+  if (![...group.options].some((o) => o.value === 'Display')) return { err: 'no Display group in the General picker' };
+  if (group.value !== 'Display') {
+    group.value = 'Display';
+    group.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 500));
+  }
+`;
+
 const OPEN_TITLE = `(async () => {
   const b = [...document.querySelectorAll('button')].find((x) => /settings/i.test(x.textContent));
   if (!b) return { err: 'no Settings button on the title screen' };
   b.click(); await new Promise((r) => setTimeout(r, 500));
-  const d = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Display');
-  if (!d) return { err: 'no Display tab in the settings modal' };
-  d.click(); await new Promise((r) => setTimeout(r, 500));
+  ${OPEN_DISPLAY}
   return { ok: true };
 })()`;
 
@@ -635,9 +672,7 @@ const OPEN_INRUN = `(async () => {
     || document.querySelector('.ov-tab[data-member="settings"]');
   if (!t) return { err: 'no Settings tab in the overlay' };
   t.click(); await new Promise((r) => setTimeout(r, 550));
-  const d = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Display');
-  if (!d) return { err: 'no Display tab in the overlay settings panel' };
-  d.click(); await new Promise((r) => setTimeout(r, 500));
+  ${OPEN_DISPLAY}
   return { ok: true };
 })()`;
 
@@ -954,8 +989,15 @@ async function main() {
         const r = await ev(READ);
         reached++;
         perDoor[door] = judge(r, cell);
-        if (r && r.panel && r.tab !== 'Display') {
-          fail(`FINDING D0/population cell=${cell} tab=${r.tab} — the panel measured is not Display.`);
+        // IDENTITY IS TAB **AND** GROUP. Display stopped being a tab at
+        // `c9d78115d` and became a group inside General, so `.set-tab.on`
+        // alone answers a question nobody asked: every General panel passes it
+        // regardless of which group is drawn. Both halves are named in the
+        // finding, because "not Display" without saying what WAS measured is
+        // the shape of report this file spends 400 lines refusing elsewhere.
+        if (r && r.panel && (r.tab !== 'General' || r.group !== 'Display')) {
+          fail(`FINDING D0/population cell=${cell} tab=${r.tab} group=${r.group} `
+            + '— the panel measured is not General > Display.');
         }
         // THE MAX EDGE HAS TO ARRIVE, NOT JUST BE NAMED. Record computed text
         // metrics per cell and assert them after the loop. Row height remains a
@@ -978,7 +1020,7 @@ async function main() {
         // an instrument lying about its own death — every field here is now
         // optional-read, because a read that came back empty is exactly when
         // this line matters most.
-        console.log(`      ${cell}: tab=${r && r.panel ? r.tab : 'n/a (no #set-panel)'} `
+        console.log(`      ${cell}: tab=${r && r.panel ? `${r.tab} > ${r.group}` : 'n/a (no #set-panel)'} `
           + `rows=${r && r.domKeys ? r.domKeys.length : 'n/a'} `
           + `fullscreenRowHeight=${r && r.fs ? r.fs.h : 'n/a'}`);
       }
@@ -1117,61 +1159,121 @@ function selftestPlants() {
   ].join('');
   return [
     {
-      // 1 — THE NEIGHBOURHOOD. `fullscreen` moves exactly ONE position. One step
-      // of the threshold's own unit flips the verdict (Charter 2b). test 61
-      // catches this one too, which is the point: on the obvious direction the
-      // two agree.
-      name: 'the row moves one position down the array',
-      file: 'src/ui/screens/settings.js',
-      find: [
-        "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-        "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
-        "  // Fullscreen and Music are persistent quick controls on Title, Map, and",
-        "  // Combat. Settings does not duplicate them with a second stateful surface.",
-        "  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',",
-        "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
-        "  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',",
-        "    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',",
-        "    note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },",
-      ].join(settingsEol),
-      replace: [
-        "  // Fullscreen and Music are persistent quick controls on Title, Map, and",
-        "  // Combat. Settings does not duplicate them with a second stateful surface.",
-        "  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',",
-        "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
-        "  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',",
-        "    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',",
-        "    note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },",
-        "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-        "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
-      ].join(settingsEol),
-      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+      // 1 — THE NEIGHBOURHOOD. `fullscreen` and the row behind it TRADE PLACES.
+      // One step of the threshold's own unit flips the verdict (Charter 2b).
+      // test 61 catches this one too, which is the point: on the obvious
+      // direction the two agree.
+      //
+      // RE-AIMED TWICE, AND BOTH AIMS ARE WORTH WRITING DOWN, because each was
+      // wrong in a way the corpus could not have told me:
+      //
+      //   · IT WAS ONE CONTIGUOUS NINE-LINE BLOCK sweeping `fullscreen` past the
+      //     two rows physically beneath it, leaning on a coincidence — those
+      //     rows happened to be Display rows in a DIFFERENT topic, so the sweep
+      //     changed which topic opened. They are `cat: 'Combat'` now and a
+      //     comment block sits between, so the bytes matched ZERO times (a hard
+      //     preflight red) and, had they matched, sweeping past two Combat rows
+      //     would not have moved the Display panel at all: GREEN on a plant that
+      //     must be red.
+      //   · THEN I LIFTED THE ROW OUT AND PUT IT BACK BEHIND `accent`, which is
+      //     one position — and measured `first=titleCityHold`, with `fullscreen`
+      //     absent from the panel and D2 and D3 firing too. Removing the FIRST
+      //     Display row changes which TOPIC opens (the panel draws one topic and
+      //     opens on the first one filed), so a plant meant to isolate D1 was
+      //     tripping three checks for a reason that had nothing to do with
+      //     ordering.
+      //
+      // A SWAP is what isolates D1 under the topic pickers: `accent` takes seat
+      // one and `fullscreen` takes accent's, both inside the SAME topic, so the
+      // Interface group still opens, the panel still draws four rows, the
+      // Fullscreen control still exists exactly once and is still ink — and the
+      // only thing that changed is which control a player meets first. D2 and
+      // D3 stay green BY CONSTRUCTION, which is how this plant now proves it is
+      // D1 doing the catching.
+      //
+      // Each edit carries its following line as an anchor, so neither find
+      // becomes ambiguous once the other has been applied.
+      name: 'the row trades places with the one behind it in the rendered Display panel',
+      edits: [
+        {
+          file: 'src/ui/screens/settings.js',
+          find: [
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
+            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
+          ].join(settingsEol),
+          replace: [
+            "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
+            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
+          ].join(settingsEol),
+        },
+        {
+          file: 'src/ui/screens/settings.js',
+          find: [
+            "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
+            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',",
+          ].join(settingsEol),
+          replace: [
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
+            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',",
+          ].join(settingsEol),
+        },
+      ],
+      expectRed: /FINDING D1\/order .*first=accent want=fullscreen/,
     },
     {
       // 2 — THE RENDERER REORDERS AND THE TABLE DOES NOT. test 61 reads
       // categoryHandler().rows, which this never touches: GREEN there, wrong
       // here.
+      //
+      // RE-AIMED — AND IT WAS DECORATION FOR AS LONG AS THE DOOR WAS BROKEN.
+      // It mutated `categoryHtml`'s LAST line, the fallback branch for a
+      // category rendered as one flat list. Display has not gone through that
+      // branch since it became a group inside General: it is drawn by the
+      // General branch's `topics.get(topic).map(...)` instead. So the plant
+      // still applied cleanly, still ran, and reversed a code path the Display
+      // panel no longer takes — exit 0, UNCAUGHT, "decoration, not evidence" in
+      // this harness's own words. Nothing noticed, because with the door dead
+      // every cell was already red for a different reason. Fixing the door is
+      // what made this visible, and this is the branch that actually draws the
+      // rows a player meets.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
-      replace: '  return `${heading}<div class="set-card-list">${[...h.rows].reverse().map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
+      find: "      + `</div><div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      replace: "      + `</div><div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
       // 3 — CSS HIDES THE FIRST ROW. Array untouched, test 61 green, and the
-      // first control a player can see is Combat pacing.
+      // first control a player can see is the Accent colour. (It read Combat
+      // pacing until that row moved to General > Combat; the row behind
+      // Fullscreen in the Display panel is what this plant names, whatever it
+      // happens to be called.)
       name: 'CSS hides the first row (test 61 stays green)',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { display: none !important; }',
-      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+      expectRed: /FINDING D1\/order .*first=accent want=fullscreen/,
     },
     {
       // 4 — THE DOM NEVER MOVES AND THE SCREEN REVERSES. This is the exact
       // shape that costs a reader a whole verdict: every box is where it always
       // was, and the parent changed. A DOM-order check is green here.
+      //
+      // RE-AIMED ONTO THE ROWS' ACTUAL PARENT, for the same reason as plant 2.
+      // `.set-panel` stopped being the box that holds the rows when General
+      // grew its pickers: the panel's children are now the picker strip and a
+      // `.set-card-list`, so reversing the PANEL swapped those two and left the
+      // row order untouched — exit 0, UNCAUGHT. Reversing `.set-card-list` is
+      // the defect this plant has always meant: every row box exactly where the
+      // DOM says, and the screen reading backwards.
       name: 'the scroll parent reverses the visual order (DOM order unchanged)',
       file: 'styles/ui.css',
-      append: '.set-panel { display: flex !important; flex-direction: column-reverse !important; }',
+      append: '.set-panel .set-card-list { display: flex !important; flex-direction: column-reverse !important; }',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1214,7 +1316,7 @@ function selftestPlants() {
       name: 'EDGE TOP — the Fullscreen row sits 4000px off the top of the viewport',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { position: relative !important; top: -4000px !important; }',
-      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+      expectRed: /FINDING D1\/order .*first=accent want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
     },
     {
       name: 'EDGE BOTTOM — the Fullscreen row sits 4000px off the bottom of the viewport',
@@ -1435,8 +1537,9 @@ function selftestPlants() {
     {
       // 20 — A RENDERED ROW WHOLLY ABOVE THE VIEWPORT IS NOT VISIBLE ORDER.
       // The mutation removes the viewport-intersection term from D1 and moves
-      // Combat pacing above the screen; the legacy predicate then names it
-      // first even though the player cannot meet it.
+      // the row behind Fullscreen (the Accent colour) above the screen; the
+      // legacy predicate then names it first even though the player cannot
+      // meet it.
       name: 'an off-screen non-Fullscreen row is incorrectly allowed to outrank visible Fullscreen',
       edits: [
         {
@@ -1449,7 +1552,7 @@ function selftestPlants() {
           append: '.set-panel .set-row:nth-child(2) { position: relative !important; top: -4000px !important; }',
         },
       ],
-      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+      expectRed: /FINDING D1\/order .*first=accent want=fullscreen/,
     },
     {
       // 21 — THE TITLE DOOR STARTS WHERE A PLAYER STARTS. The startup gate is

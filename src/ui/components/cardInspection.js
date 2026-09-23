@@ -1,15 +1,226 @@
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
+import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
+import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
+import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 
-// Logical identity survives a host re-render after its first selection tap.
-let touchedIdentity = null;
-let touchTaps = 0;
+// WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
+// ./cardSelection.js. They were two module-level `let`s here — shared by every
+// card on the page, with `.inspection-selected` in the DOM as a second copy of
+// the same fact and a `document.querySelectorAll` sweep reconciling them. That
+// is why three shipped changes in three days broke the tap accounting: the
+// state had no name, no test, and no way to be asked a question.
+//
+// The behaviour is unchanged. Selection is still page-wide; the sweep is gone
+// because a card now hands the store the callback that puts it out.
+
+// THE DOOR'S SHAPE BELONGS TO THE DOOR, NOT TO THE APP SHELL.
+//
+// Below the inspect card's own width plus the readable measure beside it there
+// is no room for two columns, and the door reads top to bottom instead. A media
+// query cannot read a custom property, so the comparison happens in JS and the
+// stylesheet keys on `data-card-door` — which keeps card.json the one home for
+// both numbers rather than having a breakpoint restate one of them.
+//
+// This lived in `src/main.js` and was WRONG THERE, measured rather than argued.
+// Walking the import graph from every module script in every page at the repo
+// root, FIVE pages reach this module and only ONE of them boots `main.js`:
+//
+//   index.html                  -> src/main.js                  door + main
+//   armament-kits-preview.html  -> inline module script          door, no main
+//   item-cards-preview.html     -> src/ui/previews/itemCards.js  door, no main
+//   tooltip-review-scene.html   -> .../tooltipReviewEntry.js     door, no main
+//   weapon-cards-preview.html   -> .../weaponCards.js            door, no main
+//
+// On those four the attribute was never written, so the door kept two columns
+// at every width — measured on weapon-cards-preview.html at 390x844, the
+// details column was 24.969px. That is not a column, it is a seam. The fix was
+// in the app and the defect was in the component.
+//
+// (An earlier version of this comment named `docs/architecture-handoff/wireframe-gallery.html`
+// as a host. It is not one and never was: it has a single CLASSIC script tag
+// and no module script at all, and its 86 mentions of this file are embedded
+// source-listing TEXT, not imports. The list above is the measured one.)
+//
+// So the decision sits beside the layout it governs. One listener for this
+// module's life rather than one per door: the attribute is on `:root`, one door
+// is open at a time, and a per-door listener would be a leak with no reader.
+// THE THRESHOLD IS READ, NOT REMEMBERED. It was a module-level `const`
+// computed once from the authored config, which was fine while the widths were
+// authored-only and wrong the moment they became tunable: turning the inspect
+// slider up moved `--card-w-inspect` and left the breakpoint at the old 704, so
+// the door would sit beside a card too wide to fit next to it. The effective
+// inspect width is whatever has been projected onto `:root`; the authored sum
+// is the fallback for a page that projects nothing.
+let doorShapeWatched = false;
+// PIXELS OR NOTHING. A custom property is UNREGISTERED here, so
+// `getPropertyValue` hands back the token exactly as it was written rather than
+// a resolved length — and `parseFloat` is happy to read `20rem` as 20 and `50%`
+// as 50. That would have silently put the threshold at 404 instead of 704 and
+// looked like it was working. Only a bare px length is read; anything else
+// falls back to the authored sum rather than being half-understood.
+const PX = /^(\d+(?:\.\d+)?)px$/;
+function doorStackBelowPx() {
+  const projected = getComputedStyle(document.documentElement).getPropertyValue('--card-w-inspect').trim();
+  const match = PX.exec(projected);
+  const inspect = match ? Number(match[1]) : NaN;
+  if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
+  return inspect + doorReadableMinPx();
+}
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
+// so at a 1440px viewport the layout is 748px whatever the screen does. While
+// the inspect width was authored-only that gap was merely conservative and I
+// wrote it down as an accepted caveat. Making the width TUNABLE turned it into
+// the original defect, reachable from the new slider — measured at 1440:
+//
+//   inspect 320 (authored) -> beside, details 393px   fine
+//   inspect 560            -> beside, details 153px   squeezed
+//   inspect 800            -> beside, details   0px   gone
+//
+// So the comparison is against the layout's OWN width. A ResizeObserver is the
+// honest instrument: the layout's width is set by the modal and does not depend
+// on the columns we choose, so reading it and then changing
+// `grid-template-columns` cannot feed back into itself. Before the layout is in
+// the DOM there is nothing to measure, so the viewport still answers the first
+// call and the observer corrects it on the first frame it has a box.
+let doorObserver = null;
+
+// THE GAP IS PART OF WHAT TWO COLUMNS COST. The layout reserves `column-gap: 2%`
+// between the card and the details, and the threshold counted only the two
+// tracks. Measured with the content box forced to 710px and the authored 320px
+// card: 710 > 704, so `beside` — and the details track came out 375.8px, eight
+// pixels under the authored 384 minimum. The sum has to include everything the
+// two-column layout spends, not just the parts with names.
+//
+// `column-gap` computes as the authored token, so `2%` arrives as "2%" rather
+// than resolved pixels; a percentage gap is a percentage of the content box, so
+// it is resolved against the width being judged.
+function columnGapPx(layout, widthPx) {
+  if (!layout) return 0;
+  const raw = getComputedStyle(layout).columnGap.trim();
+  if (raw.endsWith('%')) {
+    const pct = Number.parseFloat(raw);
+    return Number.isFinite(pct) ? (widthPx * pct) / 100 : 0;
+  }
+  const px = PX.exec(raw);
+  return px ? Number(px[1]) : 0;
+}
+
+function decideCardDoorShape(widthPx, layout = document.querySelector('.card-inspection-layout')) {
+  const stacked = (widthPx - columnGapPx(layout, widthPx)) < doorStackBelowPx();
+  const next = stacked ? 'stacked' : 'beside';
+  if (document.documentElement.dataset.cardDoor !== next) {
+    document.documentElement.dataset.cardDoor = next;
+  }
+}
+function applyCardDoorShape() {
+  const slimmest = narrowestDoorWidth();
+  if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
+  else decideCardDoorShape(window.innerWidth, null);
+}
+// A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
+// THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently
+// built layout was measured, while `applyCardDoorShape`'s `querySelector` read
+// the FIRST in the document — two different elements. Measured on the weapon
+// preview: two `.card-inspection-layout` nodes, both inside the modal; forcing
+// the first to a 700px content box left `data-card-door` at `beside`, because
+// the observer was watching the second and never saw the change.
+//
+// So every layout is observed, and the decision is taken from the NARROWEST one
+// still connected: if any layout in the door cannot hold two columns, the door
+// stacks. Detached nodes are skipped rather than held — a layout from a closed
+// door must not vote, and must not be kept alive by being watched.
+// THE TRACKS LIVE IN THE CONTENT BOX, SO THAT IS WHAT IS MEASURED. `clientWidth`
+// includes the layout's horizontal padding, and the grid columns and the
+// percentage gap are resolved inside the padding — so a 720px layout with the
+// `1rem` padding kit.css gives it read as 720 against a 704 threshold and sat
+// `beside` with about 354px of details. The ResizeObserver hands back a content
+// box already; this is the same number for the querySelector path.
+function contentWidthOf(node) {
+  const cs = getComputedStyle(node);
+  const pad = (Number.parseFloat(cs.paddingLeft) || 0) + (Number.parseFloat(cs.paddingRight) || 0);
+  return Math.max(0, node.clientWidth - pad);
+}
+// ONLY THE LAYOUTS THE ATTRIBUTE ACTUALLY GOVERNS GET A VOTE. Every
+// `data-card-door` rule in the stylesheet is scoped under
+// `.card-inspection-modal`, so an EMBEDDED inspection — the Armoury's detail
+// pane, a non-modal host — is not governed by this decision at all. Letting one
+// vote meant a narrow pane sitting behind a newly opened modal could force a
+// desktop door with ample room into the stacked layout, on the strength of a
+// measurement of something the rule never touches. "Narrowest wins" is the
+// right rule among the door's OWN layouts and the wrong one across unrelated
+// surfaces.
+function narrowestDoorWidth() {
+  let slimmest = null;
+  let width = 0;
+  for (const node of document.querySelectorAll('.card-inspection-modal .card-inspection-layout')) {
+    if (!node.isConnected) continue;
+    const w = contentWidthOf(node);
+    if (w <= 0) continue;
+    if (slimmest === null || w < width) { slimmest = node; width = w; }
+  }
+  return slimmest ? { node: slimmest, width } : null;
+}
+
+/**
+ * Re-decide the door's shape because something OTHER than its box moved.
+ *
+ * The observer watches the layout's own size, and the modal layout is
+ * `width: 100%; height: 100%` — so tuning the inspect width changes the
+ * threshold without changing anything the observer can see, and a door standing
+ * open kept its old shape until a resize or a reopen. Whoever moves an authored
+ * or tuned term calls this; `src/main.js` does it when the card-size settings
+ * are applied.
+ */
+export function refreshCardDoorShape() {
+  applyCardDoorShape();
+}
+// AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
+// nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
+// an observer holds its targets — so every card you opened kept its whole
+// layout subtree alive for the rest of the session. Each pass drops the ones
+// that have left the document.
+const doorWatched = new Set();
+function releaseDetachedLayouts() {
+  for (const node of doorWatched) {
+    if (!node.isConnected) {
+      doorObserver?.unobserve(node);
+      doorWatched.delete(node);
+    }
+  }
+}
+function observeDoorWidth(layout) {
+  if (typeof ResizeObserver !== 'function') return;
+  if (!doorObserver) {
+    doorObserver = new ResizeObserver(() => {
+      releaseDetachedLayouts();
+      const slimmest = narrowestDoorWidth();
+      if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
+    });
+  }
+  releaseDetachedLayouts();
+  doorObserver.observe(layout);
+  doorWatched.add(layout);
+}
+function watchCardDoorShape() {
+  applyCardDoorShape();
+  if (doorShapeWatched) return;
+  doorShapeWatched = true;
+  window.addEventListener('resize', applyCardDoorShape);
+}
 
 /** Read-only composition shared by equipment and playing-card detail surfaces. */
 export function cardInspectionLayout(card, details) {
+  // Resolved as the layout is built, so a door opened on any host — the game,
+  // the weapon preview, the wireframe gallery — reads the same shape.
+  watchCardDoorShape();
   const body = document.createElement('section');
   body.className = 'card-inspection-layout';
+  // The first decision is made on the viewport because this node has no box
+  // yet; the observer re-decides against the real one as soon as it does.
+  observeDoorWidth(body);
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
   art.append(card);
@@ -21,37 +232,79 @@ export function cardInspectionLayout(card, details) {
   return body;
 }
 
-export function openCardInspection({ title, card, details, opener, getAction = null }) {
+// THE DOOR ASKS; IT DOES NOT DECIDE. This used to build exactly one button,
+// label it `Play card`, and take its enabled state from a `getAction` whose
+// default — set in card.js, inherited by every surface but combat — was
+// "disabled, because you play cards from your combat hand". So the spoils
+// screen offered a dead Play on the very card the player had come to take.
+//
+// It now receives a LIST of `{ id, verb, enabled, reason }` from
+// services/cardActions.js and a `commands` map of `{ [id]: fn }` from the
+// screen that owns the state. No verb is written in this file. A surface with
+// nothing to offer passes an empty list and gets a reading door with no
+// footer at all — which is the honest shape for the compendium, and is not
+// the same thing as a greyed button apologising about combat.
+//
+// `actions` may be a function so a door that stands open while the run moves
+// re-reads on press rather than acting on what was true when it opened. That
+// is the one behaviour the old `getAction()`-on-click had right.
+export function openCardInspection({ title, card, details, opener, actions = null, commands = {} }) {
   hideTooltip();
   document.getSelection()?.removeAllRanges();
-  const action = getAction?.();
-  const play = action ? document.createElement('button') : null;
-  const reason = action ? document.createElement('p') : null;
-  if (reason) {
-    reason.className = 'card-play-reason'; reason.setAttribute('role', 'status');
-    reason.textContent = action.reason || (action.needsTarget ? 'Choose a target after playing.' : 'Ready to play.');
-    details.append(reason);
+  const read = () => {
+    const rows = typeof actions === 'function' ? actions() : actions;
+    return Array.isArray(rows) ? rows : [];
+  };
+  const rows = read();
+  // The refusal sentence stands in the body, where a reader is already
+  // looking, and only when there is one. An enabled act needs no caption:
+  // the button says what it does.
+  const blocked = rows.filter((row) => !row.enabled && row.reason);
+  let note = null;
+  if (blocked.length) {
+    note = document.createElement('p');
+    note.className = 'card-action-reason';
+    note.setAttribute('role', 'status');
+    note.textContent = blocked.map((row) => row.reason).join(' ');
+    details.append(note);
   }
-  if (play) {
-    play.type = 'button'; play.className = 'card-inspection-play';
-    play.textContent = 'Play card'; play.disabled = !action.enabled;
-    play.title = action.reason || (action.needsTarget ? 'Choose a target after closing this window.' : 'Play this card.');
-  }
-  const shell = openModal({ title, eyebrow: 'Card information', size: 'lg',
-    className: 'card-inspection-modal', opener,
-    primary: play,
-    body: cardInspectionLayout(card, details) });
-  play?.addEventListener('click', () => {
-    const current = getAction();
-    if (!current.enabled) {
-      play.disabled = true; play.title = current.reason;
-      if (reason) reason.textContent = current.reason;
-      return;
-    }
-    play.disabled = true;
-    shell.close();
-    current.play();
+  const buttons = rows.map((row) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'card-inspection-act';
+    button.dataset.act = row.id;
+    button.textContent = row.verb;
+    button.disabled = !row.enabled;
+    if (row.reason) button.title = row.reason;
+    return button;
   });
+  // W1o: the header close is the way out. The footer holds only applicable
+  // actions — one fills it — and a read-only door has no footer at all, not a
+  // redundant Back beside the close it duplicates.
+  const shell = openModal({ title, size: 'lg',
+    className: 'card-inspection-modal', opener,
+    primary: buttons[0] || null,
+    secondary: buttons.slice(1),
+    body: cardInspectionLayout(card, details) });
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      // Re-read rather than trusting the row this button was drawn from: the
+      // door can stand open while the run moves underneath it.
+      const current = read().find((row) => row.id === button.dataset.act);
+      const commit = commands[button.dataset.act];
+      if (!current || !current.enabled || typeof commit !== 'function') {
+        button.disabled = true;
+        if (current && current.reason) {
+          button.title = current.reason;
+          if (note) note.textContent = current.reason;
+        }
+        return;
+      }
+      button.disabled = true;
+      shell.close();
+      commit();
+    });
+  }
   shell.panel.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
     const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
@@ -63,7 +316,7 @@ export function openCardInspection({ title, card, details, opener, getAction = n
 }
 
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
-export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false }) {
+export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
@@ -87,52 +340,157 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   const revealDelayMs = () => {
     const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
-    return Number.isFinite(ms) && ms >= 0 ? ms : 125;
+    return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
   };
   const revealInfo = () => {
-    if (card.classList.contains('inspection-info-visible')) return;
-    clearTimeout(revealTimer);
-    revealTimer = setTimeout(() => card.classList.add('inspection-info-visible'), revealDelayMs());
-  };
-  const identity = card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
-  const select = () => {
-    document.querySelectorAll('.inspection-selected').forEach(other => {
-      if (other !== card) {
-        other.classList.remove('inspection-selected', 'inspection-info-visible');
-        other.removeAttribute('aria-current');
-        // A pending reveal on the card being deselected would otherwise land
-        // after it lost selection, showing a button on a card nobody chose.
-        other.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
+    if (revealTimer !== null || card.classList.contains('inspection-info-visible')) return;
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      if (card.isConnected && card.classList.contains('inspection-selected')) {
+        card.classList.add('inspection-info-visible');
       }
-    });
+    }, revealDelayMs());
+  };
+  // A CALLER MAY NAME THE CARD'S LOGICAL IDENTITY. Selection is page-wide and
+  // keyed by identity, so two faces of the SAME item are one lit card — which
+  // is right on a screen (a picker rebuilt under you keeps your choice) and
+  // wrong in the component catalogue, where three faces of one item exist
+  // precisely to be compared side by side. Without this, selecting any of them
+  // promoted all three to `focus` and destroyed the comparison they are there
+  // to show. Defaults to the DOM's own answer, so every screen is unchanged.
+  const identity = givenIdentity || card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
+  // HOW THIS CARD PUTS ITSELF OUT. The store calls this on the card that was
+  // lit before, so nothing traverses the document looking for it. A pending
+  // reveal is cancelled with it: otherwise it lands after the card has lost
+  // selection, showing an information button on a card nobody chose.
+  const douse = () => {
+    card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    card.setAttribute('aria-pressed', 'false');
+    card.removeAttribute('aria-current');
+    card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
+    // HOW A FACE LEARNS IT MUST SAY LESS AGAIN. A card's presentation level
+    // (src/model/cardFields.js) is `focus` while it is lit and its floor when
+    // it is not, so the two cards whose level changed on any selection are
+    // exactly the one newly lit and the one the store has just doused — and
+    // the store hands us that second one by calling this. The event is fired
+    // ON THE CARD ITSELF, so the face that repaints is that card and no other:
+    // dev deliberately deleted the `document.querySelectorAll` sweep this
+    // would otherwise grow back (see the header of cardSelection.js), and a
+    // sweep is also how a card removed from the DOM kept being reconciled.
+    card.dispatchEvent(new CustomEvent('cardinspectiondouse'));
+  };
+  const select = () => {
+    lightCard(identity, douse);
     card.classList.add('inspection-selected');
+    card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
     revealInfo();
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
-  card.addEventListener('cardholdstart', select);
+  // A HOLD THAT BECOMES A DRAG TAKES ITS LIGHT BACK. A combat card's hold
+  // lights this card from pointer-down (combat.js dispatches 'cardholdstart'
+  // at once, so the fill is visible from the first frame). A press that then
+  // crosses the drag slop was never a selection: the light the hold lent is
+  // put out again, and a card lit before the press keeps it, as a drag has
+  // never undone a choice already made.
+  let litByHold = false;
+  card.addEventListener('cardholdstart', () => { litByHold = litCard() !== identity; select(); });
+  card.addEventListener('carddragstart', () => { if (litByHold && litCard() === identity) clearSelection(); litByHold = false; });
+  card.addEventListener('pointerup', () => { litByHold = false; });
+  card.addEventListener('pointercancel', () => { litByHold = false; });
   card.addEventListener('cardinspectionrequest', () => { select(); revealInfo(); });
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     info.addEventListener(type, event => event.stopImmediatePropagation());
   }
+  // THE SELECTING BEAT IS SPENT, NOT RESET. This used to zero the count, so a
+  // player who read a card's information and then tapped it had their tap
+  // swallowed as a fresh selection — the card was already lit and the tap did
+  // nothing visible. Reading is something you do TO a selected card; the beat
+  // it stands on is still spent, so the next tap on the face is the action's.
   info.addEventListener('click', event => {
     event.preventDefault(); event.stopImmediatePropagation();
-    touchedIdentity = null; touchTaps = 0;
+    spendSelectingBeat(identity, douse);
     select(); open(info);
   });
   card.addEventListener('cardinspectioncancelreveal', () => {
     clearTimeout(revealTimer);
+    revealTimer = null;
     card.classList.remove('inspection-info-visible');
   });
-  card.append(info);
+  // TRUNCATED IS NEVER A DEAD END, AND IT IS STILL THE SAME TWO BEATS
+  // (Constantine, 2026-09-12: *"it should still select and show the (i) button
+  // for more information. all cards should react this way"*).
+  //
+  // A face whose text is clipped (fitCardFace → data-truncated) carries a `›`
+  // in its corner. It began as a muted CSS hint a thumb could not act on;
+  // #987 made it a control that opened the inspect door on ONE tap, and that
+  // is the half that was wrong — it gave one kind of card a private shortcut
+  // past the selecting beat every other card owes, so the same gesture meant
+  // two different things depending on whether a card's text happened to fit.
+  //
+  // The chevron is still a real tap-floor control, and what it does now is
+  // what a tap on the card's own face does: SELECT, draw the selection border,
+  // and reveal the `i` after the authored delay. The `i` is the one door into
+  // information, on every card, truncated or not. The chevron's job is to say
+  // "there is more here" somewhere a thumb can reach — not to be a second
+  // door with its own rules.
+  //
+  // It still swallows its own pointer and touch so the card's tap accounting
+  // never sees it; the chevron begins the two beats rather than spending one.
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'card-more-button';
+  more.textContent = '›';
+  more.setAttribute('aria-label', `Select ${title} to read its full text`);
+  for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
+    more.addEventListener(type, event => event.stopImmediatePropagation());
+  }
+  more.addEventListener('click', event => {
+    event.preventDefault(); event.stopImmediatePropagation();
+    // The chevron IS the selecting beat, so it spends it rather than zeroing
+    // the count: the next tap on the face is the card's own act.
+    spendSelectingBeat(identity, douse);
+    select(); revealInfo();
+  });
+  // A REBUILT CARD ADOPTS THE SELECTION IT ALREADY HELD.
+  //
+  // Selection is keyed by LOGICAL identity precisely so it survives a host
+  // re-render — that is the store's stated contract, and it is what lets a
+  // screen repaint its grid without losing the player's choice. But the store
+  // also holds the previous card's `douse`, closed over a node that the
+  // rebuild has just detached. So the replacement read as lit (its level
+  // resolved to `focus`) while carrying none of the selected classes, and
+  // lighting a different card only doused the detached ghost — leaving the
+  // replacement stuck in the focused presentation with no way out.
+  //
+  // Re-registering here is the fix that keeps the contract rather than
+  // trading it away: clearing the selection before a rebuild would fix the
+  // stuck card by discarding the very thing identity-keying exists to
+  // preserve. `lightCard` replaces the douse for an already-lit id and keeps
+  // its beats, so the count a player has spent survives the repaint too.
+  //
+  // THE STORE HOLDS ONE DOUSE PER IDENTITY, and this makes that visible rather
+  // than causing it. Where several LIVE cards share one identity — the creation
+  // screen's left and right hand pickers offer the same pieces, and a shop's
+  // faces can fall through to `title` — every one of them lights here, and only
+  // the last to bind owns the douse, so the others keep the glow until they are
+  // rebuilt. That is the pre-existing shape of a page-wide store keyed by
+  // identity, unchanged by this block and reproducible without it; scoping
+  // selection per grid is the fix for it and is its own question.
+  if (litCard() === identity) {
+    lightCard(identity, douse);
+    card.classList.add('inspection-selected');
+    card.setAttribute('aria-pressed', 'true');
+    card.setAttribute('aria-current', 'true');
+  }
+  card.append(info, more);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
     if (event.target === info) return;
     select();
     revealInfo();
     if (touch) {
-      touchTaps = touchedIdentity === identity ? touchTaps + 1 : 1;
-      touchedIdentity = identity;
+      const touchTaps = countBeat(identity, douse);
       // ONE PRESS REVEALS IT. This waited for touchTaps >= 2, so the button
       // that explains a card could only be found by someone who already knew
       // it was there — every first-time player selected a card and saw nothing.
@@ -140,8 +498,31 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       // place under a thumb already on the glass. Both the delay and the fade
       // are authored in balance.ui.equipmentCard.info.
       revealInfo();
-      if (!actionOwnsTouch && (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe))) {
-        // Selection/information taps cannot reach buy, equip or play handlers.
+      // TWO TAPS, AND THE SECOND ONE IS THE ACTION'S (Constantine, 2026-09-12:
+      // *"it should be two taps. the first selects and the information icon (i)
+      // should appear after the set delay ... the second tap should select the
+      // card or press and hold should work as well"*).
+      //
+      // THIS LINE USED TO SWALLOW TWO, and that is the defect #980 answered
+      // from the wrong end. `touchTaps === 2` reserved the second tap for the
+      // information button nobody had asked for, so a card's own act — choose
+      // this candidate, arm this burn — could only be reached on the THIRD.
+      // #980 fixed the count by handing tap ONE to the action (`actionOwnsTouch`
+      // on the Smith and the merchant), which cost the selecting beat: a thumb
+      // committed to a candidate it had not yet been shown.
+      //
+      // The rule now is the one he asked for, and it is the same rule for every
+      // card that has an act: THE FIRST TAP SELECTS AND NOTHING ELSE; every tap
+      // after it on the SAME card reaches the host's own handler. The `i` the
+      // first tap reveals is a door beside the act, never in front of it, and a
+      // press-and-hold is unaffected — it never came through `click` at all.
+      //
+      // `actionOwnsTouch` survives for the surfaces with no selecting beat to
+      // spend (a card in the combat hand, the reward chooser whose click only
+      // selects); `touchSelectionSafe` still lets a card whose act needs a
+      // target keep its first tap.
+      if (!actionOwnsTouch && touchTaps === 1 && !touchSelectionSafe) {
+        // The selecting tap cannot reach buy, equip, burn or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
       }
     } else if (readOnly) open(card);

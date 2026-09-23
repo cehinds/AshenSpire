@@ -10,18 +10,26 @@
 
 import { disclosureProblem } from './disclosure.js';
 
-export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana']);
+export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana', 'poise']);
+// POISE BECAME A DERIVED ROW IN RULESET 5 (plan phase 9). Every ruleset before
+// it snapshotted five rows, and those snapshots are restored through this same
+// door, so the required set is a function of the version rather than a
+// constant: asking a version-4 save for a Poise row would archive it.
+export function derivedStatIdsFor(rulesetVersion) {
+  return DERIVED_STAT_IDS.filter((id) => id !== 'poise' || (Number(rulesetVersion) || 0) >= 5);
+}
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4]);
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5]);
 export const DERIVED_STAT_SNAPSHOT_VERSION = 2;
 export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
 const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
-const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap'];
+const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap', 'perLevel'];
+const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
 const BASE_FIELDS = ['strategy', 'field'];
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -82,6 +90,20 @@ function validateBase(out, value, path, { required, classFields }) {
   }
 }
 
+/**
+ * `perLevel: { every, gain }` — the character-level term (plan phase 6): every
+ * `every` levels past the first, the row's maximum gains `gain`. Optional per
+ * row; a row without it never moves with the level. Snapshotted with the
+ * row, so a run keeps the cadence it was born under.
+ */
+function validatePerLevel(out, value, path) {
+  if (value === undefined) return;
+  if (!plainObject(value)) { problem(out, path, 'must be { every, gain }'); return; }
+  unknownFields(out, value, PER_LEVEL_FIELDS, path);
+  if (!Number.isInteger(value.every) || value.every <= 0) problem(out, `${path}.every`, 'must be a positive integer number of levels');
+  if (!Number.isFinite(value.gain) || value.gain < 0) problem(out, `${path}.gain`, 'must be a finite number >= 0');
+}
+
 function validateDefaults(out, value, path, { partial }) {
   if (!plainObject(value)) {
     problem(out, path, 'must be a plain object');
@@ -118,6 +140,7 @@ function validateRule(out, value, path, options, partial) {
   validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
+  validatePerLevel(out, value.perLevel, `${path}.perLevel`);
 }
 
 function normalizedOptions(options = {}) {
@@ -142,9 +165,15 @@ export function derivedStatRuleProblems(source, options = {}) {
     problem(out, 'rules', 'must be a plain object');
     return out;
   }
-  for (const id of DERIVED_STAT_IDS) {
+  for (const id of derivedStatIdsFor(source.rulesetVersion)) {
     if (!own(source.rules, id)) problem(out, `rules.${id}`, 'missing required derived-stat row');
     else validateRule(out, source.rules[id], `rules.${id}`, opts, false);
+  }
+  // A row the version does not require is still validated when it is there.
+  for (const id of DERIVED_STAT_IDS) {
+    if (!derivedStatIdsFor(source.rulesetVersion).includes(id) && own(source.rules, id)) {
+      validateRule(out, source.rules[id], `rules.${id}`, opts, false);
+    }
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
@@ -171,7 +200,7 @@ export function derivedStatPresentationProblems(source) {
   const table = source.presentation;
   if (!plainObject(table)) return [{ path: 'derivedStatRules.presentation', msg: 'must be a plain object with one row per derived stat' }];
   const orders = new Map();
-  for (const id of DERIVED_STAT_IDS) {
+  for (const id of derivedStatIdsFor(source.rulesetVersion)) {
     const path = `presentation.${id}`;
     if (!own(table, id)) { problem(out, path, 'missing presentation row for a shipped derived stat'); continue; }
     const row = table[id];
@@ -232,15 +261,28 @@ export function resolveDerivedStatRules(source, options = {}) {
   const replayed = {
     rulesetVersion: source.rulesetVersion,
     defaults: { ...source.defaults },
-    rules: Object.fromEntries(DERIVED_STAT_IDS.map((id) => [id, { ...source.defaults, ...structuredClone(source.rules[id]) }])),
+    // ONLY THE ROWS THE TABLE ACTUALLY CARRIES. Mapping the whole id list
+    // would invent a baseless row for a version that never had one.
+    rules: Object.fromEntries(DERIVED_STAT_IDS
+      .filter((id) => own(source.rules, id))
+      .map((id) => [id, { ...source.defaults, ...structuredClone(source.rules[id]) }])),
   };
   for (const [, layer] of layers) {
     if (!layer) continue;
+    // A LAYER PATCHES THE ROWS THE TABLE HAS. Since the row set became a
+    // function of the ruleset version, a table may legally lack a row the id
+    // list carries, and patching it blindly threw an unnamed TypeError —
+    // exactly what the Advanced stat-tier dial hands in (a `defaults` layer).
     if (layer.defaults) {
       Object.assign(replayed.defaults, layer.defaults);
-      for (const id of DERIVED_STAT_IDS) Object.assign(replayed.rules[id], layer.defaults);
+      for (const id of DERIVED_STAT_IDS) if (replayed.rules[id]) Object.assign(replayed.rules[id], layer.defaults);
     }
-    if (layer.rules) for (const [id, patch] of Object.entries(layer.rules)) Object.assign(replayed.rules[id], patch);
+    if (layer.rules) {
+      for (const [id, patch] of Object.entries(layer.rules)) {
+        if (!replayed.rules[id]) throw new Error(`Derived-stat override patches '${id}', which this ruleset ${replayed.rulesetVersion} table does not carry`);
+        Object.assign(replayed.rules[id], patch);
+      }
+    }
   }
   return replayed;
 }
@@ -285,16 +327,34 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
   };
 }
 
-/** Pure calculation. The returned receipt distinguishes base, tier, raw and cap. */
-export function deriveStat(resolved, statId, { attributes, classDef } = {}) {
+/**
+ * levelBonus(row, level) → what the row's `perLevel` term adds at a character
+ * level: `floor((level − 1) / every) × gain`; 0 for a row without the term,
+ * for no level, or for level 1.
+ */
+export function levelBonus(row, level) {
+  const term = row && row.perLevel;
+  if (!plainObject(term) || !Number.isInteger(level) || level <= 1) return 0;
+  if (!Number.isInteger(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
+  return Math.floor((level - 1) / term.every) * term.gain;
+}
+
+/**
+ * Pure calculation. The returned receipt distinguishes base, tier, level
+ * bonus, raw and cap. `level` is the character level (plan phase 6); a
+ * caller that computes a run's pools passes it, a ceiling or a table probe
+ * leaves it out and reads the attribute term alone.
+ */
+export function deriveStat(resolved, statId, { attributes, classDef, level = undefined } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
   const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
   const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
-  const raw = base + tier * tierReceipt.gainPerTier;
+  const bonus = levelBonus(row, level);
+  const raw = base + tier * tierReceipt.gainPerTier + bonus;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, raw, cap: row.cap, value };
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, level: Number.isInteger(level) ? level : null, levelBonus: bonus, raw, cap: row.cap, value };
 }
 
 /** One compatibility contract for folding an authored relic tier into a rule. */

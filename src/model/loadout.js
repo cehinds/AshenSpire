@@ -3,7 +3,8 @@ import { tokenRe } from './validate.js';
 import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
 } from './cardMounts.js';
-import { deriveAttributeTierReceipt, deriveStat } from './derivedStats.js';
+import { deriveStat } from './derivedStats.js';
+import { defaultRatingFormula, effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -13,9 +14,10 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
+import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 
-const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
-const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
+const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
+const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
 const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
@@ -397,10 +399,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!registries.cards.has(profile.baseCardId)) problems.push(`${profile.id}: unknown base card '${profile.baseCardId}'`);
     if (!DAMAGE_SCHOOLS.includes(profile.damageSchool)) problems.push(`${profile.id}: unknown damage school '${profile.damageSchool}'`);
     if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
-    if (!attributeIds.has(profile.scalingStat)) problems.push(`${profile.id}: unknown scalingStat '${profile.scalingStat}'`);
-    if (!Number.isFinite(profile.pointsPerTier) || profile.pointsPerTier <= 0) problems.push(`${profile.id}: pointsPerTier must be finite and > 0`);
-    if (!['floor', 'ceil', 'round'].includes(profile.rounding)) problems.push(`${profile.id}: unknown rounding '${profile.rounding}'`);
-    if (!Number.isFinite(profile.gainPerTier)) problems.push(`${profile.id}: gainPerTier must be finite`);
+    if (!ratingIds.includes(profile.ratingId)) problems.push(`${profile.id}: unknown ratingId '${profile.ratingId}'`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     // The service owns what a family may carry, so this reads the same rule
@@ -530,7 +529,7 @@ function collectEquipmentProblems(registries, problems = []) {
 
   for (const classId of registries.classes.ids()) {
     const sets = (eq.armour || []).filter((o) => o.classId === classId);
-    const starting = sets.filter((o) => o.unlock === '');
+    const starting = sets.filter((o) => o.unlock === '' && !o.sharedSet);
     if (starting.length !== 1) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
     }
@@ -596,11 +595,12 @@ function collectEquipmentProblems(registries, problems = []) {
     // and these dormant counts would still reject it for summing to ten.
     // They are rules only while they are the ones being read.
     if (!startingDeckConfig(registries)) {
-      const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+      const total = [...EQUIPMENT_ROLES, 'signature', 'ability'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
       if (total !== registries.balance.startingDeckSize) {
         problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
       }
       if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+      if (roleCopies.ability !== undefined && roleCopies.ability !== 1) problems.push('balance.equipment.roleCopies.ability must be exactly 1 when present');
     }
     problems.push(...startingDeckProblems(registries));
     for (const role of EQUIPMENT_ROLES) {
@@ -977,7 +977,7 @@ export function createLoadout(registries, classId, startingKit = null, startingA
   // id: an id validated here would be a second decider for one question.
   // Absent, the class's free set — byte-for-byte the old behaviour.
   const starting = startingArmour
-    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '' && !o.sharedSet);
   if (starting && sets.armor) sets.armor[0] = starting.id;
   const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
   for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
@@ -1028,19 +1028,29 @@ export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
 /** Validate and clone a saved equipment scaling snapshot without live-data repair. */
 export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
-  if (snapshot.snapshotVersion !== EQUIPMENT_PROFILE_SNAPSHOT_VERSION) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
+  if (![1, EQUIPMENT_PROFILE_SNAPSHOT_VERSION].includes(snapshot.snapshotVersion)) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
   if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
   snapshot = structuredClone(snapshot);
+  if (snapshot.snapshotVersion === 1) {
+    const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => {
+      const live = profileRule(profile);
+      const saved = snapshot.profiles[profile.id] || {};
+      const preserved = Object.fromEntries(
+        [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility']
+          .filter((key) => saved[key] !== undefined && key !== 'ratingId')
+          .map((key) => [key, saved[key]]),
+      );
+      return [profile.id, { ...live, ...preserved }];
+    }));
+    snapshot = { snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses: snapshot.rarityBonuses };
+  }
   const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
   for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
   for (const profile of registries.equipment.basicCardProfiles || []) {
     const rule = snapshot.profiles[profile.id];
     if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
     if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
-    if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
-    if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
-    if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
-    if (!Number.isFinite(rule.gainPerTier)) throw new Error(`${profile.id}.gainPerTier must be finite`);
+    if (!ratingIds.includes(rule.ratingId)) throw new Error(`${profile.id}.ratingId '${rule.ratingId}' is unknown`);
     if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
     if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
     // Version-1 snapshots predate combat carriers. They adopt the live row
@@ -1087,16 +1097,32 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const profile = row.profile;
   const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
   if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-  const tier = deriveAttributeTierReceipt(rule, { attributes, sourceStat: rule.scalingStat });
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  const raw = rule.baseValue + tier.value + rarityBonus;
+  const ratingConfig = registries.balance?.combatRatings || defaultRatingFormula;
+  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId);
+  rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
+  const uncappedEffectBase = rule.baseValue + rarityBonus;
+  const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
+  const raw = uncappedEffectBase + rating.value;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
   if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
-  return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
+  return {
+    role: row.role,
+    profileId: profile.id,
+    pieceId: row.piece && row.piece.id,
+    base: rule.baseValue,
+    rarity,
+    rarityBonus,
+    rating,
+    effectBase,
+    raw,
+    cap: rule.cap,
+    value,
+  };
 }
 
-/** Calculation receipts; the tier arithmetic is owned by derivedStats.js. */
+/** Calculation receipts for card base + source-equipment rating + rarity. */
 export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
   const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
@@ -1449,7 +1475,7 @@ function startingDeckFindings(registries) {
     } else {
       for (const source of cfg.sourceOrder) {
         if (!legal.includes(source)) {
-          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add nodes under the grantSource root in nodes.csv'})`);
         }
       }
     }
@@ -1471,7 +1497,7 @@ function startingDeckFindings(registries) {
         if (typeof bound !== 'string' || !bound) {
           problems.push(`startingDeck.sources.${role} must name a grant-source tag (got ${JSON.stringify(bound)}) — the '${role}' seam mints cards and would stamp nothing, sorting them last in silence`);
         } else if (!legal.includes(bound)) {
-          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add nodes under the grantSource root in nodes.csv'})`);
         } else if (Array.isArray(cfg.sourceOrder) && !cfg.sourceOrder.includes(bound)) {
           // Legal — an unranked source is dealt last by contract — but almost
           // never what an author meant, so it is SEEN rather than refused.
@@ -1763,6 +1789,9 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
     for (const cardId of globalGrants) grants.push({ source: grantSourceFor(cfg, 'global'), cardId });
   }
   if (cls.startingSignatureCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.startingSignatureCard });
+  // The class ability card (plan phase 5a, proposal §4): one copy, beside the
+  // signature, from the same source.
+  if (cls.abilityCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.abilityCard });
 
   // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
   // a source it does not name is dealt last, in the order it was pushed. Stable,
@@ -1894,6 +1923,7 @@ export function startingDeckRefs(registries, loadout, classId) {
 
   if (!plan) {
     for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+    if (cls.abilityCard) for (let i = 0; i < (copies.ability || 0); i++) refs.push({ cardId: cls.abilityCard });
     return refs;
   }
   for (const grant of plan.grants) {
@@ -2282,15 +2312,34 @@ export function figureSpec(registries, loadout, classId) {
   const spec = {
     armourId: 'default', rightId: null, leftId: null,
     rightMirror: false, leftMirror: false,
+    // The three worn layers the slot split added (plan phase 3b). Art is keyed
+    // `<slot>_<id>` and a missing file draws nothing (assets.js equippedFigure),
+    // so a layer here is an id and never a promise that a picture exists.
+    headId: null, handsId: null, feetId: null,
   };
   if (!loadout) return spec;
-  for (const slot of slots) {
-    const piece = equippedIn(registries, loadout, classId, slot.id);
+  // THE ZONES ARE WHAT IS DRAWN. The projection reads the same loadout the
+  // run saves (zones.js projectZones, registry-free), so the figure and the
+  // save cannot disagree about what is worn or held: body ← zones.worn.body,
+  // the three new layers ← zones.worn.head/hands/feet, the hands ← zones.hands.
+  const { zones } = projectZones({ class: classId, loadout, relics: [], deck: [] });
+  // The body layer is the RESOLVED armour row for this class, as it always
+  // was: a raw id the table does not know (a stale save, a co-op member's
+  // loadout that never crossed the load door) keeps the default body rather
+  // than asking for art that does not exist.
+  const body = zones.worn.body ? equippedIn(registries, loadout, classId, WORN_SLOT_IDS.body) : null;
+  if (body) spec.armourId = body.id;
+  spec.headId = zones.worn.head;
+  spec.handsId = zones.worn.hands;
+  spec.feetId = zones.worn.feet;
+  // The hands need the PIECE (art key, shield mirroring), so each hand zone
+  // resolves its slot's piece; the zone said which id, the table says how it
+  // is drawn.
+  for (const [zone, slotId] of Object.entries(HAND_SLOT_IDS)) {
+    if (!zones.hands[zone]) continue;
+    const slot = slots.find((s) => s.id === slotId);
+    const piece = slot ? equippedIn(registries, loadout, classId, slotId) : null;
     if (!piece) continue;
-    if (slot.kinds.includes('armor')) {
-      spec.armourId = piece.id;
-      continue;
-    }
     const hand = slotHand(slot);
     if (hand === 'right') {
       spec.rightId = piece.artKey || piece.id;
@@ -2299,10 +2348,160 @@ export function figureSpec(registries, loadout, classId) {
       spec.leftId = piece.artKey || piece.id;
       spec.leftMirror = piece.kind !== 'shield';
     }
-    // No hand: this slot is not held (a talisman), so there is nothing to draw
-    // in a hand for it. It used to land in the right hand as a weapon layer.
   }
   return spec;
+}
+
+/**
+ * GRIP (plan phase 3c, proposal §5). How the hands hold what they hold, READ
+ * off the loadout and never stored: a grip is a function of the two hand
+ * slots, so a stored grip would be a second home for one fact (3NF), and the
+ * moment the player gains a grip CHOICE (two-handing a one-hander) that
+ * choice becomes the stored intent and this the reader of it.
+ *
+ *   two   either hand holds a piece whose package requires both hands
+ *   dual  both hands hold a piece, neither two-handed, sharing an item
+ *         type tag (item:blade, item:shield, …) — the "same armament group"
+ *   one   anything else, including empty hands
+ *
+ * gripOf(registries, loadout, classId) → { mode, group, right, left } where
+ * `group` is the shared item type tag under `dual` and null otherwise, and
+ * right/left are the held piece ids (null when empty).
+ */
+export const GRIP_MODES = Object.freeze(['one', 'two', 'dual']);
+
+function handHeld(registries, loadout, classId, hand) {
+  const slot = (((registries || {}).equipment || {}).slots || []).find((row) => slotHand(row) === hand);
+  if (!slot || !loadout) return { piece: null, twoHanded: false };
+  const piece = equippedIn(registries, loadout, classId, slot.id);
+  const pkg = piece ? WeaponCardPackageModel.fromPiece(registries, piece) : null;
+  return { piece, twoHanded: Boolean(pkg && pkg.handsRequired === 2) };
+}
+
+export function gripOf(registries, loadout, classId) {
+  const right = handHeld(registries, loadout, classId, 'right');
+  const left = handHeld(registries, loadout, classId, 'left');
+  const out = { mode: 'one', group: null, right: right.piece ? right.piece.id : null, left: left.piece ? left.piece.id : null };
+  if (right.twoHanded || left.twoHanded) return { ...out, mode: 'two' };
+  if (right.piece && left.piece) {
+    const shared = (right.piece.itemTypeTags || []).find((tag) => (left.piece.itemTypeTags || []).includes(tag));
+    if (shared) return { ...out, mode: 'dual', group: shared };
+  }
+  return out;
+}
+
+/** The framework tags a grip derives — read at the action snapshot, written to no card. */
+export const GRIP_TAGS = Object.freeze({ one: Object.freeze([]), two: Object.freeze(['equipment.twoHanded']), dual: Object.freeze(['equipment.dualWield']) });
+export function gripTags(grip) {
+  const mode = grip && grip.mode;
+  if (!GRIP_MODES.includes(mode)) throw new Error(`gripTags: '${mode}' is not a grip mode (${GRIP_MODES.join(', ')})`);
+  return [...GRIP_TAGS[mode]];
+}
+
+/**
+ * gripRefusal(registries, loadout, classId, slotId, setIndex, itemId) → '' or
+ * the sentence that refuses the grip the hands would be left in. The one
+ * illegal grip today is a two-handed piece beside an occupied other hand;
+ * `dual` is legal on its own (its attribute gate is plan phase 9's row). The
+ * loadout is judged AS THE EDIT LEAVES IT — the candidate in its cell, every
+ * active index unchanged — against the other hand's active piece: the active
+ * pair is the invariant, and it is also held by the deck plan's gate
+ * (buildEquippedWeaponCardPlan throws on a two-hander beside an occupied
+ * off-hand, which cycleSet and equipPiece both run). This is the same rule
+ * asked EARLIER — at canEquip, with a sentence — so the Armoury can say why
+ * before the act rather than after it.
+ *
+ * A MOVE IS NOT A SECOND COPY: equipping a piece that is already in the
+ * other hand moves it (applyEquipTransition clears the old cell), so the
+ * trial clears every other hand cell holding the candidate before it reads
+ * the hands — else a two-hander moved from left to right would be refused
+ * for being beside itself.
+ */
+export function gripRefusal(registries, loadout, classId, slotId, setIndex, itemId) {
+  const slots = (((registries || {}).equipment || {}).slots || []);
+  const slot = slots.find((row) => row.id === slotId);
+  if (!slot || !slotHand(slot) || !loadout) return '';
+  const trial = structuredClone(loadout);
+  trial.sets = trial.sets || {}; trial.active = trial.active || {};
+  for (const hand of slots.filter((row) => slotHand(row))) {
+    trial.sets[hand.id] = [...(trial.sets[hand.id] || [])].map((held) => (itemId && held === itemId ? null : held));
+  }
+  // THE ACTIVE INDEX IS NOT MOVED: equipPiece edits the cell and never
+  // activates it, so a two-hander laid in a prepared set beside an occupied
+  // active hand is a legal edit here; the day the player cycles to it, the
+  // deck plan's gate at cycleSet refuses the pair. Judging the loadout as it
+  // will actually be is the only reading that cannot refuse a legal edit.
+  if (Number.isInteger(setIndex) && setIndex >= 0) trial.sets[slotId][setIndex] = itemId || null;
+  const right = handHeld(registries, trial, classId, 'right');
+  const left = handHeld(registries, trial, classId, 'left');
+  if ((right.twoHanded && left.piece) || (left.twoHanded && right.piece)) {
+    const two = right.twoHanded ? right.piece : left.piece;
+    const other = right.twoHanded ? left.piece : right.piece;
+    return `${two.name || two.id} needs both hands, and ${other.name || other.id} is in the other one. Free that hand first.`;
+  }
+  return '';
+}
+
+/**
+ * healMissingSlotCells(registries, loadout) → the ids of the slots whose cells
+ * were absent and are now present, empty. A save written before a slot row
+ * existed (phase 3b added head, hands and feet) carries no cells for it, so
+ * the Armoury drew no position and equipPiece refused the slot; this gives it
+ * what createLoadout gives a fresh run, and nothing else. Both load doors
+ * call it (save.js loadRun, which notes it on the ledger; tools/session.mjs
+ * restoreSession, which has no ledger).
+ */
+export function healMissingSlotCells(registries, loadout) {
+  if (!loadout || typeof loadout !== 'object') return [];
+  loadout.sets = loadout.sets || {};
+  loadout.active = loadout.active || {};
+  const added = [];
+  for (const slot of (((registries || {}).equipment || {}).slots || [])) {
+    if (Array.isArray(loadout.sets[slot.id])) continue;
+    loadout.sets[slot.id] = new Array(Math.max(1, slot.sets || 1)).fill(null);
+    loadout.active[slot.id] = 0;
+    added.push(slot.id);
+  }
+  return added;
+}
+
+/**
+ * deckMinimum(registries, run) → the fewest cards a run may leave the Armoury
+ * with (plan phase 3b, proposal §5). balance.deck is the one home of the
+ * numbers; character level (phase 6) is read as 0 until it exists.
+ */
+export function deckMinimum(registries, run) {
+  const cfg = (((registries || {}).balance || {}).deck) || {};
+  // The character level is the ledger's (plan phase 6, `run.level.level`;
+  // a fresh run is level 1); `characterLevel` is the field the floor read
+  // before the ledger existed, kept for a caller that still names it.
+  const ledger = run && run.level && Number.isInteger(run.level.level) && run.level.level > 0 ? run.level.level : null;
+  const level = ledger !== null ? ledger
+    : (run && Number.isInteger(run.characterLevel) && run.characterLevel > 0 ? run.characterLevel : 0);
+  const step = Number.isInteger(cfg.minimumStepLevels) && cfg.minimumStepLevels > 0 ? cfg.minimumStepLevels : 1;
+  const base = Number.isInteger(cfg.minimum) ? cfg.minimum : 0;
+  const perStep = Number.isInteger(cfg.minimumPerStep) ? cfg.minimumPerStep : 0;
+  return base + Math.floor(level / step) * perStep;
+}
+
+/**
+ * loadoutLeaveRefusal(registries, run, { enteredWith }) → '' when the player
+ * may leave the Armoury, else the sentence that says why not.
+ *
+ * THE FLOOR GATES THE DOOR, NOT THE ACT: unequipping is always allowed (the
+ * player may be mid-swap), and what is refused is LEAVING with the deck under
+ * `deckMinimum`. `enteredWith` is the deck size when the screen opened: a run
+ * that was already under the floor when it arrived (a shop removal took it
+ * there; nothing in this screen did) may leave, because a door that traps a
+ * player over a state it did not create is a defect, not a rule.
+ */
+export function loadoutLeaveRefusal(registries, run, { enteredWith } = {}) {
+  const held = Array.isArray(run && run.deck) ? run.deck.length : 0;
+  const floor = deckMinimum(registries, run);
+  if (held >= floor) return '';
+  if (Number.isInteger(enteredWith) && enteredWith < floor) return '';
+  const short = floor - held;
+  return `Your deck holds ${held} card${held === 1 ? '' : 's'} and the floor is ${floor}. Equip something that carries ${short} more, or put back what you took off, before you leave.`;
 }
 
 /** Tags granted by what you're wearing (deduplicated, slot order). */
@@ -2472,9 +2671,13 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   // Keep this named composition explicit: three independent instruments pin
   // the exact HP addends at creation and load. Mana/Stamina use the same
   // persisted-equipment rule below without weakening that historical witness.
+  // The character level rides the derivation (plan phase 6): the snapshot's
+  // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
+  const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
     attributes: run.attributes,
     classDef,
+    level,
   });
   const equipmentBonus = bonuses.maxHp;
   const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
@@ -2483,6 +2686,7 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
     const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
       attributes: run.attributes,
       classDef,
+      level,
     });
     const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
     applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
@@ -2704,6 +2908,10 @@ export function stampDeck(registries, run, cards, {
       if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
       if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
       inst.profileId = row.profile.id;
+      inst.ratingId = row.receipt.rating.id;
+      inst.ratingValue = row.receipt.rating.value;
+      if (Number.isFinite(row.receipt.cap)) inst.ratingCap = row.receipt.cap;
+      else delete inst.ratingCap;
       inst.profileReceipt = { ...row.receipt };
       const sourceArmamentId = row.piece && row.piece.id;
       if (sourceArmamentId) {
@@ -2742,8 +2950,8 @@ export function stampDeck(registries, run, cards, {
     const mods = cardMods(registries, run.loadout, run.class, {
       attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
-    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.value}`
-      : row && row.role === 'guard' ? `block=${row.receipt.value}` : null;
+    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.effectBase}`
+      : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
     const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
@@ -2968,6 +3176,49 @@ export function canEquip(registries, slotId, ctx) {
   const cfg = (((registries || {}).balance || {}).equipment || {});
   if (ctx.inCombat && cfg.allowChangesInCombat !== true) {
     return { ok: false, reason: COMBAT_EQUIPMENT_CHANGE_DISABLED };
+  }
+  // THE GRIP THE HANDS WOULD BE LEFT IN (plan phase 3c). Asked only when the
+  // caller says what it is about to put where — equipPiece does; a bare
+  // "may this slot change at all" question keeps its old answer.
+  if (ctx.loadout && ctx.itemId !== undefined) {
+    const refusal = gripRefusal(registries, ctx.loadout, ctx.classId || null, slotId, ctx.setIndex, ctx.itemId);
+    if (refusal) return { ok: false, reason: refusal };
+  }
+  // THE ATTRIBUTE GATE (plan phase 9), BESIDE THE GRIP'S. equipPiece has
+  // enforced these minima on the mutation for as long as they have existed;
+  // what this adds is the ANSWER, early and in words, to a caller that asks
+  // "may this go here" before acting — the equipment screen's seal, which
+  // could previously only find out by trying. Asked when the caller names
+  // both the candidate and the attributes to judge it by; a bare "may this
+  // slot change" question keeps its old answer, and the mutation's own check
+  // remains the gate of record.
+  if (ctx.itemId && ctx.attributes) {
+    // BOTH HALVES OF THE WARDROBE. equipmentRequirements.csv carries armour
+    // rows (the plate asks Strength, the vestments Wisdom) as well as
+    // armaments, and a gate that searched only the weapons would have left
+    // every armour minimum unenforced while reading as though it enforced
+    // them — worse than no gate, because the table says otherwise.
+    const eq = registries.equipment || {};
+    const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
+      || (eq.armour || []).find((row) => row.id === ctx.itemId);
+    if (piece) {
+      // THE SAME INPUTS THE MUTATION'S OWN CHECK USES. equipPiece has read
+      // these minima since before this gate existed; this one runs FIRST and
+      // short-circuits, so a narrower copy here would overrule the wider one
+      // and refuse an item whose requirement an upgrade had lowered.
+      const receipt = equipmentRequirementReceipt(registries, piece, ctx.attributes, {
+        itemUpgradeLevels: ctx.itemUpgradeLevels || {},
+        armamentLevels: ctx.armamentLevels || {},
+      });
+      if (!receipt.ok) {
+        const shortOf = receipt.failures[0];
+        const label = (registries.attributes.get(shortOf.attributeId) || {}).shortLabel || shortOf.attributeId;
+        // An absent attribute is UNKNOWN, not zero: a caller that hands in a
+        // partial allocation is not a character with nothing in that stat.
+        const have = shortOf.actual === null ? 'unknown' : shortOf.actual;
+        return { ok: false, reason: `${piece.name || piece.id} requires ${label} ${shortOf.required} (you have ${have})` };
+      }
+    }
   }
   return { ok: true, reason: '' };
 }
@@ -3254,7 +3505,16 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
   // function had just refused into a legal one, so if the check above is ever
   // loosened canEquip's own check is a real second gate rather than an echo.
-  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat });
+  const permission = canEquip(registries, slotId, {
+    inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId,
+    // The attribute gate judges only when the caller hands in what to judge
+    // by, and then by the same levels this function's own check uses.
+    ...(ctx.attributes ? {
+      attributes: ctx.attributes,
+      itemUpgradeLevels: ctx.itemUpgradeLevels,
+      armamentLevels: ctx.armamentLevels,
+    } : {}),
+  });
   if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);

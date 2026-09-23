@@ -71,6 +71,13 @@ export function resourceScale(v) {
  * half that is genuinely free is the UI.
  */
 export const RESOURCE_SOURCES = Object.freeze({
+  ward: Object.freeze({
+    read: (view, entity) => {
+      const meter = view?.wardMeter || entity?.wardMeter;
+      return meter && meter.max > 0 ? { cur: meter.value, max: meter.max } : null;
+    },
+    domain: pop => maxOf(pop.map(e => e.wardMeter?.max || 0)),
+  }),
   hp: Object.freeze({
     read: (view, entity) => {
       const max = entity && entity.maxHp;

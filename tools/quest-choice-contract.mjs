@@ -90,7 +90,7 @@ check('same state and choice replay byte-identically', JSON.stringify(replay) ==
 
 const authoredChoices = events.flatMap((event) => eventChoicesWithHistory(event)
   .map((choice) => ({ event, choice })));
-check('all shipped event choices have stable explicit ids', authoredChoices.length === 62
+check('all shipped event choices have stable explicit ids', authoredChoices.length === events.reduce((count, event) => count + event.choices.length, 0)
   && authoredChoices.every(({ choice }) => /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(choice.id)));
 check('choice ids are unique within each event', events.every((event) => {
   const ids = eventChoiceIds[event.id] || [];
@@ -173,7 +173,7 @@ check('the second cairn opens after the keeper and answers the branch taken',
 const rollEvents = (history, seeds = 400) => {
   const seen = new Set();
   for (let seed = 1; seed <= seeds; seed++) {
-    const r = resolveUnknownNode(REG, createRng(seed), { act: 1, history });
+    const r = resolveUnknownNode(REG, createRng(seed), { tier: 1, history });
     if (r.kind === 'event') seen.add(r.eventId);
   }
   return seen;

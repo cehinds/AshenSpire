@@ -28,13 +28,24 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
+import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
+import { skillsProblems } from './skills.js';
+import { coreTagsProblems } from './classTree.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
+import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 5;
+// 7 (plan phase 3a): `zones` and `collection` ride the save. They are a
+// PROJECTION of the fields that own the truth today — `class`, `loadout`,
+// `relics`, `deck` — written at every door (createRunState, serializeRun,
+// migrateRunSchema) by syncZones and shape-checked by validateRunShape. The
+// legacy fields stay authoritative until phase 3b flips the readers and
+// writers; until then a save whose zones disagree with its legacy fields is
+// re-projected at the load door with a ledger note, never refused.
+export const RUN_SCHEMA_VERSION = 10;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -130,6 +141,15 @@ export function createRunState({
     // exactly what the derived-stat table says a point is worth), and this
     // number is what the COST RAMP indexes on. `model/levelup.js`.
     levelUps: 0,
+    // THE CHARACTER LEVEL (plan phase 6): earned XP, the level it has bought,
+    // and the attribute points waiting to be assigned at a shrine. Written
+    // only by model/levelup.js. A fresh run is level 1 with nothing waiting.
+    level: { xp: 0, level: 1, unspentPoints: 0 },
+    // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
+    // written only by model/skills.js awardSkillXp. Empty until a hit lands.
+    skills: {},
+    // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
+    coreTags: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -140,6 +160,11 @@ export function createRunState({
     levelPoints: 0,
     floor: 0,
     actNumber: 1,
+    // The DEFAULT order — seats by authored baseline — so a run made here is
+    // byte-for-byte the run this function always made. The orchestrator draws
+    // the seeded order on the `seats` stream right after (drawSeatOrder,
+    // engine/actmap.js); a test or tool that never does gets the old climb.
+    seatOrder: defaultSeatOrder(registries),
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
@@ -160,7 +185,8 @@ export function createRunState({
     // derive it from. So it is recorded here, once, and carried like the
     // profile snapshot beside it.
     equipmentAttackSlotCount: null, // filled in below, from the deck just built
-    relics: [startingRelic.id],
+    // The starting relic, and the class kit's relic beside it (plan phase 5a).
+    relics: [startingRelic.id, ...(classDef.kitRelic && classDef.kitRelic !== startingRelic.id ? [classDef.kitRelic] : [])],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
@@ -214,6 +240,9 @@ export function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  // The projection, LAST: stampDeck and orderStartingDeck have just composed
+  // the opening deck, and the collection is a copy of that deck.
+  syncZones(run);
   closeLedger(run);
   return run;
 }
@@ -242,12 +271,27 @@ function derivedOptions(registries, extra = {}) {
  * migration. Once a snapshot exists, restores validate and trust the persisted
  * outputs so a later content edit cannot rewrite a climb in progress.
  */
+/** The character level a run's pools are derived at (plan phase 6): 1 for a run whose ledger is absent. */
+function characterLevelOf(run) {
+  const row = run && run.level;
+  return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
+}
+
 export function initializeRunDerivedStats(run, registries, {
   snapshot = undefined,
   derivedStatOptions = {},
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
+  // A smaller starting pool used to multiply every `pointsPerTier` by the
+  // ratio, which is the same as handing each formula an inflated attribute:
+  // 12 points on the authored 35-point scale meant CON 1 bought the HP of CON
+  // 2.92. The row now reads the attribute the sheet shows — `base +
+  // gainPerTier × floor(attribute ÷ pointsPerTier)` — and a pool worth fewer
+  // points buys fewer pools, which is what a smaller pool means. Runs already
+  // carrying a scaled snapshot keep it: a climb is priced by the rules it was
+  // born under, and `existing` below is still the authority.
   const modeModifiers = modeProfiles
     ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
     : derivedStatOptions.modeModifiers;
@@ -277,7 +321,7 @@ export function initializeRunDerivedStats(run, registries, {
         const persistedMax = run[maxField];
         const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
         if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
-        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef }).value;
+        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
         inferred[maxField] = persistedMax - derived - adjustment;
       }
     }
@@ -325,7 +369,7 @@ export function initializeRunDerivedStats(run, registries, {
   // D22 changes the base formula.
   if (run.maxHpAdjustment === undefined) {
     if (restoredExisting && Number.isFinite(run.maxHp)) {
-      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
       run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
     } else run.maxHpAdjustment = 0;
     note(run, {
@@ -358,7 +402,7 @@ export function initializeRunDerivedStats(run, registries, {
       }
       const equipmentBonus = key === 'maxMana' ? run.equipmentPoolBonuses.maxMana
         : key === 'maxStamina' ? run.equipmentPoolBonuses.maxStamina : 0;
-      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value + equipmentBonus);
+      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus);
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
     // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
@@ -367,7 +411,7 @@ export function initializeRunDerivedStats(run, registries, {
     // collapse what you cannot watch drift. It states its number so a tool can
     // compare the three instead of trusting that they agree.
     const expectedMaxHp = Math.max(1,
-      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value
       + hpEquipmentBonus + run.maxHpAdjustment);
     note(run, {
       kind: 'compute',
@@ -426,11 +470,11 @@ export function initializeRunDerivedStats(run, registries, {
       relicModifierReceipt,
     });
   const rules = receipt.rules;
-  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
-  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
-  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
-  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
-  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
+  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
@@ -522,6 +566,9 @@ export const RUN_SHAPE = [
   // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
   { key: 'levelPoints', type: 'number', optional: true },
+  // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
+  // at the migration door from its bought levels, with nothing waiting.
+  { key: 'level', type: 'object' },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -531,6 +578,11 @@ export const RUN_SHAPE = [
   { key: 'removedAttackSlotIds', type: 'array', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
+  // SPEC §13.4: the seats this run climbs, in order; `actNumber` is the tier
+  // and `seatOrder[tier - 1]` the seat. Required at schema 6; a pre-§13 save
+  // gets the default order at the load door (save.js), never here — this file
+  // has no registries and may not spell a seat id (DEVELOPER.md rule 1).
+  { key: 'seatOrder', type: 'array' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
   { key: 'maxHpAdjustment', type: 'number' },
@@ -567,7 +619,21 @@ export const RUN_SHAPE = [
   // Optional so a run saved before equipment existed still loads; save.js
   // heals it with a fresh loadout rather than refusing the save.
   { key: 'loadout', type: 'object', optional: true },
+  // Plan phase 3a. Required at schema 7; a preZones save (≤ 6) is filled at
+  // the migration door from the four legacy fields, no registries needed.
+  { key: 'zones', type: 'object' },
+  { key: 'collection', type: 'array' },
+  // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
+  // with no picks at the migration door.
+  { key: 'coreTags', type: 'array' },
+  // Plan phase 5c: the item types in hand as each boss fell, for the
+  // bossWithGroup unlock; optional, written at the boss door.
+  { key: 'bossGroups', type: 'object', optional: true },
+  // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
+  // with the empty ledger at the migration door.
+  { key: 'skills', type: 'object' },
   { key: 'seedString', type: 'string', nullable: true },
+  { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
@@ -576,6 +642,67 @@ export const RUN_SHAPE = [
   { key: 'mapView', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
+
+// ---------------------------------------------------------------------------
+// Zones (plan phase 3a) — the character as cards in zones, projected
+// ---------------------------------------------------------------------------
+
+// The zone map and the projection live in zones.js (a leaf) since phase 3b,
+// so the figure composer and the slot table's door read the same map this
+// run does. Re-exported here for the readers that learned them at 3a.
+export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
+
+/**
+ * syncZones(run) → true if the projection changed what the run carried.
+ *
+ * The ONE writer of `zones` and `collection`. Called at createRunState, in
+ * serializeRun (so what is written is what the legacy fields say at that
+ * moment, whatever a writer did between), at the migration door, at the end
+ * of the two load doors that heal and re-stamp after the migration
+ * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
+ * session's serialize, which emits member runs without serializeRun. Until
+ * phase 3b, nothing else may write these two fields.
+ */
+export function syncZones(run) {
+  const next = projectZones(run);
+  const changed = JSON.stringify({ z: run.zones, c: run.collection }) !== JSON.stringify({ z: next.zones, c: next.collection });
+  // Write only on change: a save whose projection is current serializes the
+  // very object it was handed, byte for byte (tests hold JSON.stringify(run)
+  // equal across a save — the projection may not move a key or a reference).
+  if (changed) {
+    run.zones = next.zones;
+    run.collection = next.collection;
+  }
+  return changed;
+}
+
+/** The shape of a zone map, refused row by row. */
+export function zonesProblems(zones) {
+  const problems = [];
+  if (!typeOk(zones, 'object')) return ['zones must be an object'];
+  const idOrNullOk = (v) => v === null || (typeof v === 'string' && v.length > 0);
+  if (!idOrNullOk(zones.core)) problems.push('zones.core must be an id or null');
+  if (!typeOk(zones.worn, 'object')) problems.push('zones.worn must be an object');
+  else {
+    for (const slot of WORN_ZONE_SLOTS) if (!idOrNullOk(zones.worn[slot])) problems.push(`zones.worn.${slot} must be an id or null`);
+    for (const key of Object.keys(zones.worn)) if (!WORN_ZONE_SLOTS.includes(key)) problems.push(`zones.worn.${key} is not a worn slot (slots: ${WORN_ZONE_SLOTS.join(', ')})`);
+  }
+  if (!typeOk(zones.hands, 'object')) problems.push('zones.hands must be an object');
+  else {
+    for (const hand of ['main', 'off']) if (!idOrNullOk(zones.hands[hand])) problems.push(`zones.hands.${hand} must be an id or null`);
+    for (const key of Object.keys(zones.hands)) if (!['main', 'off'].includes(key)) problems.push(`zones.hands.${key} is not a hand (main, off)`);
+  }
+  if (!Array.isArray(zones.passive)) problems.push('zones.passive must be an array of relic ids');
+  else zones.passive.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.passive[${i}] must be a relic id`); });
+  // The core card's picked tree nodes (plan phase 5b); absent on a projection
+  // written before them, an array of node ids since.
+  if (zones.coreTags !== undefined) {
+    if (!Array.isArray(zones.coreTags)) problems.push('zones.coreTags must be an array of node ids');
+    else zones.coreTags.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.coreTags[${i}] must be a node id`); });
+  }
+  for (const key of Object.keys(zones)) if (!['core', 'coreTags', 'worn', 'hands', 'passive'].includes(key)) problems.push(`zones.${key} is not a zone (core, coreTags, worn, hands, passive)`);
+  return problems;
+}
 
 function typeOk(value, type) {
   if (type === 'array') return Array.isArray(value);
@@ -586,14 +713,50 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger } = {}) {
+/** The draft rows a pending offer carries, keyed as the reward menu keys them (model/rewardplan.js rowKey). */
+function pendingDraftRows(pending) {
+  const seen = {};
+  const rewards = (pending && pending.rewards) || {};
+  const skill = (Array.isArray(rewards.skillDrafts) ? rewards.skillDrafts : [])
+    .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d) => ({ key: `skillDraft:${d.skillId}:${(seen[`s:${d.skillId}`] = (seen[`s:${d.skillId}`] || 0) + 1) - 1}`, cardIds: d.cardIds, ids: d.cardIds }));
+  // A class draft (plan phase 5b) picks a tree node, keyed by class and ordinal.
+  const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
+    .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
+    .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
+  return [...cls, ...skill];
+}
+const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
+
+/**
+ * levelProblems(level) → the character ledger's refusals by name (plan phase
+ * 6): a level from 1, XP and waiting points whole and never negative.
+ */
+export function levelProblems(level) {
+  if (!level || typeof level !== 'object' || Array.isArray(level)) return ['level must be { xp, level, unspentPoints }'];
   const problems = [];
+  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
+  if (!Number.isInteger(level.level) || level.level < 1) problems.push('level.level must be an integer of at least 1');
+  for (const key of ['xp', 'unspentPoints']) {
+    if (!Number.isInteger(level[key]) || level[key] < 0) problems.push(`level.${key} must be a non-negative integer`);
+  }
+  return problems;
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags } = {}) {
+  const problems = [];
+  problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
+    if (preSeats && f.key === 'seatOrder') continue;
+    if (preZones && (f.key === 'zones' || f.key === 'collection')) continue;
+    if (preSkills && f.key === 'skills') continue;
+    if (preCoreTags && f.key === 'coreTags') continue;
+    if (preXpLevels && f.key === 'level') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -609,6 +772,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
+  if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
+  if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.collection)) {
+    run.collection.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`collection[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+  }
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -648,6 +822,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       problems.push(`${key} must be a non-negative integer`);
     }
   }
+  if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }
@@ -712,9 +887,65 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         problems.push('pendingReward.states must be an object');
       } else {
         const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
-        for (const [kind, state] of Object.entries(pending.states)) {
-          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
-            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+        const draftKeys = new Set(pendingDraftKeys(pending));
+        for (const [key, state] of Object.entries(pending.states)) {
+          // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
+          if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.rewards?.skillDrafts !== undefined) {
+        const drafts = pending.rewards.skillDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+        });
+      }
+      if (pending.chosenDraftCardIds !== undefined) {
+        const chosen = pending.chosenDraftCardIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
+        else {
+          const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
+          for (const [key, cardId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d.key === key);
+            if (!draft || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
+          }
+        }
+      }
+      if (pending.rewards?.classDrafts !== undefined) {
+        const drafts = pending.rewards.classDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.classDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
+          if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
+        });
+      }
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft names its node holds all the same.
+        const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
+        else {
+          const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
+          for (const [key, nodeId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d.key === key);
+            if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
           }
         }
       }
@@ -747,6 +978,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
       if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
       if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`deck[${i}].ratingId '${card.ratingId}' is unknown`);
+      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`deck[${i}].ratingValue must be a finite non-negative number`);
+      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`deck[${i}].ratingCap must be a finite non-negative number`);
     }
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
@@ -832,6 +1066,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
 }
 
 export function serializeRun(run) {
+  // What is written is what the legacy fields say NOW — a writer between two
+  // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
+  syncZones(run);
   return JSON.stringify(run);
 }
 
@@ -915,11 +1152,39 @@ export function migrateRunSchema(run) {
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
   const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
   const preEquipmentPools = [1, 2, 3, 4].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, ${RUN_SCHEMA_VERSION})`);
+  // v5 and older: no seatOrder. Admitted here; FILLED at the load door
+  // (save.js), which has the registries this file does not (SPEC §13.4).
+  const preSeats = [1, 2, 3, 4, 5].includes(run.schemaVersion);
+  // v6 and older: no zones. Filled HERE, not at the load door, because the
+  // projection reads only the run's own fields (projectZones is registry-free).
+  const preZones = [1, 2, 3, 4, 5, 6].includes(run.schemaVersion);
+  // v7 and older: no skill ledger. Filled HERE with the empty ledger — a run
+  // that never recorded a hit has none, and the shape wants the object.
+  const preSkills = [1, 2, 3, 4, 5, 6, 7].includes(run.schemaVersion);
+  // v8 and older: no class tree picks. Filled HERE with none (plan phase 5b).
+  const preCoreTags = [1, 2, 3, 4, 5, 6, 7, 8].includes(run.schemaVersion);
+  // v9 and older: levels were bought with cinders and counted in `levelUps`.
+  // Filled HERE (plan phase 6): the displayed level those purchases reached,
+  // no XP toward the next, nothing waiting — the points were spent as bought.
+  const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels });
+  if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
+  if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
+  if (preXpLevels && (run.level === undefined || run.level === null)) {
+    run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
+  }
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
+  // The projection is re-derived at every load. A schema-7 save that carried
+  // zones disagreeing with its legacy fields (an edit by hand; serializeRun
+  // cannot write one) is brought back to what the authoritative fields say,
+  // and the disagreement is left on the run for the load door's ledger to
+  // note — this file has no open ledger. Never a refusal: the truth is the
+  // legacy fields, and they are intact.
+  const carried = preZones ? undefined : { zones: run.zones, collection: run.collection };
+  if (syncZones(run) && carried) run.reprojectedZones = carried;
   if (originalVersion !== RUN_SCHEMA_VERSION) {
     run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
@@ -997,8 +1262,20 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
  */
 export function stampPlayerPoiseMax(entity, max) {
   if (Number.isInteger(max) && max > 0) {
-    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
-    entity.poiseMeter = { value, max };
+    // THE GROWTH SURVIVES THE RESTAMP. A fill widens the vessel by
+    // balance.poise.growthMult and records the factor on the meter; the
+    // receipt only ever knows the BASE, so a swap of armaments (or a
+    // restored fight) would otherwise hand a staggered player their
+    // opening threshold back and make the next break cheaper (Codex, #1203).
+    const growths = (entity.poiseMeter && entity.poiseMeter.growths) || 0;
+    const step = (entity.poiseMeter && entity.poiseMeter.growthMult) || 1.25;
+    // Older phase-8 snapshots carried a combined factor instead of a count.
+    // Preserve it as a prefix when later fills add counted growth steps.
+    const legacyGrowth = entity.poiseMeter?.growth || 1;
+    let grownMax = Math.ceil(max * legacyGrowth);
+    for (let i = 0; i < growths; i++) grownMax = Math.ceil(grownMax * step);
+    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, grownMax)) : 0;
+    entity.poiseMeter = { value, max: grownMax, ...(growths ? { growths, growthMult: step } : {}), ...(legacyGrowth !== 1 ? { growth: legacyGrowth } : {}) };
   } else {
     delete entity.poiseMeter;
   }
@@ -1020,6 +1297,7 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     statuses: {},
     poiseMeter: { value: 0, max: poiseMax },
     movesHistory: [],
+    performedMoves: [], // moves that resolved (movesHistory is rolls)
     intent: null,
     pendingMove: null, // delayed-move commitment: { moveId, resolveOnTurn }
     skipNextTurn: false, // set by a poise-meter fill; consumed by the enemy turn
@@ -1032,3 +1310,4 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
   return entity;
 }
+import { legacyDungeonProblems } from './legacyDungeon.js';

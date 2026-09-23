@@ -43,6 +43,11 @@
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
 @media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
+/* WGS1: once the battlefield stage has fitted the plate (SceneLayerModel), its
+   viewBox already carries the bleed and the floor alignment; a CSS zoom about
+   the centre would move the painted ground off the floor band. */
+.environment-backdrop[data-scene-fit] > svg { transform: none; }
+.environment-backdrop[data-skyline='off'] > svg { display: none; }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
@@ -204,8 +209,11 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
-.enemy.hover-target .sprite { outline-style: solid; }
+/* WGC4: eligible targets are dashed, the active one (pointer or keyboard) is
+   solid. Width and offset come from TargetLayerModel via the battlefield stage,
+   held at a physical minimum under the sprite's depth zoom. */
+.enemy.targetable .sprite { outline: var(--target-outline-width, 2px) dashed var(--gold); outline-offset: var(--target-outline-offset, 6px); border-radius: var(--r-3); }
+.enemy.hover-target .sprite, .enemy.targetable:is(.gp-focus, :focus-visible) .sprite { outline-style: solid; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
@@ -296,10 +304,8 @@
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
 }
-.hand .card.selected {
-  border-color: var(--gold);
-  outline: 2px solid var(--parchment); outline-offset: 2px;
-}
+/* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
+.hand .card.selected { border-color: var(--gold); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -639,8 +645,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.context-selected .combatant-card {
-  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+/* WCF3: one glow over the whole selected assembly — intent, the delayed
+   inspect control, art, name and lower stack — never one per child. */
+.combatant.context-selected > .combatant-stack {
+  filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
@@ -1014,9 +1022,12 @@
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
-/* A hand card has one portrait profile; viewport changes never resize one axis alone. */
+/* A hand card has one portrait profile; viewport changes never resize one axis
+   alone. The profile itself is authored once, in card.json, and reaches here as
+   --card-ratio / --card-height-per-width (src/ui/models/CardSizeModel.js): the
+   1.4 that used to sit in this calc was 7/5 written out by hand. */
 :root .combat:not(.coop) .hand .card {
-  height: calc(var(--card-w) * 1.4); aspect-ratio: 5 / 7;
+  height: calc(var(--card-w) * var(--card-height-per-width)); aspect-ratio: var(--card-ratio);
   --card-art-h: calc(var(--card-w) * 0.30);
   --card-name-h: calc(var(--card-w) * 0.18);
 }
@@ -1102,7 +1113,7 @@
   flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0;
   display: grid; grid-template-rows: 10% 45% 45%; overflow: clip;
 }
-:root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: 0; height: 100%; box-sizing: border-box; overflow: visible; }
+:root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
 :root .combat[data-layout='formation'] > .field {
   grid-row: 2; height: 100%; min-height: 0; padding: 0; display: block; overflow: visible;
 }
@@ -1142,7 +1153,7 @@
 :root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
-.combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 :root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
@@ -1155,8 +1166,14 @@
   gap: 0; overflow: visible;
 }
 :root .combat[data-layout='formation'] .hand .card {
+  /* 178px is the hand's own pinned width (SPEC §12's 150-180 band); the HEIGHT
+     is the card's shape applied to it, not a second 249.2px to keep in step. */
   box-sizing: border-box; flex: 0 0 178px; min-width: 178px; max-width: 178px;
-  width: 178px; height: 249.2px; min-height: 249.2px; max-height: 249.2px; aspect-ratio: 5 / 7;
+  width: 178px;
+  height: calc(178px * var(--card-height-per-width));
+  min-height: calc(178px * var(--card-height-per-width));
+  max-height: calc(178px * var(--card-height-per-width));
+  aspect-ratio: var(--card-ratio);
 }
 :root .combat[data-layout='formation'] .hand .card .ctext { min-height: 0; overflow: hidden; }
 :root .combat[data-layout='formation'][data-turn='enemy'] .hand {
@@ -1167,6 +1184,68 @@
   width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
 }
 :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
+/* THE POTIONS MINIS stand over the footer's Potions control, outside the row's
+   grid. The row is wider than its grid on a wide screen, so combat.js
+   (placePotionTray) writes where the control is. The tray is the shared icon
+   tray (styles/kit.css § ICON TRAY): --icon-tray-slots of its own icons wide
+   (wireframeUi.iconTray.footerPotionIcons), its right edge on the control's,
+   and what does not fit is its +N tile, which opens the Potions list. */
+:root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  position: absolute; inset: auto var(--potion-tray-right, 0px) calc(100% + 0.3rem) auto; margin: 0; z-index: 1;
+  width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom,1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom,1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom,1))));
+  max-width: 100%; height: auto; max-height: none; justify-content: flex-end; align-self: auto;
+  visibility: hidden;
+  transition: visibility 0s linear var(--potion-reveal-fade, 160ms);
+}
+:root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+  opacity: 0; transform: translateY(0.7rem);
+  transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
+}
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(1) { --potion-stagger: 0ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(2) { --potion-stagger: 40ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(3) { --potion-stagger: 80ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(4) { --potion-stagger: 120ms; }
+/* Keyboard focus exposes the minis on every device. :focus-visible keeps a
+   pointer click (and focus restored after closing the list) from pinning them
+   open as though the pointer were still hovering the control. */
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray {
+  visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
+}
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > * {
+  opacity: 1; transform: none;
+  transition-delay: calc(var(--potion-focus-delay, 500ms) + var(--potion-stagger, 0ms));
+}
+/* A touchscreen can latch :hover after tapping. The touch route is the large
+   Potions button and its full list, so hover reveal belongs only to a real
+   fine hover pointer. Keeping the tray itself in the selector lets the pointer
+   cross into a mini and use it. */
+@media (hover: hover) and (pointer: fine) {
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
+    visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
+  }
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > * {
+    opacity: 1; transform: none;
+    transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
+  }
+}
+:root body.reduced-motion .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+  transform: none; transition-property: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+    transform: none; transition-property: opacity;
+  }
+}
+/* Narrow: the fan reaches down to the row beside the control, so there is no
+   room above it. The minis ride inside the control's top edge, as wide as the
+   control (its +N opens the list), and the control's label moves down. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  top: calc(var(--potion-control-top, 0px) + 2px); bottom: auto;
+  width: var(--potion-control-width, var(--combat-control-size)); justify-content: center;
+}
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potions {
+  justify-content: flex-end; padding-bottom: calc(6px / var(--ui-zoom, 1));
+}
 /* THE DESKTOP ACTION ROW (owner, 2026-09-11): Draw and Discard were stretched
    to a third of a 1920 window each, and Actions / End Turn / Potions stood
    52-64 px tall in a row that owns 15% of the viewport. The row keeps the
@@ -1178,26 +1257,6 @@
    edges and the cluster rather than inside the piles. The `/ var(--ui-zoom)`
    is the shape every viewport length wears under the body zoom (base.css).
    Below 600px tall the formation's own 52/42 px rule above still stands. */
-@media (min-height: 600px) {
-:root[data-layout='wide'] .combat[data-layout='formation']:not(.coop) > .hand-area > .combat-action-row {
-  --combat-control-size: calc(13vh / var(--ui-zoom, 1)) !important;
-  --combat-pile-w: calc(15vw / var(--ui-zoom, 1));
-  --combat-end-w: calc(30vw / var(--ui-zoom, 1));
-  grid-template-columns: var(--combat-control-size) var(--combat-pile-w) var(--combat-end-w) var(--combat-pile-w) var(--combat-control-size);
-  justify-content: space-between;
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
-  height: calc(var(--combat-control-size) * .8); min-height: calc(var(--combat-control-size) * .8);
-  font-size: max(1.05rem, calc(2.4vh / var(--ui-zoom, 1)));
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
-  height: calc(var(--combat-control-size) * .62); min-height: calc(var(--combat-control-size) * .62);
-  font-size: max(0.95rem, calc(1.9vh / var(--ui-zoom, 1)));
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb, .combat-potions) {
-  font-size: max(1.1rem, calc(2.1vh / var(--ui-zoom, 1)));
-}
-}
 .turn-ribbon {
   position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
   padding: calc(3px / var(--ui-zoom,1)) calc(32px / var(--ui-zoom,1));
@@ -1206,6 +1265,25 @@
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
 }
 .turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
+/* THE VICTORY BEAT (components/victoryBeat.js): the fight's title over the
+   battlefield for balance.ui.victoryBeat.ms, drawn in the ribbon's own ink so
+   it reads as the same voice that said "Player Turn". Absolute inside .combat
+   like the ribbon; px through --ui-zoom, never vw/vh. */
+.victory-beat {
+  position: absolute; inset: 0; z-index: 60; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #00000088, #000000cc);
+  opacity: 0; transition: opacity 180ms ease;
+}
+.victory-beat.is-in { opacity: 1; }
+.victory-beat-title {
+  margin: 0; width: 100%; text-align: center;
+  padding: calc(8px / var(--ui-zoom,1)) calc(40px / var(--ui-zoom,1));
+  font: small-caps bold calc(34px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .14em;
+  color: #ead294; border-block: 1px solid #ac854b;
+  background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
+}
+.victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @media (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
@@ -1280,15 +1358,16 @@
 
 /* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
    the enemy-turn filter changes would shift the vertically centered cards. */
-:root .combat[data-layout='formation'] .hand { overflow:visible !important; }
+:root .combat[data-layout='formation'] .hand { overflow:visible; }
 
-/* Short landscape keeps vitals in one row inside the fixed HUD band. */
+/* Short landscape keeps meters inline in the left resource column.
+   Relics remain below them; the compact band preserves battlefield space. */
 @media (max-height:500px) {
- :root .combat[data-layout='formation'] > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
- :root .combat[data-layout='formation'] .topbar .hud-top { width:100%; height:100%; justify-content:center; }
- :root .combat[data-layout='formation'] .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
- :root .combat[data-layout='formation'] .topbar .resline { min-width:0; }
- :root .combat[data-layout='formation'] .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .hud-top { width:100%; height:auto; justify-content:center; }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
  :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
  :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
  :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
@@ -1315,18 +1394,12 @@
    what `elementFromPoint` returned at the centre of the second Blight Hound's
    name at 390x650 (tools/screenreach.mjs, red on dev since #788). Only the pips
    inside it are controls; the tray and its gaps pass the press through. */
+/* The row, its icons and its +N tile are the shared icon tray (styles/kit.css
+   § ICON TRAY); the card only reserves the tray's height and gives it the
+   card's width. */
 :root .combat[data-layout='formation'] .combatant .statuses {
- display:flex; flex-wrap:nowrap; align-items:center; gap:calc(3px / var(--ui-zoom,1));
- height:calc(24px / var(--ui-zoom,1)); min-height:calc(24px / var(--ui-zoom,1)); width:100%; margin:0; pointer-events:none;
+ height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); min-height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); width:100%; margin:0;
 }
-:root .combat[data-layout='formation'] .combatant .statuses > * { pointer-events:auto; }
-:root .combat[data-layout='formation'] .statuses .status-icon {
- flex:none; width:calc(21px / var(--ui-zoom,1)); height:calc(21px / var(--ui-zoom,1)); min-width:0; min-height:0;
- font-size:calc(13px / var(--ui-zoom,1)); box-sizing:border-box;
-}
-.status-overflow { position:relative; font-size:calc(11px / var(--ui-zoom,1)); }
-.status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
-.status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
 /* Lite keeps the target color and selection affordance without cloning art. */
 :root[data-performance='lite'] .aim-silho.aim-outline {
@@ -1338,6 +1411,54 @@
 :root[data-performance='lite'] .sprite > img { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
+
+/* Grid geometry and actor placement share the formation model. */
+.formation-grid {
+  display: none; position: absolute; inset: 0; z-index: 8;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  pointer-events: none; user-select: none;
+}
+:root[data-formation-grid='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid-cell:not(:disabled) { pointer-events: auto; cursor: pointer; }
+.formation-grid-cell.formation-selected { --grid-stroke: var(--selection-color, #59bd75); }
+.formation-grid-cell.formation-selected .formation-grid-outline > * { fill-opacity: .4; stroke-width: 3; }
+.formation-move-controls { position: absolute; z-index: 2500; top: 36px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.formation-move-controls[hidden] { display: none; }
+.formation-move-controls button { min-height: 44px; background: #191710; white-space: nowrap; }
+.formation-grid-cell {
+  border: 0; border-radius: 0; padding: 0; background: transparent; color: inherit; opacity: 1; box-shadow: none;
+  position: absolute;
+  transform: translateY(-50%);
+  min-width: 0; min-height: 0; box-sizing: border-box;
+  --grid-stroke: var(--player-grid-color, #d5cc63);
+}
+.formation-grid-cell[hidden] { display: none !important; }
+:root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {
+  background-color: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
+}
+.formation-grid-cell::after {
+  content: none; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); color: #fff2bb; font-weight: bold;
+}
+.formation-grid-cell[data-side='enemy'] { --grid-stroke: var(--enemy-grid-color, #e1a679); }
+.formation-grid-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: var(--tile-transform, none); transform-origin: center; }
+.formation-grid-outline > * { display: none; fill: var(--grid-stroke); fill-opacity: .07; stroke: var(--grid-stroke); stroke-width: 1; }
+.formation-grid[data-shape='rhombus'] polygon,
+.formation-grid[data-shape='wide-rhombus'] polygon,
+.formation-grid[data-shape='square'] rect,
+.formation-grid[data-shape='rectangle'] rect,
+.formation-grid[data-shape='circle'] ellipse,
+.formation-grid[data-shape='ellipse'] ellipse { display: block; }
+.formation-grid-cell[data-occupied='true'] .formation-grid-outline > * { stroke-width: 2; fill-opacity: .25; }
+.formation-grid-cell span {
+  position: absolute; left: 50%; top: 100%; transform: translateX(-50%); white-space: nowrap;
+  display: inline-block; background: #14110de6; color: #fff2bb;
+  font: 500 max(1rem, calc(11px / var(--ui-zoom, 1)))/1.2 var(--font-ui, sans-serif); padding: .1rem .25rem;
+  border-radius: .2rem;
+}
+:root .combat .combatant .sprite { scale: none; translate: none; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
@@ -1375,7 +1496,7 @@
 .combatant-leading .intent.staggered { font-size: calc(18px / var(--ui-zoom, 1)); }
 .combatant-leading .intent.dashed { border-style: dashed; }
 .combatant-leading .overhead-control:is(.tooltip-selected, :focus-visible) {
-  outline: calc(3px / var(--ui-zoom, 1)) solid #fff2bd;
+  outline: var(--focus-ring);
   outline-offset: calc(3px / var(--ui-zoom, 1));
   box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
 }
@@ -1389,43 +1510,8 @@
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
-
-/* Reserve space for larger edge controls; compact piles leave End Turn room. */
-:root .combat:not(.coop)[data-layout='formation'] > .hand-area {
-  --combat-orb-size: calc(clamp(64px, 20vw, 128px) / var(--ui-zoom,1));
-  grid-template-rows: minmax(0,1fr) calc(var(--combat-orb-size) + 16px / var(--ui-zoom,1));
-}
-:root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
-  grid-template-columns: var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
-  gap:calc(8px / var(--ui-zoom,1));
-}
-:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb,.combat-potions) {
-  width:var(--combat-orb-size); height:var(--combat-orb-size); min-height:var(--combat-orb-size);
-}
-:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
-  height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
-}
-@media (max-width:480px) {
-  /* A PHONE'S ROW, measured at 390x844 on 2026-09-11: the two 78 px orbs took
-     156 of 374 px, Draw and Discard were 64 wide, and End Turn was a 74x52 box
-     carrying "End Turn", the E keycap and HOLD on three lines. The orbs come
-     down to 56 (still over the 44 tap floor), the keycap goes (a thumb has no E
-     to press — the kit already hides keycaps under `pointer: coarse`, and a
-     phone-wide viewport is the same statement made by width), and End Turn
-     stacks its label over its hold hint on one line each. */
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(56px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
-    grid-template-columns:var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
-    gap:calc(4px / var(--ui-zoom,1));
-  }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(2px / var(--ui-zoom,1));
-    white-space:nowrap; padding-inline:2px; font-size:max(1.2rem, calc(13px / var(--ui-zoom,1)));
-  }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .et-key { display:none; }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .hold-hint { margin-left:0; }
-}
-@media (max-height:500px) {
-  :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(248px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(96px / var(--ui-zoom,1)); }
-}
+/* WCO1 headroom: on every host the relic row's box spans the band's width
+   under the HUD row, over the enemies' intent and Inspect controls. Only the
+   relics themselves answer a press. */
+:root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
+:root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }

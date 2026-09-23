@@ -1,3 +1,7 @@
+import { characterLevel } from '../../model/levelup.js';
+import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
+import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -21,6 +25,7 @@ import { resolveCard } from '../../model/registries.js';
 import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
+  loadoutLeaveRefusal,
 } from '../../model/loadout.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
@@ -58,6 +63,11 @@ import {
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+import { clearSelection } from '../components/cardSelection.js';
+import { t } from '../strings.js';
+import {
+  armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
+} from '../models/ArmouryWorkspaceModel.js';
 // THE KIT (2026-09-04, the sweep): every piece inside the door is a kit builder
 // — OptionCards for the positions, the inventory faces and the card rows,
 // DetailCards for the character's numbers and the open item, StatPairs and
@@ -65,7 +75,7 @@ import { FOLD_GLYPH } from '../components/foldGlyph.js';
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl, meter, meters,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -363,11 +373,13 @@ function buildArmoury(L, ui) {
     }
   } else {
     slots.classList.add('armoury-position-grid-groups');
+    // W1e: the item collection (the slot groups) beside the selected item's detail.
+    const collection = el('div', { class: 'armoury-position-collection', dataset: { component: 'armoury.itemCollection' } });
     for (const { slot, positions } of positionsBySlot) {
       const tiles = el('div', { class: 'armoury-position-grid-tiles' }, optionGrid([ui.positionGroup(slot, positions, 'grid')]));
-      slots.appendChild(el('section', { class: 'armoury-position-grid-group', dataset: { equipmentGroup: slot.id } }, [eyebrow(slot.label), tiles]));
+      collection.appendChild(el('section', { class: 'armoury-position-grid-group', dataset: { equipmentGroup: slot.id } }, [eyebrow(slot.label), tiles]));
     }
-    slots.appendChild(ui.armamentGridDetail(ordered));
+    slots.append(collection, ui.armamentGridDetail(ordered));
   }
   const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: ui.armamentView } });
   const toggle = button({ label: ui.armamentView === 'list' ? 'Grid view' : 'List view', className: 'armoury-armament-view-toggle' });
@@ -389,7 +401,7 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
-    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand') : null;
+    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand', equipmentAnimationForLoadout(registries, run.loadout, run.class)) : null;
   if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
@@ -411,7 +423,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
+    : assetUrl(armamentIconAsset(piece));
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -445,20 +457,69 @@ function pieceArt(piece, fallback = '⚔') {
   return well;
 }
 
+// One counter, because the chosen note is referenced BY ID from the card that
+// owns it and two chips in the same picker must not claim the same id.
+let chosenNoteSerial = 0;
+
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
-export function pieceChip(registries, piece, { selected, kind = null, presentation = null }) {
+/**
+ * `level` is the FLOOR this picker's current view mode asks for — a view
+ * SELECTS one of the three presentation levels (src/model/cardFields.js), it
+ * does not own a field set of its own. Lighting a chip still promotes it to
+ * `focus` on top of that floor, so the grid's glance faces say more the moment
+ * one is chosen without the picker keeping its own copy of which that is.
+ */
+export function pieceChip(registries, piece, { selected, kind = null, presentation = null, level = 'glance', surface = 'creation' }) {
   const card = document.createElement('div');
-  card.className = 'equip-chip poker-equipment-choice' + (selected ? ' on' : '');
-  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false, presentation })).card;
+  card.className = 'equip-chip poker-equipment-choice';
+  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false, level, surface }) : renderEquipmentCard(registries, piece, { interactive: false, presentation, level, surface })).card;
   face.tabIndex = 0;
   face.setAttribute('role', 'group');
   const choose = document.createElement('button');
   choose.type = 'button';
   choose.className = 'equipment-choose';
-  choose.textContent = selected ? 'Selected' : 'Choose ' + piece.name;
-  choose.setAttribute('aria-pressed', String(selected));
-  card.append(face, choose);
+  // THE BUTTON ONLY EVER OFFERS THE CHOICE; it never reports it. A chosen card
+  // is read off the ring the card wears (kit.css, `.is-chosen`), which is the
+  // same ring the spoils door draws — one signal for the whole game.
+  choose.textContent = t('equipment.choose', { piece: piece.name });
+  // The ring is a colour, and a colour is not available to everyone. This note
+  // is the same fact in words, sized out of the layout (`.sr-only`), so the
+  // state survives for a screen reader once the button goes quiet.
+  // IT IS TIED TO THE CARD, NOT MERELY PLACED NEAR IT. A sibling nobody points
+  // at is read by nobody: Tab lands on the card, and the card is what has to
+  // carry the state — the pressed button that used to carry it is hidden, and
+  // `visibility: hidden` leaves the accessibility tree as well as the page.
+  const note = document.createElement('span');
+  note.className = 'sr-only equip-chosen-note';
+  note.id = `equip-chosen-note-${++chosenNoteSerial}`;
+  face.setAttribute('aria-describedby', [face.getAttribute('aria-describedby'), note.id].filter(Boolean).join(' '));
+  card.append(face, choose, note);
+  setPieceChipChosen(card, selected);
   return card;
+}
+
+/**
+ * Put a kit chip into (or out of) its chosen state — the ring on the card, the
+ * quiet button, the spoken note. The picker calls this instead of writing the
+ * three of them itself, so a chip can never wear a ring while its button still
+ * offers the choice.
+ */
+export function setPieceChipChosen(chip, chosen) {
+  const on = !!chosen;
+  const face = chip.querySelector('.equipment-poker-card, .card');
+  chip.classList.toggle('on', on);
+  face?.classList.toggle('is-chosen', on);
+  const choose = chip.querySelector('.equipment-choose');
+  if (choose) choose.setAttribute('aria-pressed', String(on));
+  const note = chip.querySelector('.equip-chosen-note');
+  if (note) note.textContent = on ? 'Selected' : '';
+  // THE BUTTON IS ABOUT TO VANISH UNDER THE KEYBOARD. A player who chose with
+  // Enter still has focus on the control this call hides, and hiding a focused
+  // element drops the ring to the document — the next Tab restarts at the top
+  // of the page instead of continuing from the choice just made. The card is
+  // the stable landing: it is focusable, it is what now wears the ring, and it
+  // is the thing the choice was about.
+  if (on && choose && document.activeElement === choose) face?.focus({ preventScroll: true });
 }
 
 function inventoryFace(registries, row, {
@@ -469,9 +530,14 @@ function inventoryFace(registries, row, {
   }));
   if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
+    // WC2: the metadata band ends with how many of this item the run holds.
+    // The Armoury names itself so the manifest can patch what a glance says
+    // here: the question on this screen is what goes in which slot, so the
+    // type band earns its row before anything else does
+    // (content/config/ui/components/card.json, behavior.fields.surfaces).
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false })
-      : renderEquipmentCard(registries, row.item, { interactive: false })).card);
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury' })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
@@ -482,7 +548,7 @@ function inventoryFace(registries, row, {
 
 function inventoryReveal(registries, row, {
   comparison = null, action = null, instruction = '', holdDuration = 0,
-  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null,
+  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null, facts = null,
 } = {}) {
   const item = row.item;
   let art;
@@ -515,6 +581,12 @@ function inventoryReveal(registries, row, {
     el.prepend(['Potion', 'Relic'].includes(row.category)
       ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
       : renderEquipmentInspection(registries, item, { interactive: false }));
+  }
+  // W1n: what the selected item is compared with and whether it can go on
+  // stand just before the action, so the action is read with its reason.
+  if (facts) {
+    const info = el.querySelector('.inventory-information') || el;
+    info.insertBefore(facts, action && action.parentElement === info ? action : null);
   }
   el.dataset.inventoryItem = row.key;
   // When the global hold-confirm dial is off, the explicit action button owns
@@ -599,8 +671,8 @@ function inventoryReveal(registries, row, {
       onHoldEnd: endComparisonPreview,
       feedbackHosts: () => {
         const reveal = el.closest('.disc-reveal');
-        const faces = el.closest('.disc-faces');
-        const faceButton = [...(faces?.children || [])]
+        // W1n: the face stands in the collection column, not beside its reveal.
+        const faceButton = [...(el.closest('.ep-list')?.querySelectorAll('[data-face]') || [])]
           .find((candidate) => candidate.dataset?.face === row.key);
         return [reveal, faceButton?.querySelector('.inventory-face')];
       },
@@ -620,6 +692,12 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
 }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
   if (destination && !destinationPlan) {
     console.error(`mountEquipment(): unknown action destination ${JSON.stringify(destination)}; refusing to open.`);
@@ -732,6 +810,15 @@ export function mountEquipment(host, {
     for (const disarm of holdDisarms.splice(0)) disarm();
   };
   const registerHold = (disarm) => holdDisarms.push(disarm);
+  // The footer's primary slot (W1e "Equip if available"). draw() binds it to
+  // the panel it just rendered; the Inventory's selection fills it.
+  let setFooterPrimary = () => {};
+  // The views' kit categoryNav from the latest draw: its start() is the rail
+  // item on wide hosts and the [Category ▾] selector on compact ones.
+  let armouryNav = null;
+  const shellCopy = () => ({
+    title: t('armoury.title'), closeLabel: t('armoury.close'), railLabel: t('armoury.categories'),
+  });
 
   // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
   // carries four files away, for the same reason. This panel mounts on <body>,
@@ -758,6 +845,7 @@ export function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
   const overlayPanelModel = armouryPanelModel({
+    ...shellCopy(),
     view,
     views: viewIds(),
     viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
@@ -773,6 +861,19 @@ export function mountEquipment(host, {
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
+  // THE DECK'S FLOOR GATES EVERY ROAD THE PLAYER TAKES OUT (plan phase 3b,
+  // proposal §5): Back, the ✕, Escape and the tap outside all go through
+  // `leave`, which asks the model (loadoutLeaveRefusal) and shows its sentence
+  // in place instead of closing. `close` itself stays unconditional — it is
+  // also the teardown a host calls when a fight starts, and a door that can
+  // trap a host is not a rule. `enteredWith` is what the run held when the
+  // screen opened: a deck already under the floor on arrival may still leave.
+  const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
+  const leave = () => {
+    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
+    if (refusal) { notice = refusal; draw(); return; }
+    close();
+  };
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (paneObserver) paneObserver.disconnect();
@@ -802,9 +903,11 @@ export function mountEquipment(host, {
   // `ev.target === wrap` is load-bearing: a click that started on the panel
   // and bubbled must not close it.
   wrap.addEventListener('click', (ev) => {
-    if (ev.target === wrap) { close(); return; }
+    if (ev.target === wrap) { leave(); return; }
     if (!picking) return;
-    if (ev.target.closest('.armoury-close, [data-surface="armouryView"]')) return;
+    // The footer's Back and action are outside the Inventory but are not a
+    // "tap elsewhere": clearing the selection there would drop the action.
+    if (ev.target.closest('.armoury-close, [data-surface="armouryView"], .modal-foot')) return;
     if (ev.target.closest('.armoury-inventory, [data-slot-position]')) return;
     clearInventorySelection();
     if (onChange) onChange(run.loadout, foldSettings());
@@ -863,6 +966,17 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    const piece = pieceId && (eq.slots.find(slot => slot.id === slotId)?.kinds.includes('armor')
+      ? eq.armour.find(row => row.classId === run.class && row.id === pieceId)
+      : eq.armaments.find(row => row.id === pieceId));
+    if (piece) {
+      const requirement = equipmentRequirementReceipt(registries, piece, run.attributes, run);
+      if (!requirement.ok) {
+        notice = `${piece.name} requires ${requirement.failures.map(row => `${registries.attributes.get(row.attributeId).label} ${row.required} (you have ${row.actual ?? '—'})`).join(', ')}.`;
+        draw();
+        return false;
+      }
+    }
     if (inCombat) {
       if (typeof onEquip !== 'function') {
         notice = 'Combat equipment changes are unavailable on this screen.';
@@ -1108,10 +1222,88 @@ export function mountEquipment(host, {
     return detail;
   }
 
+  const pieceById = (slot, id) => (slot.kinds.includes('armor')
+    ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === id)
+    : (eq.armaments || []).find((piece) => piece.id === id)) || null;
+  const RELATION_COPY = Object.freeze({
+    replaces: 'armoury.compare.replaces', removes: 'armoury.compare.removes', fills: 'armoury.compare.fills',
+  });
+
+  /**
+   * W1n: the selected item compared with what is equipped, and whether it can
+   * go on. Every value is read from the candidate receipt and the loadout's
+   * own refusals (models/ArmouryWorkspaceModel.js); nothing here is computed.
+   */
+  function selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) {
+    const occupantId = (run.loadout.sets[target.slot.id] || [])[target.setIndex] || null;
+    const occupantName = target.kind === 'unequip' ? row.name
+      : (occupantId && occupantId !== row.id ? (pieceById(target.slot, occupantId)?.name || occupantId) : null);
+    const compared = inventoryComparison({
+      candidate: comparison, target: { kind: target.kind, slotLabel: target.slot.label }, occupantName, roleLabels,
+    });
+    const facts = el('section', { class: 'armoury-selection-facts', dataset: { component: 'armoury.selectionFacts' } });
+    if (compared) {
+      const { relation } = compared;
+      facts.append(
+        eyebrow(t('armoury.compare.title')),
+        prose(t(RELATION_COPY[relation.kind], relation.kind === 'fills'
+          ? { slot: relation.slot } : { name: relation.name, slot: relation.slot }), { class: 'armoury-compare-relation' }),
+        compared.unchanged
+          ? statusText(t('armoury.compare.unchanged'), { class: 'armoury-compare-roles' })
+          : kitLine(compared.roles.map((r) => kitItem({
+            glyph: '◆', name: t('armoury.compare.role', { label: r.label, before: r.before, after: r.after }),
+          })), { class: 'armoury-compare-roles' }),
+      );
+    }
+    if (eligibility && eligibility.state !== 'none') {
+      const attributeLabel = (id) => registries.attributes.get(id)?.label || id;
+      const requirementText = () => eligibility.shortfalls.map((s) => t('armoury.eligibility.requirement', {
+        attribute: attributeLabel(s.attributeId), required: s.required, actual: s.actual ?? '—',
+      })).join(', ');
+      const line = eligibility.state === 'blocked'
+        ? blocker(t('armoury.eligibility.blocked', { reason: eligibility.reason }))
+        : statusText(eligibility.state === 'short'
+          ? t('armoury.eligibility.short', { requirements: requirementText() })
+          : t('armoury.eligibility.ready', { action: actionLabel }));
+      line.classList.add('armoury-eligibility');
+      line.dataset.eligibility = eligibility.state;
+      facts.appendChild(line);
+    }
+    return facts;
+  }
+
+  /** The footer's primary: the selected item's own action, with its hold and its refusal. */
+  function footerAction(plan) {
+    if (!plan) return null;
+    const node = button({
+      label: plan.label, weight: 'primary', className: 'armoury-foot-action',
+      attrs: { dataset: { focusable: 'true', footAct: plan.kind } },
+    });
+    if (plan.blocked) {
+      node.classList.add('locked');
+      node.setAttribute('aria-disabled', 'true');
+      refuses(node, () => plan.reason);
+      return node;
+    }
+    registerHold(armHold(node, { ms: plan.holdMs, id: 'equipInventory', onConfirm: plan.act }));
+    return node;
+  }
+
   /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
-    box.className = 'inventory-list ep-list';
+    box.className = 'inventory-list ep-list armoury-split';
+    box.dataset.wireframeBody = 'W1n';
+    // W1n: the items on one side, the selected item's detail on the other. The
+    // disclosure keeps its faces in the collection and puts its reveal in the
+    // detail column; before a selection that column carries the instruction.
+    const collection = el('div', { class: 'armoury-item-collection', dataset: { component: 'armoury.itemCollection' } });
+    const detail = el('div', { class: 'armoury-item-detail', dataset: { component: 'armoury.itemDetail' }, 'aria-live': 'polite' });
+    const prompt = prose(t('armoury.detail.prompt'), { class: 'armoury-detail-prompt' });
+    detail.appendChild(prompt);
+    box.append(collection, detail);
+    const footerPlans = new Map();
+    const roleLabels = Object.fromEntries(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const selectedSlot = picking ? eq.slots.find((slot) => slot.id === picking.slotId) : null;
     const allRows = inventoryRows(registries, run, meta);
     const rows = selectedSlot
@@ -1244,9 +1436,13 @@ export function mountEquipment(host, {
       });
       if (draggable) draggableRows.set(row.key, row);
       let actionButton = null;
+      let comparison = null;
+      let eligibility = null;
       if (target) {
         const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
-        const seal = canEquip(registries, target.slot.id, { inCombat });
+        // With the candidate named, the seal carries the grip's sentence too
+        // (model/loadout.js gripRefusal) — the player reads why before the act.
+        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels });
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
@@ -1277,6 +1473,11 @@ export function mountEquipment(host, {
           registerHold(disarm);
           faceActions.set(row.key, act);
         }
+        comparison = comparisonFor(target.slot.id, target.setIndex, target.pieceId);
+        eligibility = inventoryEligibility({ target, seal, transition, requirement: comparison?.requirement });
+        const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
+        // The footer runs the same act, through the same hold, as the card.
+        if (plan) footerPlans.set(row.key, { ...plan, act, holdMs: inventoryItemClass.holdAction ? holdDuration : 0 });
       }
       return {
         key: row.key,
@@ -1291,7 +1492,8 @@ export function mountEquipment(host, {
         },
         reveal: {
           node: inventoryReveal(registries, row, {
-            comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
+            comparison,
+            facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
             action: actionButton,
             instruction: selectedSlot
               ? `${target?.kind === 'unequip' ? 'Unequip from' : 'Equip or drag to'} ${selectedSlot.label}.`
@@ -1306,9 +1508,14 @@ export function mountEquipment(host, {
         },
       };
     });
-    inventoryDisclosure = mountDisclosure(box, entries, {
+    inventoryDisclosure = mountDisclosure(collection, entries, {
       moreLabel: 'more items',
       layout: 'column',
+      revealHost: detail,
+      onReveal: (key) => {
+        prompt.hidden = !!key;
+        setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
+      },
       armFace: ({ button, entry, onTap }) => {
         const draggableRow = draggableRows.get(entry.key);
         if (draggableRow) attachInventoryDrag(button, draggableRow);
@@ -1333,9 +1540,9 @@ export function mountEquipment(host, {
             hintHost: button.querySelector('.inventory-face'),
             hintBefore: button.querySelector('.inventory-category'),
             feedbackHosts: () => {
-              const reveal = [...(button.parentElement?.children || [])]
-                .find((candidate) => candidate.dataset?.revealFor === entry.key);
-              return [button.querySelector('.inventory-face'), reveal];
+              // W1n: the reveal is in the detail column, not beside the face.
+              const reveal = detail.querySelector('.disc-reveal');
+              return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
             },
           });
           registerHold(disarm);
@@ -1357,7 +1564,12 @@ export function mountEquipment(host, {
       box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [prose(`Choose an item for ${selectedSlot.label}.`), clear]));
     }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    if (!entries.length) box.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
+    if (!entries.length) {
+      // Nothing to select: the collection says why and takes the whole pane.
+      collection.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
+      detail.remove();
+      box.classList.add('is-empty');
+    }
     return box;
   }
 
@@ -1393,7 +1605,7 @@ export function mountEquipment(host, {
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
     const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
-      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${run.level || 1}`, attrs: { class: 'armoury-stats-identity' } }),
+      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
       group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
@@ -1412,7 +1624,7 @@ export function mountEquipment(host, {
       const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
-        ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
+        ? `${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
       // A power face: the label, its gear bonus as the description, the value trailing as StatusText.
       const powerFace = face({
@@ -1443,6 +1655,75 @@ export function mountEquipment(host, {
         reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.'] },
       };
     });
+  }
+
+  /**
+   * Put a badge on a Meter's plate, before the value. NOT `plate?.insert…`:
+   * a kit Meter that stopped emitting `.m-plate` would have taken the reason
+   * to visit a shrine, and the draft waiting at the next reward, off the
+   * screen with no error at all. A missing plate is a broken atom, so it says
+   * so by name.
+   */
+  function badgePlate(node, badge, what) {
+    const plate = node.querySelector('.m-plate');
+    if (!plate) throw new Error(`armoury: the kit Meter has no .m-plate to place ${what} beside`);
+    plate.insertBefore(badge, plate.querySelector('.m-value'));
+  }
+
+  /**
+   * THE LEVEL BAR. The Armoury named the level and never said how far the next
+   * one was, so the one ledger that always moves was the one thing the screen
+   * would not show. The kit's Meter, stacked: the level on the plate, the XP
+   * beside it, the climb as the fill. Every number is levelProgress's, which
+   * is levelUpPlan's — the shrine and this bar read the same step.
+   */
+  function characterLevelMeter() {
+    const progress = levelProgress(registries, run);
+    const node = meter({
+      stack: true, tone: 'xp',
+      label: progress.label,
+      value: progress.value,
+      pct: progress.pct,
+      // The kit's contract is that an instrument reads data-cur/data-max and
+      // never the label, so a capped run — which has no next step — offers
+      // neither rather than a pair the full bar contradicts.
+      cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext,
+      ariaLabel: progress.sense,
+      attrs: {
+        class: `character-level-meter${progress.points ? ' has-points' : ''}`,
+        dataset: { component: 'armoury.levelProgress', level: String(progress.level), capped: progress.capped ? 'true' : 'false' },
+      },
+    });
+    attachTooltip(node, () => `<div class="tt-title">${esc(progress.label)}</div><p>${esc(progress.sense)}</p>`);
+    // The waiting points belong beside the LEVEL, not past the XP: a stacked
+    // plate spreads its children, and appending would have put the reason to
+    // visit a shrine on the far side of the number it explains. The sentence
+    // is the model's, spelled once there; the plate is only where it lands.
+    if (progress.pointsLabel) {
+      badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
+    }
+    return node;
+  }
+
+  /** One skill track as a Meter: its name and level on the plate, its XP as the fill. */
+  function skillProgressMeter(rowModel) {
+    const node = meter({
+      stack: true, tone: 'skill',
+      label: `${rowModel.label} ${rowModel.level}`,
+      value: rowModel.value,
+      pct: rowModel.pct,
+      cur: rowModel.xp, max: rowModel.xpToNext,
+      ariaLabel: rowModel.sense,
+      attrs: {
+        class: `character-skill-meter${rowModel.own ? ' own-class' : ''}`,
+        dataset: { component: 'armoury.skillTrack', skill: rowModel.id, kind: rowModel.kind, level: String(rowModel.level) },
+      },
+    });
+    if (rowModel.draftsLabel) {
+      badgePlate(node, pill({ label: rowModel.draftsLabel, attrs: { class: 'character-skill-drafts' } }), `the drafts waiting on ${rowModel.label}`);
+    }
+    attachTooltip(node, () => `<div class="tt-title">${esc(rowModel.label)}</div><p>${esc(rowModel.sense)}</p>`);
+    return node;
   }
 
   function characterStatsPanel() {
@@ -1564,6 +1845,28 @@ export function mountEquipment(host, {
       summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
       body: relics,
     }));
+    // A run always has its own class ladder (skillProgressRows refuses a class
+    // the registry does not know, rather than returning a list without it), so
+    // there is no empty case to draw here and none is pretended.
+    const skillRows = skillProgressRows(registries, run);
+    // A ledger row whose track the content no longer declares cannot become a
+    // bar — it has no label — but it may be holding drafts, so it is SAID
+    // rather than dropped, the way a saved view the table no longer declares
+    // is said above. One line, once per draw.
+    const stale = staleSkillTracks(registries, run);
+    if (stale.length) {
+      console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
+        + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
+    }
+    const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
+      meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
+    ]);
+    box.appendChild(informationCard({
+      id: 'skillsCard',
+      label: 'Skill progression',
+      summary: skillProgressSummary(skillRows),
+      body: skills,
+    }));
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',
       label: 'Equipment cards',
@@ -1577,9 +1880,10 @@ export function mountEquipment(host, {
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
     return el('header', { class: 'character-summary as-labelstack' }, [
-      eyebrow(`Forsaken · ${cls.name} · Level ${Number(run.level || 1)}`, { class: 'character-kicker' }),
+      eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
       titleS(cls.name, { tag: 'h3' }),
       subtitle(cls.description || ''),
+      characterLevelMeter(),
     ]);
   }
 
@@ -1798,7 +2102,9 @@ export function mountEquipment(host, {
    * set, and the armoury is where that first bites.
    */
   function draw() {
-    const previousScroll = wrap.querySelector('.armoury-shell-body')?.scrollTop || 0;
+    // W1e: the pane scrolls, or (Inventory) its item collection does.
+    const previousScroll = wrap.querySelector('.armoury-pane')?.scrollTop || 0;
+    const previousCollectionScroll = wrap.querySelector('.armoury-item-collection')?.scrollTop || 0;
     if (paneObserver) paneObserver.disconnect();
     cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
@@ -1808,6 +2114,7 @@ export function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     const panelModel = armouryPanelModel({
+      ...shellCopy(),
       view,
       views: viewIds(),
       viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
@@ -1825,7 +2132,13 @@ export function mountEquipment(host, {
         sortable: region.id === 'cards',
       })),
     });
-    const rendered = renderArmouryPanel(panelModel, wrap);
+    // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
+    // selected item's action bottom-right when there is one.
+    const back = button({ label: t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
+    back.addEventListener('click', leave);
+    const rendered = renderArmouryPanel(panelModel, wrap, { back });
+    setFooterPrimary = rendered.setPrimary;
+    armouryNav = rendered.nav;
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
     panel.dataset.pane = viewMode().pane;
@@ -1833,6 +2146,12 @@ export function mountEquipment(host, {
     panel.dataset.characterState = viewMode().character;
     panel.dataset.composition = 'character-equipment';
     panel.dataset.responsive = responsiveMode();
+    // The active pane's split (W1e itemCollection | equipmentDetail, W1n items
+    // | comparison): columns on wide hosts, rows on phones; shares from config.
+    const split = armouryPaneSplit({ responsive: panel.dataset.responsive });
+    panel.dataset.split = split.axis;
+    panel.style.setProperty('--armoury-collection-track', split.collectionTrack);
+    panel.style.setProperty('--armoury-detail-track', split.detailTrack);
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
     const blocks = eq.slots
@@ -1897,7 +2216,9 @@ export function mountEquipment(host, {
     wrap.querySelector('.armoury-stats-tray').remove();
     if (view === 'hybrid') {
       wrap.querySelector('.armoury-body').remove();
-      inventory.append(titleS('Your inventory'), prose('Select an item to see its details and available actions.'), inventoryBlock());
+      // The rail already names this view; the W1n body carries no second title,
+      // and its instruction lives in the empty detail column.
+      inventory.append(inventoryBlock());
     } else inventory.remove();
     if (view === 'cards') {
       wrap.querySelector('.armoury-content').remove();
@@ -1937,14 +2258,18 @@ export function mountEquipment(host, {
       if (equipment) paneObserver.observe(equipment);
     }
 
-    wrap.querySelector('.armoury-shell-body').scrollTop = previousScroll;
+    wrap.querySelector('.armoury-pane').scrollTop = previousScroll;
+    const itemCollection = wrap.querySelector('.armoury-item-collection');
+    if (itemCollection) itemCollection.scrollTop = previousCollectionScroll;
     notice = '';
-    wrap.querySelector('.armoury-close').addEventListener('click', close);
+    wrap.querySelector('.armoury-close').addEventListener('click', leave);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         picking = null;
         view = b.dataset.member;
-        wrap.querySelector('.armoury-shell-body').scrollTop = 0;
+        wrap.querySelector('.armoury-pane').scrollTop = 0;
+        const list = wrap.querySelector('.armoury-item-collection');
+        if (list) list.scrollTop = 0;
         // A view is a presentation preset, not a second saved preference.
         // Explicit per-region choices still win; untouched regions adopt the
         // newly selected Character/Inventory/Hybrid defaults.
@@ -1958,7 +2283,9 @@ export function mountEquipment(host, {
         }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
-        wrap.querySelector('[data-surface="armouryView"] [aria-selected="true"]')?.focus({ preventScroll: true });
+        // The selected view on a rail; the selector (which now names it) when
+        // the views are the compact [Category ▾] list.
+        landControl(armouryNav?.start());
       });
     }
   }
@@ -1966,15 +2293,18 @@ export function mountEquipment(host, {
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) close();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) leave();
   };
   document.addEventListener('keydown', onKey);
 
   const focusArmouryDestination = () => {
     if (!destinationPlan || !wrap.isConnected) return;
-    const target = destinationPlan.region
+    let target = destinationPlan.region
       ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
       : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
+    // A compact host keeps the views in the closed [Category ▾] list: the
+    // selector, which names the destination view, is where focus lands.
+    if (target && !destinationPlan.region && !target.getClientRects().length) target = armouryNav?.start() || null;
     if (!target) return;
     target.focus({ preventScroll: true });
     target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
@@ -1984,3 +2314,4 @@ export function mountEquipment(host, {
   if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

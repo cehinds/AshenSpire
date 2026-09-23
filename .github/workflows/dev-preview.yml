@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +34,9 @@ jobs:
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
+
+      - name: Relic artwork resolves to shipped assets
+        run: node --test tests/relic-art.test.mjs
 
       - name: Mobile rendering and bounded pose preloads
         run: node --test tests/mobile-performance.test.mjs
@@ -49,6 +54,15 @@ jobs:
       # baseline holds the known backlog to exactly itself.
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
+
+      # The harness that decides, for every corpus above and in the dispatch-only
+      # lane, whether a known-bad was armed at all. It read plants as exact bytes,
+      # so on a CRLF checkout every MULTI-LINE plant reported PLANT SITE DRIFTED —
+      # a false red on Windows, invisible on this runner because Linux checks out
+      # LF. That is the shape of defect this lane exists to catch, and the harness
+      # was the one tool with no door of its own. Seconds, no browser, no port.
+      - name: The plant harness can still arm a plant (doorplant's own door)
+        run: node tools/doorplant.mjs --selftest
 
       # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
       # THE DISPATCH-ONLY LANE.
@@ -77,7 +91,7 @@ jobs:
       # both are pure reads, no execution and no browser, well under a second,
       # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
       # dispatch-only; nothing here re-enables it or spends a Windows minute.
-      - name: Current builds use the 0.6.x.x release series
+      - name: Current builds use the 0.7.x.x release series
         run: node tools/release-series.mjs
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
@@ -87,6 +101,8 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
+      - name: The mobile art twin tree mirrors assets/ and fits its budget
+        run: node tools/mobile-art.mjs --check
 
       # Same budget as the gates above: a pure read, no execution, no browser,
       # well under a second, on the runner this job already pays for. It walks
@@ -136,6 +152,7 @@ jobs:
           # here — see the two upload steps below for why.
           mkdir -p standalone
           cp AshenSpire.html standalone/AshenSpire.html
+          cp AshenSpire-mobile.html standalone/AshenSpire-mobile.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -181,7 +198,8 @@ jobs:
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the dev-standalone artifact from"
-            echo "this same run — it is ~39 MB rather than all of this."
+            echo "this same run: AshenSpire.html is the full game (~250 MB) and"
+            echo "AshenSpire-mobile.html the same build with its art shrunk under 50 MB."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."
@@ -275,6 +293,7 @@ jobs:
   #   shotguard-probe           26s
   #   startup-gate              72s
   #   screenreach --only         32s
+  #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
   # plus checkout and node setup. Against that: #720's regression sat undetected
   # across two promotions and cost three dispatched 3-OS matrices to find.
   browser-gates:
@@ -282,6 +301,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -309,6 +330,18 @@ jobs:
 
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+      # THE MAP CAMERA MOVES ON BOTH AXES — the player's hand on it, and the
+      # board's own hand when a pick opens the tray. #1229 landed here because
+      # the second half was measurable and unmeasured: the glide wrote
+      # `scrollLeft = 0`, which is the vertical-only camera's honest answer and
+      # the two-axis camera's far-left pan, and every pick threw the act into
+      # the right half of the screen. The tool is a gate only where something
+      # runs it, and ci.yml has been dispatch-only since 2026-08-01, so this is
+      # the door. `--no-screenshots` because the writing arm would dirty
+      # docs/preview/ in a tree the `reproducible` job diffs.
+      - name: Picking a map node brings it to the middle, on both axes
+        run: node tools/verdict.mjs -- node tools/map-two-axis-pan.mjs --no-screenshots
 
       # SCREENREACH IS DELIBERATELY NOT HERE, AND THIS IS THE RETRACTION OF MY
       # OWN STEP RATHER THAN A GATE BEING SWITCHED OFF.

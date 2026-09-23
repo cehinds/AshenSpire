@@ -4,7 +4,13 @@
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 export const derivedStatRules = {
-  rulesetVersion: 4,
+  // RULESET 5 — THE ATTRIBUTE REBASE (plan phase 9). Every formula is restated
+  // against the tuned2 scale (baseline 5, ceiling 12) rather than the old
+  // ten-point one, and the pools stop being tiers of five: Mana IS Wisdom and
+  // Stamina IS Constitution, so a point spent is a point felt. Actions and
+  // draw keep a tier, now five points wide instead of ten. Snapshots of 4 and
+  // earlier are restored exactly as they were saved; only new runs read this.
+  rulesetVersion: 5,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -12,18 +18,20 @@ export const derivedStatRules = {
   },
   rules: {
     energy: {
-      base: 2,
+      base: 3,
       sourceStat: 'dexterity',
-      pointsPerTier: 10,
+      pointsPerTier: 5,
       gainPerTier: 1,
       cap: null,
     },
     draw: {
-      base: 4,
+      base: 3,
       sourceStat: 'intelligence',
-      pointsPerTier: 10,
+      pointsPerTier: 5,
       gainPerTier: 1,
       cap: null,
+      // One more card in hand at level 11 and every ten after (plan phase 6).
+      perLevel: { every: 10, gain: 1 },
     },
     hp: {
       // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
@@ -33,18 +41,43 @@ export const derivedStatRules = {
       base: 30,
       sourceStat: 'constitution',
       pointsPerTier: 1,
-      gainPerTier: 2,
+      gainPerTier: 4,
+      // THE CHARACTER LEVEL'S OWN TERM (plan phase 6): every five levels past
+      // the first the maximum gains this, beside whatever the points bought.
+      // Snapshotted with the row, so a run born before it never gains it and
+      // a run born under it keeps it whatever the table says later.
+      perLevel: { every: 5, gain: 5 },
     },
     stamina: {
-      base: 0,
+      // Ruleset 5: the pool IS Constitution, on the same one-point tier as
+      // Mana's — the body's own reserve rather than a tier of five.
+      base: 1,
       sourceStat: 'constitution',
+      pointsPerTier: 1,
       gainPerTier: 1,
+      perLevel: { every: 5, gain: 1 },
     },
     mana: {
       // Small-unit pool: WIS is the only authored Mana authority. Classes do
-      // not carry a second base pool that can drift from this row.
-      base: 0,
+      // not carry a second base pool that can drift from this row. Under
+      // ruleset 5 the pool IS Wisdom, which is what lets a signature art ask
+      // for two points of it on the first floor (plan phase 9).
+      base: 1,
       sourceStat: 'wisdom',
+      pointsPerTier: 1,
+      gainPerTier: 1,
+      cap: null,
+      perLevel: { every: 5, gain: 1 },
+    },
+    // THE POISE VESSEL, derived at last (plan phase 9). Phase 8 shipped the
+    // meter with its Constitution term in balance because this ruleset had
+    // not been written yet; the coefficient lives here now, and the receipt
+    // that stamps the meter reads this row. Armour and relics remain the two
+    // external addends, exactly as HP's are.
+    poise: {
+      base: 1,
+      sourceStat: 'constitution',
+      pointsPerTier: 1,
       gainPerTier: 1,
       cap: null,
     },
@@ -92,5 +125,6 @@ export const derivedStatRules = {
     // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
     draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
+    poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
   },
 };

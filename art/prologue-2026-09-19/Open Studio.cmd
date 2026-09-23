@@ -1,0 +1,4 @@
+@echo off
+set "ASHENSPIRE_STUDIO_DIR=%~dp0"
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $studioPython=Join-Path $env:USERPROFILE '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'; if (!(Test-Path -LiteralPath $studioPython)) { $studioPython=(Get-Command python -ErrorAction Stop).Source }; $studioUrl='http://127.0.0.1:8770/art/prologue-2026-09-19/'; try { $studioResponse=Invoke-WebRequest -UseBasicParsing -Uri $studioUrl -TimeoutSec 2; $studioRunning=$studioResponse.Content.Contains('Opening art studio') } catch { $studioRunning=$false }; if (!$studioRunning) { $studioScript=Join-Path $env:ASHENSPIRE_STUDIO_DIR 'serve.py'; Start-Process -FilePath $studioPython -ArgumentList ([char]34+$studioScript+[char]34) -WindowStyle Hidden; Start-Sleep -Seconds 1 }; Start-Process $studioUrl"
+if errorlevel 1 pause

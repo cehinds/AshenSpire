@@ -10,13 +10,17 @@ export function combatSpriteRatio(stature, enemyId) {
 // Fit once for the formation. Fitting each actor independently cancels stature
 // on cramped screens. Depth is applied to every actor in the same row.
 export function fitCombatSprites({ width, height, actors }) {
+  // Newly mounted artwork may not have a layout box yet. It must not poison
+  // the shared fit with 0/0; the stage retries on image load / resize.
+  actors = actors.filter(a => Number.isFinite(a.visibleHeight) && a.visibleHeight > 0
+    && Number.isFinite(a.visibleWidth) && a.visibleWidth > 0);
   // The shared reference is the formation's figure ceiling (its one home),
   // not a flat 150: the figures grow with the stage.
   let base = Math.min(figureCeiling({ width, height }), height * .52);
   for (const a of actors) {
     const ratio = a.ratio * a.slot.depth;
-    const maxHeight = Math.max(1, a.slot.ground - a.leading - 6);
-    const maxWidth = Math.max(1, Math.min(a.slot.artWidth, width - 12));
+    const maxHeight = Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
+    const maxWidth = Math.max(1, Math.min(a.slot.artWidth, 2 * Math.min(a.slot.x - 6, width - a.slot.x - 6)));
     // Overhead controls anchor to the visible idle top, so transparent canvas
     // padding must not consume the clearance a second time.
     base = Math.min(base, maxHeight / ratio,
@@ -25,8 +29,7 @@ export function fitCombatSprites({ width, height, actors }) {
   return actors.map(a => {
     const visibleHeight = base * a.ratio * a.slot.depth;
     const scale = visibleHeight / a.visibleHeight;
-    const half = a.visibleWidth * scale / 2;
     return { id: a.slot.id, scale, visibleHeight,
-      x: Math.max(half + 6, Math.min(width - half - 6, a.slot.x)) };
+      x: a.slot.x };
   });
 }

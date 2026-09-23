@@ -17,48 +17,51 @@
 // Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
+//   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
+//   default order. Off by default so the win-rate corpus keeps comparing the
+//   same climbs it always measured (§13.6); on, it measures every order.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
+import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
+import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
+import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
-import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
+import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext as xpToNextLevel } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
-  rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollClassDraftIds, rollFlaskDrop,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const argv = process.argv.slice(2);
-// THE LEVEL-LADDER A/B (E13, #258). Constantine's acceptance test for shrine
+// THE XP-CURVE A/B (plan phase 6). Constantine's acceptance test for
 // levelling is a range with a unit — "10-20 level-ups a run, scalable" — so
-// the sim counts them, and `--level-cost=first,step` reruns the fleet under a
-// different ladder without touching content: the A-side is the shipped
-// balance.levelUp, the B-side whatever the flag names.
-const LEVEL_COST = (argv.find((a) => a.startsWith('--level-cost=')) || '').slice('--level-cost='.length);
-const levelBundle = LEVEL_COST
+// the sim pays the character XP a real run pays (a won fight, each kill by
+// the door's pool), counts the levels reached, and says whether the fleet's
+// mean over its full (victorious) runs sits in the band. `--xp-levels` alone
+// prints the measurement against the shipped curve; `--xp-levels=base,growth,
+// roundTo` reruns the fleet under another curve without touching content.
+const XP_LEVELS = argv.find((a) => a === '--xp-levels' || a.startsWith('--xp-levels='));
+const XP_CURVE = XP_LEVELS && XP_LEVELS.includes('=') ? XP_LEVELS.slice('--xp-levels='.length) : '';
+const levelBundle = XP_CURVE
   ? (() => {
-    // Exactly two non-empty fields: `20,` would read as 20/0 (Number('') is 0)
-    // and `20,4,999` would silently drop its tail — both mislabel a fleet.
-    const fields = LEVEL_COST.split(',');
-    if (fields.length !== 2 || fields.some((f) => f.trim() === '')) throw new Error(`--level-cost expects exactly first,step — got '${LEVEL_COST}'`);
-    const [firstCost, costStep] = fields.map(Number);
-    if (!Number.isFinite(firstCost) || !Number.isFinite(costStep)) throw new Error(`--level-cost expects first,step — got '${LEVEL_COST}'`);
-    // A ladder the shrine could not price: a first purchase that is free or
-    // negative, or a step that walks the price DOWN, is a typo, not an
-    // experiment. Refuse it at the door, before a fleet reports on it.
-    // Integers, because the shrine rounds its price: a fractional first cost
-    // below one half (`0.1,0`) passed the sign check and still priced every
-    // level at zero — the same endless loop by another door.
-    if (!Number.isInteger(firstCost) || firstCost < 1) throw new Error(`--level-cost: first must be a whole cinder cost of at least 1 — got ${firstCost}`);
-    if (!Number.isInteger(costStep) || costStep < 0) throw new Error(`--level-cost: step must be a whole number of zero or more — got ${costStep}`);
-    return { ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, firstCost, costStep } } };
+    const fields = XP_CURVE.split(',');
+    if (fields.length !== 3 || fields.some((f) => f.trim() === '')) throw new Error(`--xp-levels expects exactly base,growth,roundTo — got '${XP_CURVE}'`);
+    const [base, growth, roundTo] = fields.map(Number);
+    if (!Number.isFinite(base) || base <= 0) throw new Error(`--xp-levels: base must be a positive number — got ${base}`);
+    if (!Number.isFinite(growth) || growth < 1) throw new Error(`--xp-levels: growth must be at least 1 — got ${growth}`);
+    if (!Number.isInteger(roundTo) || roundTo < 1) throw new Error(`--xp-levels: roundTo must be a positive integer — got ${roundTo}`);
+    return { ...contentBundle, balance: { ...contentBundle.balance, level: { ...contentBundle.balance.level, xp: { base, growth, roundTo } } } };
   })()
   : contentBundle;
 const REG = createRegistries(levelBundle);
@@ -70,6 +73,7 @@ const ENDLESS = argv.includes('--endless');
 // bot's shrine behaviour is untouched, only the refill is withheld.
 const GRACE_AB = argv.includes('--grace-ab');
 let GRACE_ON = !argv.includes('--no-grace-refill');
+const SEEDED_SEATS = argv.includes('--seeded-seats');
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the
@@ -78,6 +82,8 @@ let GRACE_ON = !argv.includes('--no-grace-refill');
 // plain fleet's wins exactly, same seeds, or the instrument perturbed the
 // measurement. (Invariant, not a boast: re-run both ways and diff the wins.)
 const DEEP = argv.includes('--deep');
+// Plan phase 4a: report the skill level each track reached, averaged per class.
+const SKILL_LEVELS = argv.includes('--skill-levels');
 // THE CON BAND (Vira, 2026-08-15). D22 put HP back on Constitution while D10
 // already had Stamina there, so one attribute now pays two resources and the
 // creation screen's five bonus points became a question nobody had measured.
@@ -123,15 +129,26 @@ function spendAllocation(classId) {
 let poured = 0;
 let graces = 0;
 let levelUps = 0;
-let cinderSpentOnLevels = 0;
+let levelsReached = 0;
+let levelsReachedInWins = 0;
+let xpEarnedInWins = 0;
+// The XP a run has earned in all: every step it climbed plus what waits toward the next.
+const xpEarnedBy = (run) => {
+  const row = run.level || { level: 1, xp: 0 };
+  let total = row.xp || 0;
+  for (let l = 1; l < (row.level || 1); l++) total += xpToNextLevel(REG, l);
+  return total;
+};
 let cinderLeftAtEnd = 0;
+let skillDraftsTaken = 0;
+let classDraftsTaken = 0;
 let levelUpsInWins = 0;
 // Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
 function resetFleetCounters() {
   poured = 0; graces = 0;
-  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0;
+  levelUps = 0; levelsReached = 0; levelsReachedInWins = 0; xpEarnedInWins = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0; classDraftsTaken = 0;
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
@@ -183,6 +200,8 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     // (not `...run`) keeps the sim honest about what a fight consumes.
     player: {
       classId: run.class, attributes: run.attributes, loadout: run.loadout,
+      skills: run.skills,
+      coreTags: run.coreTags,
       maxHp: run.maxHp, hp: run.hp,
       maxMana: run.maxMana, mana: run.mana,
       maxStamina: run.maxStamina, stamina: run.stamina,
@@ -255,13 +274,48 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  // The skill receipt, as main.js onCombatEnd pays it (plan phase 4a).
+  applySkillXp(REG, run, skillXpReceipt(combat));
+  // The character level (plan phase 6), as main.js onCombatEnd pays it: a won
+  // fight and every kill by the door's pool; the points wait for a shrine.
+  awardLevelXp(REG, run, combatLevelXp(REG, {
+    victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+  }));
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
 }
 
 function afterVictory(run, rng, pool) {
   run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+  // The class track, paid by the run's owner (plan phase 5b), and its draft,
+  // one per door as main.js offers it: the bot picks the first node offered.
+  awardClassXp(REG, run, { victory: true, pool });
+  let classDrafts = 0;
+  {
+    const row = run.skills && run.skills[classSkillId(run.class)];
+    if (row && row.pendingDrafts > 0) {
+      const ids = rollClassDraftIds(REG, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
+      if (ids.length && pickClassNode(REG, run, ids[0])) { spendSkillDraft(run, classSkillId(run.class)); classDrafts += 1; }
+    }
+  }
+  classDraftsTaken += classDrafts;
+  // The skill drafts, as main.js offers them (plan phase 4b): one per track
+  // with a draft queued, capped per door, the bot taking the first card; a
+  // draft on the table takes the card row's seat.
+  let drafts = 0;
+  for (const track of skillTracks(REG)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row || !(row.pendingDrafts > 0)) continue;
+    for (let i = 0; i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
+      const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
+      if (!ids.length) break;
+      spendSkillDraft(run, track.id);
+      run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
+      drafts += 1;
+    }
+  }
+  skillDraftsTaken += drafts;
+  const cards = drafts || classDrafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
@@ -277,12 +331,16 @@ function simulateRun(classId, seed, ds = null) {
   run._id = createIdGen('sim');
   run.seenEvents = [];
   const rng = createRng(seed);
+  // SPEC §13.4: the seeded order rides its own stream, so drawing it here moves
+  // no map, event or reward roll below.
+  if (SEEDED_SEATS) run.seatOrder = drawSeatOrder(REG, rng);
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
   // ONE exit for every path out of a run, win or death: the purse a run ends
   // with is part of the cinder economy whichever way it ended, and the report
   // divides by every run — a death that skipped this line underreported it.
   const finish = () => {
     cinderLeftAtEnd += run.cinders;
+    levelsReached += Math.max(0, (run.level && run.level.level ? run.level.level : 1) - 1);
     // E12 receipts: how many event choices this run recorded, and how many of
     // them answered a GATED step (a quest step earned by an earlier choice) —
     // zero across a fleet means gated content never entered the simulation.
@@ -290,6 +348,7 @@ function simulateRun(classId, seed, ds = null) {
     const choices = run.history.filter((row) => row && row.kind === 'eventChoice');
     result.eventChoices = choices.length;
     result.questSteps = choices.filter((row) => gates[row.eventId]).length;
+    result.skills = run.skills;
     return result;
   };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
@@ -307,12 +366,18 @@ function simulateRun(classId, seed, ds = null) {
     result.act = act;
     // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
     const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
-    const cm = loop > 0
-      ? { hpMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] }
+    const seat = seatAtTier(run.seatOrder, contentAct);
+    // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; exactly 1
+    // when the seat is climbed at its authored baseline, i.e. every default-
+    // order run this tool ever measured).
+    const tierMult = seatTierHpMult(REG, seat, contentAct);
+    const hpMult = (1 + ENDLESS_HP_PER_LOOP * loop) * tierMult;
+    const cm = hpMult !== 1 || loop > 0
+      ? { hpMult, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
       : {};
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
-    const map = buildActMap(REG, rng, contentAct, null, { history: run.history });
+    const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
 
     let currentId = null;
     let nextIds = map.startIds;
@@ -354,8 +419,8 @@ function simulateRun(classId, seed, ds = null) {
 
       if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, contentAct)
-          : rollEncounter(REG, rng, { pool, act: contentAct });
+        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
+          : rollEncounter(REG, rng, { pool, seat });
         if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
@@ -364,9 +429,14 @@ function simulateRun(classId, seed, ds = null) {
           break; // act cleared
         }
       } else if (kind === 'shrine') {
-        // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest does
-        // — a run that comes to smith is refilled like a run that comes to rest.
+        // THE SHRINE IS A LOCATION VISIT (plan phase 7, engine/locations.js):
+        // its tags' rules mount, `arrived` refills (the restFlasks rule —
+        // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest
+        // does) and `rested` heals and restores Mana by the tag set. The bot
+        // walks the same door the game does, so a retune of the shrine's rows
+        // moves this measurement without an edit here.
         graces++;
+        const visit = createLocationVisit({ run, registries: REG, rng }, 'shrine');
         if (GRACE_ON) {
           // COUNT THE CHARGE MODEL, NOT ONLY THE GRANT MODEL. applyGraceRefill
           // returns `total: 0` BY CONSTRUCTION for a run on charge vessels — it
@@ -377,18 +447,19 @@ function simulateRun(classId, seed, ds = null) {
           // both sides"). The sustain was live; the counter was blind.
           const before = run.flaskCharges
             ? (run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0) : 0;
-          poured += applyGraceRefill(REG, run).total;
+          const arrival = arriveAt(visit);
+          poured += arrival.refill ? arrival.refill.total : 0;
           if (run.flaskCharges) {
             poured += Math.max(0, ((run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0)) - before);
           }
         }
-        if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
+        if (run.hp < run.maxHp * 0.6 && !visit.restDenied) restAt(visit);
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
-        // THE BOT LEVELS WHILE IT CAN AFFORD TO — the whole point of E13's shrine:
-        // cinders become permanent points here. Constitution every time: the
-        // greedy pilot measures how many levels the economy allows, not which.
+        leaveLocation(visit);
+        // THE BOT ASSIGNS EVERY POINT IT HAS EARNED — the shrine is where the
+        // level's points land (plan phase 6). Constitution every time: the
+        // greedy pilot measures how many levels the climb pays, not which.
         for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
-          cinderSpentOnLevels += plan.cost;
           applyLevelUp(REG, run, 'constitution');
           result.levelUps = (result.levelUps || 0) + 1;
           levelUps += 1;
@@ -405,6 +476,8 @@ function simulateRun(classId, seed, ds = null) {
   }
   result.victory = true;
   levelUpsInWins += result.levelUps || 0;
+  levelsReachedInWins += Math.max(0, (run.level && run.level.level ? run.level.level : 1) - 1);
+  xpEarnedInWins += xpEarnedBy(run);
   return finish();
 }
 
@@ -414,6 +487,7 @@ console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_C
 console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
+const skillLevelsByClass = {};
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
@@ -428,6 +502,10 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
+    if (SKILL_LEVELS) {
+      skillLevelsByClass[cls.id] = skillLevelsByClass[cls.id] || {};
+      for (const [id, row] of Object.entries(r.skills || {})) skillLevelsByClass[cls.id][id] = (skillLevelsByClass[cls.id][id] || 0) + (row.level || 0);
+    }
     tally.runs++; if (r.victory) tally.wins++; tally.acts += r.act;
     tally.eventChoices += r.eventChoices || 0; tally.questSteps += r.questSteps || 0;
     acts += r.act; floors += r.floor; maxAct = Math.max(maxAct, r.act);
@@ -442,6 +520,11 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  if (SKILL_LEVELS) {
+    const levels = skillLevelsByClass[cls.id] || {};
+    const line = skillTracks(REG).map((t) => `${t.id} ${((levels[t.id] || 0) / N).toFixed(1)}`).join('  ');
+    console.log(`  skill levels/run: ${line}`);
+  }
   if (ds && ds.fights) {
     const perTurn = (x) => (x / ds.turns).toFixed(2);
     const perFight = (x) => (x / ds.fights).toFixed(1);
@@ -467,9 +550,15 @@ for (const cls of REG.classes.all()) {
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
-console.log(`level-ups bought at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run` + (LEVEL_COST ? ` (ladder ${LEVEL_COST})` : ' (shipped ladder)') + ` — E13's acceptance range is 10-20 per run; over the ${tally.wins} full (victorious) runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
+const levelsPerWin = levelsReachedInWins / Math.max(1, tally.wins);
+const inBand = tally.wins > 0 && levelsPerWin >= 10 && levelsPerWin <= 20;
+console.log(`character levels earned: ${(levelsReached / Math.max(1, tally.runs)).toFixed(1)} per run over ${tally.runs} runs; ${levelsPerWin.toFixed(1)} per full (victorious) run over ${tally.wins}` + (XP_CURVE ? ` (curve ${XP_CURVE})` : ' (shipped curve)') + ` — the acceptance band is 10-20 per full run: ${tally.wins ? (inBand ? 'IN BAND' : '<-- OUT OF BAND') : 'no full run to measure'} (plan phase 6; a greedy bot, the ceiling a real climb approaches)`);
+console.log(`XP earned per full run: ${(xpEarnedInWins / Math.max(1, tally.wins)).toFixed(0)} (this curve's receipt: ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0)} reaches level 11)`);
+console.log(`attribute points assigned at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run; over the ${tally.wins} full runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
 console.log(`event choices recorded: ${tally.eventChoices} over ${tally.runs} runs, ${tally.questSteps} of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation`);
-console.log(`cinder economy: ${cinderSpentOnLevels} spent on levels + ${cinderLeftAtEnd} left at run end = ${((cinderSpentOnLevels + cinderLeftAtEnd) / Math.max(1, tally.runs)).toFixed(0)} cinders per run available to a shrine (the bot buys nothing at merchants)`);
+console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(classDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 5b: the bot picks the first node offered)`);
+console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
+console.log(`cinder economy: ${cinderLeftAtEnd} left at run end = ${(cinderLeftAtEnd / Math.max(1, tally.runs)).toFixed(0)} cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };
 }

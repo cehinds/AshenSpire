@@ -1,0 +1,119 @@
+# content/source/variableBindings.csv — what each variable reads, per scope
+#
+# One row per (scope, scopeId, node, variable): the balance.js row that
+# variable is worth in that scope. Resolution is a ladder, highest scope wins:
+#   instance › upgrade › class › default
+#   default   scopeId ''             the shipped tuning
+#   class     scopeId a class id     a class's own tuning of a shared node
+#   upgrade   scopeId a level        the smith's tier table (per copy, per run)
+#   instance  scopeId an instanceId  this one copy
+# Only default rows ship today; the other scopes are the shape phase 2b needs
+# for per-copy relic passives, so they are declared and validated now.
+#
+# NUMBERS LIVE IN src/content/balance.js. balancePath names a row there; a
+# literal number in this column is refused by name.
+#
+# columns: scope, scopeId, nodeId, variable, balancePath
+scope,scopeId,nodeId,variable,balancePath
+default,,siphon,restoreMana,exposure.siphonRefund
+default,,siphon,restoreMana_2,exposure.siphonRefundMastered
+default,,siphon,siphonMasteryLevel,exposure.siphonMasteryLevel
+default,,overcharge,overchargeBuildupMult,exposure.overchargeBuildupMult
+default,,staggerBreak,poiseDamage,exposure.staggerBreakPoise
+default,,resonance,spreadPct,exposure.resonanceSpreadPct
+default,,forsakenMedallion,poiseDamage,powers.forsakenMedallion.poiseDamage
+default,,starstoneShard,starstoneCharge,powers.starstoneShard.starstoneCharge
+default,,starstoneShard,restoreMana,powers.starstoneShard.restoreMana
+default,,cutpursesCoin,prepared,powers.cutpursesCoin.prepared
+default,,cutpursesCoin,venom,powers.cutpursesCoin.venom
+default,,goldFigurine,block,powers.goldFigurine.block
+default,,goldenSprout,heal,powers.goldenSprout.heal
+default,,whetstoneFragment,damage,powers.whetstoneFragment.damage
+default,,kindlingCharm,draw,powers.kindlingCharm.draw
+default,,goldleafCharm,block,powers.goldleafCharm.block
+default,,crackedLantern,gainEnergy,powers.crackedLantern.gainEnergy
+default,,sacrificialKnife,bleed,powers.sacrificialKnife.bleed
+default,,curedHide,block,powers.curedHide.block
+default,,ivoryComb,draw,powers.ivoryComb.draw
+default,,ivoryComb,n,powers.ivoryComb.n
+default,,fellWardenBrand,draw,powers.fellWardenBrand.draw
+default,,bloodiedTalisman,loseHp,powers.bloodiedTalisman.loseHp
+default,,twinnedArmor,block,powers.twinnedArmor.block
+default,,twinnedArmor,n,powers.twinnedArmor.n
+default,,blightTouchedIdol,crimsonBlight,powers.blightTouchedIdol.crimsonBlight
+default,,warhorn,strength,powers.warhorn.strength
+default,,vowOfVengeance,strength,powers.vowOfVengeance.strength
+default,,pearlOfSagacity,gainEnergy,powers.pearlOfSagacity.gainEnergy
+default,,pearlOfSagacity,n,powers.pearlOfSagacity.n
+default,,blessedDew,heal,powers.blessedDew.heal
+default,,azureSigil,gainEnergy,powers.azureSigil.gainEnergy
+default,,bloodstainedChalice,block,powers.bloodstainedChalice.block
+default,,goldboughSapling,block,powers.goldboughSapling.block
+default,,wyrmHeart,gainEnergy,powers.wyrmHeart.gainEnergy
+default,,titansCinder,strength,powers.titansCinder.strength
+default,,radiantAegis,block,powers.radiantAegis.block
+default,,flayersCenser,crimsonBlight,powers.flayersCenser.crimsonBlight
+default,,vigilantHalo,heal,powers.vigilantHalo.heal
+default,,carrionTalon,damage,powers.carrionTalon.damage
+default,,emberIdol,damage,powers.emberIdol.damage
+default,,crownOfStitches,strength,powers.crownOfStitches.strength
+default,,crownOfStitches,frail,powers.crownOfStitches.frail
+default,,wardenHorn,draw,powers.wardenHorn.draw
+default,,wardenHorn,loseHp,powers.wardenHorn.loseHp
+default,,ashOfRemembrance,gainEnergy,powers.ashOfRemembrance.gainEnergy
+default,,ashOfRemembrance,madness,powers.ashOfRemembrance.madness
+default,,cinderOfTheFallen,madness,powers.cinderOfTheFallen.madness
+default,,cinderOfTheFallen,gainEnergy,powers.cinderOfTheFallen.gainEnergy
+default,,crimsonCovenant,loseHp,powers.crimsonCovenant.loseHp
+default,,crimsonCovenant,bleed,powers.crimsonCovenant.bleed
+default,,travelersWhetstone,strength,powers.travelersWhetstone.strength
+default,,moonlitVial,block,powers.moonlitVial.block
+default,,wardensLantern,draw,powers.wardensLantern.draw
+default,,hollowedHorn,vulnerable,powers.hollowedHorn.vulnerable
+default,,gildedTear,heal,powers.gildedTear.heal
+default,,watchmansBadge,strength,powers.watchmansBadge.strength
+default,,howlingStandard,strength,powers.howlingStandard.strength
+default,,emberwickCharm,gainEnergy,powers.emberwickCharm.gainEnergy
+default,,carrionMorsel,heal,powers.carrionMorsel.heal
+default,,gravetendersBell,draw,powers.gravetendersBell.draw
+default,,sentinelsOath,strength,powers.sentinelsOath.strength
+default,,sentinelsOath,n,powers.sentinelsOath.n
+default,,forsakenWarflag,weak,powers.forsakenWarflag.weak
+default,,wrathCoil,damage,powers.wrathCoil.damage
+default,,favored,skillXpMult,skill.favoredXpMult
+default,,ashenGrip,restoreStamina,powers.ashenGrip.restoreStamina
+default,,lodestarShard,restoreMana,powers.lodestarShard.restoreMana
+default,,waxenSeal,heal,powers.waxenSeal.heal
+default,,whetstonePouch,bleed,powers.whetstonePouch.bleed
+default,,cost.action,amount,costs.action
+default,,cost.stamina,amount,costs.stamina
+default,,cost.mana,amount,costs.mana
+default,,ironFooting,block,classTree.ironFooting.block
+default,,bloodTempo,draw,classTree.bloodTempo.draw
+default,,ashenReserve,restoreStamina,classTree.ashenReserve.restoreStamina
+default,,grimHarvest,heal,classTree.grimHarvest.heal
+default,,warlord,strength,classTree.warlord.strength
+default,,bulwarkKing,block,classTree.bulwarkKing.block
+default,,attunedMind,draw,classTree.attunedMind.draw
+default,,starlitFocus,starstoneCharge,classTree.starlitFocus.starstoneCharge
+default,,lodestarCap,restoreMana,classTree.lodestarCap.restoreMana
+default,,arcaneDraw,draw,classTree.arcaneDraw.draw
+default,,conduit,restoreStamina,classTree.conduit.restoreStamina
+default,,reservoir,restoreMana,classTree.reservoir.restoreMana
+default,,warmth,block,classTree.warmth.block
+default,,vigil,heal,classTree.vigil.heal
+default,,sealOfPlenty,restoreMana,classTree.sealOfPlenty.restoreMana
+default,,wakingRot,crimsonBlight,classTree.wakingRot.crimsonBlight
+default,,martyr,block,classTree.martyr.block
+default,,saint,heal,classTree.saint.heal
+default,,quickHands,prepared,classTree.quickHands.prepared
+default,,secondWind,draw,classTree.secondWind.draw
+default,,honedEdge,bleed,classTree.honedEdge.bleed
+default,,poisonedPouch,venom,classTree.poisonedPouch.venom
+default,,assassin,prepared,classTree.assassin.prepared
+default,,assassin,draw,classTree.assassin.draw
+default,,shadow,block,classTree.shadow.block
+default,,restHpSmall,pct,rest.hpSmallPct
+default,,restHpPartial,pct,rest.hpPartialPct
+default,,restManaFlat,restoreMana,rest.mana.flat
+default,,restManaFloor,floorPct,rest.mana.floorPct

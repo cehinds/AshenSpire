@@ -1,0 +1,339 @@
+{
+  "components": {
+    "sequence": {
+      "schemaVersion": 1,
+      "kind": "AshenSpire prologue art",
+      "revision": "2026-09-21-staging-v7",
+      "labels": {
+        "continue": "Continue",
+        "setForth": "Set forth",
+        "pause": "Pause",
+        "resume": "Resume",
+        "replay": "Replay",
+        "skip": "Skip opening",
+        "settings": "Settings",
+        "close": "Return to settings"
+      },
+      "classes": {
+        "reaver": {
+          "name": "Reaver",
+          "item": "Sword",
+          "line": "The Fell Courtyard gate fell. My watch never ended."
+        },
+        "starseer": {
+          "name": "Starseer",
+          "item": "Staff",
+          "line": "I took his charts. I still owe him an answer."
+        },
+        "rogue": {
+          "name": "Rogue",
+          "item": "Dagger",
+          "line": "The Court Surgeon kept my sister. I kept his trail."
+        },
+        "herald": {
+          "name": "Herald",
+          "item": "Holy book",
+          "line": "The fire stopped on me. The Chapel still owes an answer."
+        }
+      },
+      "scenes": [
+        {
+          "id": "warmth",
+          "name": "Remembered warmth",
+          "seconds": 5,
+          "speaker": "Hamlet witness",
+          "text": "Three hearths once kept the roads warm.\nWe lived beyond their walls.",
+          "effect": "push",
+          "character": false,
+          "art": "warmth",
+          "enabled": true,
+          "order": 1,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "year",
+          "name": "The Burning",
+          "seconds": 5,
+          "speaker": "Hamlet witness",
+          "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
+          "effect": "fade",
+          "character": false,
+          "art": "year",
+          "enabled": true,
+          "order": 2,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "carry",
+          "name": "What the fire left",
+          "seconds": 5,
+          "speaker": "{class}",
+          "text": "{classLine}",
+          "effect": "fade",
+          "character": false,
+          "actor": {
+            "desktop": {
+              "x": 33,
+              "y": 81,
+              "height": 58
+            },
+            "mobile": {
+              "x": 34,
+              "y": 79,
+              "height": 42
+            }
+          },
+          "art": "carry",
+          "enabled": true,
+          "order": 3,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "night",
+          "name": "Last night",
+          "seconds": 5,
+          "speaker": "Hamlet witness",
+          "text": "They never marked him.\nI washed the ash from his hands.\nHe is still breathing.",
+          "effect": "fade",
+          "character": false,
+          "art": "night",
+          "enabled": true,
+          "order": 4,
+          "banner": false,
+          "ownStaging": true,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {
+            "wash": 0.06
+          }
+        },
+        {
+          "id": "step",
+          "name": "The first step",
+          "seconds": 5,
+          "speaker": "{name}",
+          "text": "I will find a road to the hearths.",
+          "location": "{location}",
+          "effect": "fade",
+          "character": true,
+          "actor": {
+            "desktop": {
+              "x": 30,
+              "y": 84,
+              "height": 40
+            },
+            "mobile": {
+              "x": 31,
+              "y": 81,
+              "height": 28
+            }
+          },
+          "art": "step",
+          "enabled": true,
+          "order": 5,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "extraA",
+          "name": "Added scene 1",
+          "seconds": 5,
+          "speaker": "",
+          "text": "",
+          "effect": "fade",
+          "character": false,
+          "art": "none",
+          "enabled": false,
+          "order": 6,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "extraB",
+          "name": "Added scene 2",
+          "seconds": 5,
+          "speaker": "",
+          "text": "",
+          "effect": "fade",
+          "character": false,
+          "art": "none",
+          "enabled": false,
+          "order": 7,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "extraC",
+          "name": "Added scene 3",
+          "seconds": 5,
+          "speaker": "",
+          "text": "",
+          "effect": "fade",
+          "character": false,
+          "art": "none",
+          "enabled": false,
+          "order": 8,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        },
+        {
+          "id": "extraD",
+          "name": "Added scene 4",
+          "seconds": 5,
+          "speaker": "",
+          "text": "",
+          "effect": "fade",
+          "character": false,
+          "art": "none",
+          "enabled": false,
+          "order": 9,
+          "banner": false,
+          "ownStaging": false,
+          "waitForInput": false,
+          "music": "keep",
+          "stinger": "none",
+          "stage": {}
+        }
+      ],
+      "presentation": {
+        "transitionSeconds": 5,
+        "speed": 1,
+        "tintSource": "accent",
+        "accent": "gold",
+        "characterTint": "gold",
+        "wash": 0.14,
+        "reduceMotion": false,
+        "playback": "every",
+        "autoAdvance": true,
+        "customTint": "#c9a227",
+        "previewClass": "reaver",
+        "previewScene": "warmth",
+        "shadowStrength": 0.7,
+        "layout": "caption",
+        "imageScale": 1,
+        "imageFit": "cover",
+        "imageFocusX": 50,
+        "imageFocusY": 50,
+        "bannerPosition": "top",
+        "textPosition": "bottom-center",
+        "textAlign": "center",
+        "textScale": 1,
+        "textBox": true,
+        "textBoxVisible": true,
+        "textBoxOpacity": 1,
+        "textBoxColor": "#100e0c",
+        "textOutline": false,
+        "textOutlineColor": "#100e0c",
+        "textOutlineWidth": 2,
+        "camera": "auto",
+        "cameraAmount": 3.5,
+        "textInsetX": 4,
+        "textInsetY": 4,
+        "reveal": "none",
+        "revealSpeed": 45,
+        "imageBrightness": 1,
+        "imageContrast": 1,
+        "imageSaturation": 1,
+        "imageBlur": 0,
+        "imageFlip": false,
+        "vignette": 0,
+        "backdropColor": "#100e0c",
+        "letterboxColor": "#000000",
+        "transitionEase": "ease-in-out",
+        "cameraEase": "linear",
+        "titleVisible": true,
+        "speakerVisible": true,
+        "locationVisible": true,
+        "progressStyle": "numbers",
+        "titleColor": "#c9a227",
+        "speakerColor": "#c0b39d",
+        "dialogueColor": "#eee6d5",
+        "locationColor": "#c9a227",
+        "titleScale": 1,
+        "speakerScale": 1,
+        "lineHeight": 1.5,
+        "letterSpacing": 0,
+        "textMaxWidth": 65,
+        "textFont": "body",
+        "textDelaySeconds": 0,
+        "boxPadding": 1,
+        "boxRadius": 0,
+        "boxBorderWidth": 0,
+        "boxBorderColor": "#c9a227",
+        "boxBlur": 0,
+        "controlsPosition": "bar",
+        "controlsAlign": "center",
+        "controlsSize": "normal",
+        "showPause": true,
+        "showSkip": true,
+        "advanceOnClick": false
+      },
+      "palettes": {
+        "accent": {
+          "gold": "#c9a227",
+          "crimson": "#c1453a",
+          "frost": "#7fa8c9",
+          "verdant": "#8bae54",
+          "violet": "#a06cc8"
+        },
+        "character": {
+          "gold": "#c9a227",
+          "ember": "#c9502e",
+          "frost": "#7fa8c9",
+          "rot": "#b5541c",
+          "grace": "#9fc3e8"
+        }
+      },
+      "slots": 4,
+      "presets": {
+        "a": {
+          "name": "Slot 1",
+          "data": ""
+        },
+        "b": {
+          "name": "Slot 2",
+          "data": ""
+        },
+        "c": {
+          "name": "Slot 3",
+          "data": ""
+        }
+      }
+    }
+  },
+  "sizing": {
+    "mobileBreakpoint": 760
+  }
+}

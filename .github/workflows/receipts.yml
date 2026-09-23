@@ -41,6 +41,7 @@ jobs:
       # Full history: the check walks `origin/test..HEAD` for merge subjects.
       - uses: actions/checkout@v4
         with:
+          lfs: true
           fetch-depth: 0
 
       - uses: actions/setup-node@v4

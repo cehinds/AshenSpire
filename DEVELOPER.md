@@ -9,8 +9,28 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
-`node tools/launch.mjs --build-only` produces the standalone aliases and an
-external-art web edition in `build/web/`. Serve the whole web directory for
+Install Git LFS before cloning, or run `git lfs install` and `git lfs pull`
+in an existing checkout. The three generated standalone HTML aliases use LFS
+because the full artwork exceeds GitHub's regular-file size limit. Source art
+stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
+CI hydrates these files, and historical build readers verify their content hashes.
+
+
+Hand management lives in `src/content/handRules.js` (defaults),
+`src/model/handRules.js` (settings and stat formula), and
+`src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
+per-fight snapshot from profile settings; legacy snapshots omit it. Run
+`node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
+for the focused rules, persistence and settings checks. Advanced → Hand & Draw
+Rules provides separate starting-hand, turn-draw, capacity and discard groups.
+
+`node tools/launch.mjs --build-only` produces the standalone aliases — the full
+single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
+its art from the committed `assets-mobile/` twin tree, held under 50 MB) — and an
+external-art web edition in `build/web/`. Changing anything under `assets/`
+means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
+from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
@@ -19,6 +39,24 @@ Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
 `node tests/run-node.mjs` includes its focused engine regression suite.
+
+Layout numbers (sizes, positions, layers, timings, which parts appear) are
+authored as JSON in `content/config/`, the third authored tree after
+`content/source/` and `content/framework/`. Its README explains the folders,
+the sections, and the `"$name"` variables. `node tools/config-build.mjs`
+compiles it into `src/config/generated/ui.js` (`uiConfig`), and
+`tools/launch.mjs` runs it before every build. `--check` is the drift gate that
+`tests/run-node.mjs` runs, and `tools/content-build.mjs` refuses a config file
+the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
+a compatibility shim composed from `uiConfig`, so change the JSON, never the
+shim or the generated module.
+`ui-studio/` is a standalone local editor for that JSON (see
+[ui-studio/README.md](ui-studio/README.md)): `node ui-studio/server.mjs` draws
+the approved wireframes at real device sizes on a snapping grid, edits any
+value with its unit and variables, validates the tree with `compileEntries`
+before writing, keeps backups, and opens the live game at the chosen size.
+`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
+`node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
@@ -74,7 +112,11 @@ are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. Weapon-art packages are authored in
+mounting and save round-trip coverage. How many cards a shelf of resting cards
+holds — the merchant's shelves, a mount's deck list — is authored once at
+`content/config/ui/components/card.json -> sizing.shelf`, laid out by
+`.card-shelf` in styles/kit.css, and checked by
+`node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
@@ -90,8 +132,15 @@ only explicit Use may spend a charge. The map Quick Access faces retain real
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
 
+# build the authored trees (launch.mjs runs the first two for you)
+node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
+node tools/content-build.mjs           # content/source/* → src/content/generated/ (+ the tag tree's views: tags, domains,
+                                       #   pairings, property rules, and src/framework/data/{properties,relations}.js)
+node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/ (entities, terms, assets, …)
+node tools/config-build.mjs --check    # drift gate: the generated UI config is current
+
 # tests (22 assertions, SPEC §8)
-node tests/run-node.mjs        # CI-style, exits 1 on failure
+node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
 # or open tests/index.html in a browser — same suite, green/red list
 
 # what raises the red failure banner, and what must not
@@ -183,6 +232,53 @@ see. **Whether this should instead be a real YAML parse is an open dependency
 question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
+
+## Plants and the same door (`tools/doorplant.mjs`)
+
+Every `--selftest` corpus in `tools/` is one mechanic: a known-bad is written as
+FILE BYTES into a copy of this checkout, the tool is run whole from that copy,
+and the run must fail *by the red that plant names*. `doorplant.mjs` is the only
+home of that mechanic; the tools supply the plants and the reds.
+
+```bash
+node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no browser, no port
+node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
+```
+
+Both run on every pull request in `dev-preview.yml`, because a corpus that has
+stopped being able to arm is green for the wrong reason and nothing else notices.
+
+**Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to
+the plant.** The committed blobs are LF and Linux CI checks out LF, but a Windows
+checkout under `core.autocrlf=true` — the Git-for-Windows system default — has a
+CRLF working tree. An exact byte match on a **multi-line** find-string can never
+succeed there. Until 2026-09-17 that made `node tools/startup-gate.mjs
+--selftest` print `SELFTEST RED — 2 plant(s)/edge(s) failed` on Windows and green
+in CI, and both failures read `PLANT SITE DRIFTED` — the same words real drift
+produces, about two sites that had not moved. Single-line plants were unaffected,
+which is what made it look arbitrary. `doorplant` now re-expresses each plant in
+the target file's own line ending before matching and writes the replacement back
+in that ending; `plantsites.mjs` already compared LF-normalised views, so this is
+the same rule at the stage that edits bytes.
+
+**So do not "repair" a drifted plant by spelling `\r\n` into its find-string** —
+that is a plant which only arms on Windows, and it will read as drifted the next
+time anyone runs the corpus on Linux. Author `\n` and let the harness translate.
+
+`PLANT SITE DRIFTED` still means exactly one thing: the site is absent in the
+file's own ending **and** exactly as authored, so the plant never armed and the
+corpus is proving less than it claims. It is a hard red, never a skip. The known
+backlog of genuinely drifted sites is pinned in `tools/plantsites-baseline.json`,
+and `--check` fails in both directions — a site that starts resolving again must
+be recorded in the same change, or the freed slack hides the next regression.
+
+**Verifying a line-ending claim: count bytes, not lines.** Git Bash's
+`grep -c $'\r$'` reports every line of an LF file as matching, so it cannot tell
+the two apart. Ask Node instead:
+
+```bash
+node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(const c of b){if(c===13)cr++;if(c===10)lf++}console.log('CR',cr,'LF',lf)" styles/kit.css
+```
 
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
@@ -329,6 +425,42 @@ node tools/combat-save.mjs --selftest
 node tools/combat-save.mjs --artifact --screenshots
 ```
 
+## Reword the interface (one file: `content/source/uiStrings.csv`)
+
+Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
+screen asks for it by id:
+
+```js
+import { t, tFull, tTip } from '../strings.js';
+t('reward.continue')                         // the control's own words
+t('reward.cinders.title', { amount: 40 })    // {tokens} come from the caller
+tFull('reward.blocked.storage')              // the sentence it means
+tTip('reward.skip')                          // the tooltip a small face gets
+```
+
+Three authored forms per id, never a runtime guess between them: `short` is
+what the control wears, `full` is the sentence it means, `tip` is the tooltip
+title. A blank cell means "this id has no such form", and asking for it throws
+by name — an empty button is the defect this prevents. `extends` fills only the
+cells a row leaves blank, so `reward.skip` is the house Skip with one sentence
+changed.
+
+Rewording the game is then a spreadsheet edit and a rebuild, touching no code:
+
+```bash
+node tools/content-build.mjs      # csv → src/content/generated/uiStrings.js
+node tools/uistrings.mjs --check  # the ratchet, below
+node tests/run-node.mjs           # tests/ui-strings.test.mjs holds the rules
+```
+
+**The migration is a one-way street.** Most screens still hold their own
+sentences; `tools/uistrings.mjs` counts what is left, per file, against
+`tools/uistrings-baseline.json`, and `--check` fails in BOTH directions — a
+file that grew a hardcoded sentence, and a file that migrated one without
+recording it (an overstated baseline hides the next regression in its slack).
+A screen you migrate ends with `node tools/uistrings.mjs --write-baseline` in
+the same commit.
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js
@@ -430,6 +562,17 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 the combat orchestrator after `resultText` shows. Nothing to register — every
 shipped event is reachable via Unknown nodes.
 
+A **quest chain** is a sidecar beside the events in the same file: list its
+steps and completing choices in `questChains`, and name each step's speaker in
+`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+(`id,name,portraitKey`; the key names existing art, and a blank key shows the
+name plate). A chain's steps open in the dialogue screen, one beat per
+blank-line paragraph of the event's `text`. Both event screens commit a choice
+through `commitEventChoice` (`src/engine/quests.js`); do not call
+`executeRunEffects` and `recordEventChoice` separately, or completion is
+skipped. `node --test tests/quest-dialogue.test.mjs` covers the door, the
+validation refusals and the dialogue model.
+
 > Each walkthrough above is **validation-checked**: add the snippet and run the
 > suite — test 15 (content validation) rejects unknown fields, bad enums,
 > dangling ids, out-of-set opcodes/formulas/predicates, and unbound template
@@ -440,13 +583,13 @@ shipped event is reachable via Unknown nodes.
 
 | Set | Where defined | Contents |
 |---|---|---|
-| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage |
-| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
-| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
-| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
+| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, dodgeRoll, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, restoreMana, restoreStamina, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage, stagger, arcaneBuildup |
+| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, addFlaskCapacity, loseMaxHpPct, startCombat, swapClass, refillFlasks |
+| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
+| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
+| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
+| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
@@ -624,3 +767,58 @@ Combat cards select before committing. A selected card retains its fan position 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
 Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+
+## Opening sequence
+
+Advanced → Opening configures every scene, class line, caption, control, hold,
+transition and tint, and the staging around them: which painting a scene draws
+on (`art`, any shipped opening painting, not only its own), whether it plays
+(`enabled`), where it plays (`order`), whether it carries a title banner, plus
+the wireframe, artwork scale/fit/focus, text position, alignment, size,
+container (present / visible / opacity / colour) and outline. `prologueSequence`
+turns order and inclusion into the playing order; the indices it returns stay
+indices into the AUTHORED `config.scenes`, which is what `run.prologue.scene`
+and every `gameConfig.prologue.scenes.<id>.*` key are named for, and
+`prologueResumePosition` is how a run paused on a scene since switched off finds
+where to carry on.
+
+Staging is held twice, from one table: `PROLOGUE_STAGE_FIELDS` names every field
+that exists both under `presentation` (the house style) and under each scene's
+`stage` (its own answer, read only when the scene sets `ownStaging`), and the
+rows, the defaults, the validation and `prologueStaging` all read that table, so
+a field cannot be added to one home and forgotten in the other. The `night`
+wash cap that used to be an `if` in the renderer is that scene's own staging.
+
+Scenes are added into named slots, never invented at runtime: the authored
+sequence carries `slots` empty scenes (`extraA`…), switched off, so every key an
+added scene writes is still a key the all-or-nothing importer can refuse a bad
+value for. `prologueSceneCopy`, `prologueSceneClear`, `prologueReorderChanges`
+and `prologueFreeSlot` are the list editor's whole model; Settings only renders
+them. `presets.<id>` are three slots a whole opening parks in
+(`prologueSlotPayload` / `prologueSlotChanges` — loading is a replacement, so
+the change set names the keys to unset as well). Per-scene `music`/`stinger`
+reach the audio engine through the `audio` option `main.js` passes to
+`mountPrologue`; the settings preview passes none and keeps what is playing.
+Deliberate quiet is the `quiet` bed (`content/music.js`), never `stopMusic()` —
+the engine remembers the context it is in.
+
+The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
+is the last grid row of every wireframe, so text that floats does not take
+Continue with it. `presentation.controlsPosition: 'text'` puts them back under
+the words. `node tools/screenshot.mjs --only prologue` photographs the opening
+(`?shot=prologue`, with `?shotSettings={…}` to stage it), which is how a staging
+change is checked against the real screen rather than against its selectors. The authored
+data is in `content/config/ui/screens/prologue.json`; rebuild with the config
+compiler. Scene file: `prologueScenePreset` exports the opening alone in the
+art-studio preset shape that `parseAdvancedConfigFile` already imports, so the
+scene file and the whole-game configuration carry the same keys and one
+importer reads both.
+`src/model/prologue.js` projects settings without gameplay RNG. The shared
+`mountPrologue` renderer serves new solo games and the settings preview.
+`run.prologue` stores a version, pending/complete status and scene index; new
+runs snapshot the effective overrides in the existing advanced-config snapshot.
+Old saves bypass the opening. The completion callback persists before revealing
+the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
+immutability, class lines, destination, and interrupted save recovery.
+### Ratings and starting pools
+Settings → Advanced → Progression controls starting stat pools and resource conversions. Stats & Defence controls rating formulas, physical/magical resistance, status weights, impact categories, breaks and per-source bonuses. Source models: src/model/startingStatConfig.js and src/model/combatRatings.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs.

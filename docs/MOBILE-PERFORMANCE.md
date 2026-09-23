@@ -5,10 +5,20 @@ presentation only; it does not alter damage, resources, targeting, saves or RNG.
 
 ## Builds
 
-Run `node tools/launch.mjs --build-only` to generate both editions:
+Run `node tools/launch.mjs --build-only` to generate all three editions:
 
 - `AshenSpire.html`, `build/AshenSpire.html` and `dist/AshenSpire.html` are the
-  portable single-file game.
+  portable single-file game with the art as painted (~253 MB on 0.7.1).
+- `AshenSpire-mobile.html`, `build/AshenSpire-mobile.html` and
+  `dist/AshenSpire-mobile.html` are the same build reading its art from
+  `assets-mobile/`: every image with a side of 384 px or more halved, all
+  re-encoded lossy (`tools/mobileart-policy.mjs`: q50, alpha q60). The file is
+  held under 50 MB — `bundle.mjs --mobile` refuses to write one over the budget
+  and `verify-shipped.mjs` fails a committed one. The Pages site serves it at
+  `/<branch>/<ordinal>/mobile/` and offers both downloads side by side.
+  Regenerate the twins after any change under `assets/` with
+  `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
+  an encoder and is the CI gate. Settings → About names the edition.
 - `build/web/AshenSpire.html` with its sibling `assets/` and `map-detail/` trees
   is the web edition. Serve/copy that entire directory. Images are requested
   separately when used. Copying just its HTML will not work offline.
@@ -27,7 +37,8 @@ endings as the bundler.
 
 ## Rendering and input
 
-Settings → Display → Rendering quality offers Auto, Full and Lite. Auto uses
+Settings → General → Combat → Animation & effects → Rendering quality offers
+Auto, Full and Lite. Auto uses
 Lite for a coarse primary pointer and Full otherwise. An explicit choice wins.
 Lite removes expensive sprite filters and cloned target silhouettes, replacing
 the latter with the same relationship color on a ground ring. It disables ambient
@@ -57,6 +68,7 @@ node tests/run-node.mjs
 node tools/launch.mjs --build-only
 node tools/buildversion.mjs --check
 node tools/verify-shipped.mjs
+node tools/mobile-art.mjs --check
 node tools/verify-external.mjs
 node tools/plantsites.mjs --check
 ```

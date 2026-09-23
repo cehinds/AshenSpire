@@ -2,7 +2,7 @@
 
 A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no framework, no build step. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**.
 
-**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
+**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[▶ Play the mobile edition](https://cehinds.github.io/AshenSpire/AshenSpire-mobile.html)** (same build, art shrunk under 50 MB) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
 
 > Single-player with optional LAN co-op. Four classes, three acts, 20 regular enemies, three elites, ten bosses. Seeded, resumable runs. Enemy moves and destinations: [enemy roster](docs/ENEMY-ROSTER.md).
 
@@ -22,11 +22,11 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 - **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
 - **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
 - The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
-- **Weight:** one self-contained file, art and all, at **~58 MB** on the `0.6.0` line — down from 93 MB before the sprite sheets were re-encoded as WebP (#908). It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting.
+- **Weight, and two downloads:** every build is offered twice. The **full** file is one self-contained download, art and all — **~253 MB** on the `0.7.1` line, up from 58 MB on `0.6.0` as the painted animation frames landed. The **mobile** file (`AshenSpire-mobile.html`, at `…/<branch>/<ordinal>/mobile/`) is the same build with every image shrunk to half size and recompressed under `tools/mobileart-policy.mjs`, held **under 50 MB** by a gate (`tools/verify-shipped.mjs`); it plays the same and looks softer. It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting, and the mobile file is the one to take there. Saves are compatible between the two.
 
 ### Offline
 
-Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and double-click it — one self-contained file, no installation. It is an alias for [`dist/AshenSpire.html`](dist/AshenSpire.html); both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if either copy differs. External music folders need http — see [dist/README.md](dist/README.md).
+Download **[`AshenSpire.html`](AshenSpire.html)** (full, ~253 MB) or **[`AshenSpire-mobile.html`](AshenSpire-mobile.html)** (mobile, under 50 MB) from the repository root and double-click it — one self-contained file, no installation. Each is an alias for its [`dist/`](dist/) twin; all four are generated from `build/` by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
 
 ## Running it
 
@@ -54,7 +54,7 @@ Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and d
 - **Rewards you open before you collect:** post-fight spoils are a menu; nothing joins your run until you take it. A reward you have no room for says so and is the only row offering Skip. Settings → Advanced → Reward collection decides whether Continue sweeps up the rest.
 - **A merchant who buys back:** five collapsing bars — cards, relics, flasks, remove-a-card, Sell — one open at a time. He buys relics and flasks back at half his cheapest price; the Sell bar can be switched off in Settings.
 - **An in-game changelog:** Settings → Changelog reads the repository changelog as expandable rows, with build stamps linking back to the exact source.
-- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → Display.
+- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → General → Display.
 
 Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, mockups, art direction). Original brief: **[PROMPT.md](PROMPT.md)**.
 
@@ -96,7 +96,7 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ## Contributing
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — working rules: one task per branch, draft PRs into `dev`, only the owner merges to `main`.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — working rules: one task per branch, PRs into `dev` opened ready for review, only the owner merges to `main`.
 - **[DEVELOPER.md](DEVELOPER.md)** — build and test commands; how to add a card, relic, enemy or event.
 - **[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable composition/component contract. The [current-`dev` snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) refreshes automatically after every push to `dev`.
 - **[QA testing](docs/QA-TESTING.md)** and the **[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the design → build → responsive playtest → evidence → documentation process. Latest write-up: [Smith modal design](docs/qa/2026-08-25-smith-modal-design.md).

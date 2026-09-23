@@ -28,18 +28,23 @@
 // The public entry points below are the ones 23 surfaces already call; their
 // shape is unchanged so nothing had to be re-wired to inherit the machine.
 
-import { placeAnchored, viewportLocalBox } from '../fx.js';
-import { tooltipPlacementIntent } from '../models/TooltipPlacementModel.js';
+import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import {
+  tooltipPlacementIntent, TOOLTIP_RUNGS, tooltipWireframe, tooltipArrow, tooltipArrowSize,
+} from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
+import { reducedMotionRequested } from '../motion.js';
 let tooltipSettings = resolveTooltipSettings();
 
 export function configureTooltipSettings(settings) {
   tooltipSettings = resolveTooltipSettings(settings);
   hideTooltip();
 }
-const RUNGS = ['small', 'medium', 'large', 'expanded'];
+// The rung list has one home (TooltipPlacementModel); wireframeUi.tooltip
+// names the wireframe each rung draws (WT1 compact, WT2 standard, WT3).
+const RUNGS = TOOLTIP_RUNGS;
 
 // ---- the two panels ---------------------------------------------------------
 const panels = [null, null];
@@ -232,7 +237,47 @@ function fitRung(el, pinned) {
   }
   const fits = el.scrollHeight <= el.clientHeight + 1;
   el.dataset.overflow = fits ? 'false' : 'true';
+  el.dataset.wireframe = tooltipWireframe(el.dataset.size);
   return fits;
+}
+
+/**
+ * WT0.ARROW FOLLOWS THE TRIGGER. Once the panel is placed — flipped or shifted
+ * included — the arrow goes on the edge that faces the anchor and points at
+ * its centre. `#tooltip::after` draws it from these properties (kit.css);
+ * `data-arrow="none"` (the panel sits on its anchor) draws nothing.
+ */
+function pointArrow(t, placed, anchor) {
+  const root = getComputedStyle(document.documentElement);
+  const zoom = parseFloat(root.getPropertyValue('--ui-zoom')) || 1;
+  const rootFontPx = parseFloat(root.fontSize) || 16;
+  const arrow = tooltipArrow(placed, anchorLocalBox(VIEWPORT_ORIGIN, anchor), tooltipArrowSize({ zoom, rootFontPx }));
+  t.dataset.arrow = arrow.edge;
+  t.style.setProperty('--tip-arrow-left', `${arrow.left}px`);
+  t.style.setProperty('--tip-arrow-top', `${arrow.top}px`);
+  t.style.setProperty('--tip-arrow-w', `${arrow.width}px`);
+  t.style.setProperty('--tip-arrow-h', `${arrow.height}px`);
+}
+
+/**
+ * THE RUNG STEPS, IT DOES NOT JUMP. When an open panel re-opens larger — the
+ * pointer hopped from a value-and-a-line to a card with a glossary — the new
+ * box is revealed from the old one's size over tooltipHelp.stepMs, anchored on
+ * the edge that faces the control (a panel above its anchor grows upward). A
+ * clip reveal, never a size transition: fitRung reads scrollHeight against
+ * clientHeight the tick it writes the rung, and the instruments read the
+ * panel's rect the tick it opens, so the box itself is always final. Shrinks
+ * cut. Reduced motion (either ask) skips it.
+ */
+function stepRung(t, before, intent) {
+  if (typeof t.animate !== 'function' || !(tooltipSettings.step > 0) || reducedMotionRequested()) return;
+  const dw = Math.max(0, t.offsetWidth - before.w);
+  const dh = Math.max(0, t.offsetHeight - before.h);
+  if (dw < 2 && dh < 2) return;
+  const top = intent === 'above' ? dh : 0, bottom = intent === 'above' ? 0 : dh;
+  const left = intent === 'left' ? dw : 0, right = intent === 'left' ? 0 : dw;
+  t.animate([{ clipPath: `inset(${top}px ${right}px ${bottom}px ${left}px)` }, { clipPath: 'inset(0px)' }],
+    { duration: tooltipSettings.step, easing: 'ease-out' });
 }
 
 /**
@@ -290,6 +335,9 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
   t.style.setProperty('--tooltip-fade-duration', `${tooltipSettings.fade}ms`);
+  // The box this panel stood at, if it stood at all: a hop from one control to
+  // the next re-opens at the new rung, and the difference is revealed, not cut.
+  const stoodAt = t.dataset.open === 'true' && t.style.display !== 'none' ? { w: t.offsetWidth, h: t.offsetHeight } : null;
   conceal(level);
   t.innerHTML = html;
   // At the second level definitions are terminal: no unreachable third panel.
@@ -325,7 +373,8 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
     })
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
-  placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
+  pointArrow(t, placeAnchored(t, anchor, { intent: resolvedIntent, clear, align }), anchor);
+  if (stoodAt) stepRung(t, stoodAt, resolvedIntent);
   state[level].target?.removeAttribute?.('data-tip-open');
   hoverCloseCallback = null;
   state[level].target = target;
@@ -380,6 +429,10 @@ export function attachTooltip(el, contentFn, {
       selectedControl = el;
       el.classList.add('tooltip-selected');
     }
+    // A repeated hover or focus on the element already counting down keeps
+    // that countdown (CURRENT-SPECIFICATION, Tooltips); restarting it made a
+    // second event push the tooltip a whole delay further away.
+    if (pending?.el === el && openTimer) return;
     cancelOpen();
     if (state[0].open && state[0].target === el) { clearTimers(); if (stuck) unstick(); return; }
     pending = { el, show };
@@ -603,7 +656,13 @@ function wireTitles() {
     else if (state[0].open || selectedControl) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
     else { cancelOpen(); cancelNested(); }
   }, true);
-  const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };
+  const replace = () => {
+    for (const [i, st] of state.entries()) {
+      if (!st.open || !st.target?.getBoundingClientRect || !panels[i]) continue;
+      const rect = st.target.getBoundingClientRect();
+      pointArrow(panels[i], placeAnchored(panels[i], rect, { intent: panels[i].dataset.tooltipPlacement || 'above' }), rect);
+    }
+  };
   addEventListener('resize', replace);
 }
 wireTitles();

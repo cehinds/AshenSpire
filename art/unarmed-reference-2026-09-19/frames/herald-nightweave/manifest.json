@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-nightweave",
+  "classId": "herald",
+  "armourId": "nightweave",
+  "effectsBaked": false,
+  "source": "sources/herald-nightweave.png",
+  "sourceSha256": "af5bf417055f5ee14d81cb76d730c97c320c73d96b82dac1d6a34b0ad993331e",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3291139240506329,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        20,
+        15,
+        287,
+        316
+      ],
+      "core": [
+        32,
+        27,
+        275,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        144.0,
+        289
+      ],
+      "offset": [
+        65,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        101,
+        407,
+        484
+      ],
+      "file": "frames/herald-nightweave/STANCE-READY.webp",
+      "sha256": "cf7951886dfa2e5457872b7be3daa7aae17327fc0954d8eae23c84a1ac692cb5"
+    },
+    "ATK-01": {
+      "content": [
+        329,
+        16,
+        602,
+        316
+      ],
+      "core": [
+        341,
+        28,
+        590,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        146.0,
+        288
+      ],
+      "offset": [
+        62,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        109,
+        414,
+        486
+      ],
+      "file": "frames/herald-nightweave/ATK-01.webp",
+      "sha256": "29986aaf155ce4e070f6da44ebef96378f11d19a11f902f387f70e9cf17f649f"
+    },
+    "ATK-02": {
+      "content": [
+        637,
+        18,
+        922,
+        316
+      ],
+      "core": [
+        649,
+        30,
+        910,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        146.0,
+        286
+      ],
+      "offset": [
+        62,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        113,
+        433,
+        484
+      ],
+      "file": "frames/herald-nightweave/ATK-02.webp",
+      "sha256": "17b68180fd7ebc07682c3a652a9663447f9987e4c2762a004f3a07d21f67c8be"
+    },
+    "ATK-03": {
+      "content": [
+        948,
+        19,
+        1246,
+        316
+      ],
+      "core": [
+        960,
+        31,
+        1234,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        146.5,
+        285
+      ],
+      "offset": [
+        61,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        114,
+        445,
+        486
+      ],
+      "file": "frames/herald-nightweave/ATK-03.webp",
+      "sha256": "f921e51cae88dfb6e8a1baa4a452a990dc52eafac0fe50b009fce803922aca03"
+    },
+    "ATK-04": {
+      "content": [
+        22,
+        329,
+        286,
+        629
+      ],
+      "core": [
+        34,
+        341,
+        274,
+        617
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        141.5,
+        288
+      ],
+      "offset": [
+        68,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        109,
+        407,
+        493
+      ],
+      "file": "frames/herald-nightweave/ATK-04.webp",
+      "sha256": "8eb8e7cfc93b19fd758b977ea986cb8d2908e3747190ed8e60421446bf48143f"
+    },
+    "ATK-05": {
+      "content": [
+        325,
+        329,
+        617,
+        629
+      ],
+      "core": [
+        337,
+        341,
+        605,
+        617
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        145.0,
+        288
+      ],
+      "offset": [
+        63,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        109,
+        446,
+        491
+      ],
+      "file": "frames/herald-nightweave/ATK-05.webp",
+      "sha256": "8b9d4bd34888aa505801b7e11f35fb94ca2c6d060cab433c51679edd8bd1463c"
+    },
+    "ATK-06": {
+      "content": [
+        640,
+        333,
+        914,
+        629
+      ],
+      "core": [
+        652,
+        345,
+        902,
+        617
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        148.5,
+        284
+      ],
+      "offset": [
+        59,
+        103
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        112,
+        411,
+        491
+      ],
+      "file": "frames/herald-nightweave/ATK-06.webp",
+      "sha256": "50f7c7fb1f0ba1424b3c7dd335d055a0660ab8c3a86e80fc70b02b7bad284729"
+    },
+    "ATK-07": {
+      "content": [
+        961,
+        330,
+        1230,
+        629
+      ],
+      "core": [
+        973,
+        342,
+        1218,
+        617
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        145.5,
+        287
+      ],
+      "offset": [
+        63,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        111,
+        408,
+        488
+      ],
+      "file": "frames/herald-nightweave/ATK-07.webp",
+      "sha256": "c6527d3839384a7d5274e3eba709907998311dcdb6f0a4bcb4decfadd42c713a"
+    },
+    "DEFEND": {
+      "content": [
+        29,
+        642,
+        292,
+        937
+      ],
+      "core": [
+        41,
+        654,
+        280,
+        925
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        138.5,
+        283
+      ],
+      "offset": [
+        72,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        116,
+        410,
+        491
+      ],
+      "file": "frames/herald-nightweave/DEFEND.webp",
+      "sha256": "6986e1c1e3f5bf6757c4e0cc79fcad4b2adcc35f840f7e32cce39e55b2ec064f"
+    },
+    "HURT": {
+      "content": [
+        322,
+        645,
+        604,
+        937
+      ],
+      "core": [
+        334,
+        657,
+        592,
+        925
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        160.5,
+        280
+      ],
+      "offset": [
+        43,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        51,
+        117,
+        406,
+        492
+      ],
+      "file": "frames/herald-nightweave/HURT.webp",
+      "sha256": "d1236095e8fd0cdd45a91055e19eb8b826b2e6666fd8b9a0547f4575448b9f51"
+    },
+    "CAST": {
+      "content": [
+        634,
+        645,
+        944,
+        937
+      ],
+      "core": [
+        646,
+        657,
+        932,
+        925
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        152.5,
+        280
+      ],
+      "offset": [
+        53,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        109,
+        465,
+        491
+      ],
+      "file": "frames/herald-nightweave/CAST.webp",
+      "sha256": "7b6fa01ec0407527aaf67f21791a8b2e5e39427ff0939701fd37f452cb36f66d"
+    },
+    "BUFF": {
+      "content": [
+        974,
+        630,
+        1202,
+        937
+      ],
+      "core": [
+        986,
+        642,
+        1190,
+        925
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        129.5,
+        295
+      ],
+      "offset": [
+        84,
+        88
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        89,
+        100,
+        375,
+        493
+      ],
+      "file": "frames/herald-nightweave/BUFF.webp",
+      "sha256": "6a00d8a8e2fe021f767f34a9afe8a2f32a31c36d55b8e365fd5f7685028d64eb"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        18,
+        964,
+        296,
+        1227
+      ],
+      "core": [
+        30,
+        976,
+        284,
+        1215
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        150.5,
+        251
+      ],
+      "offset": [
+        56,
+        146
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        146,
+        424,
+        493
+      ],
+      "file": "frames/herald-nightweave/STANCE-AGGRESSIVE.webp",
+      "sha256": "e5cdc40cd07bbc9b5b40c8c4b9d8f607908869b581e8f029ecf17af5e2afb5cc"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        334,
+        960,
+        606,
+        1228
+      ],
+      "core": [
+        346,
+        972,
+        594,
+        1216
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        147.0,
+        256
+      ],
+      "offset": [
+        61,
+        140
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        143,
+        410,
+        488
+      ],
+      "file": "frames/herald-nightweave/STANCE-DEFENSIVE.webp",
+      "sha256": "53b7380812d034cfe532f241e3dd8f22c38b204fc2026729af10aaf313ce6e01"
+    },
+    "PORTRAIT": {
+      "content": [
+        634,
+        936,
+        945,
+        1246
+      ],
+      "core": [
+        646,
+        948,
+        933,
+        1234
+      ],
+      "scale": 1.4919614147909968,
+      "sourceFootAnchor": [
+        155.5,
+        298
+      ],
+      "offset": [
+        24,
+        35
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        33,
+        48,
+        488,
+        489
+      ],
+      "file": "frames/herald-nightweave/PORTRAIT.webp",
+      "sha256": "f0b556ca0f67eb58b53447d91c51f3fe962e7991e130eef264950ded7b949d16"
+    },
+    "CONVERSATION": {
+      "content": [
+        976,
+        927,
+        1194,
+        1243
+      ],
+      "core": [
+        988,
+        939,
+        1182,
+        1231
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        129.5,
+        304
+      ],
+      "offset": [
+        84,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        92,
+        84,
+        366,
+        487
+      ],
+      "file": "frames/herald-nightweave/CONVERSATION.webp",
+      "sha256": "9a85cf07e5685776dd7f7c9b05005ba803f503fa311cfba88689f26b3f6a5902"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

@@ -436,7 +436,7 @@ and RNG state. Migration is explicit and idempotent. Either retain the matching
 legacy resolver for active combats or require a safe between-combat transition;
 never reinterpret a legacy in-progress fight with new costs. Unsupported versions
 get a recoverable explanation, not reset possessions or silently duplicated items.
-Maintain the project's 0.6.x.x version line; ruleset identity is a separate concern.
+Maintain the project's 0.7.x.x version line; ruleset identity is a separate concern.
 
 Implementation units are serialized GitHub Issues and branches/PRs targeting dev:
 

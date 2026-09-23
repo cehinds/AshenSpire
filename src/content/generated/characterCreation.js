@@ -4,13 +4,12 @@
 export const characterCreation = {
   "spritePreviewSide": "right",
   "visibleModeIds": [
-    "standard",
-    "pointbuy"
+    "lean"
   ],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
-    "equipmentChoiceView": "list",
+    "equipmentChoiceView": "grid",
     "equipmentAutoAdvance": false
   },
   "equipmentSections": [

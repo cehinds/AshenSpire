@@ -27,8 +27,16 @@ const atlas = async () => {
   await page.locator(".world-atlas-screen").waitFor();
   await page.waitForTimeout(350);
 };
+// W4b: the screen never scrolls and the Recenter / Enter footer stays in view.
+const bandsFit = async (label) => {
+  const fit = await page.evaluate(() => {
+    const s = document.querySelector(".world-atlas-screen"), f = document.querySelector(".atlas-footer");
+    return s.scrollHeight <= s.clientHeight + 1 && document.documentElement.scrollHeight <= innerHeight + 1 && f.getBoundingClientRect().bottom <= innerHeight + 1;
+  });
+  check(fit, `W4b bands fit without screen scroll (${label})`);
+};
 const inspect = async () => {
-  await page.locator("[data-atlas-inspect-current]").click();
+  await page.locator("[data-atlas-inspect]").click();
   await page.locator("dialog.atlas-dialog[open]").waitFor();
 };
 try {
@@ -43,8 +51,16 @@ try {
   await page.locator('.slot-continue').waitFor();
   await page.locator('.slot-continue').click();
   await page.locator('.world-atlas-screen').waitFor();
+  // Settle the shared screen-entry transition before measuring, exactly as
+  // atlas() does on a first load. It offsets the screen for under 250ms after
+  // mounting, and bandsFit's footer term reads that offset as overflow:
+  // measured at 1440x1080 on this branch's own head, the footer's bottom is
+  // 1090 at 0ms, 1082 at 150ms and 1080 — the viewport edge — from 350ms on,
+  // while the screen (900/900) and document (1080/1080) fit at every settle.
+  await page.waitForTimeout(350);
   check(JSON.stringify(await page.evaluate(() => window.__worldJourney())) === JSON.stringify(initial), 'Save, quit and Continue preserve the manifest');
   if (gameEntry.includes('.html')) check(await page.locator('.atlas-terrain image').evaluateAll(es => es.every(e => e.getAttribute('href').startsWith('data:'))), 'Standalone world artwork is embedded');
+  await bandsFit("1440x1080");
   await shot("01-world-desktop");
   await page.locator(".atlas-core.current").hover();
   await shot("02-landmark-hover");
@@ -76,9 +92,10 @@ try {
   check(
     (await page.evaluate(() => window.__worldJourney())).currentNodeId ===
       initial.currentNodeId,
-    "Inspecting a road does not travel",
+    "Selecting a road does not travel",
   );
-  await page.locator("[data-atlas-travel]").click();
+  check(await page.locator("#atlas-enter").isEnabled(), "Enter is offered for an open road");
+  await page.locator("#atlas-enter").click();
   await page.locator(".combat").waitFor();
   await page.waitForTimeout(900);
   await shot("06-live-regional-combat");
@@ -96,6 +113,7 @@ try {
   );
   await page.setViewportSize({ width: 390, height: 844 });
   await atlas();
+  await bandsFit("390x844");
   await shot("07-world-phone");
   await inspect();
   await page.locator('[data-local-point="crownfall/forge"]').click();
@@ -119,7 +137,7 @@ try {
   );
   check(
     await page.evaluate(() =>
-      document.activeElement?.hasAttribute("data-atlas-inspect-current"),
+      document.activeElement?.hasAttribute("data-atlas-inspect"),
     ),
     "Focus returns after dialog close",
   );

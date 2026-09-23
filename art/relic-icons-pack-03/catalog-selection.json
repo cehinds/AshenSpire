@@ -1,0 +1,91 @@
+[
+  {
+    "id": "ivoryComb",
+    "name": "Ivory Comb",
+    "rarity": "common",
+    "lore": "Someone kept themselves tidy right up until the end.",
+    "subject": "A single ancient ivory grooming comb, wide horizontal gently arched spine, ten thick slightly uneven teeth pointing downward. A few teeth chipped short. Warm aged bone, charcoal dirt in shallow carved grooves, a thin worn antique gold repair band at one end. Three-quarter near-frontal view, melancholy humble personal possession. No hair, no skull, no extra objects.",
+    "prompt": "Use case: stylized-concept. One AshenSpire dark fantasy inventory relic icon, square image, genuine transparent RGBA background. Full isolated object centered at 80% canvas, clear margins. No text, no border, no environment, no ground, no painted checkerboard. Painterly worn tactile materials with broad readable silhouette at 64 pixels. Restrained antique gold, charcoal, muted burgundy, olive or indigo as appropriate; soft upper-left highlights. No floating particles or large glow. A single ancient ivory grooming comb, wide horizontal gently arched spine, ten thick slightly uneven teeth pointing downward. A few teeth chipped short. Warm aged bone, charcoal dirt in shallow carved grooves, a thin worn antique gold repair band at one end. Three-quarter near-frontal view, melancholy humble personal possession. No hair, no skull, no extra objects. Canonical lore: Someone kept themselves tidy right up until the end.",
+    "editPrompt": "Edit this Ivory Comb image. Preserve the exact comb design, ivory texture, gold repair band and chipped teeth. Remove the entire background and glow including all spaces between teeth. Output actual transparent RGBA PNG alpha, NOT a black background, NOT a checkerboard drawn into pixels. Center full comb within a square canvas with 10 percent clear margins. No ground shadow or glow. This is a game icon cutout.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory reward and other standard relic reward rolls.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+      "bossOwner": "None; not a boss-rarity relic.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js",
+        "src/content/events.js:namelessKeeper"
+      ]
+    }
+  },
+  {
+    "id": "blessedDew",
+    "name": "Blessed Dew",
+    "rarity": "uncommon",
+    "lore": "It gathers on the vial overnight, from nowhere, for no one.",
+    "subject": "One small rounded pear-shaped vial of smoky pale indigo glass, short neck and worn antique-gold stopper, dark metal foot ring. A shallow pool of softly luminous pale silver-blue dew inside and three broad condensation droplets on its outer glass. Simple sacred object with no symbol or inscription, clear pear silhouette, transparent glass represented with restrained semi-transparent areas, no background reflections.",
+    "prompt": "Use case: stylized-concept. One AshenSpire dark fantasy inventory relic icon, square image, genuine transparent RGBA background. Full isolated object centered at 80% canvas, clear margins. No text, no border, no environment, no ground, no painted checkerboard. Painterly worn tactile materials with broad readable silhouette at 64 pixels. Restrained antique gold, charcoal, muted burgundy, olive or indigo as appropriate; soft upper-left highlights. No floating particles or large glow. One small rounded pear-shaped vial of smoky pale indigo glass, short neck and worn antique-gold stopper, dark metal foot ring. A shallow pool of softly luminous pale silver-blue dew inside and three broad condensation droplets on its outer glass. Simple sacred object with no symbol or inscription, clear pear silhouette, transparent glass represented with restrained semi-transparent areas, no background reflections. Canonical lore: It gathers on the vial overnight, from nowhere, for no one. CRITICAL: output an actual alpha-transparent game asset cutout, without any backdrop or glow halo.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory reward and other standard relic reward rolls.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+      "bossOwner": "None; not a boss-rarity relic.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js",
+        "src/content/events.js:namelessKeeper"
+      ]
+    }
+  },
+  {
+    "id": "gravetendersBell",
+    "name": "Gravetender's Bell",
+    "rarity": "uncommon",
+    "lore": "One toll for each name laid down. The tending is in the counting.",
+    "subject": "One heavy old handheld funerary bell, broad flared cold charcoal iron cup with rubbed antique gold lip, a thick upright loop handle wrapped once in frayed muted olive cloth. Large small clapper visible in the dark interior below the angled lip. Hand-worked ridges and a few deep tally grooves without readable writing. Three-quarter frontal view. Quiet dignified care, no skulls, no extra props.",
+    "prompt": "Use case: stylized-concept. One AshenSpire dark fantasy inventory relic icon, square image, genuine transparent RGBA background. Full isolated object centered at 80% canvas, clear margins. No text, no border, no environment, no ground, no painted checkerboard. Painterly worn tactile materials with broad readable silhouette at 64 pixels. Restrained antique gold, charcoal, muted burgundy, olive or indigo as appropriate; soft upper-left highlights. No floating particles or large glow. One heavy old handheld funerary bell, broad flared cold charcoal iron cup with rubbed antique gold lip, a thick upright loop handle wrapped once in frayed muted olive cloth. Large small clapper visible in the dark interior below the angled lip. Hand-worked ridges and a few deep tally grooves without readable writing. Three-quarter frontal view. Quiet dignified care, no skulls, no extra props. Canonical lore: One toll for each name laid down. The tending is in the counting. CRITICAL: output an actual alpha-transparent game asset cutout, without any backdrop or glow halo.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "The Keeper of the Nameless event: choose “Accept the keeper’s thanks” when that choice is available.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "0% — quest-pool relic; guaranteed from the eligible Accept Thanks choice.",
+      "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+      "bossOwner": "No boss owner; awarded by the Keeper through the quest.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js",
+        "src/content/events.js:namelessKeeper"
+      ]
+    }
+  },
+  {
+    "id": "wyrmHeart",
+    "name": "Wyrm Heart",
+    "rarity": "rare",
+    "lore": "It still beats. It expects something of you.",
+    "subject": "One fantastical preserved dragon heart, compact anatomical heart shape with two thick vessel stumps on top. Deep muted burgundy leathery muscle merging into charcoal-black reptile scales around its lower half. Subtle warm ember-orange fissure across its central lobe implies a stubborn heartbeat. Old, heavy, magical specimen, no dripping blood, no gore spray, no pedestal, no jewelry or cage. Bold pearlike asymmetrical organic silhouette.",
+    "prompt": "Use case: stylized-concept. One AshenSpire dark fantasy inventory relic icon, square image, genuine transparent RGBA background. Full isolated object centered at 80% canvas, clear margins. No text, no border, no environment, no ground, no painted checkerboard. Painterly worn tactile materials with broad readable silhouette at 64 pixels. Restrained antique gold, charcoal, muted burgundy, olive or indigo as appropriate; soft upper-left highlights. No floating particles or large glow. One fantastical preserved dragon heart, compact anatomical heart shape with two thick vessel stumps on top. Deep muted burgundy leathery muscle merging into charcoal-black reptile scales around its lower half. Subtle warm ember-orange fissure across its central lobe implies a stubborn heartbeat. Old, heavy, magical specimen, no dripping blood, no gore spray, no pedestal, no jewelry or cage. Bold pearlike asymmetrical organic silhouette. Canonical lore: It still beats. It expects something of you. CRITICAL: output an actual alpha-transparent game asset cutout, without any backdrop or glow halo.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory reward and other standard relic reward rolls.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+      "bossOwner": "None; not a boss-rarity relic.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js",
+        "src/content/events.js:namelessKeeper"
+      ]
+    }
+  }
+]

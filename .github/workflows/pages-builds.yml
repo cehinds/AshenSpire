@@ -149,6 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          lfs: true
           fetch-depth: 0
       # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
       # test release main` is atomic: `fatal: couldn't find remote ref test`

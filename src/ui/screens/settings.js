@@ -1,3 +1,4 @@
+import { previewPrologue } from './prologue.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -6,6 +7,11 @@
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
+import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
+import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -17,21 +23,118 @@ import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
-import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
+import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
 } from '../../model/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
+import { t } from '../strings.js';
+import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
+import { contentBundle } from '../../content/index.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import {
+  prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
+  prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
+  prologueFreeSlot, prologueStagedOrder, PROLOGUE_PREFIX, PROLOGUE_DEFAULTS,
+} from '../../model/prologue.js';
 
 const UI_DEFAULTS = balance.ui;
+// The card's authored sizes, so the rows below state a DEFAULT they read
+// rather than a number typed twice. content/config/ui/components/card.json is
+// the one home; these rows lay a tuning override over it.
+const CARD_LEVELS = cardLevels();
+// The same authored range the model clamps to, so the control and the width it
+// produces cannot disagree about what is in bounds.
+const CARD_WIDTH_BOUNDS = cardWidthBounds();
+// A CLIPBOARD WRITE OUTLIVES THE PANEL THAT STARTED IT, so the guard against a
+// second export cannot live inside `renderSettings`. It did, and closing and
+// reopening Settings handed the button a fresh `false` while the first write
+// was still unsettled — two writes in flight again, free to land in either
+// order, which is the one thing the guard exists to prevent. It belongs to the
+// clipboard operation's lifetime, so it sits here.
+//
+// IT CARRIES NOTHING ELSE, AND THE REASON IS A CLAIM I GOT WRONG. It held the
+// block and the settings bag that produced it, so a late landing could say
+// whether that block was still the one on the sliders. I justified that with
+// "there is ONE bag" — and there is not: `persistSettingsChange`
+// (`src/main.js`) reassigns `activeSettings` from a fresh `saves.loadMeta()`
+// on every change, and `loadMeta` returns a NEW object each call. A render
+// therefore holds the bag it opened with, not the one in force later, so the
+// comparison could report the opposite of the truth. A notice that cannot be
+// made reliable should not be made at all, so the late landing now states only
+// what is always true: the block on the clipboard is the one from that copy.
+let exportWritePending = false;
+// THE BAG IN FRONT OF THE USER, which is not the one a handler closed over.
+// `persistSettingsChange` (`src/main.js`) reassigns `activeSettings` from a
+// fresh `saves.loadMeta()` on every change, so each render opens with a
+// DIFFERENT object: a panel writes into its own bag (`settings[key] = val`
+// below) and therefore stays right about itself, while a handler left over
+// from a CLOSED panel keeps reading a bag nobody writes to any more. Anything
+// that asks "what do the sliders read NOW" has to ask the live panel, so the
+// current render records itself here and the export's settlement reads this
+// rather than its own closure.
+let panelSettings = null;
+// A NOTICE POSTED TO A CLOSED PANEL IS LOST, and the late clipboard landing is
+// the only notice in this screen that can arrive after its panel has gone:
+// `showSettingsNotice` finds no `[data-settings-host]` and returns. So the
+// clipboard would be overwritten after the UI had said it was not, with the
+// announcement that was supposed to cover exactly that dropped on the floor.
+// It is held here instead and posted by the next render. The console gets it
+// either way, because a panel that is never reopened must not swallow it.
+let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
 // value the engine actually resolves rows against, so the row that turns it
 // reads it from there and a copy cannot drift.
 const DERIVED_DEFAULTS = derivedStatRules.defaults;
+// `retired: true` is a row that keeps its KEY so an exported configuration
+// still imports and still applies, and stays off the screen because nothing a
+// player can reach depends on it — today, the creation pools of the modes
+// `characterCreation.visibleModeIds` does not offer. The screen showed three
+// near-identical "starting stat pool" rows for one reachable pool; this is the
+// line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
+// directly, so import is unaffected.
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+
+// A row that holds no value of its own: a button, the fullscreen action, the
+// opening's list editor. They are never exported and never reset, because
+// there is nothing under their key to export or take away.
+const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
+
+// ---- the Wireframes tab: DERIVED from the choice catalogue ------------------
+//
+// "I want to customize the wireframe choices for modals and menus and scenes"
+// (owner, 2026-09-20), as one Advanced group whose topics are the three
+// families and whose rows are dropdowns. Not one row typed per choice: the
+// catalogue (models/WireframeChoiceModel.js) already has to name every option
+// for the components that read them, and a second copy here is the drift this
+// screen has learned to refuse everywhere else (see graceRefillRows above). A
+// fourth family, or a third option on an existing one, is an edit to the model
+// and NOTHING here.
+//
+// `dropdown: true` on every row although two of them have three options: the
+// chip strip is the default under four, and the owner asked for drop downs.
+// `wireframeTopic` is what files a row under Modals, Menus or Scenes
+// (models/AdvancedSettingsGroups.js).
+function wireframeChoiceRows() {
+  return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
+    cat: 'Advanced',
+    advancedGroup: 'Wireframes',
+    wireframeTopic: group.label,
+    key: choice.key,
+    type: 'choice',
+    dropdown: true,
+    def: choice.def,
+    choices: choice.options.map((entry) => entry.id),
+    choiceLabels: Object.fromEntries(choice.options.map((entry) => [entry.id, entry.label])),
+    label: choice.label,
+    note: choice.note,
+  })));
+}
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -87,12 +190,39 @@ const ROWS = [
     note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
+  // ---- cat: 'Combat' -----------------------------------------------------
+  //
+  // HIS REPORT, LOOKING AT THE ADVANCED SECTION LIST: "no good section to
+  // customize combat, combat animation, etc". He was right, and the reason is
+  // that combat's presentation had no home — it had three.
+  //
+  //   Combat pacing / Rendering quality / Screen shake / played-card animation
+  //     -> General > Display > "Effects & pacing", a bag that also held the
+  //        TITLE SCREEN's lit-city pause, so its name did not promise combat.
+  //   Character sprites -> Advanced > Interface > "Characters", i.e. behind the
+  //        debugging surface, for a row that decides what a player looks at for
+  //        the whole run.
+  //   Combat Armaments / phone placement -> General > Display > "Interface",
+  //        filed with the accent colour and the UI scale.
+  //
+  // And the one section NAMED for combat — Advanced > "Combat & actors" — is
+  // authored balance constants (poise, exposure), which is the opposite of what
+  // the name offers someone hunting for an animation switch.
+  //
+  // So these seven rows carry `cat: 'Combat'` and the General tab grows a third
+  // group beside Display and Audio (GENERAL_GROUPS). NOT a fourth top-level tab:
+  // `filedCategories()` is authored, so a new `cat` adds a GROUP and never a tab
+  // — the tab strip stays three wide at every screen size it was measured at.
+  //
+  // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
+  // Advanced tip now says where the feel settings went so the section named for
+  // combat stops being a dead end.
+  { cat: 'Combat', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
-  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',
+  { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
     note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },
-  { cat: 'Display', key: 'performanceMode', type: 'choice', def: 'auto',
+  { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto',
     choices: ['auto', 'full', 'lite'], label: 'Rendering quality',
     note: 'Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.' },
   { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
@@ -188,7 +318,9 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
     choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
     note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
-  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
+  // `selfEvident`: W1a shows help only where the effect is not obvious. The
+  // note stays on the row as the one place the sentence lives; it is not drawn.
+  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
@@ -197,22 +329,24 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
-  { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
+  { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
+    note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true,
     note: 'Show the run seed in the map header bar.' },
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
@@ -257,23 +391,25 @@ const ROWS = [
     choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
-  { cat: 'Display', key: 'armamentsPresentation', type: 'choice', def: 'radial',
+  { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: 'Combat Armaments',
     note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
-  { cat: 'Display', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
+  { cat: 'Combat', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
     choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
     note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
 
-  { cat: 'Display', key: 'showPlayedCard', def: false, label: 'Show played card animation',
+  { cat: 'Combat', key: 'showPlayedCard', def: false, label: 'Show played card animation',
     note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
+
+  ...HUD_VISIBILITY_SETTINGS,
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
     note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
-  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
+  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume', selfEvident: true,
     note: 'Ambient score for the title, map, and battles.' },
-  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
+  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects', selfEvident: true,
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
   { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
@@ -435,11 +571,35 @@ const ROWS = [
   // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
   // `derivedStatRules.defaults` — its one home, one import away, so this row
   // cannot drift from the rule it turns.
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+  // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
+  // content/config/ui/components/card.json and ship as the default; these rows
+  // lay an override over that table so a size can be tried against real cards
+  // without a rebuild, and `cardSizingExport` hands back the exact JSON block
+  // to paste into the file when a number is worth keeping.
+  //
+  // The ladder is the contract: a card you opened to read is never smaller
+  // than one you were browsing past. A set of numbers that breaks it is
+  // REFUSED and the authored table stands — see cardLevelsWithOverrides.
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
+    def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
+    note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_mobile', type: 'number',
+    def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
+    note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
+    def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
+    note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
+    def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
+    note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
+    label: 'Export card sizes',
+    note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
-    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
     min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
     label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
@@ -449,10 +609,18 @@ const ROWS = [
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
     note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+  ...ADVANCED_CONFIG_ROWS,
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
+    note: 'Ask to export a configuration file after Done and Save.' },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: 'Export game configuration',
+    note: 'Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.' },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: 'Load game configuration',
+    note: 'Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
   ...graceRefillRows(),
+  ...wireframeChoiceRows(),
 ];
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
@@ -490,22 +658,83 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
+  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
+  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
+  // ONE TAB FOR ONE IDEA (owner, 2026-09-20). "Class defaults" was its own tab
+  // and held the class tables and the tier size while the creation pool sat
+  // here — one concept, two menus, and the two disagreed. Class defaults are
+  // now topics under Progression. The id is GONE rather than emptied because an
+  // emptied one draws a blank panel in silence: advanced group ids are not a
+  // declared surface (src/ui/surfaces.js declares overlayTab, settingsCategory,
+  // armouryView, armourySubject and menuAct — not these), so `assertSurfaces`
+  // would not catch it. A stored id that is gone is resolved by
+  // `activeAdvancedGroup`, which both the painter and the reset button read.
+  { id: 'Progression', label: 'Progression', tip: 'The points a new character starts with: the creation pool, each class’s defaults, level-up and stat conversions.' },
+  // THE TIP CARRIES A FORWARDING ADDRESS, and it is the other half of the
+  // report: this section is NAMED for combat and holds authored constants, so
+  // it is exactly where someone looking for an animation switch lands and finds
+  // nothing they recognise. One clause ends that walk.
+  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
+  { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
+  { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
+  { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
   { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  // The wireframe decisions the drawings leave open, one topic per family of
+  // surfaces. Separate from Interface because these are not "extra controls":
+  // they answer which wireframe a whole family of surfaces draws, and the
+  // answer reaches every door, menu and scene at once.
+  { id: 'Wireframes', label: 'Wireframes', tip: 'How windows, menus and scenes are laid out. Every choice starts where the game already draws it.' },
+  { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
+  { id: 'Export', label: 'Import / Export', tip: 'Load or save game configuration as a portable JSON file.' },
+  { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
+  { id: 'About', label: 'About', tip: 'Version and credits.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
+/**
+ * activeAdvancedGroup(settings) → the Advanced group actually on screen.
+ *
+ * ONE RESOLUTION, READ BY BOTH DOORS. The painter fell back to the first group
+ * when the stored id no longer existed and never wrote the fallback back, so
+ * "Class defaults" — a tab this change retired — stayed in the profile. The
+ * reset button then read the RAW stored value, asked for the subgroups of a
+ * group that is gone, got none, reset zero keys and said nothing. Anyone whose
+ * last-open tab was that one met it on first launch of the new build.
+ */
+export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
 
-const CATEGORY_LABELS = {
-  Display: 'Game',
-  Accessibility: 'Accessibility',
-};
+export function activeAdvancedGroup(settings) {
+  const stored = settings?.[ADVANCED_CAT_KEY];
+  return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+}
+
+export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
+
+// The groups the General tab's first picker offers, in the order it offers
+// them. ONE HOME: the tab's row filter, the picker, the stored-value migration
+// and Reset-this-group all read this list, and a fifth group is one entry here
+// plus a branch in `generalGroups`. They were four separate `['Display',
+// 'Audio']` literals before Combat existed, which is four places for a fifth
+// group to be forgotten in.
+export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio'];
+
+/** The General group a stored value names, or the first one. Never undefined:
+ *  a bag written by an older build can hold a group this one dropped. */
+export function generalGroup(settings) {
+  return GENERAL_GROUPS.includes(settings?.settingsGeneralCategory)
+    ? settings.settingsGeneralCategory : GENERAL_GROUPS[0];
+}
+
+// W1a names the first category Display, as its id already is. (It read "Game"
+// from f17d9a2e; restoring that is one entry here.)
+const CATEGORY_LABELS = {};
 
 function categoryLabel(cat) {
   return CATEGORY_LABELS[cat] || cat;
@@ -519,6 +748,7 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
+  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat)) };
   if (SECTIONS[cat]) return SECTIONS[cat];
   const rows = ROWS.filter((r) => r.cat === cat);
   return rows.length ? { rows } : null;
@@ -537,7 +767,7 @@ export function categoryHandler(cat) {
  * derived from it, so the two cannot drift.
  */
 export function filedCategories() {
-  return [...new Set([...ROWS.map((r) => r.cat), ...Object.keys(SECTIONS)])];
+  return ['General', 'Accessibility', 'Advanced'];
 }
 
 /** Every category that exists, in the order it is drawn. Derived, one home. */
@@ -645,8 +875,60 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
+/**
+ * compactRowLabel(label, topic) → the label with the leading subjects the tab
+ * already names taken off.
+ *
+ * The row owns its full label; a tab is a heading, and a heading repeated in
+ * every line beneath it is noise. "Reaver — Strength" under the Reaver tab is
+ * "Strength"; "Levels · Enemy Scaling · HP — Per level" under Enemy scaling is
+ * "HP — Per level". Nothing is invented and nothing is recased: this only ever
+ * removes whole leading subjects, and only when they ARE the tab.
+ *
+ * A TAB NAME CAN SPAN SEVERAL SUBJECTS, and comparing one at a time missed
+ * every such tab. `Equipment drops` is one heading over rows that read
+ * "Equipment · Drops — Enabled": no single subject folds to "equipmentdrops",
+ * so all nine rows said the tab's name back to it. Rules → Skill xp and
+ * Rules → Skill class did the same. So a RUN of adjacent subjects is matched,
+ * longest reach first, which subsumes the single-subject case.
+ *
+ * A tab that renames what it covers still matches nothing, by design: Rewards
+ * → `Shop · Card prices` heads rows built from `shop.cardCost.*`, and "Card
+ * prices" is not "Card Cost". Those keep their full label rather than have
+ * this function guess.
+ *
+ * It never returns an empty label. A row whose every subject matches its tab
+ * keeps its leaf, and a leaf that is itself blank keeps the whole label,
+ * because a blank row is worse than a redundant one.
+ */
+export function compactRowLabel(label, topic) {
+  const text = String(label || '');
+  // The LAST em dash separates the leaf, so a leaf containing one of its own
+  // ("Enter: Bulwark — impact override" under a two-part subject) still splits
+  // where a reader would split it.
+  const cut = text.lastIndexOf(' — ');
+  if (cut < 0) return text;
+  const leaf = text.slice(cut + 3);
+  const subjects = text.slice(0, cut).split(/ · | — /);
+  const fold = (value) => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const want = fold(topic);
+  if (!want) return text;
+  let matched = -1;
+  for (let end = subjects.length - 1; end >= 0 && matched < 0; end -= 1) {
+    for (let start = 0; start <= end; start += 1) {
+      if (fold(subjects.slice(start, end + 1).join(' ')) === want) { matched = end; break; }
+    }
+  }
+  if (matched < 0) return text;
+  const kept = subjects.slice(matched + 1);
+  if (kept.length) return `${kept.join(' · ')} — ${leaf}`;
+  return leaf.trim() || text;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const note = rowNote(settings, r);
+  // W1a: help only where the effect is not obvious. Condition and status lines
+  // are feedback, and settingsRowShowsHelp always keeps them.
+  const note = settingsRowShowsHelp(r) ? rowNote(settings, r) : '';
   const condition = typeof r.note === 'function'
     ? ` data-setting-condition="${r.key}" aria-live="polite"`
     : '';
@@ -657,10 +939,106 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>
-        <span class="ls-hint set-note"${status}>${note}</span>${extra}
+        <span class="ls-label">${r.label}</span>${note ? `
+        <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  if (r.type === 'color') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
+  // ---- 'sceneList': THE OPENING AS A LIST, BECAUSE THAT IS WHAT IT IS ------
+  //
+  // Order was a number typed into a row per scene, which is workable at five
+  // scenes and clumsy the moment there are nine: to move one scene you edit two
+  // numbers, and nothing shows you the running order you are editing. The list
+  // IS the running order — drag it, or use the arrows, and the `order` keys are
+  // rewritten to match. Add / Duplicate / Remove work the empty slots the
+  // settings file already names, so a scene the owner adds is still a scene the
+  // importer can refuse a bad value for.
+  if (r.type === 'sceneList') {
+    const config = prologueConfig(settings);
+    const playing = prologueSequence(config);
+    // THE LIST IS THE STAGING, NOT "PLAYING, THEN THE REST". Listing the parked
+    // scenes after the playing ones meant every edit renumbered them to the end
+    // — switch a scene off, move anything, switch it back on, and it came back
+    // last. A scene that is off keeps its place here and gets it back.
+    const staged = prologueStagedOrder(config);
+    const live = index => config.scenes[index].enabled !== false;
+    const anyLive = staged.some(live);
+    const free = prologueFreeSlot(config);
+    const item = (index, at) => {
+      const scene = config.scenes[index];
+      const on = live(index);
+      // Duplicate reads the scene it is beside, so the row that IS the next
+      // free slot cannot be the source: it would be both sides of the copy.
+      const canCopy = free && scene.id !== free;
+      return `<li class="set-scene" draggable="true" data-scene="${esc(scene.id)}" data-live="${on ? '1' : '0'}">
+        <span class="set-scene-grip" aria-hidden="true">⠿</span>
+        <span class="set-scene-name">${esc(scene.name || scene.id)}${isPrologueSlot(scene) ? ' <em>(added)</em>' : ''}</span>
+        <span class="set-scene-at">${on ? `${at + 1} / ${playing.length}` : 'not playing'}</span>
+        <span class="set-scene-acts">
+          <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
+          <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
+          <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
+          ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
+        </span>
+      </li>`;
+    };
+    let at = -1;
+    const list = staged.map(index => item(index, live(index) ? ++at : -1)).join('');
+    const slotsLeft = config.scenes.filter(scene => isPrologueSlot(scene) && scene.enabled === false && !String(scene.text || '').trim()).length;
+    return `${rowOpen('set-row-wide set-row-scenes')}${stack()}
+      <div class="r-trail set-scene-trail">
+        <ol class="set-scene-list" data-scene-list>${list}</ol>
+        <div class="set-scene-tools">
+          <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
+          <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
+          ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
+        </div>
+      </div></div>`;
+  }
+  // ---- 'presetSlot': a whole opening, parked under a name ------------------
+  if (r.type === 'presetSlot') {
+    const parkedName = typeof settings[r.nameKey] === 'string' && settings[r.nameKey].trim()
+      ? settings[r.nameKey] : PROLOGUE_DEFAULTS.presets[r.presetId].name;
+    const filled = typeof settings[r.key] === 'string' && settings[r.key].length > 2;
+    return `${rowOpen('set-row-wide set-row-preset')}<span class="as-labelstack">
+        <span class="ls-label">${esc(parkedName)}</span>
+        <span class="ls-hint set-note">${filled ? 'Holds a saved opening.' : 'Empty.'} ${note}</span>
+      </span>
+      <span class="r-trail set-preset-acts">
+        <button type="button" class="as-btn" data-preset-save="${esc(r.presetId)}">Save</button>
+        <button type="button" class="as-btn" data-preset-load="${esc(r.presetId)}"${filled ? '' : ' disabled'}>Load</button>
+        <button type="button" class="as-btn" data-preset-clear="${esc(r.presetId)}"${filled ? '' : ' disabled'}>Clear</button>
+      </span></div>`;
+  }
+  // ---- 'colorSwatch': BOTH WAYS OF NAMING A COLOUR, ONE OF THEM FOLDED -----
+  //
+  // The swatches are the palette this game already paints with, so the common
+  // answer is one tap. The wheel is every other colour, and it is DISCLOSED
+  // rather than always open: a permanently mounted system colour input made a
+  // one-line setting two lines tall on a phone, times every colour row the
+  // opening now has. Both write the same key, and the swatch row shows which
+  // one the stored value matches — including "none of them", which is itself
+  // the answer to "did I pick this from the wheel?".
+  if (r.type === 'colorSwatch') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    const chips = (r.swatches || []).map((color) => {
+      const on = String(color).toLowerCase() === String(value).toLowerCase();
+      return `<button type="button" class="as-swatch set-swatch${on ? ' on' : ''}" style="--swatch:${esc(color)}" data-key="${esc(r.key)}" data-color="${esc(color)}" aria-pressed="${on}" aria-label="${esc(color)}" title="${esc(color)}"></button>`;
+    }).join('');
+    return `${rowOpen('set-row-wide set-row-swatches')}${stack()}<span class="r-trail set-swatch-trail">
+        <span class="as-swatches" role="group" aria-label="${esc(r.label)}">${chips}</span>
+        <button type="button" class="as-btn set-wheel-toggle" data-wheel-toggle="${esc(r.key)}" aria-controls="set-wheel-${esc(r.key)}" aria-expanded="false">Colour wheel</button>
+        <input type="color" id="set-wheel-${esc(r.key)}" class="set-color set-wheel" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)} — colour wheel" hidden>
+      </span></div>`;
+  }
+  if (r.type === 'textarea') {
+    const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
+    return `${rowOpen('set-row-wide set-row-prologue')}${stack()}<span class="r-trail"><textarea class="set-prologue-text" data-key="${esc(r.key)}" maxlength="${r.maxLength}" aria-label="${esc(r.label)}">${esc(val)}</textarea></span></div>`;
+  }
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `${rowOpen('set-row-wide')}
@@ -673,13 +1051,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // number of its own. The synced slider (Part B) is still held behind #181.
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
+    const step = r.step ?? 1;
+    const inputMode = r.integer === false ? 'decimal' : 'numeric';
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
-                 min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
+                 min="${r.min}" max="${r.max}" step="${step}" inputmode="${inputMode}"
                  aria-label="${r.label}">
-          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="1" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
+          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="${step}" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
@@ -701,9 +1081,14 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       </div>`;
   }
   if (r.type === 'choice') {
-    const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
+    const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
+    const cur = r.choices.includes(stored) ? stored : r.def;
+    if (r.dropdown || r.choices.length > 3) {
+      const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
+    }
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
@@ -892,11 +1277,66 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
-  const def = Number(row.def);
+  if (settings?.[row.key] === undefined && row.key.startsWith('gameConfig.attributeRules.presets.')) {
+    const path = row.key.slice('gameConfig.'.length).split('.');
+    return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
+  }
   const raw = (settings || {})[row.key];
-  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
-  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
-  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+  // The rule itself lives in CardSizeModel so the card-size model and this row
+  // cannot disagree about what a stored number means — they did, by a floor
+  // against a round.
+  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
+  const numeric = raw === '' || raw === null || raw === undefined ? Number(row.def) : Number(raw);
+  if (!Number.isFinite(numeric)) return Number(row.def);
+  const clamped = Math.min(row.max, Math.max(row.min, numeric));
+  const step = Number(row.step) || 0.01;
+  const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
+  return Number(clamped.toFixed(precision));
+}
+
+/**
+ * typedNumberRefusal(row, raw) → the sentence for a number HE TYPED that the
+ * row's domain will not take, or null.
+ *
+ * THE CLAMP IS NOT A REFUSAL HE CAN SEE. `resolveNumberRow` is the one gate and
+ * it clamps: type 8 into a row whose floor is 12 and 12 is what gets stored,
+ * displayed, and handed to `advancedConfigProblemRows` — which then finds a
+ * perfectly legal number and says nothing. The refusal naming the Starseer's
+ * kit was reachable only by injecting a bad value past the field.
+ *
+ * AND IT CANNOT BORROW THE EXISTING SENTENCE. `startingStatPoolProblems` ends
+ * "The value in use is 35" — true when the bad value was STORED and the
+ * authored default stood, and a lie here, where the clamp means 12 is in use.
+ * So this says what the clamp actually did: what was typed, the bound, why the
+ * bound is there (the row's own `boundsNote`, which names the class and kit),
+ * and the number the game is now using.
+ *
+ * Null the moment the typed value is legal — the message must LEAVE, which is
+ * the same rule `numberAppliedHtml` and `paintConfigProblems` live by.
+ */
+export function typedNumberRefusal(row, raw) {
+  if (!row || row.type !== 'number') return null;
+  const text = String(raw ?? '').trim();
+  if (text === '') return null;                        // an empty field is not a zero
+  const typed = Number(text);
+  if (!Number.isFinite(typed)) return null;            // unreadable is unset, as everywhere else
+  const wanted = row.integer !== false ? Math.floor(typed) : typed;
+  if (wanted >= row.min && wanted <= row.max) return null;
+  const used = resolveNumberRow({ [row.key]: raw }, row);
+  return `${row.label}: ${JSON.stringify(typed)} is outside ${row.min}\u2013${row.max} and was refused.`
+    + `${row.boundsNote ? ` ${row.boundsNote}` : ''}`
+    + ` The value in use is ${used}; every other setting you changed is still applied.`;
+}
+
+/**
+ * commitNumberRow(settings, row, raw) → { value, refusal }
+ *
+ * WHAT A TYPED NUMBER BECOMES, as one answer. The handler below wires it to the
+ * field and the slider; this holds the decision, so the node suite can drive the
+ * SAME code the screen runs instead of a second copy of its rules.
+ */
+export function commitNumberRow(settings, row, raw) {
+  return { value: resolveNumberRow({ [row.key]: raw }, row), refusal: typedNumberRefusal(row, raw) };
 }
 
 /**
@@ -1077,6 +1517,59 @@ function refreshApplied(container, settings) {
 }
 
 /**
+ * paintConfigProblems(container, settings) → the problem sentences, deduped.
+ *
+ * A REFUSAL IS ADDRESSED TO A ROW (owner, 2026-09-20 — "the new game assign
+ * and standard loadout don't seem to change on a new game despite having the
+ * values change in the settings"). The game was refusing his creation pool and
+ * saying so in one line at the top of Settings, four screens away from the
+ * twenty class cells and the pool row it was about; from where he sat the dial
+ * simply did nothing.
+ *
+ * Same seam as `refreshApplied` above: this reads the rows the panel actually
+ * drew and asks the model which keys are in trouble, so a new row costs
+ * nothing here. The line is REMOVED when the row is fine — a warning that is
+ * always on is decoration with a worried face (Sunna, and `numberAppliedHtml`
+ * lives by the same rule).
+ */
+export function paintConfigProblems(container, settings, extra = []) {
+  // `extra` carries the refusals the MODEL cannot see, because the value never
+  // reached it: a typed number the field clamped on its way in (see
+  // `typedNumberRefusal`). Same shape, same painting, same dedupe.
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...extra];
+  const byKey = new Map();
+  for (const entry of entries) {
+    for (const key of entry.keys || []) {
+      if (!byKey.has(key)) byKey.set(key, []);
+      const messages = byKey.get(key);
+      if (!messages.includes(entry.message)) messages.push(entry.message);
+    }
+  }
+  const painted = new Set();
+  container.querySelectorAll('.set-row [data-key]').forEach((control) => {
+    const row = control.closest('.set-row');
+    if (!row || painted.has(row)) return;
+    painted.add(row);
+    const stack = row.querySelector('.as-labelstack') || row;
+    const existing = stack.querySelector('[data-row-problem]');
+    const messages = byKey.get(control.dataset.key) || [];
+    if (!messages.length) {
+      existing?.remove();
+      delete row.dataset.refused;
+      return;
+    }
+    const slot = existing || stack.appendChild(container.ownerDocument.createElement('p'));
+    slot.className = 'set-note set-applied limited';
+    slot.dataset.rowProblem = '';
+    slot.setAttribute('role', 'status');
+    slot.textContent = messages.join(' ');
+    row.dataset.refused = '';
+  });
+  const seen = new Set();
+  return entries.map((entry) => entry.message).filter((message) => !seen.has(message) && seen.add(message));
+}
+
+/**
  * anchorPressed(container, btn, wasAt) — keep the pressed control where the
  * finger left it.
  *
@@ -1170,8 +1663,44 @@ function shownCategories(saves) {
   });
 }
 
-/** The body of one category, as HTML. */
+/** The topics one General group is drawn in, as Map(label -> rows).
+ *
+ * EXPORTED so the Combat group's shape is asserted rather than described: the
+ * report that created it ("no good section to customize combat, combat
+ * animation") is a claim about which NAME holds which ROW, and that claim is
+ * only worth anything if something reads it back. */
+export function generalGroups(category) {
+  const groups = new Map();
+  for (const row of categoryHandler(category).rows) {
+    const key = row.key;
+    const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
+      // "Effects & pacing" USED TO CATCH THE COMBAT ROWS TOO, and that is the
+      // bag the report was about: a player hunting for an animation switch had
+      // to guess that combat lived under a title-screen word. Those keys are
+      // `cat: 'Combat'` now, so what is left here is the title entrance — and
+      // the topic is named for the one thing it holds.
+      : /titleCity/.test(key) ? 'Title screen' : 'Interface'
+      : category === 'Combat' ? /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
+      : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(row);
+  }
+  return groups;
+}
+
 function categoryHtml(cat, settings, saves) {
+  if (cat === 'General' || cat === 'Accessibility') {
+    const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
+    const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
+    const topics = generalGroups(selected);
+    const storedTopic = settings[`settingsGeneralTopic.${selected}`];
+    const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
+    return '<div class="set-general-pickers">'
+      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
+      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
+      + `</div><div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+  }
   const h = categoryHandler(cat);
   if (!h) {
     // The lone heading, made loud — now a lone TAB, which is louder still: it
@@ -1182,29 +1711,58 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  const heading = `<header class="set-section-head"><span class="as-eyebrow">Settings</span><h3 class="as-title-m">${esc(categoryLabel(cat))}</h3>`
-    + `<p class="as-subtitle">${esc(categoryTip(cat))}</p></header><hr class="as-hairline">`;
+  // NO PANE HEADING (W1a). It printed "Settings / <category> / <tip>" under a
+  // door already titled Settings, beside a tab already naming the category.
+  // The selected tab is the pane's identity: the panel is labelled by it
+  // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
-    const stored = settings[ADVANCED_CAT_KEY];
-    const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+    const active = activeAdvancedGroup(settings);
     const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     const groups = ADVANCED_GROUPS.map((group) => {
       const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog') {
+      if (group.id === 'Changelog' || group.id === 'About') {
         return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + '><div class="set-changelog-mount"></div></section>';
+          + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
       }
-      const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
+      const subgroups = advancedSubgroups(h.rows, group.id);
+      const selected = settings[`settingsAdvancedSubgroup.${group.id}`];
+      const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
+      const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
+        + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
+      const picker = '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
-        + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
+        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
+          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
+            // SHORTEN WHAT THE TAB ALREADY SAYS — and only that. The label
+            // itself has ONE home (`leafRows` in model/advancedConfig.js); a
+            // branch here used to rebuild every generated balance row's label
+            // out of `row.key`, splitting camelCase without capitalising it,
+            // which is how "hand Max" and "levels · player Starting Level"
+            // came to sit two rows under "HP — base amount" in one menu. That
+            // is gone. What is left is presentation: under a tab named
+            // "Enemy scaling", a row called "Levels · Enemy Scaling · HP — Per
+            // Level" says the tab's own name back to the reader, and the class
+            // tabs have always compacted that away. Now every tab does.
+            const compact = { ...row, label: compactRowLabel(row.label, sub.id) };
+            if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
+              // The class's own topic already says which class this is, so the
+              // note goes — EXCEPT the sentence naming the kit floor, which is
+              // the only place the row's minimum explains itself. Dropping it
+              // left the floor a number from nowhere.
+              compact.note = row.floorNote || '';
+            }
+            return settingsRowHtml(settings, compact);
+          }).join('')) + '</div>').join('') + '</section>';
     }).join('');
-    return `${heading}<div class="as-pane-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>${groups}`;
+    return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
+      + groups;
   }
-  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
-  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  if (h.mount) return `<div class="${h.mount}"></div>`;
+  return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 /**
@@ -1230,7 +1788,8 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null }) {
+  panelSettings = settings;
   let html = '';
   let cats = [];
   let current = null;
@@ -1240,7 +1799,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // SAFE and visibly: fall back to the first tab, which is where a player who
     // never chose one lands anyway.
     const stored = settings[CAT_KEY];
-    current = cats.includes(stored) ? stored : cats[0] || null;
+    current = cats.includes(stored) ? stored : ['Changelog', 'About'].includes(stored) ? 'Advanced' : cats[0] || null;
+    if (['Changelog', 'About'].includes(stored)) settings[ADVANCED_CAT_KEY] = stored;
+    if ([...GENERAL_GROUPS, 'Accessibility'].includes(stored)) settings.settingsGeneralCategory = stored;
     if (!cats.length) {
       // Nothing is filed anywhere. assertSurfaces fails the boot before a
       // player can meet this, so it is a developer's message, not a player's.
@@ -1264,8 +1825,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const tabs = cats.map((cat) => `<button class="as-railitem set-tab${cat === current ? ' on' : ''}" type="button"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"${cat === current ? ' aria-current="true"' : ''}`
         + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
-      html = `<div class="as-railed set-railed"><div class="as-rail set-tabs" role="tablist" aria-label="Settings sections"`
-        + ` data-surface="settingsCategory">${tabs}</div>`
+      // W1a COMPACT: one selector above the pane, naming the selected
+      // category — the kit's categoryNav, added below once the markup is in
+      // the page. It opens the SAME tabs, so every tool, tooltip and ring that
+      // reads `.set-tab` reads one set either way.
+      html = `<div class="as-railed set-railed" data-settings-nav="rail">`
+        + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
+        + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
     }
@@ -1273,17 +1839,31 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
+  if (!headerTools) {
+    headerTools = settingsHeaderTools();
+    headerTools.dataset.inlineSettings = 'true';
+  }
   container.setAttribute('data-settings-host', '');
+  // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
+  // in-run overlay has no head to hang them in, so they used to be prepended
+  // one after the other and landed as two stacked rows above the rail — the
+  // download button on its own line, the icon pair floating at the right of the
+  // next. Both ride one row now, and the CSS that styles them keys off
+  // `[data-settings-host]` so the overlay gets the same faces as the modal.
+  const inlineBar = document.createElement('div');
+  inlineBar.className = 'set-inline-bar';
+  if (onOffline) {
+    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
+    offline.addEventListener('click', onOffline);
+    inlineBar.append(offline);
+  }
+  if (headerTools.dataset.inlineSettings) inlineBar.append(headerTools);
+  if (inlineBar.childElementCount) container.prepend(inlineBar);
   // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
   // belongs to this render, so clearing Settings for Deck disconnects it and
   // releases listeners even while the shared container remains on the page.
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
-  if (onOffline) {
-    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
-    offline.addEventListener('click', onOffline);
-    container.prepend(offline);
-  }
 
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
@@ -1308,7 +1888,99 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // switch — the old nodes go with the innerHTML that replaced them, so nothing
   // accumulates. The one listener that is NOT per-panel (the resize handler for
   // the applied-zoom readout) is installed once per open, below.
+  // Move one set of section tabs between the sidebar and compact content pane.
+  const placeAdvancedNavigation = (mode = container.querySelector('.set-railed')?.dataset.settingsNav) => {
+    const sections = container.querySelector('.set-advanced-head');
+    if (!sections) return;
+    const vertical = mode !== 'selector';
+    sections.querySelector('[role="tablist"]').setAttribute('aria-orientation', vertical ? 'vertical' : 'horizontal');
+    if (vertical) container.querySelector('.set-tabs [data-member="Advanced"]')?.after(sections);
+    else container.querySelector('.set-panel')?.prepend(sections);
+  };
   const wire = () => {
+  mountFormationSettings(container, settings, onChange,
+    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
+  placeAdvancedNavigation();
+  headerTools.querySelector('[data-search-toggle]').onclick = () => {
+    const input = headerTools.querySelector('[data-advanced-search]');
+    input.hidden = !input.hidden;
+    headerTools.classList.toggle('search-open', !input.hidden);
+    headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
+    if (!input.hidden) input.focus();
+    else { input.value = ''; input.dispatchEvent(new Event('input')); }
+  };
+  container.querySelector('[data-general-select]')?.addEventListener('change', event => {
+    settings.settingsGeneralCategory = event.target.value;
+    onChange({ settingsGeneralCategory: event.target.value });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+  });
+  container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
+    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
+    settings[key] = event.target.value;
+    onChange({ [key]: event.target.value });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+  });
+  const syncTopicPicker = () => {
+    const picker = container.querySelector('.set-topic-select');
+    if (!picker) return;
+    const tabs = [...container.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')];
+    picker.hidden = !tabs.length;
+    picker.innerHTML = tabs.map(tab => `<option${tab.getAttribute('aria-selected') === 'true' ? ' selected' : ''}>${esc(tab.dataset.topic)}</option>`).join('');
+  };
+  syncTopicPicker();
+  container.querySelector('.set-topic-select')?.addEventListener('change', event => {
+    [...container.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(tab => tab.dataset.topic === event.target.value)?.click();
+  });
+  container.querySelector('.set-section-select')?.addEventListener('change', event => {
+    [...container.querySelectorAll('.set-subtab')].find(tab => tab.dataset.advancedGroup === event.target.value)?.click();
+  });
+  // A typed value the field clamped is refused HERE and nowhere else: it never
+  // reaches `settings`, so the model has nothing to report. Keyed by row, so a
+  // legal re-entry clears exactly the message it replaced.
+  const typedRefusals = new Map();
+  const reportAdvancedProblems = () => {
+    for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
+      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
+    }
+    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    if (section) {
+      let summary = section.querySelector('[data-hand-summary]');
+      if (!summary) {
+        summary = document.createElement('p');
+        summary.dataset.handSummary = '';
+        summary.className = 'set-group-summary';
+        summary.setAttribute('aria-live', 'polite');
+        section.querySelector('.set-group-summary').after(summary);
+      }
+      summary.textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {}) + ' Stat bonuses use whole intervals above the baseline.';
+      for (const row of handRulesRows(contentBundle.attributes)) {
+        const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
+        const read = path => path.split('.').reduce((v, k) => v[k], rules);
+        const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
+          || (row.fixedOnly && rules.drawMode !== 'fixed')
+          || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
+        controls.forEach(control => { control.disabled = !!disabled; control.setAttribute('aria-disabled', String(!!disabled)); });
+        controls.forEach(control => {
+          const wrapper = control.closest('.set-row');
+          wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
+          if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
+        });
+      }
+    }
+    // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
+    //
+    // This used to be one notice at the top of Settings carrying `problems[0]`
+    // and nothing else. It was TRUE and it was UNADDRESSED: with twenty class
+    // cells and a creation pool on screen, "which number is it refusing?" was
+    // a guess, and the owner's read was that the dial did nothing. Each row
+    // now says, under its own label, what was refused, why, and what the game
+    // is using instead. The banner stays for the problems that belong to no
+    // row (cross-field ranges), and as the thing you see from the other tab.
+    const problems = paintConfigProblems(container, settings, [...typedRefusals.entries()].map(([key, message]) => ({ keys: [key], message })));
+    if (problems.length) showSettingsNotice(problems[0], 'game-config');
+    else clearSettingsNotice('game-config');
+  };
   // The acknowledgement needs no manager and no settings — it always renders.
   const aboutMount = container.querySelector('.set-about-mount');
   if (aboutMount) renderAboutSection(aboutMount);
@@ -1316,23 +1988,141 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (changelogMount) renderChangelogSection(changelogMount);
 
   container.querySelectorAll('.set-subtab').forEach((button) => {
+    button.classList.add('as-railitem');
+    button.addEventListener('keydown', (event) => {
+      const tabs = [...container.querySelectorAll('.set-subtab')];
+      const vertical = button.closest('[role="tablist"]').getAttribute('aria-orientation') === 'vertical';
+      const delta = event.key === (vertical ? 'ArrowDown' : 'ArrowRight') ? 1
+        : event.key === (vertical ? 'ArrowUp' : 'ArrowLeft') ? -1 : 0;
+      const target = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1)
+        : delta ? tabs[(tabs.indexOf(button) + delta + tabs.length) % tabs.length] : null;
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      target.click();
+      target.focus();
+    });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
       settings[ADVANCED_CAT_KEY] = group;
+      const picker = container.querySelector('.set-section-select');
+      if (picker) picker.value = group;
       onChange({ [ADVANCED_CAT_KEY]: group });
       container.querySelectorAll('.set-subtab').forEach((candidate) => {
         const selected = candidate.dataset.advancedGroup === group;
         candidate.classList.toggle('on', selected);
         candidate.setAttribute('aria-selected', String(selected));
+        candidate.setAttribute('aria-pressed', String(selected));
       });
       container.querySelectorAll('.set-advanced-group').forEach((panel) => {
         panel.hidden = panel.dataset.advancedPanel !== group;
       });
+      syncTopicPicker();
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
+      filterAdvancedRows();
     });
   });
 
+  const advancedSearch = headerTools.querySelector('[data-advanced-search]');
+  const filterAdvancedRows = () => {
+    if (!advancedSearch) return;
+    const query = advancedSearch.value.trim().toLocaleLowerCase();
+    let shown = 0;
+    let total = 0;
+    const section = container.querySelector('.set-advanced-group:not([hidden])');
+    if (!section) {
+      container.querySelectorAll('.set-row').forEach(row => {
+        row.hidden = !!query && !row.textContent.toLocaleLowerCase().includes(query);
+      });
+      return;
+    }
+    const selected = section.querySelector('[data-topic][aria-selected="true"]')?.dataset.topic;
+    section.querySelectorAll('[data-topic-panel]').forEach(panel => {
+      panel.hidden = !query && !!selected && panel.dataset.topicPanel !== selected;
+      panel.dataset.searching = String(!!query);
+    });
+    section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
+      total += 1;
+      const match = !query || row.textContent.toLocaleLowerCase().includes(query)
+        || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
+      row.hidden = !match || row.dataset.handHidden === 'true';
+      if (match) shown += 1;
+    });
+    if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
+      panel.hidden = !panel.querySelector('.set-row:not([hidden])');
+    });
+    const count = section.querySelector('[data-config-count]');
+    if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
+  };
+  if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
+  container.querySelectorAll('.set-advanced-group').forEach(section => {
+    const selectTopic = topic => {
+      const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
+      settings[key] = topic;
+      onChange({ [key]: topic });
+      section.querySelectorAll('[data-topic]').forEach(tab => {
+        const active = tab.dataset.topic === topic;
+        tab.setAttribute('aria-selected', String(active));
+        tab.classList.toggle('on', active);
+      });
+      const picker = section.querySelector('.set-topic-select');
+      if (picker) picker.value = topic;
+      syncTopicPicker();
+      if (advancedSearch) advancedSearch.value = '';
+      filterAdvancedRows();
+    };
+    section.querySelectorAll('[data-topic]').forEach(tab => {
+      tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
+      tab.addEventListener('keydown', event => {
+        const tabs = [...section.querySelectorAll('[data-topic]')];
+        const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+        const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1)
+          : step ? tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length] : null;
+        if (!next) return;
+        event.preventDefault();
+        event.stopPropagation();
+        next.click();
+        next.focus();
+      });
+    });
+    section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
+  });
+  filterAdvancedRows();
+
+  headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
+    button.onclick = () => {
+      const currentGroup = activeAdvancedGroup(settings);
+      const groups = advancedSubgroups(ROWS, currentGroup);
+      const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
+      const rows = button.dataset.resetConfig === 'all' ? ROWS
+        : current === 'General' || current === 'Accessibility' ? (() => {
+          const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
+          const topics = generalGroups(section);
+          return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
+        })()
+        : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
+      const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+      const changed = {};
+      for (const key of keys) {
+        delete settings[key];
+        changed[key] = undefined;
+      }
+      onChange(changed);
+      headerTools.querySelector('details').open = false;
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    };
+  });
+
+  container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
+    btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('.set-prologue-text').forEach(input => {
+    input.addEventListener('input', () => {
+      settings[input.dataset.key] = input.value;
+      onChange({[input.dataset.key]:input.value});
+    });
+  });
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
@@ -1342,6 +2132,147 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  const commitColor = (key, value) => {
+    settings[key] = value;
+    onChange({ [key]: value });
+    // The swatch row is the readout as well as the control: a colour picked on
+    // the wheel lights its swatch if it happens to be one, and lights none if
+    // it is not.
+    container.querySelectorAll(`.set-swatch[data-key="${CSS.escape(key)}"]`).forEach(chip => {
+      const on = chip.dataset.color.toLowerCase() === value.toLowerCase();
+      chip.classList.toggle('on', on);
+      chip.setAttribute('aria-pressed', String(on));
+    });
+    const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(key)}"]`);
+    if (wheel && wheel.value.toLowerCase() !== value.toLowerCase()) wheel.value = value;
+  };
+  container.querySelectorAll('.set-color').forEach(input => {
+    input.addEventListener('input', () => commitColor(input.dataset.key, input.value));
+  });
+  container.querySelectorAll('.set-swatch').forEach(chip => {
+    chip.addEventListener('click', () => commitColor(chip.dataset.key, chip.dataset.color));
+  });
+  // ---- the opening's list editor and preset slots -------------------------
+  //
+  // Every write goes through one door: the model decides WHICH keys change
+  // (prologueReorderChanges / prologueSceneCopy / prologueSceneClear), this
+  // applies them the way the reset button already does — `undefined` unsets —
+  // and re-renders, because the list, the counts and the per-scene topics are
+  // all reading the same settings.
+  const applyPrologue = (changes, refocus = null) => {
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === undefined) delete settings[key]; else settings[key] = value;
+    }
+    if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    // A re-render replaces the button that was pressed, so reordering three
+    // places from the keyboard meant hunting for the arrow again after each
+    // press. The same control on the same scene takes the focus back.
+    if (refocus) container.querySelector(refocus)?.focus({ preventScroll: true });
+  };
+  // THE ORDER COMES FROM THE SETTINGS, NOT FROM THE DOM. A drag that is
+  // abandoned outside the list leaves the rows rearranged with nothing saved,
+  // and reading the DOM meant the next arrow press quietly persisted that
+  // abandoned arrangement. Every action re-derives the staging and edits it.
+  const stagedIds = () => {
+    const config = prologueConfig(settings);
+    return prologueStagedOrder(config).map(index => config.scenes[index].id);
+  };
+  container.querySelectorAll('[data-scene-list]').forEach(list => {
+    list.querySelectorAll('[data-scene-move]').forEach(btn => btn.addEventListener('click', () => {
+      const ids = stagedIds();
+      const from = ids.indexOf(btn.dataset.sceneId);
+      const to = from + (btn.dataset.sceneMove === 'up' ? -1 : 1);
+      if (from < 0 || to < 0 || to >= ids.length) return;
+      ids.splice(to, 0, ...ids.splice(from, 1));
+      applyPrologue(prologueReorderChanges(ids), `[data-scene-move="${btn.dataset.sceneMove}"][data-scene-id="${CSS.escape(btn.dataset.sceneId)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-toggle]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.sceneToggle;
+      const scene = prologueConfig(settings).scenes.find(row => row.id === id);
+      applyPrologue({ [prologueSettingKey(['scenes', id, 'enabled'])]: scene?.enabled === false },
+        `[data-scene-toggle="${CSS.escape(id)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-copy]').forEach(btn => btn.addEventListener('click', () => {
+      const source = btn.dataset.sceneCopy;
+      const slot = prologueFreeSlot(prologueConfig(settings));
+      // The free slot is never its own source — the markup disables that row's
+      // Duplicate, and this refuses it too rather than inserting at the front.
+      if (!slot || slot === source) return;
+      const ids = stagedIds().filter(id => id !== slot);
+      ids.splice(ids.indexOf(source) + 1, 0, slot);
+      applyPrologue({ ...prologueSceneCopy(settings, source, slot), ...prologueReorderChanges(ids) },
+        `[data-scene-remove="${CSS.escape(slot)}"]`);
+    }));
+    list.querySelectorAll('[data-scene-remove]').forEach(btn => btn.addEventListener('click', () => {
+      applyPrologue(prologueSceneClear(btn.dataset.sceneRemove), '[data-scene-add]');
+    }));
+    // Dragging writes the same keys as the arrows. A drag that ends anywhere
+    // but on another row is ABANDONED: the rows are put back by a re-render,
+    // so what is on screen is always what is saved.
+    let dragging = null, dropped = false;
+    list.querySelectorAll('[data-scene]').forEach(item => {
+      item.addEventListener('dragstart', event => {
+        dragging = item; dropped = false; item.classList.add('set-scene-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', item.dataset.scene);
+      });
+      item.addEventListener('dragend', () => {
+        dragging?.classList.remove('set-scene-dragging');
+        const moved = !dropped && dragging;
+        dragging = null;
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      });
+      item.addEventListener('dragover', event => {
+        if (!dragging || dragging === item) return;
+        event.preventDefault();
+        const box = item.getBoundingClientRect();
+        item.parentNode.insertBefore(dragging, event.clientY - box.top < box.height / 2 ? item : item.nextSibling);
+      });
+    });
+    list.addEventListener('dragover', event => { if (dragging) event.preventDefault(); });
+    list.addEventListener('drop', event => {
+      if (!dragging) return;
+      event.preventDefault();
+      dropped = true;
+      applyPrologue(prologueReorderChanges([...list.querySelectorAll('[data-scene]')].map(node => node.dataset.scene)));
+    });
+  });
+  container.querySelectorAll('[data-scene-add]').forEach(btn => btn.addEventListener('click', () => {
+    const slot = prologueFreeSlot(prologueConfig(settings));
+    if (!slot) return;
+    applyPrologue({
+      [prologueSettingKey(['scenes', slot, 'enabled'])]: true,
+      ...prologueReorderChanges([...stagedIds().filter(id => id !== slot), slot]),
+    }, `[data-scene-remove="${CSS.escape(slot)}"]`);
+  }));
+  container.querySelectorAll('[data-preset-save]').forEach(btn => btn.addEventListener('click', () => {
+    try {
+      applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetSave, 'data'])]: prologueSlotPayload(panelSettings || settings) });
+      showSettingsNotice('Opening saved to this slot. It travels in your configuration file.');
+    } catch (error) { showSettingsNotice(error.message); }
+  }));
+  container.querySelectorAll('[data-preset-load]').forEach(btn => btn.addEventListener('click', () => {
+    try {
+      // Loading REPLACES the opening: prologueSlotChanges names the keys to
+      // take away as well as the ones to write.
+      applyPrologue(prologueSlotChanges(settings[prologueSettingKey(['presets', btn.dataset.presetLoad, 'data'])], settings));
+      showSettingsNotice('Opening loaded from this slot. Every other setting is unchanged.');
+    } catch (error) { showSettingsNotice(`That slot could not be loaded: ${error.message}`); }
+  }));
+  container.querySelectorAll('[data-preset-clear]').forEach(btn => btn.addEventListener('click', () => {
+    applyPrologue({ [prologueSettingKey(['presets', btn.dataset.presetClear, 'data'])]: undefined });
+  }));
+  container.querySelectorAll('.set-wheel-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const wheel = container.querySelector(`.set-wheel[data-key="${CSS.escape(toggle.dataset.wheelToggle)}"]`);
+      if (!wheel) return;
+      wheel.hidden = !wheel.hidden;
+      toggle.setAttribute('aria-expanded', String(!wheel.hidden));
+      if (!wheel.hidden) wheel.focus({ preventScroll: true });
+    });
   });
 
   // 'number' rows: the typed field and its slider are ONE value.
@@ -1368,10 +2299,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       for (const input of wrap.querySelectorAll('input')) input.value = String(val);
     };
     const commit = (raw) => {
-      const val = resolveNumberRow({ [key]: raw }, row);
+      // THE CLAMP SAYS SO. `val` is always legal, so the model will never
+      // report what he typed; the row does, and stops the moment he types a
+      // number the row can take.
+      const { value: val, refusal } = commitNumberRow(settings, row, raw);
       mirror(val);
       settings[key] = val;
       onChange({ [key]: val });
+      if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
+      if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.
@@ -1401,6 +2337,276 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', openDebugLog);
   });
 
+  container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      const result = await saveAdvancedConfigFile(panelSettings || settings, {
+        build: { contentVersion: contentBundle.version },
+        includeKeys: ROWS.filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
+      });
+      btn.disabled = false;
+      btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
+      showSettingsNotice(result.ok
+        ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'}`
+        : 'This browser could not create a local configuration file.');
+      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
+    });
+  });
+
+  // ONE IMPORTER, TWO DOORS. The opening's scene file is the same format under
+  // a narrower name (parseAdvancedConfigFile recognises an art-studio preset and
+  // turns it into ordinary overrides), so the scene door is this door with a
+  // different label — not a second reader that could drift from it.
+  //
+  // THE SCENE DOOR IS STILL NARROWER THAN THE READER. Both exports are .json and
+  // the whole-game one has the likelier filename, so picking the wrong one in
+  // Advanced → Opening is one mis-click — and the reader would have applied
+  // every balance and interface override in it under a notice that said only
+  // "Loaded 412 settings". The door that says scenes takes scenes, and says so
+  // by name when handed something wider.
+  for (const buttonKey of ['gameConfigImport', 'prologueSceneImport']) container.querySelectorAll(`[data-btn="${buttonKey}"]`).forEach(btn => {
+    const openingOnly = buttonKey === 'prologueSceneImport';
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = '.json,application/json';
+    picker.hidden = true;
+    picker.dataset.configImport = '';
+    btn.after(picker);
+    btn.addEventListener('click', () => { picker.value = ''; picker.click(); });
+    picker.addEventListener('change', async () => {
+      const file = picker.files?.[0];
+      if (!file) return;
+      btn.disabled = true;
+      try {
+        if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
+        // A raised floor is reported, not thrown: the rest of the file lands.
+        const warnings = [];
+        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
+        if (outside.length) {
+          throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
+        }
+        if (!container.isConnected) return;
+        const result = onChange(changes);
+        if (result?.ok === false) throw new Error('Settings could not be saved.');
+        Object.assign(settings, changes);
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
+      } catch (error) {
+        showSettingsNotice(`Import failed: ${error.message}`);
+      } finally { btn.disabled = false; }
+    });
+  });
+
+  container.querySelectorAll('[data-btn="prologueSceneExport"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      const result = await saveJsonFile(prologueScenePreset(panelSettings || settings), {
+        filename: 'ashen-spire-opening.json',
+        description: 'Ashen Spire opening scenes',
+      });
+      btn.disabled = false;
+      btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
+      showSettingsNotice(result.ok
+        ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'} The same settings also travel in the whole game configuration.`
+        : 'This browser could not create a local configuration file.');
+      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
+    });
+  });
+
+  // EXPORT WHAT THE FILE EXPECTS, AND SAY WHERE IT GOES. The block this copies
+  // is the shape content/config/ui/components/card.json already uses, so a size
+  // worth keeping is pasted in rather than transcribed — transcription is where
+  // a number would get changed on the way home.
+  //
+  // It is a FRAGMENT, nested at `sizing.levels`, and the row note says so. An
+  // earlier draft emitted a bare `{ levels: … }` and described it as the file:
+  // pasted over card.json that leaves no `sizing` block at all and the config
+  // builder refuses it. The path comes from `cardSizingExportPath` so this note
+  // and the model cannot drift about where the text belongs.
+  // A REFUSAL RESOLVED AT BOOT HAS NOBODY TO TELL, SO IT IS RE-ASKED HERE.
+  // `showSettingsNotice` is a no-op before this panel exists, and a bad ladder
+  // stored in a profile is decided at startup — so on reload the sliders showed
+  // the rejected numbers, the authored widths were in force, and nothing said
+  // why until the next edit. Re-running the pure validator when Settings opens
+  // costs nothing and closes that window; it reads the same settings bag the
+  // boot path did, so the two cannot disagree.
+  {
+    const { refused } = cardLevelsWithOverrides(settings);
+    if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
+    else clearSettingsNotice('card-size');
+  }
+  // A LATE CLIPBOARD LANDING THAT HAD NO PANEL TO SPEAK TO WAITS HERE FOR ONE,
+  // and it waits until AFTER the refusal check above: that check clears the
+  // `card-size` tag when the ladder is valid, so flushing any earlier would
+  // have posted the held notice and wiped it in the same render.
+  if (deferredCardSizeNotice) {
+    const held = deferredCardSizeNotice;
+    deferredCardSizeNotice = null;
+    showSettingsNotice(held.msg);
+  }
+  container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { levels, refused } = cardLevelsWithOverrides(settings);
+      const text = cardSizingExport(levels);
+      // A CLIPBOARD THAT NEVER ANSWERS IS NOT THE SAME AS ONE THAT REFUSES, AND
+      // ONLY THE SECOND WAS HANDLED. `catch` covers a rejection; it does not
+      // cover a promise that simply never settles, which is what
+      // `navigator.clipboard.writeText` does here — measured in headless
+      // Chromium on a secure context with the API present: still `pending`
+      // after 1.5s, never resolved, never rejected. The `await` then never
+      // returned, so nothing below it ran: no notice, no console fallback, and
+      // the button sat on "Copy" for ever. The export had no failure path at
+      // all on such a browser, only the appearance of one.
+      //
+      // So the wait is bounded, and a clipboard that has not answered in time
+      // is treated exactly like one that said no.
+      // NO API IS A FAILURE, NOT A SUCCESS. Wrapping the call in
+      // `Promise.resolve(...)` to bound the wait turned the MISSING-clipboard
+      // case into a pass: `navigator.clipboard?.writeText(text)` is `undefined`
+      // on an insecure context or an older browser, and
+      // `Promise.resolve(undefined).then(() => true)` says it worked. The button
+      // would read "Copied", the notice would agree, and the console fallback
+      // would be skipped — leaving no export anywhere. The API is checked before
+      // the race rather than inferred from it.
+      // A RACE DOES NOT CANCEL THE LOSER. `writeText` cannot be aborted, so a
+      // write that is merely SLOW — a browser holding it while it asks for
+      // clipboard permission — still lands after the timeout has declared it
+      // failed. Two consequences, and only the second can be prevented:
+      //
+      //   * The clipboard ends up holding this block after the UI said it did
+      //     not. Nothing in the platform can undo that, so it is SAID rather
+      //     than hidden: a late landing posts a notice naming what arrived.
+      //   * Two exports could otherwise be in flight at once and land in
+      //     either order, so the newer text loses to the older. That one is
+      //     preventable: while a write is outstanding the button refuses to
+      //     start another, and says why.
+      // REFUSING THE WRITE IS NOT REFUSING THE EXPORT, and the first version of
+      // this guard confused the two. `writeText` that NEVER settles — the very
+      // case the timeout exists for — leaves the flag raised for the rest of
+      // the session, because only `write.then` lowers it. Returning early there
+      // meant the second click did nothing at all: no console block, no button
+      // change, and a slider moved afterwards could not be exported by ANY
+      // route. So a held clipboard now takes the fallback path instead of the
+      // door: the block is serialised and logged exactly as an unreachable
+      // clipboard's is, and only the second WRITE is withheld.
+      const CLIPBOARD_WAIT_MS = 1200;
+      let copied = false;
+      const held = exportWritePending;
+      if (!held && typeof navigator.clipboard?.writeText === 'function') {
+        const write = navigator.clipboard.writeText(text).then(() => true, () => false);
+        exportWritePending = true;
+        // ASK THE TIMER, NOT THE RESULT, WHETHER THIS WAS LATE. Keying the
+        // announcement on `copied` was wrong by one microtask: this handler is
+        // subscribed to `write` BEFORE `Promise.race` is, so on an ordinary
+        // fast copy it runs while `copied` is still its initial `false` and
+        // announced a late landing that never happened. The timeout callback
+        // runs before the race resolves, so its own flag is the honest witness.
+        let timedOut = false;
+        const timeout = new Promise((settle) => setTimeout(() => { timedOut = true; settle(false); }, CLIPBOARD_WAIT_MS));
+        // Whenever it settles — before or long after the timeout — the flag is
+        // released, and a landing the user was told had failed is announced. By
+        // then the panel may have been closed and reopened and the sliders
+        // moved, and this callback CANNOT TELL: the bag it could compare
+        // against is the one its own render opened with. So it names what it
+        // knows — the block is the one from that copy, not a fresh read of the
+        // sliders — and leaves the reader to look at them.
+        write.then((landed) => {
+          exportWritePending = false;
+          if (!landed || !timedOut) return;
+          // UNTAGGED ON PURPOSE. The `card-size` tag exists so a REFUSAL can be
+          // withdrawn once the ladder is valid — and `applyCardSizeSettings`
+          // (`src/main.js`) clears that tag on every settings change, so a
+          // tagged announcement was wiped by the next tab click: measured as an
+          // EMPTY notice element after reopening Settings. This is news, not a
+          // standing claim about the sliders, so nothing should withdraw it.
+          const msg = 'The clipboard answered late: it now holds the block from that copy, not a fresh read of the sliders.';
+          console.warn(`card sizes: ${msg}`);
+          if (!showSettingsNotice(msg)) deferredCardSizeNotice = { msg };
+        });
+        try {
+          copied = await Promise.race([write, timeout]);
+        } catch {
+          copied = false;
+        }
+      }
+      btn.textContent = copied ? 'Copied' : 'See log';
+      if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
+      // "Copied" WHEN NOTHING WAS COPIED IS THE WORST OF THE THREE OUTCOMES.
+      // The notice below said it regardless, so a browser that refuses the
+      // clipboard produced a confident lie. The wording now follows `copied`.
+      // SAY WHAT WAS COPIED WHEN IT IS NOT WHAT IS ON THE SLIDERS. A refused
+      // ladder falls back to the authored table, so this button hands over the
+      // AUTHORED numbers while the controls still show the rejected ones —
+      // silently, until now. Copying the wrong sizes and passing them on as a
+      // new default is the one outcome this feature must not produce quietly.
+      // THE WAIT IS A WINDOW, AND THE SIZES CAN MOVE INSIDE IT. Bounding the
+      // clipboard wait made this visible: the notice is posted up to
+      // CLIPBOARD_WAIT_MS after the click, and a slider moved in between left it
+      // announcing "the AUTHORED sizes are in use" while the tuned ones were
+      // live — the same lie as the stale refusal, arriving late instead of
+      // staying behind. So the ladder is re-asked at the moment of speaking, and
+      // when it has changed the notice says the text is stale rather than
+      // describing a state that has passed.
+      // ASK THE LIVE PANEL, NOT THIS CLOSURE. Within one render the captured
+      // bag is right — the rows write into it before calling `onChange` — but
+      // a panel closed and reopened inside this wait leaves this handler
+      // holding a bag the new panel never touches, so it would compare the
+      // copied block against numbers nobody is looking at and could call it
+      // current while the visible sliders say otherwise.
+      const settled = cardLevelsWithOverrides(panelSettings || settings);
+      const settledRefusal = settled.refused;
+      // COMPARE THE THING, NOT A PROXY FOR IT. The first version of this asked
+      // whether the REFUSAL MESSAGE had changed, which cannot see one valid
+      // ladder replaced by another — both are `null`, so a slider moved from
+      // 300 to 320 inside the wait left the notice claiming the tuned sizes
+      // were copied while `text` still held the old ones. The question is
+      // whether the block that was serialised is still the block the settings
+      // would produce, so that is what is asked.
+      // BOTH HALVES, because either alone has a blind spot. Comparing only the
+      // block misses valid -> INVALID: a refused ladder falls back to the
+      // authored table, so an export that started from the authored defaults
+      // serialises identically and `moved` stays false — then the captured
+      // `refused` (null) says "Copied the tuned sizes" while the controls are
+      // being rejected. Comparing only the verdict misses valid -> valid, which
+      // is what the previous commit fixed. The pair covers both.
+      const moved = settledRefusal !== refused || cardSizingExport(settled.levels) !== text;
+      const what = moved
+        ? 'sizes that have since changed — copy again'
+        : settledRefusal
+          ? `the AUTHORED sizes, not the ones shown: ${settledRefusal}`
+          : `the tuned sizes — ${cardSizingExportPath}`;
+      if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
+      // be withdrawn by the one that posted it. Exporting under a broken ladder
+      // replaced the tagged refusal with an untagged one, and then correcting
+      // the slider could not clear it — Settings went on claiming the authored
+      // sizes had been copied while the tuned ones were live. The tag follows
+      // whether this notice is about a refusal, not who happened to post it.
+      showSettingsNotice(copied
+        ? `Copied ${what}.`
+        : held
+          ? `A copy is still with the clipboard, so this one is in the browser console instead — ${what}. Starting a second write could land out of order.`
+          : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
+      settledRefusal ? 'card-size' : '');
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+  });
+
+  container.querySelectorAll('.set-choice-select').forEach(select => {
+    select.addEventListener('change', () => {
+      const wasAt = select.getBoundingClientRect().top;
+      settings[select.dataset.key] = select.value;
+      onChange({ [select.dataset.key]: select.value });
+      if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      refreshApplied(container, settings);
+      refreshConditionNotes(container, settings);
+      anchorPressed(container, select, wasAt);
+    });
+  });
+
   container.querySelectorAll('.choice').forEach((btn) => {
     btn.addEventListener('click', () => {
       // SUNNA'S FLOOR: a control that changes layout must still be under the
@@ -1413,6 +2619,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       });
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
+      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
@@ -1449,9 +2656,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
       onChange({ [btn.dataset.key]: stored });
+      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
       refreshConditionNotes(container, settings);
     });
   });
+  reportAdvancedProblems();
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
@@ -1459,12 +2668,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
   let claimedRing = false;
+  // Assigned below once the strip exists; declared here for the same reason.
+  let nav = null;
 
   // Auto's applied value moves with the window even though the setting does not.
   // ONE listener per open, not one per tab switch: the readout lives on a row
   // inside Display, so a player who visits Display four times would otherwise
   // collect four handlers that all write the same number.
-  const onResize = () => refreshApplied(container, settings);
+  const onResize = () => { refreshApplied(container, settings); };
   window.addEventListener('resize', onResize);
   const onFullscreenChange = () => syncFullscreen();
   const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
@@ -1483,6 +2694,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     document.removeEventListener('fullscreenerror', onFullscreenError);
     document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
+    nav?.release();
     obs.disconnect();
   });
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
@@ -1492,6 +2704,31 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (!grouped || !cats.length) return;
 
   // ---- the strip: selection, tooltips, and the ring ------------------------
+
+  // RAIL OR SELECTOR is the kit's W1 category navigation (kit/categoryNav.js,
+  // CategoryNavModel): the same component, model and budget as every other
+  // categorized W1 surface. It adopts the `.set-tabs` rail drawn above, puts
+  // the `[Section ▾]` selector (`.set-cat-select`) before it, and Escape with
+  // its list open closes the list, not Settings. `data-settings-nav` and
+  // `data-nav-open` mirror its state for the instruments that read them.
+  const railed = container.querySelector('.set-railed');
+  railed.dataset.catNav = 'selector';
+  railed.dataset.settingsNav = 'selector';
+  placeAdvancedNavigation('selector');
+  const rail = container.querySelector('.set-tabs');
+  rail.setAttribute('aria-orientation', 'horizontal');
+  nav = { start: () => rail.querySelector('[aria-selected="true"]'), release() {} };
+  rail.querySelectorAll('.set-tab').forEach(tab => {
+    tab.addEventListener('click', () => selectCategory(tab.dataset.member));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? cats[0] : event.key === 'End' ? cats.at(-1)
+        : stepCategory(cats, current, event.key === 'ArrowRight' ? 1 : -1);
+      selectCategory(next);
+      nav.start()?.focus();
+    });
+  });
 
   function selectCategory(cat) {
     if (!cats.includes(cat) || cat === current) return;
@@ -1511,6 +2748,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
+    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
     panel.innerHTML = categoryHtml(cat, settings, saves);
     panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
     // A tab switch is a new screenful. Start it at the top, or the player lands
@@ -1520,8 +2758,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wire();
   }
 
+  // Selection is the nav's `choose`; a pick from the opened selector list
+  // closes it and hands focus back to the selector, which now names the pick.
   container.querySelectorAll('.set-tab').forEach((b) => {
-    b.addEventListener('click', () => selectCategory(b.dataset.member));
     // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
     // does not satisfy it — touch and gamepad players never see one.
     attachTooltip(b, () => `<b>${esc(categoryLabel(b.dataset.member))}</b><br>${esc(categoryTip(b.dataset.member))}`);
@@ -1538,13 +2777,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // already held.
   if (!hasTabRing()) {
     claimedRing = true;
-    const step = (d) => {
-      const i = cats.indexOf(current);
-      const at = i < 0 ? 0 : i;
-      selectCategory(cats[(at + d + cats.length) % cats.length]);
-    };
+    const step = (d) => selectCategory(stepCategory(cats, current, d));
     setTabRing({ prev: () => step(-1), next: () => step(1) });
   }
+  return { nav };
 }
 
 /**
@@ -1552,13 +2788,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
  * a refused write can answer instead of being a silent no-op (#67); no-op when
  * Settings is not open.
  */
-export function showSettingsNotice(msg) {
+export function showSettingsNotice(msg, tag = '') {
   // BOTH doors. This used to look only for the modal's own body, so on the
   // in-run overlay it would have been a silent no-op — the very defect it
   // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
   // whatever container it filled, so the notice lands wherever Settings is.
   const host = document.querySelector('[data-settings-host]');
-  if (!host) return;
+  // RETURNS WHETHER IT SPOKE, because one caller — the late clipboard landing —
+  // has to know: its news arrives after its panel may have closed, and a false
+  // here is what sends it to the deferred slot instead of nowhere.
+  if (!host) return false;
   let el = host.querySelector('.set-notice');
   if (!el) {
     el = document.createElement('p');
@@ -1567,28 +2806,114 @@ export function showSettingsNotice(msg) {
     host.prepend(el);
   }
   el.textContent = msg;
+  if (tag) el.dataset.noticeTag = tag; else delete el.dataset.noticeTag;
+  return true;
 }
 
-export function openSettings({ meta, onChange, saves = null, onOffline = null }) {
+/**
+ * Withdraw a notice this caller put up, and only that one.
+ *
+ * A refusal that has since been resolved must stop being announced — a slider
+ * moved back into a valid ladder left "the authored sizes are in use" standing
+ * while the tuned sizes were in force. Clearing unconditionally would wipe
+ * whatever else had spoken last, so a notice carries its owner's tag and only
+ * its owner can take it down.
+ */
+export function clearSettingsNotice(tag) {
+  const host = document.querySelector('[data-settings-host]');
+  const el = host?.querySelector('.set-notice');
+  if (el && el.dataset.noticeTag === tag) {
+    el.textContent = '';
+    delete el.dataset.noticeTag;
+  }
+}
+
+function settingsHeaderTools() {
+  const tools = document.createElement('div');
+  tools.className = 'set-header-tools';
+  tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
+    + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
+    + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
+    + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
+    + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
+  tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
+    build: { contentVersion: contentBundle.version },
+    includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
+  });
+  return tools;
+}
+
+// `onOffline` was destructured here and then dropped: both renderSettings calls
+// below left it out, so main.js handed this door `showOfflinePlay` and the
+// title screen's Settings never grew the button it opens. The changelog for
+// #1213 promises Download & saves "from Title or Settings", and only one of
+// those two was telling the truth. It is forwarded now, and lands in the same
+// one-row bar the in-run overlay uses.
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
-  const done = button({ label: 'Done', weight: 'primary', id: 'set-close' });
-  const offline = onOffline ? button({ label: offlinePlay.title, id: 'settings-download' }) : null;
-  offline?.addEventListener('click', onOffline);
+  const done = button({ label: 'Done and Save', weight: 'primary', id: 'set-close' });
+  const load = button({ label: 'Load settings', id: 'settings-load' });
+  const headerTools = settingsHeaderTools();
+  // W1a header: the title and the exit, nothing above them. The old eyebrow
+  // ("Title") named the door it was opened from, which W1a does not carry.
+  let rendered = null;
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
     titleId: 'settings-modal-title',
-    eyebrow: 'Title',
-    title: 'Settings',
-    closeLabel: 'Close Settings',
+    title: t('settings.title'),
+    closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => renderSettings(host, { settings, onChange, saves }),
-    secondary: offline ? [offline] : [],
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
+    secondary: [load],
     primary: done,
     footSize: 'short',
   });
-  done.addEventListener('click', door.close);
-  door.veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
+  door.head.querySelector('.modal-head-actions').prepend(headerTools);
+  const picker = document.createElement('input');
+  picker.type = 'file'; picker.accept = '.json,application/json'; picker.hidden = true;
+  load.after(picker);
+  load.addEventListener('click', () => { picker.value = ''; picker.click(); });
+  picker.addEventListener('change', async () => {
+    const file = picker.files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
+      const warnings = [];
+      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+      if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
+      Object.assign(settings, changes);
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
+      showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
+    } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
+  });
+  done.addEventListener('click', () => {
+    if (!applyPendingFormationSettings(door.body)) return;
+    if (settings.promptSettingsExport === false) { door.close(); return; }
+    const exportButton = button({ label: 'Export configuration', weight: 'primary' });
+    const skip = button({ label: 'Not now' });
+    const body = document.createElement('div');
+    body.innerHTML = '<p>Your settings are saved. Export a configuration file to keep a backup?</p>'
+      + '<label class="set-export-choice"><input type="checkbox" checked> Ask when I press Done and Save</label>';
+    body.querySelector('input').addEventListener('change', event => {
+      settings.promptSettingsExport = event.target.checked;
+      onChange({ promptSettingsExport: event.target.checked });
+    });
+    const prompt = openModal({ size: 'sm', title: 'Export configuration?', bodyClassName: 'set-export-body', body, primary: exportButton, secondary: [skip] });
+    skip.addEventListener('click', () => { prompt.close(); door.close(); });
+    exportButton.addEventListener('click', async () => {
+      exportButton.disabled = true;
+      const result = await saveAdvancedConfigFile(panelSettings || settings, {
+        build: { contentVersion: contentBundle.version },
+        includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
+      });
+      exportButton.disabled = false;
+      if (result.ok) { prompt.close(); door.close(); }
+      else exportButton.textContent = 'Try export again';
+    });
+  });
+  // The selected tab on a rail; the [Section ▾] selector on a compact host.
+  (rendered?.nav?.start() || door.veil.querySelector('#set-close'))?.focus({ preventScroll: true });
 }

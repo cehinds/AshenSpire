@@ -1,0 +1,118 @@
+# content/source/nodeVariables.csv — the variables a conferring node exposes
+#
+# A NODE CARRIES NO NUMBERS. Its effects (nodeEffects.json) name variables, and
+# this table declares them: one row per (node, variable), with the role the
+# variable plays (amount, stacks, pct, hits, n, level, or a passive key).
+# validate.js refuses an effect naming a variable this table lacks, and a row
+# here that no effect names.
+#
+# What a variable IS WORTH is variableBindings.csv, never here.
+#
+# columns: nodeId, variable, role
+nodeId,variable,role
+siphon,restoreMana,amount
+siphon,restoreMana_2,amount
+siphon,siphonMasteryLevel,level
+overcharge,overchargeBuildupMult,exposureBuildupMult
+staggerBreak,poiseDamage,amount
+resonance,spreadPct,pct
+forsakenMedallion,poiseDamage,amount
+starstoneShard,starstoneCharge,stacks
+starstoneShard,restoreMana,amount
+cutpursesCoin,prepared,stacks
+cutpursesCoin,venom,stacks
+goldFigurine,block,amount
+goldenSprout,heal,amount
+whetstoneFragment,damage,amount
+kindlingCharm,draw,amount
+goldleafCharm,block,amount
+crackedLantern,gainEnergy,amount
+sacrificialKnife,bleed,stacks
+curedHide,block,amount
+ivoryComb,draw,amount
+ivoryComb,n,n
+fellWardenBrand,draw,amount
+bloodiedTalisman,loseHp,amount
+twinnedArmor,block,amount
+twinnedArmor,n,n
+blightTouchedIdol,crimsonBlight,stacks
+warhorn,strength,stacks
+vowOfVengeance,strength,stacks
+pearlOfSagacity,gainEnergy,amount
+pearlOfSagacity,n,n
+blessedDew,heal,amount
+azureSigil,gainEnergy,amount
+bloodstainedChalice,block,amount
+goldboughSapling,block,amount
+wyrmHeart,gainEnergy,amount
+titansCinder,strength,stacks
+radiantAegis,block,amount
+flayersCenser,crimsonBlight,stacks
+vigilantHalo,heal,amount
+carrionTalon,damage,amount
+emberIdol,damage,amount
+crownOfStitches,strength,stacks
+crownOfStitches,frail,stacks
+wardenHorn,draw,amount
+wardenHorn,loseHp,amount
+ashOfRemembrance,gainEnergy,amount
+ashOfRemembrance,madness,stacks
+cinderOfTheFallen,madness,stacks
+cinderOfTheFallen,gainEnergy,amount
+crimsonCovenant,loseHp,amount
+crimsonCovenant,bleed,stacks
+travelersWhetstone,strength,stacks
+moonlitVial,block,amount
+wardensLantern,draw,amount
+hollowedHorn,vulnerable,stacks
+gildedTear,heal,amount
+watchmansBadge,strength,stacks
+howlingStandard,strength,stacks
+emberwickCharm,gainEnergy,amount
+carrionMorsel,heal,amount
+gravetendersBell,draw,amount
+sentinelsOath,strength,stacks
+sentinelsOath,n,n
+forsakenWarflag,weak,stacks
+wrathCoil,damage,amount
+favored,skillXpMult,skillXpMult
+ashenGrip,restoreStamina,amount
+lodestarShard,restoreMana,amount
+waxenSeal,heal,amount
+whetstonePouch,bleed,stacks
+# The framework's cost defaults — the amount a card pays when it carries the
+# cost node with no amount of its own. They were `defaultParameters` literals
+# on the property rows; a node carries no numbers, so they are variables here
+# and rows in balance.costs.
+cost.action,amount,amount
+cost.stamina,amount,amount
+cost.mana,amount,amount
+ironFooting,block,amount
+bloodTempo,draw,amount
+ashenReserve,restoreStamina,amount
+grimHarvest,heal,amount
+warlord,strength,stacks
+bulwarkKing,block,amount
+attunedMind,draw,amount
+starlitFocus,starstoneCharge,stacks
+lodestarCap,restoreMana,amount
+arcaneDraw,draw,amount
+conduit,restoreStamina,amount
+reservoir,restoreMana,amount
+warmth,block,amount
+vigil,heal,amount
+sealOfPlenty,restoreMana,amount
+wakingRot,crimsonBlight,stacks
+martyr,block,amount
+saint,heal,amount
+quickHands,prepared,stacks
+secondWind,draw,amount
+honedEdge,bleed,stacks
+poisonedPouch,venom,stacks
+assassin,prepared,stacks
+assassin,draw,amount
+shadow,block,amount
+restHpSmall,pct,pct
+restHpPartial,pct,pct
+restManaFlat,restoreMana,amount
+restManaFloor,floorPct,toFloorPct

@@ -77,6 +77,22 @@ for (const r of results) {
 // in engine.test.js. Two files, no git conflict, and a suite that would have
 // printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+{
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const files = ['survey-quest-lore.test.mjs', 'hud-visibility.test.mjs', 'wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'wireframe-map-tray.test.mjs', 'wireframe-atlas-selection.test.mjs', 'combat-formation.test.mjs', 'formation-layout.test.mjs', 'formation-movement.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'reward-progress.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-hud-fold.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-choices.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'wireframe-save-flow.test.mjs', 'wireframe-creation.test.mjs', 'property-mount.test.mjs', 'poise-restamp.test.mjs', 'ui-config.test.mjs', 'config-migration.test.mjs',
+    // The property system's snapshots: every relic sentence byte-identical to
+    // its pre-move fixture (phase 2a), and everything the tag tree derives
+    // row-identical to the three pre-tree fixtures (phase T).
+    'relic-properties.test.mjs', 'tree-equivalence.test.mjs', 'card-size-tuning.test.mjs', 'card-shelf.test.mjs', 'advanced-config.test.mjs', 'advanced-settings-groups.test.mjs', 'hand-rules.test.mjs', 'starting-stat-config.test.mjs', 'combat-ratings.test.mjs', 'settings-inline-chrome.test.mjs', 'prologue.test.mjs',
+    // The opening's art studio shares the game's scene model; its test lives
+    // beside the studio and would otherwise run nowhere CI can see.
+    '../art/prologue-2026-09-19/model.test.mjs',
+    'lastLanternQuest.test.mjs', 'content-expansion-equipment.test.mjs', 'card-rarity-costs.test.mjs', 'caster-reward-rarity.test.mjs', 'character-progression.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
+  console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
+}
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
 {
@@ -868,12 +884,39 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 {
   const { execFileSync } = await import('node:child_process');
   try {
-    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs', 'tests/ui-strings.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
     zoomPassed++;
   } catch (error) {
     console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
+// The third authored tree: content/config/**.json compiles to
+// src/config/generated/ui.js. A hand edit to the generated module, or a JSON
+// edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['tools/config-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated UI config is current with content/config (config-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+  // The tag tree's derived views — tags, domains, pairings, property rules and
+  // src/framework/data/{properties,relations}.js (which bakes the default
+  // balance bindings in) — are generated, and nothing at runtime checks them
+  // against the tree. This is the drift gate: an edit to nodes.csv or
+  // balance.js that was not rebuilt is red here.
+  try {
+    execFileSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated content is current with content/source, the tag tree\'s views included (content-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated content: ${String(error.stderr || error.stdout || error.message).slice(0, 600)}`);
     zoomExtra++;
   }
 }
@@ -990,6 +1033,60 @@ try {
   console.error('FAIL  Card removal and touch flick regressions:', error);
 }
 try {
+  await import('./card-two-beats.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Every card owes two beats:', error);
+}
+try {
+  await import('./selection-clears-on-mount.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL A spent beat belongs to the screen that spent it:', error);
+}
+try {
+  await import('./combat-disarms-when-selection-clears.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
+  await import('./combat-card-hold-targeting.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Combat-card holds arm the existing targeting flow:', error);
+}
+try {
+  await import('./creation-continue-stacking.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error("FAIL The substep's way on outranks the stage's skip:", error);
+}
+try {
+  await import('./hand-forwards-surface.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The hand forwards its surface to the inspect door:', error);
+}
+try {
+  await import('./card-actions.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card action service:', error);
+}
+try {
+  await import('./playing-card-model.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The playing card model:', error);
+}
+try {
+  await import('./card-selection-store.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card selection store:', error);
+}
+try {
   await import('./starting-equipment-preview.test.mjs');
 } catch (error) {
   zoomExtra++;
@@ -1000,5 +1097,35 @@ try {
 } catch (error) {
   zoomExtra++;
   console.error('FAIL Armament combat kits:', error);
+}
+try {
+  await import('./card-presentation-levels.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card presentation levels (manifest, row solver, subset law):', error);
+}
+try {
+  await import('./dev-sweep-fixes.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The dev sweep fixes (seat tiers, co-op snapshot, post-fight save):', error);
+}
+try {
+  await import('./equipment-animation.test.mjs');
+await import('./twin-sword-animation.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Equipment animation references:', error);
+}
+try {
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const suites = ['unarmed-animation.test.mjs', 'unarmed-magic.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...suites.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) throw new Error(result.stdout + result.stderr);
+  console.log('PASS Unarmed physical and magic references: real import orders, ownership, routing, timing and all armor assets');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Unarmed animation references:', error);
 }
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

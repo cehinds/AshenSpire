@@ -33,14 +33,14 @@ const emptyResource = () => ({ flat: 0, attributeTiers: [], total: 0 });
  * every caller got before this parameter existed.
  */
 function tierSizeFor(registries, resource, row, tierSizes) {
-  if (Number.isInteger(row.pointsPerTier)) return row.pointsPerTier;
-  if (tierSizes && Number.isInteger(tierSizes[resource])) return tierSizes[resource];
+  if (Number.isFinite(row.pointsPerTier) && row.pointsPerTier > 0) return row.pointsPerTier;
+  if (tierSizes && Number.isFinite(tierSizes[resource]) && tierSizes[resource] > 0) return tierSizes[resource];
   const table = registries.derivedStatRules || {};
   const authored = (table.rules || {})[resource] || {};
-  const per = Number.isInteger(authored.pointsPerTier)
+  const per = Number.isFinite(authored.pointsPerTier)
     ? authored.pointsPerTier
     : (table.defaults || {}).pointsPerTier;
-  if (!Number.isInteger(per) || per <= 0) {
+  if (!Number.isFinite(per) || per <= 0) {
     throw new Error(`relic modifier on '${resource}' states no pointsPerTier and none could be derived`);
   }
   return per;

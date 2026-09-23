@@ -1,0 +1,150 @@
+.prologue-screen{container-type:size;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(12rem,1fr) auto auto;min-height:100%;height:100dvh;background:var(--prologue-backdrop,#100e0c);color:#eee6d5;overflow:auto}
+.prologue-stage{position:relative;min-height:0;overflow:hidden;grid-row:1}
+.prologue-plate{position:absolute;inset:0;overflow:hidden;transform-origin:center}
+.prologue-background{width:100%;height:100%;object-fit:cover;display:block}
+.prologue-actor{position:absolute;width:auto;transform:translateX(-50%);pointer-events:none}
+.prologue-wash{position:absolute;inset:0;mix-blend-mode:color;pointer-events:none}
+.prologue-caption{position:relative;z-index:2;padding:var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-right)) var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
+.prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
+.prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
+.prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
+.prologue-location{font-size:2rem;color:var(--gold);margin:.5rem}
+.prologue-progress{font-size:1.2rem;color:#b8ac98;margin:.5rem}
+.prologue-controls{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.prologue-controls button{min-height:48px}
+.prologue-preview-body{padding:0!important;overflow:auto!important}
+.prologue-preview-body .prologue-screen{height:70dvh;min-height:24rem}
+.set-prologue-text{width:100%;min-height:5rem;resize:vertical;font:inherit;line-height:1.4;padding:.65rem;background:var(--bg);color:var(--text);border:1px solid var(--line-soft);border-radius:4px}
+@media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:75dvh}.set-row-prologue .r-trail{width:100%;min-width:0}}
+@media(max-height:500px) and (orientation:landscape){.prologue-screen{grid-template-columns:1fr minmax(18rem,45%);grid-template-rows:1fr}.prologue-caption{overflow:auto}.prologue-preview-body .prologue-screen{min-height:15rem;height:65dvh}}
+
+/* ---- the opening's wireframes and text plate -------------------------------
+   Every value below is a SETTING (Advanced → Opening): which frame presents a
+   scene, how the painting sits in it, where the words go, what is behind them
+   and whether they are outlined. The stylesheet states the frames; the custom
+   properties carry the owner's numbers in. Defaults here match the shipped
+   configuration, so a profile that has never touched these renders as before. */
+.prologue-screen{--prologue-text-scale:1;--prologue-text-align:center;--prologue-box:rgba(16,14,12,.72);--prologue-outline-color:#100e0c;--prologue-outline-width:0px;--prologue-fit:cover;--prologue-focus:50% 50%;--prologue-scale:1}
+.prologue-background{object-fit:var(--prologue-fit);object-position:var(--prologue-focus);transform:scale(var(--prologue-scale))}
+.prologue-caption{text-align:var(--prologue-text-align)}
+.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale))}
+.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale))}
+.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale))}
+.prologue-location{font-size:calc(2rem*var(--prologue-text-scale))}
+.prologue-progress{font-size:calc(1.2rem*var(--prologue-text-scale))}
+/* The container: present or absent, and when present, visible or not. An
+   invisible container still holds its spacing — that is the difference between
+   "no container" and "a container you cannot see". */
+.prologue-has-box .prologue-caption{background:var(--prologue-box)}
+.prologue-box-hidden .prologue-caption{background:transparent}
+.prologue-screen:not(.prologue-has-box) .prologue-caption{background:transparent;padding-inline:0}
+.prologue-outlined .prologue-title,.prologue-outlined .prologue-speaker,.prologue-outlined .prologue-dialogue,.prologue-outlined .prologue-location,.prologue-outlined .prologue-banner-text{-webkit-text-stroke:var(--prologue-outline-width) var(--prologue-outline-color);paint-order:stroke fill}
+.prologue-banner{position:absolute;left:0;right:0;display:flex;justify-content:center;padding:.6rem 1rem;pointer-events:none;background:linear-gradient(90deg,transparent,var(--prologue-box) 18%,var(--prologue-box) 82%,transparent)}
+.prologue-banner.banner-top{top:0}
+.prologue-banner.banner-bottom{bottom:0}
+.prologue-banner-text{font-size:calc(1.5rem*var(--prologue-text-scale));letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center}
+/* Text over the art: one cell, and `data-position` places the plate in it. */
+.prologue-layout-overlay{grid-template-rows:1fr auto}
+.prologue-layout-overlay .prologue-stage,.prologue-layout-overlay .prologue-caption{grid-row:1;grid-column:1}
+.prologue-layout-overlay .prologue-caption{align-self:end;justify-self:center;max-width:min(60rem,92%);margin:1rem;margin:calc(var(--prologue-inset-y,4)*1cqh) calc(var(--prologue-inset-x,4)*1cqw);height:max-content}
+.prologue-layout-overlay .prologue-caption[data-position^=top]{align-self:start}
+.prologue-layout-overlay .prologue-caption[data-position^=middle]{align-self:center}
+.prologue-layout-overlay .prologue-caption[data-position$=left]{justify-self:start;max-width:min(46rem,62%)}
+.prologue-layout-overlay .prologue-caption[data-position$=right]{justify-self:end;max-width:min(46rem,62%)}
+.prologue-layout-letterbox .prologue-stage{background:#000}
+.prologue-layout-letterbox .prologue-background{object-fit:contain}
+.prologue-layout-panelLeft,.prologue-layout-panelRight{grid-template-rows:1fr auto;grid-template-columns:minmax(18rem,34%) 1fr}
+.prologue-layout-panelRight{grid-template-columns:1fr minmax(18rem,34%)}
+.prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption{grid-row:1;display:grid;align-content:center;overflow:auto}
+.prologue-layout-panelLeft .prologue-caption{grid-column:1}
+.prologue-layout-panelLeft .prologue-stage{grid-row:1;grid-column:2}
+.prologue-layout-panelLeft .prologue-bar,.prologue-layout-panelRight .prologue-bar,.prologue-layout-overlay .prologue-bar{grid-row:2;grid-column:1/-1}
+.prologue-layout-panelRight .prologue-stage{grid-row:1;grid-column:1}
+.prologue-layout-panelRight .prologue-caption{grid-column:2}
+/* A phone in portrait has no room for a side panel or a floating plate; both
+   fall back to the caption frame rather than squeezing the words to a column. */
+@media(max-width:760px) and (orientation:portrait){
+  .prologue-layout-panelLeft,.prologue-layout-panelRight,.prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:minmax(14rem,1fr) auto auto}
+  .prologue-layout-panelLeft .prologue-stage,.prologue-layout-panelRight .prologue-stage,.prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
+  .prologue-layout-panelLeft .prologue-caption,.prologue-layout-panelRight .prologue-caption,.prologue-layout-overlay .prologue-caption{grid-row:2;grid-column:1;max-width:none;justify-self:stretch;margin:0}
+  /* …and the band follows the caption down to the third row, rather than
+     keeping the second-row place it takes when the words are over the art. */
+  .prologue-layout-panelLeft .prologue-bar,.prologue-layout-panelRight .prologue-bar,.prologue-layout-overlay .prologue-bar{grid-row:3;grid-column:1}
+}
+/* The colour rows in Advanced → Opening: a palette you tap, and the system
+   wheel folded away behind its own button until it is wanted. */
+.set-swatch-trail{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.set-row-swatches .as-swatches{gap:.45rem}
+.set-row-swatches .set-swatch::before{width:2rem;height:2rem}
+.set-swatch-trail .set-wheel{width:3.2rem;height:2.4rem;padding:0;border:1px solid var(--line-soft);border-radius:4px;background:transparent}
+/* The short-landscape rule near the top of this file turns the screen into art
+   plus a side panel. That is right for the caption frame, which has nowhere
+   else to put the words on a 500px-tall screen, and wrong for the two frames
+   that state their own geometry: overlay puts the words ON the art, letterbox
+   puts them under a letterboxed plate. Neither inherits a panel it did not ask
+   for — the wireframe the owner chose is the wireframe that is drawn. The two
+   panel frames already restate their columns above, so they are unaffected. */
+@media(max-height:500px) and (orientation:landscape){
+  /* The side-panel fallback puts the art beside the words; the band still runs
+     the width of the screen underneath both. This rule comes FIRST: the frames
+     below state their own geometry, and a generic rule after them would win on
+     equal specificity and take it away again. */
+  .prologue-screen{grid-template-rows:1fr auto}
+  .prologue-bar{grid-row:2;grid-column:1/-1}
+  .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
+  .prologue-layout-letterbox .prologue-bar{grid-row:3}
+}
+/* A scene with no painting is a text card: the backdrop, and the words. */
+.prologue-plate-bare{background:#100e0c}
+/* The reveal: finished text, the part not yet reached drawn in transparent ink.
+   It keeps its space, so nothing reflows as the words arrive, and it keeps its
+   place in the accessibility tree, so nothing has to wait for a typewriter. */
+.prologue-unsaid{color:transparent;-webkit-text-stroke-color:transparent}
+/* ---- Advanced → Opening: the scene list and the preset slots --------------
+   The list IS the running order: one row per scene, the playing ones first and
+   numbered, anything switched off parked below them. Drag or arrow — both write
+   the same `order` keys — and the actions sit at the end of the row they act on. */
+.set-scene-trail{width:100%;min-width:0;display:grid;gap:.5rem}
+.set-scene-list{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
+.set-scene{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.45rem .6rem;border:1px solid var(--line-soft);border-radius:6px;background:var(--bg)}
+.set-scene[data-live="0"]{opacity:.65}
+.set-scene-grip{cursor:grab;color:var(--muted, #b8ac98);font-size:1.1rem;line-height:1}
+.set-scene-dragging{outline:2px dashed var(--gold);opacity:.9}
+.set-scene-name{flex:1 1 12rem;min-width:0}
+.set-scene-name em{font-style:normal;color:var(--muted, #b8ac98)}
+.set-scene-at{font-variant-numeric:tabular-nums;color:var(--muted, #b8ac98);white-space:nowrap}
+.set-scene-acts,.set-preset-acts{display:flex;flex-wrap:wrap;gap:.35rem}
+.set-scene-acts .as-btn,.set-preset-acts .as-btn{min-height:40px}
+.set-scene-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+@media(max-width:760px){.set-scene-name{flex-basis:100%}.set-scene-acts{width:100%}}
+
+/* ---- the control band, and every dial the staging writes ------------------
+   The buttons are the FRAME's: a band along the bottom of the screen, under
+   the words but never part of them, so a wireframe that floats the text into
+   the middle of the picture leaves Continue where a hand expects it. */
+.prologue-bar{grid-row:3;position:relative;z-index:3;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;justify-content:var(--prologue-controls-align,center);padding:.6rem max(1.25rem,env(safe-area-inset-right)) max(.7rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));background:linear-gradient(#15110d,#100e0c);border-top:1px solid rgba(255,255,255,.06)}
+.prologue-bar .prologue-progress{margin:0}
+.prologue-controls{justify-content:var(--prologue-controls-align,center)}
+.prologue-controls-compact .prologue-controls button{min-height:40px;padding-block:.35rem;font-size:.95em}
+.prologue-controls-large .prologue-controls button{min-height:60px;padding-inline:1.4rem;font-size:1.15em}
+.prologue-controls-text .prologue-caption{padding-bottom:max(var(--prologue-box-padding,1rem),env(safe-area-inset-bottom))}
+/* The picture: four dials in one filter, the mirror, the vignette over it. */
+.prologue-background{filter:var(--prologue-filter,none);transform:scale(var(--prologue-scale,1)) scaleX(var(--prologue-flip,1))}
+.prologue-plate{background:var(--prologue-backdrop,#100e0c)}
+/* The plate is `inset:0` over the whole stage, so IT is what shows beside a
+   letterboxed painting — a colour on the stage underneath could never paint. */
+.prologue-layout-letterbox .prologue-plate{background:var(--prologue-letterbox,#000)}
+.prologue-plate::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:var(--prologue-vignette,0);background:radial-gradient(ellipse at center,transparent 45%,#000 120%)}
+.prologue-layout-letterbox .prologue-stage{background:var(--prologue-letterbox,#000)}
+/* The words, part by part. */
+.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
+.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
+.prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-body))}
+.prologue-location{color:var(--prologue-location-color,var(--gold))}
+.prologue-text-waiting .prologue-title,.prologue-text-waiting .prologue-speaker,.prologue-text-waiting .prologue-dialogue,.prologue-text-waiting .prologue-location{visibility:hidden}
+/* The container, in detail: it keeps its spacing whatever it is drawn with. */
+.prologue-has-box .prologue-caption{border-radius:var(--prologue-box-radius,0);border:var(--prologue-box-border,0) solid var(--prologue-box-border-color,transparent);backdrop-filter:var(--prologue-box-backdrop,none)}
+.prologue-dot{display:inline-block;width:.55rem;height:.55rem;margin:0 .22rem;border-radius:50%;background:currentColor;opacity:.35}
+.prologue-dot.on{opacity:1;box-shadow:0 0 6px currentColor}
+@media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto auto}}

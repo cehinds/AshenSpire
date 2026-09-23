@@ -13,6 +13,8 @@
 // elements as hooks and draw nothing of their own.
 
 import { attachTooltip, esc } from './tooltip.js';
+import { t } from '../strings.js';
+import { relicIcon } from '../assets.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
@@ -101,6 +103,7 @@ export function resourceStrip(rows, poise) {
     return item;
   });
   chips.push(chip({ key: 'Poise', value: poise.value, attrs: { dataset: { stat: 'poise' } } }));
+  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) chips.push(chip({ key: id === 'ward' ? 'Ward' : id.toUpperCase(), value: poise.ratings[id], attrs: { dataset: { stat: id } } }));
   const strip = statStrip(chips, { class: 'cc-derived', 'aria-label': 'Derived resources' });
   return markUiComponent(strip, UI.resourceStrip);
 }
@@ -121,6 +124,23 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
   return markUiComponent(group, UI.viewModeToggle);
 }
 
+/**
+ * viewModeSwitch(value, onChoose, label) → ONE small button that flips the
+ * view: it shows the arrangement a press would give (▦ from a list, ☰ from a
+ * grid) so the pane's width goes to the choices, not to a labelled pair
+ * (owner, 2026-09-19). `data-view-mode` is the mode a press selects.
+ */
+export function viewModeSwitch(value, onChoose, label = 'View choices') {
+  const next = value === 'grid' ? 'list' : 'grid';
+  const name = t(`creation.view.${next}`);
+  const control = el('button', {
+    type: 'button', class: 'as-btn small cc-view-switch', text: next === 'grid' ? '\u25a6' : '\u2630',
+    dataset: { viewMode: next }, 'aria-label': `${label}: ${name}`, title: name,
+  });
+  control.addEventListener('click', () => onChoose?.(next));
+  return markUiComponent(control, UI.viewModeToggle);
+}
+
 /** A boolean setting: Row·setting with a LabelStack and a Toggle. */
 export function booleanSettingToggle(label, value, onChoose) {
   const control = toggle({ on: value, className: 'cc-switch', attrs: { 'aria-label': label } });
@@ -130,11 +150,13 @@ export function booleanSettingToggle(label, value, onChoose) {
 }
 
 /** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
-export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null } = {}) {
+export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null, hint = null } = {}) {
   const card = optionCard({
     name: cls.name,
     description: cls.description || '',
-    badge: locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
+    // A locked card wears the unlock's own hint (plan phase 5c) or, for a
+    // class not yet shipped, the milestone it arrives in.
+    badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
     selected, disabled: locked, tag: locked ? 'div' : 'button',
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
     attrs: { dataset: { class: cls.id } },
@@ -150,9 +172,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
   const pane = el('article', { class: 'as-pane cc-class-preview', 'aria-label': `${cls.name} class preview` }, [
-    eyebrow('Class preview'),
     titleM(cls.name, { tag: 'h3' }),
-    hairline(),
     el('div', { class: 'as-stack' }, [
       art,
       el('div', { class: 'as-stack tight' }, [
@@ -160,15 +180,38 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
         resources,
       ]),
       el('div', { class: 'as-stack tight' }, [
-        eyebrow('Class relic'),
         relic ? optionCard({
-          glyph: relic.icon || '◆', name: relic.name, description: relicDescription,
+          glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
           arrow: false, tag: 'div', className: 'cc-class-relic',
         }) : null,
       ]),
     ]),
   ]);
   return markUiComponent(pane, UI.classPreviewPane);
+}
+
+/**
+ * classUnfold({ cls, sprite, resources, relic }) → what the chosen
+ * class card opens to hold (owner, 2026-09-19): the portrait on the left,
+ * the summary stats on the right, never past the card's box. Appended
+ * inside the card, so it is the card that unfolds; the shares and the
+ * height are the screen's --creation-unfold-* (creation.json).
+ */
+export function classUnfold({ cls, sprite = null, resources = null, relic = null }) {
+  // Spans only: this lives inside the card's <button>, which admits no div
+  // and discards a group role. The card names the class; the portrait is
+  // decoration here, and the resources and relic reach a reader through the
+  // card's aria-describedby (customize.js).
+  if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
+  const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
+  const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
+    el('span', { class: 'cc-unfold-portrait' }, art),
+    el('span', { class: 'cc-unfold-summary' }, [
+      resources,
+      relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
+    ]),
+  ]);
+  return markUiComponent(node, UI.classPreviewPane);
 }
 
 /** The five starting resources: a StatStrip of Chips. */
@@ -243,7 +286,7 @@ export function keepsakeChoiceButton(keepsake, selected, onChoose) {
 /** A starting relic: an OptionCard. */
 export function relicChoiceButton(relic, description, selected, onChoose) {
   const button = optionCard({
-    glyph: relic.icon || '◆', name: relic.name, description, selected, arrow: false,
+    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
     className: `cc-relic-card${selected ? ' chosen' : ''}`,
     attrs: { dataset: { relicId: relic.id }, 'aria-label': `${relic.name}. ${description}` },
   });

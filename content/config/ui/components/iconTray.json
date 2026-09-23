@@ -1,0 +1,9 @@
+{
+  "sizing": {
+    "iconRem": 1.575,
+    "footerPotionIcons": 4
+  },
+  "positioning": {
+    "iconGapRem": 0.1875
+  }
+}

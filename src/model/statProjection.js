@@ -5,6 +5,7 @@ import { deriveStat } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
+import { ratingReceipt } from './combatRatings.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -31,12 +32,45 @@ function presentationRows(registries) {
  */
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
+  if (registries.balance?.combatRatings?.enabled) {
+    const receipt = ratingReceipt(registries, run, registries.balance.combatRatings);
+    return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
+      raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
+      equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
+      ratings: receipt.totals, ratingSources: receipt.sources, ratingAttributes: receipt.attributeReceipts,
+      note: 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
+  }
   const levels = run.itemUpgradeLevels || {};
-  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels });
+  // THE VESSEL'S THREE SOURCES (plan phase 8, proposal §7.3): the derived
+  // Poise row read against Constitution, the worn BODY ARMOUR's threshold (a
+  // weapon's poiseThreshold is its weight, not the wearer's footing), and the
+  // relics' poiseThresholdAdd. A run handed without attributes (a headless
+  // fixture) has no attribute term.
+  // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
+  // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
+  // not been written yet; reading it from two places would be the copy Law 1
+  // forbids. A run whose own snapshot predates the row falls through to the
+  // live table, which is what a headless fixture and a creation preview need;
+  // a run that HAS the row is priced by its own, below.
+  // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
+  // fallback for a caller that carries no run (a headless fixture, a
+  // creation preview). A run born under an Advanced tier-size override
+  // records that override in its snapshot, and reading the authored row
+  // instead would price its meter by numbers that run never agreed to
+  // (Codex, #1217).
+  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
+    || registries.derivedStatRules?.rules?.poise;
+  const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
+    : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
+  const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
+  const poiseBase = Number.isFinite(poiseRule?.base) ? poiseRule.base : 0;
+  const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
+  const attribute = poiseRule ? poiseBase + Math.floor(con / (perTier || 1)) * gain : 0;
+  const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
     id: piece.id,
-    classId: piece.kind === 'armor' ? piece.classId : null,
+    classId: piece.classId,
     value: piece.poiseThreshold,
   }));
   const relicSources = (run.relics || [])
@@ -45,17 +79,21 @@ export function playerPoiseThresholdReceipt(registries, run) {
     .map((relic) => ({ kind: 'relic', id: relic.id, value: relic.passives.poiseThresholdAdd }));
   const equipment = pieceSources.reduce((sum, source) => sum + source.value, 0);
   const relic = passiveSum(registries, run.relics || [], 'poiseThresholdAdd', levels);
-  const raw = equipment + relic;
+  const raw = attribute + equipment + relic;
   return {
     id: 'poiseThreshold',
     label: 'Poise threshold',
-    sources: [...pieceSources, ...relicSources],
+    sources: [
+      ...(attribute > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      ...pieceSources, ...relicSources,
+    ],
+    attribute,
     equipment,
     relic,
     raw,
     value: raw,
-    active: false,
-    note: 'Display consumer only: the combat entity stamps this as the HUD vessel\'s max. No combat consumer — Poise damage is not dealt to players. Player Poise is not the enemy Poise meter.',
+    active: true,
+    note: 'The combat entity stamps this as the player Poise meter\'s max; impact fills it and a fill Staggers the player (SPEC §13.4k). Player Poise is not the enemy Poise meter.',
   };
 }
 
@@ -139,9 +177,18 @@ export function statProjection(registries, run) {
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
-  const derived = presentationRows(registries).map((presentation) => {
+  // A ROW THE RUN'S SNAPSHOT NEVER HAD IS NOT PROJECTED. The presentation
+  // table is the LIVE one and grows with the content — Poise joined it in
+  // ruleset 5 (plan phase 9) — while a run keeps the rules it was born
+  // under. Asking a version-3 snapshot for a Poise receipt threw by name and
+  // took every stat surface down with it (Codex, #1217). The pairing the
+  // content door enforces is between the live table's halves; across a
+  // version boundary the snapshot decides.
+  const derived = presentationRows(registries).filter((presentation) => (
+    snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
+  )).map((presentation) => {
     const id = presentation.id;
-    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
+    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
     const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
     const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
@@ -157,10 +204,13 @@ export function statProjection(registries, run) {
       value,
       equipmentBonus,
       adjustment,
+      // Every term the value has, so the arithmetic shown equals the result
+      // shown: the level's own term (plan phase 6) joins once it is non-zero.
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+        + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Hand & Draw Rules.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

@@ -1,4 +1,5 @@
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
@@ -6,24 +7,39 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // (live math, SPEC §3.13); outside combat, the card's own literal values via
 // computeTokenBindings. No math happens here.
 
-import { resolveCard } from '../../model/registries.js';
-import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
+import { resolveCard, relicPropertyRules } from '../../model/registries.js';
+import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
+import { cardShape } from '../models/CardSizeModel.js';
+import { litCard } from './cardSelection.js';
+import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
+import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { t } from '../strings.js';
 
-/** Static token values straight off the def (for reward/pile/deck views). */
-export function staticTokens(def) {
-  const tokens = {};
-  for (const b of computeTokenBindings(def.effects || [])) {
-    const v = (def.effects[b.index] || {})[b.field];
-    if (typeof v === 'number') tokens[b.token] = v;
-  }
-  return tokens;
+// WCI3: rarity at the start of the band, the owned count at the end, each only
+// when the surface can state it. No domain action ever belongs in this band.
+function metadataBand(rarity, owned) {
+  const band = metadataFooter({ rarity, owned });
+  const slot = (name, entry) => (entry
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? t('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    : '');
+  return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
 }
+
+/**
+ * Static token values straight off the def (for reward/pile/deck views).
+ *
+ * The body moved to src/model/playingCard.js with the rest of the projection;
+ * this stays as the name five files already import, so the extraction costs
+ * no call site a rename that would prove nothing.
+ */
+export function staticTokens(def) { return staticCardTokens(def); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the
@@ -44,7 +60,11 @@ export function staticTokens(def) {
  */
 export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
-  const tokens = relicTokens(def);
+  // The relic's own passives and its property rules' triggers are two homes for
+  // one sentence's numbers since plan phase 2, so both are handed to the token
+  // reader. Without registries only the passive half resolves, which is why
+  // every run-facing call site passes them.
+  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : [], registries);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
@@ -95,90 +115,213 @@ function fillTemplate(def, tokens, baseTokens) {
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
   const def = resolveCard(registries, ref);
+  // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
+  // way to innerHTML — the tag junction, the cost profile, the type row, the
+  // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
+  // left. The output is byte-identical by construction: the model's bodies are
+  // the ones that stood here.
+  const model = playingCardModel(registries, ref, { preview: opts.preview || null });
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
   // type band), and one shared row budget below the band that tags and text
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
-  el.className = `card as-card playing-poker-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = playingCardClasses(model);
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
-  const ty = balance.ui.cardTypes[def.type];
-  if (ty) {
-    el.style.setProperty('--card-type-color', ty.color);
-    el.style.setProperty('--card-radius', `${ty.radius}px`);
-    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  if (model.paint.typeColor) {
+    el.style.setProperty('--card-type-color', model.paint.typeColor);
+    el.style.setProperty('--card-radius', `${model.paint.radiusPx}px`);
+    el.style.setProperty('--card-art-radius', `${model.paint.artRadiusPx}px`);
   }
   // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
   // adding a class brings its own card colour with no stylesheet edit. Colorless
   // cards have no owning class, so they fall back to the neutral frame.
-  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
-  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
+  if (model.paint.tint) el.style.setProperty('--card-tint', model.paint.tint);
   if (opts.affordable === false) el.classList.add('unaffordable');
-  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
-  el.dataset.cardId = def.id;
+  if (model.instanceId) el.dataset.instanceId = model.instanceId;
+  el.dataset.cardId = model.id;
 
   // Equipment-generated cards carry their profile's tags on `cardTags`; authored
   // cards resolve through the junction. BOTH read the ACTIVE registries — the
   // authored branch used to call the module-global `tagsFor`, so a bundle that
   // changed a card's tags changed what combat did with them and not what the
   // card showed, which is the chip strip lying about the run being played.
-  const service = tagService(registries);
-  const liveTagRows = (opts.preview?.values || []).filter((row) => Array.isArray(row.tags));
-  const inheritedBy = new Map();
-  for (const row of liveTagRows) for (const id of row.inheritedTags || []) {
-    const sources = inheritedBy.get(id) || new Set(); sources.add(row.sourceName); inheritedBy.set(id, sources);
-  }
-  const resolvedTags = liveTagRows.length
-    ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
-    : def.cardTags && def.cardTags.length
-    ? service.resolve(def.cardTags)
-    : service.tagsOf('card', def);
-  // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
-  // when the categorized theme/technique is the same visible word.
-  const categorizedLabels = new Set(resolvedTags.filter((tag) => ['theme', 'technique'].includes(tag.domain)).map((tag) => tag.label.toLowerCase()));
-  const tags = resolvedTags.filter((tag) => tag.domain !== 'card' || !categorizedLabels.has(tag.label.toLowerCase()));
-  el.dataset.tagRows = tags.length ? '1' : '0';
-  const base = staticTokens(def);
-  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
+  const tags = model.tags;
+  // `data-tag-rows` is set by `paint` below, because whether the chips are on
+  // the face is now a question the presentation level answers as well as the
+  // card's own data — and a second assignment here would be the older of two
+  // answers winning on some paths.
   // The badge numbers come from the framework cost profile (a preview's
   // numbers are the preview's own — it already resolved them); the badge
   // words come from the TermRegistry, like the tooltip's cost line.
-  const pools = opts.preview ? null : registries.framework.costProfile(def);
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : (pools.variable ? 'X' : pools.action);
-  const manaCost = opts.preview ? opts.preview.manaCost : pools.mana;
-  const staminaCost = opts.preview ? opts.preview.staminaCost : pools.stamina;
+  const cost = model.costs.variable ? 'X' : model.costs.action;
+  const manaCost = model.costs.mana;
+  const staminaCost = model.costs.stamina;
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
-  el.innerHTML =
-    `<div class="card-costs"><div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
-    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
-    `</div><div class="cname">${esc(def.name)}</div>` +
-    `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/tagging.csv. Untagged cards
-    // render nothing here, so the layout is unchanged for them.
-    (tags.length
-      ? `<div class="cd-body"><div class="ctags cd-tags">${tags
-          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (inheritedBy.has(t.id) ? ` Granted by ${[...inheritedBy.get(t.id)].join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
-          .join('')}</div>`
-      : '<div class="cd-body">') +
-    `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;
-  // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
-  // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
-  // count or measure, so the renderer reports after the first paint.
-  scheduleCardFits([el]);
+  // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
+  // The existing framework/preview remains the authority for all values.
+  // A ZERO ACTION COST IS A REAL, READABLE COST — it is the whole point of a
+  // free card, and the fan's left edge is where a player counts what a turn can
+  // afford. Dropping the row at 0 rendered rogueShiv (cost: 0) and its kin with
+  // no ◆ at all, which reads as "no action cost printed" — i.e. unknown — not
+  // as "free". Only the SECONDARY pools elide at zero: a card that spends no
+  // stamina and no mana should not print two empty rails.
+  const costRows = [
+    ['action', 'cost', '◆', cost, true],
+    ['stamina', 'stamina-cost', 'ϟ', staminaCost, false],
+    ['mana', 'mana-cost', '♦', manaCost, false],
+  ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
+  el.dataset.wireframe = 'WC1';
+  // THE SAME THREE LEVELS THE EQUIPMENT FACE USES, and deliberately the same
+  // vocabulary rather than a second one shaped like it. dev unified these two
+  // renderers behind models (src/model/playingCard.js) specifically so they
+  // could share this; giving the playing card its own field table would re-fork
+  // them the day after they were joined.
+  //
+  // The regions are `balance.ui.equipmentCard.regions` — the one vocabulary —
+  // mapped onto this face's own landmarks:
+  //
+  //   art      the artwork well            facts   the cost rail
+  //   type     the type band               tags    the subtype chips
+  //   effects  the rule text               footer  the rarity/owned band
+  //
+  // `flavor` has no landmark ON THE FACE, and that is a layout decision rather
+  // than an absence of data. This note used to claim a playing card authors no
+  // flavour, which was false: `resolveCard` composes `profile.flavor ||
+  // def.flavor`, the generated basic profiles author it, and so do the
+  // colorless and co-op sets. Believing the comment meant the text was written
+  // and shown to nobody.
+  // The face has four fixed bands and no room to grow one, so the flavour is
+  // carried by the reading door's pane — the same place, and the same
+  // `inspection-lore` disclosure, the equipment card uses for its own.
+  //
+  // `cname` is not a region, for the same reason `.epc-name` is not: the title
+  // is what tells one card from another and shows at every level.
+  const identity = model.instanceId || model.id;
+  // See equipmentCard.js: `inspection: false` means "no door on this face",
+  // not "this face says everything". An explicit level wins over the inert
+  // default so a caller that binds the door to a wrapper still gets a resting
+  // card at resting size.
+  const floor = opts.level || (opts.inspection === false ? 'inspect' : 'glance');
+  const levelNow = () => resolveCardLevel({
+    floor, lit: litCard() === identity,
+  });
+  let drawn = levelNow();
+  const paint = (at) => {
+    const visible = new Set(cardFields(at, { surface: opts.surface || 'none' }).visible);
+    const region = (key, html) => (visible.has(key) ? html : '');
+    // HIDE BY NOT RENDERING. A region left in the markup and hidden in CSS
+    // still takes its share of the face's row budget, so the card would be the
+    // same card with holes rather than a larger-typed one — and a screen
+    // reader would announce a field the player cannot see.
+    const body = region('type', `<div class="ctype">${esc(model.type.label)}</div>`)
+      + region('effects', `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div>`);
+    // The information button and the chevron are children of the card that
+    // `bindCardInspection` appended with their own listeners; a repaint must
+    // hand them back rather than take them away.
+    // WHAT A REPAINT MAY DESTROY IS WHAT IT DREW, AND NOTHING ELSE.
+    //
+    // This kept a NAMED PAIR — the `i` and the chevron — on the premise that
+    // they are the only children a caller adds. They are not. The combat hand
+    // appends a positional keycap, a `card-unavailable-reason` pill and its
+    // `.hand-hit-lane` to the card AFTER the renderer has run (hand.js), and
+    // selection repaints now, so the first tap on a card in combat deleted
+    // them. The hit lane is part of how the hand decides what a touch landed
+    // on, so this could move where a player's taps go.
+    //
+    // An allow-list of foreign children cannot be right, because the renderer
+    // cannot know what a surface will add. Invert it: mark the children THIS
+    // renderer drew and keep everything unmarked. New callers and new
+    // decorations are then safe by default rather than by remembering to come
+    // back and edit a list here.
+    //
+    // Guarded, because this renderer is also exercised against the minimal DOM
+    // the wireframe tests build, which has no `children`. There is nothing to
+    // keep on a first paint in any case — the door has not run yet.
+    const kept = el.children
+      ? [...el.children].filter((node) => node?.dataset?.cardPainted !== '1')
+      : [];
+    el.innerHTML =
+      region('facts', `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
+        `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+      ).join('')}</div>`) +
+
+      `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
+      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+      // Subtypes: authored in content/source/tagging.csv. Untagged cards
+      // render nothing here, so the layout is unchanged for them.
+      (tags.length && visible.has('tags')
+        ? `<div class="ctags cd-tags">${tags
+            .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+            .join('')}</div>`
+        : '') + '</div>') +
+      (body ? `<div class="cd-body">${body}</div>` : '') +
+      region('footer', metadataBand(def.rarity, opts.owned));
+    // Stamp what this paint drew BEFORE the kept children go back on, so the
+    // next repaint can tell the two apart. Guarded for the same minimal DOM.
+    if (el.children) for (const node of el.children) { if (node.dataset) node.dataset.cardPainted = '1'; }
+    for (const node of kept) el.append(node);
+    // A WITHHELD REGION GIVES ITS TRACK BACK.
+    //
+    // WC1 lays the face out on four authored bands — name / art / body /
+    // metadata — and the level decides which of those children are drawn. The
+    // bands were the authored four regardless, so a `glance` card that
+    // withholds its metadata band left an EMPTY TRAILING TRACK: about a tenth
+    // of the face spent on nothing, and none of it returned to the rule text.
+    // That is the opposite of the claim levels are built on — that omitting a
+    // region returns its pixels — and it held for the equipment face (whose
+    // solver already recomputes rows) while quietly not holding here.
+    //
+    // The card states the bands for the children it ACTUALLY drew, in face
+    // order. The numbers are still the authored ones; only the absent band is
+    // dropped, so the remaining shares keep their proportions to each other.
+    {
+      const drawn = [
+        true,                                   // .cname, always
+        visible.has('art'),                     // .art
+        Boolean(body),                          // .cd-body (type and/or effects)
+        visible.has('footer'),                  // .card-metadata
+      ];
+      const bands = cardShape().bands.filter((_, index) => drawn[index]);
+      el.style.setProperty('--card-bands', bands.map((b) => `minmax(0, ${b}fr)`).join(' '));
+      // THE COST RAIL HANGS UNDER THE HEAD BAND, SO IT MOVES WITH IT.
+      // `--card-band-head` is the head's share of the face, projected once on
+      // :root as head/total = 10%. Withholding a band changes that total —
+      // 1/9 rather than 1/10 — so a rail pinned to the root value drifts up
+      // into the name it is meant to sit below: measured at shop glance, 0.3px
+      // of clearance against the 2.7px the four-band face gives. Re-derived
+      // here from the same list, so the rail and the bands cannot disagree.
+      const total = bands.reduce((sum, b) => sum + b, 0);
+      el.style.setProperty('--card-band-head', `${(bands[0] / total) * 100}%`);
+      // The layout's own invariant, asserted where it is created rather than
+      // left to a gate that does not look at bands: one track per in-flow
+      // child. The `drawn` list is a positional mirror of the emit order
+      // below, and a future edit that adds a fifth in-flow child or reorders
+      // the emits would silently misalign every band on every card.
+      el.dataset.cardBands = String(bands.length);
+    }
+    el.dataset.level = at;
+    // `data-tag-rows` is what the stylesheet and every tool read to know the
+    // text's share of the budget. At a level that withholds the chips there
+    // are no tag rows, whatever the card's own data says.
+    el.dataset.tagRows = tags.length && visible.has('tags') ? '1' : '0';
+    // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
+    // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
+    // count or measure, so the renderer reports after the first paint.
+    scheduleCardFits([el]);
+  };
+  paint(drawn);
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
   // of set-intersection math. Non-matching cards get nothing (absence = no
   // bonus; never a "+0%" badge).
-  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
-  if (boost) {
+  if (model.paint.boostTint) {
     el.classList.add('tag-boost');
-    el.style.setProperty('--boost-tint', boost.boostTint);
+    el.style.setProperty('--boost-tint', model.paint.boostTint);
   }
 
   // NO HOVER TOOLTIP ON A CARD (owner, 2026-09-11: "all cards will use the
@@ -193,14 +336,67 @@ export function renderCard(registries, ref, opts = {}) {
     actionOwnsTouch: opts.actionOwnsTouch === true,
     open: opener => {
       const details = document.createElement('div');
-      const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      const liveCosts = model.hasPreview ? model.costs : null;
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
       decorateKeywords(details);
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
+      // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
+      // everything. The note above the regions used to say a playing card
+      // authors no flavour; that was simply false — `resolveCard` composes
+      // `profile.flavor || def.flavor` (model/registries.js), the generated
+      // basic profiles author it, and so do the colorless and co-op sets. It
+      // was written, stored, and shown to nobody.
+      // It goes in the reading door's pane rather than on the face, which is
+      // exactly where the equipment card puts its own (`inspection-lore` in
+      // equipmentCard.js) — same disclosure, same summary, so the two card
+      // types read the same way at the same level.
+      if (def.flavor) {
+        const lore = document.createElement('details');
+        lore.className = 'inspection-lore';
+        const summary = document.createElement('summary');
+        summary.textContent = 'Flavor';
+        summary.tabIndex = 0;
+        const text = document.createElement('p');
+        text.textContent = def.flavor;
+        lore.append(summary, text);
+        details.append(lore);
+      }
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
       details.classList.add('playing-card-details');
+      // NO DEFAULT VERB. This line used to read
+      //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
+      // and that fallback was the defect: every surface but combat inherited
+      // combat's verb as a dead button, on the spoils screen most absurdly,
+      // where the player had opened the card in order to take it.
+      //
+      // A surface now says which one it is (`opts.surface`) and hands over the
+      // commits it owns (`opts.commands`); services/cardActions.js answers what
+      // that surface offers. A card with nothing to offer gets a reading door
+      // and no footer, which is the honest shape rather than an apology.
+      const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        getAction: opts.inspectionAction || (() => ({ enabled:false, reason:'Play cards from your combat hand.' })) });
+        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
+        commands: opts.commands || {} });
     } });
+  // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED. A selection lights one card and
+  // douses one card, and cardInspection.js fires both events on the card they
+  // concern, so each face repaints itself. Nothing sweeps the document —
+  // `document.querySelectorAll` is what dev deliberately deleted when the
+  // selection store was extracted (see the header of cardSelection.js), and a
+  // sweep is also how a card removed from the DOM kept being reconciled.
+  //
+  // The guard matters as much as the listener: `select()` runs on every tap,
+  // including on a card that is already lit, and rebuilding the face under a
+  // thumb mid-gesture would be a new defect wearing this feature's clothes.
+  if (opts.inspection !== false) {
+    const restate = () => {
+      const next = levelNow();
+      if (next === drawn) return;
+      drawn = next;
+      paint(drawn);
+    };
+    el.addEventListener('cardinspectionselect', restate);
+    el.addEventListener('cardinspectiondouse', restate);
+  }
   return el;
 }
 
@@ -243,9 +439,29 @@ function fitCardFaces(cards) {
   long.forEach(row => { row.el.dataset.name = 'long'; });
   const veryLong = long.filter(({name}) => name.scrollWidth > name.clientWidth + 1);
   veryLong.forEach(row => { row.el.dataset.name = 'verylong'; });
+  // WHICH ROW EACH CHIP LANDED ON — COUNTED, NOT DIVIDED, AND AGAINST THE
+  // CHIP'S OWN ORIGIN.
+  //
+  // This was wrong twice, and on the one face that matters most it was wrong
+  // silently. `chip.offsetTop` is measured from the chip's OFFSET PARENT, and
+  // WC0 makes `.ctags` `position: absolute` (kit.css) — so on a playing card
+  // the strip IS that offset parent and chip tops already start at 0. The old
+  // line subtracted `tags.offsetTop`, which is measured from `.art` instead, so
+  // every position came out negative, nothing ever cleared the `>= 2` test, and
+  // the `+N` deferral NEVER FIRED on a combat card. The rows past the second
+  // were then cut off by `.ctags`'s own `overflow: hidden` with no ellipsis and
+  // no scroller. Measured at c63a09620, ?shot=combat, 1200x730: Guard Counter's
+  // strip was 78 px of content in a 36 px box — 42 px of a card's subtypes
+  // gone, and `data-tag-rows` reporting 0 for a five-chip card at 390x844.
+  //
+  // Second: the pitch. `chip.offsetHeight + 2` assumed a 2 px gap while the
+  // stylesheet's is `0.3rem` (3 px at the shipped 10px root), so a row cost 20
+  // px and the arithmetic charged 19 — a drift that grows with every row. There
+  // is no need to divide at all: chips on one row share an offsetTop, so the
+  // DISTINCT tops in order ARE the rows.
   for (const row of rows) {
-    const top = row.tags?.offsetTop || 0;
-    row.positions = row.chips.map(chip => Math.round((chip.offsetTop - top) / Math.max(1, chip.offsetHeight + 2)));
+    const tops = [...new Set(row.chips.map(chip => chip.offsetTop))].sort((a, b) => a - b);
+    row.positions = row.chips.map(chip => tops.indexOf(chip.offsetTop));
   }
   for (const row of rows) {
     row.chips.forEach((chip, i) => {
@@ -258,10 +474,24 @@ function fitCardFaces(cards) {
       row.tags.appendChild(row.more);
     }
   }
-  const overflow = rows.filter(({more,tags}) => more && Math.round((more.offsetTop - tags.offsetTop) / Math.max(1, more.offsetHeight + 2)) >= 2);
-  for (const row of overflow) {
-    const last = row.chips.filter(chip => !chip.hidden).pop();
-    if (last) { last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden; }
+  // `+N` is itself a chip and can be the thing that pushes the strip to a third
+  // row. Same counting, same origin — and it REPEATS: dropping one chip can
+  // widen `+N` from "+1" to "+10" and overflow again, which the single pass
+  // below used to leave on the face. Bounded by the chip count, and every pass
+  // reads the whole batch before the next one writes.
+  for (let pass = 0; pass < 8; pass++) {
+    const overflow = rows.filter((row) => {
+      if (!row.more) return false;
+      const live = [...row.chips.filter(chip => !chip.hidden), row.more];
+      const tops = [...new Set(live.map(chip => chip.offsetTop))].sort((a, b) => a - b);
+      return tops.indexOf(row.more.offsetTop) >= 2;
+    });
+    if (!overflow.length) break;
+    for (const row of overflow) {
+      const last = row.chips.filter(chip => !chip.hidden).pop();
+      if (!last) continue;
+      last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden;
+    }
   }
   for (const row of rows) {
     if (row.more) {
@@ -340,6 +570,13 @@ function glossaryEntry(registries, kind, id) {
     : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
   if (!display || !display.tooltip) return null;
   return { name: display.name, tooltip: statusTooltipText(display) };
+}
+
+/** W1h: the read-only reading a pile viewer shows beside its collection —
+ *  the same body the card's own inspect door and tooltip use. */
+export function cardDetailHtml(registries, ref) {
+  const def = resolveCard(registries, ref);
+  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null) {

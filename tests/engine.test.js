@@ -7,12 +7,13 @@
 import { contentBundle } from '../src/content/index.js';
 import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries, resolveCard, relicPropertyRules } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
+import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
-import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances, equippedIn } from '../src/model/loadout.js';
 import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
 import { ownerItemRef, mountKey as mountKeyOf } from '../src/model/cardMounts.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
@@ -22,30 +23,36 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
-import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
+import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
+import { computeAttackDamage, applyLoseHp, applyHeal } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun, syncZones } from '../src/model/state.js';
+import { stampPlayerPoiseMax } from '../src/model/state.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
+import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
+import { generateJourney } from '../src/model/worldAtlas.js';
 import {
   rollEncounter,
   rollRuneReward,
   rollCardRewardIds,
+  rollSkillDraftIds,
+  rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
   resolveUnknownNode,
-  shrineHealAmount,
   rollArmamentDrop,
 } from '../src/engine/encounters.js';
 import {
@@ -55,7 +62,7 @@ import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCo
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
-import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
+import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
@@ -69,7 +76,20 @@ import {
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
+  deckMinimum, loadoutLeaveRefusal, gripOf, gripTags, gripRefusal,
 } from '../src/model/loadout.js';
+import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
+import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
+import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft, reconcileSkillUpgrades } from '../src/model/skills.js';
+import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
+import { classCard, runClassIdentity } from '../src/model/classCard.js';
+import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
+import { classCarrier } from '../src/engine/properties.js';
+import { swapRunClass, peakClassLevel } from '../src/model/classSwap.js';
+import { bornClassOf } from '../src/model/startingKits.js';
+import { classAvailable, classUnlockRow } from '../src/model/unlocks.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
+import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
@@ -99,12 +119,14 @@ import {
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
 // at the top of this file still holds.
 import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
-import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/model/levelup.js';
+import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
+import { levelProblems } from '../src/model/state.js';
+import { playerLevel } from '../src/model/levels.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -136,6 +158,8 @@ const TEST_CARDS = [
   { id: 'tBigDraw', name: 'T Big Draw', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'draw', amount: 10 }], textTemplate: 'Draw {draw} cards.' },
   { id: 'tKeep', name: 'T Keep', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['retain'], effects: [], textTemplate: 'Retain.' },
   { id: 'tPoise', name: 'T Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'enemy', amount: 10 }], textTemplate: '{poiseDamage} Poise damage.' },
+  // Plan phase 8: the player's own meter, filled by a self-aimed pour.
+  { id: 'tSelfPoise', name: 'T Self Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'self', amount: 5 }], textTemplate: '{poiseDamage} Poise damage to you.' },
   { id: 'tCharge', name: 'T Charge', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'applyStatus', target: 'self', status: 'testCharge', stacks: 3 }], textTemplate: 'Gain {testCharge} Charge.' },
   // #61 fixtures: proc appliers + a tagged hit for the vulnerability lane.
   { id: 'tFrost10', name: 'T Frost', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {frost} Frost.' },
@@ -169,13 +193,16 @@ const TEST_TAGGING = [
 ];
 
 function testBundle() {
-  return {
+  // withKindRows: every fixture card and enemy states its kind, as shipped
+  // content must (model/tree.js) — the engine reads a card's kind tag, never
+  // its `type`, so a fixture without the row would be no kind at all.
+  return withKindRows({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-  };
+  });
 }
 
 const REG = createRegistries(testBundle());
@@ -241,7 +268,7 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, relicIds = [], flasks = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -250,9 +277,36 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'reaver', maxHp, hp, mana, maxMana, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, mana, maxMana, stamina, maxStamina, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
+}
+
+/**
+ * withKindRows(bundle) → the same bundle with a classification tagging row for
+ * every collection object that lacks one. Every object states its kind
+ * (model/tree.js refuses one that does not), so a fixture that adds a synthetic
+ * event or card owes it a kind row exactly as shipped content does; this writes
+ * the one the object's collection and type name, which is the only row the
+ * validator would accept anyway.
+ */
+function withKindRows(bundle) {
+  const TYPE_KIND = { attack: 'classification.attack', skill: 'classification.skill', power: 'classification.power', curse: 'classification.curse', status: 'classification.statusCard' };
+  const rows = [...(bundle.tagging || [])];
+  const has = new Set(rows.filter((r) => String(r.tagId).startsWith('classification.')).map((r) => `${r.family}\u0000${r.scope || ''}\u0000${r.objectId}`));
+  for (const spec of bundle.tagFamilies || []) {
+    if (!spec.source || typeof spec.source !== 'string') continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && node[part];
+    for (const def of Array.isArray(node) ? node : []) {
+      if (!def || typeof def.id !== 'string') continue;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      if (has.has(`${spec.family}\u0000${scope}\u0000${def.id}`)) continue;
+      const tagId = spec.family === 'card' ? TYPE_KIND[def.type] : `classification.${spec.family}`;
+      if (tagId) rows.push({ family: spec.family, scope, objectId: def.id, tagId });
+    }
+  }
+  return { ...bundle, tagging: rows };
 }
 
 function playFromHand(combat, cardId, targetId = 'e1') {
@@ -369,23 +423,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 6. Keywords + X-cost -----------------------------------------------------
   test('6. Exhaust / Ethereal / Retain / Innate / X-cost / upgrade removes Exhaust', () => {
-    const c = makeCombat({ deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] });
+    const c = makeCombat({ stamina: 4, deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] });
     playFromHand(c, 'kickOff');
     assert(c.piles.exhaust.some((x) => x.cardId === 'kickOff'), 'Exhaust card exhausted on play');
     dispatch(c, { type: 'endTurn' });
     assert(c.piles.exhaust.some((x) => x.cardId === 'lastStand'), 'Ethereal exhausted at turn end');
     assert(c.piles.hand.some((x) => x.cardId === 'tKeep'), 'Retain kept in hand');
 
-    const inn = makeCombat({ deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
+    const inn = makeCombat({ stamina: 4, deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
     assert(inn.piles.hand.some((x) => x.cardId === 'warriorsVow'), 'Innate in opening hand');
 
-    const x = makeCombat({ deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
+    const x = makeCombat({ stamina: 4, deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
     playFromHand(x, 'stitchedArms');
     eq(x.player.energy, 0, 'X-cost consumed all energy');
     eq(logOf(x, 'damageDealt').filter((e) => e.sourceId === 'player').length, 3, '3 energy → 3 hits');
 
     // X = 0 whiffs entirely (StS): playable, but zero hits.
-    const x0 = makeCombat({ deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
+    const x0 = makeCombat({ stamina: 4, deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
@@ -408,7 +462,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (Constantine, "let rune pick the threshold against the sim") — the
     // contract under test is the mechanism, not the current pick.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3); // sub-threshold build-up
     eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed accumulated, no decay');
@@ -431,7 +485,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(e1.statuses.bleed.meter.max, T, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
     eq(e1.poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
 
-    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'], stamina: 6 });
     S.applyStatus(g, getEntity(g, 'e1'), 'bleed', T - 3);
     playFromHand(g, 'gorefireSlash'); // → T → proc on the giant
     const gb = logOf(g, 'procBurst').filter((e) => e.targetId === 'e1').pop();
@@ -440,7 +494,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Overflow is DROPPED at proc (reset-to-zero, his words) — (T-1) + 3
     // procs once and leaves 0, not 2. This is the anti-stranding delta the
     // #61 falsifier measures.
-    const o = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const o = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     S.applyStatus(o, getEntity(o, 'e1'), 'bleed', T - 1);
     playFromHand(o, 'gorefireSlash'); // T-1+3 = T+2 ≥ T → proc
     eq(logOf(o, 'procBurst').filter((e) => e.targetId === 'e1').length, 1, 'single proc');
@@ -485,7 +539,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // inside a dispatch (card play) so the enqueued resistance drains.
     // Threshold-derived like test 7 — the knob is provisional.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'] });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'], stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3);
     playFromHand(c, 'gorefireSlash'); // +3 → T → proc
@@ -557,7 +611,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // `tags` field, so green here proves the real card door derives the hit's
   // identity rather than preserving the old test-only tagged-effect fixture.
   test('7e2. Frost-Exposed changes a real Starstone hit through tagging.csv', () => {
-    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
+    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'], stamina: 2 });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('starstonePebble');
     assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Starstone Pebble damage does not hand-copy CSV tags');
@@ -570,7 +624,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
-    const c = makeCombat({ deck: ['blightTouch'], enemies: ['tGiant'] });
+    const c = makeCombat({ stamina: 4, deck: ['blightTouch'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('blightTouch');
     assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Blight Touch damage does not hand-copy CSV tags');
@@ -733,7 +787,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 10. Stances -------------------------------------------------------------
   test('10. stance exclusivity; Gorefire per-hit Bleed; Bulwark on-Skill block', () => {
-    const c = makeCombat({ deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
+    const c = makeCombat({ stamina: 4, deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
     playFromHand(c, 'enterGorefire');
     eq(c.player.stanceId, 'gorefire', 'entered gorefire');
     eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');
@@ -1305,7 +1359,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const def = resolveCard(REG, inst);
         if ((def.keywords || []).includes('unplayable')) return false;
         const cost = def.cost === 'X' ? 0 : def.cost;
-        return c.player.energy >= cost && c.player.mana >= (def.manaCost || 0);
+        return c.player.energy >= cost && c.player.mana >= (def.manaCost || 0) && (c.player.stamina ?? 0) >= (def.staminaCost || 0);
       });
       if (playable && target) {
         dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
@@ -1413,13 +1467,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const r = createRng(0xaa11);
       const rn = createRunState({ seed: 0xaa11, classId: 'reaver', registries: REG });
       return JSON.stringify([
-        rollEncounter(REG, r, { pool: 'normal' }),
+        rollEncounter(REG, r, { pool: 'normal', seat: rn.seatOrder[0] }),
         rollRuneReward(REG, r, 'normal', []),
         rollCardRewardIds(REG, r, { classId: 'reaver', pool: 'normal' }),
         rollFlaskDrop(REG, r, rn),
         rollRelicReward(REG, r, ['forsakenMedallion']),
         buildShopStock(REG, r, rn),
-        resolveUnknownNode(REG, r, { act: 1 }),
+        resolveUnknownNode(REG, r, { tier: 1 }),
       ]);
     };
     eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');
@@ -1475,21 +1529,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
     eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
     eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
-
-    const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
-    rn4.relics.push('emberFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
   test('19. keepsakes: effect lists validate and apply as run effects', () => {
     // Every keepsake's effects must pass the same closed-set validation as events.
-    const probe = { ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
+    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
       id: `ks_${k.id}`, name: k.name, text: 'probe',
       choices: [{ label: 'x', effects: k.effects, resultText: 'x' }],
-    }))] };
+    }))] });
     const v = validateContent(probe);
     assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
@@ -1513,7 +1561,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.classes.ids().join(','), 'reaver,starseer,rogue,herald', 'the four registered classes include Rogue in authored order');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 6, maxMana: 6, stamina: 6 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
@@ -1531,12 +1579,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const spellDeck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `sm${i}`, cardId: 'starstonePebble', upgraded: false }));
     const soloMagic = createCombat({
       registries: REG, rng: createRng(0x57a2),
-      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
         energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
         relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
       enemyIds: ['tGiant'],
     });
-    eq(soloMagic.player.mana, 1, 'Starstone combatStart recovery restores one Mana through its trigger row');
+    eq(soloMagic.player.mana, 2, 'Starstone combatStart recovery restores one Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) one more');
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
     eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
@@ -1546,7 +1594,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
       players: [
-        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
           energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
           relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
         { id: 'p2', classId: 'reaver', maxHp: 96, hp: 96, maxMana: 2, mana: 2, energyMax: 3, drawPerTurn: 5,
@@ -1554,14 +1602,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
       enemyIds: ['tGiant'],
     });
-    eq(coopMagic.players.get('p1').entity.mana, 1, 'co-op combatStart uses the same Mana recovery row');
+    eq(coopMagic.players.get('p1').entity.mana, 2, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
     eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 7,
       'co-op live magic damage uses the same host-stamped +1');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
-    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'] });
+    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
     playFromHand(s, 'starstonePebble');
     eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
 
@@ -1575,7 +1623,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(p.piles.hand.length, handBefore, 'drew 1 (played 1, drew 1)');
 
     // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
-    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'] });
+    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'], stamina: 2 });
     playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
     eq(g.player.block, 2, 'overheal converted to Block');
     dispatch(g, { type: 'endTurn' }); // tRegen heals itself
@@ -1638,10 +1686,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    eq(fresh.mana, 1, 'run starts at its WIS-derived mana maximum');
-    eq(fresh.maxMana, 1, 'Reaver maximum follows the tuned WIS preset');
+    // ONE, BECAUSE A POINT IS A POINT. The Reaver leaves Wisdom at the lean
+    // baseline of 1 and the pool IS Wisdom, read at the value the sheet shows:
+    // the creation scale that made one lean point five tuned tiers is gone
+    // (2026-09-21), and this row is the authored one, unconverted.
+    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 2, 'Reaver maximum follows the lean WIS preset — a base of 1 and the pool IS Wisdom (plan phase 9)');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
-    assert(validateRunShape({ ...fresh, mana: 3 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
+    assert(validateRunShape({ ...fresh, mana: fresh.maxMana + 1 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
     const badMax = validateContent({
       ...contentBundle,
@@ -1654,7 +1706,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2 });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
@@ -1662,7 +1714,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spend.player.mana, 1, 'signature starter spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2 });
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -1689,8 +1741,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     delete old.derivedStatRuleSnapshot;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 1, 'pre-mana save migrates to full derived mana');
-    eq(migrated.maxMana, 1, 'pre-mana save derives from its tuned WIS allocation');
+    eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, 2, 'pre-mana save derives from its lean WIS allocation');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };
@@ -1720,17 +1772,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
-  test('21. act-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
-    // Encounter rolls are act-scoped.
+  test('21. seat-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
+    // Encounter rolls are SEAT-scoped (SPEC §13.2); an act argument is refused.
     for (let i = 0; i < 20; i++) {
       const r = createRng(i * 7919);
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 2 }).startsWith('a2_'), 'act 2 pool only');
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
-      assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'marches' }).startsWith('a2_'), 'marches pool only');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'reach' }).startsWith('a3_'), 'reach pool only');
+      assert(!rollEncounter(REG, r, { pool: 'normal', seat: 'weald' }).startsWith('a2_'), 'weald pool untouched');
     }
-    const act3Boss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }));
-    eq(act3Boss.act, 3, 'boss stays in act 3');
-    eq(act3Boss.pool, 'boss', 'boss pool only');
+    let refused = null;
+    try { rollEncounter(REG, createRng(1), { pool: 'normal', act: 2 }); } catch (e) { refused = e.message; }
+    assert(/retired/.test(refused || ''), 'act is refused by name');
+    const reachBoss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', seat: 'reach' }));
+    eq(reachBoss.seat, 'reach', 'boss stays in its seat');
+    eq(reachBoss.pool, 'boss', 'boss pool only');
 
     // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
@@ -1775,7 +1830,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const playable = f.piles.hand.find((inst) => {
         const def = resolveCard(REG, inst);
         if ((def.keywords || []).includes('unplayable')) return false;
-        return f.player.energy >= (def.cost === 'X' ? 0 : def.cost) && f.player.mana >= (def.manaCost || 0);
+        return f.player.energy >= (def.cost === 'X' ? 0 : def.cost) && f.player.mana >= (def.manaCost || 0) && (f.player.stamina ?? 0) >= (def.staminaCost || 0);
       });
       if (playable && target) dispatch(f, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
       else dispatch(f, { type: 'endTurn' });
@@ -1795,7 +1850,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (let act = 4; act <= 12; act++) {
       const ca = endlessActInfo(act).contentAct;
       assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
-      assert(rollEncounter(REG, createRng(act), { pool: 'boss', act: ca }), `boss encounter rolls for looped act ${act}`);
+      assert(rollEncounter(REG, createRng(act), { pool: 'boss', seat: ['weald', 'marches', 'reach'][ca - 1] }), `boss encounter rolls for looped act ${act}`);
     }
     // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
     const base = createCombat({
@@ -1913,6 +1968,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tagIds.length, new Set(tagIds).size, 'tag ids are unique');
     eq(domainIds.length, new Set(domainIds).size, 'domain ids are unique');
     for (const t of TAGS) {
+      // A node the framework shows (one carrying a visibility) reaches the
+      // player through its term rows, never as a chip, so it has no colour.
+      if (t.visibility) continue;
       assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
       assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
       assert(domainIds.includes(t.domain), `tag '${t.id}' names a registered domain ('${t.domain}')`);
@@ -1989,9 +2047,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // Registries resolve the join onto the object, so a mechanic reads
     // obj.tags whatever table the row was authored in.
-    eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood', 'the Reaver carries its class tags');
+    eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood|item:blade', 'the Reaver carries its class tags — and, since plan phase 5a, the item type it favours');
     eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee', 'a card carries its tags on the def');
-    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged', 'the table resolves by family and id');
+    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
     eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
       'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
@@ -2057,8 +2115,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme', 'armaments allow categorized combat tags alongside legacy tags');
-    assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme|property|classification', 'armaments allow categorized combat tags alongside legacy tags, and state their kind');
+    // Domain-filtered: an enemy may carry creature kinds, the kind every object
+    // states, and property tags (every family may) — never a card school.
+    assert(svc.allowedFor('enemy').some((t) => t.domain === 'creature') && !svc.allowedFor('enemy').some((t) => t.domain === 'card'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
     eq(svc.tag('nope'), null, 'tag() on an unknown id is null');
@@ -2089,7 +2149,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
       const reg = createRegistries({ ...legacyTestBundle(), balance });
       const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
-      eq(run.deck.length, 10, `bias ${bias} still starts a 10-card deck`);
+      eq(run.deck.length, 11, `bias ${bias} still starts an 11-card deck (10 before the class ability card joined the kit, plan phase 5a)`);
       eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, wantAttack, `bias ${bias} deals ${wantAttack} attacks`);
       eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, wantGuard, `bias ${bias} deals ${wantGuard} guards`);
     }
@@ -2244,7 +2304,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // refs nothing ever swept. The owner ruled (2026-09-03): if the item is not
     // equipped, its cards are gone. The sword took its two with it; 26v owns
     // the full statement of that rule.
-    eq(run.deck.length, 8, 'and the unequipped sword took its two bound cards with it — the deck floats, by ruling');
+    eq(run.deck.length, 9, 'and the unequipped sword took its two bound cards with it — the deck floats, by ruling (11 − 2 since the ability card joined the kit)');
 
     // roleCopies is the legacy distribution. Its hand-kept sum is exactly the
     // coupling the composed deck removes, so it is a rule only while it is the
@@ -3439,9 +3499,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const ids = weapons.map((w) => w.id);
     eq(ids.length, new Set(ids).size, 'armament ids are unique');
-    eq(weapons.filter((w) => w.kind === 'weapon').length, 9, 'nine weapons');
+    const expectedArmaments = ['straightSword', 'greatsword', 'dagger', 'shortbow', 'katana', 'halberd', 'warhammer', 'twinblade', 'battleaxe',
+      'buckler', 'kiteShield', 'towerShield', 'roundShield', 'spikedShield', 'lantern', 'torch', 'parryDagger',
+      'ashStaff', 'starstoneStaff', 'boneSceptre', 'emberlightSceptre', 'goldboughBranch', 'blightRod', 'gorefireBrand', 'wyrmhornStaff',
+      'frostSpear', 'cinderAxe', 'duskChime'];
+    eq([...ids].sort().join('|'), expectedArmaments.sort().join('|'), 'exact expanded armament roster');
+    eq(weapons.filter((w) => w.kind === 'weapon').length, 11, 'eleven weapons');
     eq(weapons.filter((w) => w.kind === 'shield').length, 8, 'eight shields/offhands');
-    eq(weapons.filter((w) => w.kind === 'staff').length, 8, 'eight staves');
+    eq(weapons.filter((w) => w.kind === 'staff').length, 9, 'nine staves');
 
     const checkMods = (mods, where) => {
       if (mods === '') return;
@@ -3476,11 +3541,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
 
-    // Armour: four sets per class, exactly one of them unlocked from the start.
+    // Each class keeps its baseline roster plus explicitly named additions.
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
-      eq(mine.length, 4, `class '${id}' has four armour sets`);
-      eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
+      const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
+      eq(mine.length, additions[id] ? 9 : 8, `class '${id}' has its full armour roster including four shared sets`);
+      if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
+      eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
       checkItemTypes(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
@@ -3496,7 +3563,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(LEGACY_REG).join('; '), '', 'every authored piece parses against the vocabulary');
 
     const intrinsicReceipts = LEGACY_REG.equipment.armaments.map(armamentIntrinsicReceipt);
-    eq(intrinsicReceipts.length, 25, 'all 25 armaments expose an intrinsic stat receipt');
+    eq(intrinsicReceipts.length, 28, 'all 28 armaments expose an intrinsic stat receipt');
+    eq(LEGACY_REG.equipment.armaments.map(piece => piece.id).sort().join('|'),
+      weapons.map(piece => piece.id).sort().join('|'), 'intrinsic receipts cover the exact authored roster');
     assert(intrinsicReceipts.every((row) => ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((field) => Number.isInteger(row[field]) && row[field] >= 0)),
     'each intrinsic receipt exposes five explicit non-negative integer facts');
@@ -3508,7 +3577,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
     eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
-      JSON.stringify({ itemId: 'greatsword', attackRating: 9, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
@@ -3564,7 +3633,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // A run starts stamped by whatever it starts wearing, and `self.*` mods
     // reach the run rather than a card.
-    const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+    // THE ALLOCATION IS SPELLED OUT HERE BECAUSE THIS BLOCK EQUIPS A DAGGER.
+    // On the lean span a Reaver's own preset leaves Dexterity at the baseline
+    // of 1, and the dagger asks 2 — so the in-combat `changeEquipment` below
+    // would be refused for a reason that has nothing to do with the action
+    // economy this block is about. Three points placed as a dagger-carrying
+    // Reaver would place them: still 8, still inside 1–4, still holding the
+    // greatsword's 2 Strength.
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG,
+      attributes: { strength: 3, dexterity: 2, constitution: 1, wisdom: 1, intelligence: 1 } });
     assert(run.loadout && run.loadout.sets.rightHand.length === 3, 'the right hand carries three sets');
     eq(run.loadout.sets.armor[0], 'default', 'the reaver starts in its one unlocked set');
 
@@ -3573,7 +3650,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     equipPiece(LEGACY_REG, run.loadout, 'armor', 0, 'oathsworn', OWNS_EVERYTHING, AT_CAMP);
     stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 7, 'the deck itself is stamped with the tuned STR strike receipt');
+    eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 3, 'the deck definition carries its base while runtime adds source AR');
     eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses[0].status, 'strength', 'the Oathsworn set grants Strength');
     assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
@@ -3588,8 +3665,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const energyBefore = combat.player.energy;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
+    // The swap re-stamps the Poise vessel from the loadout it just changed, and
+    // it re-derives the WHOLE receipt: a re-stamp that forgets the attributes
+    // collapses the player's threshold to equipment + relics, silently, mid
+    // fight. changeEquipment is asserted below; this is the other door.
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'a mid-fight swap re-stamps the exact live Poise threshold, Constitution included');
+    assert(combat.player.poiseMeter.max > playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels,
+    }).value, 'the attribute term is really in the stamp: drop it and the threshold is lower');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
+    eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 6, 'every Strike carries the greatsword base plus rarity before runtime AR');
 
     // Re-arming a position in combat uses the same priced action economy, but
     // it can replace/move/unequip the item rather than only select a prepared
@@ -3604,7 +3693,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.rightHand[0], null, 'moving the dagger clears its previous position');
     assert(combat.loadout.storage.includes('greatsword'), 'the replaced greatsword returns to carried storage');
     const daggerStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(LEGACY_REG, daggerStrike)), 5, 'live Strikes immediately use the newly equipped dagger profile');
+    eq(dmgOf(resolveCard(LEGACY_REG, daggerStrike)), 3, 'live Strikes immediately use the newly equipped dagger profile');
     assert(rearmed.events.some((event) => event.type === 'equipmentRearmed' && event.pieceId === 'dagger'),
       'the combat receipt names the item that was equipped');
 
@@ -3616,8 +3705,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
     eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
       loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
-      itemUpgradeLevels: combat.itemUpgradeLevels,
-    }).value, 'changing armour immediately stamps the exact live Poise threshold');
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'changing armour immediately stamps the exact live Poise threshold (Constitution included)');
     assert(combat.player.poiseMeter.max !== poiseBeforeArmour,
       'changing from Oathsworn armour to Wayfarer Plate visibly changes the Poise vessel');
     assert(armourChanged.events.some((event) => event.type === 'equipmentChanged'),
@@ -3632,7 +3721,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.rightHand[1], null, 'the requested combat position is empty after unequip');
     assert(combat.loadout.storage.includes('dagger'), 'the unequipped dagger returns to carried storage');
     const bareStrike = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
-    eq(dmgOf(resolveCard(LEGACY_REG, bareStrike)), 4,
+    eq(dmgOf(resolveCard(LEGACY_REG, bareStrike)), 2,
       'live Strikes are re-stamped to the run\'s tuned unarmed profile after unequip');
     assert(unequipped.events.some((event) => event.type === 'equipmentChanged'
       && event.changedPositions.some((position) => position.slotId === 'rightHand'
@@ -3710,7 +3799,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const loaded = saves.loadRun(LEGACY_REG);
     eq(loaded.loadout.sets.rightHand[1], null, 'the combat unequip round-trips');
     assert(loaded.loadout.storage.includes('dagger'), 'the unequipped item round-trips in carried storage');
-    eq(dmgOf(resolveCard(LEGACY_REG, loaded.deck.find((c) => c.cardId === 'strike'))), 4,
+    eq(dmgOf(resolveCard(LEGACY_REG, loaded.deck.find((c) => c.cardId === 'strike'))), 2,
       'the saved deck round-trips with the live unarmed profile');
 
     // And a run saved before equipment existed is healed, not refused.
@@ -4592,10 +4681,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
-      'a fresh profile is offered exactly its one starting set');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
+      'a fresh profile owns its starting set and four attribute-gated shared sets');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => earned.has(p)).length, 2, 'earning one unlock adds exactly one set');
+    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5017,7 +5106,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const RARITY = { common: 0, uncommon: 1, rare: 2 };
 
     const vec = (piece) => {
-      const out = {};
+      const out = {
+        'rating.attack': piece.attackRating || 0,
+        'rating.defense': piece.defenseRating || 0,
+        'impact.weight': piece.weight || 0,
+      };
+      for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
+        out[`requirement.${attribute}`] = -minimum;
+      }
       for (const raw of piece.mods) {
         const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
         if (!m) continue;
@@ -5139,7 +5235,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     for (const o of REG.equipment.armour) {
       const key = `${o.classId}/${o.id}`;
-      const entry = manifest.armour[key];
+      const artKey = `${o.artClassId || o.classId}/${o.artKey || o.id}`;
+      const entry = manifest.armour[artKey];
       if (!entry) {
         stale.push(`${key}: no art rendered`);
         continue;
@@ -5164,7 +5261,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // pass every assertion above by having nothing to disagree with.
     const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
     eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
-    eq(Object.keys(manifest.armour).length, REG.equipment.armour.length, 'every armour set is covered');
+    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.artClassId || o.classId}/${o.artKey || o.id}`));
+    eq(Object.keys(manifest.armour).length, armourArtKeys.size, 'every distinct armour art key is covered');
   });
 
   // ---- 34. armour sets must be visibly distinct in the RENDER --------------
@@ -6084,13 +6182,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
     const reg = createRegistries(contentBundle);
-    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
+    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 'weald', 1, shape));
     eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
     // `shortest`, not a literal, for the same reason as above: this call really
     // does build a map, so it must name a length this act's own rules resolve.
     assert(graphOf(null) !== graphOf({ floors: shortest }), 'a shape reaches the generator through buildActMap');
     let threw = null;
-    try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
+    try { buildActMap(reg, createRng(1), 'weald', 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
     assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
     assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');
@@ -6125,8 +6223,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(attrs.map((a) => a.shortLabel).join(','), 'STR,DEX,CON,WIS,INT', 'all five short labels ship from the same rows');
     const standard = contentBundle.creationModes.find((m) => m.id === contentBundle.attributeRules.defaultMode);
     assert(!!standard, 'the default mode resolves');
-    eq(standard.id, 'tuned', 'new runs select the save-safe tuned mode');
-    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/3/8/15', 'tuned creation bounds author the fixed total of 53');
+    eq(standard.id, 'lean', 'new runs select the lean mode (owner, 2026-09-20)');
+    eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '1/3/1/4', 'lean creation bounds author the fixed total of 8: 1 in every stat and 3 to place');
     eq(classes.length, 4, 'four playable classes participate in the creation product');
     eq(classes.map((c) => c.id).join(','), 'reaver,starseer,rogue,herald', 'the creation product includes Rogue in authored order');
     eq(
@@ -6138,6 +6236,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.tuned[c.id][a.id]).join('/')).join('|'),
       '13/11/11/8/10|11/11/8/13/10|11/13/10/9/10|12/11/8/12/10',
       'all four tuned class presets are exact in the authored attribute order'
+    );
+    // The rebased mode, kept for the saves created under it (plan phase 9).
+    eq(
+      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.tuned2[c.id][a.id]).join('/')).join('|'),
+      '10/6/9/3/7|3/6/7/11/8|7/11/7/3/7|6/5/7/10/7',
+      'all four tuned2 class presets are exact in the authored attribute order'
+    );
+    // The lean mode new runs are actually created under: baseline 1 everywhere
+    // plus each class's three assigned points.
+    eq(
+      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.lean[c.id][a.id]).join('/')).join('|'),
+      '3/1/2/1/1|1/1/1/2/3|1/3/2/1/1|1/1/2/3/1',
+      'all four lean class presets are exact in the authored attribute order'
     );
 
     // The product is derived from its three axes. This is not a fixed-class
@@ -6181,49 +6292,49 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     rejected((b) => { b.creationModes[0].minimum = b.creationModes[0].baseline + 1; }, 'creationModes', 'minimum above baseline');
     rejected((b) => { b.creationModes[0].maximum = b.creationModes[0].baseline - 1; }, 'creationModes', 'baseline above maximum');
     rejected((b) => { b.creationModes[0].bonusPool = -1; }, 'bonusPool', 'negative bonus pool');
-    rejected((b) => { b.creationModes[0].equipmentProfiles.ghost = { baseValue: -6 }; }, 'ghost', 'unknown tuned equipment profile');
-    rejected((b) => { b.creationModes[0].equipmentProfiles.unarmedAttack.pointsPerTier = 0; }, 'pointsPerTier', 'non-positive tuned equipment tier');
+    rejected((b) => { b.creationModes[0].equipmentProfiles = { ghost: { baseValue: 6 } }; }, 'ghost', 'unknown tuned equipment profile');
+    rejected((b) => { b.creationModes[0].equipmentProfiles = { unarmedAttack: { ratingId: 'luck' } }; }, 'ratingId', 'unknown tuned equipment rating');
     rejected((b) => { b.attributeRules.defaultMode = 'missing'; }, 'defaultMode', 'dangling default mode');
     rejected((b) => { delete b.attributeRules.presets.standard.reaver.strength; }, 'strength', 'missing stat product cell');
     rejected((b) => { b.attributeRules.presets.standard.reaver.luck = 10; }, 'luck', 'extra stat cell');
     rejected((b) => { b.attributeRules.presets.standard.ghost = { ...b.attributeRules.presets.standard.reaver }; }, 'ghost', 'unknown class cell');
     rejected((b) => { b.attributeRules.presets.ghost = {}; }, 'ghost', 'unknown mode cell');
     rejected((b) => { b.attributeRules.presets.standard.reaver.strength = 10.5; }, 'strength', 'fractional preset value');
-    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = standard.maximum + 1; }, 'strength', 'out-of-range preset value');
+    rejected((b) => { b.attributeRules.presets.standard.reaver.strength = b.creationModes.find((m) => m.id === 'standard').maximum + 1; }, 'strength', 'out-of-range preset value');
     rejected((b) => { b.attributeRules.presets.standard.reaver.strength -= 1; }, 'reaver', 'wrong fixed total');
 
     const fresh = createRunState({ seed: 50, classId: 'herald', registries: REG });
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '20/4', 'the measured ramp (E13: 14.8 level-ups per full run for a greedy bot) — five purchases cost 140');
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,120,130,150,170,200,230,270,310,350', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
-    eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
-    eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
-    eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'five purchases cost 140 on the measured 20 + 4 ramp and end at displayed level 6');
+    eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
+    eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
+    eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 2030, '2,030 XP reaches level 11 — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
-    eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
+    eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.sourceStat}/${rogueAttack.profileReceipt.points}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/-6/strength/11/5', 'Rogue dagger Strike is stamped from the tuned physical profile');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.sourceStat}/${rogueGuard.profileReceipt.points}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/-6/dexterity/13/7', 'Rogue buckler Defend is stamped from the tuned defense profile');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/1/4', 'Rogue dagger Strike is stamped from source AR');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/6/9', 'Rogue buckler Defend is stamped from source DR');
     const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
-    eq(star.attributes.intelligence, 10, 'the approved Starseer preset keeps INT 10');
+    eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
     let alternateRefusal = '';
     try {
       createRunState({
         seed: 50, classId: 'reaver', registries: REG, startingKitId: 'reaverGreatsword',
         profileMeta: { discoveredArmaments: ['greatsword'] },
-        attributes: { strength: 8, dexterity: 15, constitution: 12, wisdom: 8, intelligence: 10 },
+        attributes: { strength: 1, dexterity: 4, constitution: 1, wisdom: 1, intelligence: 1 },
       });
     } catch (error) { alternateRefusal = error.message; }
-    assert(/requires strength 12 \(got 8\)/.test(alternateRefusal), 'an alternate kit still passes the manual equipment requirement gate');
+    assert(/requires strength 3 \(got 1\)/.test(alternateRefusal), 'an alternate kit still passes the manual equipment requirement gate');
 
     const driftedBundle = {
       ...contentBundle,
@@ -6237,7 +6348,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     createSaveManager(driftStore).saveRun(fresh);
     const afterDrift = createSaveManager(driftStore).loadRun(drifted);
     assert(afterDrift !== null, 'a later live mode edit cannot refuse an allocation admitted by its saved snapshot');
-    eq(afterDrift.attributeModeSnapshot.baseline, 10, 'the run keeps the creation rules it was born under');
+    eq(afterDrift.attributeModeSnapshot.baseline, 1, 'the run keeps the creation rules it was born under');
     for (const mode of modes) {
       const selected = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
       eq(selected.attributeMode, mode.id, `creation accepts authored mode '${mode.id}'`);
@@ -6402,10 +6513,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // to 84 class + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
     // CURRENT snapshot is NOT touched — test 50e is that edge, and the pair is
     // the whole save story of the formula change.
-    eq(run.maxHp, 64, 'legacy maxHp is re-derived through the current CON/flat-bonus authority');
-    eq(run.hp, 64, 'a legacy full-HP save remains full after current-rule migration');
-    eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
-    eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
+    eq(run.maxHp, 88, 'legacy maxHp is re-derived through the current CON/flat-bonus authority (ruleset 5: 30 + 4 × CON + 10 flat)');
+    eq(run.hp, 88, 'a legacy full-HP save remains full after current-rule migration');
+    eq(run.energyMax, 5, 'energyMax follows the rebased DEX tier over its base of 3 (ruleset 5), not the rename');
+    eq(run.drawPerTurn, 5, 'drawPerTurn follows the rebased INT tier over its base of 3 (ruleset 5), not the rename');
     // Forward hygiene: the next save writes zero dead bytes.
     assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
@@ -6417,30 +6528,42 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test('50d. tuned HP is 30 + 2 × CON + flat bonuses at every legal edge', () => {
-    for (const [classId, con, flat] of [['reaver', 11, 10], ['starseer', 8, 0], ['rogue', 10, 0], ['herald', 8, 0]]) {
+  test('50d. lean HP is 30 + 4 × CON-tier + flat bonuses at every legal edge (plan phase 9)', () => {
+    // RESTATED AGAIN WHEN THE CONVERSION SCALE WENT (2026-09-21). #1238 read
+    // this row through the lean mode's fifth, so one point of the 1–4 span was
+    // five tiers and a point bought 20 HP. Nothing divides the attribute now:
+    // the authored row is 20 + 4 per Constitution TIER and a tier is a point,
+    // so the arithmetic below is 20 + 4 × CON + flat.
+    const perPoint = 4;
+    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 0], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
-      eq(run.attributes.constitution, con, `${classId} uses the approved tuned CON preset`);
-      eq(`${hp.base}/${hp.pointsPerTier}/${hp.gainPerTier}`, `${30 + flat}/1/2`, `${classId} receipt exposes the configured formula and flat bonus`);
-      eq(run.maxHp, 30 + 2 * con + flat, `${classId} max HP is 30 + 2 × CON + flat bonuses`);
+      eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
+      eq(`${hp.base}/${hp.pointsPerTier}/${hp.gainPerTier}`, `${30 + flat}/1/4`, `${classId} receipt exposes the configured formula and flat bonus`);
+      eq(run.maxHp, 30 + perPoint * con + flat, `${classId} max HP is 30 + 4 × CON-tier + flat bonuses`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
     }
-    const at = (con) => {
-      const strength = con === 8 ? 15 : 24 - con;
-      const dexterity = con === 8 ? 12 : 11;
-      return createRunState({
-        seed: 0xf2, classId: 'reaver', registries: REG,
-        attributes: { strength, dexterity, constitution: con, wisdom: 8, intelligence: 10 },
-      });
+    // Each row spends the mode's whole total (8) so the allocation is legal;
+    // only Constitution moves between them.
+    const REST = {
+      1: { strength: 4, dexterity: 1, wisdom: 1, intelligence: 1 },
+      2: { strength: 3, dexterity: 1, wisdom: 1, intelligence: 1 },
+      3: { strength: 2, dexterity: 1, wisdom: 1, intelligence: 1 },
+      4: { strength: 1, dexterity: 1, wisdom: 1, intelligence: 1 },
+      0: { strength: 4, dexterity: 2, wisdom: 1, intelligence: 1 },
+      5: { strength: 1, dexterity: 1, wisdom: 1, intelligence: 0 },
     };
-    eq(at(8).maxHp, 56, 'CON floor 8 gives 30 + 16 + 10 flat');
-    eq(at(15).maxHp, 70, 'CON ceiling 15 gives 30 + 30 + 10 flat');
-    eq(at(15).maxHp - at(14).maxHp, 2, 'one adjacent CON point is exactly two HP');
-    for (const outside of [7, 16]) {
+    const at = (con) => createRunState({
+      seed: 0xf2, classId: 'reaver', registries: REG,
+      attributes: { ...REST[con], constitution: con },
+    });
+    eq(at(1).maxHp, 44, 'CON floor 1 gives 30 + 4 + 10 flat');
+    eq(at(4).maxHp, 56, 'CON ceiling 4 gives 30 + 16 + 10 flat');
+    eq(at(4).maxHp - at(3).maxHp, perPoint, 'one adjacent CON point is exactly four HP — one tier, one point');
+    for (const outside of [0, 5]) {
       let refused = false;
-      try { at(outside); } catch (error) { refused = /between 8 and 15/.test(error.message); }
-      assert(refused, `CON ${outside} is refused by the tuned creation bounds`);
+      try { at(outside); } catch (error) { refused = /between 1 and 4/.test(error.message); }
+      assert(refused, `CON ${outside} is refused by the lean creation bounds`);
     }
   });
 
@@ -6475,7 +6598,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       attributeMode: before.attributeMode, attributes: before.attributes,
     });
     eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
-    eq(fresh.maxHp, 64, 'a NEW run with the same class and CON gets 30 + 2 × CON + 10 flat, so preservation is not a coincidence');
+    const liveHp = REG.derivedStatRules.rules.hp;
+    eq(fresh.maxHp, liveHp.base + liveHp.gainPerTier * before.attributes.constitution + 10,
+      'a NEW run with the same class and CON gets the LIVE rule plus its 10 flat, so preservation is not a coincidence');
+    assert(fresh.maxHp !== before.maxHp, 'and that number is not the saved one');
   });
 
   // ---- 58. the nearest shrine: one computation, two asks -------------------
@@ -6622,61 +6748,70 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 60. levelling at a shrine -------------------------------------------
-  test('60. a level is one attribute point bought with cinders, and the pools follow', () => {
+  test('60. a level is earned with XP, grants a point, and the pools follow the point (plan phase 6)', () => {
     const run = createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG });
     const startCon = run.attributes.constitution;
     const startHp = run.maxHp;
-    const plan = levelUpPlan(REG, run);
-    eq(plan.levelsTaken, 0, 'a fresh run has taken no levels');
-    eq(plan.cost, REG.balance.levelUp.firstCost, 'the first level costs the authored first price');
+    let plan = levelUpPlan(REG, run);
+    eq(plan.level, 1, 'a fresh run is level 1'); eq(plan.xp, 0); eq(plan.xpToNext, REG.balance.level.xp.base, 'the first step costs the curve base');
     eq(plan.attributes.length, REG.attributes.all().length,
       'every authored attribute is offered — the shrine names no stat itself (the Law 0 falsifier)');
 
-    // THE EMPTY EDGE: no cinders, no offer, and both refusals are BY NAME.
-    run.cinders = 0;
-    assert(!levelUpPlan(REG, run).offerable, 'with an empty purse the shrine offers nothing');
+    // THE EMPTY EDGE: no point waiting, no offer, and both refusals are BY NAME.
+    assert(!plan.offerable, 'with nothing earned the shrine offers nothing'); eq(plan.blockedBy, 'points');
     let refused = '';
     try { applyLevelUp(REG, run, 'constitution'); } catch (e) { refused = e.message; }
-    assert(/cinders needed/.test(refused), `an unaffordable level is refused by name (got: ${refused})`);
+    assert(/no attribute point waiting/.test(refused), `an unearned point is refused by name (got: ${refused})`);
     let badId = '';
     try { applyLevelUp(REG, run, 'charisma'); } catch (e) { badId = e.message; }
     assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
 
-    // THE PURCHASE.
-    run.cinders = 10000;
-    const purse = run.cinders;
-    const manaBefore = run.maxMana;
-    const got = applyLevelUp(REG, run, 'constitution');
-    eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat that was bought');
-    eq(run.cinders, purse - plan.cost, 'the cinders are gone, exactly the priced amount');
-    eq(run.levelUps, 1, 'the purchase is recorded — this is the number the load door reads');
-    eq(got.level, 1, 'the receipt names the level bought');
-    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
+    // THE CLIMB: XP buys the level, the level grants the point, the point waits.
+    const got = awardLevelXp(REG, run, REG.balance.level.xp.base);
+    eq(got.levelUps, 1); eq(got.points, 1); eq(run.level.level, 2); eq(run.level.xp, 0); eq(run.level.unspentPoints, 1, 'the point waits on the ledger');
+    eq(run.attributes.constitution, startCon, 'no stat moved yet — the shrine assigns, the fight does not');
+    eq(run.cinders, createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG }).cinders, 'no cinder was touched');
+    plan = levelUpPlan(REG, run); assert(plan.offerable); eq(plan.blockedBy, null); eq(plan.points, 1);
+    eq(awardLevelXp(REG, run, 0).levelUps, 0, 'nothing is nothing'); eq(awardLevelXp(REG, run, -5).levelUps, 0);
 
-    eq(run.maxHp, startHp + 2, 'one CON point adds the configured two HP immediately');
-    const conAt = run.attributes.constitution;
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 4, `CON ${conAt + 1} adds a second two-HP step`);
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 6, `CON ${conAt + 2} adds a third two-HP step`);
-    eq(run.levelUps, 3, 'three levels bought and three points spent');
+    // THE ASSIGNMENT.
+    const manaBefore = run.maxMana;
+    const spent = applyLevelUp(REG, run, 'constitution');
+    eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat it was assigned to');
+    eq(run.level.unspentPoints, 0, 'and leaves the ledger'); eq(spent.points, 0);
+    eq(run.levelUps, 1, 'the assignment is recorded — this is the number the load door reads'); eq(run.levelPoints, 1);
+    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
+    // FOUR PER TIER, AND A TIER IS A POINT — no conversion scale between them.
+    eq(run.maxHp, startHp + 4, 'one CON point adds the configured four HP per tier immediately (ruleset 5)');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
+    eq(run.level.level, 4, 'enough XP for two steps climbs two'); eq(run.level.unspentPoints, 2);
+    applyLevelUp(REG, run, 'constitution'); applyLevelUp(REG, run, 'constitution');
+    eq(run.maxHp, startHp + 12, 'three CON points, three four-HP steps (ruleset 5)');
+    eq(run.levelUps, 3, 'three points assigned');
 
     // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
     // shrine sells the heal at the next panel; a level that healed would make
     // that panel pointless at the same counter.
     const hurt = createRunState({ seed: 0x4c4e, classId: 'reaver', registries: REG });
-    hurt.cinders = 5000;
     hurt.hp = hurt.maxHp - 10;
     const hurtMax = hurt.maxHp;
-    applyLevelUp(REG, hurt, 'constitution');
-    eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the levels — levelling does not heal');
+    awardLevelXp(REG, hurt, xpToNextLevel(REG, 1)); applyLevelUp(REG, hurt, 'constitution');
+    eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the level — levelling does not heal');
     assert(hurt.maxHp > hurtMax, 'and the ceiling still rose (the probe has a referent)');
 
-    // THE RAMP, and the only half of his acceptance test this suite can hold.
-    eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 140), 5, '140 cinders buys five levels and reaches displayed level 6');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'the measured 20 + 4 ramp totals 140 for five purchases');
-    eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
+    // THE AWARDS: a won fight, each kill by the door's pool; a loss keeps its kills.
+    const xp = REG.balance.xp;
+    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), xp.combatWin + 2 * xp.kill.normal);
+    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), xp.combatWin + xp.kill.boss);
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), xp.kill.elite, 'a lost fight pays its kills and no win');
+    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), xp.combatWin + xp.kill.normal, 'an unknown pool pays the normal rate');
+    eq(questLevelXp(REG), xp.quest);
+
+    // THE CAP holds the level and keeps the XP.
+    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 2 } } };
+    const roof = createRunState({ seed: 0x1e7e2, classId: 'reaver', registries: REG });
+    awardLevelXp(capped, roof, 10000);
+    eq(roof.level.level, 2, 'the cap holds'); assert(roof.level.xp > 0, 'the XP past it stays on the ledger'); eq(levelUpPlan(capped, roof).capped, true);
   });
 
   // ---- 60b. a levelled run comes back through the real save door ------------
@@ -6687,11 +6822,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // level-up that only incremented `run.attributes` would look
     // perfect on screen and destroy the player's run at the next load.
     const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
-    run.cinders = 10000;
     run.seedString = 'LEVELS';
+    awardLevelXp(REG, run, [1, 2, 3, 4, 5, 6].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 7, 'six levels earned'); eq(run.level.unspentPoints, 6);
     for (let i = 0; i < 6; i++) applyLevelUp(REG, run, 'constitution');
-    eq(run.levelUps, 6, 'six levels bought');
-    assert(run.attributes.constitution > 15, 'and the stat is past the creation ceiling of 15');
+    eq(run.levelUps, 6, 'six points assigned');
+    assert(run.attributes.constitution > 4, 'and the stat is past the lean creation ceiling of 4');
 
     const storage = createMemoryStorage();
     createSaveManager(storage).saveRun(run);
@@ -6700,6 +6836,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(back.attributes.constitution, run.attributes.constitution, 'the levelled points survive the door');
     eq(back.levelUps, 6, 'and so does the count that makes them legal');
     eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
+    eq(back.level.level, 7, 'the character level rides the save'); eq(back.maxHp, run.maxHp);
+    assert(back.maxHp >= 30 + 4 * back.attributes.constitution + 5, `level 7 carries the level-6 threshold bump beside the six CON points — got ${back.maxHp}`);
 
     // THE e05be89 SAVE SHAPE, AND IT MUST LOAD. That build recorded `levelUps`
     // and no `levelPoints`, and it had exactly one possible level value, so for
@@ -6729,7 +6867,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // points claimed and none spent is refused too.
     const inflated = JSON.parse(JSON.stringify(raw));
     inflated.levelPoints = 6;
-    inflated.attributes.constitution = 12;
+    inflated.attributes.constitution = REG.attributeRules.presets.lean.reaver.constitution;
     storage.setItem(RUN_KEY, JSON.stringify(inflated));
     eq(createSaveManager(storage).loadRun(REG), null,
       'PLANT: six points claimed and none spent is refused — the total is checked in both directions');
@@ -6751,30 +6889,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // a level visible and the value that does not.
 
     // ---- DIAL 1: the level value ------------------------------------------
+    // The dial is read where the level is REACHED (plan phase 6): a level at
+    // value 1 grants one point to the ledger, at value 3 three; the shrine
+    // then assigns them one at a time.
     const one = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
-    one.cinders = 5000;
-    applyLevelUp(REG, one, 'constitution', { pointsPerLevel: 1 });
-    eq(one.attributes.constitution - 11, 1, 'at 1, a level grants one point');
-    eq(one.levelPoints, 1, 'and records one point granted');
+    awardLevelXp(REG, one, xpToNextLevel(REG, 1), { pointsPerLevel: 1 });
+    eq(one.level.unspentPoints, 1, 'at 1, a level grants one point');
+    applyLevelUp(REG, one, 'constitution');
+    eq(one.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 1); eq(one.levelPoints, 1, 'and records one point assigned');
 
     const three = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
-    three.cinders = 5000;
     const hpBefore = three.maxHp;
-    applyLevelUp(REG, three, 'constitution', { pointsPerLevel: 3 });
-    eq(three.attributes.constitution - 11, 3, 'at 3, one level grants three points');
-    eq(three.levelPoints, 3, 'and records three');
-    eq(three.levelUps, 1, 'while still being ONE purchase — the ramp indexes on purchases');
-    eq(three.cinders, one.cinders, 'and costs the same: the value is what a level GRANTS, not what it costs');
+    awardLevelXp(REG, three, xpToNextLevel(REG, 1), { pointsPerLevel: 3 });
+    eq(three.level.unspentPoints, 3, 'at 3, one level grants three points');
+    eq(three.level.level, one.level.level, 'and costs the same XP: the value is what a level GRANTS, not what it costs');
+    for (let i = 0; i < 3; i++) applyLevelUp(REG, three, 'constitution');
+    eq(three.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 3); eq(three.levelPoints, 3, 'and records three');
     // Both values are visible under the per-CON HP formula.
     assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
-    eq(one.maxHp, hpBefore + 2, 'at 1, the same one level adds exactly two HP');
+    eq(one.maxHp, hpBefore + 4, 'at 1, the same one level adds exactly the authored four HP a tier (ruleset 5)');
 
     // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
-    // moment he turns the dial mid-climb — and the case where the count and
-    // the points stop being the same number.
-    applyLevelUp(REG, three, 'wisdom', { pointsPerLevel: 1 });
-    eq(three.levelUps, 2, 'two purchases');
-    eq(three.levelPoints, 4, 'four points — the two numbers have diverged, as they must');
+    // moment he turns the dial mid-climb.
+    awardLevelXp(REG, three, xpToNextLevel(REG, 2), { pointsPerLevel: 1 });
+    applyLevelUp(REG, three, 'wisdom');
+    eq(three.level.level, 3, 'two levels');
+    eq(three.levelPoints, 4, 'four points assigned over two levels at two values');
     const mixedStore = createMemoryStorage();
     three.seedString = 'MIXED';
     createSaveManager(mixedStore).saveRun(three);
@@ -6815,6 +6955,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const born = (opts) => createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG, derivedStatOptions: opts });
     const at5 = born(derivedStatDialOptions({}));
     const at1 = born(dialled);
+    // THE STAMPED TIER IS THE AUTHORED ONE, FULL STOP. It used to be the
+    // authored one through the mode's scale — `lean` divided every tier by
+    // five, stamping the 1-point HP tier as 0.2 — and no panel said so. With
+    // the scale gone the row a run is born with is the row the panel shows,
+    // and the DIAL still doubles the tier, which is the property this block is
+    // about.
     eq(at5.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1, 'a default run stamps the configured per-CON HP formula');
     eq(at1.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 2, 'and the dialled run stamps its explicit 2-point tier');
     // ⚠ HP IS THE CELL THAT MATTERS AND IT IS WHY THE RESTATEMENT HAD TO GO.
@@ -6844,20 +6990,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
     eq(byHand.rules.hp.pointsPerTier, 1, 'HP keeps its authored per-CON formula when only the fallback default changes');
-    eq(byHand.rules.energy.pointsPerTier, 10, 'Actions keep their authored DEX/10 formula');
-    eq(byHand.rules.draw.pointsPerTier, 10, 'Hand keeps its authored INT/10 formula');
+    eq(byHand.rules.energy.pointsPerTier, 5, 'Actions keep their authored DEX/5 formula (ruleset 5)');
+    eq(byHand.rules.draw.pointsPerTier, 5, 'Hand keeps its authored INT/5 formula (ruleset 5)');
     eq(byHand.rules.mana.pointsPerTier, 1, 'Mana inherits the edited fallback default');
     eq(byHand.rules.stamina.pointsPerTier, 1, 'Stamina inherits the edited fallback default');
 
-    // AND ONE LEVEL IS NOW VISIBLE, which is the sentence his ask is made of.
-    at1.cinders = 5000;
+    // AND THE POINTS ARE NOW VISIBLE, which is the sentence his ask is made of.
+    // A two-point tier pays on every SECOND point — the dial's whole purpose —
+    // so the two levels below cross exactly one boundary between them.
+    awardLevelXp(REG, at1, xpToNextLevel(REG, 1) + xpToNextLevel(REG, 2));
     const at1Hp = at1.maxHp;
-    applyLevelUp(REG, at1, 'constitution', { pointsPerLevel: 1 });
-    assert(at1.maxHp > at1Hp, 'at a 2-point tier, CON 11 to 12 crosses the boundary and moves max HP');
-    at5.cinders = 5000;
+    applyLevelUp(REG, at1, 'constitution');
+    applyLevelUp(REG, at1, 'constitution');
+    assert(at1.maxHp > at1Hp, 'at a 2-point tier, two CON points cross the boundary and move max HP');
+    awardLevelXp(REG, at5, xpToNextLevel(REG, 1));
     const at5Hp = at5.maxHp;
-    applyLevelUp(REG, at5, 'constitution', { pointsPerLevel: 1 });
-    eq(at5.maxHp, at5Hp + 2, 'under the shipping per-CON formula one point adds two HP');
+    applyLevelUp(REG, at5, 'constitution');
+    eq(at5.maxHp, at5Hp + 4, 'under the shipping per-CON formula one point adds the authored four HP a tier (ruleset 5)');
 
     // A RUN IN PROGRESS KEEPS THE RULES IT WAS BORN UNDER. This is what the
     // settings row's note promises a player, and it is the behaviour that makes
@@ -6868,7 +7017,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const reloaded = createSaveManager(store).loadRun(REG);
     assert(reloaded !== null, 'a dialled run loads');
     eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 2,
-      'and still carries ITS OWN tier size, whatever the setting says today');
+      'and still carries ITS OWN tier size — the 2 he typed, whatever the setting says today');
     eq(reloaded.maxHp, at1.maxHp, 'so its HP is not re-stated behind the player');
   });
 
@@ -6921,17 +7070,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // level bought — no new run, nothing snapshotted — which is the promise the
     // row's own note makes to him.
     const run = createRunState({ seed: 0x7ed, classId: 'reaver', registries: REG });
-    run.cinders = 5000;
     const typed = resolveLevelUpValue({ levelUpValue: '7' });
-    applyLevelUp(REG, run, 'constitution', { pointsPerLevel: typed });
-    eq(run.attributes.constitution - 11, 7, 'a level bought at a typed 7 grants seven points');
-    eq(run.levelPoints, 7, 'and records seven granted');
-    eq(run.levelUps, 1, 'as ONE purchase');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: typed });
+    eq(run.level.unspentPoints, 7, 'a level reached at a typed 7 grants seven points');
+    for (let i = 0; i < 7; i++) applyLevelUp(REG, run, 'constitution');
+    eq(run.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 7, 'all seven assigned to one stat');
+    eq(run.levelPoints, 7, 'and records seven assigned');
+    eq(run.level.level, 2, 'from ONE level');
     // …mid-run, he changes his mind. The next level answers the new number and
-    // the run stays loadable, which is the pair of facts that made levelPoints a
-    // separate field in the first place.
-    applyLevelUp(REG, run, 'wisdom', { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
-    eq(run.levelPoints, 9, 'nine points over two purchases at two different typed values');
+    // the run stays loadable.
+    awardLevelXp(REG, run, xpToNextLevel(REG, 2), { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
+    eq(run.level.unspentPoints, 2);
+    applyLevelUp(REG, run, 'wisdom'); applyLevelUp(REG, run, 'wisdom');
+    eq(run.levelPoints, 9, 'nine points over two levels at two different typed values');
     run.seedString = 'TYPED';
     const store = createMemoryStorage();
     createSaveManager(store).saveRun(run);
@@ -6939,68 +7090,47 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'and the run still loads — typing a new value mid-climb cannot archive a save');
 
     // THE PLANT'S TARGET, named so the next reader can find it: with the clamp
-    // removed, `0` reaches the model and a level grants nothing while charging
-    // for it. Watched red (see the commit message).
+    // removed, `0` reaches the model and a level grants nothing. Watched red.
     const zero = resolveLevelUpValue({ levelUpValue: 0 });
-    assert(zero >= 1, 'the floor is what stops a paid level from granting nothing');
+    assert(zero >= 1, 'the floor is what stops an earned level from granting nothing');
   });
 
   // ---- 60e. the affordability predicate the fold reads ---------------------
-  test('60e. one derivation answers "can he afford a level", with a reason', () => {
+  test('60e. one derivation answers "may he assign a point", with a reason', () => {
     // Constantine: "make the flask and the level up collapsible (with level up
-    // being grayed out or not visible when there isn't enough cinders)". The
-    // fold and the grey-out belong to the player-experience seat; THE PREDICATE
-    // is this, and it is asserted here so she can consume it without inventing
-    // an affordability rule of her own.
+    // being grayed out or not visible when there isn't enough cinders)". Cinders
+    // buy no level now (plan phase 6); the fold greys the card when no earned
+    // point waits. THE PREDICATE is this, asserted so the fold consumes it
+    // without inventing a rule of its own.
     const run = createRunState({ seed: 0xa77, classId: 'reaver', registries: REG });
-    const first = REG.balance.levelUp.firstCost;
-
-    run.cinders = 0;
     let p = levelUpPlan(REG, run);
-    eq(p.affordable, false, 'an empty purse cannot afford a level');
-    eq(p.short, first, 'and `short` is the whole price, not a difference the caller computes');
-    eq(p.blockedBy, 'cinders', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
+    eq(p.points, 0, 'a fresh run has no point waiting');
+    eq(p.blockedBy, 'points', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
     eq(p.offerable, false, 'so it is not offerable');
+    eq(`${p.level}/${p.xp}/${p.xpToNext}`, `1/0/${xpToNextLevel(REG, 1)}`, 'and the card can say where the climb stands');
 
-    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one cinder either side of the price,
-    // adjacent, so moving the boundary one unit of its own flips a verdict.
-    run.cinders = first - 1;
+    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one XP either side of the step.
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1) - 1);
     p = levelUpPlan(REG, run);
-    eq(p.affordable, false, `one cinder short of ${first} is short`);
-    eq(p.short, 1, 'and short says exactly one');
-    run.cinders = first;
+    eq(p.level, 1, 'one XP short is still level 1'); eq(p.xp, xpToNextLevel(REG, 1) - 1); eq(p.offerable, false);
+    awardLevelXp(REG, run, 1);
     p = levelUpPlan(REG, run);
-    eq(p.affordable, true, 'the exact price is affordable — the boundary is inclusive');
-    eq(p.short, 0, 'nothing is missing');
-    eq(p.blockedBy, null, 'and there is no reason, because there is no block');
+    eq(p.level, 2, 'the exact step climbs — the boundary is inclusive'); eq(p.xp, 0);
+    eq(p.points, 1); eq(p.blockedBy, null, 'and there is no reason, because there is no block'); eq(p.offerable, true);
 
-    // IT MOVES WITH THE RAMP, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT CACHE
-    // IT: the same purse that afforded level 1 may not afford level 2.
-    run.cinders = 5000;
+    // IT MOVES WITH THE LEDGER, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT
+    // CACHE IT: the point assigned, the offer closes.
     applyLevelUp(REG, run, 'constitution');
     const after = levelUpPlan(REG, run);
-    assert(after.cost > first, 'the next level costs more than the first');
-
-    // ⚠ AND IT IS INDIFFERENT TO THE TYPED LEVEL VALUE. The dispatch that asked
-    // for this predicate said the price now depends on the dial. IT DOES NOT:
-    // `levelCost` is firstCost + costStep × levelsTaken and takes no third
-    // argument. The dial decides what a level GRANTS, never what it COSTS.
-    const poor = createRunState({ seed: 0xa78, classId: 'reaver', registries: REG });
-    poor.cinders = first - 1;
-    for (const value of [1, 2, 7, 20]) {
-      const q = levelUpPlan(REG, poor, { pointsPerLevel: value });
-      eq(q.cost, first, `at a typed ${value} the price is unchanged`);
-      eq(q.short, 1, `and so is how short he is`);
-      eq(q.blockedBy, 'cinders', 'affordability does not move with the dial');
-    }
+    eq(after.offerable, false); eq(after.blockedBy, 'points');
+    assert(after.xpToNext > xpToNextLevel(REG, 1), 'the next step costs more than the first');
 
     // A CAP IS A DIFFERENT SENTENCE TO A PLAYER, so it is a different token —
-    // and it outranks the purse, because being told to earn cinders you cannot
-    // spend is worse than being told nothing.
-    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 0 } } };
-    const c = levelUpPlan(capped, poor);
-    eq(c.capped, true, 'a cap of zero caps a fresh run');
-    eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
+    // once the points are spent; a point waiting is still assignable at the cap.
+    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 1 } } };
+    const c = levelUpPlan(capped, createRunState({ seed: 0xa78, classId: 'reaver', registries: REG }));
+    eq(c.capped, true, 'a cap of one caps a fresh run');
+    eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty ledger');
     eq(c.offerable, false, 'either block closes the offer');
   });
 
@@ -7010,8 +7140,50 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
     eq(display.filter((r) => r.key === 'fullscreen').length, 1,
       'Fullscreen moved to the first seat without being duplicated');
-    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
-      'Combat pacing remains available behind Fullscreen');
+    // COMBAT PACING LEFT DISPLAY FOR THE COMBAT GROUP (his report: "no good
+    // section to customize combat, combat animation"). The claim this line has
+    // always made is that the row is still REACHABLE from the General tab and
+    // is not what Fullscreen displaced, so it is asserted where the row now
+    // lives — General still draws it, in one group, exactly once.
+    eq(display.some((r) => r.key === 'animSpeed'), false,
+      'Combat pacing is no longer filed beside the display preferences');
+    const combat = categoryHandler('Combat').rows;
+    assert(combat.some((r) => r.key === 'animSpeed'), 'Combat pacing is filed under Combat');
+    eq(categoryHandler('General').rows.filter((r) => r.key === 'animSpeed').length, 1,
+      'the General tab still offers Combat pacing, once');
+
+    // ---- THE COMBAT GROUP IS THE ANSWER TO "no good section to customize
+    // combat, combat animation, etc", so what it HOLDS is asserted, not
+    // described. A row that drifts back out of it takes the report with it.
+    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio',
+      'the General tab offers three groups, and Combat sits between them');
+    const combatTopics = generalGroups('Combat');
+    eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
+      'Combat names its topics for what a player came looking for');
+    eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
+      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard',
+      'every combat pacing, quality, shake, sprite and played-card switch is under one name');
+    eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
+      'armamentsPresentation,armamentsPhonePlacement',
+      'the combat Armaments cluster is filed with combat, not with the accent colour');
+
+    // ONE HOME EACH: a row that moved must not still be drawn where it was.
+    // Display keeps Fullscreen first (test 61's original subject) and its
+    // leftover effects topic is named for the one screen it still describes.
+    const displayTopics = generalGroups('Display');
+    eq([...displayTopics.keys()][0], 'Interface', 'Display still opens on the group holding Fullscreen');
+    eq(displayTopics.get('Interface')[0].key, 'fullscreen', 'and Fullscreen is still first inside it');
+    eq(displayTopics.has('Effects & pacing'), false,
+      'the bag that mixed combat pacing with the title entrance is gone');
+    eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
+      'what is left of it is named for the title screen it actually holds');
+    for (const key of ['useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'showPlayedCard',
+      'armamentsPresentation', 'armamentsPhonePlacement']) {
+      eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
+        `${key} has exactly one home in the General tab`);
+      eq(categoryHandler('Advanced').rows.some((r) => r.key === key), false,
+        `${key} is not also drawn behind Advanced`);
+    }
     eq(display.some((r) => r.key === 'fullscreen'), true,
       'Settings exposes the browser-owned Fullscreen state');
     eq(audio.some((r) => r.key === 'musicEnabled'), true,
@@ -7389,13 +7561,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
     eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
-    eq(defaultCreationModeId(REG), 'tuned', 'the internal creation default remains tuned for legacy and non-screen callers');
-    eq(creationModeViews(REG).map((row) => row.id).join(','), 'standard,pointbuy',
-      'the player-visible creation modes are the authored Standard and Assign Points pair');
+    eq(defaultCreationModeId(REG), 'lean', 'the internal creation default is the lean mode (owner, 2026-09-20)');
+    eq(creationModeViews(REG).map((row) => row.id).join(','), 'lean',
+      'creation offers the lean mode alone; the older modes stay in the table for saved runs (plan phase 9)');
     eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
     eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
     eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
-    eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
+    eq(REG.characterCreation.layout.equipmentChoiceView, 'grid', 'equipment selectors default to the configured grid view');
     eq(REG.characterCreation.layout.equipmentAutoAdvance, false, 'equipment selection waits for Continue by default');
     eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,rightHand,leftHand,equipSlot,relic',
       'the equipment subcard order is authored in character-creation content');
@@ -7463,34 +7635,34 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/rightHand.*buckler.*does not fit/.test(wrongHandError),
       'creation hand resolution rejects a side-specific armament in the wrong slot');
 
-    const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
-    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
-      'the incompatible preview fixture is still a valid point-buy allocation');
+    const lowStrength = { strength: 1, dexterity: 4, constitution: 1, wisdom: 1, intelligence: 1 };
+    eq(attributeAllocationProblems(REG, 'reaver', 'lean', lowStrength).length, 0,
+      'the incompatible preview fixture is still a valid allocation in the mode creation offers');
     const requestedHands = { leftHand: 'roundShield', rightHand: 'greatsword' };
     const previewHands = previewCompatibleHands(REG, requestedHands, lowStrength);
     eq(previewHands.leftHand, 'roundShield', 'preview keeps a compatible selected hand');
     eq(previewHands.rightHand, null, 'preview omits an incompatible selected hand instead of throwing');
     eq(requestedHands.rightHand, 'greatsword', 'preview compatibility never mutates the player selection used by the refusal');
-    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 12, dexterity: 14 });
+    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 3, dexterity: 2 });
     eq(correctedHands.rightHand, 'greatsword', 'preview restores the selected hand when the allocation meets its requirement');
     const previewRun = createRunState({
       seed: 71, classId: 'reaver', registries: REG,
-      attributeMode: 'pointbuy', attributes: lowStrength,
+      attributeMode: 'lean', attributes: lowStrength,
       startingHands: previewHands,
     });
-    eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
+    eq(previewRun.attributes.strength, lowStrength.strength, 'a valid-but-incompatible selection still produces a live stat preview');
 
     const standardMismatch = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     standardMismatch.characterCreation.classes.herald.handIds.push('dagger');
     const standardRosterValidation = validateContent(standardMismatch);
     assert(standardRosterValidation.ok, 'a valid roster may expose an armament above the Standard preset');
     const standardMismatchRegistries = createRegistries(standardMismatch);
-    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'standard');
+    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'lean');
     const standardFailure = startingHandsRequirementFailure(standardMismatchRegistries, { leftHand: 'dagger' }, heraldStandard);
     assert(standardFailure && standardFailure.piece.id === 'dagger'
       && standardFailure.failure.attributeId === 'dexterity'
-      && standardFailure.failure.required === 11 && standardFailure.failure.actual === 10,
-    'Standard mode reports a selected hand requirement before Begin can throw');
+      && standardFailure.failure.required === 2 && standardFailure.failure.actual === 1,
+    'the creation mode reports a selected hand requirement before Begin can throw');
 
     const selected = createRunState({
       seed: 69, classId: 'reaver', registries: REG,
@@ -7616,15 +7788,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // prose — from `derivedStatRules`, the run's own derivation — and each
     // fact carries its own cadence because they differ. The authored sentence
     // is still there, as the fold's flavour.
-    eq(constitution.face.summary, '+2 HP per pt · +1 Stamina per 5 pts',
+    // THE RUN'S OWN NUMBERS, WHICH ARE NOW THE ROW'S. The lean mode used to
+    // convert at a fifth, making a point of Constitution five tiers and the
+    // card read +20 HP; nothing converts an attribute any more, so a tier is a
+    // point and the card states the authored four.
+    eq(constitution.face.summary, '+4 HP per pt · +1 Stamina per pt · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
     eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
       'the authored description is still derived, as the fold\'s flavour');
-    assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
+    assert(constitution.reveal.lines.some((line) => /^HP \+4 every 1 point$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 1 point$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical AR +1 every 1 point'),
-      'the active run profile projects Strength attack scaling without copied UI prose');
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.5 × STR), then × 1 global'),
+      'the active rating formula projects Strength AR weight without copied UI prose');
 
     const changed = {
       ...contentBundle,
@@ -7652,6 +7829,57 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(contentBundle.equipment.armouryUi.layout.trays,
       'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
     const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
+
+    // The Armoury is authored in TWO trees on purpose, and this is the rule
+    // between them. content/config/ui/presentation/armouryLayout.json holds the
+    // DEFAULTS and the validator's limits — they belong to the engine and apply
+    // to any content bundle. content/source/armouryUi.json holds what THIS
+    // bundle authors, and the assert above keeps it complete rather than sparse,
+    // so a bundle reads as the whole contract instead of a patch over defaults.
+    //
+    // Completeness has a price nothing used to charge: 54 of the bundle's 60
+    // leaf values merely restate the default, so a default could be edited and
+    // no test would notice, and a deliberate authored choice was indistinguish-
+    // able from an inherited one. This names every real deviation and refuses
+    // any other, which makes both directions of drift a named red.
+    const authoredDeviations = new Map([
+      ['cardClasses.inventoryItem.holdAction',
+        'Inventory items opt into the shared hold action; the engine default stays hold-safe.'],
+      ['viewModes.rack.label', 'This bundle calls the equipped-gear tab Equipment, not Inventory.'],
+      ['viewModes.hybrid.label', 'This bundle spends the hybrid slot on a second Inventory tab.'],
+      ['viewModes.hybrid.pane', 'That tab takes the full surface rather than the engine split.'],
+      ['viewModes.hybrid.armaments', 'Armaments stay open on it — the approved Hybrid pane.'],
+      ['viewModes.hybrid.inventory', 'Inventory stays open on it for the same reason.'],
+      ['viewModes.cards', 'A fourth tab for the full deck, which the engine does not ship.'],
+    ]);
+    const defaultsLayout = normalizeArmouryLayout({});
+    const found = [];
+    (function compare(authored, defaults, path) {
+      const keys = new Set([...Object.keys(defaults || {}), ...Object.keys(authored || {})]);
+      for (const key of keys) {
+        const at = path ? `${path}.${key}` : key;
+        const mine = authored ? authored[key] : undefined;
+        const theirs = defaults ? defaults[key] : undefined;
+        if (theirs !== undefined && mine !== undefined
+          && theirs && typeof theirs === 'object' && !Array.isArray(theirs)) {
+          compare(mine, theirs, at);
+          continue;
+        }
+        if (JSON.stringify(mine) !== JSON.stringify(theirs)) found.push(at);
+      }
+    }(layout, defaultsLayout, ''));
+    for (const path of found) {
+      assert(authoredDeviations.has(path),
+        `the Armoury bundle departs from the engine default at ${path} with no reason recorded beside it`);
+      assert((authoredDeviations.get(path) || '').length > 20,
+        `the Armoury deviation at ${path} needs a reason a reader can act on, not a word`);
+    }
+    for (const path of authoredDeviations.keys()) {
+      assert(found.includes(path),
+        `the Armoury deviation recorded at ${path} no longer departs from the engine default — drop it or restore it`);
+    }
+    eq(found.length, authoredDeviations.size,
+      'every value the Armoury bundle authors either matches the engine default or is a named, argued deviation');
     eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
     eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
     eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
@@ -7903,6 +8131,1649 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
       'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
+
+  // ---- 80. Property rules: the registry and its refusals (plan phase 1a) ------
+  // docs/proposal-progression-and-property-system.md §3. Each refusal is a
+  // fixture bundle that differs from shipped content by one row, and each is
+  // asserted by the words it is refused with, in the style of test 15.
+  test('80. property rules: one rule per property tag, requires/excludes resolve, no cycles, never on a card — each refused by name', () => {
+    const propTag = (id) => ({ id, domain: 'property', label: id, color: '7FA8C9', glyph: '◈', blurb: 'Test fixture property.' });
+    const rule = (tag, extra = {}) => ({ tag, requires: [], excludes: [], textTemplate: 'Fixture.', ...extra });
+    const withRules = (tags, rules, extra = {}) => ({
+      ...contentBundle,
+      tags: [...contentBundle.tags, ...tags.map(propTag)],
+      // Fixture rules join the shipped table rather than replace it: every
+      // shipped property tag keeps its one rule, so each case differs from
+      // shipped content by exactly the rows it adds.
+      propertyRules: [...contentBundle.propertyRules, ...rules],
+      ...extra,
+    });
+    const said = (bundle) => validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    const refuses = (bundle, pattern, what) => {
+      const words = said(bundle);
+      assert(pattern.test(words), `${what} — said ${JSON.stringify(words.slice(0, 240))}`);
+    };
+
+    // 80.0 — the edges that must PASS: shipped content, and one well-formed
+    // rule on a real carrier, which the registry then indexes by its tag.
+    assert(validateContent(contentBundle).ok, 'shipped content validates with the property domain present');
+    const siphonLike = rule('fxSiphon', {
+      textTemplate: 'Arcane break: restore {restoreMana} Mana.',
+      triggers: [{ on: 'arcaneBreak', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }],
+    });
+    const good = withRules(['fxSiphon'], [siphonLike], {
+      tagging: [...contentBundle.tagging, { family: 'armament', scope: '', objectId: 'boneSceptre', tagId: 'fxSiphon' }],
+    });
+    assert(validateContent(good).ok, `a well-formed property rule on an armament validates — said ${JSON.stringify(said(good).slice(0, 240))}`);
+    const R = createRegistries(good);
+    eq(R.propertyRules.get('fxSiphon').triggers[0].on, 'arcaneBreak', 'the registry indexes a rule by its tag');
+    const sceptre = R.equipment.armaments.find((a) => a.id === 'boneSceptre');
+    assert(sceptre.propertyTags.includes('fxSiphon'), 'the carrier is stamped with its property tag');
+    assert(!sceptre.tags.includes('fxSiphon') && !sceptre.entityTags.includes('fxSiphon'),
+      'a property tag never joins `tags`, so chips and the fit check are unchanged');
+    for (const piece of [...REG.equipment.armaments, ...REG.equipment.armour]) {
+      for (const tag of piece.propertyTags || []) assert(REG.propertyRules.has(tag), `${piece.id}: stamped property tag '${tag}' resolves to a rule`);
+    }
+
+    // 80.1 — a property tag with no rule.
+    refuses(withRules(['fxLost'], []), /tags\.fxLost: property tag 'fxLost' has no rule/, 'a property tag with no rule is refused by name');
+    // 80.2 — two rules for one tag.
+    refuses(withRules(['fxTwice'], [rule('fxTwice'), rule('fxTwice')]), /duplicate rule for property tag 'fxTwice'/, 'a second rule for one tag is refused by name');
+    // 80.3 — a rule for a tag outside the property domain.
+    refuses(withRules([], [rule('blade')]), /propertyRules\.blade: 'blade' is not a property tag/, 'a rule for a card-domain tag is refused by name');
+    // 80.4 / 80.5 — requires and excludes resolve.
+    refuses(withRules(['fxNeedy'], [rule('fxNeedy', { requires: ['fxNowhere'] })]), /propertyRules\.fxNeedy\.requires: requires 'fxNowhere', which is not a property tag/,
+      'an unresolved requires is refused by name');
+    refuses(withRules(['fxShy'], [rule('fxShy', { excludes: ['blade'] })]), /propertyRules\.fxShy\.excludes: excludes 'blade', which is not a property tag/,
+      'an excludes naming a non-property tag is refused by name');
+    refuses(withRules(['fxSelfish'], [rule('fxSelfish', { excludes: ['fxSelfish'] })]), /'fxSelfish' excludes itself/, 'a rule excluding itself is refused by name');
+    // 80.6 — no requires cycles, direct or through a partner.
+    refuses(withRules(['fxA', 'fxB'], [rule('fxA', { requires: ['fxB'] }), rule('fxB', { requires: ['fxA'] })]), /requires cycle fxA → fxB → fxA/,
+      'a two-rule requires cycle is refused by name');
+    refuses(withRules(['fxLoop'], [rule('fxLoop', { requires: ['fxLoop'] })]), /requires cycle fxLoop → fxLoop/, 'a rule requiring itself is refused by name');
+    // 80.7 — EVERY FAMILY CARRIES PROPERTY TAGS. The four-carrier gate is gone
+    // (schemas.js says why): a card holding one validates like anything else,
+    // is stamped with it, and still never shows it as a chip.
+    const onStrike = withRules(['fxSiphon'], [siphonLike], {
+      tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'fxSiphon' }],
+    });
+    assert(validateContent(onStrike).ok, `a card may hold a property tag — said ${JSON.stringify(said(onStrike).slice(0, 240))}`);
+    const strikeDef = createRegistries(onStrike).cards.get('strike');
+    assert(strikeDef.propertyTags.includes('fxSiphon') && !strikeDef.tags.includes('fxSiphon'), 'the card is stamped with its property tag, and a property tag never joins the displayed `tags`');
+    // 80.8 — THE TREE KEEPS THE KINDS HONEST instead. A kind on the wrong
+    // family, a second kind, and a card whose kind is not its type are each
+    // refused by name (model/tree.js).
+    refuses({ ...contentBundle, tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'classification.relic' }] },
+      /tagging\.card\.strike: holds 'classification\.relic', the kind of the 'relic' family, on a row of the 'card' family/, 'a kind on the wrong family is refused by name');
+    refuses({ ...contentBundle, tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'classification.skill' }] },
+      /tagging\.card\.strike: states 2 kinds/, 'a second kind is refused by name');
+    refuses({ ...contentBundle, tagging: contentBundle.tagging.map((r) => (r.family === 'card' && r.objectId === 'strike' && r.tagId === 'classification.attack' ? { ...r, tagId: 'classification.skill' } : r)) },
+      /tagging\.card\.strike: states 'classification\.skill' but is a attack, whose kind is 'classification\.attack'/, 'a card whose kind is not its type is refused by name');
+    refuses({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'relic' && r.objectId === 'forsakenMedallion' && r.tagId === 'classification.relic')) },
+      /tagging\.relic\.forsakenMedallion: states no kind/, 'an object with no kind is refused by name');
+    // 80.8b — a node carries no numbers: a binding that is a literal, or a
+    // path to nothing, is refused; so is an effect reading an undeclared
+    // variable, and a variable nothing reads.
+    refuses({ ...contentBundle, variableBindings: contentBundle.variableBindings.map((r) => (r.nodeId === 'siphon' && r.variable === 'restoreMana' ? { ...r, balancePath: 3 } : r)) },
+      /variableBindings\.default\.\.siphon\.restoreMana\.balancePath: is the number 3 — numbers live in src\/content\/balance\.js/, 'a literal number in a binding is refused by name');
+    refuses({ ...contentBundle, variableBindings: contentBundle.variableBindings.map((r) => (r.nodeId === 'siphon' && r.variable === 'restoreMana' ? { ...r, balancePath: 'exposure.nowhere' } : r)) },
+      /'exposure\.nowhere' is not a number in src\/content\/balance\.js/, 'a binding to no balance row is refused by name');
+    refuses({ ...contentBundle, nodeVariables: [...contentBundle.nodeVariables, { nodeId: 'siphon', variable: 'idle', role: 'amount' }] },
+      /nodeVariables\.siphon\.idle: is declared but no effect of 'siphon' reads it/, 'a variable nothing reads is refused by name');
+    refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, siphon: { triggers: [{ on: 'arcaneBreak', do: [{ op: 'restoreMana', target: 'self', amount: { variable: 'ghost' } }] }] } } },
+      /nodeEffects\.siphon: reads variable 'ghost', which nodeVariables\.csv does not declare/, 'an effect reading an undeclared variable is refused by name');
+    // 80.8d — a branch-scoped pairing is enforced as the branch, not lifted to
+    // its root: cards paired with classification.attack alone may not carry a
+    // skill kind, even though the derived tagFamilyDomains says `card,classification`.
+    refuses({ ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'card' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.attack' } : r)) },
+      /tagging\.card\.defend: holds 'classification\.skill', which is outside every subtree 'card' is paired with in familyNodes\.csv \(the family may carry only classification\.attack under that root\)/,
+      'a tagging row outside the family\'s paired subtree is refused by name');
+    // 80.8e — a narrower classification pairing is LEGAL (the presence check
+    // asks whether the row's node is under classification, not the reverse).
+    const narrower = { ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'enemy' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.enemy' } : r)) };
+    assert(validateContent(narrower).ok, `enemy → classification.enemy validates — said ${JSON.stringify(said(narrower).slice(0, 240))}`);
+    // 80.8f — a mis-spelt column is refused, not a silent root; effects on a
+    // node outside property, a role that is not the field, a visibility outside
+    // the framework's words, and a dotted framework id its parents do not spell.
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? (({ parentId, ...rest }) => ({ ...rest, parentid: parentId }))(n) : n)) },
+      /nodes\[\d+\]\.parentid: Unknown column 'parentid'/, 'an unknown column is refused by name');
+    refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, blade: { triggers: [] } } },
+      /nodeEffects\.blade: confers behaviour on a node outside the property subtree/, 'effects on a non-property node are refused by name');
+    refuses({ ...contentBundle, nodeVariables: contentBundle.nodeVariables.map((v) => (v.nodeId === 'forsakenMedallion' ? { ...v, role: 'stacks' } : v)) },
+      /nodeVariables\.forsakenMedallion\.poiseDamage\.role: says 'stacks' but the effect reads the variable as 'amount'/, 'a role that is not the field is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.innate' ? { ...n, visibility: 'LOUD' } : n)) },
+      /nodes\.lifecycle\.innate\.visibility: 'LOUD' is not a visibility/, 'a visibility outside the framework\'s words is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.recall.afterUse' ? { ...n, parentId: 'lifecycle' } : n)) },
+      /nodes\.lifecycle\.recall\.afterUse\.parentId: the id spells the path 'lifecycle\.recall\.afterUse' but its parents spell 'lifecycle\.afterUse'/, 'a dotted id its parents do not spell is refused by name');
+    // 80.8c — the tree's own shape: a parent that is not a node, and a cycle.
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? { ...n, parentId: 'nowhere' } : n)) },
+      /nodes\.fx:blade\.parentId: names 'nowhere', which is not a node/, 'a parent that is not a node is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'presentation' ? { ...n, parentId: 'fx:blade' } : n)) },
+      /parent cycle through/, 'a parent cycle is refused by name');
+    // 80.9 — passives come from the one PASSIVE_TYPES home the relic schema uses.
+    refuses(withRules(['fxOdd'], [rule('fxOdd', { passives: { notAPassive: 1 } })]), /propertyRules\.fxOdd\.passives\.notAPassive: Unknown field 'notAPassive'/,
+      'an unknown passive key on a rule is refused by the shared schema');
+    // 80.10 — a sidecar number must name a real balance row.
+    refuses(withRules(['fxDrift'], [rule('fxDrift', { passives: { flaskPowerMult: { balance: 'no.such.row' } } })]), /names balance row 'no\.such\.row'/,
+      'a balance reference naming no row is refused by name');
+    // 80.11 — the progression predicates are closed-set members, checked for shape,
+    // and answer false until the phase-4 skill/class ledger exists.
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 0 }, do: [] }] })]),
+      /propertyRules\.fxGate\.triggers\[0\]\.if\.level: level must be a positive integer/, 'a non-positive skill level is refused by name');
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'classLevelAtLeast' }, do: [] }] })]),
+      /if\.level: level must be a positive integer/, 'a class-level gate with no level is refused by name');
+    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 7 }] }, do: [] }] })])).ok,
+      'a well-formed skill gate validates');
+    eq(evalPredicate({}, { p: 'skillLevelAtLeast', skill: 'focus', level: 1 }), false, 'skillLevelAtLeast is false until the skill ledger exists');
+    eq(evalPredicate({}, { p: 'classLevelAtLeast', level: 1 }), false, 'classLevelAtLeast is false until the class ledger exists');
+  });
+
+  // ---- 81. Relics are property carriers (plan phase 2) -----------------------
+  // Their triggers moved into propertyRules and they mount beside the loadout's
+  // pieces. What must survive the move is behaviour, the `once` gate, and the
+  // event the relic's flash is drawn from; the sentence is the snapshot's
+  // (tests/relic-properties.test.mjs).
+  test('81. a relic fires through the mount path, once, and still announces itself', () => {
+    const c = makeCombat({ deck: ['strike', 'strike'], relicIds: ['forsakenMedallion'] });
+
+    // The relic is mounted as a carrier, keyed under its own kind, and its rule
+    // came from the table rather than from the relic definition.
+    const mounts = c.propertyMounts && c.propertyMounts[triggerOwnerKey(c, c.player)];
+    assert(!!mounts && !!mounts['relic:forsakenMedallion'], 'the held relic mounted as a property carrier');
+    eq(mounts['relic:forsakenMedallion'].kind, 'relic', 'the mount records the carrier kind');
+    eq(REG.relics.get('forsakenMedallion').triggers, undefined, 'the relic definition no longer carries triggers');
+
+    // Forsaken Medallion: the FIRST attack of the combat also deals 4 Poise.
+    const enemy = () => c.enemies.find((e) => e.alive);
+    const before = enemy().poiseMeter.value;
+    playFromHand(c, 'strike', enemy().id);
+    const afterFirst = enemy().poiseMeter.value;
+    assert(afterFirst - before >= 4, `the relic's opening Poise landed (${before} → ${afterFirst})`);
+    eq(logOf(c, 'relicTriggered').filter((e) => e.relicId === 'forsakenMedallion').length, 1,
+      'the mount scan emits relicTriggered, which is what ui/fx.js draws the relic flash from');
+
+    // …and `once` still means once: the second attack adds only its own Poise.
+    const second = enemy().poiseMeter.value;
+    playFromHand(c, 'strike', enemy().id);
+    assert(enemy().poiseMeter.value - second < 4, 'the once gate held on the second attack');
+    eq(logOf(c, 'relicTriggered').filter((e) => e.relicId === 'forsakenMedallion').length, 1,
+      'and the relic announced itself exactly once');
+  });
+
+  // ---- 81a. A relic authored against the old shape is refused BY NAME --------
+  // The field is still declared (schemas.js) precisely so this can be said. A
+  // relic whose triggers were left on the definition would otherwise load with
+  // them silently inert, which is the failure the deprecation window exists for.
+  test('81a. a relic that still authors its own triggers is refused, and told where they go', () => {
+    const bundle = {
+      ...contentBundle,
+      relics: contentBundle.relics.map((r) => (r.id === 'forsakenMedallion'
+        ? { ...r, triggers: [{ on: 'combatStart', do: [{ op: 'block', amount: 2 }] }] }
+        : r)),
+    };
+    const words = validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/relics\.forsakenMedallion\.triggers/.test(words), `the refusal names the relic and the field — said ${JSON.stringify(words.slice(0, 200))}`);
+    assert(/propertyRuleEffects\.json/.test(words), 'and names the file the triggers belong in');
+  });
+
+  // ---- 82. Zones in run state (plan phase 3a) --------------------------------
+  // The character as cards in zones, as a PROJECTION of the fields that own
+  // the truth today (SPEC §13.4a). Four claims: a fresh run carries its
+  // projection; a schema-6 save is filled at the migration door with no
+  // registries; the shape is refused by name; a tampered projection is
+  // re-derived and noted, never refused.
+  test('82. zones and collection ride the save as a projection; a schema-6 save is filled; a tampered one is re-projected and noted', () => {
+    const run = createRunState({ seed: 0x3a3a, classId: 'reaver', registries: REG });
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION, 'the current schema');
+    eq(run.zones.core, 'reaver', 'core is the class id');
+    eq(run.zones.hands.main, run.loadout.sets.rightHand[run.loadout.active.rightHand], 'main hand is the active right-hand piece');
+    eq(run.zones.hands.off, run.loadout.sets.leftHand[run.loadout.active.leftHand], 'off hand is the active left-hand piece');
+    eq(run.zones.worn.body, run.loadout.sets.armor[0], 'body is the active armour');
+    eq(run.zones.worn.head, null, 'head/hands/feet are null until 3b authors the rows');
+    eq(JSON.stringify(run.zones.passive), JSON.stringify(run.relics), 'passive is the relics, in order');
+    eq(run.collection.map((c) => c.instanceId).join('|'), run.deck.map((c) => c.instanceId).join('|'), 'collection is the deck, instance for instance');
+    assert(run.collection[0] !== run.deck[0], 'and a copy, not the same objects');
+
+    // serializeRun writes what the legacy fields say NOW, not what zones said.
+    run.relics.push('warhorn');
+    const saved = JSON.parse(serializeRun(run));
+    eq(saved.zones.passive.join('|'), 'forsakenMedallion|ashenGrip|warhorn', 'a relic added after creation is in the saved projection, after the starting relic and the kit relic');
+
+    // A schema-6 save (no zones) migrates with its projection filled — from
+    // its own fields, no registries in hand.
+    const old = JSON.parse(serializeRun(run));
+    delete old.zones; delete old.collection; old.schemaVersion = 6;
+    const back = deserializeRun(JSON.stringify(old));
+    eq(back.schemaVersion, RUN_SCHEMA_VERSION, 'brought forward');
+    eq(back.migratedFromRunSchemaVersion, 6, 'and says from where');
+    eq(back.zones.hands.main, run.zones.hands.main, 'filled: main hand');
+    eq(back.collection.length, run.deck.length, 'filled: collection');
+    eq(back.reprojectedZones, undefined, 'a fill is not a disagreement');
+
+    // The shape, refused by name.
+    const said = (r) => validateRunShape(r).join(' | ');
+    assert(/missing 'zones'/.test(said({ ...run, zones: undefined })), 'a missing zones is named');
+    assert(/zones\.worn\.cloak is not a worn slot/.test(said({ ...run, zones: { ...run.zones, worn: { ...run.zones.worn, cloak: null } } })), 'an unknown worn slot is named');
+    assert(/zones\.hands\.main must be an id or null/.test(said({ ...run, zones: { ...run.zones, hands: { main: 7, off: null } } })), 'a non-id hand is named');
+    assert(/zones\.passive\[0\] must be a relic id/.test(said({ ...run, zones: { ...run.zones, passive: [''] } })), 'a blank relic id is named');
+    assert(/collection\[0\] must be a card instance/.test(said({ ...run, collection: [{ cardId: 'strike' }] })), 'a collection entry with no instanceId is named');
+
+    // A schema-7 save whose zones were edited by hand loads with the
+    // projection re-derived and the disagreement noted on the ledger.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    saves.saveRun(run, createRng(1));
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    raw.zones.passive = ['warhorn'];
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    const loaded = saves.loadRun(REG);
+    assert(loaded, 'the edited save still loads');
+    eq(loaded.zones.passive.join('|'), 'forsakenMedallion|ashenGrip|warhorn', 'the projection is re-derived from the relics');
+    eq(loaded.reprojectedZones, undefined, 'the marker does not ride the run');
+    const row = (saves.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'zones');
+    assert(row && row.kind === 'overwrite' && /phase 3b/.test(row.why), `the ledger names the re-projection — got ${JSON.stringify(row).slice(0, 200)}`);
+
+    // The run that LEAVES the door carries a projection that is true now.
+    // A save with no loadout is healed with the bare one and its deck is
+    // re-stamped inside the door, after the migration drew the projection —
+    // so the door draws it again, and nothing waits for the next save.
+    const bare = JSON.parse(storage.getItem(RUN_KEY));
+    delete bare.loadout; bare.zones.hands = { main: null, off: null }; bare.zones.worn.body = null; bare.collection = [];
+    storage.setItem(RUN_KEY, JSON.stringify(bare));
+    const healed = saves.loadRun(REG);
+    assert(healed && healed.loadout, 'the loadout-less save is healed');
+    eq(healed.zones.hands.main, healed.loadout.sets.rightHand[healed.loadout.active.rightHand], 'the loaded projection reads the healed loadout');
+    eq(healed.zones.worn.body, healed.loadout.sets.armor[healed.loadout.active.armor], 'and its armour');
+    eq(JSON.stringify(healed.collection), JSON.stringify(healed.deck), 'the loaded collection is the re-stamped deck, card for card');
+  });
+
+  test('83. the worn zone has four slots, the figure reads the zones, the deck has a floor, and the lock is grantedBy (plan phase 3b)', () => {
+    // The slot split. Three new rows, one set each, out of combat, and the run's
+    // loadout gains a cell for each — the projection reads REAL slots now.
+    const slotIds = REG.equipment.slots.map((s) => s.id);
+    for (const id of ['head', 'hands', 'feet']) {
+      const slot = REG.equipment.slots.find((s) => s.id === id);
+      assert(slot, `slot '${id}' is authored`);
+      eq(slot.kinds.join('|'), id, `slot '${id}' accepts the kind of the same name`);
+      eq(slot.sets, 1, `slot '${id}' carries one set`);
+      eq(slot.swap, 'outOfCombat', `slot '${id}' swaps out of combat`);
+      eq(slotHand(slot), null, `slot '${id}' is worn, not held`);
+    }
+    const run = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    eq(Object.keys(run.zones.worn).join('|'), 'body|head|hands|feet|talisman', 'the worn zone has its five slots in order');
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(run.loadout.sets[id]) && run.loadout.sets[id].length === 1, `loadout.sets.${id} is one empty cell`);
+      eq(run.zones.worn[id], null, `zones.worn.${id} is null with no piece authored`);
+    }
+    eq(run.zones.worn.body, run.loadout.sets.armor[0], 'body is still the armour slot');
+    // The map is the one home: every slot row is a zone, every zone is a slot.
+    for (const id of slotIds) assert(wornZoneOf(id) || handZoneOf(id), `slot '${id}' fills a zone`);
+    for (const slotId of Object.values(WORN_SLOT_IDS)) assert(slotIds.includes(slotId), `worn zone slot '${slotId}' is an authored slot`);
+    for (const slotId of Object.values(HAND_SLOT_IDS)) assert(slotIds.includes(slotId), `hand zone slot '${slotId}' is an authored slot`);
+    // A slot row no zone names is refused by name at boot.
+    const cloak = { id: 'cloak', label: 'Cloak', positionLabel: 'Cloak {n}', positionCode: 'CLK', kinds: ['cloak'], hand: '', sets: 1, swap: 'outOfCombat', storage: false, order: 9, blurb: 'probe' };
+    const withCloak = validateContent({ ...testBundle(), equipment: { ...contentBundle.equipment, slots: [...contentBundle.equipment.slots, cloak] } });
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    assert(!withCloak.ok && said(withCloak).some((e) => /equipment\.slots\.cloak/.test(e) && /no worn zone names/.test(e)), `a worn slot outside the map is named — got ${JSON.stringify(said(withCloak)).slice(0, 300)}`);
+    const thirdHand = { ...cloak, id: 'thirdHand', hand: 'right', kinds: ['weapon'] };
+    const withHand = validateContent({ ...testBundle(), equipment: { ...contentBundle.equipment, slots: [...contentBundle.equipment.slots, thirdHand] } });
+    assert(!withHand.ok && said(withHand).some((e) => /equipment\.slots\.thirdHand/.test(e) && /no hands zone names/.test(e)), 'a hand slot outside the map is named');
+
+    // The figure reads the zones: body from worn.body, the three new layers
+    // from their slots, the hands from the pieces their zones name.
+    const spec = figureSpec(REG, run.loadout, run.class);
+    eq(spec.armourId, run.zones.worn.body, 'the body layer is zones.worn.body');
+    eq(spec.rightId, run.zones.hands.main, 'the right hand draws zones.hands.main');
+    eq(spec.leftId, run.zones.hands.off, 'the left hand draws zones.hands.off');
+    eq(spec.headId, null); eq(spec.handsId, null); eq(spec.feetId, null);
+    const helmed = structuredClone(run.loadout); helmed.sets.head[0] = 'probeHelm'; helmed.sets.feet[0] = 'probeBoots';
+    const spec2 = figureSpec(REG, helmed, run.class);
+    eq(spec2.headId, 'probeHelm', 'a piece in the head slot is the head layer, table or no table');
+    eq(spec2.feetId, 'probeBoots', 'and the feet slot the feet layer');
+    eq(spec2.handsId, null, 'an empty slot is no layer');
+
+    // The deck's floor: balance.deck through deckMinimum, at the ledger's
+    // character level (plan phase 6; a fresh run is level 1).
+    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 1 is balance.deck.minimum');
+    const atLevel = (level) => ({ ...run, level: { xp: 0, level, unspentPoints: 0 } });
+    eq(deckMinimum(REG, atLevel(2)), REG.balance.deck.minimum + 1, 'and one more every two levels');
+    eq(deckMinimum(REG, atLevel(3)), REG.balance.deck.minimum + 1, 'three levels is still one step');
+    eq(deckMinimum(REG, atLevel(4)), REG.balance.deck.minimum + 2);
+    eq(deckMinimum(REG, { ...run, level: undefined, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'a caller without the ledger may still name the level');
+    const badDeck = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, deck: { ...contentBundle.balance.deck, minimum: 7.5 } } });
+    assert(!badDeck.ok && said(badDeck).some((e) => /balance\.deck\.minimum/.test(e)), 'a fractional floor is refused by name');
+    // The door: leaving under the floor is refused with both numbers; a deficit
+    // the run arrived with is not this screen's to refuse; unequipping is free.
+    eq(loadoutLeaveRefusal(REG, run, { enteredWith: run.deck.length }), '', 'a full deck leaves');
+    const entered = run.deck.length;
+    run.loadout.sets.rightHand = [null, null, null];
+    run.loadout.sets.leftHand = [null, null, null];
+    stampDeck(REG, run);
+    assert(run.deck.length < deckMinimum(REG, run), `unequipping both hands takes the deck under the floor (${run.deck.length} < ${deckMinimum(REG, run)}) — the floor is live, not dormant`);
+    const refusal = loadoutLeaveRefusal(REG, run, { enteredWith: entered });
+    assert(new RegExp(`holds ${run.deck.length} cards`).test(refusal) && new RegExp(`floor is ${deckMinimum(REG, run)}`).test(refusal), `the refusal names both numbers — got '${refusal}'`);
+    eq(loadoutLeaveRefusal(REG, run, { enteredWith: run.deck.length }), '', 'a deck that arrived under the floor may leave');
+
+    // The lock is grantedBy: a lent card cannot be removed while its piece is
+    // worn, and is gone — not unlocked — once the piece is not.
+    const fresh = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const lent = fresh.deck.filter(isItemOwned);
+    assert(lent.length > 0, 'the starting hands lend cards');
+    for (const inst of lent) {
+      assert(inst.grantedBy, `'${inst.cardId}' names the piece that lent it`);
+      eq(canRemoveDeckCard(inst), false, `'${inst.cardId}' cannot be removed while its piece is worn`);
+    }
+    assert(fresh.deck.filter((c) => !isItemOwned(c)).every((c) => canRemoveDeckCard(c)), 'the run\'s own cards can be');
+    fresh.loadout.sets.rightHand = [null, null, null];
+    fresh.loadout.sets.leftHand = [null, null, null];
+    stampDeck(REG, fresh);
+    eq(fresh.deck.filter(isItemOwned).length, 0, 'unequipping removes every lent instance');
+    eq(fresh.zones.worn.head, null, 'and the projection still reads');
+
+    // The review of #1183. The body layer is the RESOLVED armour row: an id the
+    // table does not know keeps the default body rather than asking for art
+    // that does not exist.
+    const stale = structuredClone(run.loadout); stale.sets.armor[0] = 'notAnArmourSet';
+    eq(figureSpec(REG, stale, run.class).armourId, 'default', 'an unknown armour id draws the default body');
+    // A save written before the slot split has no cells for head, hands and
+    // feet; the load door gives it each slot's empty cells and says so.
+    const storage2 = createMemoryStorage();
+    const saves2 = createSaveManager(storage2);
+    saves2.saveRun(createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG }), createRng(1));
+    const old = JSON.parse(storage2.getItem(RUN_KEY));
+    for (const id of ['head', 'hands', 'feet']) { delete old.loadout.sets[id]; delete old.loadout.active[id]; }
+    delete old.zones; delete old.collection; old.schemaVersion = 6;
+    storage2.setItem(RUN_KEY, JSON.stringify(old));
+    const grown = saves2.loadRun(REG);
+    assert(grown, 'the pre-split save loads');
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(grown.loadout.sets[id]) && grown.loadout.sets[id].length === 1 && grown.loadout.sets[id][0] === null, `loadout.sets.${id} gained its one empty cell`);
+      eq(grown.loadout.active[id], 0, `and an active index`);
+    }
+    const healRow = (saves2.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
+    assert(healRow && healRow.kind === 'heal' && /head, hands, feet/.test(healRow.why), `the ledger names the slots that were filled — got ${JSON.stringify(healRow).slice(0, 200)}`);
+    // A pre-split save captured MID-FIGHT carries a second loadout in its
+    // combat snapshot. The reference check passes a slot the snapshot never
+    // knew, the door heals that loadout too, and the run resumes rather than
+    // being archived.
+    const midFight = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const fight = createCombat({
+      registries: REG, rng: createRng(0x3b3b), enemyIds: ['fellWarden'],
+      player: { classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp, maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina, energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn, damageBySchoolAdd: midFight.damageBySchoolAdd, equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: midFight.equipmentAttackSlotCount, equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels, deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks, flaskCharges: midFight.flaskCharges, loadout: midFight.loadout },
+    });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    const storage3 = createMemoryStorage();
+    const saves3 = createSaveManager(storage3);
+    saves3.saveRun(midFight, createRng(2));
+    const raw3 = JSON.parse(storage3.getItem(RUN_KEY));
+    for (const lo of [raw3.loadout, raw3.combatEntered.snapshot.loadout]) for (const id of ['head', 'hands', 'feet']) { delete lo.sets[id]; delete lo.active[id]; }
+    delete raw3.zones; delete raw3.collection; raw3.schemaVersion = 6;
+    storage3.setItem(RUN_KEY, JSON.stringify(raw3));
+    const resumed = saves3.loadRun(REG);
+    assert(resumed, `the pre-split mid-fight save loads rather than being archived — ${JSON.stringify(saves3.runStatus()).slice(0, 200)}`);
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(resumed.loadout.sets[id]), `the run's loadout gained ${id}`);
+      assert(Array.isArray(resumed.combatEntered.snapshot.loadout.sets[id]) && resumed.combatEntered.snapshot.loadout.active[id] === 0, `the saved fight's loadout gained ${id} too`);
+    }
+    const fightRow = (saves3.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
+    assert(fightRow && fightRow.now.snapshotSlots.includes('head') && /saved fight/.test(fightRow.why), `one row names both loadouts — got ${JSON.stringify(fightRow).slice(0, 220)}`);
+    // The excuse is for a slot nothing could ever have filled. A current
+    // save whose snapshot lost a HAND is malformed and is archived, as before.
+    const storage4 = createMemoryStorage();
+    const saves4 = createSaveManager(storage4);
+    saves4.saveRun(midFight, createRng(3));
+    const raw4 = JSON.parse(storage4.getItem(RUN_KEY));
+    delete raw4.combatEntered.snapshot.loadout.sets.rightHand; delete raw4.combatEntered.snapshot.loadout.active.rightHand;
+    storage4.setItem(RUN_KEY, JSON.stringify(raw4));
+    eq(saves4.loadRun(REG), null, 'a snapshot missing a hand slot is refused');
+    assert(/loadout\.sets\.rightHand must be an array/.test(saves4.runStatus().reason || ''), `and named — got ${saves4.runStatus().reason}`);
+  });
+
+  test('84. the grip is read off the hands, its tags ride the action snapshot and no card, and cardTagIs reads both lists (plan phase 3c)', () => {
+    // The grip, read, never stored. A rogue's knife and buckler are two groups
+    // — `one`; a knife and a sword share item:blade — `dual`.
+    const rogue = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
+    eq(JSON.stringify(gripOf(REG, rogue.loadout, 'rogue')), JSON.stringify({ mode: 'one', group: null, right: 'dagger', left: 'buckler' }), 'knife and buckler is one grip');
+    eq(gripTags(gripOf(REG, rogue.loadout, 'rogue')).length, 0, 'and derives no tag');
+    rogue.loadout.sets.leftHand[0] = 'straightSword';
+    const dual = gripOf(REG, rogue.loadout, 'rogue');
+    eq(dual.mode, 'dual'); eq(dual.group, 'item:blade');
+    eq(gripTags(dual).join('|'), 'equipment.dualWield', 'dual derives the framework tag');
+    assert(contentBundle.nodes.some((n) => n.id === 'equipment.dualWield' && n.parentId === 'equipment'), 'the tag is a node under equipment');
+    eq(gripRefusal(REG, rogue.loadout, 'rogue', 'leftHand', 0, 'straightSword'), '', 'dual is legal on its own — its attribute gate is phase 9');
+    // A two-handed piece beside an occupied hand is the one illegal grip. No
+    // shipped package requires two hands yet, so a probe registry says one does.
+    const twoHanded = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments: contentBundle.equipment.armaments.map((a) => (a.id === 'greatsword' ? { ...a, handsRequired: 2 } : a)) } });
+    const reaver = createRunState({ seed: 0x3c3c, classId: 'reaver', registries: REG });
+    const refusal = gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword');
+    assert(/Greatsword/.test(refusal) && /Round Shield/.test(refusal) && /both hands/.test(refusal), `the refusal names both pieces — got '${refusal}'`);
+    const equipCtx = { inCombat: false, classId: 'reaver', attributes: reaver.attributes };
+    eq(equipPiece(twoHanded, reaver.loadout, 'rightHand', 0, 'greatsword', { has: () => true }, equipCtx), false, 'equipPiece refuses the grip');
+    eq(reaver.loadout.sets.rightHand[0], 'straightSword', 'and the hand is unchanged');
+    eq(canEquip(twoHanded, 'rightHand', { inCombat: false }).ok, true, 'a bare "may this slot change" question keeps its answer');
+    // A prepared (inactive) set may hold the two-hander beside an occupied
+    // active hand: the edit does not activate it, and cycleSet's plan gate
+    // refuses the pair the day the player reaches for it.
+    eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 1, 'greatsword'), '', 'an inactive-set edit is judged with the active index unchanged');
+    reaver.loadout.sets.leftHand[0] = null;
+    eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword'), '', 'with the other hand free, the two-hander goes in');
+    // A move is not a second copy: the two-hander in the LEFT hand may be
+    // moved to the right without being refused for standing beside itself.
+    const moving = structuredClone(reaver.loadout); moving.sets.leftHand[0] = 'greatsword'; moving.sets.rightHand[0] = null;
+    eq(gripRefusal(twoHanded, moving, 'reaver', 'rightHand', 0, 'greatsword'), '', 'moving a two-hander hand to hand is not refused');
+    assert(equipPiece(twoHanded, moving, 'rightHand', 0, 'greatsword', { has: () => true }, equipCtx), 'and equipPiece moves it — the same call the refusal above declined, so the refusal was the grip and not the requirements');
+    eq(moving.sets.rightHand[0], 'greatsword'); eq(moving.sets.leftHand[0], null, 'the old cell is cleared');
+    reaver.loadout.sets.rightHand[0] = 'greatsword';
+    eq(gripOf(twoHanded, reaver.loadout, 'reaver').mode, 'two');
+    eq(gripTags(gripOf(twoHanded, reaver.loadout, 'reaver')).join('|'), 'equipment.twoHanded');
+
+    // The snapshot. A card played under a dual grip carries the derived tag on
+    // its cardPlayed event and its action card — and on no card row, no deck
+    // instance, no card definition.
+    stampDeck(REG, rogue);
+    const c = createCombat({
+      registries: REG, rng: createRng(0x3c3c),
+      player: { classId: 'rogue', attributes: rogue.attributes, maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: rogue.energyMax, drawPerTurn: rogue.drawPerTurn, deck: rogue.deck, loadout: rogue.loadout, relicIds: [] },
+      enemyIds: ['fellWarden'],
+    });
+    const target = c.enemies.find((e) => e.alive);
+    const playable = c.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && c.player.energy >= def.cost && (def.manaCost || 0) === 0 && (c.player.stamina ?? 0) >= (def.staminaCost || 0); });
+    assert(playable, 'the opening hand holds a playable card');
+    const out = dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+    const played = out.events.find((e) => e.type === 'cardPlayed');
+    assert(played, 'cardPlayed fired');
+    eq((played.derivedTags || []).join('|'), 'equipment.dualWield', 'the event carries the grip\'s derived tag');
+    assert(!(played.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
+    assert(!(REG.cards.get(playable.cardId).tags || []).includes('equipment.dualWield'), 'the card definition never carries it');
+    assert(!('derivedTags' in playable), 'nor does the deck instance');
+    const preview = previewCard(c, c.piles.hand[0] ? c.piles.hand[0].instanceId : playable.instanceId, target.id);
+    assert(preview, 'a preview still answers');
+
+    // Co-op builds its own snapshot and its own cardPlayed: the same dual grip
+    // carries the same derived tag there.
+    const coopRun = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
+    coopRun.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, coopRun);
+    const coop = createCoopCombat({ registries: REG, rng: createRng(0x3c3c), players: [{ id: 'p1', classId: 'rogue', attributes: coopRun.attributes, maxHp: 60, hp: 60, maxMana: 2, mana: 2, maxStamina: 2, stamina: 2, energyMax: coopRun.energyMax, drawPerTurn: coopRun.drawPerTurn, deck: coopRun.deck, loadout: coopRun.loadout, relicIds: [] }], enemyIds: ['fellWarden'] });
+    const coopHand = coop.players.get('p1').piles.hand;
+    const coopCard = coopHand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && (def.manaCost || 0) === 0 && def.cost <= 3; });
+    assert(coopCard, 'the co-op hand holds a playable card');
+    const coopPlayed = playCoopCard(coop, 'p1', coopCard.instanceId, coop.enemies.find((e) => e.alive).id).events.find((e) => e.type === 'cardPlayed');
+    assert(coopPlayed && (coopPlayed.derivedTags || []).join('|') === 'equipment.dualWield', `the co-op event carries the grip's tag — got ${JSON.stringify(coopPlayed && coopPlayed.derivedTags)}`);
+    assert(!(coopPlayed.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
+    // The predicate reads the card's AUTHORED tags ∪ the derived tags, on the
+    // action card and on the event alike — never the resolved attack tags a
+    // foundation carrier rewrites `tags` into.
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'blade' }, { card: { tags: ['blade', 'guard'], authoredTags: ['guard'], derivedTags: [] } }), false, 'a tag the weapon lent to the resolved attack is not the card\'s');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'guard' }, { card: { tags: ['blade', 'guard'], authoredTags: ['guard'], derivedTags: [] } }), true, 'the authored tag is');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'a derived tag answers on the card snapshot');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'blade' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'an authored tag answers');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.twoHanded' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), false, 'a tag in neither list does not');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, { event: played }), true, 'and the event path reads the same lists');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, {}), false, 'no card, no event: false');
+
+    // Validation: the tag must be a node of the tree, by name.
+    const defend = contentBundle.cards.find((card) => card.id === 'defend');
+    const probe = (tag) => withKindRows({ ...contentBundle, cards: [...contentBundle.cards, { ...structuredClone(defend), id: 'probeGripCard', effects: [{ ...structuredClone(defend.effects[0]), if: { p: 'cardTagIs', tag } }] }] });
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bad = validateContent(probe('nope'));
+    assert(!bad.ok && said(bad).some((e) => /probeGripCard/.test(e) && /Unknown tag 'nope'/.test(e)), `an unknown tag is refused by name — got ${JSON.stringify(said(bad)).slice(0, 300)}`);
+    const good = validateContent(probe('equipment.dualWield'));
+    assert(!said(good).some((e) => /probeGripCard/.test(e)), `the derived tag is a legal predicate tag — got ${JSON.stringify(said(good).filter((e) => /probeGripCard/.test(e)))}`);
+  });
+
+  test('85. the skill tracks are derived, climb one curve, are paid by the combat receipt, and gate the progression predicates (plan phase 4a)', () => {
+    // The tracks come from the tree, the framework and the class registry —
+    // no list of their own.
+    const tracks = skillTracks(REG);
+    const ids = tracks.map((t) => t.id);
+    for (const id of ['item:blade', 'item:shield', 'item:magic-focus', 'armour:light', 'armour:medium', 'armour:heavy', 'dualWield', 'class:reaver', 'class:rogue']) assert(ids.includes(id), `track '${id}' is derived`);
+    assert(!ids.includes('item:armor'), 'armour is not a weapon group');
+    eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
+    eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
+    assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
+    // One curve shape: round(base × growth^n, roundTo).
+    const c = REG.balance.skill.xp;
+    eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
+    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
+    assert(xpToNext(REG, 'class', 0) > xpToNext(REG, 'weapon', 0), 'the class curve is the slower one');
+    assert(xpToNext(REG, 'armour', 1) > xpToNext(REG, 'armour', 0), 'the curve climbs');
+    // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
+    const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
+    eq(skillLevel(run, 'item:blade'), 0);
+    const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
+    eq(first.levelUps, 2, 'enough XP for two steps climbs two');
+    eq(run.skills['item:blade'].level, 2); eq(run.skills['item:blade'].xp, 1, 'the remainder carries'); eq(run.skills['item:blade'].pendingDrafts, 2, 'one draft queued per level');
+    eq(awardSkillXp(REG, run, 'item:blade', 0).levelUps, 0, 'nothing is nothing');
+    let threw = null; try { awardSkillXp(REG, run, 'notATrack', 5); } catch (e) { threw = e.message; }
+    assert(/not a skill track/.test(threw || ''), 'an unknown track is refused by name');
+    // The shape, refused by name; a migration fills the ledger.
+    assert(/skills\.item:blade\.xp must be a non-negative integer/.test(skillsProblems({ 'item:blade': { xp: -1, level: 0, pendingDrafts: 0 } }).join('|')));
+    assert(/skills\.x\.bogus is not a ledger field/.test(skillsProblems({ x: { xp: 0, level: 0, pendingDrafts: 0, bogus: 1 } }).join('|')));
+    assert(/missing 'skills'/.test(validateRunShape({ ...run, skills: undefined }).join(' | ')), 'a current save without the ledger is named');
+    const old = JSON.parse(serializeRun(run)); delete old.skills; old.schemaVersion = 7;
+    const back = deserializeRun(JSON.stringify(old));
+    eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.skills), '{}', 'a schema-7 save gains the empty ledger');
+
+    // The combat receipt: a reaver's sword strikes pay item:blade, the shield's
+    // defends pay item:shield, a win pays every held group, the killing group
+    // more, and the run's ledger takes it once through applySkillXp.
+    const fresh = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    const cb = createCombat({
+      registries: REG, rng: createRng(0x4a4a),
+      player: { classId: 'reaver', attributes: fresh.attributes, skills: fresh.skills, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] },
+      enemyIds: ['fellWarden'],
+    });
+    let guard = 0;
+    while (!cb.result && ++guard < 2000) {
+      const target = cb.enemies.find((e) => e.alive);
+      const playable = cb.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && cb.player.energy >= def.cost && (def.manaCost || 0) === 0 && (cb.player.stamina ?? 0) >= (def.staminaCost || 0); });
+      if (playable && target) dispatch(cb, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id }); else dispatch(cb, { type: 'endTurn' });
+    }
+    assert(cb.result, 'the bot finished the fight');
+    // The group of an event's card, read from the log alone: the hand it was
+    // swung from, or the piece a kit/package card names (bare id or ref).
+    const groupOfEvent = (e) => {
+      if (e.sourceHand === 'right') return 'item:blade';
+      if (e.sourceHand === 'left') return 'item:shield';
+      const id = typeof e.grantedBy === 'string' ? e.grantedBy.replace(/^armament\//, '') : null;
+      const piece = id ? REG.equipment.armaments.find((a) => a.id === id) : null;
+      return piece ? (piece.itemTypeTags || []).find((t) => t !== 'item:armor') || null : null;
+    };
+    // Every hit landed and every block gained by a card the piece lent is one
+    // payment to that piece's group — a sword's guard art pays the blade, a
+    // shield's bash pays the shield.
+    const paid = (group) => cb.eventLog.filter((e) => e.amount > 0 && groupOfEvent(e) === group
+      && ((e.type === 'damageDealt' && e.sourceId === 'player') || (e.type === 'blockGained' && e.targetId === 'player'))).length;
+    const hits = cb.eventLog.filter((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && groupOfEvent(e) === 'item:blade').length;
+    assert(hits > 0, 'the sword landed hits');
+    assert(cb.eventLog.some((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && !e.sourceHand && groupOfEvent(e)), 'a kit or art card, named by its piece alone, landed too');
+    const receipt = skillXpReceipt(cb);
+    const rows = REG.balance.skill.xp;
+    if (cb.result === 'victory') {
+      const killGroup = cb.skillXp.player.killGroup;
+      assert(killGroup === 'item:blade' || killGroup === 'item:shield', `the killing hit names its group — got ${killGroup}`);
+      // × the class card's leaning (plan phase 5a): the Reaver favours the blade.
+      const favoured = REG.balance.skill.favoredXpMult;
+      eq(receipt['item:blade'], Math.floor((paid('item:blade') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:blade' ? rows.killMult : 1)) * favoured), 'blade is paid per hit and block plus the win, more for the kill, favoured by the class card');
+      eq(receipt['item:shield'], Math.floor(paid('item:shield') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:shield' ? rows.killMult : 1)), 'shield is paid per hit and block plus the win');
+    } else {
+      eq(receipt['item:blade'], Math.floor(paid('item:blade') * rows.perHit * REG.balance.skill.favoredXpMult), 'a lost fight still pays the hits');
+    }
+    assert(!('dualWield' in receipt), 'sword and shield is not dual-wielding');
+    assert(!Object.keys(receipt).some((k) => k.startsWith('class:')), 'no class XP source until phase 5b');
+    eq(fresh.skills['item:blade'], undefined, 'combat never wrote the run');
+    const awards = applySkillXp(REG, fresh, receipt);
+    eq(awards.find((a) => a.skillId === 'item:blade').after, skillLevel(fresh, 'item:blade'), 'the run took the receipt');
+    assert(skillLevel(fresh, 'item:blade') >= 1 || fresh.skills['item:blade'].xp === receipt['item:blade'], 'the XP is in the ledger');
+    // Dual grip pays dualWield beside the group.
+    const rogue = createRunState({ seed: 0x4a4a, classId: 'rogue', registries: REG });
+    rogue.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, rogue);
+    const cd = createCombat({ registries: REG, rng: createRng(1), player: { classId: 'rogue', attributes: rogue.attributes, skills: rogue.skills, maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: rogue.energyMax, drawPerTurn: rogue.drawPerTurn, deck: rogue.deck, loadout: rogue.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    const t2 = cd.enemies.find((e) => e.alive);
+    const strike = cd.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return def.type === 'attack' && def.cost !== 'X' && cd.player.energy >= def.cost && inst.sourceHand; });
+    if (strike) {
+      dispatch(cd, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: t2.id });
+      const r2 = cd.skillXp.player.xp;
+      assert(r2['item:blade'] > 0 && r2.dualWield * REG.balance.skill.favoredXpMult === r2['item:blade'], `dual pays dualWield beside the blade (the blade favoured by the Rogue's card, plan phase 5a) — got ${JSON.stringify(r2)}`);
+    }
+    // The predicates read the ledger the combat was handed.
+    const gated = createCombat({ registries: REG, rng: createRng(2), player: { classId: 'reaver', attributes: fresh.attributes, skills: { 'item:blade': { xp: 0, level: 3, pendingDrafts: 0 }, 'class:reaver': { xp: 0, level: 2, pendingDrafts: 0 } }, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 3 }), true, 'a level the ledger holds passes');
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 4 }), false, 'one above does not');
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:shield', level: 1 }), false, 'an untouched track is level 0');
+    eq(evalPredicate(gated, { p: 'classLevelAtLeast', level: 2 }, { owner: gated.player }), true, 'the class track reads class:<id>');
+    eq(evalPredicate(gated, { p: 'classLevelAtLeast', level: 3 }, { owner: gated.player }), false);
+    // balance.skill is validated by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bad = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, xp: { ...contentBundle.balance.skill.xp, growth: 0.5 } } } });
+    assert(!bad.ok && said(bad).some((e) => /balance\.skill\.xp\.growth/.test(e)), 'a shrinking curve is refused by name');
+    // Review round. A granted card names its piece in whichever spelling the
+    // loadout stamped (bare id for kits, packages and arts; namespaced refs);
+    // an armour piece's card and a run card have no group.
+    const probe = createCombat({ registries: REG, rng: createRng(3), player: { classId: 'reaver', attributes: fresh.attributes, skills: {}, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    const foe = probe.enemies[0];
+    const hit = (extra) => recordSkillXp(probe, { type: 'damageDealt', sourceId: 'player', targetId: foe.id, amount: 3, ...extra });
+    const fav = REG.balance.skill.favoredXpMult; // the Reaver's card favours the blade (plan phase 5a)
+    hit({ grantedBy: 'straightSword' }); eq(probe.skillXp.player.xp['item:blade'], rows.perHit * fav, 'a bare armament id pays its group');
+    hit({ grantedBy: 'armament/straightSword' }); eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit * fav, 'the namespaced ref pays the same group');
+    hit({ grantedBy: 'armor/reaver/ironPlate' }); hit({ grantedBy: 'unarmed:leftHand' }); hit({});
+    eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit * fav, 'armour, the empty hand and a run card pay nothing');
+    // The killing hit is read from the HP it left, not from a flag set later.
+    eq(probe.skillXp.player.killGroup, null);
+    foe.hp = 0; hit({ sourceHand: 'right' });
+    eq(probe.skillXp.player.killGroup, 'item:blade', 'the hit that emptied the HP is the kill');
+    // A fight saved and resumed keeps its ledger and receipt, and keeps recording.
+    const before = JSON.stringify(probe.skillXp);
+    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(probe)));
+    eq(JSON.stringify(stored.skillXp), before, 'the receipt is in the snapshot'); eq(JSON.stringify(stored.skills), '{}', 'so is the ledger');
+    const resumed = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(resumed.skillXp), before, 'the receipt survives the load');
+    resumed.emit('damageDealt', { sourceId: 'player', targetId: foe.id, amount: 3, grantedBy: 'straightSword' });
+    eq(resumed.skillXp.player.xp['item:blade'], 4 * rows.perHit * fav, 'the listener is hooked again after the load');
+    const gatedStore = JSON.parse(JSON.stringify(serializeCombatSnapshot(gated)));
+    eq(evalPredicate(restoreCombatSnapshot({ registries: REG, rng: createRng(2), snapshot: gatedStore }), { p: 'skillLevelAtLeast', skill: 'item:blade', level: 3 }), true, 'a restored fight gates on the ledger it was handed');
+    delete stored.skills; delete stored.skillXp;
+    const older = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(older.skills), '{}'); eq(JSON.stringify(older.skillXp), '{}', 'a pre-ledger snapshot resumes with an empty one');
+    assert(/skillXp\.player\.xp\.item:blade must be a non-negative number/.test(combatSnapshotProblems({ ...stored, skillXp: { player: { xp: { 'item:blade': -1 }, killGroup: null } } }).join('|')), 'a malformed receipt is refused by name');
+    // A gate names a derived track, or is refused: the shipped Siphon reads the focus track.
+    const shipped = JSON.stringify(contentBundle.nodeEffects.siphon);
+    assert(shipped.includes('"skill":"item:magic-focus"') && !shipped.includes('"skill":"focus"'), 'siphon gates on the focus track by its derived id');
+    // (The bundle validates the derived propertyRules, which content-build joins from nodeEffects.)
+    const ghostGate = validateContent({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => r.tag === 'siphon' ? JSON.parse(JSON.stringify(r).replace(/item:magic-focus/g, 'focus')) : r) });
+    assert(!ghostGate.ok && said(ghostGate).some((e) => /Unknown skill track 'focus'/.test(e)), 'a gate on a name no track has is refused by name');
+    // Co-op: a guard one seat casts on another is the caster's work, and a
+    // seat's gates read that seat's own ledger, not the active one's.
+    const seatA = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    const seatB = createRunState({ seed: 0x4a4b, classId: 'rogue', registries: REG });
+    const party = createCoopCombat({ registries: REG, rng: createRng(0x4a4a), players: [
+      { id: 'A', classId: 'reaver', attributes: seatA.attributes, skills: { 'item:blade': { xp: 0, level: 5, pendingDrafts: 0 } }, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: seatA.energyMax, drawPerTurn: seatA.drawPerTurn, deck: seatA.deck, loadout: seatA.loadout, relicIds: [] },
+      { id: 'B', classId: 'rogue', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
+    ], enemyIds: ['fellWarden'] });
+    const entB = party.players.get('B').entity;
+    const caster = party.playerKey, ally = caster === 'A' ? 'B' : 'A';
+    gainBlock(party, party.players.get(ally).entity, 4, { instanceId: 'kit:roundShield:guard', grantedBy: 'roundShield' });
+    eq(party.skillXp[caster] && party.skillXp[caster].xp['item:shield'], rows.perHit, "the active seat's shield is paid for the guard it cast on its ally");
+    assert(!party.skillXp[ally], 'the ally guarded is paid nothing');
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 5 }, { owner: party.players.get('A').entity }), true, "a seat's gate reads its own ledger");
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
+  });
+
+  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, the threshold upgrades the deck (plan phase 4b)', () => {
+    const c = REG.balance.skill;
+    // THE SCHOOLS ARE DERIVED from what the hands hold — a straight sword's
+    // tagging rows, not a second table; armour and class tracks draft nothing.
+    const reaver = createRunState({ seed: 0x4b4b, classId: 'reaver', registries: REG });
+    eq(skillSchools(REG, reaver.loadout, 'item:blade').join(','), 'blade,basic', 'the held sword names the blade track\'s schools');
+    eq(skillSchools(REG, reaver.loadout, 'item:shield').join(','), 'guard,basic', 'the held shield names the shield track\'s');
+    eq(skillSchools(REG, reaver.loadout, 'dualWield').join(','), 'blade,basic,guard', 'dual-wield reads both hands');
+    eq(skillSchools(REG, reaver.loadout, 'armour:heavy').length, 0, 'an armour track has no schools');
+    eq(skillSchools(REG, reaver.loadout, 'class:reaver').length, 0, 'nor a class track (phase 5b\'s tree)');
+    eq(skillSchools(REG, reaver.loadout, 'item:magic-focus').length, 0, 'a type no hand holds has no schools — its draft waits');
+    eq(skillSchools(REG, null, 'item:blade').length, 0, 'no loadout, no schools');
+    // RARITY OPENS BY LEVEL, from the balance rows, level 0 opening nothing.
+    eq(rarityUnlockedAt(REG, 0).length, 0); eq(rarityUnlockedAt(REG, c.rarityUnlock.common).join(','), 'common');
+    eq(rarityUnlockedAt(REG, c.rarityUnlock.uncommon).join(','), 'common,uncommon'); eq(rarityUnlockedAt(REG, c.rarityUnlock.rare).join(','), 'common,uncommon,rare');
+    // THE ROLL: draftSize distinct cards of the class pool, each of a school
+    // the track owns and a rarity the level has opened; the same stream as
+    // the card offer, and an empty pool draws nothing.
+    const rogue = createRunState({ seed: 0x4b4b, classId: 'rogue', registries: REG });
+    const pool = REG.classes.get('rogue').cardPool;
+    const bladeSchools = new Set(skillSchools(REG, rogue.loadout, 'item:blade'));
+    const low = rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 1 });
+    eq(low.length, c.draftSize, 'a full draft'); eq(new Set(low).size, low.length, 'distinct cards');
+    for (const id of low) {
+      const def = REG.cards.get(id);
+      assert(pool.includes(id), `${id} is in the class pool`);
+      assert((def.tags || []).some((t) => bladeSchools.has(t)), `${id} carries a blade school`);
+      eq(def.rarity, 'common', 'level 1 drafts commons only');
+    }
+    const high = rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: c.rarityUnlock.rare });
+    assert(high.every((id) => ['common', 'uncommon', 'rare'].includes(REG.cards.get(id).rarity)), 'a high level drafts from the opened set');
+    const rngEmpty = createRng(7); const beforeCounters = JSON.stringify(rngEmpty.getCounters());
+    const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
+    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
+    eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:blade', level: 1 }).length, 0, 'a track whose type no hand holds rolls nothing');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'reaver', loadout: reaver.loadout, skillId: 'item:blade', level: 1, pool: 'boss' }).length, c.draftSize, 'a boss door rolls at its own odds');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 0 }).length, 0, 'level 0 has opened no rarity');
+    // THE MENU: one keyed row per draft, ahead of the card row, each a choice
+    // auto-collect resolves through the injected pick; NEW reads the draft's cards.
+    const offer = { cinders: 5, skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:shield', level: 1, cardIds: ['quickCut'] }], cardIds: [], relicId: 'forsakenMedallion' };
+    const plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
+    eq(plan.rows.map((r) => r.key).join(','), 'cinders,skillDraft:item:blade:0,skillDraft:item:shield:0,relic', 'keyed rows in the declared order; an empty card offer has no row');
+    eq(plan.rows[1].choice, true); eq(plan.rows[2].choice, false);
+    const auto = resolveContinue(plan, { 'skillDraft:item:blade:0': 'skipped' }, 'auto', () => 0);
+    eq(auto.take.map((r) => r.key).join(','), 'cinders,skillDraft:item:shield:0,relic', 'a skipped draft stays skipped; the one-card draft takes itself');
+    eq(auto.take[1].cardId, 'quickCut');
+    eq(resolveContinue(plan, {}, 'auto', (n) => 2 % n).take.find((r) => r.key === 'skillDraft:item:blade:0').cardId, low[2], 'the pick is the injected one');
+    assert(unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[1]) && !unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[0]), 'NEW reads the drafts\' cards');
+    assert(REWARD_KIND_ORDER.indexOf('skillDraft') < REWARD_KIND_ORDER.indexOf('card'), 'the draft sits where the class card sat');
+    // THE THRESHOLD UPGRADES THE DECK — the ORDINARY cards of the track's
+    // schools; an equipment-bound basic and an item-owned card are the piece's
+    // (the smith's tier, re-derived by every restamp) and are left alone.
+    const before = reaver.deck.filter((x) => x.upgraded).length; eq(before, 0);
+    const toThreshold = Array.from({ length: c.upgradeAt }, (_, lvl) => xpToNext(REG, 'weapon', lvl)).reduce((a, b) => a + b, 0);
+    const award = awardSkillXp(REG, reaver, 'item:blade', toThreshold);
+    eq(award.after, c.upgradeAt, 'the award reached the threshold');
+    const isBlade = (x) => (REG.cards.get(x.cardId).tags || []).some((t) => ['blade', 'basic'].includes(t));
+    const ordinary = (x) => !x.sourceArmamentId && !['granted', 'weaponArt'].includes(x.equipmentRole);
+    const bladeCards = reaver.deck.filter((x) => isBlade(x) && ordinary(x));
+    assert(bladeCards.length > 0 && bladeCards.every((x) => x.upgraded), 'every ordinary blade-school card in the deck is upgraded');
+    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).length > 0, 'the deck holds equipment-bound blade cards too');
+    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).every((x) => !x.upgraded), "and they are the piece's — untouched");
+    assert(reaver.deck.filter((x) => x.cardId === 'defend').every((x) => !x.upgraded), 'a guard-only card is not');
+    eq(award.upgraded.length, bladeCards.length, 'the award names what it upgraded');
+    eq(awardSkillXp(REG, reaver, 'item:blade', xpToNext(REG, 'weapon', c.upgradeAt)).upgraded.length, 0, 'the next level upgrades nothing again');
+    eq(applySkillUpgrades(REG, reaver, 'item:blade').length, 0, 'idempotent');
+    // Restamping (as onCombatEnd does after the award) leaves the ordinary
+    // upgrade in place: the rule wrote only what the restamp does not own.
+    stampDeck(REG, reaver);
+    assert(reaver.deck.filter((x) => isBlade(x) && ordinary(x)).every((x) => x.upgraded), 'the restamp keeps the ordinary upgrades');
+    // A STANDING RULE, not a crossing: a blade card that joins the deck later
+    // is upgraded at the next award, and a ledger written before the rule
+    // existed is reconciled at the load door.
+    reaver.deck.push({ instanceId: 'late', cardId: 'crimsonCleave', upgraded: false });
+    eq(awardSkillXp(REG, reaver, 'item:blade', 1).upgraded.join(','), 'late', 'a later card is upgraded at the next award');
+    reaver.deck.push({ instanceId: 'later', cardId: 'serratedBlade', upgraded: false });
+    eq(JSON.stringify(reconcileSkillUpgrades(REG, reaver)), JSON.stringify({ 'item:blade': ['later'] }), 'the load door asks the rule of every track past the threshold');
+    assert(skillUpgradesCards(REG, c.upgradeAt) && !skillUpgradesCards(REG, c.upgradeAt - 1));
+    eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt + 1, 'each level queued a draft');
+    assert(spendSkillDraft(reaver, 'item:blade')); eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt);
+    assert(!spendSkillDraft(reaver, 'item:shield'), 'a track with no draft queued spends nothing');
+    // TWO DRAFTS FOR ONE TRACK (draftsPerCombat > 1) are two rows with two keys.
+    const twin = rewardPlan({ skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
+    eq(twin.rows.map((r) => r.key).join(','), 'skillDraft:item:blade:0,skillDraft:item:blade:1', 'the ordinal tells same-track drafts apart');
+    eq(resolveContinue(twin, { 'skillDraft:item:blade:0': 'skipped' }, 'auto', () => 0).take.map((r) => r.key).join(','), 'skillDraft:item:blade:1', 'and their states are their own');
+    // THE SAVE DOOR: a draft's state key is known only when the offer carries
+    // that draft; a chosen card must be the draft's and its row Taken.
+    const pending = (states, chosenDraftCardIds, drafts = offer.skillDrafts) => validateRunShape({ ...reaver, pendingReward: { schemaVersion: 1, source: 'normal', after: 'map', rewards: { ...offer, skillDrafts: drafts }, states, chosenCardId: null, chosenDraftCardIds } }).join(' | ');
+    eq(pending({ 'skillDraft:item:blade:0': 'taken' }, { 'skillDraft:item:blade:0': low[0] }), '', 'a taken draft with its card passes');
+    assert(/states\.skillDraft:item:magic-focus:0/.test(pending({ 'skillDraft:item:magic-focus:0': 'taken' }, {})), 'a draft the offer does not carry is refused by name');
+    assert(/states\.skillDraft:item:blade:1/.test(pending({ 'skillDraft:item:blade:1': 'taken' }, {})), 'so is a second draft the offer has not got');
+    assert(/chosenDraftCardIds\.skillDraft:item:blade:0 must name a card of that draft/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, { 'skillDraft:item:blade:0': 'stomp' })));
+    assert(/requires the draft's Taken state/.test(pending({}, { 'skillDraft:item:blade:0': low[0] })));
+    assert(/Taken state requires its chosen card/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, {})));
+    assert(/skillDrafts\[0\]\.cardIds must be a non-empty array/.test(pending({}, {}, [{ skillId: 'item:blade', level: 1, cardIds: 'strike' }])), 'a draft\'s shape is refused by name');
+    assert(/skillDrafts\[0\]\.level must be a non-negative integer/.test(pending({}, {}, [{ skillId: 'item:blade', level: -1, cardIds: ['strike'] }])));
+    // The balance rows are refused by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const withSkill = (skill) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, ...skill } } });
+    assert(said(withSkill({ rarityUnlock: { ...c.rarityUnlock, legendary: 10 } })).some((e) => /rarityUnlock\.legendary/.test(e)), 'a rarity the game has not got is refused by name');
+    assert(said(withSkill({ draftSize: 0 })).some((e) => /balance\.skill\.draftSize/.test(e)), 'a zero draft is refused by name');
+    assert(said(withSkill({ upgradeAt: 2.5 })).some((e) => /balance\.skill\.upgradeAt/.test(e)));
+  });
+
+  test('87. the class card: a derived core-zone card, its kit dealt at creation, its favored leaning a property the fight mounts (plan phase 5a)', () => {
+    // THE CARD IS DERIVED: the class row, its free kit, its tagging rows.
+    const card = classCard(REG, 'reaver');
+    eq(card.kind, 'class'); eq(card.zone, 'core'); eq(card.name, 'Reaver');
+    eq(card.kit.abilityCardId, 'brace'); eq(card.kit.relicId, 'ashenGrip'); eq(card.kit.startingRelicId, 'forsakenMedallion');
+    eq(card.kit.weaponKitId, 'reaverBaseline'); eq(card.kit.rightHand, 'straightSword'); eq(card.kit.leftHand, 'roundShield');
+    eq(card.favored.join(','), 'item:blade', 'the leaning is the item type the class names'); eq(card.propertyTags.join(','), 'favored');
+    eq(card.schools.join(','), 'blade,guard,blood', 'the schools are the class-domain card tags, the item type apart');
+    let threw = null; try { classCard(REG, 'nope'); } catch (e) { threw = e.message; }
+    assert(/unknown class/i.test(threw || ''), 'an unknown class is refused by name');
+    // THE KIT AT CREATION, every class: the ability card beside the signature,
+    // the kit relic beside the starting relic, the deck at the authored size.
+    for (const cls of REG.classes.all()) {
+      const run = createRunState({ seed: 0x5a5a, classId: cls.id, registries: REG });
+      eq(run.deck.length, contentBundle.balance.startingDeckSize, `${cls.id} starts at the authored deck size`);
+      const ability = run.deck.filter((c) => c.cardId === cls.abilityCard);
+      eq(ability.length, 1, `${cls.id} starts with its ability card, once`);
+      eq(ability[0].grantSource, 'from:class', 'dealt from the class, as the signature is');
+      eq(run.deck.filter((c) => c.cardId === cls.startingSignatureCard).length, 1, 'the signature still rides');
+      eq(run.relics.join(','), `${cls.startingRelic},${cls.kitRelic}`, `${cls.id} holds its starting relic and its kit relic`);
+      eq(run.zones.passive.join(','), run.relics.join(','), 'the passive zone projects both');
+    }
+    // THE LEANING IS A PROPERTY THE FIGHT MOUNTS, scoped by the card's own tags:
+    // blade XP is multiplied, shield XP is not.
+    const fresh = createRunState({ seed: 0x5a5a, classId: 'reaver', registries: REG });
+    const seat = (reg, run, rngSeed) => createCombat({ registries: reg, rng: createRng(rngSeed), player: { classId: 'reaver', attributes: run.attributes, skills: {}, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
+    const cb = seat(REG, fresh, 0x5a5a);
+    const mounts = cb.propertyMounts[triggerOwnerKey(cb, cb.player)];
+    assert(mounts['class:reaver'], 'the class card mounts as a carrier keyed class:<id>');
+    eq(mounts['class:reaver'].kind, 'class'); eq(mounts['class:reaver'].rules.map((r) => r.tag).join(','), 'favored');
+    assert(mounts['class:reaver'].scopeTags.includes('item:blade') && !mounts['class:reaver'].scopeTags.includes('item:shield'), 'the mount keeps the card\'s own tags as its scope');
+    const rows = REG.balance.skill.xp; const mult = REG.balance.skill.favoredXpMult;
+    const foe = cb.enemies[0];
+    recordSkillXp(cb, { type: 'damageDealt', sourceId: 'player', targetId: foe.id, amount: 3, sourceHand: 'right' });
+    recordSkillXp(cb, { type: 'damageDealt', sourceId: 'player', targetId: foe.id, amount: 3, sourceHand: 'left' });
+    eq(cb.skillXp.player.xp['item:blade'], rows.perHit * mult, 'blade XP is favoured');
+    eq(cb.skillXp.player.xp['item:shield'], rows.perHit, 'shield XP is not');
+    // A class that carries no leaning mounts nothing and pays plain XP.
+    const plainReg = createRegistries({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'favored')) });
+    const plain = seat(plainReg, createRunState({ seed: 0x5a5a, classId: 'reaver', registries: plainReg }), 0x5a5a);
+    assert(!(plain.propertyMounts[triggerOwnerKey(plain, plain.player)] || {})['class:reaver'], 'no property, no mount');
+    recordSkillXp(plain, { type: 'damageDealt', sourceId: 'player', targetId: plain.enemies[0].id, amount: 3, sourceHand: 'right' });
+    eq(plain.skillXp.player.xp['item:blade'], rows.perHit, 'plain XP');
+    // Mounts are never saved: a restored fight re-derives the class mount.
+    const back = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))) });
+    assert(back.propertyMounts[triggerOwnerKey(back, back.player)]['class:reaver'], 'a restored fight mounts the class card again');
+    // Co-op: each seat mounts its own class card.
+    const seatB = createRunState({ seed: 0x5a5b, classId: 'starseer', registries: REG });
+    const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
+      { id: 'A', classId: 'reaver', attributes: fresh.attributes, skills: {}, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] },
+      { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
+    ], enemyIds: ['fellWarden'] });
+    assert(party.propertyMounts.A['class:reaver'] && party.propertyMounts.B['class:starseer'], 'each seat carries its own class card');
+    assert(party.propertyMounts.B['class:starseer'].scopeTags.includes('item:magic-focus'));
+    // THE KIT RELICS FIRE THROUGH THE MOUNT PATH.
+    // Ashen Grip: the first stance entered each turn refunds Stamina; Brace holds and, on leaving, hits harder.
+    const c1 = makeCombat({ deck: ['brace', 'enterBulwark', 'brace', 'brace', 'brace'], relicIds: ['ashenGrip'] });
+    c1.player.maxStamina = 3; c1.player.stamina = 2;
+    playFromHand(c1, 'brace');
+    eq(c1.player.stanceId, 'brace', 'Brace is entered'); assert(c1.player.block >= 4, 'and braces');
+    eq(c1.player.stamina, 2, 'the Stamina Brace cost came back — the first stance this turn');
+    eq(logOf(c1, 'relicTriggered').filter((e) => e.relicId === 'ashenGrip').length, 1, 'Ashen Grip announced itself once');
+    playFromHand(c1, 'enterBulwark');
+    eq(c1.player.stanceId, 'bulwark'); eq(S.getStacks(c1.player, 'strength'), 1, 'leaving Brace for another stance adds Strength');
+    eq(logOf(c1, 'relicTriggered').filter((e) => e.relicId === 'ashenGrip').length, 1, 'the second stance this turn refunds nothing');
+    // Whetstone Pouch: the first attack while Prepared applies Bleed, once.
+    const c2 = makeCombat({ deck: ['prepare', 'strike', 'strike', 'prepare', 'prepare'], relicIds: ['whetstonePouch'] });
+    c2.player.maxStamina = 3; c2.player.stamina = 3;
+    playFromHand(c2, 'prepare'); eq(S.getStacks(c2.player, 'prepared'), 1, 'Prepare prepares');
+    playFromHand(c2, 'strike', c2.enemies[0].id);
+    eq(S.getStacks(c2.enemies[0], 'bleed'), REG.balance.powers.whetstonePouch.bleed, 'the prepared strike bleeds');
+    eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
+    // Waxen Seal: the first heal each combat heals more, once.
+    const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
+    c3.player.maxStamina = 3; c3.player.stamina = 3;
+    playFromHand(c3, 'warmLitany');
+    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
+    playFromHand(c3, 'warmLitany');
+    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal + 3, 'the second heal is its own');
+    // A heal at full HP heals nothing and spends nothing (healPositive):
+    // Golden Sprout's opening heal on a healthy Herald leaves the seal for the
+    // first real heal.
+    const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78 });
+    eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
+    c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.hp = 40;
+    playFromHand(c3b, 'warmLitany');
+    eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
+    // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
+    // seal on the ally, and A's seal stays whole.
+    const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
+    const hB = createRunState({ seed: 0x5a5d, classId: 'herald', registries: REG });
+    const heals = createCoopCombat({ registries: REG, rng: createRng(3), players: [
+      { id: 'A', classId: 'herald', attributes: hA.attributes, skills: {}, maxHp: 60, hp: 30, maxMana: 2, mana: 2, energyMax: hA.energyMax, drawPerTurn: hA.drawPerTurn, deck: hA.deck, loadout: hA.loadout, relicIds: ['waxenSeal'] },
+      { id: 'B', classId: 'herald', attributes: hB.attributes, skills: {}, maxHp: 60, hp: 30, maxMana: 2, mana: 2, energyMax: hB.energyMax, drawPerTurn: hB.drawPerTurn, deck: hB.deck, loadout: hB.loadout, relicIds: ['waxenSeal'] },
+    ], enemyIds: ['fellWarden'] });
+    const entA = heals.players.get('A').entity, entB2 = heals.players.get('B').entity;
+    // The gates say whose seal fired: the mount scan keys a property's once
+    // by the seat that owns the carrier (the effect itself queues for the
+    // co-op loop to resolve, which this direct heal does not run).
+    const fires = (seat) => (heals.triggerState.get(`property:${seat}:relic:waxenSeal:0`) || { fires: 0 }).fires;
+    applyHeal(heals, entB2, 5);
+    eq(fires('B'), 1, "B's seal answered B's heal"); eq(fires('A'), 0, "A's did not fire for B's heal");
+    eq(logOf(heals, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 1);
+    applyHeal(heals, entA, 5);
+    eq(fires('A'), 1, "A's seal answers A's own heal, still whole"); eq(fires('B'), 1, "and B's once is spent");
+    // Lodestar Shard: extra Mana at combat start.
+    const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 3 });
+    eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
+    // Attune restores Mana and exhausts; upgraded it stays.
+    const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
+    c5.player.maxStamina = 3; c5.player.stamina = 3;
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    // VALIDATION, by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });
+    assert(said(noGroup).some((e) => /tagging\.class\.reaver: carries 'favored' but names no item type/.test(e)), 'a leaning with no group is refused by name');
+    const badMult = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, favoredXpMult: 0.5 } } });
+    assert(said(badMult).some((e) => /balance\.skill\.favoredXpMult/.test(e)), 'a leaning below 1 is refused by name');
+    const noAbility = validateContent({ ...testBundle(), classes: contentBundle.classes.map((c) => (c.id === 'reaver' ? { ...c, abilityCard: 'notACard' } : c)) });
+    assert(said(noAbility).some((e) => /classes\.reaver\.abilityCard/.test(e)), 'a dangling ability card is refused by name');
+    const twiceRelic = validateContent({ ...testBundle(), classes: contentBundle.classes.map((c) => (c.id === 'reaver' ? { ...c, kitRelic: c.startingRelic } : c)) });
+    assert(said(twiceRelic).some((e) => /classes\.reaver\.kitRelic: 'forsakenMedallion' is already the starting relic/.test(e)), 'a kit relic that is the starting relic is refused by name');
+    const relicLeaning = validateContent({ ...testBundle(), tagging: [...testBundle().tagging, { family: 'relic', scope: '', objectId: 'warhorn', tagId: 'favored' }] });
+    assert(said(relicLeaning).some((e) => /tagging\.relic\.warhorn: 'favored' is the class card's leaning/.test(e)), 'a leaning on a relic is refused by name');
+  });
+
+  test('88. the class tree: a level buys a node, the pick rides the core card, the top pick is the subclass (plan phase 5b)', () => {
+    const c = REG.balance.skill.class;
+    // THE TABLE IS THE TREE: rows per class, tiers the balance rows open.
+    const rows = classTreeRows(REG, 'reaver');
+    eq(rows.length, 6, 'the reaver tree has six nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
+    for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
+    // THE POOL: what a class at a level may draft, given what it picked.
+    eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo', 'tier 1 at its level');
+    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo', 'a picked node leaves the pool');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 6, 'every tier open at the top level');
+    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
+    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
+    // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
+    const roll = rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: [], level: c.tierAt[2] });
+    eq(roll.length, REG.balance.skill.draftSize); eq(new Set(roll).size, roll.length, 'distinct');
+    assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
+    const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
+    eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
+    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting'], level: c.tierAt[0] }).join(','), 'bloodTempo', 'a pool smaller than the draft is the whole pool');
+    // THE PICK writes the core card's own tags, and only what the tree allows.
+    const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');
+    eq(pickClassNode(REG, run, 'ironFooting'), false, 'level 0 may pick nothing');
+    awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
+    eq(skillLevel(run, 'class:reaver'), 1);
+    eq(pickClassNode(REG, run, 'warlord'), false, 'a tier not yet open is refused');
+    eq(pickClassNode(REG, run, 'ironFooting'), true, 'a tier-1 node is picked');
+    eq(pickClassNode(REG, run, 'ironFooting'), false, 'and not twice');
+    syncZones(run); eq(run.zones.coreTags.join(','), 'ironFooting', 'the projection follows');
+    const saved = JSON.parse(serializeRun(run)); eq(saved.coreTags.join(','), 'ironFooting', 'the pick rides the save');
+    assert(/coreTags\[0\] must be a non-empty node id/.test(validateRunShape({ ...run, coreTags: [3] }).join('|')), 'a malformed pick is refused by name');
+    assert(/picked twice/.test(validateRunShape({ ...run, coreTags: ['ironFooting', 'ironFooting'] }).join('|')));
+    const old = JSON.parse(serializeRun(run)); delete old.coreTags; old.schemaVersion = 8;
+    const back = deserializeRun(JSON.stringify(old)); eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.coreTags), '[]', 'a schema-8 save gains no picks');
+    // THE LOAD DOOR reads the tree (the review of #1192): a pick that is not
+    // this class's node, a fight carrying one, a draft for another class —
+    // each refused by name, where the shape door could only count strings.
+    {
+      const storage = createMemoryStorage(); const saves = createSaveManager(storage);
+      const tamperRun = (edit) => { saves.saveRun(run, createRng(1)); const raw = JSON.parse(storage.getItem(RUN_KEY)); edit(raw); storage.setItem(RUN_KEY, JSON.stringify(raw)); return saves.loadRun(REG); };
+      const tamper = (edit) => (tamperRun(edit) ? '' : saves.runStatus().reason);
+      eq(tamper(() => {}), '', 'the run with its own pick loads');
+      // A node NO tree holds — a content update renamed or dropped it — is
+      // stale, not a tamper: the pick is dropped with a ledger row, the run loads.
+      const stale = tamperRun((r) => { r.coreTags = ['ironFooting', 'notANodeAnyMore']; });
+      assert(stale && stale.coreTags.join(',') === 'ironFooting', `a stale pick is dropped, the rest kept — got ${stale && JSON.stringify(stale.coreTags)}`);
+      const staleRow = (saves.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'coreTags');
+      assert(staleRow && staleRow.kind === 'overwrite' && /notANodeAnyMore/.test(JSON.stringify(staleRow.was)), `the ledger names the dropped pick — got ${JSON.stringify(staleRow).slice(0, 200)}`);
+      assert(/coreTags 'attunedMind' is another class's node \('starseer'\)/.test(tamper((r) => { r.coreTags = ['attunedMind']; })), "another class's node is refused by name");
+      assert(/coreTags 'ironFooting' is another class's node \('reaver'\)/.test(tamper((r) => { r.class = 'starseer'; })), 'a class that does not own the pick is refused');
+      const draft = { schemaVersion: 1, source: 'normal', after: 'map', rewards: { classDrafts: [{ classId: 'starseer', level: 1, nodeIds: ['attunedMind'] }] }, states: {}, chosenCardId: null, chosenDraftNodeIds: {} };
+      assert(/class draft class 'starseer' is not the run's class 'reaver'/.test(tamper((r) => { r.pendingReward = draft; })), "a draft for another class is refused by name");
+      eq(coreTagsTreeProblems(REG, 'reaver', ['ironFooting', 'warlord']).length, 0, 'the tree owns its own nodes');
+      eq(coreTagsTreeProblems(REG, 'reaver', ['conduit'], 'combatEntered.snapshot.coreTags')[0], "combatEntered.snapshot.coreTags 'conduit' is another class's node ('starseer')", 'the path is the caller\'s');
+      eq(coreTagsTreeProblems(REG, 'reaver', ['notANodeAnyMore']).length, 0, 'a node no tree holds is stale, not refused');
+      eq(staleCoreTags(REG, 'reaver', ['ironFooting', 'notANodeAnyMore']).join(','), 'notANodeAnyMore');
+    }
+    // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
+    const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
+    eq(awardClassXp(REG, paid, { victory: false, pool: 'boss' }), null, 'a lost fight pays nothing');
+    awardClassXp(REG, paid, { victory: true, pool: 'normal' }); eq(paid.skills['class:reaver'].xp, c.xp.perWin, 'a won fight pays perWin');
+    awardClassXp(REG, paid, { victory: true, pool: 'boss' }); eq(paid.skills['class:reaver'].xp, 2 * c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
+    // THE PICK MOUNTS with the class card, in solo, co-op and a restored fight; the rule fires.
+    run.coreTags = ['ironFooting'];
+    const cb = createCombat({ registries: REG, rng: createRng(0x5b5b), player: { classId: 'reaver', attributes: run.attributes, skills: run.skills, coreTags: run.coreTags, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
+    const mount = cb.propertyMounts[triggerOwnerKey(cb, cb.player)]['class:reaver'];
+    eq(mount.rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'the picked node mounts beside the leaning');
+    eq(classCarrier(REG, 'reaver', 'player', ['ironFooting', 'attunedMind']).tagIds.join(','), 'favored,ironFooting', "the carrier confers the class's own tree only");
+    const blockBefore = cb.player.block;
+    cb.player.maxStamina = 3; cb.player.stamina = 3; // Brace costs a Stamina
+    const braceInst = cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace');
+    if (!cb.piles.hand.includes(braceInst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(braceInst), 1); cb.piles.hand.push(braceInst); }
+    dispatch(cb, { type: 'playCard', cardInstanceId: braceInst.instanceId, targetId: cb.enemies[0].id });
+    assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
+    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
+    const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
+    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'a restored fight mounts the pick again');
+    const seatB = createRunState({ seed: 0x5b5c, classId: 'starseer', registries: REG });
+    const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
+      { id: 'A', classId: 'reaver', attributes: run.attributes, skills: {}, coreTags: ['bloodTempo'], maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: [] },
+      { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, coreTags: [], maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
+    ], enemyIds: ['fellWarden'] });
+    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,bloodTempo', "each seat's picks are its own");
+    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored');
+    // THE CARD READS ITS PICKS: the subclass lends its name and glyph.
+    eq(classCard(REG, 'reaver', ['ironFooting']).presentation.name, 'Reaver', 'a lower pick leaves the name');
+    const sub = classCard(REG, 'reaver', ['ironFooting', 'warlord']);
+    eq(sub.subclassId, 'warlord'); eq(sub.presentation.name, 'Warlord', 'the subclass is the name'); eq(sub.presentation.glyph, '👑');
+    eq(sub.picked.join(','), 'ironFooting,warlord');
+    // THE NAME REACHES THE PLAYER (the review of #1192): the HUD, the combat
+    // name plate and the save slot read runClassIdentity — the subclass once
+    // its node is picked, the class until then.
+    eq(runClassIdentity(REG, { class: 'reaver', coreTags: ['ironFooting', 'warlord'] }).name, 'Warlord', 'the subclass names the run');
+    eq(runClassIdentity(REG, { class: 'reaver', coreTags: ['ironFooting'] }).name, 'Reaver', 'the class until then');
+    eq(runClassIdentity(REG, { class: 'nope', coreTags: [] }).name, 'nope', 'an unknown class keeps its id');
+    // A HEAL THAT HEALS NOTHING and a Mana restore that restores nothing fire
+    // no node (the review of #1192): Warmth, Seal of Plenty and Attuned Mind
+    // gate on healPositive / manaPositive. The gates' fire counts are read, as
+    // test 87 reads them: the rule's actions wait on the queue.
+    {
+      const her = createRunState({ seed: 0x5b5c, classId: 'herald', registries: REG });
+      const hc = createCombat({ registries: REG, rng: createRng(0x5b5c), player: { classId: 'herald', attributes: her.attributes, skills: her.skills, coreTags: ['warmth', 'sealOfPlenty'], maxHp: 70, hp: 70, mana: 2, maxMana: 2, energyMax: her.energyMax, drawPerTurn: her.drawPerTurn, deck: her.deck, loadout: her.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+      const fires = (c, key) => (c.triggerState.get(key) || {}).fires || 0;
+      applyHeal(hc, hc.player, 5);
+      eq(fires(hc, 'property:player:class:herald:0'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 0, 'and spends no Seal of Plenty');
+      hc.player.hp = 60; applyHeal(hc, hc.player, 5);
+      eq(fires(hc, 'property:player:class:herald:0'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 1, 'and Seal of Plenty once');
+      const star = createRunState({ seed: 0x5b5d, classId: 'starseer', registries: REG });
+      const sc = createCombat({ registries: REG, rng: createRng(0x5b5d), player: { classId: 'starseer', attributes: star.attributes, skills: star.skills, coreTags: ['attunedMind'], maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: star.energyMax, drawPerTurn: star.drawPerTurn, deck: star.deck, loadout: star.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+      sc.emit('manaRestored', { targetId: sc.player.id, amount: 0 });
+      eq(fires(sc, 'property:player:class:starseer:0'), 0, 'a restore at full Mana wakes no Attuned Mind');
+      sc.emit('manaRestored', { targetId: sc.player.id, amount: 1 });
+      eq(fires(sc, 'property:player:class:starseer:0'), 1, 'a restore that restores does');
+    }
+    // THE MENU: a class draft is a keyed choice row of nodes, ahead of the skill draft; auto-collect picks a node.
+    const plan = rewardPlan({ classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }], skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
+    eq(plan.rows.map((r) => r.key).join(','), 'classDraft:reaver:0,skillDraft:item:blade:0');
+    eq(resolveContinue(plan, {}, 'auto', () => 1).take[0].nodeId, 'bloodTempo', 'the injected pick chooses the node');
+    eq(rewardClaimStatus(plan).requiredChoice.count, 2);
+    const pending = (states, chosenDraftNodeIds, drafts = plan.rows[0] && [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }]) => validateRunShape({ ...run, pendingReward: { schemaVersion: 1, source: 'normal', after: 'map', rewards: { classDrafts: drafts }, states, chosenCardId: null, chosenDraftNodeIds } }).join(' | ');
+    eq(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'ironFooting' }), '', 'a taken class draft with its node passes');
+    assert(/chosenDraftNodeIds\.classDraft:reaver:0 must name a node of that draft/.test(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'warlord' })));
+    assert(/Taken state requires its chosen node/.test(pending({ 'classDraft:reaver:0': 'taken' }, {})));
+    assert(/Taken state requires its chosen node/.test(pending({ 'classDraft:reaver:0': 'taken' }, undefined)), 'a save without the pick map is held to the same rule');
+    assert(/classDrafts\[0\]\.nodeIds must be a non-empty array/.test(pending({}, {}, [{ classId: 'reaver', level: 1, nodeIds: [] }])));
+    // VALIDATION of the tree, by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const badTree = (rows2) => validateContent({ ...testBundle(), classTree: rows2 });
+    assert(said(badTree([...contentBundle.classTree, { classId: 'nope', nodeId: 'siphon', tier: 1 }])).some((e) => /unknown class 'nope'/.test(e)), 'an unknown class is refused by name');
+    assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'blade', tier: 1 }])).some((e) => /is not a property node/.test(e)), 'a non-property node is refused by name');
+    assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'siphon', tier: 7 }])).some((e) => /must be a tier 1\.\.3/.test(e)), 'a tier the balance rows do not open is refused by name');
+    assert(said(badTree(contentBundle.classTree.map((r) => (r.nodeId === 'bulwarkKing' ? { ...r, nodeId: 'siphon' } : r)))).some((e) => /do not exclude one another/.test(e)), 'two subclasses that do not exclude one another are refused by name');
+    assert(said(validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, class: { ...c, tierAt: [3, 1] } } } })).some((e) => /balance\.skill\.class\.tierAt/.test(e)), 'a falling tier ladder is refused by name');
+  });
+
+  test('89. unlocks and the swap: a class card is gated by a profile row, and the mirror replaces the core card (plan phase 5c)', () => {
+    // THE UNLOCK TABLE: a class row gates the card; every shipped class is free.
+    for (const cls of REG.classes.all()) assert(classAvailable(REG.unlocks, cls.id, {}), `${cls.id} is free`);
+    const gate = { id: 'rogueUnlock', kind: 'class', ref: 'rogue', name: 'The Rogue', condition: 'classLevel', param: 3, reveal: 'listed', hint: 'Reach class level 3.' };
+    const unlocks = [...REG.unlocks, gate];
+    eq(classUnlockRow(unlocks, 'rogue').id, 'rogueUnlock'); eq(classUnlockRow(unlocks, 'reaver'), null);
+    eq(classAvailable(unlocks, 'rogue', { unlocked: [] }), false, 'a gated class waits for its row');
+    eq(classAvailable(unlocks, 'rogue', { unlocked: ['rogueUnlock'] }), true, 'and is free once earned');
+    // THE CONDITIONS read the progress tally the run end records.
+    const progress = recordProgress(emptyProgress(), { victory: false, class: 'reaver', act: 2, bosses: ['fellWarden'], maxClassLevel: 2, bossGroups: { fellWarden: ['item:blade'] } });
+    eq(progress.maxClassLevel, 2); eq(progress.bossGroups.fellWarden.join(','), 'item:blade');
+    eq(evaluateUnlocks(unlocks, { progress, unlocked: [] }).includes('rogueUnlock'), false, 'level 2 is not level 3');
+    recordProgress(progress, { victory: true, class: 'reaver', act: 3, bosses: ['fellWarden'], maxClassLevel: 3, bossGroups: { fellWarden: ['item:shield'] } });
+    eq(progress.maxClassLevel, 3, 'the tally only grows'); eq(progress.bossGroups.fellWarden.join(','), 'item:blade,item:shield', 'groups accrue per boss');
+    assert(evaluateUnlocks(unlocks, { progress, unlocked: [] }).includes('rogueUnlock'), 'level 3 earns the card');
+    const bossGate = { ...gate, id: 'heraldUnlock', ref: 'herald', condition: 'bossWithGroup', param: 'fellWarden:item:shield' };
+    eq(evaluateUnlocks([bossGate], { progress, unlocked: [] }).join(','), 'heraldUnlock', 'a boss felled with the group earns it');
+    eq(evaluateUnlocks([{ ...bossGate, param: 'fellWarden:item:magic-focus' }], { progress, unlocked: [] }).length, 0, 'the wrong group does not');
+    eq(evaluateUnlocks([bossGate], { progress: { ...progress, bosses: [] }, unlocked: [] }).length, 0, 'the group without the kill does not');
+    // THE SWAP replaces the core card and prunes what the new class has no seat for.
+    const run = createRunState({ seed: 0x5c5c, classId: 'reaver', registries: REG });
+    awardSkillXp(REG, run, 'item:blade', 50); awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
+    eq(pickClassNode(REG, run, 'ironFooting'), true);
+    const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
+    run.loadout.sets.armor[0] = 'vigil'; // a set the Reaver earned; the Rogue has no row for it
+    const receipt = swapRunClass(REG, run, 'rogue');
+    eq(receipt.fromLevel, 1, 'the level the old class reached is on the receipt');
+    eq(receipt.droppedArmour.join(','), 'armor/reaver/vigil', "the reaver's armour is set aside, by name");
+    eq(equippedIn(REG, run.loadout, run.class, 'armor').id, 'default', "the run wears the rogue's free set");
+    eq(equippedIn(REG, run.loadout, run.class, 'armor').classId, 'rogue');
+    eq(run.zones.worn.body, 'default', 'and the projection follows');
+    eq(peakClassLevel(run), 1, 'the peak survives the swap');
+    eq(run.history.at(-1).fromLevel, 1, 'and rides the history row');
+    eq(receipt.from, 'reaver'); eq(receipt.to, 'rogue'); eq(receipt.droppedTags.join(','), 'ironFooting', "the reaver's pick has no seat in the rogue tree"); eq(receipt.resetTracks.join(','), 'class:reaver');
+    eq(run.class, 'rogue'); eq(run.zones.core, 'rogue', 'the core zone follows'); eq(JSON.stringify(run.coreTags), '[]'); eq(JSON.stringify(run.zones.coreTags), '[]');
+    eq(skillLevel(run, 'class:reaver'), 0, 'the class track starts over'); assert(run.skills['class:reaver'] === undefined);
+    assert(run.skills['item:blade'].xp === 50 || run.skills['item:blade'].level >= 1, 'the weapon skill is kept');
+    eq(run.deck.map((c) => c.instanceId).join(','), deckBefore, 'the deck is the run\'s'); eq(run.relics.join(','), relicsBefore, 'so are the relics');
+    eq(run.history.filter((h) => h.kind === 'classSwapped').length, 1, 'the swap is a history row');
+    eq(swapRunClass(REG, run, 'rogue').droppedTags.length, 0, 'a swap to the same class changes nothing');
+    let threw = null; try { swapRunClass(REG, run, 'nope'); } catch (e) { threw = e.message; }
+    assert(/unknown class 'nope'/.test(threw || ''), 'an unknown class is refused by name');
+    assert(validateRunShape(run).length === 0, 'the swapped run is a sound save');
+    eq(deserializeRun(serializeRun(run)).class, 'rogue', 'and rides the save');
+    // THE LOAD DOOR (the session's review): the starting kit, its snapshot
+    // and the creation armour grant are the BIRTH's, held to the class the
+    // run was born as, so a swapped run — swapped twice — loads.
+    {
+      const st = createMemoryStorage(); const sv = createSaveManager(st);
+      sv.saveRun(run, createRng(1));
+      const back = sv.loadRun(REG);
+      assert(back && back.class === 'rogue', `the swapped run loads — ${JSON.stringify(sv.runStatus()).slice(0, 160)}`);
+      eq(bornClassOf(back), 'reaver', 'the birth class is the first swap\'s from');
+      swapRunClass(REG, back, 'herald');
+      sv.saveRun(back, createRng(2));
+      const twice = sv.loadRun(REG);
+      assert(twice && twice.class === 'herald', `a run swapped twice loads — ${JSON.stringify(sv.runStatus()).slice(0, 160)}`);
+      eq(bornClassOf(twice), 'reaver'); eq(peakClassLevel(twice), 1);
+      eq(equippedIn(REG, twice.loadout, twice.class, 'armor').classId, 'herald', "and wears the herald's free set");
+    }
+    // THE OLD SET'S MODS LEAVE WITH IT: the deck is restamped and the pools
+    // reconciled at the swap, as the loadout screen does after any change.
+    {
+      const her = createRunState({ seed: 0x5c5e, classId: 'herald', registries: REG });
+      her.loadout.sets.armor[0] = 'pilgrim'; stampDeck(REG, her);
+      const worn = her.equipmentPoolBonuses.maxHp;
+      assert(worn > 0, `Pilgrim Wrap raises max HP — got ${worn}`);
+      swapRunClass(REG, her, 'rogue');
+      eq(her.equipmentPoolBonuses.maxHp, 0, "the rogue's free set raises nothing, and the bonus left with the wrap");
+      assert(her.maxHp < her.maxHp + worn && Number.isFinite(her.hp), 'the pools reconciled');
+    }
+    // THE OPCODE runs through the run-effect door; random never lands on the run's own class.
+    const door = createRunState({ seed: 0x5c5d, classId: 'starseer', registries: REG });
+    executeRunEffects({ run: door, registries: REG, rng: createRng(4) }, [{ op: 'swapClass', classId: 'herald' }]);
+    eq(door.class, 'herald', 'a named swap lands');
+    for (let i = 0; i < 6; i++) {
+      const before = door.class;
+      executeRunEffects({ run: door, registries: REG, rng: createRng(10 + i) }, [{ op: 'swapClass', random: true }]);
+      assert(door.class !== before, `a random swap is another class (${before} → ${door.class})`);
+    }
+    // THE MIRROR ships as an event with the opcode, its choices durable.
+    const mirror = REG.events.get('turncoatMirror');
+    eq(mirror.choices[0].effects[0].op, 'swapClass'); eq(eventChoicesWithHistory(mirror).map((c) => c.id).join(','), 'stepThrough,turnAway');
+    // VALIDATION: the opcode's shape, by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const badRef = validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects: [{ op: 'swapClass', classId: 'nope' }] }, ev.choices[1]] } : ev)) });
+    assert(said(badRef).some((e) => /nope/.test(e)), 'a swap to an unknown class is refused by name');
+    const mirrorWith = (effects) => validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects }, ev.choices[1]] } : ev)) });
+    assert(said(mirrorWith([{ op: 'swapClass' }])).some((e) => /exactly one of 'classId' or 'random: true'/.test(e)), 'a swap to nothing is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: true }])).some((e) => /exactly one of/.test(e)), 'a named AND random swap is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false beside a name is refused by name');
+    assert(!said(mirrorWith([{ op: 'swapClass', classId: 'rogue' }])).some((e) => /swapClass/.test(e)), 'a named swap passes');
+  });
+
+  test('90. the character level is earned: the ledger, the thresholds, the migration and the doors (plan phase 6)', () => {
+    // THE THRESHOLDS: every five levels past the first the maxima bump — the
+    // snapshot's own perLevel rows — beside whatever the points bought; the
+    // deficit is carried, the current pools ride up.
+    const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
+    const rules = run.derivedStatRuleSnapshot.rules.rules;
+    eq(`${rules.hp.perLevel.every}/${rules.hp.perLevel.gain}`, '5/5', 'the HP row carries its level term in the snapshot');
+    const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, drawPerTurn: run.drawPerTurn };
+    run.hp = run.maxHp - 7;
+    awardLevelXp(REG, run, [1, 2, 3, 4].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 5); eq(run.maxHp, born.maxHp, 'level 5 is below the first threshold');
+    const got = awardLevelXp(REG, run, xpToNextLevel(REG, 5));
+    eq(run.level.level, 6); assert(got.thresholds > 0, 'the step to 6 moved a maximum');
+    eq(run.maxHp, born.maxHp + rules.hp.perLevel.gain, 'level 6 adds the HP term'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
+    eq(run.maxMana, born.maxMana + rules.mana.perLevel.gain); eq(run.maxStamina, born.maxStamina + rules.stamina.perLevel.gain);
+    eq(run.drawPerTurn, born.drawPerTurn, 'the hand waits for level 11');
+    awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + 2 * rules.hp.perLevel.gain);
+    eq(characterLevel(run), 11, 'the readers read the ledger'); eq(playerLevel(REG, run), 11, 'and so does the hidden player level');
+    // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
+    // formula's addends equal its result once the level term is non-zero.
+    const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
+    eq(shown.levelBonus, 2 * rules.hp.perLevel.gain); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
+    eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
+    const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
+    assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);
+    eq(statProjection(REG, createRunState({ seed: 3, classId: 'reaver', registries: REG })).derived.find((row) => row.id === 'hp').formula.includes('level'), false, 'and at level 1 there is no term to show');
+
+    // THE LOAD DOOR accepts the bumped pools (they are the snapshot's own
+    // arithmetic at the run's level) and refuses a malformed ledger by name.
+    run.seedString = 'THRESH';
+    const storage = createMemoryStorage(); const saves = createSaveManager(storage);
+    saves.saveRun(run, createRng(1));
+    const back = saves.loadRun(REG);
+    assert(back && back.level.level === 11 && back.maxHp === run.maxHp, `a run at level 11 loads with its bumped pools — ${JSON.stringify(saves.runStatus()).slice(0, 160)}`);
+    eq(back.level.unspentPoints, 10, 'the ten points wait through the save');
+    assert(/level\.level must be an integer of at least 1/.test(levelProblems({ xp: 0, level: 0, unspentPoints: 0 }).join('|')));
+    assert(/level\.xp must be a non-negative integer/.test(levelProblems({ xp: -1, level: 1, unspentPoints: 0 }).join('|')));
+    assert(/is not a field of the level ledger/.test(levelProblems({ xp: 0, level: 1, unspentPoints: 0, cinders: 3 }).join('|')));
+    assert(/level must be/.test(levelProblems([]).join('|')));
+    assert(/level\.unspentPoints/.test(validateRunShape({ ...run, level: { xp: 0, level: 1, unspentPoints: 1.5 } }).join('|')), 'the shape door reads the ledger');
+
+    // THE MIGRATION: a schema-9 save bought its levels with cinders and counted
+    // them in levelUps; it arrives at the level those purchases reached, no
+    // XP toward the next, nothing waiting — and, born under a snapshot with
+    // no level term, gains no bump.
+    const bought = createRunState({ seed: 0x6a6b, classId: 'reaver', registries: REG });
+    bought.seedString = 'BOUGHT';
+    const st2 = createMemoryStorage(); const sv2 = createSaveManager(st2);
+    sv2.saveRun(bought, createRng(2));
+    const old = JSON.parse(st2.getItem(RUN_KEY));
+    // Three CON points bought with cinders, as that build wrote them: the
+    // count, the points, the stat, and the pools those points had already moved.
+    // Ruleset 5: a Constitution point is four HP and one Stamina, read against
+    // the attribute the sheet shows — nothing converts a point any more — so
+    // three purchases had already moved the pools by twelve HP and three
+    // Stamina.
+    delete old.level; old.schemaVersion = 9; old.levelUps = 3; old.levelPoints = 3; old.attributes.constitution += 3;
+    old.maxHp += 12; old.hp = old.maxHp; old.maxStamina += 3; old.stamina = old.maxStamina;
+    for (const row of Object.values(old.derivedStatRuleSnapshot.rules.rules)) delete row.perLevel;
+    const migrated = deserializeRun(JSON.stringify(old));
+    eq(migrated.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(migrated.level), JSON.stringify({ xp: 0, level: 4, unspentPoints: 0 }), 'three purchases are level 4');
+    st2.setItem(RUN_KEY, JSON.stringify(old));
+    const loaded = sv2.loadRun(REG);
+    assert(loaded && loaded.level.level === 4, `the schema-9 save loads at level 4 — ${JSON.stringify(sv2.runStatus()).slice(0, 200)}`);
+    eq(loaded.derivedStatRuleSnapshot.rules.rules.hp.perLevel, undefined, 'and keeps the snapshot it was born under, with no level term');
+
+    // THE CONTENT DOOR: the curve, the awards and the grant are closed sets.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
+    assert(said(bal({ level: { xp: { base: 0, growth: 1.15, roundTo: 10 } } })).some((e) => /balance\.level\.xp\.base/.test(e)), 'a zero base is refused by name');
+    assert(said(bal({ level: { xp: { base: 100, growth: 0.9, roundTo: 10 } } })).some((e) => /balance\.level\.xp\.growth/.test(e)), 'a falling curve is refused by name');
+    assert(said(bal({ xp: { ...contentBundle.balance.xp, kill: { normal: 10, elite: 30 } } })).some((e) => /balance\.xp\.kill\.boss/.test(e)), 'a missing kill rate is refused by name');
+    assert(said(bal({ levelUp: { ...contentBundle.balance.levelUp, firstCost: 50 } })).some((e) => /balance\.levelUp\.firstCost/.test(e)), 'the cinder ladder is refused by name');
+    assert(said(validateContent({ ...testBundle(), derivedStatRules: { ...contentBundle.derivedStatRules, rules: { ...contentBundle.derivedStatRules.rules, hp: { ...contentBundle.derivedStatRules.rules.hp, perLevel: { every: 0, gain: 5 } } } } })).some((e) => /perLevel\.every/.test(e)), 'a zero cadence is refused by name');
+  });
+
+  // ---- 91. Recovery as location properties (plan phase 7) ----------------------------------
+  test('91. recovery as location properties: a place restores exactly its tag set, the mode resolves, a relic denies by tag (plan phase 7)', () => {
+    const rest = contentBundle.balance.rest;
+    const fresh = (classId = 'herald') => {
+      const run = createRunState({ seed: 4, classId, registries: REG });
+      run.hp = 10;
+      run.mana = 0;
+      run.fullHpCharges = run.flaskCharges.hpCurrent;
+      run.flaskCharges.hpCurrent = 0;
+      return run;
+    };
+    const visitTo = (run, id, opts) => createLocationVisit({ run, registries: REG, rng: createRng(1) }, id, opts);
+    const refuses = (fn, re, why) => {
+      let said = null;
+      try { fn(); } catch (e) { said = e.message; }
+      assert(said !== null && re.test(said), `${why}${said === null ? ' (did not throw)' : ` (got: ${said})`}`);
+    };
+
+    // THE TAG SETS ARE CONTENT, AND THE DOOR RESOLVES THE MODE.
+    eq(locationTags(REG, 'shrine').join(','), 'restHpPartial,restMana,restFlasks,smith,levelUp', 'the shrine carries the proposal\'s set');
+    eq(locationTags(REG, 'camp').join(','), 'restHpSmall,restMana', 'the field camp: a small rest and Mana, no services');
+    eq(locationTags(REG, 'inn').join(','), 'restHpFull,restManaFull,restFlasks,levelUp', 'the town\'s inn restores everything');
+    eq(resolveLocationId(REG, { nodeId: 'crownfall/inn', serviceTypeId: 'inn' }), 'inn', 'an untagged point falls back to its service type');
+    eq(resolveLocationId(REG, { nodeId: 'nowhere', serviceTypeId: 'shop' }), null, 'a point of no location kind resolves to nothing');
+    refuses(() => visitTo(fresh(), 'merchant'), /carries no tags/, 'an untagged id is refused by name');
+
+    // THE SHRINE: partial heal, Mana by the default mode (floorOrFull), the
+    // flasks refilled on arrival, the smith and the level-up offered.
+    const shrineRun = fresh();
+    const shrine = visitTo(shrineRun, 'shrine');
+    eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp', 'restMana resolves to the mode\'s own tag at the carrier');
+    eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true }), 'the services read off the set');
+    assert(shrine.ctx.propertyMounts.player['location:shrine'], 'the place is mounted under its owner');
+    const arrival = arriveAt(shrine);
+    assert(arrival.events.some((e) => e.type === 'arrived' && e.locationId === 'shrine'), '`arrived` is emitted with the place');
+    eq(shrineRun.flaskCharges.hpCurrent, shrineRun.fullHpCharges, 'the restFlasks rule refilled the charges on arrival');
+    eq(shrineRun.hp, 10, 'arriving heals nothing');
+    const countersBefore = JSON.stringify(shrine.ctx.rng.getCounters());
+    const preview = previewRest(shrine);
+    eq(JSON.stringify(shrine.ctx.rng.getCounters()), countersBefore, 'the preview rolls on a copy of the streams');
+    const floor = Math.floor((shrineRun.maxMana * rest.mana.floorPct) / 100);
+    eq(preview.heal, Math.floor((shrineRun.maxHp * rest.hpPartialPct) / 100), 'the preview reads the partial rest\'s row');
+    eq(preview.manaAfter, floor, 'the preview reads the floor');
+    eq(shrineRun.hp, 10, 'the preview writes nothing');
+    const rested = restAt(shrine);
+    assert(rested.events.some((e) => e.type === 'rested'), '`rested` is emitted');
+    eq(shrineRun.hp, 10 + preview.heal, 'the shrine heals exactly its tag\'s share');
+    eq(shrineRun.mana, floor, 'Mana rises to the floor when below it');
+    shrineRun.mana = floor;
+    restAt(shrine);
+    eq(shrineRun.mana, shrineRun.maxMana, 'Mana at the floor fills to full');
+    assert(leaveLocation(shrine), 'leaving unmounts');
+
+    // A REBUILT VISIT (a saved session restored at the place) arrives no
+    // second time: nothing pours, nothing fires, and arriveAt is a no-op.
+    const restoredRun = fresh();
+    const restored = visitTo(restoredRun, 'shrine', { arrived: true });
+    eq(restoredRun.flaskCharges.hpCurrent, 0, 'rebuilding a visit as arrived pours nothing');
+    eq(arriveAt(restored).events.length, 0, 'and arriving at it again fires nothing');
+    eq(restored.refill, null, 'a rebuilt visit reports no refill receipt');
+    leaveLocation(restored);
+
+    // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
+    // stream seeded from the run instead of throwing (the atlas inspection).
+    // The runtime reads a tag's rule off `propertyRules` (content-build's
+    // balance-resolved row), so a test that changes a rule changes that row.
+    const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
+    const rollingReg = createRegistries(withRule('restHpPartial', (r) => { r.triggers[0].if = { p: 'random', pct: 100 }; return r; }));
+    const rollingRun = createRunState({ seed: 4, classId: 'herald', registries: rollingReg });
+    rollingRun.hp = 10;
+    const rolling = createLocationVisit({ run: rollingRun, registries: rollingReg, rng: null }, 'shrine');
+    eq(previewRest(rolling).heal, Math.floor((rollingRun.maxHp * rest.hpPartialPct) / 100), 'a preview with no live stream still rolls the rule');
+    eq(rollingRun.hp, 10, 'and writes nothing');
+    leaveLocation(rolling);
+    assert(!shrine.ctx.propertyMounts.player, 'nothing stays mounted after the visit');
+
+    // THE CAMP: a small rest, the same Mana mode, no refill and no services.
+    const campRun = fresh();
+    const camp = visitTo(campRun, 'camp');
+    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false }), 'the camp offers nothing');
+    eq(arriveAt(camp).refill, null, 'no refill rule, no receipt');
+    eq(campRun.flaskCharges.hpCurrent, 0, 'the camp refills no flask');
+    restAt(camp);
+    eq(campRun.hp, 10 + Math.floor((campRun.maxHp * rest.hpSmallPct) / 100), 'the camp heals its small share');
+    eq(campRun.mana, floor, 'the camp restores Mana by the default mode');
+
+    // THE TOWN: everything, and Mana to full.
+    const innRun = fresh();
+    const inn = visitTo(innRun, 'inn');
+    arriveAt(inn);
+    restAt(inn);
+    eq(innRun.hp, innRun.maxHp, 'the inn heals to full');
+    eq(innRun.mana, innRun.maxMana, 'the inn restores Mana to full');
+    eq(innRun.flaskCharges.hpCurrent, innRun.fullHpCharges, 'the inn refills the flasks');
+
+    // THE FIXED MODES: a flat rest and the full rest override the default.
+    const flatReg = createRegistries({ ...testBundle(), balance: { ...contentBundle.balance, rest: { ...rest, mana: { ...rest.mana, mode: 'flat' } } } });
+    const flatRun = createRunState({ seed: 4, classId: 'herald', registries: flatReg });
+    flatRun.hp = 10; flatRun.mana = 0;
+    const flat = createLocationVisit({ run: flatRun, registries: flatReg, rng: createRng(1) }, 'camp');
+    eq(flat.tags.join(','), 'restHpSmall,restManaFlat', 'the flat mode resolves to its tag');
+    restAt(flat);
+    eq(flatRun.mana, Math.min(flatRun.maxMana, rest.mana.flat), 'the flat rest restores its row');
+
+    // THE MULTIPLIERS: the custom mod scales the heal, the relic passive
+    // multiplies it, and neither touches Mana.
+    const emberRun = fresh();
+    emberRun.relics.push('emberFragment');
+    const ember = visitTo(emberRun, 'shrine', { healMult: 0.5 });
+    restAt(ember);
+    eq(emberRun.hp, 10 + Math.floor(((emberRun.maxHp * rest.hpPartialPct) / 100) * 0.5 * 1.15), 'Ember Fragment ×1.15 and the mod ×0.5 scale the heal, floored once after them');
+    eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
+
+    // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
+    // shrine and the chapel — and leaves the town's bed and the camp open.
+    const wyrmRun = fresh();
+    wyrmRun.relics.push('wyrmHeart');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
+    const wyrmShrine = visitTo(wyrmRun, 'shrine');
+    eq(wyrmShrine.restDenied, 'wyrmHeart', 'the visit names the relic');
+    refuses(() => restAt(wyrmShrine), /denied by relic 'wyrmHeart'/, 'resting there is refused by name');
+    const wyrmInn = visitTo(wyrmRun, 'inn');
+    restAt(wyrmInn);
+    eq(wyrmRun.hp, wyrmRun.maxHp, 'the town rest still heals a Wyrm Heart holder');
+
+    // THE DENIAL IS READ AS THE RUN STANDS: an arrival rule that hands the
+    // run the Wyrm Heart denies the Rest at the same place, after arrival.
+    const grantingReg = createRegistries(withRule('restFlasks', (r) => { r.triggers[0].do.push({ op: 'addRelic', id: 'wyrmHeart' }); return r; }));
+    const grantedRun = createRunState({ seed: 4, classId: 'herald', registries: grantingReg });
+    const granted = createLocationVisit({ run: grantedRun, registries: grantingReg, rng: createRng(1) }, 'shrine');
+    eq(granted.restDenied, null, 'before arrival nothing denies the Rest');
+    arriveAt(granted);
+    assert(grantedRun.relics.includes('wyrmHeart'), 'the arrival rule handed the run the relic');
+    eq(granted.restDenied, 'wyrmHeart', 'and the visit re-read the denial off the run');
+    refuses(() => restAt(granted), /denied by relic 'wyrmHeart'/, 'so the Rest is refused by name');
+    leaveLocation(granted);
+
+    // RULES COMPOSE THROUGH THEIR OWN EVENTS: a rule on `healed` mounted by the
+    // place hears the rest's heal, as a combat property would.
+    const composingReg = createRegistries(withRule('restHpSmall', (r) => { r.triggers.push({ on: 'healed', do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }); return r; }));
+    const composingRun = createRunState({ seed: 4, classId: 'herald', registries: composingReg });
+    composingRun.hp = 10; composingRun.mana = 0;
+    const composing = createLocationVisit({ run: composingRun, registries: composingReg, rng: createRng(1) }, 'camp');
+    const composed = restAt(composing);
+    assert(composed.events.some((e) => e.type === 'healed'), 'the heal\'s own event rides the bus');
+    eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
+    leaveLocation(composing);
+
+    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
+    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
+    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
+    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
+    const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
+    eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
+
+    // THE VISIT RE-READS THE RUN: a door between arrival and rest (a level
+    // point's re-derived maximum) is not overwritten by a stale facade.
+    const lateRun = fresh();
+    const late = visitTo(lateRun, 'inn');
+    arriveAt(late);
+    lateRun.maxHp += 10;
+    lateRun.hp = 20;
+    restAt(late);
+    eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
+
+    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
+    // a cap the map cannot meet is refused by name.
+    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
+    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
+
+    // THE REFUSALS: an unknown location id, a restoreMana with neither or
+    // both selectors, a bad rest mode, a restDenied naming no carried tag.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
+    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
+    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
+    assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
+    assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
+    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
+    const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'camp', tagId: 'restManaFlat' }])).some((e) => /tagging\.location\.camp.*one rule/.test(e)), 'restMana beside a fixed-mode tag is refused by name');
+    const overrideReg = createRegistries({ ...testBundle(), tagging: contentBundle.tagging.map((r) => (r.family === 'location' && r.objectId === 'camp' && r.tagId === 'restMana' ? { ...r, tagId: 'restManaFlat' } : r)) });
+    const overrideRun = createRunState({ seed: 4, classId: 'herald', registries: overrideReg });
+    overrideRun.hp = 10; overrideRun.mana = 0;
+    const override = createLocationVisit({ run: overrideRun, registries: overrideReg, rng: createRng(1) }, 'camp');
+    eq(override.tags.join(','), 'restHpSmall,restManaFlat', 'a fixed-mode tag overrides the default outright');
+    restAt(override);
+    eq(overrideRun.mana, Math.min(overrideRun.maxMana, rest.mana.flat), 'and the place restores Mana by that one rule');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/market', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/market/.test(e)), 'a point offering no rest is not a location');
+    const withCard = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzMana', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Rest.' }] });
+    assert(said(withCard([{ op: 'restoreMana', target: 'self' }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with neither selector is refused');
+    assert(said(withCard([{ op: 'restoreMana', target: 'self', amount: 2, toFloorPct: 50 }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with both is refused');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restSauna'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming a tag no location carries is refused by name');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restMana'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming the unresolved restMana is refused: a visit never holds it');
+    assert(validateContent({ ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restManaFloor'] } } : r)) }).ok, 'a filter naming the resolved mode tag is a location\'s effective tag');
+    assert(said(validateContent({ ...testBundle(), statuses: contentBundle.statuses.map((st, i) => (i === 0 ? { ...st, hooks: [...(st.hooks || []), { on: 'rested', do: [] }] } : st)) })).some((e) => /statuses\..*hooks\[\d+\]\.on/.test(e)), 'a status hooked on a run-level event is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'boss', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.boss/.test(e)), 'a node type the door never visits is not a location');
+    for (const id of ['shrine', 'camp']) {
+      const without = validateContent({ ...testBundle(), tagging: contentBundle.tagging.filter((r) => !(r.family === 'location' && r.objectId === id)) });
+      assert(said(without).some((e) => new RegExp(`tagging\\.location\\.${id}: carries no tags`).test(e)), `a bundle without a row for '${id}' — a place the classic map opens unconditionally — is refused by name, not at the door`);
+    }
+    const twice = visitTo(fresh(), 'shrine');
+    const first = arriveAt(twice);
+    const again = arriveAt(twice);
+    eq(again.events.length, 0, 'a second arrival fires nothing');
+    eq(again.refill, first.refill, 'and answers with the first receipt');
+    assert(validateContent(contentBundle).ok, 'the shipped bundle stays green');
+  });
+
+  // ---- 92. Plan phase 8: Mana costing, focus breaks, the player's Poise ----
+  test('92. Mana is the third cost line, and the player has a Poise meter that Staggers (plan phase 8)', () => {
+    const bal = contentBundle.balance;
+    const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
+    // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c))).some((e) => /cards\.gorefireSlash\.staminaCost: .*at least 1 stamina/.test(e)), 'a Mana card with no stamina line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
+    assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
+    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships, and passes: X is at least one action');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { minActionCost: -1, minStaminaCost: 1 } } })).some((e) => /balance\.mana\.minActionCost/.test(e)), 'a negative floor is refused by name');
+    const { mana: _noMana, ...sansMana } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
+    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
+    const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
+    eq(REG.cards.get('gorefireSlash').staminaCost, 1, 'the signature art costs stamina beside its Mana');
+
+    // THE PLAYER'S METER: a fill applies the row's statuses and takes one
+    // action off the next turn, once; the meter grows as an enemy's does.
+    const c = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 50, hp: 50, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'sp1', cardId: 'tSelfPoise', upgraded: false }], relicIds: [], flasks: [], poiseMax: 5 },
+      enemyIds: ['tDummy'],
+    });
+    eq(c.player.poiseMeter.max, 5, 'the stamped max is the vessel');
+    playFromHand(c, 'tSelfPoise');
+    const stagger = bal.stagger.player;
+    for (const [status, stacks] of Object.entries(stagger.statuses)) eq(S.getStacks(c.player, status), stacks, `the fill applies ${stacks} ${status}`);
+    const told = logOf(c, 'playerStaggered');
+    eq(told.length, 1, 'one playerStaggered receipt');
+    eq(told[0].actionLoss, stagger.actionLoss, 'which names the action it took');
+    assert(logOf(c, 'meterFilled').some((e) => e.targetId === 'player' && e.meter === 'poise'), 'the fill is a meterFilled on the player');
+    eq(c.player.poiseMeter.max, Math.ceil(5 * bal.poise.growthMult), 'the meter grows as an enemy\'s does');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax - stagger.actionLoss, 'the next turn opens one action short');
+    eq(c.player.pendingActionLoss, 0, 'and the debt is paid once');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax, 'the turn after is whole');
+
+    // THE SHIPPED FIGHT HAS NO RULESET: an enemy blow that draws blood rocks
+    // the player by balance.poise.playerImpactPerHit, and two blows fill a
+    // meter of twice that — the player is Staggered by ordinary enemy hits.
+    const perHit = bal.poise.playerImpactPerHit;
+    const hit = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 90, hp: 90, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `hk${i}`, cardId: 'tKeep', upgraded: false })), relicIds: [], flasks: [], poiseMax: perHit * 2 },
+      enemyIds: ['tHitter'],
+    });
+    assert(!hit.foundation, 'the fixture, like main.js, hands in no ruleset');
+    dispatch(hit, { type: 'endTurn' });
+    eq(hit.player.poiseMeter.value, perHit, 'the first enemy hit rocks the player by the row');
+    assert(logOf(hit, 'impactDealt').some((e) => e.targetId === 'player' && e.amount === perHit), 'and says so');
+    dispatch(hit, { type: 'endTurn' });
+    eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
+    // AND THE RECEIPT CARRIES THE METER THE ENGINE ENDED ON. The Poise damage
+    // lands before the receipt is emitted, so a paced view that added the
+    // amount would draw a bar that never filled; the reader SETS from these.
+    const filling = logOf(hit, 'impactDealt').filter((e) => e.targetId === 'player').pop();
+    eq(filling.poiseMeter.value, hit.player.poiseMeter.value, 'the impact names the meter value the engine ended on');
+    eq(filling.poiseMeter.max, hit.player.poiseMeter.max, 'and the max, which the fill widened');
+    eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
+    // AND THE WIDENED VESSEL SURVIVES A RESTAMP. A fill grows the max by
+    // balance.poise.growthMult; the receipt only knows the base, so an
+    // armament swap or a restored fight must rebuild the grown vessel.
+    const grownMax = hit.player.poiseMeter.max;
+    assert(grownMax > perHit * 2, 'the fill widened the vessel');
+    stampPlayerPoiseMax(hit.player, perHit * 2);
+    eq(hit.player.poiseMeter.max, grownMax, 'a restamp from the base receipt keeps the growth a Stagger paid for');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerImpactPerHit: -1 } } })).some((e) => /balance\.poise\.playerImpactPerHit/.test(e)), 'a negative impact row is refused by name');
+    const { poise: _noPoise, ...sansPoise } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansPoise })).some((e) => /^balance\.poise:/.test(e)), 'a bundle without the poise block is refused by name');
+
+    // THE VESSEL'S MAX: Constitution through the DERIVED POISE ROW (plan
+    // phase 9 moved the coefficient out of balance and into the ruleset), the
+    // body armour, the relics.
+    const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
+    const receipt = playerPoiseThresholdReceipt(REG, run);
+    // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
+    // the lean creation mode converts at a fifth, so the live tier is a fifth
+    // of the authored one and the authored table is not what the receipt reads.
+    const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
+    eq(receipt.attribute, poiseRow.base + Math.floor(run.attributes.constitution / poiseRow.pointsPerTier) * poiseRow.gainPerTier,
+      'Constitution through derivedStatRules.rules.poise');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerPerConstitution: 1 } } })).some((e) => /balance\.poise\.playerPerConstitution/.test(e)),
+      'and the retired balance copy is refused by name, so the coefficient cannot regrow a second home');
+    assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id === 'constitution'), 'and the receipt names it');
+    assert(receipt.sources.filter((s) => s.kind === 'equipment').every((s) => s.classId), 'only the body armour counts among the equipment — a weapon\'s poiseThreshold is its weight');
+    eq(receipt.value, receipt.attribute + receipt.equipment + receipt.relic, 'the three sum to the max');
+    assert(receipt.active, 'and the receipt is live: the combat entity stamps it and impact fills it');
+    // The run's own rule snapshot rides in, exactly as main.js hands it to
+    // createCombat: the lean mode's conversion scale lives in that snapshot, and
+    // a combat built without it derives the vessel on the authored tier instead.
+    const born = createCombat({ registries: REG, rng: createRng(7), player: { classId: 'reaver', attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot, maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: 0, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout }, enemyIds: ['tDummy'] });
+    eq(born.player.poiseMeter.max, receipt.value, 'createCombat stamps the receipt as the meter\'s max');
+  });
+
+  test('93. the attribute rebase: one creation scale, one derived ruleset, one equip gate (plan phase 9)', () => {
+    // THE MODE CREATION OFFERS, AND THE ONES IT NO LONGER DOES. The older
+    // modes stay in the table because saves were admitted against them.
+    eq(creationModeViews(REG).map((m) => m.id).join(','), 'lean', 'creation offers the lean mode alone');
+    const older = ['tuned2', 'tuned', 'standard', 'pointbuy'].every((id) => REG.creationModes.all().some((m) => m.id === id));
+    assert(older, 'and every retired mode is still resolvable for the runs born under it');
+    eq(allocationTotal(REG, 'lean'), 8, 'five stats at a baseline of 1 plus three to place');
+    eq(allocationTotal(REG, 'tuned2'), 35, 'and the rebased mode still totals its own 35 for the saves that carry it');
+
+    // THE RULESET. Mana IS Wisdom and Stamina IS Constitution: a point spent
+    // is a point felt, which is what let the signature arts ask two of each.
+    const rules = REG.derivedStatRules;
+    eq(rules.rulesetVersion, 5, 'the authored table is ruleset 5');
+    eq(`${rules.rules.mana.sourceStat}/${rules.rules.mana.pointsPerTier}/${rules.rules.mana.gainPerTier}`, 'wisdom/1/1', 'Mana is Wisdom, point for point');
+    eq(`${rules.rules.stamina.sourceStat}/${rules.rules.stamina.pointsPerTier}/${rules.rules.stamina.gainPerTier}`, 'constitution/1/1', 'Stamina is Constitution, point for point');
+    eq(`${rules.rules.hp.base}/${rules.rules.hp.gainPerTier}`, '30/4', 'HP is 30 + 4 × CON');
+    const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
+    // A pool carries its own flat base beside the attribute — a class or relic
+    // addend folds into it — so the attribute half is read off the receipt
+    // rather than assumed to be the whole pool.
+    const rowOf = (id) => statProjection(REG, star).derived.find((row) => row.id === id);
+    const manaRow = rowOf('mana'); const staminaRow = rowOf('stamina');
+    // POINT FOR POINT, AND NOW LITERALLY SO. The lean mode used to reach the
+    // tuned span through a conversion scale — one lean point bought five Mana
+    // — and no row said it. Nothing converts an attribute now: the pool above
+    // its base IS the attribute, which is what "Mana IS Wisdom" said all along.
+    eq(REG.creationModes.all().find((m) => m.id === 'lean').statConversionScale, undefined, 'and no scale stands between them');
+    eq(manaRow.value - manaRow.base, star.attributes.wisdom, 'a new Starseer opens with Wisdom in Mana');
+    eq(staminaRow.value - staminaRow.base, star.attributes.constitution, 'and Constitution in Stamina');
+    // The pools could now fund a 2/2 signature art, but the cost stays 1/1:
+    // a card resolves its cost LIVE while a run's pools are snapshotted, so
+    // raising it strands the starter card of every run already under way
+    // (a legacy Reaver at Wisdom 8 holds one Mana). That step needs
+    // run-stamped costs, which is a mechanism and not this phase's number.
+    const art = REG.cards.get('starstonePebble');
+    assert(star.maxStamina >= art.staminaCost && star.maxMana >= art.manaCost,
+      'the signature art is playable on the first floor');
+    assert(art.staminaCost === 1 && art.manaCost === 1,
+      'and stays at 1/1 until costs travel with the run rather than with the table');
+
+    // THE POISE ROW, WHICH PHASE 8 LEFT IN BALANCE AND THIS PHASE MOVED.
+    assert(!!rules.rules.poise, 'Poise is a derived row now');
+    eq(REG.balance.poise.playerPerConstitution, undefined, 'and the balance copy is gone');
+    // A ruleset that predates the row is still restorable: the required set is
+    // a function of the version, not a constant.
+    eq(derivedStatIdsFor(4).includes('poise'), false, 'ruleset 4 requires no Poise row');
+    eq(derivedStatIdsFor(5).includes('poise'), true, 'ruleset 5 does');
+
+    // THE EQUIP GATE, ON THE MUTATION RATHER THAN ON A SCREEN.
+    const weak = createRunState({ seed: 93, classId: 'starseer', registries: REG });
+    const gate = (run) => canEquip(REG, 'rightHand', {
+      inCombat: false, loadout: run.loadout, classId: run.class, setIndex: 0,
+      itemId: 'greatsword', attributes: run.attributes,
+    });
+    const refused = gate(weak);
+    assert(!refused.ok && /requires STR \d+ \(you have \d+\)/.test(refused.reason), `the gate names the shortfall: ${refused.reason}`);
+    const strong = createRunState({ seed: 93, classId: 'reaver', registries: REG });
+    assert(gate(strong).ok, 'and a hand that meets the minimum is admitted');
+    // Asked without attributes, the question keeps its old answer.
+    assert(canEquip(REG, 'rightHand', { inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0, itemId: 'greatsword' }).ok,
+      'a caller that names no attributes is not judged by them');
+    // A RUN KEEPS THE RULES IT WAS BORN UNDER, on both doors. The live
+    // presentation table grew a Poise row; a snapshot that predates it is
+    // projected without one rather than asked for a receipt it cannot give,
+    // and the meter's coefficient is read from the run's own snapshot so an
+    // Advanced tier-size override is not quietly overruled by the table.
+    const legacy = preE6RunSave ? deserializeRun(preE6RunSave) : null;
+    if (legacy) {
+      assert(legacy.derivedStatRuleSnapshot.rulesetVersion < REG.derivedStatRules.rulesetVersion, 'the fixture predates the Poise row');
+      const rows = statProjection(REG, legacy).derived.map((row) => row.id);
+      assert(!rows.includes('poise') && rows.includes('hp'), `a pre-Poise run projects its own rows: ${rows.join(',')}`);
+    }
+    const tuned = createRunState({
+      seed: 93, classId: 'reaver', registries: REG,
+      derivedStatOptions: { modeModifiers: { defaults: { pointsPerTier: 2 } } },
+    });
+    const tunedRow = tuned.derivedStatRuleSnapshot.rules.rules.poise;
+    const owed = tunedRow.base + Math.floor(tuned.attributes.constitution / tunedRow.pointsPerTier) * tunedRow.gainPerTier;
+    eq(playerPoiseThresholdReceipt(REG, tuned).attribute, owed, 'the meter reads the run-owned row, tier size and all');
+    // AND THE RULE TRAVELS INTO THE FIGHT. The receipt reading the snapshot
+    // is no use if every combat adapter hands it a run object without one:
+    // the sheet would show the override and the meter the live table.
+    const overridden = createCombat({
+      registries: REG, rng: createRng(1), enemyIds: [contentBundle.enemies[0].id],
+      player: {
+        classId: tuned.class, attributes: tuned.attributes,
+        derivedStatRuleSnapshot: tuned.derivedStatRuleSnapshot,
+        maxHp: tuned.maxHp, hp: tuned.hp, maxMana: tuned.maxMana, mana: tuned.mana,
+        maxStamina: tuned.maxStamina, stamina: tuned.stamina, energyMax: 3, drawPerTurn: 5,
+        relicIds: tuned.relics, flasks: [], loadout: tuned.loadout,
+        itemUpgradeLevels: tuned.itemUpgradeLevels, deck: tuned.deck,
+      },
+    });
+    eq(overridden.player.poiseMeter.max, playerPoiseThresholdReceipt(REG, tuned).value,
+      'the fight stamps the vessel the run owns, not the one the live table would price');
+
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN KIT. The rebase moved the
+    // attributes and the minima at once and nothing cross-read them, so the
+    // first Starseer preset could not lift its own staff.
+    for (const cls of ['reaver', 'starseer', 'rogue', 'herald']) {
+      const born = createRunState({ seed: 93, classId: cls, registries: REG });
+      for (const [slot, id] of [['rightHand', born.loadout.sets.rightHand[0]], ['leftHand', born.loadout.sets.leftHand[0]], ['armor', born.loadout.sets.armor[0]]]) {
+        if (!id) continue;
+        const seal = canEquip(REG, slot, { inCombat: false, loadout: born.loadout, classId: cls, setIndex: 0, itemId: id, attributes: born.attributes });
+        assert(seal.ok, `${cls} can hold the ${slot} it starts in: ${seal.reason}`);
+      }
+    }
+    // The break is authored in the DEFAULT mode, because that is the one the
+    // content door applies the kit rule to: a legal allocation (still 8, still
+    // inside 1–4) whose Intelligence is one short of the Ash Focus staff's 3.
+    const kitBreak = { ...contentBundle, attributeRules: { ...contentBundle.attributeRules,
+      presets: { ...contentBundle.attributeRules.presets, lean: { ...contentBundle.attributeRules.presets.lean,
+        starseer: { ...contentBundle.attributeRules.presets.lean.starseer, intelligence: 2, strength: 2 } } } } };
+    const kitSaid = validateContent(kitBreak).errors.map((e) => `${e.path}: ${e.msg}`);
+    assert(kitSaid.some((e) => /cannot hold the kit it starts in/.test(e)),
+      `and a preset that cannot is refused at the content door, by name: ${kitSaid.slice(0, 2).join(' | ')}`);
+
+    // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
+    // every armour minimum unenforced while the table said otherwise.
+    const plate = canEquip(REG, 'armor', {
+      inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0,
+      itemId: 'wayfarerPlate', attributes: weak.attributes,
+    });
+    assert(!plate.ok && /STR/.test(plate.reason), `the armour minimum is enforced as well: ${plate.reason}`);
+    // An absent attribute is unknown, never a silent zero.
+    const blind = canEquip(REG, 'armor', {
+      inCombat: false, loadout: weak.loadout, classId: weak.class, setIndex: 0,
+      itemId: 'wayfarerPlate', attributes: {},
+    });
+    assert(/you have unknown/.test(blind.reason), `a missing stat reads as unknown: ${blind.reason}`);
+  });
+
 
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;

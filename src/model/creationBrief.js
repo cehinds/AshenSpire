@@ -53,6 +53,7 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
+import { defaultRatingFormula } from './ratingFormula.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -97,9 +98,8 @@ function armamentEntries(registries, run) {
   });
 }
 
-function relicEntry(registries, run) {
-  const classDef = registries.classes.get(run.class);
-  const relic = classDef.startingRelic ? registries.relics.get(classDef.startingRelic) : null;
+function relicEntry(registries, run, relicId = registries.classes.get(run.class).startingRelic) {
+  const relic = relicId ? registries.relics.get(relicId) : null;
   if (!relic) return null;
   // The resource's name is the presentation table's, never an upper-cased id:
   // a player reads 'Mana', and the engine's key is not a label (Vira's
@@ -137,19 +137,19 @@ function foldedSummary(sense) {
   return sentence || text;
 }
 
-function equipmentScalingLines(registries, attributeId, profiles) {
-  const lines = new Set();
-  for (const [id, profile] of Object.entries(profiles || {})) {
-    if (!profile || profile.scalingStat !== attributeId) continue;
-    const source = (registries.equipment.basicCardProfiles || []).find((row) => row.id === id) || profile;
-    const role = source.role || profile.role;
-    const school = source.damageSchool || profile.damageSchool;
-    const label = role === 'guard'
-      ? 'Guard'
-      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}AR`;
-    lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
-  }
-  return [...lines];
+function ratingWeightFacts(registries, attributeId) {
+  const config = registries.balance?.combatRatings || defaultRatingFormula;
+  const short = registries.attributes.get(attributeId).shortLabel;
+  if (!config?.ratings) return [];
+  return Object.entries(config.ratings)
+    .filter(([, rule]) => Number(rule[attributeId]) > 0)
+    .map(([id, rule]) => {
+      const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      return {
+        line: `${label}: floor(${rule[attributeId]} × ${short}), then × ${config.multiplier ?? 1} global`,
+        summary: `${label} weight ${rule[attributeId]}`,
+      };
+    });
 }
 
 /**
@@ -175,14 +175,43 @@ export function attributeCardModels(registries, attributes, { projection = null,
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
         const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
-        const points = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
-        // A class-field gain (hp) is a different number per class, so it is
-        // read off the projection's own receipt rather than restated here.
-        const perTier = gain == null ? projected.get(id)?.gainPerTier : gain;
-        return { label: presentation[id].label, perTier, points };
+        // THE RUN'S TIER, NOT THE TABLE'S. A run carries the derived-stat rows
+        // it was BORN under — a settings override tunes the live table while a
+        // climb in progress keeps its own snapshot — so the authored row can
+        // say "every 1 point" while the character on screen was priced by a
+        // different one. The projection is the run's own derivation and
+        // already carries the resolved tier; reading the authored row here is
+        // the copy-that-nothing-syncs the card exists to avoid (Law 1 clause
+        // 2).
+        const row = projected.get(id);
+        const authoredPoints = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
+        const resolvedPoints = Number.isFinite(row?.pointsPerTier) ? row.pointsPerTier : authoredPoints;
+        // THE PROJECTION WINS ON THE GAIN TOO, for the same reason it wins on
+        // the tier: it is the run's own derivation. A class-field gain (hp) has
+        // no authored number at all and was always read here; an authored one
+        // that disagrees with the run's snapshot — a settings override, or a
+        // save born under an older table — is the copy that goes stale.
+        const perTier = Number.isFinite(row?.gainPerTier) ? row.gainPerTier : gain;
+        // A TIER SMALLER THAN A POINT IS RESTATED AS WHAT A POINT BUYS. "+4 HP
+        // every 0.2 points" is arithmetic homework; the player is asking what
+        // one point does.
+        //
+        // FLOOR, NOT ROUND, BECAUSE THE RULE FLOORS. A tier is counted
+        // `floor(points / pointsPerTier)`, so a point buys `floor(1 /
+        // pointsPerTier)` tiers at worst and never more on the first point.
+        // Rounding said "+8 HP per pt" at a tier of 0.6 where the measured gain
+        // is +4 — a card that promises more than the rule pays. The epsilon is
+        // for the same binary float the run door rounds away: 1 / 0.2 is
+        // 5.000000000000001 and must not floor to 4.
+        if (Number.isFinite(perTier) && resolvedPoints > 0 && resolvedPoints < 1) {
+          const tiersPerPoint = Math.max(1, Math.floor(1 / resolvedPoints + 1e-9));
+          return { label: presentation[id].label, perTier: perTier * tiersPerPoint, points: 1 };
+        }
+        return { label: presentation[id].label, perTier, points: resolvedPoints };
       });
     const unlocks = unlockLines(registries, def.id);
-    const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const ratingFacts = ratingWeightFacts(registries, def.id);
+    const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
       : `${label} scales with ${def.label}`));
@@ -198,22 +227,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
-    // An attribute whose only reader is the equipment profile (Strength feeds
-    // attack scaling, not a derived stat) still has a fact to state — read from
-    // its own authored line rather than left to flavour.
-    // Two equipped profiles can scale off one attribute at DIFFERENT rates and
-    // carry the same label ("Physical AR" for a sword and a staff), so the
-    // face states each label once, at its most frequent gain — the fold below
-    // still lists every rate, which is where a player compares them.
-    const scalingFacts = faceFacts.length ? [] : [...scaling
-      .map((line) => line.match(/^(.*) \+(\d+) every (\d+) points?$/))
-      .filter(Boolean)
-      .reduce((best, [, label, gain, points]) => {
-        const seen = best.get(label);
-        if (!seen || Number(points) < seen.points) best.set(label, { gain: Number(gain), points: Number(points) });
-        return best;
-      }, new Map())]
-      .map(([label, { gain, points }]) => `+${gain} ${label} ${cadence(points)}`);
+    const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
@@ -266,7 +280,9 @@ export function creationBrief(registries, run) {
     equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
   }), ...derivedEntries(projection)];
   const relic = relicEntry(registries, run);
-  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : [])];
+  // The kit relic (plan phase 5a) rides beside the starting relic; the brief says so.
+  const kitRelic = relicEntry(registries, run, registries.classes.get(run.class).kitRelic);
+  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : []), ...(kitRelic && kitRelic.id !== (relic && relic.id) ? [kitRelic] : [])];
   const split = splitByDisclosure(stats);
   return {
     classId: run.class,

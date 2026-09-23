@@ -1,0 +1,210 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import {
+  advancedConfigRows,
+  advancedConfigProblems,
+  advancedConfigStructuralProblems,
+  advancedConfigSnapshot,
+  advancedConfigExport,
+  configuredContentBundle,
+  presentationConfig,
+  saveAdvancedConfigFile,
+  parseAdvancedConfigFile,
+} from '../src/model/advancedConfig.js';
+
+test('settings files round trip and leave unrelated settings untouched', () => {
+  const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };
+  const current = { 'gameConfig.presentation.rowBScale': 2 };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(source), contentBundle, current), source);
+  assert.deepEqual(current, { 'gameConfig.presentation.rowBScale': 2 });
+});
+
+test('settings import refuses malformed, oversized, unknown and invalid values atomically', () => {
+  for (const text of ['{', '{}', ' '.repeat(1024 * 1024 + 1),
+    advancedConfigExport({ 'gameConfig.presentation.rowAScale': 90 }),
+    advancedConfigExport({ 'gameConfig.presentation.gridShape': 'triangle' }),
+    advancedConfigExport({ 'gameConfig.presentation.playerGridColor': 'red' }),
+    advancedConfigExport({ 'gameConfig.unknown': true }),
+    '{"game":"Ashen Spire","schemaVersion":1,"overrides":{"__proto__":{}}}',
+  ]) assert.throws(() => parseAdvancedConfigFile(text, contentBundle));
+});
+
+test('settings import accepts exported legacy advanced settings using their row definitions', () => {
+  const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
+    { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  const text = advancedConfigExport({ levelUpValue: 3, cardMotif: 'band' }, {}, ['cardMotif']);
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { levelUpValue: 3, cardMotif: 'band' });
+});
+
+test('advanced configuration inventory is complete, grouped, and uniquely keyed', () => {
+  const rows = advancedConfigRows(contentBundle);
+  assert(rows.length > 250);
+  assert.equal(new Set(rows.map((row) => row.key)).size, rows.length);
+  for (const classDef of contentBundle.classes) {
+    for (const attribute of contentBundle.attributes) {
+      assert(rows.some((row) => row.key.endsWith(`.${classDef.id}.${attribute.id}`)));
+    }
+  }
+  assert(rows.some((row) => row.key === 'gameConfig.progression.xpMultiplier'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
+});
+
+test('configured bundle overlays starting stats and progression without mutating authored content', () => {
+  const configured = configuredContentBundle(contentBundle, {
+    'gameConfig.attributeRules.presets.lean.reaver.strength': 4,
+    'gameConfig.attributeRules.presets.lean.reaver.dexterity': 1,
+    'gameConfig.attributeRules.presets.lean.reaver.constitution': 1,
+    'gameConfig.balance.xp.combatWin': 30,
+    'gameConfig.progression.xpMultiplier': 2,
+    'gameConfig.progression.rewardMultiplier': 0.5,
+    'gameConfig.derivedStatRules.defaults.pointsPerTier': 3,
+  });
+  assert.equal(configured.attributeRules.presets.lean.reaver.strength, 4);
+  assert.equal(contentBundle.attributeRules.presets.lean.reaver.strength, 3);
+  assert.equal(configured.balance.xp.combatWin, 60);
+  assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
+  assert.equal(contentBundle.balance.xp.combatWin, 50);
+  assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
+  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
+});
+
+test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {
+  const settings = { 'gameConfig.attributeRules.presets.lean.reaver.strength': 4 };
+  assert.match(advancedConfigProblems(contentBundle, settings)[0], /Reaver.*total 8/);
+  const configured = configuredContentBundle(contentBundle, settings);
+  assert.deepEqual(configured.attributeRules.presets.lean.reaver, contentBundle.attributeRules.presets.lean.reaver);
+});
+
+test('cross-field ranges are refused instead of reaching a new run inverted', () => {
+  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': 100 };
+  assert.match(advancedConfigStructuralProblems(contentBundle, settings)[0], /rewards\.cinders\.normal/);
+  assert.match(advancedConfigProblems(contentBundle, settings)[0], /first value/);
+});
+
+test('snapshot and export contain only versioned game-config overrides in deterministic order', () => {
+  const settings = {
+    volume: 20,
+    'gameConfig.presentation.enemySpriteScale': 1.2,
+    'gameConfig.balance.startingCinders': 99,
+  };
+  const snapshot = advancedConfigSnapshot(settings);
+  assert.deepEqual(Object.keys(snapshot.overrides), [
+    'gameConfig.balance.startingCinders',
+    'gameConfig.presentation.enemySpriteScale',
+  ]);
+  const exported = JSON.parse(advancedConfigExport({ ...settings, cardMotif: 'band' }, { contentVersion: 'test' }, ['cardMotif']));
+  assert.equal(exported.schemaVersion, 1);
+  assert.equal(exported.game, 'Ashen Spire');
+  assert.equal(exported.overrides['settings.cardMotif'], 'band');
+  const { ['settings.cardMotif']: ignored, ...runtimeOverrides } = exported.overrides;
+  assert.deepEqual(runtimeOverrides, snapshot.overrides);
+});
+
+test('presentation config clamps numbers and refuses unknown rows', () => {
+  const config = presentationConfig({
+    'gameConfig.presentation.playerSpriteScale': 8,
+    'gameConfig.presentation.enemySpawnRow': 'A',
+    'gameConfig.presentation.playerSpawnRow': 'sideways',
+    'gameConfig.presentation.playerSpawnColumn': '2',
+    'gameConfig.presentation.enemySpawnColumn': '9',
+  });
+  assert.equal(config.playerSpriteScale, 2);
+  assert.equal(config.enemySpawnRow, 'A');
+  assert.equal(config.playerSpawnRow, 'C');
+  assert.equal(config.playerSpawnColumn, '2');
+  assert.equal(config.enemySpawnColumn, '3');
+});
+
+test('formation defaults put the player at C2 and enemies at C3', () => {
+  const config = presentationConfig({});
+  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'C2');
+  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'C3');
+});
+
+test('formation appearance validates scales, colors, shapes and offsets', () => {
+  const config = presentationConfig({
+    'gameConfig.presentation.rowAScale': 50,
+    'gameConfig.presentation.rowBScale': -1,
+    'gameConfig.presentation.frontOffsetX': 500,
+    'gameConfig.presentation.gridShape': 'triangle',
+    'gameConfig.presentation.playerGridColor': '#00ff88',
+    'gameConfig.presentation.enemyGridColor': 'url(invalid)',
+  });
+  assert.equal(config.rowAScale, 3);
+  assert.equal(config.rowBScale, .25);
+  assert.equal(config.frontOffsetX, 150);
+  assert.equal(config.gridShape, 'wide-rhombus');
+  assert.equal(config.playerGridColor, '#00ff88');
+  assert.equal(config.enemyGridColor, '#e1a679');
+});
+
+test('legacy row and column names migrate to the six-cell formation grid', () => {
+  const config = presentationConfig({
+    'gameConfig.presentation.playerSpawnRow': 'front',
+    'gameConfig.presentation.enemySpawnRow': 'front',
+    'gameConfig.presentation.playerSpawnColumn': 'right',
+    'gameConfig.presentation.enemySpawnColumn': 'left',
+  });
+  assert.deepEqual({
+    player: `${config.playerSpawnRow}${config.playerSpawnColumn}`,
+    enemy: `${config.enemySpawnRow}${config.enemySpawnColumn}`,
+  }, { player: 'A2', enemy: 'C3' });
+});
+
+test('a renamed balance path keeps its stored override, and the new key wins when both are stored', () => {
+  const legacy = 'gameConfig.balance.shrine.healPct';
+  const current = 'gameConfig.balance.rest.hpPartialPct';
+  assert.equal(configuredContentBundle(contentBundle, { [legacy]: 50 }).balance.rest.hpPartialPct, 50,
+    'a profile written before the rename still tunes the partial rest');
+  assert.equal(configuredContentBundle(contentBundle, { [legacy]: 50, [current]: 60 }).balance.rest.hpPartialPct, 60,
+    'the current key wins over the legacy one');
+  assert.deepEqual(advancedConfigSnapshot({ [legacy]: 50 }).overrides, { [current]: 50 },
+    'a snapshot carries the current key, never the retired one');
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ [legacy]: 50 }), contentBundle), { [current]: 50 },
+    'an exported file naming the retired key imports under the current one');
+});
+
+test('percent rows are bounded to 100 and the town cap to at least 1, as validation will insist', () => {
+  const rows = new Map(advancedConfigRows(contentBundle).map((row) => [row.key, row]));
+  for (const path of ['rest.hpSmallPct', 'rest.hpPartialPct', 'rest.mana.floorPct']) {
+    const row = rows.get(`gameConfig.balance.${path}`);
+    assert.deepEqual([row.min, row.max, row.integer], [0, 100, true], `${path} is a whole percent`);
+  }
+  assert.equal(rows.get('gameConfig.balance.atlas.townsPerActMax').min, 1, 'a route must hold its hub');
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.balance.rest.hpPartialPct': 135 }), contentBundle),
+    'a percent past 100 is refused at import');
+});
+
+test('desktop export uses Save As and writes the deterministic JSON', async () => {
+  let written = '';
+  const result = await saveAdvancedConfigFile({ 'gameConfig.balance.startingCinders': 7 }, {
+    window: {
+      showSaveFilePicker: async () => ({
+        createWritable: async () => ({ write: async (value) => { written = value; }, close: async () => {} }),
+      }),
+    },
+    document: {},
+  });
+  assert.equal(result.method, 'save-as');
+  assert.equal(JSON.parse(written).overrides['gameConfig.balance.startingCinders'], 7);
+});
+
+test('mobile and unsupported desktop export fall back to a local browser download', async () => {
+  let clicked = false;
+  let revoked = false;
+  const anchor = { hidden: false, click: () => { clicked = true; }, remove: () => {} };
+  const result = await saveAdvancedConfigFile({}, {
+    window: {
+      URL: { createObjectURL: () => 'blob:config', revokeObjectURL: () => { revoked = true; } },
+      setTimeout: (callback) => callback(),
+    },
+    document: { createElement: () => anchor, body: { appendChild: () => {} } },
+  });
+  assert.equal(result.method, 'download');
+  assert.equal(anchor.download, 'ashen-spire-game-config.json');
+  assert(clicked);
+  assert(revoked);
+});

@@ -9,7 +9,7 @@ export function resolveTooltipSettings(settings = {}, policy = tooltipHelp) {
   };
   const delay = policy.delays[value('tooltipDelay')];
   return { hoverEnabled: value('hoverTooltips'), open: delay, handover: delay, focus: policy.focusMs ?? delay,
-    close: policy.delays[value('tooltipCloseDelay')], hold: policy.holdMs, doubleTap: policy.doubleTapMs, fade: policy.fadeMs, textLengths: policy.textLengths };
+    close: policy.delays[value('tooltipCloseDelay')], hold: policy.holdMs, doubleTap: policy.doubleTapMs, fade: policy.fadeMs, step: policy.stepMs ?? 0, textLengths: policy.textLengths };
 }
 
 export function tooltipSettingsRows(policy = tooltipHelp) {

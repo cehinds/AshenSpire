@@ -1,3 +1,4 @@
+import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
@@ -7,7 +8,8 @@ import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
-import { armourMenuAsset } from '../model/paintedOutfitArt.js';
+import { armourMenuAsset, armourArtKey, armourArtClass } from '../model/paintedOutfitArt.js';
+import { armourById } from '../content/equipment.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -17,8 +19,40 @@ import { assetUrl } from './assetmap.js';
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';
+import { relicArtAsset } from '../model/relicArt.js';
+
+export function relicArtUrl(relic) {
+  const path = relicArtAsset(relic);
+  return path ? assetUrl(path) : null;
+}
+
+/** Decorative identity art; the containing control owns its accessible name. */
+export function relicIcon(relic) {
+  const src = relicArtUrl(relic);
+  if (!src) return null;
+  const icon = document.createElement('span');
+  icon.className = 'og relic-art';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;aspect-ratio:1;';
+  const img = hintImage(document.createElement('img'));
+  img.src = src;
+  img.alt = '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.addEventListener('error', () => { icon.textContent = relic.icon || '◆'; }, { once: true });
+  icon.append(img);
+  return icon;
+}
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
+
+/** Opening art uses the same external/standalone asset seam as the game. */
+export function prologueArtwork(id, layout = 'desktop', {classId = 'reaver'} = {}) {
+  const classes = ['reaver','starseer','rogue','herald'];
+  if (id === 'carry') return assetUrl(`assets/prologue/carry-${classes.includes(classId) ? classId : 'reaver'}-${layout === 'mobile' ? 'mobile' : 'desktop'}.webp`);
+  const scenes = ['warmth','year','carry','night','step','road'];
+  if (!classes.includes(id) && !scenes.includes(id)) throw new Error(`Unknown opening art: ${id}`);
+  return assetUrl(`assets/prologue/${id}${classes.includes(id) ? '' : `-${layout === 'mobile' ? 'mobile' : 'desktop'}`}.webp`);
+}
 
 // Sprite size tiers (the display dimensions each enemy def's `size` selects) are
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
@@ -417,7 +451,11 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
+export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default', presentation = {}) {
+  const visualClass = armourArtClass(classId, armourId);
+  if (visualClass !== classId) {
+    return classSprite(visualClass, tint, sigil, tintId, style, figureId, armourArtKey(classId, armourId), presentation);
+  }
   const build = CLASS_SVG[classId];
   if (!build) return null;
   // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
@@ -432,8 +470,8 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
   const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
-    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' });
-    const art = stage?.el || paintedPresentation(classId, armourId);
+    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' || Boolean(presentation.view), animation: presentation.animation, view: presentation.view || 'stand' });
+    const art = stage?.el || paintedPresentation(classId, armourId, presentation.view || 'stand', presentation.animation);
     if (art) {
       const host = document.createElement('div');
       host.className = 'class-sprite painted-outfit' + (stage && style === 'animated' ? ' animated' : '');
@@ -495,6 +533,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // 'rendered' remains a separate painted still so an explicit choice never
   // swaps art styles mid-swing. A class with no shipped frames falls through
   // to the painting, so the default is never a blank figure.
+  armourId = armourArtKey(classId, armourId);
   const outfitPoseId = armourId && armourId !== 'default' ? `${classId}-${armourId}` : classId;
   const poseId = hasPoses(outfitPoseId, tintId) ? outfitPoseId : classId;
   if (style === 'animated' && hasPoses(poseId, tintId)) {
@@ -540,7 +579,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
+ * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror, headId, handsId, feetId })
  * → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
@@ -555,7 +594,13 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false, headId = null, handsId = null, feetId = null }) {
+  // The classic layered rig retains its authored body alias; painted sprites
+  // have their own class-specific outfit art and are selected by the caller.
+  const piece = armourById(classId, armourId);
+  const visualClass = piece?.artClassId || classId;
+  armourId = piece?.artKey || armourId;
+  classId = visualClass;
   // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
   // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
   // these two lines and returned a single standing frame, so the armament layers
@@ -592,9 +637,17 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
-  layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
+  layer(assetUrl(`assets/equipment/body_${classId}_${armourArtKey(classId, armourId)}.webp`), 1);
+  // The worn layers the slot split added (plan phase 3b): feet under hands
+  // under head, all over the body and under whatever is held. The file is
+  // `<slot>_<id>.webp`; when it does not exist the image's error handler above
+  // removes it, so a slot with a piece but no art draws nothing rather than a
+  // broken image — the fallback the plan asks for.
+  if (feetId) layer(assetUrl(`assets/equipment/feet_${feetId}.webp`), 2);
+  if (handsId) layer(assetUrl(`assets/equipment/hands_${handsId}.webp`), 3);
+  if (headId) layer(assetUrl(`assets/equipment/head_${headId}.webp`), 4);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 5, leftMirror);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 6, rightMirror);
   return el;
 }
 
@@ -671,11 +724,11 @@ function animatedEquippedFigure(classId, equip) {
 // held-weapon overlay no longer show on the fighter. equippedFigure() still
 // exists and the Armoury preview (screens/equipment.js) still calls it, so the
 // composite is not dead — it is just no longer the combat figure.
-export function playerSprite(customization = {}, classId, armourId = 'default') {
+export function playerSprite(customization = {}, classId, armourId = 'default', presentation = {}) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId, presentation);
   }
   const el = document.createElement('div');
   el.style.cssText =
@@ -703,11 +756,11 @@ export function classGlyph(classId) {
   return classGlyphs[classId] || '❖';
 }
 
-/* Inventory artwork uses item identity, never the character rig's artKey. */
+/* Inventory artwork uses item identity or its explicit icon alias, independently of rig artKey. */
 export function equipmentCardArt(piece) {
   return assetUrl(piece.kind === 'armor'
     ? armourMenuAsset(piece.classId, piece.id)
-    : `assets/equipment/icon_${piece.id}.webp`);
+    : armamentIconAsset(piece));
 }
 
 export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : Object.hasOwn(POSE_EFFECT_ART,kind) ? POSE_EFFECT_ART[kind] : []).map(assetUrl); }

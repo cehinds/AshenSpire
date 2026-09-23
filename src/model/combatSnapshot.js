@@ -1,4 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
+import { handRulesProblems } from './handRules.js';
+import { combatRatingProblems } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -6,6 +8,8 @@ import { retiredAttackSlots } from './cardRemoval.js';
 // runtime methods detached for storage and reattached after loading.
 
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
+import { skillsProblems } from './skills.js';
+import { coreTagsProblems } from './classTree.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -40,6 +44,8 @@ function entityProblems(entity, path, { player = false } = {}) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
   }
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
+  if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
+  if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
   return problems;
 }
@@ -67,7 +73,25 @@ export function combatSnapshotProblems(snapshot) {
     if (!Number.isInteger(snapshot[key]) || snapshot[key] < 0) problems.push(`${key} must be a non-negative integer`);
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
+  if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
+  if (snapshot.ratingsRules !== undefined) problems.push(...combatRatingProblems(snapshot.ratingsRules));
+  if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
+  if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
+  // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
+  // before them, refused by name when present and malformed.
+  if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
+  if (snapshot.skillXp !== undefined) {
+    if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');
+    else for (const [owner, receipt] of Object.entries(snapshot.skillXp)) {
+      if (!record(receipt) || !record(receipt.xp)) { problems.push(`skillXp.${owner} must be { xp, killGroup }`); continue; }
+      for (const [skillId, amount] of Object.entries(receipt.xp)) {
+        if (!finite(amount) || amount < 0) problems.push(`skillXp.${owner}.xp.${skillId} must be a non-negative number`);
+      }
+      if (receipt.killGroup !== null && !nonEmptyString(receipt.killGroup)) problems.push(`skillXp.${owner}.killGroup must be null or a skill track id`);
+    }
+  }
   if (snapshot.armamentLevels !== undefined) {
     if (!record(snapshot.armamentLevels)) problems.push('armamentLevels must be an object');
     else for (const [pieceId, level] of Object.entries(snapshot.armamentLevels)) {
@@ -136,6 +160,13 @@ export function assertCombatSnapshot(snapshot) {
 }
 
 /** Validate content references after registries exist at the run load door. */
+/** True when some authored piece fits the slot — a slot nothing can fill yet cannot have lost anything. */
+function slotCanHoldAnything(slot, equipment) {
+  const kinds = Array.isArray(slot.kinds) ? slot.kinds : [];
+  if (kinds.includes('armor') && (equipment.armour || []).length) return true;
+  return (equipment.armaments || []).some((piece) => kinds.includes(piece.kind));
+}
+
 export function combatSnapshotReferenceProblems(snapshot, registries) {
   if (snapshot == null) return [];
   const problems = [];
@@ -208,6 +239,16 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     for (const slot of slots) {
       const ids = record(loadout.sets) ? loadout.sets[slot.id] : undefined;
       const active = record(loadout.active) ? loadout.active[slot.id] : undefined;
+      // A slot the snapshot never knew (the row was authored after the fight
+      // was saved — phase 3b's head, hands, feet) is not a malformed
+      // reference: it has no cells and no active index at all, AND nothing in
+      // the content could ever have been in it — no authored piece fits its
+      // kinds. That second clause is what keeps this from excusing a current
+      // save that lost a hand: a slot a weapon can fill is held to the shape
+      // whether or not the snapshot names it. The load door gives an excused
+      // slot its empty cells (model/loadout.js healMissingSlotCells) after
+      // this check proves the rest.
+      if (ids === undefined && active === undefined && !slotCanHoldAnything(slot, equipment)) continue;
       if (!Array.isArray(ids)) {
         problems.push(`loadout.sets.${slot.id} must be an array`);
       } else {

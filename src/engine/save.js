@@ -27,20 +27,24 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { healMissingSlotCells } from '../model/loadout.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
+import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -92,12 +96,40 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
   return added;
 }
 
+/**
+ * The class tree's picks, by the run's own class (plan phase 5b): the picks
+ * on the run, the picks a fight in progress carries, and the class a pending
+ * draft names. The shape door proves the arrays; this door proves the tree.
+ */
+function classTreeReferenceProblems(run, registries) {
+  const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  const snapshot = run.combatEntered && run.combatEntered.snapshot;
+  if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
+  for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {
+    if (draft && draft.classId !== run.class) problems.push(`class draft class '${draft.classId}' is not the run's class '${run.class}'`);
+  }
+  return problems;
+}
+
 function pendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
   for (const cardId of rewards.cardIds || []) {
     if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  for (const draft of rewards.classDrafts || []) {
+    const tree = new Set(classTreeRows(registries, draft && draft.classId).map((row) => row.nodeId));
+    if (!draft || !registries.classes.has(draft.classId)) problems.push(`class draft class '${draft && draft.classId}' is unknown`);
+    for (const nodeId of (draft && draft.nodeIds) || []) {
+      if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
+    }
+  }
+  for (const draft of rewards.skillDrafts || []) {
+    if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
+    for (const cardId of (draft && draft.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`skill draft card '${cardId}' is unknown`);
+    }
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
@@ -498,7 +530,11 @@ export function createSaveManager(storage) {
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
       ensureProfile(); // a stored run implies a stored profile — never the other way round
-      storage.setItem(runKey(slot), serializeRun(run));
+      // W1l–W1r: the slot says when it was last written. Stamped only when the
+      // write lands, so a full store cannot leave a run claiming a save it lost.
+      const previous = run.savedAt;
+      run.savedAt = new Date().toISOString();
+      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**
@@ -515,6 +551,13 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        // SPEC §13.4: a save from before seats climbs the order it was already
+        // climbing — the default — and nothing else about it moves, no draw.
+        // A save that HAS an order must name every seat once, or it is a
+        // dangling id and refused like any other (§3.12).
+        if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
+        const seatProblems = seatOrderProblems(run.seatOrder, registries);
+        if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
         const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
         if (run.journey) {
           // deserializeRun validated the pinned manifest. Its graph is a derived
@@ -522,7 +565,7 @@ export function createSaveManager(storage) {
           for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
           run.mapGraph = journeyGraph(run.journey);
         } else {
-          assertSavedBossReferences(registries, run.mapGraph, mapAct);
+          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
           run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         }
         const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
@@ -533,6 +576,8 @@ export function createSaveManager(storage) {
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
+        const treeProblems = classTreeReferenceProblems(run, registries);
+        if (treeProblems.length) throw new Error(`Malformed class tree references: ${treeProblems.join('; ')}`);
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -547,6 +592,39 @@ export function createSaveManager(storage) {
             was: run.migratedFromRunSchemaVersion,
             now: RUN_SCHEMA_VERSION,
             why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
+        // Plan phase 3a: `zones`/`collection` are a projection of the legacy
+        // fields and were re-derived at the migration door; a save whose
+        // carried projection disagreed (an edit by hand — serializeRun cannot
+        // write one) is noted here, where the ledger is open, never refused.
+        if (run.reprojectedZones !== undefined) {
+          note(run, {
+            kind: 'overwrite',
+            site: 'state.js:migrateRunSchema',
+            field: 'zones',
+            was: run.reprojectedZones,
+            now: { zones: run.zones, collection: run.collection },
+            why: 'the saved zones disagreed with the class, loadout, relics and deck they are projected from; those fields own the truth until phase 3b, so the projection was re-derived',
+          });
+          delete run.reprojectedZones;
+        }
+        // Plan phase 5b: a class-tree pick no tree holds any more — a content
+        // update renamed or dropped the node — is stale, not a tamper (another
+        // class's node is refused above). It is dropped here, where the ledger
+        // is open, from the run and from a fight in progress; the rest stay.
+        for (const [holder, field] of [[run, 'coreTags'], [run.combatEntered && run.combatEntered.snapshot, 'combatEntered.snapshot.coreTags']]) {
+          const stale = holder ? staleCoreTags(registries, run.class, holder.coreTags) : [];
+          if (!stale.length) continue;
+          const was = [...holder.coreTags];
+          holder.coreTags = holder.coreTags.filter((id) => !stale.includes(id));
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was,
+            now: [...holder.coreTags],
+            why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
           });
         }
         normalizeRunAttributes(run, registries);
@@ -595,6 +673,40 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      // A slot row that arrived after this save was written (phase 3b: head,
+      // hands, feet) has no cells in it. Give each its empty cells, as a fresh
+      // run has them, and say so — a position the Armoury cannot draw is a
+      // piece the player could never equip.
+      // The active-combat snapshot carries its own loadout (the fight's
+      // authority, SPEC §13.3) and is healed the same way, in the same row.
+      const slotsAdded = healMissingSlotCells(registries, run.loadout);
+      const snapshotSlotsAdded = run.combatEntered && run.combatEntered.snapshot
+        ? healMissingSlotCells(registries, run.combatEntered.snapshot.loadout) : [];
+      if (slotsAdded.length || snapshotSlotsAdded.length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout.sets',
+          was: undefined,
+          now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
+          why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
+        });
+      }
+      // The skill threshold's standing rule (plan phase 4b, model/skills.js):
+      // a ledger written before the rule existed may stand past `upgradeAt`
+      // with its cards untouched; the rule is idempotent, so the load door
+      // asks it once and says what it did.
+      const skillUpgrades = reconcileSkillUpgrades(registries, run);
+      if (Object.keys(skillUpgrades).length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'deck.upgraded',
+          was: undefined,
+          now: skillUpgrades,
+          why: `the tracks ${Object.keys(skillUpgrades).join(', ')} stand at or past balance.skill.upgradeAt; the cards of their schools are upgraded, as the rule upgrades them at every award`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
@@ -679,6 +791,13 @@ export function createSaveManager(storage) {
           });
         }
         initializeRunFlaskCharges(run, registries);
+        // Plan phase 3a: the heals above (a missing loadout given the bare
+        // one, the deck re-stamped) wrote the fields the projection is drawn
+        // from, so it is drawn again here — the run that leaves the door
+        // carries a projection that is true NOW, not one that waits for the
+        // next save to catch up. The heals were noted where they fired; the
+        // projection following them is not a second event.
+        syncZones(run);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
@@ -734,6 +853,7 @@ export function createSaveManager(storage) {
           hp: r.hp,
           maxHp: r.maxHp,
           customization: r.customization,
+          savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
         };
       } catch (e) {
         return null;

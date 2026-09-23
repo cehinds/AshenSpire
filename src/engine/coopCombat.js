@@ -29,6 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { syncRelicProperties, syncClassProperties, syncLoadoutProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -37,7 +38,11 @@ import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { cardKind } from '../model/tree.js';
+import { gripOf, gripTags } from '../model/loadout.js';
+import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { refreshCombatRatings } from './combatRatings.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -53,9 +58,10 @@ export function coopHpMult(headcount, factor = 0.6) {
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {} }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const bal = registries.balance || {};
   const C = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     rng,
@@ -82,6 +88,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   };
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C._emitEvent = emitEvent;
+  attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events
@@ -108,13 +115,32 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
       damageResistanceBySchool: def.damageResistanceBySchool,
     }));
   });
+  if (C.ratingsRules) {
+    for (const enemy of C.enemies) {
+      const values = C.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
+  }
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
 
   // combatStart per player so each player's relics/statuses hook up.
+  //
+  // THE MOUNT IS INSIDE THIS LOOP, AND THAT IS THE WHOLE OF IT. A co-op owner
+  // key is the ACTIVE seat (triggers.js ownerKeyFor reads C.playerKey, which
+  // setActive moves), so mounting all seats in one pass outside it filed every
+  // seat's relics under whichever seat happened to be active — one owner, two
+  // seats, and the second seat's relic silently conferring nothing. Mounted
+  // under setActive, each seat's carriers land under the key its own scan will
+  // look them up by, which is the per-seat scoping test 24 exists for.
   for (const P of livingPlayers(C)) {
     setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
+    syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
+    if (C.ratingsRules) refreshCombatRatings(C);
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -155,6 +181,9 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.ratingId ? { ratingId: c.ratingId } : {}),
+    ...(Number.isFinite(c.ratingValue) ? { ratingValue: c.ratingValue } : {}),
+    ...(Number.isFinite(c.ratingCap) ? { ratingCap: c.ratingCap } : {}),
     ...(c.kitRole ? { kitRole: c.kitRole } : {}),
     ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
@@ -176,6 +205,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // dodge check) is decided from THIS player's equipment, not a Light default.
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
+    skills: p.skills ? structuredClone(p.skills) : {},
+    coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
@@ -184,7 +215,20 @@ function addPlayerState(C, p, { initial = false } = {}) {
   C.players.set(p.id, P);
   if (!C.order.includes(p.id)) C.order.push(p.id);
   if (!initial) {
-    // Mid-combat join: give them a fresh turn's hand if it's the player phase.
+    // Mid-combat join. Mount the relics they arrive holding under their own
+    // seat key, for the reason the initial loop states — but PUT THE ACTIVE
+    // SEAT BACK. A join can land in the enemy phase, where this function did
+    // not touch the active seat before, and leaving someone else's entity and
+    // piles installed on the shared context is how the next enemy action hits
+    // the wrong hand.
+    const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
+    setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
+    syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
+    if (C.ratingsRules) refreshCombatRatings(C);
+    setActive(C, wasActive || null);
+    // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
@@ -204,6 +248,7 @@ function setActive(C, P) {
   C.attributes = P ? P.attributes : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
+  C.skills = P ? P.skills : {};
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
@@ -307,7 +352,9 @@ function startPlayerPhase(C) {
     e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
-    e.energy = e.energyMax;
+    // Less what a Stagger took (plan phase 8): owed to this next turn only.
+    e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
+    e.pendingActionLoss = 0;
     A.drawCards(C, e.drawPerTurn);
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
@@ -388,9 +435,24 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  // The kind tag, not def.type (model/tree.js cardKind) — as solo combat reads it.
+  const kind = cardKind(def);
+  // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
+  const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
   const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+    ratingId: inst.ratingId,
+    ratingValue: inst.ratingValue,
+    ratingCap: inst.ratingCap,
+    equipmentRole: inst.equipmentRole,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -415,11 +477,11 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
   };
-  if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
+  if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
-    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
+    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
@@ -599,6 +661,7 @@ function enemyPhase(C) {
 // A move's self/enemy-targeted parts apply once; player-targeted damage +
 // effects fan out to every living player (each blocks independently).
 function executeMove(C, enemy, move, moveId) {
+  (enemy.performedMoves ||= []).push(moveId); // performed, not rolled (see combat.js)
   C.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.block != null) {
     setActive(C, firstLiving(C));

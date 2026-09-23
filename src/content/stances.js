@@ -34,4 +34,18 @@ export const stances = [
     ],
     tooltip: 'Whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.',
   },
+  {
+    // The class ability card's stance (plan phase 5a, proposal §4): Brace
+    // holds the line, and LEAVING it for another stance is the tempo —
+    // the next blows land harder.
+    id: 'brace',
+    name: 'Brace',
+    icon: '🦶',
+    onEnter: [{ op: 'block', target: 'self', amount: 4 }],
+    modifiers: { damageTakenMult: 0.75 },
+    hooks: [
+      { on: 'stanceExited', do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 }] },
+    ],
+    tooltip: 'Damage taken −25%. On entering: gain 4 Block. On leaving: gain 1 Strength.',
+  },
 ];
