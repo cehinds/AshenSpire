@@ -115,7 +115,12 @@ function previewContext(settings, previewAttributes, previewLevel, forcedRefusal
       attributeIds: (configured.attributes || []).map((attribute) => attribute.id),
       classFields: ['maxHp', 'maxMana'],
     })),
-    ratings: lazy(() => resolveCombatRatings(settings, configured)),
+    // THE RULES A FIGHT IS HANDED: `main.js` passes `registries.balance.
+    // combatRatings`, which only the configured bundle carries. A refused
+    // configuration falls back to the authored content, which carries none,
+    // so the fight runs with ratings off and so does the example — never the
+    // rejected overrides (Codex, on #1252).
+    ratings: lazy(() => configured.balance?.combatRatings || { ...resolveCombatRatings({}, configured), enabled: false }),
     newRun: () => newRun,
     hand: lazy(() => resolveHandRules(settings, configured.attributes)),
   };

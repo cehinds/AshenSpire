@@ -750,6 +750,13 @@ test('a refused configuration is named, and the example shows the rules a run ke
   const cost = statsTopicPreview({ 'gameConfig.balance.mana.minActionCost': 99, 'gameConfig.derivedStatRules.rules.hp.base': 50, settingsStatsExampleClass: 'reaver' }, 'HP');
   assert.match(cost.refused, /minActionCost/);
   assert.equal(cost.examples[0].lines[0].total, authored('reaver').maxHp);
+  // Ratings too: a refused file's rating overrides never reach a fight, and
+  // the authored content a refused configuration falls back to hands a fight
+  // no rating rules at all (main.js ratingsRules), so the example says ratings
+  // are off rather than applying the rejected multiplier (Codex, #1252).
+  const ar = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.combatRatings.multiplier': 2 }, 'Attack rating (AR)', { strength: 6 });
+  assert.equal(ar.examples[0].off, true);
+  assert.doesNotMatch(ar.examples[0].lines[0].expression, /× 2 all ratings/);
 });
 
 test('the example shows what a run is born with at the edges', async () => {
