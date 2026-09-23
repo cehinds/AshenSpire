@@ -461,46 +461,60 @@ plan and is stated there, not here.
 
 ## 7. Card flavor: how the world is told
 
-Narrative is ambient (GDD §4). The main channel is **one line of flavor text
-on a card**, shown in card inspection, never on the playable face and never in
-place of rule text. The card schema already accepts an optional `flavor`
-string on every card (`src/model/schemas.js`). Card inspection renders it in
-the optional **Flavor** disclosure; the playable face keeps only rules.
+Narrative is ambient (GDD §4). The main channel is **card lore**: a short
+item description on every card, in the manner of the Souls games' item text,
+shown only in card inspection — never on the playable face and never in place
+of rule text. The card schema accepts an optional `flavor` string on every card
+(`src/model/schemas.js`), and the basic weapon profiles carry their own in
+`content/source/basicCardProfiles.csv`. Card inspection renders it inside the
+folded **Flavor** disclosure, which keeps paragraph breaks, so a description has
+room to tell a story; the playable face keeps only rules.
 
-The first integration pass adds 37 attributed fragments to the four class
-pools, including each class's signature starter. Reaver lines come from the
-Warden's field-book, Rogue lines from frozen-dock cant, Starseer lines from
-the Astronomer's chart margins, and Herald lines from Chapel liturgy. Each
-fragment is at most twelve words, followed by its source attribution. These
-are authored directly beside their cards in `src/content/cards/`.
+The first two passes shipped twelve-word fragments. The third pass replaces
+every one of them with a full description: each card in `src/content/cards/`
+and each basic profile is told by one witness from one faction, about one
+moment in the kingdom's history, and is signed with its source. They are
+authored directly beside their cards.
 
-The second pass gives every remaining combat card a line: 150 more fragments
-across the four class pools, the colorless pool and the armament Arts, so no
-card in `src/content/cards/` is without flavor. Colorless and armament lines
-carry the Forsaken attribution *Cairn-scratch*; the status and curse cards and
-the co-op cards keep the unattributed lines they already had.
-
-The seed lines below are writing prompts, not verbatim shipping copy: shorten
-them to the rules and preserve §2's reveal boundary. In particular, Astral
-Insight hints at the fourth hearth rather than quoting the hearth-room page.
-Events, boss parleys, companions, and the ending remain later integration
-passes; card flavor does not imply those systems have shipped.
+The seed lines below are writing prompts, not verbatim shipping copy: fit them
+to the rules and preserve §2's reveal boundary. In particular, Astral Insight
+hints at the fourth hearth rather than quoting the hearth-room page. Events,
+boss parleys, companions, and the ending remain later integration passes; card
+lore does not imply those systems have shipped.
 
 ### Rules
 
-- **One sentence, twelve words or fewer.** Two short sentences at most.
-- **Name a thing you could pick up.** A bell, a brand, a ledger, a frozen
-  bridge. No abstractions.
-- **Never explain the rule.** Flavor may echo what the card does; it may not
-  teach it. A player who skips every line loses nothing.
-- **Fragments, not narration.** Each line is a shard of the old world. The
-  player assembles §2 from them; no single card states it.
-- **Voice belongs to the class pool.** Four voices, below. Colorless cards use
-  the Forsaken voice.
-- **Somebody said it.** Every line is someone's claim — a field-book, a
-  liturgy, a chart margin, a song. None of them is the authors. A line may be
-  wrong; the world does not correct it. Lines about the Ember, the fall or the
-  old world follow [LORE-EMBER.md](LORE-EMBER.md) §12.
+- **One witness per card.** Each description is a single perspective: a
+  field-book, a gate log, a surgeon's receipt, a chart margin, a rubric, a
+  sermon, the merchant, a hamlet council. It never sets two accounts side by
+  side. The last line names the source ("— Warden's field-book").
+- **Roughly seventy, ten, twenty.** About seventy percent of what a witness
+  says is true; about ten percent is that faction's bias (the Wardens blame the
+  Saints, the Court blames the Wardens, the Chapel calls the rite a gift, the
+  Starwatch calls it a star finishing, the docks call the Court hypocrites, the
+  hamlets resent the marked); about twenty percent is left open — a torn page,
+  a date that does not fit, a name scraped out, a question the witness will not
+  answer. The world never marks which is which.
+- **Pin it to a time.** Each card touches one age from
+  [LORE-WORLD.md](LORE-WORLD.md) §1 — the Fall, the Cinderwrights, the
+  Founding, the Marking, the Spring Wars, the Mark Trade, the Spire, the
+  Burning, the Long Winter — so that the set, read together, is a history.
+- **Plain, vague, rich.** Forty to ninety words, usually one paragraph, in
+  plain declarative sentences. Name things you could pick up. No run of short
+  fragments, no closing aphorism on every card, no "ancient," "eldritch,"
+  "eternal." Say less than the witness knows.
+- **Never explain the rule.** Lore may show what happens in the fiction; it may
+  not teach the card. No numbers and no game terms used as mechanics. A player
+  who skips every description loses nothing.
+- **The reveal boundary holds.** No card states plainly that names feed the
+  fire, that the Spire burns the unwritten, or what the Ember is or whether a
+  star fell ([LORE-EMBER.md](LORE-EMBER.md) §12–13). Faith creeds ("a name
+  written is a name kept") may be quoted as creeds.
+- **Invented people and places** are allowed when they contradict nothing here
+  or in [LORE-CAST.md](LORE-CAST.md) and [LORE-WORLD.md](LORE-WORLD.md), and
+  should recur across cards rather than appear once.
+- **No borrowed names.** The Souls games set the craft, not the vocabulary: no
+  proper noun or coined term from them ([IP-SCRUB.md](IP-SCRUB.md)).
 
 ### Four voices
 
