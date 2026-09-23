@@ -164,16 +164,17 @@ function withoutSupersededLegacy(entries) {
 // held skills, talents, relics, XP, rest and co-op side by side, each of which
 // has a real home elsewhere; it is gone, and anything not named here falls to
 // Combat, the tab for rules of play.
-//   - the legacy poise meter sits in Stats & Defence beside the ratings rows
-//     that replace it while ratings are on;
-//   - the fallback hand size sits in Hand & Draw beside the capacity in force;
+//   - everything that decides a trait is one topic of the Stats tab (owner,
+//     2026-09-21): the legacy poise meter sits under Stats → Poise beside the
+//     rating that replaces it while ratings are on, the fallback hand size
+//     under Stats → Draw & hand beside the capacity in force, and the Mana
+//     card rules under Stats → Mana;
 //   - character XP, skills and talents are Progression;
 //   - equipment and relic values are one Equipment tab;
 //   - how a run is built — rest, the atlas, seats, run modifiers, gauntlet,
 //     co-op, endless — is World.
 function balanceGroup(path) {
-  if (/^(poise|stagger)\./.test(path)) return 'Ratings & Resistance';
-  if (path === 'handMax') return 'Hand & Draw';
+  if (/^(poise|stagger|mana)\./.test(path) || path === 'handMax') return 'Stats';
   if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
@@ -305,6 +306,22 @@ function labelSegment(part, sentence = false) {
     .join(' ');
 }
 
+// The generated rows filed under Advanced → Stats sit beside hand-written rows
+// ("Hand capacity — Base cards", "Keep unplayed cards after your turn"), so
+// they say what they do rather than spell their key; "Poise · On Fill · 0 —
+// Stacks" named an array index. Everything else keeps its key-derived label.
+const BALANCE_LABELS = Object.freeze({
+  handMax: 'Fallback hand capacity',
+  'poise.growthMult': 'Poise meter growth after each fill',
+  'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
+  'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
+  'stagger.player.actionLoss': 'Actions you lose when your meter fills',
+  'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
+  'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
+  'mana.minActionCost': 'Least action cost of a mana card',
+  'mana.minStaminaCost': 'Least stamina cost of a mana card',
+});
+
 /**
  * balanceLabel(path) → the row's one label.
  *
@@ -315,6 +332,8 @@ function labelSegment(part, sentence = false) {
  * only reason its two siblings are now telling apart.
  */
 function balanceLabel(path) {
+  const named = BALANCE_LABELS[path.join('.')];
+  if (named) return named;
   const leaf = labelSegment(path[path.length - 1], true);
   const context = path.slice(0, -1).map((part) => labelSegment(part));
   return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;

@@ -1076,7 +1076,28 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-topic-tabs > button[aria-selected='true'] { color: var(--accent); border-color: var(--accent); }
 .set-group-summary { display: flex; gap: .6rem; align-items: baseline; justify-content: space-between; margin: 0 0 .6rem; color: var(--muted); font-size: 1.05rem; }
 .set-group-summary .set-config-count { flex: none; white-space: nowrap; }
-.set-topic-panel[hidden], .set-topic-panel .set-row[hidden], .set-advanced-group[hidden] { display: none; }
+.set-topic-panel[hidden], .set-topic-panel .set-row[hidden], .set-advanced-group[hidden], .set-subsection-heading[hidden] { display: none; }
+/* Advanced → Stats: the live worked example above each trait's controls, and
+   the subsection headings between its groups of rows. */
+.set-example { margin: 0 0 .8rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
+.set-example-head { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: baseline; justify-content: space-between; }
+.set-example-head > span, .set-example-who { color: var(--muted); }
+.set-example-who select { margin-left: .4rem; padding: .15rem .35rem; color: inherit; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); font: inherit; }
+.set-example-attrs { margin: .3rem 0 .5rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.set-example-block + .set-example-block { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+.set-example-block.is-off { opacity: .6; }
+.set-example-title { font-weight: 600; }
+.set-example-title small, .set-example-lines small { color: var(--muted); font-weight: 400; }
+.set-example-lines { margin: .3rem 0 0; }
+.set-example-lines > div { display: grid; grid-template-columns: minmax(7rem, max-content) 1fr; gap: .15rem .7rem; padding: .15rem 0; }
+.set-example-lines dt { color: var(--muted); }
+.set-example-lines dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.set-example-total { color: var(--gold); white-space: nowrap; }
+.set-example-hint { margin: .35rem 0 0; color: var(--muted); font-style: italic; }
+.set-example-problem { border-left-color: var(--blood); }
+@media (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
+.set-subsection-heading { margin: .9rem .2rem .3rem; color: var(--gold); font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }
+.set-subsection-heading:first-child { margin-top: .2rem; }
 .set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }
 [data-settings-host] .set-topic-panel .set-row { padding: .4rem .7rem; }
 @media (min-width: 800px) { .modal.settings-modal[data-authored-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
@@ -1194,9 +1215,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }
 .flick-practice[data-ready='true'] { border-style:solid; box-shadow:inset 0 0 12px #c9a84c55; }
 .flick-practice output { min-height:3em; font-size:14px; }
-/* Hand rule labels stay readable in the compact settings pane. */
-[data-advanced-panel="Hand & Draw"] .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
-[data-advanced-panel="Hand & Draw"] [aria-disabled="true"] { opacity: .5; }
+/* Stats labels (hand rules, conversions) stay readable in the compact settings pane. */
+[data-advanced-panel="Stats"] .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
+[data-advanced-panel="Stats"] [aria-disabled="true"] { opacity: .5; }
 .modal.hand-discard-modal { background: var(--bg-raise); }
 .hand-discard-modal .modal-head h2 { white-space: normal; }
 .hand-discard-item { display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(100%, calc(220px / var(--ui-zoom, 1))); }

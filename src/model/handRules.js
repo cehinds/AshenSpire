@@ -22,23 +22,39 @@ export function handRulesProblems(rules) {
   return problems;
 }
 
+/**
+ * handRulesRows(attributes) → the settings rows for every hand rule.
+ *
+ * Filed under Advanced → Stats → Draw & hand, beside the Draw conversion, so
+ * everything that decides how many cards you hold is edited in one place
+ * (owner, 2026-09-21). `settingSection` names the subsection each row is drawn
+ * under, and the rows are pushed in the order a turn reads them — opening
+ * hand, turn draws, capacity, then what happens to unplayed cards — so each
+ * subsection is one unbroken run of rows (tests/hand-rules.test.mjs).
+ */
 export function handRulesRows(attributes = []) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
-    cat: 'Advanced', advancedGroup: 'Hand & Draw', handTopic: topic,
+    cat: 'Advanced', advancedGroup: 'Stats', handTopic: topic, settingSection: topic,
     key: HAND_RULES_PREFIX + path, def, label,
     note: '',
     ...(typeof def === 'number' ? { type: 'number', integer: true, step: 1, min: 0, max: 99 } : {}), ...extra,
   });
-  add('retain', handRulesDefaults.retain, 'Retain unplayed cards', 'Retention & discards');
-  add('promptDiscard', false, 'Prompt for optional discards', 'Retention & discards', { requires: ['retain', true] });
-  add('discardLimit', 10, 'Maximum optional discards per turn', 'Retention & discards', { requires: ['promptDiscard', true] });
-  add('replaceDiscards', false, 'Replace optional discards next turn', 'Retention & discards', { requires: ['promptDiscard', true], note: 'Adds replacements to fixed draws, still capped by hand capacity. Fill mode already refills the hand.' });
-  add('overflow', 'keep', 'When hand exceeds capacity', 'Hand capacity', { type: 'choice', dropdown: true, choices: ['keep', 'discard'], choiceLabels: { keep: 'Keep cards; stop drawing', discard: 'Discard excess at turn end' } });
-  add('reshuffle', true, 'Reshuffle when empty', 'Turn draws', { note: 'Shuffle the discard pile back into the draw pile when needed.' });
-  add('drawMode', 'fill', 'Draw mode', 'Turn draws', { type: 'choice', dropdown: true, choices: ['fill', 'fixed'], choiceLabels: { fill: 'Fill hand', fixed: 'Fixed draw' } });
-  for (const [group, topic] of Object.entries(groups)) {
-    const labels = { base: group === 'capacity' ? 'Base hand capacity' : group === 'starting' ? 'Base starting draw' : 'Base cards drawn per turn', statEnabled: 'Enable stat scaling', stat: 'Scaling stat', baseline: 'Stat baseline', pointsPerCard: 'Stat points per additional card', minimum: 'Minimum cards', maximum: 'Maximum cards' };
+  const addGroupRows = (group) => {
+    const topic = groups[group];
+    const subject = group === 'capacity' ? 'hand capacity' : group === 'starting' ? 'opening hand' : 'turn draw';
+    // Three groups share one topic, so each label names its group: a search
+    // that finds all three still tells them apart.
+    const Subject = subject[0].toUpperCase() + subject.slice(1);
+    const labels = {
+      base: `${Subject} — Base cards`,
+      statEnabled: `${Subject} — Grow with an attribute`,
+      stat: `${Subject} — Attribute used`,
+      baseline: `${Subject} — Attribute points before bonuses`,
+      pointsPerCard: `${Subject} — Attribute points per extra card`,
+      minimum: `${Subject} — Never fewer than`,
+      maximum: `${Subject} — Never more than`,
+    };
     for (const [field, def] of Object.entries(handRulesDefaults[group])) {
       const extra = {};
       if (field === 'stat') Object.assign(extra, { type: 'choice', choices: attributes.map(a => a.id), choiceLabels: Object.fromEntries(attributes.map(a => [a.id, `${a.label} (${a.shortLabel})`])) });
@@ -46,11 +62,45 @@ export function handRulesRows(attributes = []) {
       if (group === 'capacity' && ['base', 'minimum', 'maximum'].includes(field)) extra.min = 1;
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
       if (group === 'turn') extra.fixedOnly = true;
-      if (field === 'baseline') extra.note = 'Only points above this value earn bonus cards. Lower stats never subtract cards.';
-      if (field === 'pointsPerCard') extra.note = 'Whole intervals only: floor((stat − baseline) ÷ points per card).';
+      if (field === 'base') extra.note = `The ${subject} before any attribute bonus.`;
+      if (field === 'statEnabled') extra.note = `On: the attribute below adds cards to the ${subject}. Off: only the base and the limits apply.`;
+      if (field === 'stat') extra.note = `The attribute that adds cards to the ${subject}.`;
+      if (field === 'baseline') extra.note = 'Only points above this value earn extra cards. Lower attributes never remove cards.';
+      if (field === 'pointsPerCard') extra.note = 'Lower is faster. Extra cards = floor((attribute − points before bonuses) ÷ this).';
+      if (field === 'minimum') extra.note = `The ${subject} never drops below this.`;
+      if (field === 'maximum') extra.note = `The ${subject} never rises above this, whatever the attribute.`;
       add(`${group}.${field}`, def, labels[field], topic, extra);
     }
-  }
+  };
+  addGroupRows('starting');
+  add('drawMode', 'fill', 'How cards are drawn each turn', groups.turn, {
+    type: 'choice', dropdown: true, choices: ['fill', 'fixed'],
+    choiceLabels: { fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
+    note: 'Fill draws until your hand reaches capacity. Fixed draws the turn amount below, never past capacity.',
+  });
+  add('reshuffle', true, 'Reshuffle when empty', groups.turn, { note: 'Shuffle the discard pile back into the draw pile when it runs out.' });
+  addGroupRows('turn');
+  addGroupRows('capacity');
+  add('overflow', 'keep', 'When your hand is over capacity', groups.capacity, {
+    type: 'choice', dropdown: true, choices: ['keep', 'discard'],
+    choiceLabels: { keep: 'Keep cards; stop drawing', discard: 'Discard excess at turn end' },
+    note: 'Whether retained cards past capacity stay (and block draws) or are discarded at turn end.',
+  });
+  add('retain', handRulesDefaults.retain, 'Keep unplayed cards after your turn', 'Retention & discards', {
+    note: 'On: cards you do not play stay in hand. Off: they go to the discard pile at turn end.',
+  });
+  add('promptDiscard', false, 'Offer optional discards at turn end', 'Retention & discards', {
+    requires: ['retain', true],
+    note: 'While cards are kept, pause at turn end so you can discard the ones you do not want.',
+  });
+  add('discardLimit', 10, 'Most cards you may discard by choice', 'Retention & discards', {
+    requires: ['promptDiscard', true],
+    note: 'Caps only the optional turn-end discard. Discards forced by capacity can exceed it.',
+  });
+  add('replaceDiscards', false, 'Replace optional discards next turn', 'Retention & discards', {
+    requires: ['promptDiscard', true],
+    note: 'Adds replacements to fixed draws, still capped by hand capacity. Fill mode already refills the hand.',
+  });
   return rows;
 }
 
@@ -89,8 +139,19 @@ export function handRulesSettingsProblems(settings = {}) {
  * reading of an attribute, one hand size.
  */
 export function scaledCards(rule, attributes = {}) {
-  const bonus = rule.statEnabled ? Math.floor(Math.max(0, (attributes?.[rule.stat] || 0) - rule.baseline) / rule.pointsPerCard) : 0;
-  return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
+  return scaledCardsReceipt(rule, attributes).value;
+}
+
+/** scaledCardsReceipt(rule, attributes) → every term `scaledCards` used, for a worked example. */
+export function scaledCardsReceipt(rule, attributes = {}) {
+  const points = Number(attributes?.[rule.stat]) || 0;
+  const bonus = rule.statEnabled ? Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard) : 0;
+  const raw = rule.base + bonus;
+  return {
+    stat: rule.stat, statEnabled: rule.statEnabled, points, baseline: rule.baseline, pointsPerCard: rule.pointsPerCard,
+    base: rule.base, bonus, raw, minimum: rule.minimum, maximum: rule.maximum,
+    value: Math.min(rule.maximum, Math.max(rule.minimum, raw)),
+  };
 }
 
 export function handRuleSummary(rules, attributes = {}) {

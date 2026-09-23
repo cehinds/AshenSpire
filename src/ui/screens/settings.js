@@ -8,9 +8,10 @@ import { previewPrologue } from './prologue.js';
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
-import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
+import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
@@ -673,13 +674,17 @@ const ADVANCED_GROUPS = Object.freeze([
   // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
   // last had "Rules" open lands on the first tab rather than a blank panel.
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
-  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, stat conversions, skills and talents.' },
+  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, skills and talents. What the points turn into is under Stats.' },
   // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
   // holds authored constants, so it is exactly where someone looking for an
   // animation switch lands. One clause ends that walk.
   { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
-  { id: 'Hand & Draw', label: 'Hand & Draw', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact, breaks and status resistance — and the older poise meter used when ratings are off.' },
+  // ONE TAB PER IDEA, AND STATS IS ONE IDEA (owner, 2026-09-21). Hand & Draw,
+  // Stats & Defence, Progression → Stats & resources and the Poise, Stagger
+  // and Mana constants were four doors onto the same traits. Each trait is one
+  // topic here (models/AdvancedSettingsGroups.js) with a live worked example
+  // (models/StatsPreviewModel.js).
+  { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
@@ -722,8 +727,12 @@ export function formationLayoutRows() {
     .find((group) => group.id === 'Formation layout')?.rows || [];
 }
 
+// Tabs merged into Stats. A profile whose last-open tab was one of them opens
+// on Stats rather than on the first tab.
+const MERGED_ADVANCED_GROUPS = Object.freeze({ 'Ratings & Resistance': 'Stats', 'Hand & Draw': 'Stats' });
+
 export function activeAdvancedGroup(settings) {
-  const stored = settings?.[ADVANCED_CAT_KEY];
+  const stored = MERGED_ADVANCED_GROUPS[settings?.[ADVANCED_CAT_KEY]] || settings?.[ADVANCED_CAT_KEY];
   return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
 }
 
@@ -1714,7 +1723,29 @@ export function compactAdvancedRow(row, groupId, subgroupId) {
   return compact;
 }
 
-function categoryHtml(cat, settings, saves) {
+// ---- Advanced → Stats: the live worked example ------------------------------
+//
+// Computed by models/StatsPreviewModel.js from the same configured bundle a new
+// run is born from, and redrawn after every edit (`refreshStatsPreviews`), so
+// the numbers under a dial are the ones the dial produces.
+export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null) {
+  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel);
+  if (!preview) return '';
+  if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
+  const classes = statsExampleClasses();
+  const who = preview.subject.current || classes.length < 2
+    ? `<span>${esc(preview.subject.label)}</span>`
+    : `<label class="set-example-who">Example character <select data-stats-example-class aria-label="Example character">${classes.map((entry) => `<option value="${esc(entry.id)}"${entry.id === preview.subject.classId ? ' selected' : ''}>New ${esc(entry.label)}</option>`).join('')}</select></label>`;
+  const examples = preview.examples.map((example) => `<div class="set-example-block${example.off ? ' is-off' : ''}" data-stat-example="${esc(example.id)}">`
+    + `<div class="set-example-title">${esc(example.title)}${example.legacy ? ` <small>${esc(example.legacy)}</small>` : ''}</div>`
+    + (example.lines.length ? `<dl class="set-example-lines">${example.lines.map((line) => `<div><dt>${esc(line.label)}</dt><dd><span class="set-example-math">${esc(line.expression)}</span> <b class="set-example-total">= ${esc(String(line.total))}</b>${line.capped != null ? ` <small>(capped at ${esc(String(line.capped))})</small>` : ''}</dd></div>`).join('')}</dl>` : '')
+    + (example.hint ? `<p class="set-example-hint">${esc(example.hint)}</p>` : '')
+    + '</div>').join('');
+  return `<div class="set-example" aria-live="polite"><div class="set-example-head"><strong>Worked example</strong>${who}</div>`
+    + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
+}
+
+function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null) {
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
@@ -1760,8 +1791,19 @@ function categoryHtml(cat, settings, saves) {
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
+          // Only the topic on screen computes its example; the others fill in
+          // when opened (`refreshStatsPreviews`), so an edit costs one example.
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${sub === activeSub && group.id === active ? statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel) : ''}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
-            : sub.rows.map(row => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join(''))
+            : sub.rows.map((row, rowIndex) => {
+              // A Stats topic reads as short subsections (Formula, Level
+              // growth, Starting hand, …): a heading wherever the section
+              // changes. `advancedSubgroups` keeps each one contiguous.
+              const section = group.id === 'Stats' ? statsSection(row) : null;
+              const heading = section && section !== (rowIndex ? statsSection(sub.rows[rowIndex - 1]) : null)
+                ? `<h4 class="set-subsection-heading" data-subsection="${esc(section)}">${esc(section)}</h4>` : '';
+              return heading + settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id));
+            }).join(''))
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
@@ -1795,7 +1837,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null }) {
   panelSettings = settings;
   let html = '';
   let cats = [];
@@ -1840,7 +1882,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel)}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
@@ -1918,13 +1960,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -1944,22 +1986,38 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // reaches `settings`, so the model has nothing to report. Keyed by row, so a
   // legal re-entry clears exactly the message it replaced.
   const typedRefusals = new Map();
+  const refreshStatsPreviews = () => {
+    container.querySelectorAll('.set-advanced-group:not([hidden]) .set-topic-panel:not([hidden]) [data-stats-preview]').forEach((node) => {
+      node.innerHTML = statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel);
+      node.querySelector('[data-stats-example-class]')?.addEventListener('change', (event) => {
+        settings[STATS_EXAMPLE_CLASS_KEY] = event.target.value;
+        onChange({ [STATS_EXAMPLE_CLASS_KEY]: event.target.value });
+        refreshStatsPreviews();
+      });
+    });
+  };
+  // A subsection whose every row is hidden (fixed-draw rows while drawing to
+  // capacity, or a search) draws no heading over nothing.
+  const syncSubsectionHeadings = () => {
+    container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      let node = heading.nextElementSibling;
+      let visible = false;
+      while (node && !node.classList.contains('set-subsection-heading')) {
+        if (node.classList.contains('set-row') && !node.hidden) { visible = true; break; }
+        node = node.nextElementSibling;
+      }
+      heading.hidden = !visible;
+    });
+  };
   const reportAdvancedProblems = () => {
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
     const rules = resolveHandRules(settings, contentBundle.attributes);
-    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    // The Stats → Draw & hand worked example states the hand these rules deal
+    // (`refreshStatsPreviews`); what is left here is which rows apply.
+    const section = container.querySelector('[data-advanced-panel="Stats"]');
     if (section) {
-      let summary = section.querySelector('[data-hand-summary]');
-      if (!summary) {
-        summary = document.createElement('p');
-        summary.dataset.handSummary = '';
-        summary.className = 'set-group-summary';
-        summary.setAttribute('aria-live', 'polite');
-        section.querySelector('.set-group-summary').after(summary);
-      }
-      summary.textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {}) + ' Stat bonuses use whole intervals above the baseline.';
       for (const row of handRulesRows(contentBundle.attributes)) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
@@ -1974,6 +2032,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         });
       }
     }
+    refreshStatsPreviews();
+    syncSubsectionHeadings();
     // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
     //
     // This used to be one notice at the top of Settings carrying `problems[0]`
@@ -2027,6 +2087,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
       filterAdvancedRows();
+      refreshStatsPreviews();
     });
   });
 
@@ -2060,6 +2121,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
     const count = section.querySelector('[data-config-count]');
     if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
+    syncSubsectionHeadings();
   };
   if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
   container.querySelectorAll('.set-advanced-group').forEach(section => {
@@ -2077,6 +2139,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       syncTopicPicker();
       if (advancedSearch) advancedSearch.value = '';
       filterAdvancedRows();
+      refreshStatsPreviews();
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2118,7 +2181,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
       onChange(changed);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
     };
   });
 
@@ -2174,7 +2237,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -2231,7 +2294,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -2399,7 +2462,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2757,7 +2820,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(cat, settings, saves);
+    panel.innerHTML = categoryHtml(cat, settings, saves, previewAttributes, previewLevel);
     panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
     // A tab switch is a new screenful. Start it at the top, or the player lands
     // mid-way down a section they have never seen.
@@ -2857,7 +2920,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -2874,7 +2937,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel }); },
     secondary: [load],
     primary: done,
     footSize: 'short',
@@ -2893,7 +2956,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
