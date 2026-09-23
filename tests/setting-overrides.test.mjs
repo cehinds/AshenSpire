@@ -330,3 +330,16 @@ test('a blank every-stat number does not switch the shared mode on', () => {
     assert.equal(row(OWN_HP).resolve({ statTierSize: blank }), true, 'every stat keeps its own number');
   }
 });
+
+// Owner, 2026-09-23 (after the Battlefield check in a browser): movement's
+// own settings are disabled while formation movement is off.
+test('formation movement settings are disabled while movement is off', () => {
+  const off = {};
+  const on = { 'gameConfig.presentation.movementEnabled': true };
+  for (const leaf of ['movementNeedsSelection', 'movementCostsAction', 'tileActivation', 'moveActivation']) {
+    const key = `gameConfig.presentation.${leaf}`;
+    assert.match(gateSentence(closedGate(off, row(key)), off), /Enable formation movement” is on/, leaf);
+    assert.equal(closedGate(on, row(key)), null, leaf);
+  }
+  assert.equal(closedGate(off, row('gameConfig.presentation.selectionColor')), null, 'the shared selection colour stays live');
+});

@@ -642,6 +642,12 @@ function enableGates(key, swapRuleIds = []) {
   if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
   // The older poise meter, and the derived Poise rule, run only with ratings off.
   if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  // Formation movement's own rules do nothing while movement is off: a move is
+  // refused before cost, selection or activation is read (formationMovement.js).
+  // The shared selection colour stays live — it also marks cards and menus.
+  if (/^gameConfig\.presentation\.(movementNeedsSelection|movementCostsAction|tileActivation|moveActivation)$/.test(key)) {
+    return [{ key: `${ADVANCED_CONFIG_PREFIX}presentation.movementEnabled` }];
+  }
   if (DROP_ROLL.test(key)) return [{ key: `${balance}equipment.drops.enabled` }];
   const mounts = `${balance}equipment.cardMounts.extraMounts`;
   if (key.startsWith(`${mounts}.`) && key !== `${mounts}.enabled`) return [{ key: `${mounts}.enabled` }];
