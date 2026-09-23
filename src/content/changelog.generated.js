@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every card now carries its own piece of the world's history",
     "detail": "Open a card and unfold its Flavor panel: all 195 combat cards and the 17 basic weapon cards — the Strikes, Guards and Techniques your weapon gives you — now have a short description told by someone who was there. A Warden's field-book, a Fell Courtyard gate log, a Court surgeon's receipt, the Astronomer's chart margins, a Chapel rubric, a sermon of the Feral Ember, the Tollmouth fence, a hamlet council: each speaks for itself, signs its name, and is mostly right, partly partisan and partly silent. Read together they span the kingdom from the Cinderwrights to the Long Winter, and they disagree. The panel now keeps paragraph breaks. No card's rules or numbers changed.",
-    "build": "0.7.1.397",
+    "build": "0.7.1.405",
     "pullRequest": 1258,
     "url": "https://github.com/cehinds/AshenSpire/pull/1258"
+  },
+  {
+    "id": "pr-1255",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
+    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
+    "build": "0.7.1.403",
+    "pullRequest": 1255,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1255"
   },
   {
     "id": "pr-1243",

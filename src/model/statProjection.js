@@ -30,6 +30,10 @@ function presentationRows(registries) {
  * alone. `active` stays false until a combat rule consumes it — the day the
  * player-poise mechanics land, that flip is theirs to make, with the note.
  */
+// Phase 8's player Poise: Constitution × balance.poise.playerPerConstitution,
+// shipped as 1. The rule a run born before derived-stat ruleset 5 keeps.
+const LEGACY_PLAYER_POISE_RULE = Object.freeze({ base: 0, pointsPerTier: 1, gainPerTier: 1 });
+
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
@@ -49,17 +53,23 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
   // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
   // not been written yet; reading it from two places would be the copy Law 1
-  // forbids. A run whose own snapshot predates the row falls through to the
-  // live table, which is what a headless fixture and a creation preview need;
-  // a run that HAS the row is priced by its own, below.
+  // forbids.
   // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
-  // fallback for a caller that carries no run (a headless fixture, a
-  // creation preview). A run born under an Advanced tier-size override
-  // records that override in its snapshot, and reading the authored row
-  // instead would price its meter by numbers that run never agreed to
+  // fallback for a caller that carries no snapshot at all (a headless
+  // fixture, a creation preview). A run born under an Advanced tier-size
+  // override records that override in its snapshot, and reading the authored
+  // row instead would price its meter by numbers that run never agreed to
   // (Codex, #1217).
-  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
-    || registries.derivedStatRules?.rules?.poise;
+  // A SNAPSHOT WITHOUT THE ROW IS AN ANSWER, NOT A GAP. Poise joined the
+  // derived table in ruleset 5; a run born under 1–4 was priced by phase 8's
+  // `balance.poise.playerPerConstitution`, which shipped as 1 — Constitution
+  // one-for-one. That coefficient is frozen here as the rule such a run was
+  // born under, so its meter neither loses the Constitution term nor follows
+  // the live row when that row is retuned (review, #1217 and #1255).
+  const ownSnapshot = run.derivedStatRuleSnapshot?.rules?.rules;
+  const poiseRule = ownSnapshot
+    ? ownSnapshot.poise || LEGACY_PLAYER_POISE_RULE
+    : (registries.derivedStatRules?.rules?.poise || null);
   const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
     : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
   const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
