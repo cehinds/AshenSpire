@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-23
+
+- **You can go back to your points after Continue, and a saved fight keeps its own rules** ([#1255](https://github.com/cehinds/AshenSpire/pull/1255), `0.7.1.382`). Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an *Edit points* button now reopens the editor with your numbers still on it, and Cancel puts them back. The Review card no longer shows two chips both called Poise with different numbers. The equipment screen stops refusing a +1 weapon you can in fact hold, and a smithing tier that lowers an armour's requirement now lowers it. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.
+
 ## 2026-09-21
 
 - **An enemy's move is spelled the same in settings as in the fight** ([#1250](https://github.com/cehinds/AshenSpire/pull/1250), `0.7.1.380`). The last settings pass lowered the second word of every enemy move under Enemy attack types, so the Wyrm Aspirant's *Halberd Sweep* — which is what its move card, its intent and its history call it in combat — read *Halberd sweep type* in settings. A move is a name, so the settings row now spells it exactly as the fight does: *Wyrm Aspirant — Halberd Sweep type*. The field names beside it stay as phrases — *Poise action loss*, *Recovery per turn* — because those are descriptions, not names. No setting changed its value or key.
