@@ -1,5 +1,6 @@
 import { contentBundle } from '../../content/index.js';
 import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
+import { memberOfOwnKey } from '../../model/settingOverrides.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./g, ' ').replace(/^./, c => c.toUpperCase());
@@ -16,6 +17,8 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // model group, Interface, spans three tabs.
 const BATTLEFIELD = /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/;
 export function advancedSection(row) {
+  // An override switch files with the row it governs.
+  row = row.own ? { ...row, key: memberOfOwnKey(row.key) } : row;
   if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
   if (BATTLEFIELD.test(row.key)) return 'Battlefield';
@@ -61,7 +64,7 @@ function talentTopic(path) {
 }
 
 function topic(row, section) {
-  const key = row.key;
+  const key = row.own ? memberOfOwnKey(row.key) : row.key;
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
   // Rows that share a quantity with another tab's rows are filed together,
   // before any row's own topic is consulted.
@@ -78,7 +81,7 @@ function topic(row, section) {
   if (row.handTopic) return row.handTopic;
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
-    // The tier dial replaces every stat's own "stat points per increase" while
+    // The every-stat number replaces a stat's own "points per increase" while
     // it is off its default, so it leads the rows it overrides rather than
     // sitting a topic away from them.
     if (key === 'statTierSize') return 'Stat conversions';
@@ -155,9 +158,21 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
+  // An override switch sits directly above the first row it governs, wherever
+  // generation put it, so the switch and its number read as one control.
+  for (const group of result) {
+    for (const toggle of group.rows.filter((row) => row.own)) {
+      const member = memberOfOwnKey(toggle.key);
+      const rest = group.rows.filter((row) => row !== toggle);
+      const at = rest.findIndex((row) => row.key === member || row.key.startsWith(`${member}.`));
+      if (at >= 0) group.rows = [...rest.slice(0, at), toggle, ...rest.slice(at)];
+    }
+  }
   // The tier dial leads the per-stat rows it overrides.
   for (const group of result) {
-    if (group.id === 'Stat conversions') group.rows.sort((a, b) => Number(b.key === 'statTierSize') - Number(a.key === 'statTierSize'));
+    // The general switch, then the dial it governs, then the per-stat rows.
+    const lead = (row) => (row.key === 'gameConfig.derivedStatRules.sharedPointsPerIncrease' ? 2 : row.key === 'statTierSize' ? 1 : 0);
+    if (group.id === 'Stat conversions') group.rows.sort((a, b) => lead(b) - lead(a));
   }
   // A topic not named in an order keeps its discovered order, after the named
   // ones.

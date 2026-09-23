@@ -48,7 +48,10 @@ test('Progression is the one driver: pool first, then each class, and the tier d
   // rows at all: they were read from authored content, never from an override,
   // so the two bound rows moved nothing and are retired.
   const conversions = groups.find(group => group.id === 'Stat conversions');
-  assert.equal(conversions.rows[0].key, 'statTierSize', 'the dial sits first, above the rows it overrides');
+  // The general switch leads, then the every-stat number it governs, then the
+  // per-stat rows each with its own switch (2026-09-23).
+  assert.deepEqual(conversions.rows.slice(0, 2).map(row => row.key),
+    ['gameConfig.derivedStatRules.sharedPointsPerIncrease', 'statTierSize'], 'the switch and the every-stat number lead');
   assert.ok(conversions.rows.some(row => row.key === 'gameConfig.derivedStatRules.rules.hp.pointsPerTier'));
   const general = groups.find(group => group.id === 'General');
   assert.deepEqual(general.rows.map(row => row.key), ['creationAutoAdvance']);

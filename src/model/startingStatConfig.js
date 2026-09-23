@@ -1,3 +1,32 @@
+import { ownKey } from './settingOverrides.js';
+
+// The general switch over every stat's "attribute points per increase". A
+// gameConfig key, so it rides in the configuration snapshot a run is born
+// under with the per-stat switches it governs. Its default follows the older
+// dial: a profile that had moved the every-stat number (profile key
+// `statTierSize`) off its default starts with the switch ON, so that number
+// keeps doing what it did for that player.
+//
+// NO "TIER" ON SCREEN (owner, 2026-09-23: "I don't like the term tier … it
+// should be stat driven"). The rows say what the number is — how many points
+// of the stat's own attribute raise it once — and name the attribute. The
+// keys keep their old spelling so saved profiles and exports still load.
+export const SHARED_RATE_KEY = 'gameConfig.derivedStatRules.sharedPointsPerIncrease';
+export const SHARED_RATE_LABEL = 'Every stat uses the same attribute points per increase';
+export const EVERY_STAT_RATE_LABEL = 'Attribute points per increase — every stat';
+export function sharedRateFlag(bundle) {
+  const shipped = bundle.derivedStatRules.defaults.pointsPerTier;
+  return {
+    key: SHARED_RATE_KEY,
+    defaultOn: (settings) => {
+      const dial = Number(settings.statTierSize);
+      return Number.isFinite(dial) && dial !== shipped;
+    },
+  };
+}
+
+const word = (value) => String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+
 const PREFIX = 'gameConfig.startingStats.';
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
@@ -124,13 +153,27 @@ export function equipmentRequirementRows(bundle) {
   });
   for (const row of bundle?.equipment?.equipmentRequirements || []) {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const piece = names[row.itemId] || row.itemId;
+    // An item's own requirement wins over the multiplier only while its switch
+    // is on; off, the row shows (and the game uses) authored × multiplier.
+    // Off by default, and on for any item a profile already pinned.
+    const own = { member: key, defaultOn: false };
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
+      key: ownKey(key), def: false, own,
+      label: `${piece} — own ${labels[row.attributeId] || row.attributeId} requirement`,
+      searchPath: `equipment requirement ${row.itemId} ${row.attributeId} override`,
+      note: `On: the number below is ${piece}'s requirement, whatever the multiplier says. Off: it is the authored ${row.minimum} × the multiplier. Applies to a new run.`,
+    });
     rows.push({
       cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
       type: 'number', integer: true, step: 1, min: 0, max: TOTAL_MAX, def: row.minimum,
-      key: `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`,
+      key,
+      gate: { key: ownKey(key), own, inherited: (settings) => scaledRequirement(row.minimum, settings) },
       label: `${names[row.itemId] || row.itemId} — ${labels[row.attributeId] || row.attributeId} required`,
       searchPath: `equipment requirement ${row.itemId} ${row.attributeId}`,
-      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Overrides the multiplier above for this item. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
+      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Used only while the switch above is on. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
     });
   }
   return rows;
@@ -144,17 +187,27 @@ export function equipmentRequirementRows(bundle) {
  * leave `bundle.equipment` shared by reference in the ordinary case — the
  * table is large and every run pays for a clone of it.
  */
+function requirementScale(settings = {}) {
+  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
+  return Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
+    ? Number(rawScale) : 1;
+}
+
+function scaledRequirement(minimum, settings) {
+  return Math.max(0, Math.min(TOTAL_MAX, Math.round(minimum * requirementScale(settings))));
+}
+
 export function resolveEquipmentRequirements(bundle, settings = {}) {
   const authored = bundle?.equipment?.equipmentRequirements || [];
-  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
-  const scale = Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
-    ? Number(rawScale) : 1;
   let changed = false;
   const next = authored.map((row) => {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) return row;
-    const raw = settings[`${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`];
-    const explicit = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
-    const minimum = explicit ?? Math.max(0, Math.min(TOTAL_MAX, Math.round(row.minimum * scale)));
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const raw = settings[key];
+    // A pinned value whose switch was turned off is kept in the profile but
+    // not used: the multiplier decides again.
+    const explicit = settings[ownKey(key)] !== false && Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    const minimum = explicit ?? scaledRequirement(row.minimum, settings);
     if (minimum === row.minimum) return row;
     changed = true;
     return { ...row, minimum };
@@ -353,17 +406,15 @@ function dialLabel(key) {
 // same setting"). Three of these rows share their quantity with another row,
 // and the note is where the row says which one is in force, so nobody sets
 // both and wonders why one did nothing.
-//   - Every `pointsPerTier` is replaced by Progression → Stat conversions →
-//     "Stat points per tier" whenever that dial is off its default
-//     (`derivedStatDialOptions` hands the engine a `defaults` layer, and a
-//     layer's defaults are copied onto every rule).
+//   - Every `pointsPerTier` is either the stat's own number or the every-stat
+//     number, as the switches above it say (model/settingOverrides.js).
 //   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
 //     solo fight — draws by Hand & Draw → Turn draws instead.
 //   - Poise is the threshold only while combat ratings are off; with them on,
 //     Stats & Defence → Poise formula sets it.
-function derivedRowNote(id, field, sourceStat) {
-  const parts = [`Uses ${sourceStat}. Applies to a new run.`];
-  if (field === 'pointsPerTier') parts.push('Replaced for every stat by "Stat points per tier" whenever that dial is not at its default.');
+function derivedRowNote(id, field, sourceStat, label = id, attribute = sourceStat) {
+  const parts = [`Driven by ${attribute}. Applies to a new run.`];
+  if (field === 'pointsPerTier') parts.push(`How many ${attribute} points raise ${label} once. Used only while the switch above is on; off, ${label} uses "${EVERY_STAT_RATE_LABEL}".`);
   if (id === 'draw') parts.push('Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.');
   if (id === 'poise') parts.push('Only while combat ratings are off; otherwise Stats & Defence → Poise formula sets the threshold.');
   return parts.join(' ');
@@ -432,20 +483,43 @@ export function startingStatRows(bundle) {
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
+  const general = sharedRateFlag(bundle);
+  add(SHARED_RATE_KEY, false, SHARED_RATE_LABEL, 'Stat conversions', {
+    flag: general,
+    note: `On: "${EVERY_STAT_RATE_LABEL}" below applies to every stat, and each stat's own switch starts off — turn one on to give that stat its own number. Off: every stat uses its own "… points per increase" row, and the every-stat number is not used. Applies to a new run.`,
+  });
+  const attributeName = (id) => bundle.attributes?.find((row) => row.id === id)?.label || word(id);
   for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
     const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
-    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
+    const attribute = attributeName(rule.sourceStat);
+    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', `${attribute} points per increase`], ['gainPerTier', 'gain per increase']]) {
       const value = rule[field] ?? bundle.derivedStatRules.defaults[field];
       if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
+      const key = `gameConfig.derivedStatRules.rules.${id}.${field}`;
+      // THE STAT'S OWN NUMBER WINS, BY A SWITCH (owner, 2026-09-23). The
+      // every-stat number used to replace every stat's own the moment it left
+      // 5, so the number on this row was not the number in force. Now the
+      // general switch decides: off (the default, which is the shipped game),
+      // every stat uses its own row; on, every stat follows the every-stat
+      // number until its own switch is turned on.
+      const own = field === 'pointsPerTier' ? { member: key, defaultOn: false, general } : null;
+      if (own) {
+        add(ownKey(key), false, `${label} — use its own ${attribute} points per increase`, 'Stat conversions', {
+          own,
+          gates: [{ key: SHARED_RATE_KEY }],
+          note: `On: the ${attribute} points per increase below is ${label}'s own, whatever "${EVERY_STAT_RATE_LABEL}" says. Off: ${label} uses "${EVERY_STAT_RATE_LABEL}". Applies to a new run.`,
+        });
+      }
+      add(key, value, `${label} — ${title}`, 'Stat conversions', {
         min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
         configPath: ['derivedStatRules', 'rules', id, field],
+        ...(own ? { gate: { key: ownKey(key), own, inheritedKey: 'statTierSize' } } : {}),
         // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
         // scaling adjusted the points required — the behaviour this row's own
         // panel no longer has. A note describing a retired mechanism is worse
         // than none: it tells a player the number they typed is not the number
         // in force, which is exactly backwards now.
-        note: derivedRowNote(id, field, rule.sourceStat),
+        note: derivedRowNote(id, field, rule.sourceStat, label, attribute),
       });
     }
   }
