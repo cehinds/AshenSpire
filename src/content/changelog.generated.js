@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1250",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "An enemy's move is spelled the same in settings as in the fight",
+    "detail": "The last settings pass lowered the second word of every enemy move under Enemy attack types, so the Wyrm Aspirant's Halberd Sweep — which is what its move card, its intent and its history call it in combat — read Halberd sweep type in settings. A move is a name, so the settings row now spells it exactly as the fight does: Wyrm Aspirant — Halberd Sweep type. The field names beside it stay as phrases — Poise action loss, Recovery per turn — because those are descriptions, not names. No setting changed its value or key.",
+    "build": "0.7.1.380",
+    "pullRequest": 1250,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1250"
+  },
+  {
     "id": "pr-1249",
     "date": "2026-09-21",
     "group": "2026-09-21",
