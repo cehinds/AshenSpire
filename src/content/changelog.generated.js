@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1244",
+    "id": "pr-1250",
     "date": "2026-09-21",
     "group": "2026-09-21",
-    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
-    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "summary": "An enemy's move is spelled the same in settings as in the fight",
+    "detail": "The last settings pass lowered the second word of every enemy move under Enemy attack types, so the Wyrm Aspirant's Halberd Sweep — which is what its move card, its intent and its history call it in combat — read Halberd sweep type in settings. A move is a name, so the settings row now spells it exactly as the fight does: Wyrm Aspirant — Halberd Sweep type. The field names beside it stay as phrases — Poise action loss, Recovery per turn — because those are descriptions, not names. No setting changed its value or key.",
     "build": "0.7.1.380",
-    "pullRequest": 1244,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
+    "pullRequest": 1250,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1250"
   },
   {
     "id": "pr-1249",
