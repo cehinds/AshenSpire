@@ -157,9 +157,13 @@ test('a swap-cost rule row is gated by the rule it belongs to, read from the con
 
 // Codex, on #1260: with the whole feature off, the note names the feature's
 // switch, not the row's own switch (which is itself disabled then).
-test('a row closed by both its feature and its own switch names the feature', () => {
+test('the Poise pool is disabled while ratings are on, and the note says why', () => {
   const poise = row('gameConfig.derivedStatRules.rules.poise.base');
-  assert.match(gateSentence(closedGate({}, poise), {}), /Enable ratings, Poise & Ward” is off/, 'the Poise pool is unused while ratings are on');
+  assert.match(gateSentence(closedGate({}, poise), {}), /Enable ratings, Poise & Ward” is off/);
+  assert.equal(closedGate({ 'gameConfig.combatRatings.enabled': false }, poise), null);
+});
+
+test('a row closed by both its feature and its own switch names the feature', () => {
   const deckOff = { 'gameConfig.balance.equipment.startingDeck.enabled': false, 'gameConfig.own.balance.equipment.startingDeck.classes.reaver.strikeBias': false };
   const strike = row('gameConfig.balance.equipment.startingDeck.classes.reaver.strikeBias');
   assert.match(gateSentence(closedGate(deckOff, strike), deckOff), /Starting Deck — Enabled” is on/);
@@ -199,4 +203,18 @@ test('a value whose feature is switched off is not applied or judged', () => {
   assert.equal(ratingsOn.balance.rewards.cardChoices, 4, 'and unrelated tuning is kept');
   const ratingsOff = configuredContentBundle(contentBundle, { ...stored, 'gameConfig.combatRatings.enabled': false });
   assert.equal(ratingsOff.balance.stagger.player.statuses.weak, 0, 'ratings off: the row is live and its value applies');
+});
+
+// Review of #1260: a run saved before combat ratings existed is played with
+// ratings off, so its poise and stagger tuning is in force and must be applied,
+// even though its stored settings do not say ratings are off.
+test('a snapshot from before ratings keeps its poise and stagger tuning', () => {
+  const overrides = { 'gameConfig.balance.stagger.player.statuses.weak': 3, 'gameConfig.derivedStatRules.rules.poise.base': 7 };
+  const legacy = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides });
+  assert.equal(legacy.balance.combatRatings.enabled, false);
+  assert.equal(legacy.balance.stagger.player.statuses.weak, 3);
+  assert.equal(legacy.derivedStatRules.rules.poise.base, 7);
+  const current = configuredContentBundle(contentBundle, { schemaVersion: 1, ratingsVersion: 1, overrides });
+  assert.equal(current.balance.combatRatings.enabled, true);
+  assert.equal(current.balance.stagger.player.statuses.weak, contentBundle.balance.stagger.player.statuses.weak, 'ratings on: set aside');
 });

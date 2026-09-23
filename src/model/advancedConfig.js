@@ -667,8 +667,7 @@ function withGates(rows, bundle) {
   return rows.map((row) => {
     // An override switch keeps its `own`, and also takes the gates of the row
     // it governs: a class's strike-bias switch does nothing while the starting
-    // deck rules are off, a Poise switch nothing while ratings are on (Codex,
-    // on #1260).
+    // deck rules are off (Codex, on #1260).
     if (row.own) {
       const gates = [...enableGates(row.own.member, swapRuleIds), ...(row.gates || [])];
       return gates.length ? { ...row, gates } : row;
@@ -761,8 +760,14 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // again the moment its switch is back on and the row is editable. Only gates
   // on configuration switches are read here: a profile-only switch (the swap
   // rule picker) is not in a run's snapshot to be read.
+  // A snapshot from before combat ratings existed is played with ratings OFF
+  // (see `ratingsVersion` below), whatever its settings say, so its gates are
+  // read that way too — otherwise its poise and stagger tuning, which is in
+  // force exactly then, would be set aside (review, #1260).
+  const legacyRatings = Boolean(settingsOrSnapshot?.overrides) && settingsOrSnapshot.ratingsVersion !== 1;
+  const gateSettings = legacyRatings ? { ...settings, [RATINGS_SWITCH]: false } : settings;
   const dormant = (row) => (row.gates || []).some((gate) => !gate.own
-    && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(settings, gate, rowFor));
+    && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(gateSettings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
@@ -827,7 +832,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     }
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
-  if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  if (legacyRatings) configured.balance.combatRatings.enabled = false;
   // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
   // switched on. Written HERE, after that decision, for two reasons: the
   // requirement pass above restates both equipment arrays, so columns written
