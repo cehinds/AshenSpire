@@ -9820,6 +9820,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `and the bundle it leaves still validates: ${validateContent(raised).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
     const raisedSaid = advancedConfigProblems(armourBundle, { 'gameConfig.equipmentRequirements.vigil.strength': 4 });
     assert(raisedSaid.length > 0, `and Settings says so: ${raisedSaid.join(' | ') || '(nothing)'}`);
+    // ...but the same raise made TOGETHER with a Reaver allocation that can
+    // wear it is one change, and it is admitted whole (Codex, #1255).
+    const together = {
+      'gameConfig.equipmentRequirements.vigil.strength': 4,
+      ...Object.fromEntries(Object.entries({ strength: 4, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 })
+        .map(([id, value]) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value])),
+    };
+    const both = configuredContentBundle(armourBundle, together);
+    eq(both.equipment.equipmentRequirements.find((row) => row.itemId === 'vigil').minimum, 4,
+      'a raise made with an allocation that wears it is admitted');
+    eq(both.attributeRules.presets[settingMode].reaver.strength, 4, 'and so is the allocation');
+    assert(validateContent(both).ok,
+      `and the bundle validates: ${validateContent(both).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    eq(advancedConfigProblems(armourBundle, together).length, 0, 'and Settings has nothing to say about it');
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.

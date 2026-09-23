@@ -196,16 +196,30 @@ function defaultModeHoldsItsKits(bundle, settings) {
       if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
     }
     // The OUTFITS creation offers the class are held to the same door: a raise
-    // the preset cannot wear fails validateContent just as a kit raise does,
-    // and a class falling back to its authored preset cannot rescue it, since
-    // that preset is the one the raise was measured against (Codex, #1255).
-    if (presetGearProblems({
-      presets: { [modeId]: { [classId]: values } },
+    // the preset cannot wear fails validateContent just as a kit raise does
+    // (Codex, #1255). The class survives it either way it can be born: in the
+    // preset it falls back to, or in the per-cell edit made alongside the
+    // raise, when that edit is itself a whole allocation that holds its kit —
+    // raising Vigil and giving the Reaver the Strength to wear it is one
+    // change, not two (Codex, #1255).
+    const wearsOutfits = (preset) => !presetGearProblems({
+      presets: { [modeId]: { [classId]: preset } },
       defaultMode: modeId,
       startingKits: [],
       equipmentRequirements: bundle.equipment?.equipmentRequirements || [],
       creationClasses: bundle.characterCreation?.classes || {},
-    }).length) return false;
+    }).length;
+    if (!wearsOutfits(values)) {
+      const edited = Object.fromEntries(ids.map((id) => [id,
+        Number(settings[`gameConfig.attributeRules.presets.${modeId}.${classId}.${id}`] ?? values[id])]));
+      const inForce = resolved.mode || mode;
+      const expected = inForce.baseline * ids.length + inForce.bonusPool;
+      const floor = inForce.belowBaseline === 'forbid' ? Math.max(inForce.minimum, inForce.baseline) : inForce.minimum;
+      const whole = ids.every((id) => Number.isInteger(edited[id]) && edited[id] >= Math.max(floor, kitMinimum(needs, classId, id))
+        && edited[id] <= ceiling)
+        && ids.reduce((sum, id) => sum + edited[id], 0) === expected;
+      if (!whole || !wearsOutfits(edited)) return false;
+    }
   }
   return true;
 }
