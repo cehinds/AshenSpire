@@ -22,7 +22,6 @@ import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
-import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
@@ -34,9 +33,8 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { flagOn, gateOpen, ownKey, ownOn } from '../../model/settingOverrides.js';
-import { EVERY_STAT_RATE_LABEL, SHARED_RATE_KEY, SHARED_RATE_LABEL } from '../../model/startingStatConfig.js';
-import { advancedConfigOwns, advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { gateOpen, ownOn } from '../../model/settingOverrides.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -89,10 +87,6 @@ let panelSettings = null;
 let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
-// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
-// value the engine actually resolves rows against, so the row that turns it
-// reads it from there and a copy cannot drift.
-const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // `retired: true` is a row that keeps its KEY so an exported configuration
 // still imports and still applies, and stays off the screen because nothing a
 // player can reach depends on it — today, the creation pools of the modes
@@ -103,8 +97,7 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
   // An override switch shows its EFFECTIVE state: stored, else on when the
   // class ships its own value or a profile already pinned one.
-  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) }
-    : row.flag ? { ...row, resolve: (settings) => flagOn(settings, row.flag) } : row));
+  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
@@ -580,9 +573,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
   // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
-  // `derivedStatRules.defaults` — its one home, one import away, so this row
-  // cannot drift from the rule it turns.
+  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -611,18 +602,6 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
-    // Used only while the general switch is on (model/startingStatConfig.js).
-    gates: [{ key: SHARED_RATE_KEY }],
-    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
-    label: EVERY_STAT_RATE_LABEL, applied: numberAppliedHtml,
-    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
-    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
-    // progress — which is correct, and which means turning this dial and loading
-    // an existing save shows NOTHING. It is written on the row because the
-    // alternative is him concluding the dial is broken. The middle sentence is
-    // the finding that caused the ask: at 5, one level moves no number at all.
-    note: `How many points of a stat's own attribute raise it once — Constitution for HP, Dexterity for Actions, and so on. Any whole number from 1 to 20: at 5 a single level-up point usually changes nothing; at 1 every point shows. Used only while "${SHARED_RATE_LABEL}" is on, and then by every stat whose own switch is off. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.` },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -884,7 +863,6 @@ const rowByKey = (key) => ROWS.find((row) => row.key === key);
 function inheritedValue(gate, settings) {
   if (gate.inherited) return gate.inherited(settings);
   if (!gate.inheritedKey) return undefined;
-  if (gate.inheritedKey === 'statTierSize') return resolveStatTierSize(settings);
   const row = rowByKey(gate.inheritedKey);
   return Object.hasOwn(settings, gate.inheritedKey) ? settings[gate.inheritedKey] : row?.def;
 }
@@ -901,26 +879,6 @@ export function gateSentence(gate, settings) {
   if (gate.when === undefined || gate.when === true) return `Used only while ${name} is on.`;
   const label = switchRow?.choiceLabels?.[gate.when] || gate.when;
   return `Used only while ${name} is set to ${String(label).toUpperCase()}.`;
-}
-
-/**
- * pinSharedRateBeforeDial(settings, key) → the change it wrote, or null.
- *
- * THE ROOT OF FOUR CODEX FINDINGS ON #1260. The general switch's DEFAULT is
- * read off the every-stat number (a profile that had moved it follows it), so
- * while the switch is unstored, moving that number back to 5 silently turned
- * the mode off. Boot, archive restore and import each wrote the switch, and
- * then a fourth door (the startup recovery restore) turned up. The number is
- * only ever changed HERE, so the switch is pinned here, at its current
- * effective state, before the number moves — whichever door the profile came
- * in through.
- */
-export function pinSharedRateBeforeDial(settings, key) {
-  if (key !== 'statTierSize' || typeof settings[SHARED_RATE_KEY] === 'boolean') return null;
-  const flag = rowByKey(SHARED_RATE_KEY)?.flag;
-  if (!flag) return null;
-  settings[SHARED_RATE_KEY] = flagOn(settings, flag);
-  return { [SHARED_RATE_KEY]: settings[SHARED_RATE_KEY] };
 }
 
 export function closedGate(settings, row) {
@@ -1368,17 +1326,18 @@ function graceRefillAppliedHtml(settings, r) {
  */
 /**
  * resolveLevelUpValue(settings) → how many stat points one level grants.
- * resolveStatTierSize(settings) → how many points buy one tier.
  *
- * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * HIS LEVEL DIAL, resolved the way every other row in this file is: a stored
  * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
  * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
  * the same reason. A hand-edited profile or an older build's value must behave
  * exactly like an absent one, because the alternative is a run created under a
  * number nothing in the game admits to.
  *
- * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
- * from content, so neither of these functions contains a number.
+ * IT RETURNS THE ROW'S OWN `def` WHEN UNSET, and the row derives that `def`
+ * from content, so this function contains no number. (Its sibling, the "Stat
+ * points per tier" dial, was retired with ruleset 6: every stat now states its
+ * own decimal weight per attribute.)
  */
 /**
  * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
@@ -1505,46 +1464,7 @@ function numberAppliedHtml(settings, row) {
   return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
 }
 
-export function resolveStatTierSize(settings) {
-  return resolveNumberRow(settings, settingsRow('statTierSize'));
-}
 
-/**
- * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
- * with, or `{}` when the dial is at its shipping value.
- *
- * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
- * already takes layered overrides — `modeModifiers`, `runModifiers`,
- * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
- * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
- * derived stats, and a row may still say otherwise". The shape he asked about
- * already existed; this hands it a number.
- *
- * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
- * no override layer at all, so its snapshot is byte-identical to one created
- * before this dial existed. Turning the dial and turning it back leaves no
- * residue in a save.
- */
-export function derivedStatDialOptions(settings) {
-  const size = resolveStatTierSize(settings);
-  // THE DIAL REACHES ONLY THE STATS THAT FOLLOW IT (owner, 2026-09-23:
-  // "changes to specific stats should over write global stats"). A stat whose
-  // own switch is on keeps its own number; the rest take the
-  // dial. A `rules` patch rather than a `defaults` layer, because a defaults
-  // layer is copied onto every rule. Nothing to patch — every follower already
-  // sits at the dial's value — is still `{}`, so a default run's snapshot is
-  // byte-identical to one made before either existed.
-  const rules = {};
-  for (const own of advancedConfigOwns(contentBundle)) {
-    const stat = own.member.match(/^gameConfig\.derivedStatRules\.rules\.([^.]+)\.pointsPerTier$/);
-    if (!stat || ownOn(settings, own)) continue;
-    // Every follower is patched, not only those whose SHIPPED value differs:
-    // a configured value could differ from the shipped one (review, #1260).
-    // With the switch off there are no followers, so a default run is still {}.
-    if (contentBundle.derivedStatRules.rules[stat[1]]) rules[stat[1]] = { pointsPerTier: size };
-  }
-  return Object.keys(rules).length ? { explicitOverride: { rules } } : {};
-}
 
 export function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');
@@ -2473,15 +2393,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // number the row can take.
       const { value: val, refusal } = commitNumberRow(settings, row, raw);
       mirror(val);
-      const pinned = pinSharedRateBeforeDial(settings, key);
-      if (pinned) onChange(pinned);
       settings[key] = val;
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
-      // A profile key can be what a gated row inherits ("Attribute points per
-      // increase — every stat" is `statTierSize`), so the inherited values and
-      // their sentences are redrawn whatever the key (Codex, on #1260).
+      // A profile key can be what a gated row inherits, so the inherited
+      // values and their sentences are redrawn whatever the key (Codex, #1260).
       else refreshGates(container, settings);
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
@@ -2833,23 +2750,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
       onChange({ [btn.dataset.key]: stored });
-      // A GENERAL SWITCH RESETS ITS FAMILY (owner, 2026-09-23: turning it on
-      // "auto toggles the per stat off until I toggle the individual per stat
-      // option"). Its members' switches read through it, so the screen redraws
-      // to show them in their new state.
-      if (row?.flag) {
-        if (stored) {
-          const cleared = {};
-          for (const member of ROWS.filter((candidate) => candidate.own?.general?.key === row.key)) {
-            if (!Object.hasOwn(settings, member.key)) continue;
-            delete settings[member.key];
-            cleared[member.key] = undefined;
-          }
-          if (Object.keys(cleared).length) onChange(cleared);
-        }
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
-        return;
-      }
       if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
       refreshConditionNotes(container, settings);
     });

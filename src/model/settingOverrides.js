@@ -17,8 +17,7 @@
 //
 // A toggle's default is whatever the game already did, so no existing profile
 // or shipped value changes on upgrade: a class that ships its own rarity table
-// starts ON; a stat whose shipped tier differs from the global starts ON; any
-// specific value already stored in a profile turns its toggle ON.
+// starts ON; any specific value already stored in a profile turns its toggle ON.
 
 export const OWN_PREFIX = 'gameConfig.own.';
 
@@ -37,36 +36,15 @@ function isMember(key, member) {
 }
 
 /**
- * flagOn(settings, flag) → a switch's effective state: stored, else its
- * default (a function of the settings, so it can follow an older dial).
- */
-export function flagOn(settings = {}, flag) {
-  const stored = settings[flag.key];
-  if (typeof stored === 'boolean') return stored;
-  return typeof flag.defaultOn === 'function' ? !!flag.defaultOn(settings) : !!flag.defaultOn;
-}
-
-/**
  * ownOn(settings, own) → is the specific value in force?
  *
- * `own` is `{ member, defaultOn, general? }`.
- *
- * A GENERAL SWITCH OVER A FAMILY (owner, 2026-09-23: "a general [switch] that
- * can be toggled to override [which] auto toggles the per stat off until I
- * toggle the individual per stat option. If the general toggle is off, the per
- * stat is automatically enabled"). With `general` set:
- *   - general off → every member uses its own value, whatever its switch says;
- *   - general on  → a member uses its own value only once its own switch is
- *                   turned on; until then it follows the global.
- * Without `general`: an explicit stored boolean decides; otherwise a stored
- * member value turns it on, and failing that the default.
+ * `own` is `{ member, defaultOn }`. An explicit stored boolean decides;
+ * otherwise a stored member value turns it on, and failing that the default.
  */
 export function ownOn(settings = {}, own) {
-  if (own.general && !flagOn(settings, own.general)) return true;
   const stored = settings[ownKey(own.member)];
   if (typeof stored === 'boolean') return stored;
   if (own.defaultOn) return true;
-  if (own.general) return false;
   return Object.keys(settings).some((key) => isMember(key, own.member));
 }
 
@@ -92,9 +70,8 @@ export function withoutUnowned(settings = {}, owns = []) {
 export function gateOpen(settings = {}, gate, rowFor = () => null) {
   if (gate.own) return ownOn(settings, gate.own);
   const row = rowFor(gate.key);
-  const raw = row?.flag ? flagOn(settings, row.flag)
-    : row?.resolve ? row.resolve(settings)
-      : Object.hasOwn(settings, gate.key) ? settings[gate.key] : row?.def;
+  const raw = row?.resolve ? row.resolve(settings)
+    : Object.hasOwn(settings, gate.key) ? settings[gate.key] : row?.def;
   const want = gate.when === undefined ? true : gate.when;
   return Array.isArray(want) ? want.includes(raw) : raw === want;
 }

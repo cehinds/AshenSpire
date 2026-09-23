@@ -20,7 +20,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, migrateSharedRate, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
 import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
@@ -84,7 +84,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -303,10 +303,6 @@ let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 // the readers each apply for themselves — one that skipped it would show a
 // different number from one that did. Rewritten once, here, so the settings
 // row, the item card, the export and the fight are looking at one key.
-// The every-stat attribute number became a switch plus a number (#1260). A
-// profile that had moved the number gets its switch written ON, once, and
-// saved — independent of the item-rating migration below.
-if (migrateSharedRate(activeSettings, contentBundle)) saves.saveMeta(activeMeta);
 if (hasLegacyItemRatingSettings(activeSettings)) {
   // Whatever the rewrite could not carry across exactly — a fractional plus, a
   // sum past a row's ceiling, a set's Poise that is also its weight — is said
@@ -896,16 +892,6 @@ function applyRestoredSettings(restored) {
   for (const key of Object.keys(activeSettings)) delete activeSettings[key];
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
-  // A restored profile is brought forward like a booted one (Codex, on #1260):
-  // an older dial gets its shared switch written, and saved, here too — into
-  // the RESTORED profile read back from storage. `activeMeta` is still the
-  // profile that was open before the restore, and saving it would write that
-  // profile's progress over the one just restored (Codex, on #1260).
-  if (migrateSharedRate(activeSettings, contentBundle)) {
-    const restoredMeta = saves.loadMeta();
-    restoredMeta.settings = { ...activeSettings };
-    saves.saveMeta(restoredMeta);
-  }
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);
@@ -1045,18 +1031,9 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   const seed = seedFromString(asked);
   const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
   rebuildRegistries(configSnapshot);
-  // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
-  // 2026-08-17: "let's make the increment of 5 points for reasonable change be
-  // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
-  // later content change can never re-stat a climb in progress, which is right
-  // and which means this dial has exactly one moment to apply: here. At the
-  // shipping value `derivedStatDialOptions` returns {} and the snapshot is
-  // byte-identical to one made before the dial existed. The settings row says
-  // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
     profileMeta: saves.loadMeta(),
-    derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);

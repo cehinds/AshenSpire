@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1260",
     "date": "2026-09-23",
     "group": "2026-09-23",
-    "summary": "A stat's own number wins over the every-stat one, by a switch, and a setting that does nothing right now is greyed out",
-    "detail": "Under Character & progression → Stat conversions, the old Stat points per tier is now Attribute points per increase — every stat. Every stat's row names the attribute that drives it, for example HP — Constitution points per increase, and nothing on screen says \"tier\" any more. A new switch, Every stat uses the same attribute points per increase, decides which number applies. With the switch off (the default, which is the game as it shipped), every stat uses its own number and the every-stat number is greyed out. Turning it on makes every stat follow the every-stat number; each stat then has its own switch, which starts off, and turning one on gives just that stat its own number again. A greyed-out number shows the value it is following, so the number you see is always the one in use. If you had already changed the old tier number, nothing changes for you: the switch starts on. The same idea now covers the other places where one class or item can differ from the rest. Starseer and Herald's own reward rarity, Reaver and Starseer's own strike bias, and each item's own equipment requirement each have a uses its own switch; turn one off and that class or item follows the shared value. Settings that do nothing in the current setup are greyed out with a line saying which switch turns them on: every combat rating while ratings are off, the older poise settings while ratings are on, equipment drop numbers while drops are off, extra card mounts, the swap costs for rules you are not using, and formation movement's own settings while movement is off. No setting lost its value, and configuration files you exported before still import.",
-    "build": "0.7.1.424",
+    "summary": "A class or item's own value wins over the shared one, by a switch, and a setting that does nothing right now is greyed out",
+    "detail": "Starseer and Herald's own reward rarity, Reaver and Starseer's own strike bias, and each item's own equipment requirement now each have a uses its own switch, directly above the numbers it governs. Turn one off and that class or item follows the shared value; the greyed-out number shows the value it is following, so the number you see is always the one in use, and the one you typed comes back when you turn the switch on again. Settings that do nothing in the current setup are greyed out too, with a line saying which switch turns them on: every combat rating while ratings are off, the older poise settings and the Poise pool while ratings are on, equipment drop numbers while drops are off, extra card mounts, the swap costs for rules you are not using, and formation movement's own settings while movement is off. A value stored in a greyed-out setting is set aside rather than applied, so it can no longer make the game throw out the rest of your configuration. No setting lost its value, and configuration files you exported before still import.",
+    "build": "0.7.1.425",
     "pullRequest": 1260,
     "url": "https://github.com/cehinds/AshenSpire/pull/1260"
+  },
+  {
+    "id": "pr-1253",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
+    "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
+    "build": "0.7.1.407",
+    "pullRequest": 1253,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1253"
   },
   {
     "id": "pr-1258",

@@ -21,8 +21,17 @@ test('grouping keeps every Advanced option reachable exactly once', () => {
 // duplication he reported.
 test('Progression is the one driver: pool first, then each class, and the tier dial leads the rows it overrides', () => {
   const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Progression');
-  assert.deepEqual(groups.map(group => group.id).slice(0, 6), ['Assign points', 'Equipment requirements', ...CLASS_TOPICS]);
-  assert.equal(advancedSection({ key: 'statTierSize' }), 'Progression', 'the tier size left the Classes tab with it');
+  // 2026-09-21: "I want level up and starting stats to be together too", and
+  // every stat and resource in one format beside them — so the three read in a
+  // row, before the floors and the class tables they bound.
+  assert.deepEqual(groups.map(group => group.id).slice(0, 8),
+    ['Assign points', 'Level-up', 'Stats & resources', 'Equipment requirements', ...CLASS_TOPICS]);
+  const stats = groups.find(group => group.id === 'Stats & resources');
+  for (const key of ['gameConfig.derivedStatRules.rules.hp.base', 'gameConfig.derivedStatRules.rules.hp.constitution',
+    'gameConfig.derivedStatRules.rules.mana.perLevel', 'gameConfig.combatRatings.ratings.ar.strength',
+    'gameConfig.combatRatings.ratings.ward.base']) {
+    assert.ok(stats.rows.some(row => row.key === key), `${key} sits under Stats & resources`);
+  }
 
   const assign = groups.find(group => group.id === 'Assign points');
   // His sentence, in his order: the baseline he names first is the row he sees
@@ -36,7 +45,8 @@ test('Progression is the one driver: pool first, then each class, and the tier d
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
   ]);
-  assert.ok(!assign.rows.some(row => row.key === 'statTierSize'), 'points, not tiers');
+  assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'),
+    'the tier dial retired with ruleset 6 — every stat states its own weights');
 
   // The floor under all of it, on screen beside the scale that has to clear it.
   const requirements = groups.find(group => group.id === 'Equipment requirements');
@@ -44,17 +54,10 @@ test('Progression is the one driver: pool first, then each class, and the tier d
   assert.ok(requirements.rows.some(row => row.key === 'gameConfig.equipmentRequirements.ashStaff.intelligence'),
     'and every authored minimum has a row of its own');
 
-  // The tier dial leads the per-stat tiers it replaces. Its bounds are not
-  // rows at all: they were read from authored content, never from an override,
-  // so the two bound rows moved nothing and are retired.
-  const conversions = groups.find(group => group.id === 'Stat conversions');
-  // The general switch leads, then the every-stat number it governs, then the
-  // per-stat rows each with its own switch (2026-09-23).
-  assert.deepEqual(conversions.rows.slice(0, 2).map(row => row.key),
-    ['gameConfig.derivedStatRules.sharedPointsPerIncrease', 'statTierSize'], 'the switch and the every-stat number lead');
-  assert.ok(conversions.rows.some(row => row.key === 'gameConfig.derivedStatRules.rules.hp.pointsPerTier'));
+  // What is left under General once the tier dial retired (ruleset 6, #1253).
   const general = groups.find(group => group.id === 'General');
   assert.deepEqual(general.rows.map(row => row.key), ['creationAutoAdvance']);
+  assert.ok(!groups.some(group => group.id === 'Stat conversions'), 'no tier topic survives ruleset 6');
 
   for (const id of CLASS_TOPICS) {
     const group = groups.find(candidate => candidate.id === id);
@@ -532,7 +535,6 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   const shown = new Set(categoryHandler('Advanced').rows.map(row => row.key));
   const retired = [
     'gameConfig.balance.levelUp.pointsPerLevelMin', 'gameConfig.balance.levelUp.pointsPerLevelMax',
-    'gameConfig.balance.levelUp.tierSizeMin', 'gameConfig.balance.levelUp.tierSizeMax',
     'gameConfig.balance.levels.enemyScaling.hp.perLevel', 'gameConfig.balance.levels.enemyScaling.poise.max',
     'gameConfig.balance.equipment.swapAllowancePerTurn',
     ...contentBundle.classes.map(classDef => `gameConfig.classes.${classDef.id}.maxHp`),
@@ -544,7 +546,7 @@ test('a row that moved nothing is retired: off the screen, still importable', as
     assert.ok(!shown.has(key), `${key} is off the screen`);
   }
   assert.ok(!shown.has('mapHeaderSeed'), 'the seed toggle the header never honoured is off the screen');
-  const legacy = { 'gameConfig.balance.levelUp.tierSizeMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
+  const legacy = { 'gameConfig.balance.levelUp.pointsPerLevelMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
     'an exported file naming a retired key still imports');
 
@@ -552,10 +554,13 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   // land in the bundle and refuse the whole configuration over a row no longer
   // on screen.
   const { configuredContentBundle, advancedConfigStructuralProblems } = await import('../src/model/advancedConfig.js');
-  const stale = { 'gameConfig.balance.levelUp.tierSizeMin': 15, 'gameConfig.balance.levelUp.tierSizeMax': 3, 'gameConfig.classes.reaver.maxHp': 500 };
+  const stale = { 'gameConfig.balance.levelUp.pointsPerLevelMin': 15, 'gameConfig.balance.levelUp.pointsPerLevelMax': 3, 'gameConfig.classes.reaver.maxHp': 500 };
   assert.deepEqual(advancedConfigStructuralProblems(contentBundle, stale), [], 'an inert value cannot refuse the configuration');
   const configured = configuredContentBundle(contentBundle, stale);
-  assert.equal(configured.balance.levelUp.tierSizeMin, contentBundle.balance.levelUp.tierSizeMin);
+  assert.equal(configured.balance.levelUp.pointsPerLevelMin, contentBundle.balance.levelUp.pointsPerLevelMin);
+  // The tier dial's bounds are not rows at all since ruleset 6 (#1253): the dial
+  // is gone, and its keys are skipped on import with the named warning.
+  assert.ok(!all.some(candidate => candidate.key === 'gameConfig.balance.levelUp.tierSizeMin'), 'tier bounds are not rows');
   assert.equal(configured.classes.find(classDef => classDef.id === 'reaver').maxHp,
     contentBundle.classes.find(classDef => classDef.id === 'reaver').maxHp);
 });

@@ -1,40 +1,12 @@
 import { presetGearProblems } from './attributes.js';
+import { ratingIds } from './ratingFormula.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { ownKey } from './settingOverrides.js';
 
-// The general switch over every stat's "attribute points per increase". A
-// gameConfig key, so it rides in the configuration snapshot a run is born
-// under with the per-stat switches it governs. Its default follows the older
-// dial: a profile that had moved the every-stat number (profile key
-// `statTierSize`) off its default starts with the switch ON, so that number
-// keeps doing what it did for that player.
-//
-// NO "TIER" ON SCREEN (owner, 2026-09-23: "I don't like the term tier … it
-// should be stat driven"). The rows say what the number is — how many points
-// of the stat's own attribute raise it once — and name the attribute. The
-// keys keep their old spelling so saved profiles and exports still load.
-export const SHARED_RATE_KEY = 'gameConfig.derivedStatRules.sharedPointsPerIncrease';
-export const SHARED_RATE_LABEL = 'Every stat uses the same attribute points per increase';
-export const EVERY_STAT_RATE_LABEL = 'Attribute points per increase — every stat';
-export function sharedRateFlag(bundle) {
-  const shipped = bundle.derivedStatRules.defaults.pointsPerTier;
-  return {
-    key: SHARED_RATE_KEY,
-    // Reads the profile dial AND its configuration-file / snapshot spelling,
-    // so a file imported mid-session agrees with the profile (review, #1260).
-    // A blank dial is unset, as the row and the configured bundle read it
-    // (Codex, on #1260) — `Number('')` is 0, which would switch the mode on.
-    defaultOn: (settings) => {
-      const raw = settings.statTierSize ?? settings['gameConfig.derivedStatRules.defaults.pointsPerTier'];
-      if (raw === '' || raw === null || raw === undefined || (typeof raw === 'string' && !raw.trim())) return false;
-      const dial = Number(raw);
-      return Number.isFinite(dial) && dial !== shipped;
-    },
-  };
-}
-
-const word = (value) => String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
-
 const PREFIX = 'gameConfig.startingStats.';
+// A pool that shares a rating's name is labelled as a pool so the two rows
+// cannot read alike.
+const RATING_NAMES = ratingIds;
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
 
@@ -440,22 +412,94 @@ function dialLabel(key) {
   return DIAL_LABELS[key.slice(key.lastIndexOf('.') + 1)] || key;
 }
 
-// ONE ANSWER PER NUMBER (owner, 2026-09-23: "multiple settings changing the
-// same setting"). Three of these rows share their quantity with another row,
+/**
+ * derivedStatFloorProblems(bundle) → [{ path, keys, message }]
+ *
+ * THE ONE POOL A RUN CANNOT HOLD AT ZERO. `validateRunShape` refuses a run with
+ * `maxMana <= 0`, and since ruleset 6 every input to Mana is a dial: a base and
+ * a weight per attribute. Set them all to zero and a new run is born invalid —
+ * it cannot be saved or restored (Codex, #1253). So Mana is priced here for the
+ * weakest character creation allows, at level 1, and refused by name if that
+ * is below one. HP is clamped to 1 at the run door and Stamina, Actions and
+ * draw may be 0, so Mana is the only row.
+ *
+ * THE WEAKEST LEGAL CHARACTER, NOT EVERY ATTRIBUTE AT ITS FLOOR. A fixedTotal
+ * mode spends its whole pool, so "every attribute at the floor" is a character
+ * no one can make: under lean, weights of 0.5 price that {1,1,1,1,1} at 0 Mana
+ * while every legal eight-point character has at least 2 (Codex, #1253). Each
+ * attribute's term is floored on its own, so Mana is a sum of one
+ * non-decreasing term per attribute, and the minimum over allocations that
+ * spend exactly the mode's total is a small knapsack over the points.
+ */
+export function derivedStatFloorProblems(bundle) {
+  const table = bundle?.derivedStatRules;
+  const rule = table?.rules?.mana;
+  const mode = (bundle?.creationModes || []).find((row) => row.id === bundle?.attributeRules?.defaultMode);
+  if (!rule || !mode || !Array.isArray(bundle.attributes)) return [];
+  const ids = bundle.attributes.map((row) => row.id);
+  const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
+  const ceiling = mode.maximum;
+  if (![floor, ceiling].every(Number.isInteger) || ceiling < floor) return [];
+  const fixedTotal = mode.redistribution === 'fixedTotal';
+  const total = mode.baseline * ids.length + mode.bonusPool;
+  let value;
+  let weakest;
+  try {
+    const resolved = resolveDerivedStatRules(table, { attributeIds: ids, classFields: ['maxHp'] });
+    const zero = Object.fromEntries(ids.map((id) => [id, 0]));
+    const at = (attributes) => deriveStat(resolved, 'mana', { attributes, classDef: {}, level: 1 }).value;
+    const constant = at(zero);
+    // term(id, points): what `points` of one attribute adds on its own.
+    const term = (id, points) => at({ ...zero, [id]: points }) - constant;
+    // best[s] = the least Mana the attributes placed so far can make while
+    // spending exactly s points, with the allocation that makes it.
+    let best = new Map([[0, { mana: 0, allocation: {} }]]);
+    for (const id of ids) {
+      const next = new Map();
+      for (let points = floor; points <= ceiling; points += 1) {
+        const add = term(id, points);
+        for (const [spent, entry] of best) {
+          const key = spent + points;
+          const mana = entry.mana + add;
+          if (!next.has(key) || mana < next.get(key).mana) {
+            next.set(key, { mana, allocation: { ...entry.allocation, [id]: points } });
+          }
+        }
+      }
+      best = next;
+    }
+    const candidates = fixedTotal ? [best.get(total)].filter(Boolean) : [...best.values()];
+    if (!candidates.length) return []; // no legal character: the mode's own check names that
+    const least = candidates.reduce((a, b) => (b.mana < a.mana ? b : a));
+    value = constant + least.mana;
+    weakest = least.allocation;
+  } catch {
+    return []; // a malformed table is the schema's to name, not this check's
+  }
+  if (value >= 1) return [];
+  const keys = ['base', ...ids].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
+  const shown = ids.map((id) => `${id} ${weakest[id]}`).join(', ');
+  return [{
+    path: 'derivedStatRules.rules.mana',
+    keys,
+    message: `Mana would be ${value} for the weakest character creation allows (${shown}), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
+  }];
+}
+
+// ONE ANSWER PER NUMBER (#1256, owner 2026-09-23: "multiple settings changing
+// the same setting"). Two derived rows share their quantity with another row,
 // and the note is where the row says which one is in force, so nobody sets
-// both and wonders why one did nothing.
-//   - Every `pointsPerTier` is either the stat's own number or the every-stat
-//     number, as the switches above it say (model/settingOverrides.js).
+// both and wonders why one did nothing:
 //   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
 //     solo fight — draws by Hand & Draw → Turn draws instead.
 //   - Poise is the threshold only while combat ratings are off; with them on,
-//     Stats & Defence → Poise formula sets it.
-function derivedRowNote(id, field, sourceStat, label = id, attribute = sourceStat) {
-  const parts = [`Driven by ${attribute}. Applies to a new run.`];
-  if (field === 'pointsPerTier') parts.push(`How many ${attribute} points raise ${label} once. Used only while the switch above is on; off, ${label} uses "${EVERY_STAT_RATE_LABEL}".`);
-  if (id === 'draw') parts.push('Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.');
-  if (id === 'poise') parts.push('Only while combat ratings are off; otherwise Stats & Defence → Poise formula sets the threshold.');
-  return parts.join(' ');
+//     the Poise rating formula sets it.
+// (The "Stat points per tier" sentence #1256 carried here is gone with the
+// dial itself — ruleset 6 has no tier, #1253.)
+function derivedRowNote(id) {
+  if (id === 'draw') return ' Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.';
+  if (id === 'poise') return ' Only while combat ratings are off; otherwise the Poise rating formula sets the threshold.';
+  return '';
 }
 
 export function startingStatRows(bundle) {
@@ -521,43 +565,54 @@ export function startingStatRows(bundle) {
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
-  const general = sharedRateFlag(bundle);
-  add(SHARED_RATE_KEY, false, SHARED_RATE_LABEL, 'Stat conversions', {
-    flag: general,
-    note: `On: "${EVERY_STAT_RATE_LABEL}" below applies to every stat, and each stat's own switch starts off — turn one on to give that stat its own number. Off: every stat uses its own "… points per increase" row, and the every-stat number is not used. Applies to a new run.`,
-  });
-  const attributeName = (id) => bundle.attributes?.find((row) => row.id === id)?.label || word(id);
-  for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
-    const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
-    const attribute = attributeName(rule.sourceStat);
-    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', `${attribute} points per increase`], ['gainPerTier', 'gain per increase']]) {
-      const value = rule[field] ?? bundle.derivedStatRules.defaults[field];
+  // ---- ONE FORMAT, ONE PLACE (owner, 2026-09-21) --------------------------
+  //
+  // "I'd like all the resources and stats to be in the same format so that
+  // there was no confusion to include the base values and everything because
+  // they are way too separated."
+  //
+  // So every resource and stat — HP, Mana, Stamina, Actions, draw, Poise, and
+  // the AR/DR/PR/Poise/Ward ratings — is one block of rows under ONE topic,
+  // with the same three kinds of dial, in the order a rating row has them:
+  //
+  //   base               what it opens at
+  //   <each attribute>   that attribute's decimal contribution per point
+  //   growth per level   his decimal
+  //
+  // The rating rows come from combatRatings.js and are filed into this same
+  // topic there, so the two tables are read side by side rather than a tab
+  // apart.
+  const derivedDefaults = bundle.derivedStatRules.defaults || {};
+  const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
+    const presentation = bundle.derivedStatRules.presentation[id];
+    // POISE IS BOTH A POOL AND A RATING, and they now share this topic. The
+    // rating keeps its name (combatRatings.js); the pool says it is one, so no
+    // two rows on this screen read the same.
+    const face = presentation.faceLabel || presentation.label;
+    const label = RATING_NAMES.includes(id) ? `${face} pool` : face;
+    const rule = { ...derivedDefaults, ...authored };
+    const fields = [
+      ['base', 'Base', 0, 1,
+        'What this is worth before a single attribute point is spent, and before equipment, relics and level.'],
+      ...attributeRows.map((attribute) => [attribute.id, attribute.label, 0, 0.05,
+        `Gained from each point of ${attribute.label}, floored on its own exactly as a rating's is: 0.2 gives nothing until ${attribute.label} reaches 5, then one more every five. 0 ignores ${attribute.label}.`]),
+      ['perLevel', 'Per level', 0, 0.05,
+        'Gained per character level, as a decimal and floored: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
+    ];
+    for (const [field, title, min, step, note] of fields) {
+      // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
+      // 'classField' }`, which resolves per class at the run door; a number row
+      // for it would overwrite the reference with one value for every class.
+      const value = field === 'base' ? rule.base : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
-      const key = `gameConfig.derivedStatRules.rules.${id}.${field}`;
-      // THE STAT'S OWN NUMBER WINS, BY A SWITCH (owner, 2026-09-23). The
-      // every-stat number used to replace every stat's own the moment it left
-      // 5, so the number on this row was not the number in force. Now the
-      // general switch decides: off (the default, which is the shipped game),
-      // every stat uses its own row; on, every stat follows the every-stat
-      // number until its own switch is turned on.
-      const own = field === 'pointsPerTier' ? { member: key, defaultOn: false, general } : null;
-      if (own) {
-        add(ownKey(key), false, `${label} — use its own ${attribute} points per increase`, 'Stat conversions', {
-          own,
-          gates: [{ key: SHARED_RATE_KEY }],
-          note: `On: the ${attribute} points per increase below is ${label}'s own, whatever "${EVERY_STAT_RATE_LABEL}" says. Off: ${label} uses "${EVERY_STAT_RATE_LABEL}". Applies to a new run.`,
-        });
-      }
-      add(key, value, `${label} — ${title}`, 'Stat conversions', {
-        min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stats & resources', {
+        min, step,
+        // Whole points only: every other term is floored, so a fractional base
+        // would be the one way a pool stopped being a whole number.
+        ...(field === 'base' ? { integer: true } : {}),
         configPath: ['derivedStatRules', 'rules', id, field],
-        ...(own ? { gate: { key: ownKey(key), own, inheritedKey: 'statTierSize' } } : {}),
-        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
-        // scaling adjusted the points required — the behaviour this row's own
-        // panel no longer has. A note describing a retired mechanism is worse
-        // than none: it tells a player the number they typed is not the number
-        // in force, which is exactly backwards now.
-        note: derivedRowNote(id, field, rule.sourceStat, label, attribute),
+        note: `${note}${derivedRowNote(id)} The value you set is the value a new run is born with; nothing rescales it.`,
       });
     }
   }

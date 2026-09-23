@@ -7,8 +7,8 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
-  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
-  startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment, sharedRateFlag,
+  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
+  startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
@@ -103,27 +103,8 @@ export function currentAdvancedKey(key) {
  */
 export { hasLegacyItemRatingSettings };
 
-/**
- * migrateSharedRate(settings, bundle) → true when it wrote the switch.
- *
- * A profile that moved the old every-stat number keeps what it did: its
- * general switch is written ON, explicitly, so the configuration snapshot
- * (which carries gameConfig keys, not the profile dial) agrees with the dial,
- * and setting the dial back to 5 later does not silently turn the mode off.
- * main.js runs it on every boot and saves when it wrote (Codex, on #1260: it
- * used to ride only the item-rating migration's guard).
- */
-export function migrateSharedRate(settings, bundle) {
-  if (!settings || typeof settings !== 'object' || !bundle) return false;
-  const shared = sharedRateFlag(bundle);
-  if (typeof settings[shared.key] === 'boolean' || !shared.defaultOn(settings)) return false;
-  settings[shared.key] = true;
-  return true;
-}
-
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
-  migrateSharedRate(settings, bundle);
   const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
   if (migrated === settings) return settings;
   for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
@@ -145,12 +126,25 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier — <id> is one
+//                                           of the six stat ids, never a
+//                                           wildcard, so a typo such as `hhp`
+//                                           is still refused as unknown,
+//   derivedStatRules.defaults.pointsPerTier,
+//   balance.levelUp.tierSizeMin / .tierSizeMax
+//                                           ruleset 6 (owner, 2026-09-21): HP,
+//                                           Mana and every pool read as the
+//                                           ratings do — a decimal weight per
+//                                           attribute — so a tier and its gain
+//                                           have no row left to land on, and
+//                                           the "Stat points per tier" dial
+//                                           and its bounds retired with them.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -225,8 +219,8 @@ const RETIRED_BALANCE_PATHS = new Set([
   //     'allowance', which is authored text and has no row.
   'levelUp.pointsPerLevelMin',
   'levelUp.pointsPerLevelMax',
-  'levelUp.tierSizeMin',
-  'levelUp.tierSizeMax',
+  // (`levelUp.tierSizeMin/Max` left with the tier dial itself — ruleset 6,
+  // #1253 — and are skipped on import as RETIRED_KEYS, not kept as rows.)
   ...['hp', 'damage', 'block', 'poise'].flatMap((stat) => ['perLevel', 'min', 'max']
     .map((leaf) => `levels.enemyScaling.${stat}.${leaf}`)),
   'equipment.swapAllowancePerTurn',
@@ -708,8 +702,8 @@ export function advancedConfigOwns(bundle) {
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
-  if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
+    // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
     if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
@@ -800,36 +794,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const storedDial = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(storedDial) && storedDial > 0) configured.derivedStatRules.defaults.pointsPerTier = storedDial;
-  // An untouched dial is its shipped default, the number the settings row
-  // shows and `derivedStatDialOptions` applies — so a switch turned on with
-  // the dial left alone still reaches the preview (Codex, on #1260).
-  // Normalized exactly as the settings row resolves it (`resolveStatTierSize`
-  // → `normalizeTunedNumber`: unset or unreadable is the default, otherwise
-  // floored and clamped to the authored bounds), so a stored 0 or 2.7 means
-  // the same number to the preview as to the run (Codex, on #1260).
-  const rawDial = settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize;
-  const dialNumber = typeof rawDial === 'string' ? Number(rawDial.trim()) : Number(rawDial);
-  const { tierSizeMin = 1, tierSizeMax = 20 } = bundle.balance?.levelUp || {};
-  const pointsPerTier = rawDial === '' || rawDial === null || rawDial === undefined || !Number.isFinite(dialNumber)
-    ? bundle.derivedStatRules.defaults.pointsPerTier
-    : Math.min(tierSizeMax, Math.max(tierSizeMin, Math.floor(dialNumber)));
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) {
-    // THE EVERY-STAT NUMBER IS WRITTEN INTO THE TABLE for every stat that
-    // follows it, so every reader of the configured bundle — character
-    // creation's preview, the stat projection, the run — sees one number.
-    // It used to reach only the run, through `derivedStatDialOptions`, so the
-    // creation preview showed a different HP from the run it started (Codex,
-    // on #1260). A stat follows only while the shared switch is on and its own
-    // is off (model/settingOverrides.js); with the switch off none do.
-    for (const own of owns) {
-      const stat = own.member.match(/^gameConfig\.derivedStatRules\.rules\.([^.]+)\.pointsPerTier$/);
-      if (stat && configured.derivedStatRules.rules[stat[1]] && !ownOn(raw, own)) {
-        configured.derivedStatRules.rules[stat[1]].pointsPerTier = pointsPerTier;
-      }
-    }
-  }
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was
@@ -906,7 +870,8 @@ function structuralKeys(message) {
  * old string list for callers that only want the first sentence.
  */
 export function advancedConfigProblemRows(bundle, settings = {}) {
-  const problems = [...startingStatPoolProblems(bundle, settings)];
+  const problems = [...startingStatPoolProblems(bundle, settings),
+    ...derivedStatFloorProblems(configuredContentBundle(bundle, settings)).map(({ keys, message }) => ({ keys, message }))];
   const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
@@ -1099,7 +1064,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
-    if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
   // A file exported before the per-item rows became the item's own ratings
@@ -1125,12 +1089,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   }
   const problems = advancedConfigProblems(bundle, { ...current, ...changes });
   if (problems.length) throw new Error(`Nothing was imported. ${problems[0]}`);
-  // AN IMPORTED OLDER DIAL IS BROUGHT FORWARD IN THE SAME CHANGE (Codex, on
-  // #1260). Every door that puts a profile in place — boot, archive restore,
-  // and this import — writes the shared switch explicitly, so no later edit of
-  // the dial can flip the mode by changing what its default is derived from.
-  const merged = { ...current, ...changes };
-  if (migrateSharedRate(merged, bundle)) changes[sharedRateFlag(bundle).key] = true;
   return changes;
 }
 
