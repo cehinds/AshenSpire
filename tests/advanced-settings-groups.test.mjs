@@ -740,6 +740,11 @@ test('a refused configuration is named, and the example shows the rules a run ke
   assert.match(zero.refused, /Mana would be 0/);
   assert.equal(zero.examples[0].lines[0].total, authored('herald').maxMana);
   assert.equal(statsTopicPreview({}, 'HP').refused, null);
+  // A character in play is held to the same door (Codex, #1252): a refusal
+  // elsewhere means the edited HP base is not what any run receives.
+  const inRun = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 });
+  assert.match(inRun.refused, /flask/i);
+  assert.equal(inRun.examples[0].lines[0].total, 30 + 2 * 4, 'the authored HP base, not the refused edit');
 });
 
 test('the example shows what a run is born with at the edges', async () => {

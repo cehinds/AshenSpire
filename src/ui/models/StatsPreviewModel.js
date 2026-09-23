@@ -91,19 +91,22 @@ function previewContext(settings, previewAttributes, previewLevel) {
   // number no new Reaver has. The run's own rule snapshot is what it uses.
   // Born first, because a refusal at that door decides which bundle every
   // other example reads.
-  let newRun = null;
-  if (!previewAttributes) {
-    const classOf = (bundle) => statsExampleSubject(settings, null, bundle).classId;
-    const born = (bundle) => createRunState({ seed: 0, classId: classOf(bundle), registries: createRegistries(bundle) });
-    try {
-      newRun = born(configured);
-    } catch (error) {
-      if (configured === contentBundle) throw error;
-      refused = error.message;
-      configured = contentBundle;
-      newRun = born(configured);
-    }
+  // A character in play is shown from its own attributes, but a run is still
+  // born here: it is the check that the bundle is one the game would apply
+  // (Codex, on #1252), so an unrelated refusal cannot put numbers under a
+  // current character that no run will receive.
+  const classOf = (bundle) => statsExampleSubject(settings, null, bundle).classId;
+  const born = (bundle) => createRunState({ seed: 0, classId: classOf(bundle), registries: createRegistries(bundle) });
+  let newRun;
+  try {
+    newRun = born(configured);
+  } catch (error) {
+    if (configured === contentBundle) throw error;
+    refused = error.message;
+    configured = contentBundle;
+    newRun = born(configured);
   }
+  if (previewAttributes) newRun = null;
   const subject = statsExampleSubject(settings, previewAttributes, configured, previewLevel);
   const lazy = (build) => { let value; let done = false; return () => { if (!done) { value = build(); done = true; } return value; }; };
   return {
