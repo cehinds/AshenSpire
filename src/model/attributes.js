@@ -91,6 +91,21 @@ export function creationMode(source, modeId = defaultCreationModeId(source)) {
   return mode;
 }
 
+/**
+ * creationModeHasPoints(mode) → does this mode give a player points to place?
+ *
+ * Yes when any allocation can MOVE: a bonus pool to spend, or — with none —
+ * baseline points that may be taken from one stat and put on another
+ * (below-baseline allowed, with room both under and over the baseline).
+ * Reading the pool alone made such a mode preset-only, so creation never
+ * opened the editor for a redistribution the mode permits (Codex, #1255).
+ */
+export function creationModeHasPoints(mode) {
+  if (!mode) return false;
+  if (mode.bonusPool > 0) return true;
+  return mode.belowBaseline !== 'forbid' && mode.minimum < mode.baseline && mode.maximum > mode.baseline;
+}
+
 export function creationModeSnapshot(source, modeId = defaultCreationModeId(source)) {
   return structuredClone(creationMode(source, modeId));
 }

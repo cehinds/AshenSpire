@@ -31,7 +31,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
+import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -393,7 +393,7 @@ export function mountCustomize(app, {
    * into the point editor — silently, because nothing reads wrong today
    * (review, #1217). The real question is whether the mode has a pool.
    */
-  const hasPoints = (modeId) => !!modeId && creationMode(registries, modeId).bonusPool > 0;
+  const hasPoints = (modeId) => !!modeId && creationModeHasPoints(creationMode(registries, modeId));
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.

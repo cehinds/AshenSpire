@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1255",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
+    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
+    "build": "0.7.1.398",
+    "pullRequest": 1255,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1255"
+  },
+  {
     "id": "pr-1259",
     "date": "2026-09-23",
     "group": "2026-09-23",

@@ -61,7 +61,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -9834,6 +9834,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(validateContent(both).ok,
       `and the bundle validates: ${validateContent(both).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
     eq(advancedConfigProblems(armourBundle, together).length, 0, 'and Settings has nothing to say about it');
+    // A MODE HAS POINTS WHEN ANY CAN MOVE, not only when it has a bonus pool
+    // (Codex, #1255): zero bonus points with redistribution allowed still opens
+    // the editor; zero bonus with nothing movable does not.
+    const lean = contentBundle.creationModes.find((row) => row.id === settingMode);
+    assert(creationModeHasPoints(lean), 'the shipped mode has points to place');
+    assert(creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 1, maximum: 4, belowBaseline: 'allow' }),
+      'a zero-bonus mode that permits redistribution is editable');
+    assert(!creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 1, maximum: 4, belowBaseline: 'forbid' }),
+      'one that forbids going below baseline has nothing to move');
+    assert(!creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 2, maximum: 2, belowBaseline: 'allow' }),
+      'nor does one pinned at its baseline');
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.
