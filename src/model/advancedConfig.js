@@ -13,7 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
-import { ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
+import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -758,6 +758,17 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
+  const rowFor = (key) => rows.find((candidate) => candidate.key === key) || null;
+  // A ROW WHOSE FEATURE IS SWITCHED OFF IS NOT APPLIED (Codex, on #1260). The
+  // engine ignores it in that state and the screen disables it, so a stored
+  // value there — even an invalid one — can neither be corrected nor be allowed
+  // to refuse the whole configuration (which would fall back to authored
+  // content and drop every unrelated setting). It is applied, and validated,
+  // again the moment its switch is back on and the row is editable. Only gates
+  // on configuration switches are read here: a profile-only switch (the swap
+  // rule picker) is not in a run's snapshot to be read.
+  const dormant = (row) => (row.gates || []).some((gate) => !gate.own
+    && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(settings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
@@ -766,7 +777,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     // refuse the WHOLE configuration over it (tierSizeMin 15 over tierSizeMax
     // 3) — naming a row no longer on screen. Retired preset cells are not
     // inert: a non-default mode's cells are still validated and applied.
-    if (!row?.configPath || row.inert) continue;
+    if (!row?.configPath || row.inert || dormant(row)) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'

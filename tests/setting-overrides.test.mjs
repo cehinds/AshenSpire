@@ -343,3 +343,16 @@ test('formation movement settings are disabled while movement is off', () => {
   }
   assert.equal(closedGate(off, row('gameConfig.presentation.selectionColor')), null, 'the shared selection colour stays live');
 });
+
+// Codex, on #1260: the mirror of the dormant-ratings case. With ratings on,
+// the older poise rows are disabled, so a stored value there — even one
+// validation refuses — is not applied and cannot discard the configuration.
+test('a value whose feature is switched off is not applied or judged', () => {
+  const stored = { 'gameConfig.balance.stagger.player.statuses.weak': 0, 'gameConfig.balance.rewards.cardChoices': 4 };
+  const ratingsOn = configuredContentBundle(contentBundle, stored);
+  assert.equal(validateContent(ratingsOn).ok, true, 'ratings on: the dormant 0 is not in the bundle');
+  assert.equal(ratingsOn.balance.stagger.player.statuses.weak, contentBundle.balance.stagger.player.statuses.weak);
+  assert.equal(ratingsOn.balance.rewards.cardChoices, 4, 'and unrelated tuning is kept');
+  const ratingsOff = configuredContentBundle(contentBundle, { ...stored, 'gameConfig.combatRatings.enabled': false });
+  assert.equal(ratingsOff.balance.stagger.player.statuses.weak, 0, 'ratings off: the row is live and its value applies');
+});
