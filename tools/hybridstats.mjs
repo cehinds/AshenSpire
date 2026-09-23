@@ -87,11 +87,14 @@ check('explicit global/debug overrides are resolved once and remain uncapped', (
   const run = fresh({ derivedStatOptions: { explicitOverride: { rules: {
     energy: { base: 4, cap: null },
     draw: { base: 7, cap: null },
-    stamina: { gainPerTier: 2, cap: null },
+    // Ruleset 6 (#1253): Stamina's coefficient is its Constitution weight.
+    stamina: { constitution: 2, cap: null },
   } } } });
-  equal(run.energyMax, 6, 'override Energy');
-  equal(run.drawPerTurn, 9, 'override Draw');
-  equal(run.maxStamina, 4, 'override Stamina');
+  // The lean Reaver opens DEX 1, INT 1, CON 2: 4 + floor(1 x 0.2), 7 +
+  // floor(1 x 0.2), and Stamina's base 1 + floor(2 x 2).
+  equal(run.energyMax, 4, 'override Energy');
+  equal(run.drawPerTurn, 7, 'override Draw');
+  equal(run.maxStamina, 5, 'override Stamina');
   equal(run.derivedStatRuleSnapshot.rules.rules.energy.cap, null, 'snapshot Energy remains uncapped');
   equal(run.derivedStatRuleSnapshot.rules.rules.draw.cap, null, 'snapshot Draw remains uncapped');
 });

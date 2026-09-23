@@ -81,10 +81,11 @@ check('the retired-name door migrates Vigour to Constitution, never the reverse'
 check('HP and Stamina consume Constitution; HP follows the resolved per-point rule', () => {
   const hp = contentBundle.derivedStatRules.rules.hp;
   const stamina = contentBundle.derivedStatRules.rules.stamina;
+  // Ruleset 6 (#1253): a base and a decimal weight per attribute, no tier.
   eq(hp.constitution, 4, 'HP source (ruleset 6: four per point of constitution)');
   eq(hp.base, 30, 'HP base');
-  eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 1, 'HP points per tier');
-  eq(hp.gainPerTier, 2, 'HP gain per tier');
+  eq(hp.perLevel, 1, 'HP growth per level');
+  assert(!('pointsPerTier' in hp) && !('gainPerTier' in hp), 'HP states no tier and no gain');
   eq(stamina.constitution, 1, 'Stamina source (ruleset 6: a weight on constitution)');
 });
 
