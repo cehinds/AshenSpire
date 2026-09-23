@@ -758,7 +758,13 @@ export function storedAdvancedTopic(settings, groupId) {
   const stored = settings?.[`settingsAdvancedSubgroup.${groupId}`];
   if (stored !== undefined || groupId !== 'Stats') return stored;
   const raw = settings?.[ADVANCED_CAT_KEY];
-  return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[settings?.[`settingsAdvancedSubgroup.${raw}`]];
+  const old = settings?.[`settingsAdvancedSubgroup.${raw}`];
+  // A topic that kept its name under Stats (Resistance, Impact, Breaks, the
+  // per-item tables) reopens as itself (Codex, on #1252).
+  if (MERGED_ADVANCED_GROUPS[raw] && advancedSubgroups(ROWS, 'Stats').some((group) => group.id === old)) return old;
+  // Stats & Defence's own General and legacy-poise topics.
+  if (raw === 'Ratings & Resistance') return { General: 'Overview', 'Without ratings (legacy poise)': 'Poise' }[old];
+  return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[old];
 }
 
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];

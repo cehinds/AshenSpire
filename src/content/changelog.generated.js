@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every stat has one topic in Settings, and each one shows its sum as you change it",
     "detail": "Actions, Draw, HP, Stamina, Mana, Poise and Ward were spread over Hand & Draw, Stats & Defence, Character & progression's stat formulas and the Poise, stagger and Mana rows under Combat. Advanced now has one Stats tab with a topic for each trait, and each topic holds all of it under short headings: its formula (a starting value, what each attribute point is worth, and what each level adds), its rating formula, its resistance and break rows, and for Poise and Draw the older rows used only when ratings are off or in co-op. Draw & hand keeps the opening hand, turn draws, hand capacity and discards together. Above the controls, a worked example shows the whole calculation and total for your current character, or outside a run for a new character of the class you pick, with starting relics included — for example HP at level 1: 30 base + 10 from Forsaken Medallion + CON 2 × 4 → 8 = 48. It updates as soon as you change a number, says how many more points of an attribute would raise the stat, and Overview shows the full stat block. Labels now name the trait and what the number buys (HP per Constitution point, Opening hand — Base cards).",
-    "build": "0.7.1.429",
+    "build": "0.7.1.431",
     "pullRequest": 1252,
     "url": "https://github.com/cehinds/AshenSpire/pull/1252"
   },

@@ -633,6 +633,11 @@ test('a profile last on a merged tab opens on Stats', () => {
   assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Rules', 'settingsAdvancedSubgroup.Rules': 'Mana' }, 'Stats'), 'Mana');
   assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Hand & Draw', 'settingsAdvancedSubgroup.Stats': 'HP' }, 'Stats'), 'HP',
     'a topic chosen on Stats itself wins');
+  // A topic that kept its name under Stats reopens as itself (Codex, #1252).
+  for (const topic of ['Resistance', 'Impact', 'Breaks', 'Status resistance', 'Weapon ratings']) {
+    assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Ratings & Resistance', 'settingsAdvancedSubgroup.Ratings & Resistance': topic }, 'Stats'), topic);
+  }
+  assert.equal(storedAdvancedTopic({ settingsAdvancedCategory: 'Ratings & Resistance', 'settingsAdvancedSubgroup.Ratings & Resistance': 'Without ratings (legacy poise)' }, 'Stats'), 'Poise');
 });
 
 test('the worked example recomputes from the edited values and shows the whole sum', async () => {
@@ -716,6 +721,11 @@ test('the worked example recomputes from the edited values and shows the whole s
   const poise = statsTopicPreview({ 'gameConfig.combatRatings.multiplier': 2 }, 'Poise', { strength: 3, constitution: 2 });
   assert.equal(poise.examples[0].lines[0].total, 1 + Math.floor((Math.floor(3 * 0.5) + 2) * 2));
   assert.match(poise.examples[0].lines[0].expression, /STR 3 × 0\.5 → 1 \+ CON 2 × 1 → 2/);
+  // A starting relic's rating bonus is in the rating a new character has
+  // before equipment, as combat's receipt adds it (Codex, #1252).
+  const relicAr = statsTopicPreview({ 'gameConfig.combatRatings.bonuses.relic:forsakenMedallion.ar': 5, settingsStatsExampleClass: 'reaver' }, 'Attack rating (AR)').examples[0].lines[0];
+  assert.equal(relicAr.total, Math.floor(3 * 0.5) + 5);
+  assert.match(relicAr.expression, /\+ 5 from Forsaken Medallion/);
   // With ratings off, Poise shows the conversion combat then uses, and no formula.
   const off = statsTopicPreview({ 'gameConfig.combatRatings.enabled': false }, 'Poise', { constitution: 2 });
   assert.deepEqual(off.examples.map(entry => entry.kind), ['derived']);

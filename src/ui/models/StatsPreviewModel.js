@@ -18,7 +18,7 @@ import { validateContent } from '../../model/validate.js';
 import { playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { deriveStat, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
 import { resolveHandRules, scaledCardsReceipt } from '../../model/handRules.js';
-import { resolveCombatRatings } from '../../model/combatRatings.js';
+import { ratingReceipt, resolveCombatRatings } from '../../model/combatRatings.js';
 import { attributeRatingReceipt, ratingAttributeIds } from '../../model/ratingFormula.js';
 import { createRegistries } from '../../model/registries.js';
 import { createRunState } from '../../model/state.js';
@@ -277,12 +277,22 @@ function ratingExample(ctx, id) {
   const receipt = attributeRatingReceipt(config, subject.attributes, id);
   const used = ratingAttributeIds.filter((attributeId) => receipt.weights[attributeId]);
   const terms = used.map((attributeId) => termText(subject.shortLabel[attributeId] || attributeId, receipt.values[attributeId], receipt.weights[attributeId], receipt.terms[attributeId]));
+  // A NEW CHARACTER'S STARTING RELICS, as combat adds them (`ratingReceipt`'s
+  // relic sources: the configured `relic:<id>` bonus and the relic's own
+  // passive), so "starting relics included" is true of ratings too (Codex,
+  // on #1252). Equipment stays out: it is shown on its item.
+  const run = ctx.newRun();
+  const relics = run ? ratingReceipt(ctx.registries, run, config).sources
+    .filter((source) => source.kind === 'relic' && Number(source[id])) : [];
+  const relicTotal = relics.reduce((sum, source) => sum + Number(source[id]), 0);
   const expression = `${num(receipt.base)} base + ${terms.join(' + ') || 'no attributes'}`
-    + (receipt.multiplier !== 1 ? `, sum ${receipt.weighted} × ${num(receipt.multiplier)} all ratings → ${receipt.attribute}` : '');
+    + (receipt.multiplier !== 1 ? `, sum ${receipt.weighted} × ${num(receipt.multiplier)} all ratings → ${receipt.attribute}` : '')
+    + relics.map((source) => ` + ${num(source[id])} from ${source.name}`).join('');
   return {
     kind: 'rating', id, title: `${RATING_LABELS[id]} rating`,
-    lines: [{ label: `${RATING_LABELS[id]} from attributes`, expression, total: receipt.value }],
-    hint: `Each term rounds down on its own. ${config.enabled ? 'Equipment, relics and statuses add on top of this.' : 'Ratings are off, so combat does not use this formula.'}`,
+    lines: [{ label: relics.length ? `${RATING_LABELS[id]} before equipment` : `${RATING_LABELS[id]} from attributes`, expression, total: receipt.value + relicTotal }],
+    hint: `Each term rounds down on its own. ${!config.enabled ? 'Ratings are off, so combat does not use this formula.'
+      : run ? 'Starting relics included; equipment and statuses add on top.' : 'Equipment, relics and statuses add on top of this.'}`,
     sense: '',
     off: !config.enabled,
   };
