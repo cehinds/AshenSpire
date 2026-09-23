@@ -332,7 +332,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     install && { id: 'install', selector: '#install-opt', available: install.available },
     stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
     stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
-    board && { id: 'board', selector: '#board-opt', available: true },
   ].filter(Boolean);
   const availability = restChoiceStatus(offeredChoices);
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the

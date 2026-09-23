@@ -1855,6 +1855,8 @@ function worldLocationAction(action) {
     // The atlas's quest list opens the board where the town keeps one (plan
     // phase 10b); leaving it returns to the town's map.
     if (!questBoardPointAt(registries, action.ownerId)) throw Error('No quest board here');
+    // Stay in the town across a reload while the board or an exchange is open.
+    j.inspectNodeId = j.currentNodeId;
     return showQuestBoard(action.ownerId, () => { j.inspectNodeId = j.currentNodeId; persist(); showMap(); });
   }
   if (action.kind === 'local') {
@@ -1928,11 +1930,13 @@ function showQuestBoard(ownerId, back) {
 function showQuestExchange(ownerId, questId, back) {
   const offer = questBoardModel({ registries, run, ownerNodeId: ownerId }).offers.find((row) => row.questId === questId);
   if (!offer) throw Error(`Quest '${questId}' is not on this board`);
+  // Answered already (a HUD door returning after the response): the board.
+  if (!offer.actionable) return showQuestBoard(ownerId, back);
   const exchange = questExchange(offer, QUEST_EXCHANGE_COPY);
   mountDialogue(app, {
     registries, run, meta: activeMeta, rng, eventId: exchange.definition.id,
     definition: exchange.definition, speaker: exchange.speaker,
-    hud: roomHud(() => showQuestBoard(ownerId, back)),
+    hud: roomHud(() => showQuestExchange(ownerId, questId, back)),
     commitChoice: (command) => {
       boardQuestResponse({ run, registries, rng }, { questId, choiceId: command.choiceId });
       persist();
