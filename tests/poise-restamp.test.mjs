@@ -20,7 +20,7 @@ function fight() {
   // tiers of the Poise row the run was born with — read it off the run's own
   // snapshot instead of assuming a point is a point.
   const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
-  const perPoint = Math.round(poiseRow.gainPerTier / poiseRow.pointsPerTier) || 1;
+  const perPoint = Math.floor(poiseRow.constitution + 1e-9) || 1;
   run.attributes.constitution += Math.round((13 - receipt.value) / perPoint);
   return createCombat({ registries, rng: createRng(99), player: {
     classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
@@ -104,7 +104,8 @@ test('the run\'s derived-stat rules survive a save and load of the fight', () =>
   // stamped 17 on reload (review, #1217).
   const run = createRunState({ seed: 4242, classId: 'reaver', registries });
   run.derivedStatRuleSnapshot = structuredClone(run.derivedStatRuleSnapshot);
-  run.derivedStatRuleSnapshot.rules.rules.poise.pointsPerTier = 5;
+  // Ruleset 6 words (#1253): a fifth of a Poise per Constitution point.
+  run.derivedStatRuleSnapshot.rules.rules.poise.constitution = 0.2;
   const owed = playerPoiseThresholdReceipt(registries, run).value;
   const combat = createCombat({ registries, rng: createRng(99), player: {
     classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
@@ -157,7 +158,7 @@ test('a run born before ruleset 5 keeps the Constitution term phase 8 priced it 
   assert.equal(before.value, withRow.value - withRow.attribute + before.attribute);
   const liveTable = registries.derivedStatRules;
   const retuned = { ...registries, derivedStatRules: { ...liveTable,
-    rules: { ...liveTable.rules, poise: { ...liveTable.rules.poise, gainPerTier: 7 } } } };
+    rules: { ...liveTable.rules, poise: { ...liveTable.rules.poise, constitution: 7 } } } };
   assert.equal(playerPoiseThresholdReceipt(retuned, legacy).attribute, before.attribute,
     'and a retuned live row cannot move it');
   // A caller with NO snapshot at all — a headless fixture, a creation preview
@@ -167,7 +168,7 @@ test('a run born before ruleset 5 keeps the Constitution term phase 8 priced it 
   const live = playerPoiseThresholdReceipt(registries, headless).attribute;
   assert.ok(live > 0, 'the live table still prices a headless caller');
   const moved = structuredClone(run);
-  moved.derivedStatRuleSnapshot.rules.rules.poise.pointsPerTier = 0.01;
+  moved.derivedStatRuleSnapshot.rules.rules.poise.constitution = 3;
   assert.notEqual(playerPoiseThresholdReceipt(registries, moved).attribute, live,
     'the run reads its own rules');
   assert.equal(playerPoiseThresholdReceipt(registries, headless).attribute, live,

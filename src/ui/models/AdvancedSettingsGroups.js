@@ -16,7 +16,7 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // model group, Interface, spans three tabs.
 const BATTLEFIELD = /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/;
 export function advancedSection(row) {
-  if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
+  if (row.key === 'creationAutoAdvance') return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
   if (BATTLEFIELD.test(row.key)) return 'Battlefield';
   // The legacy draw and poise conversions share their quantity with a whole
@@ -31,6 +31,20 @@ export function advancedSection(row) {
 // sorts it last.
 export const WITHOUT_RATINGS = 'Without ratings (legacy poise)';
 export const DRAW_FALLBACK = 'Co-op & legacy fallback';
+
+// ---- ONE READING ORDER FOR THE WHOLE CLIMB (owner, 2026-09-21, #1253) -------
+//
+// "I want level up and starting stats to be together too", and the stat and
+// resource formulas with them: what a character opens with, what a level adds,
+// and what every point of every attribute is worth — in that order, with
+// nothing between them. The floors and the per-class tables follow, because
+// they are bounded by the three above rather than read alongside them.
+const PROGRESSION_TOPIC_ORDER = Object.freeze([
+  'Assign points',
+  'Level-up',
+  'Stats & resources',
+  'Equipment requirements',
+]);
 
 /**
  * The class topics, in the order the content bundle lists its classes.
@@ -79,10 +93,6 @@ function topic(row, section) {
   if (row.handTopic) return row.handTopic;
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
-    // The tier dial replaces every stat's own "stat points per increase" while
-    // it is off its default, so it leads the rows it overrides rather than
-    // sitting a topic away from them.
-    if (key === 'statTierSize') return 'Stat conversions';
     if (key === 'creationAutoAdvance') return 'General';
     if (/^skill\.xp\./.test(path)) return 'Skill xp';
     if (/^skill\.class\./.test(path)) return 'Skill class';
@@ -156,10 +166,6 @@ export function advancedSubgroups(rows, section) {
     groups.get(label).push(row);
   }
   const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
-  // The tier dial leads the per-stat rows it overrides.
-  for (const group of result) {
-    if (group.id === 'Stat conversions') group.rows.sort((a, b) => Number(b.key === 'statTierSize') - Number(a.key === 'statTierSize'));
-  }
   // A topic not named in an order keeps its discovered order, after the named
   // ones.
   const byOrder = (order) => {
@@ -194,13 +200,22 @@ export function advancedSubgroups(rows, section) {
   }
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
-    // rescaled by it. Equipment requirements come second because they are the
-    // FLOOR under it — the least a character can carry is whatever the starting
-    // kits ask for — so the two are read together, and only then the class
-    // tables they bound. A topic not named here keeps its discovered order,
-    // after the named ones.
-    byOrder(['Assign points', 'Equipment requirements', ...CLASS_TOPICS, 'Level-up', 'Experience', 'Stat conversions',
+    // rescaled by it. Level-up next, because a level spends the same points on
+    // the same rows; then the rows themselves, in the one format (#1253); then
+    // the equipment floor under all of it — the least a character can carry is
+    // whatever the starting kits ask for — and only then the class tables they
+    // bound. A topic not named here keeps its discovered order, after the
+    // named ones.
+    byOrder([...PROGRESSION_TOPIC_ORDER, ...CLASS_TOPICS, 'Experience',
       'Skill xp', 'Skill class', 'Skill unlocks', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
+    // The pools he named first ("mp hp and every resource"), then the ratings
+    // they now read like — each block in its own authored order.
+    const stats = result.find((group) => group.id === 'Stats & resources');
+    if (stats) {
+      const pool = (row) => (row.key.startsWith('gameConfig.derivedStatRules.') ? 0 : 1);
+      stats.rows = stats.rows.map((row, index) => [row, index])
+        .sort(([a, i], [b, j]) => pool(a) - pool(b) || i - j).map(([row]) => row);
+    }
   }
   return result;
 }

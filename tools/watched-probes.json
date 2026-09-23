@@ -1923,10 +1923,10 @@
   {
    "id": "F1",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
+   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (ruleset 6: hp `constitution: 4`, a decimal weight per point) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
    "anchors": [
     "cz-derived",
-    "pointsPerTier"
+    "constitution: 4"
    ],
    "screen": "customize › CHARACTER — the HP-from-Vigour derivation beside the primary stat stack",
    "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",

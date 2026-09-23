@@ -68,7 +68,11 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
   assert.equal(contentBundle.balance.xp.combatWin, 50);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
-  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
+  // The retired tier dial's key does not write the table: a ruleset-6 table
+  // has no tier, so writing one would fail validation and throw every other
+  // configured value away.
+  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, undefined);
+  assert.deepEqual(configured.derivedStatRules.defaults, contentBundle.derivedStatRules.defaults);
 });
 
 test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {
@@ -209,6 +213,32 @@ test('mobile and unsupported desktop export fall back to a local browser downloa
   assert(revoked);
 });
 
+// Ruleset 6 retired every per-stat tier and the "Stat points per tier" dial
+// with its bounds. An exported file naming any of them still imports: those
+// entries are skipped with one named warning, everything else lands.
+test('an export naming a retired stat tier imports, skipping only that entry', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  Object.assign(file.overrides, {
+    'gameConfig.derivedStatRules.rules.hp.gainPerTier': 7,
+    'gameConfig.derivedStatRules.defaults.pointsPerTier': 2,
+    'gameConfig.balance.levelUp.tierSizeMax': 30,
+  });
+  const text = JSON.stringify(file);
+  const warnings = [];
+  const imported = parseAdvancedConfigFile(text, contentBundle, {}, [], warnings);
+  assert.deepEqual(imported, { 'gameConfig.derivedStatRules.rules.hp.constitution': 5 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /direct attribute weights/);
+});
+
+// Codex (#1253): only the six real stat ids are retired. A misspelt id is a
+// typo, and a typo must still refuse the whole file rather than be skipped.
+test('a misspelt stat id under a retired tier key is refused, not skipped', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  file.overrides['gameConfig.derivedStatRules.rules.hhp.pointsPerTier'] = 2;
+  assert.throws(() => parseAdvancedConfigFile(JSON.stringify(file), contentBundle, {}, [], []), /hhp/);
+});
+
 // EVERY GENERATED BALANCE ROW DESCRIBES ITSELF, and describes itself only
 // once. All 325 of them used to carry the same sentence — "Authored balance
 // value: <path>. Applies to a new run." — so the description under a row said
@@ -304,7 +334,9 @@ test('a balance row nothing reads says so in its description', () => {
   const hidden = advancedConfigRows(contentBundle)
     .filter((row) => row.generatedBalance && row.retired).map((row) => row.searchPath);
   const inert = [...hidden, 'graceRefillAtRunStart'];
-  assert.ok(inert.length >= 20, `expected the inert rows to be generated, got ${inert.length}`);
+  // 18, not 20: ruleset 6 (#1253) deleted `levelUp.tierSizeMin/Max` outright
+  // with the tier dial, so those two are no longer rows to hide.
+  assert.ok(inert.length >= 18, `expected the inert rows to be generated, got ${inert.length}`);
   for (const path of inert) {
     assert.match(rows.get(path), /not yet read|nothing reads it|retired flag/,
       `${path} is not read by the game and its description must say so`);

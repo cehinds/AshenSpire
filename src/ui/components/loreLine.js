@@ -52,7 +52,12 @@ export function loreLine({ text, title = '', eyebrow = 'Lore' } = {}) {
   if (!more) return line;
   line.type = 'button';
   line.setAttribute('aria-haspopup', 'dialog');
-  line.setAttribute('aria-label', title ? `Read the lore of ${title}` : 'Read the lore');
+  // The accessible name is the identity line itself plus a hidden verb, so
+  // the words a sighted player reads are the words a screen reader says.
+  const hint = document.createElement('span');
+  hint.className = 'sr-only';
+  hint.textContent = ' — read the lore';
+  line.append(hint);
   const cue = document.createElement('span');
   cue.className = 'lore-read';
   cue.setAttribute('aria-hidden', 'true');

@@ -196,8 +196,8 @@ export function renderCard(registries, ref, opts = {}) {
   // colorless and co-op sets. Believing the comment meant the text was written
   // and shown to nobody.
   // The face has four fixed bands and no room to grow one, so the flavour is
-  // carried by the reading door's pane — the same place, and the same
-  // `inspection-lore` disclosure, the equipment card uses for its own.
+  // carried by the reading door's pane — the same place, and the same lore
+  // line (components/loreLine.js), the equipment card uses for its own.
   //
   // `cname` is not a region, for the same reason `.epc-name` is not: the title
   // is what tells one card from another and shows at every level.

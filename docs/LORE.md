@@ -466,9 +466,9 @@ item description on every card, in the manner of the Souls games' item text,
 shown only in card inspection — never on the playable face and never in place
 of rule text. The card schema accepts an optional `flavor` string on every card
 (`src/model/schemas.js`), and the basic weapon profiles carry their own in
-`content/source/basicCardProfiles.csv`. Card inspection renders it inside the
-folded **Flavor** disclosure, which keeps paragraph breaks, so a description has
-room to tell a story; the playable face keeps only rules.
+`content/source/basicCardProfiles.csv`. Card inspection shows its first line;
+pressing that line opens the **lore modal** with the whole text, so a
+description has room to tell a story; the playable face keeps only rules.
 
 The first passes shipped twelve-word fragments, then signed single-witness
 accounts. The current pass writes each card's lore the way the Souls games

@@ -3935,8 +3935,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    under Advanced → Text & lore; models/LoreTypeModel.js writes the choice on
    <html> as data-lore-* words and the rules below turn words into type. The
    faces are bundled (assets/fonts/, CREDITS.md) under their own "AS Lore"
-   names, so none of them changes the game's headings or body text. Sizes are
-   rem against the 62.5% root (1rem = 10px at Text M), so Text size scales them. */
+   names, so none of them changes the game's headings or body text. The lore
+   window sizes in rem against the 62.5% root (1rem = 10px at Text M); the
+   inspection line sizes in em off its pane, which keeps its own 16px floor. */
 @font-face { font-family:'AS Lore Fell'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-normal.woff2') format('woff2'); }
 @font-face { font-family:'AS Lore Fell'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-italic.woff2') format('woff2'); }
 @font-face { font-family:'AS Lore Garamond'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-normal.woff2') format('woff2'); }
@@ -3952,7 +3953,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @font-face { font-family:'AS Lore Cinzel'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cinzel-400-normal.woff2') format('woff2'); }
 @font-face { font-family:'AS Lore Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-normal.woff2') format('woff2'); }
 @font-face { font-family:'AS Lore Inter'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-italic.woff2') format('woff2'); }
-:root { --lore-font:'AS Lore Fell', Georgia, serif; --lore-size:1.7rem; --lore-leading:1.6; --lore-tracking:0em; --lore-slant:italic; --lore-identity-slant:italic; }
+:root { --lore-font:'AS Lore Fell', Georgia, serif; --lore-size:1.7rem; --lore-scale:1; --lore-leading:1.6; --lore-tracking:0em; --lore-slant:italic; --lore-identity-slant:italic; }
 :root[data-lore-face="fell"] { --lore-font:'AS Lore Fell', Georgia, serif; }
 :root[data-lore-face="garamond"] { --lore-font:'AS Lore Garamond', Georgia, serif; }
 :root[data-lore-face="cormorant"] { --lore-font:'AS Lore Cormorant', Georgia, serif; }
@@ -3962,10 +3963,10 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :root[data-lore-face="cinzel"] { --lore-font:'AS Lore Cinzel', Georgia, serif; }
 :root[data-lore-face="inter"] { --lore-font:'AS Lore Inter', 'Segoe UI', system-ui, sans-serif; }
 :root[data-lore-face="georgia"] { --lore-font:Georgia, 'Times New Roman', serif; }
-:root[data-lore-size="S"] { --lore-size:1.5rem; }
-:root[data-lore-size="M"] { --lore-size:1.7rem; }
-:root[data-lore-size="L"] { --lore-size:1.9rem; }
-:root[data-lore-size="XL"] { --lore-size:2.2rem; }
+:root[data-lore-size="S"] { --lore-size:1.5rem; --lore-scale:0.9; }
+:root[data-lore-size="M"] { --lore-size:1.7rem; --lore-scale:1; }
+:root[data-lore-size="L"] { --lore-size:1.9rem; --lore-scale:1.1; }
+:root[data-lore-size="XL"] { --lore-size:2.2rem; --lore-scale:1.25; }
 :root[data-lore-leading="tight"] { --lore-leading:1.4; }
 :root[data-lore-leading="normal"] { --lore-leading:1.6; }
 :root[data-lore-leading="loose"] { --lore-leading:1.85; }
@@ -3974,16 +3975,18 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :root[data-lore-tracking="wide"] { --lore-tracking:0.04em; }
 :root[data-lore-slant="upright"] { --lore-slant:normal; }
 :root[data-lore-identity-slant="upright"] { --lore-identity-slant:normal; }
+/* Cinzel ships no italic; an upright face beats a browser-faked slant. */
+:root[data-lore-face="cinzel"] { --lore-slant:normal; --lore-identity-slant:normal; }
 .inspection-lore-line { display:flex; align-items:baseline; gap:12px; width:100%; box-sizing:border-box; margin:12px 0 0; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--parchment); text-align:left; font:inherit; }
 button.inspection-lore-line { cursor:pointer; }
 button.inspection-lore-line:hover { border-color:var(--gold); }
 button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
-.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-size) - 0.2rem); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; }
-.inspection-lore-line .lore-read { flex:none; font-size:1.2rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * 1em); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; }
+.inspection-lore-line .lore-read { flex:none; font-size:0.75em; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
 .lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
 .lore-modal-text p { margin:0; }
 .lore-modal-text .lore-identity { font-size:calc(var(--lore-size) + 0.2rem); font-style:var(--lore-identity-slant); }
-.lore-modal-text .lore-closing { margin-top:4px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); }
+.lore-modal-text .lore-closing { margin-top:4px; padding-top:12px; border-top:1px solid var(--line); color:var(--parchment); opacity:0.82; }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
 /* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
    is worn and held in the order the sections ask for it — with the receipts
