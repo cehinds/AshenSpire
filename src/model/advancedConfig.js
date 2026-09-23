@@ -780,7 +780,22 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
   const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
+  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) {
+    configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
+    // THE EVERY-STAT NUMBER IS WRITTEN INTO THE TABLE for every stat that
+    // follows it, so every reader of the configured bundle — character
+    // creation's preview, the stat projection, the run — sees one number.
+    // It used to reach only the run, through `derivedStatDialOptions`, so the
+    // creation preview showed a different HP from the run it started (Codex,
+    // on #1260). A stat follows only while the shared switch is on and its own
+    // is off (model/settingOverrides.js); with the switch off none do.
+    for (const own of owns) {
+      const stat = own.member.match(/^gameConfig\.derivedStatRules\.rules\.([^.]+)\.pointsPerTier$/);
+      if (stat && configured.derivedStatRules.rules[stat[1]] && !ownOn(raw, own)) {
+        configured.derivedStatRules.rules[stat[1]].pointsPerTier = pointsPerTier;
+      }
+    }
+  }
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was

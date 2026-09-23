@@ -896,6 +896,9 @@ function applyRestoredSettings(restored) {
   for (const key of Object.keys(activeSettings)) delete activeSettings[key];
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
+  // A restored profile is brought forward like a booted one (Codex, on #1260):
+  // an older dial gets its shared switch written, and saved, here too.
+  if (migrateSharedRate(activeSettings, contentBundle)) saves.saveMeta(activeMeta);
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);

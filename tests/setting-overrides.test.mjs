@@ -237,3 +237,17 @@ test('a swap-cost rule row is gated by the rule it belongs to, read from the con
     assert.ok(closedGate({ swapCostRule: other }, row(key)), `${rule.id} row closed under ${other}`);
   });
 });
+
+// Codex, on #1260: character creation's preview builds a run from the
+// configured registries alone, with no derivedStatOptions. The every-stat
+// number is written into the configured table, so the preview and the run
+// it starts agree.
+test('the creation preview and the run it starts show the same stats', () => {
+  const settings = { [SHARED_RATE_KEY]: true, statTierSize: 3 };
+  const registries = createRegistries(configuredContentBundle(contentBundle, settings));
+  const preview = createRunState({ seed: 7, classId: 'reaver', registries });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries, derivedStatOptions: derivedStatDialOptions(settings) });
+  assert.equal(preview.maxHp, run.maxHp);
+  assert.equal(hpRule(preview), 3);
+  assert.equal(configuredContentBundle(contentBundle, {}).derivedStatRules.rules.hp.pointsPerTier, 1, 'switch off: the table is untouched');
+});
