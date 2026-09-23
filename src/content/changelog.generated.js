@@ -7,10 +7,40 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-23",
     "group": "2026-09-23",
     "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
-    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The Review card no longer shows two chips both called Poise with different numbers. The equipment screen stops refusing a +1 weapon you can in fact hold, and a smithing tier that lowers an armour's requirement now lowers it. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
-    "build": "0.7.1.382",
+    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The Review card no longer shows two chips both called Poise with different numbers. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
+    "build": "0.7.1.388",
     "pullRequest": 1255,
     "url": "https://github.com/cehinds/AshenSpire/pull/1255"
+  },
+  {
+    "id": "pr-1251",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Each class's starting armour is told apart from the set piece it shares a name with",
+    "detail": "Under Ratings & Resistance → Armour ratings, every class listed its armour twice under one name: the Reaver starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block, +4 max HP) is a different item any class can earn — but both rows read Wayfarer Plate (reaver), so there was no telling which one a change went to. The starting one now says so: Wayfarer Plate (Reaver, starting armour) beside Wayfarer Plate (Reaver), and the class is spelled the way the rest of the menu spells it. No setting changed its value or key.",
+    "build": "0.7.1.386",
+    "pullRequest": 1251,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1251"
+  },
+  {
+    "id": "pr-1244",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
+    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "build": "0.7.1.384",
+    "pullRequest": 1244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
+  },
+  {
+    "id": "pr-1242",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every weapon's and every set's ratings are yours to set, and the number you type is the number the card shows",
+    "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so typing 3 into the straight sword's row made it fight at 5 while its card still said 2, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 4 and it is a 4-Attack sword that your Strength still improves, on the card it prints and on every Strike it lends; a staff at 1 carried by a caster with +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports — and where it cannot be kept exactly (a fraction, or armour Poise, which is also what a set weighs) the game says so. These rows only apply while ratings are switched on. A climb already in progress keeps the rules it was born under.",
+    "build": "0.7.1.382",
+    "pullRequest": 1242,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1242"
   },
   {
     "id": "pr-1250",

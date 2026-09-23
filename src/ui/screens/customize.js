@@ -64,6 +64,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
@@ -287,16 +288,64 @@ export function mountCustomize(app, {
       navigation.append(item);
     }
     headTools.prepend(navigation);
-    menu.addEventListener('click', () => {
-      headTools.togglePopover();
-      if (headTools.matches(':popover-open')) {
-        const rect = menu.getBoundingClientRect();
-        const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
-        headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;
-        headTools.style.top = `${(rect.bottom + 8) / zoom}px`;
-      }
+    // THE BUTTON IS THE POPOVER'S INVOKER, NOT A HAND-ROLLED TOGGLE. It used
+    // to call `togglePopover()` from a click listener, and with `popover=auto`
+    // that cannot close: light dismiss runs on pointerup and shuts the menu,
+    // then the click handler re-opens it. Measured on ?shot=customize at
+    // 1200x730 with real CDP input, mouse and touch alike — open, open, open,
+    // open; the menu could be summoned and never put away. `popovertarget`
+    // hands the toggle to the browser, which knows an invoker from a stray
+    // click. (quicknav's ☰ toggles correctly at the same door — true, false,
+    // true — so this was this call site's bug, not the platform's.)
+    headTools.id = 'cz-menu-popover';
+    menu.setAttribute('popovertarget', headTools.id);
+    // THE SCREEN MARGIN IS PASSED, NOT ASSUMED — flask.js's rule, and its
+    // words: placeAnchored uses `pad` for the fit test AND for the bound, so
+    // the cap below needs the same number rather than a literal matched
+    // against the default by hand. quicknav writes the doubled `8` beside a
+    // call that passes no `pad`; this follows flask, which is the one of the
+    // two that homed it. That the recipe itself — "a dropdown under its
+    // button, capped to the room below" — now has three call sites is real,
+    // and flask.js already names the deferral ("Named, not touched"); lifting
+    // it into fx.js is a change to quicknav and flask too, not this fix.
+    const PAD = 4;
+    // PLACED ON `toggle`, WHICH IS WHERE THE OPEN ACTUALLY HAPPENS. With the
+    // browser owning the toggle there is no click handler to hang this on, and
+    // an open by any other route — the keyboard, a future invoker — is placed
+    // too rather than left wherever it was last.
+    headTools.addEventListener('toggle', (event) => {
+      menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open')));
+      if (event.newState !== 'open') return;
+      // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
+      // This used to be its own arithmetic, and it read the zoom off the WRONG
+      // ELEMENT: `getComputedStyle(document.documentElement).zoom`. The app is
+      // zoomed by `body { zoom: var(--ui-zoom) }` (styles/base.css), and <html>
+      // "is the one element the zoom does not touch" — so that read answered 1
+      // at every UI size and the visual px of `getBoundingClientRect()` went
+      // straight into `style.left`, a LOCAL px property. Measured through
+      // tools/placement.mjs at 1920x1080 (--ui-zoom 1.48): the menu's box was
+      // (1580.8,72.7)-(1800.8,304.7) in a 1297.3x729.7 room, its LEFT edge
+      // alone 283 px past the right one, so none of it was on the glass. It
+      // was open, sized and hit-testable the whole time — simply drawn where
+      // nobody could see it, which reads as a button that does nothing.
+      // `position: fixed` does not escape the zoom (EldenSpire#15); fx.js is
+      // the one home for the conversion.
+      const view = viewportLocalBox();
+      const anchor = anchorLocalBox(VIEWPORT_ORIGIN, menu);
+      // THE CAP IS COMPUTED BEFORE THE PLACEMENT, AND THAT ORDER IS THE POINT.
+      // Capping afterwards — what flask.js and quicknav.js both do — means
+      // placeAnchored measures the menu at its FULL height, finds it does not
+      // fit under a short window's button, and slides it up OVER the button
+      // before the cap ever applies. Measured at 1200x260 with the cap last:
+      // menu top 4.0 against a button bottom of 58.0 — `intent: 'under'` asked
+      // for, and the menu sitting on the control that summoned it. Capped
+      // first, the box placeAnchored measures is the box that will be drawn,
+      // it fits under the button by construction, and the categories scroll
+      // inside it instead. Recomputed from the room on every open, so no cap
+      // this wrote before can be measured as this open's box.
+      headTools.style.maxHeight = `${Math.max(0, view.height - (anchor.top + anchor.height + placeGap(headTools)) - PAD * 2)}px`;
+      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });
     });
-    headTools.addEventListener('toggle', () => menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open'))));
     close.querySelector('.modal-close-face').textContent = '\u00d7';
     close.before(portrait, menu, headTools);
   }
