@@ -58,6 +58,194 @@ export function ratingSourceKey(piece) {
   return piece.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : `armament:${piece.id}`;
 }
 
+// One lookup per bundle, not one scan per row: `resolveCombatRatings` asks for
+// a piece by its rating source on every equipment row it reads.
+const itemsByRatingSource = new WeakMap();
+function itemByRatingSource(bundle) {
+  let index = itemsByRatingSource.get(bundle);
+  if (!index) {
+    index = Object.fromEntries([...(bundle?.equipment?.armaments || []), ...(bundle?.equipment?.armour || [])]
+      .map(piece => [ratingSourceKey(piece), piece]));
+    itemsByRatingSource.set(bundle, index);
+  }
+  return index;
+}
+
+// The ceiling a rating row has always had, named once so the row, the
+// validator and the legacy migration cannot drift.
+const ITEM_RATING_MAX = 999;
+
+function isMagicalPiece(equipment, piece) {
+  const profile = (equipment?.basicCardProfiles || []).find(row => row.id === piece.attackProfile);
+  return Boolean(profile && profile.damageSchool !== 'physical');
+}
+
+/**
+ * THE ITEM'S RATINGS ARE THE ITEM'S OWN NUMBERS (owner, 2026-09-21: "if I edit
+ * the AR in the settings for straight sword to 2 then it should show 2 on the
+ * card and in combat + AR bonuses"). The per-item rows used to be a second
+ * table of PLUSES on top of the authored columns, so the settings panel and the
+ * item card disagreed by whatever the plus was, and a rating the owner wanted
+ * LOWER than the authored one could not be typed at all. The rows are the
+ * columns now: `itemRatings.<source>.<rating>` opens on the authored value and
+ * whatever stands there is the item's rating everywhere — the card, the
+ * equipment receipt and combat, with attributes, relics and statuses added on
+ * top of it exactly as before.
+ *
+ * `authoredItemRatings` is the one reader of that projection, so the settings
+ * row, the item column and the combat receipt cannot drift apart.
+ */
+export function authoredItemRatings(equipment, piece) {
+  const magical = isMagicalPiece(equipment, piece);
+  const attack = piece.attackRating || 0;
+  return {
+    ar: magical ? 0 : attack,
+    dr: piece.defenseRating || 0,
+    pr: magical ? attack : 0,
+    poise: piece.kind === 'armor' ? piece.poiseThreshold || 0 : 0,
+    ward: 0,
+  };
+}
+
+/**
+ * itemRatingColumn(equipment, piece, id) → the authored field this rating is
+ * WRITTEN BACK to, or null when the item has no column for it.
+ *
+ * One column carries the attack rating and the school of the piece's attack
+ * profile decides which rating it feeds (SPEC §13.4: physical Attack Rating
+ * contributes AR, magical contributes PR), so a staff's PR and a sword's AR are
+ * the same field seen from two sides. An armament's `poiseThreshold` is its
+ * WEIGHT (`statProjection.ARMOUR_WEIGHT_RULE`), never its Poise, so it is left
+ * alone; a rating with no column is still configurable and still reaches
+ * combat, it just has nowhere on the card to print.
+ */
+export function itemRatingColumn(equipment, piece, id) {
+  const magical = isMagicalPiece(equipment, piece);
+  // ARMOUR AUTHORS NO ATTACK RATING AT ALL. It carries `poiseThreshold` and
+  // nothing else, so treating "no attack profile" as "physical, therefore the
+  // attackRating column" stamped a field onto an outfit that content never
+  // gives one — and the row's note then promised a card that prints only DR
+  // and Poise would show it.
+  if (piece.kind === 'armor') return id === 'poise' ? 'poiseThreshold' : null;
+  if (id === 'ar') return magical ? null : 'attackRating';
+  if (id === 'pr') return magical ? 'attackRating' : null;
+  if (id === 'dr') return piece.kind === 'armor' ? null : 'defenseRating';
+  if (id === 'poise') return piece.kind === 'armor' ? 'poiseThreshold' : null;
+  return null;
+}
+
+/**
+ * The stored number as the ROW resolves it, not as this file would like it.
+ *
+ * THREE ANSWERS TO ONE STORED VALUE is what refusing gave (review, #1242): the
+ * settings panel floors and clamps a hand-edited `2.7` to 2 and shows it, and
+ * rejecting it here left the column on the authored 5 — the panel and the card
+ * disagreeing, which is the defect this whole change exists to end. The rule is
+ * `normalizeTunedNumber` (src/ui/models/CardSizeModel.js), the one gate every
+ * other number row runs through: unreadable is unset, anything else is floored
+ * into the row's own domain. It is restated rather than imported because a
+ * model may not reach into the UI layer, and a test pins the two together.
+ */
+function itemRatingSetting(settings, piece, id) {
+  const raw = settings[`${prefix}itemRatings.${ratingSourceKey(piece)}.${id}`];
+  const value = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
+  if (raw === undefined || raw === null || raw === '' || !Number.isFinite(value)) return undefined;
+  return Math.min(ITEM_RATING_MAX, Math.max(0, Math.floor(value)));
+}
+
+/**
+ * applyItemRatingConfig(configured, authored, settings)
+ *
+ * The column, not a second table. Everything that shows an item's rating — the
+ * item card, the Armoury comparison, `ratingReceipt` through `equippedPieces` —
+ * reads the piece, so the configured number is written onto the piece and there
+ * is nothing left for those readers to miss. Ratings with no column
+ * (`itemRatingColumn` → null) stay in the rules object, where the receipt picks
+ * them up.
+ */
+export function applyItemRatingConfig(configured, authored, settings = {}) {
+  const write = (piece) => {
+    let next = piece;
+    for (const id of ratingIds) {
+      const column = itemRatingColumn(authored.equipment, piece, id);
+      if (!column) continue;
+      const value = itemRatingSetting(settings, piece, id);
+      if (value === undefined || next[column] === value) continue;
+      next = { ...next, [column]: value };
+    }
+    return next;
+  };
+  const equipment = configured.equipment || authored.equipment || {};
+  configured.equipment = {
+    ...equipment,
+    armaments: (equipment.armaments || []).map(write),
+    armour: (equipment.armour || []).map(write),
+  };
+}
+
+/**
+ * migrateCombatRatingSettings(settings, bundle)
+ *
+ * A STORED PLUS BECOMES THE NUMBER IT USED TO MAKE. `bonuses.<item>.<rating>`
+ * was the old per-item dial and it is gone; a profile that still holds one — or
+ * a configuration file exported before this build — is read as the item's
+ * rating: the authored value plus what the plus added. Keys are dropped only
+ * when the item they name is gone, which is what the old table did anyway.
+ * Relic and status bonuses are untouched: those ARE bonuses and stay bonuses.
+ */
+const LEGACY_ITEM_BONUS_KEY = /^gameConfig\.combatRatings\.bonuses\.(armament|armor):/;
+
+/** Whether a stored profile still holds a per-item PLUS this build has retired. */
+export function hasLegacyItemRatingSettings(settings = {}) {
+  return Object.keys(settings || {}).some(key => LEGACY_ITEM_BONUS_KEY.test(key));
+}
+
+export function migrateCombatRatingSettings(settings = {}, bundle, warnings = null) {
+  const legacy = Object.keys(settings).filter(key => LEGACY_ITEM_BONUS_KEY.test(key));
+  if (!legacy.length || !bundle) return settings;
+  const byKey = new Map([...(bundle.equipment?.armaments || []), ...(bundle.equipment?.armour || [])]
+    .map(piece => [ratingSourceKey(piece), piece]));
+  const next = { ...settings };
+  const rounded = [];
+  const capped = [];
+  const weighed = [];
+  for (const key of legacy) {
+    const [source, id] = key.slice(`${prefix}bonuses.`.length).split('.');
+    const piece = byKey.get(source);
+    delete next[key];
+    if (!piece || !ratingIds.includes(id)) continue;
+    const current = `${prefix}itemRatings.${source}.${id}`;
+    if (next[current] !== undefined) continue;
+    const bonus = Number(settings[key]);
+    if (!Number.isFinite(bonus)) continue;
+    const exact = authoredItemRatings(bundle.equipment, piece)[id] + bonus;
+    const value = Math.max(0, Math.min(ITEM_RATING_MAX, Math.round(exact)));
+    if (value !== exact) (Math.round(exact) === value ? rounded : capped).push(`${piece.name} ${ratingLabel(id)} ${exact}→${value}`);
+    if (id === 'poise' && piece.kind === 'armor' && bonus) weighed.push(`${piece.name} ${piece.poiseThreshold || 0}→${value}`);
+    next[current] = value;
+  }
+  // THE TWO PLACES THE SUM CANNOT BE KEPT EXACTLY, said out loud rather than
+  // discovered later (Copilot, on #1242). The old row was a generic numeric
+  // row: it took fractions and it took 999 on top of an authored value. An
+  // item's rating is a WHOLE NUMBER in the column it is written to —
+  // `validate.js` refuses a non-integer `attackRating`, `defenseRating` or
+  // `poiseThreshold` outright — and the row's own ceiling is the old one, so a
+  // fractional plus rounds and a sum past the ceiling stops there. Both are
+  // named where a reader can see them; everything else survives exactly.
+  // AND THE ONE PLACE THE OLD DIAL AND THE NEW ROW ARE NOT THE SAME FACT. A
+  // set's Poise threshold is also its weight (`statProjection.ARMOUR_WEIGHT_RULE`),
+  // so a Poise plus that used to add a rating and nothing else now adds to what
+  // the set costs to wear. Said out loud rather than found in a load receipt.
+  if (warnings && weighed.length) {
+    warnings.push(`A set's Poise is also its weight, so ${weighed.length === 1 ? 'one armour Poise bonus became' : `${weighed.length} armour Poise bonuses became`} part of what it costs to wear: ${weighed.join(', ')}. Everything else in the file was imported.`);
+  }
+  if (warnings && (rounded.length || capped.length)) {
+    if (rounded.length) warnings.push(`An item's rating is a whole number, so ${rounded.length === 1 ? 'one fractional per-item bonus was' : `${rounded.length} fractional per-item bonuses were`} rounded: ${rounded.join(', ')}. Everything else in the file was imported.`);
+    if (capped.length) warnings.push(`${capped.length === 1 ? 'One per-item bonus added up' : `${capped.length} per-item bonuses added up`} past the ${ITEM_RATING_MAX} a rating row accepts and stopped there: ${capped.join(', ')}. Everything else in the file was imported.`);
+  }
+  return next;
+}
+
 export function combatRatingRows(bundle) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
@@ -98,8 +286,8 @@ export function combatRatingRows(bundle) {
   // armour that shares its name with an "All classes" set piece — the Reaver
   // starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block,
   // +4 max HP, STR 3) is a different item any class can earn. They are two
-  // keys, `armor:reaver:default` and `armor:reaver:wayfarerPlate`, and they
-  // used to be two rows both reading "Wayfarer Plate (reaver)". The starting
+  // sources, `armor:reaver:default` and `armor:reaver:wayfarerPlate`, and their
+  // rows used to both read "Wayfarer Plate (reaver)". The starting
   // piece is picked out the way loadout.js picks it (free, not a shared set),
   // and the class is named the way the rest of the menu names it.
   const classNames = new Map((bundle.classes || []).map((c) => [c.id, c.name || words(c.id)]));
@@ -110,9 +298,15 @@ export function combatRatingRows(bundle) {
     return ` (${owner}${starting ? ', starting armour' : ''})`;
   };
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
-    for (const id of ratingIds) add(`bonuses.${ratingSourceKey(piece)}.${id}`, 0,
-      `${piece.name}${ownerOf(piece)} — additional ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour bonuses' : 'Weapon bonuses', {
-        note: 'Adds to the item’s authored ratings while equipped. Every equipped item contributes once.',
+    const authored = authoredItemRatings(bundle.equipment, piece);
+    for (const id of ratingIds) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
+      `${piece.name}${ownerOf(piece)} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
+        integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
+        note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
+          + `Attributes, relics and status bonuses are added to it.${itemRatingColumn(bundle.equipment, piece, id) ? ' The item card shows this number.' : ` ${piece.name} has no authored ${ratingLabel(id)} column, so this one is carried as a rating only and the item card does not print it.`}`
+          + (id === 'dr' && piece.kind === 'armor' ? ' The DR the armour card prints is the Block its own effects add, which is a different number and is not set here.' : '')
+          + (id === 'poise' && piece.kind === 'armor' ? ' Armour Poise is also its weight (SPEC §13.4): raising it raises what the set costs to wear.' : '')
+          + ' Applies to a new run.',
       });
   }
   for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
@@ -150,9 +344,11 @@ function onGrid(value, row) {
   return Number((Math.round(value / row.step) * row.step).toFixed(6));
 }
 
-export function resolveCombatRatings(settings, bundle) {
+export function resolveCombatRatings(rawSettings, bundle) {
+  const settings = migrateCombatRatingSettings(rawSettings || {}, bundle);
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
+  config.itemRatings = {};
   for (const row of combatRatingRows(bundle)) {
     const raw = settings[row.key] ?? (row.type === 'choice' || row.key.includes('.enemyRatings.') ? row.def : undefined);
     if (raw === undefined) continue;
@@ -160,6 +356,16 @@ export function resolveCombatRatings(settings, bundle) {
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
     if (typeof value === 'number' && (!Number.isFinite(value) || value < row.min || value > row.max || (row.integer && !Number.isInteger(value)))) continue;
     const path = row.key.slice(prefix.length).split('.');
+    // A RATING WITH A COLUMN IS NOT WRITTEN TWICE. `applyItemRatingConfig` puts
+    // it on the piece itself, and `ratingReceipt` reads the piece — keeping a
+    // copy here would be a second home for one number, and the two would part
+    // company the moment an upgrade moved the column. Only the ratings no item
+    // column can hold (Ward, an armament's Poise, the off-school attack rating)
+    // travel in the rules.
+    if (path[0] === 'itemRatings') {
+      const piece = itemByRatingSource(bundle)[path[1]];
+      if (!piece || itemRatingColumn(bundle.equipment, piece, path[2])) continue;
+    }
     let dest = config;
     for (const key of path.slice(0, -1)) dest = dest[key] ||= {};
     dest[path.at(-1)] = value;
@@ -201,6 +407,7 @@ export function combatRatingProblems(config) {
   if (!b || !Number.isFinite(b.thresholdGrowth) || b.thresholdGrowth < 1 || ['poiseActionLoss', 'wardActionLoss', 'recoveryPerTurn'].some(k => !Number.isInteger(b[k]) || b[k] < 0 || b[k] > 999)) problems.push('Invalid break settings');
   for (const weights of Object.values(config.statuses || {})) if (!weights || ['poise', 'ward'].some(k => !Number.isFinite(weights[k]) || weights[k] < 0 || weights[k] > 1)) problems.push('Invalid status resistance weights');
   for (const bonuses of Object.values(config.bonuses || {})) if (!bonuses || Object.values(bonuses).some(n => !Number.isFinite(n) || n < 0 || n > 999)) problems.push('Invalid rating bonus');
+  for (const ratings of Object.values(config.itemRatings || {})) if (!ratings || Object.values(ratings).some(n => !Number.isInteger(n) || n < 0 || n > ITEM_RATING_MAX)) problems.push('Invalid equipment rating');
   for (const n of [...Object.values(config.attackImpact || {}), ...Object.values(config.enemyImpact || {})]) if (!Number.isInteger(n) || n < -1 || n > 99) problems.push('Invalid impact override');
   if (Object.values(config.enemyAttackType || {}).some(v => !['auto', 'physical', 'magic'].includes(v))) problems.push('Invalid enemy attack type');
   for (const values of Object.values(config.enemyRatings || {})) if (!values || ['poise', 'ward'].some(id => !Number.isInteger(values[id]) || values[id] < 0 || values[id] > 999)) problems.push('Invalid enemy defences');
@@ -235,15 +442,25 @@ export function ratingReceipt(registries, run, config) {
   }
   add('Attributes', stat, 'attribute');
   if (run.loadout) for (const piece of equippedPieces(registries, run.loadout, run.class || run.player?.classId, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
-    const profile = registries.equipment.basicCardProfiles.find(p => p.id === piece.attackProfile);
-    const magical = profile && profile.damageSchool !== 'physical';
-    const values = { ar: magical ? 0 : piece.attackRating || 0, pr: magical ? piece.attackRating || 0 : 0,
-      dr: piece.defenseRating || 0, poise: piece.kind === 'armor' ? piece.poiseThreshold || 0 : 0 };
-    const bonus = config.bonuses?.[ratingSourceKey(piece)] || {};
-    for (const id of ratingIds) values[id] = (values[id] || 0) + (bonus[id] || 0);
+    // The piece is the configured, upgraded one, so its columns already ARE the
+    // ratings the settings panel and the item card show.
+    const values = authoredItemRatings(registries.equipment, piece);
+    const configured = config.itemRatings?.[ratingSourceKey(piece)] || {};
+    for (const id of ratingIds) if (Number.isFinite(configured[id])) values[id] = configured[id];
+    // AN OLD PER-ITEM PLUS IS NOT ADDED HERE, and that is the compatibility
+    // story rather than a hole in it (Copilot, on #1242). A saved fight carries
+    // the rules it opened under, `bonuses.<item>` and all, and the registries
+    // it is restored into are rebuilt from the RUN's own configuration
+    // snapshot — the same settings those rules were resolved from — so
+    // `migrateCombatRatingSettings` has already put authored + plus on the
+    // piece above. Adding `config.bonuses[<item>]` on top of that would score
+    // the plus twice and hand a resumed fight authored + 2 × plus.
+    // The rating a card sourced from THIS piece reads (`sourceRatingValue`)
+    // is the same item value: an override where the owner set one, the
+    // column the item authors where they did not.
     values.effectiveRatings = Object.fromEntries(ratingIds.map((id) => [
       id,
-      equipmentRatingBase(piece, id, { ratingId: id }) + (bonus[id] || 0),
+      Number.isFinite(configured[id]) ? configured[id] : equipmentRatingBase(piece, id, { ratingId: id }),
     ]));
     add(piece.name, values, 'equipment', piece.id);
   }

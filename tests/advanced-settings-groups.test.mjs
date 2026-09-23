@@ -375,7 +375,7 @@ test('no tab renders two rows a player cannot tell apart', async () => {
       }
     }
   }
-  // Armour bonuses used to show each class's starting armour twice (20 rows):
+  // Armour ratings (Armour bonuses until #1242) used to show each class's starting armour twice (20 rows):
   // `armor:<class>:default` and the "All classes" set piece of the same name
   // were both labelled "<name> (<class>)". The starting piece now says so.
   //
@@ -387,15 +387,15 @@ test('no tab renders two rows a player cannot tell apart', async () => {
     'the only indistinguishable rows left are the two Attack overrides pairs');
 });
 
-// A player editing an armour bonus has to know WHICH armour. Each class starts
+// A player editing an armour rating has to know WHICH armour. Each class starts
 // in a free outfit that shares its name with an "All classes" set piece — the
 // Reaver's plain Wayfarer Plate and the Wayfarer Plate set (+2 Block, +4 max HP,
 // STR 3) are different items with different keys, and both rows used to read
 // "Wayfarer Plate (reaver)".
-test('every armour bonus row names one piece of armour', async () => {
+test('every armour rating row names one piece of armour', async () => {
   const { contentBundle } = await import('../src/content/index.js');
   const { combatRatingRows } = await import('../src/model/combatRatings.js');
-  const rows = combatRatingRows(contentBundle).filter(row => row.statTopic === 'Armour bonuses');
+  const rows = combatRatingRows(contentBundle).filter(row => row.statTopic === 'Armour ratings');
   assert.ok(rows.length > 0);
 
   const byLabel = new Map();
@@ -404,10 +404,10 @@ test('every armour bonus row names one piece of armour', async () => {
     byLabel.set(row.label, row.key);
   }
 
-  const labelOf = (key) => rows.find(row => row.key === `gameConfig.combatRatings.bonuses.${key}`)?.label;
-  assert.equal(labelOf('armor:reaver:default.ar'), 'Wayfarer Plate (Reaver, starting armour) — additional AR');
-  assert.equal(labelOf('armor:reaver:wayfarerPlate.ar'), 'Wayfarer Plate (Reaver) — additional AR');
-  assert.equal(labelOf('armor:starseer:default.ward'), 'Nightweave (Starseer, starting armour) — additional Ward');
+  const labelOf = (key) => rows.find(row => row.key === `gameConfig.combatRatings.itemRatings.${key}`)?.label;
+  assert.equal(labelOf('armor:reaver:default.ar'), 'Wayfarer Plate (Reaver, starting armour) — AR');
+  assert.equal(labelOf('armor:reaver:wayfarerPlate.ar'), 'Wayfarer Plate (Reaver) — AR');
+  assert.equal(labelOf('armor:starseer:default.ward'), 'Nightweave (Starseer, starting armour) — Ward');
   // A class is named the way the rest of the menu names it, never by its id.
   assert.ok(!rows.some(row => /\((reaver|starseer|herald|rogue)[,)]/.test(row.label)), 'no row names a class by its lower-case id');
   // Exactly one starting armour per class, the same rule loadout.js enforces.
