@@ -587,7 +587,9 @@ way back, and it is a revision — the committed numbers are on the steppers and
 Cancel puts them back, while entering from the select is still a fresh
 allocation. And `resourceStrip` drew two chips labelled Poise whenever a
 caller passed the projection unfiltered; the drop moved into the component,
-which is where the second chip comes from.
+which is where the second chip comes from. (By the time #1255 landed, the live
+Character step filtered the row itself; the component catalogue's specimen was
+the caller still drawing two.)
 
 Three quieter ones landed with them: the equipment screen's seal now reads
 `armamentLevels` like the mutation it seals, so it cannot refuse in words an
