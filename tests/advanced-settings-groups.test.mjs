@@ -745,6 +745,11 @@ test('a refused configuration is named, and the example shows the rules a run ke
   const inRun = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 });
   assert.match(inRun.refused, /flask/i);
   assert.equal(inRun.examples[0].lines[0].total, 30 + 2 * 4, 'the authored HP base, not the refused edit');
+  // Held to the whole of validateContent, not only what createRunState trips
+  // on (Codex, #1252): a Mana card-cost floor no card meets is refused at boot.
+  const cost = statsTopicPreview({ 'gameConfig.balance.mana.minActionCost': 99, 'gameConfig.derivedStatRules.rules.hp.base': 50, settingsStatsExampleClass: 'reaver' }, 'HP');
+  assert.match(cost.refused, /minActionCost/);
+  assert.equal(cost.examples[0].lines[0].total, authored('reaver').maxHp);
 });
 
 test('the example shows what a run is born with at the edges', async () => {
@@ -758,6 +763,17 @@ test('the example shows what a run is born with at the edges', async () => {
   assert.equal(line.total, createRunState({ seed: 0, classId: 'rogue', registries: createRegistries(configuredContentBundle(contentBundle, settings)) }).maxHp);
   assert.equal(line.total, 1);
   assert.match(line.expression, /raised to 1/);
+  // With ratings off, Poise in combat is the row plus worn armour and relics,
+  // exactly as the threshold receipt stamps it (Codex, #1252).
+  const { playerPoiseThresholdReceipt } = await import('../src/model/statProjection.js');
+  const off = { 'gameConfig.combatRatings.enabled': false, settingsStatsExampleClass: 'reaver' };
+  const registries = createRegistries(configuredContentBundle(contentBundle, off));
+  const run = createRunState({ seed: 0, classId: 'reaver', registries });
+  const poise = statsTopicPreview(off, 'Poise').examples[0];
+  assert.match(poise.legacy, /armour and relic/);
+  assert.equal(poise.lines.at(-1).label, 'Poise in combat');
+  assert.equal(poise.lines.at(-1).total, playerPoiseThresholdReceipt(registries, run).value);
+  assert.match(poise.lines.at(-1).expression, /from armour/);
   // A typed weight is shown as the number that was multiplied.
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
   assert.match(eighth.examples[1].lines[0].expression, /8 levels × 0\.125 → 1/);

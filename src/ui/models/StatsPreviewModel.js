@@ -13,9 +13,10 @@
 // which it is.
 
 import { contentBundle } from '../../content/index.js';
-import { configuredContentBundle } from '../../model/advancedConfig.js';
-import { derivedStatFloorProblems } from '../../model/startingStatConfig.js';
-import { deriveStat, derivedStatRuleProblems, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
+import { advancedConfigStructuralProblems, configuredContentBundle } from '../../model/advancedConfig.js';
+import { validateContent } from '../../model/validate.js';
+import { playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { deriveStat, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
 import { resolveHandRules, scaledCardsReceipt } from '../../model/handRules.js';
 import { resolveCombatRatings } from '../../model/combatRatings.js';
 import { attributeRatingReceipt, ratingAttributeIds } from '../../model/ratingFormula.js';
@@ -63,54 +64,53 @@ function attributeList(subject) {
   return Object.entries(subject.attributes).map(([id, value]) => `${subject.shortLabel[id] || id} ${value}`).join(' · ');
 }
 
+// The last verdict, keyed by every setting that can reach the content bundle
+// (the `settings…` keys only remember what the screen shows).
+let lastRefusal = { key: null, refused: null };
+function refusalFor(settings, configured) {
+  const key = JSON.stringify(Object.entries(settings || {}).filter(([name]) => !name.startsWith('settings')));
+  if (key === lastRefusal.key) return lastRefusal.refused;
+  const validation = validateContent(configured);
+  const structural = advancedConfigStructuralProblems(contentBundle, settings);
+  const refused = structural[0] || (validation.ok ? null : `${validation.errors[0].path}: ${validation.errors[0].msg}`);
+  lastRefusal = { key, refused };
+  return refused;
+}
+
 // Everything an example reads, resolved once per preview: the configured
 // bundle, whose attributes, and the three rule sets built from it.
-function previewContext(settings, previewAttributes, previewLevel) {
+function previewContext(settings, previewAttributes, previewLevel, forcedRefusal = null) {
   // THE BUNDLE A RUN WOULD ACTUALLY GET. A configuration the game refuses is
   // not applied: `main.js` `rebuildRegistries` keeps the authored content until
-  // the values form a valid configuration. The example does the same and says
-  // why, rather than showing a number no run has, or going blank over a
-  // refusal on another tab. The full `validateContent` pass costs more than
-  // the example itself, so this checks the two refusals a stat edit can
-  // cause (the rule table and the Mana floor) up front, and anything else
-  // when the example run is born (`newRun` below).
+  // `validateContent` and the structural checks pass. The example runs the
+  // same two checks and does the same, and says why, rather than showing a
+  // number no run has or going blank over a refusal on another tab (review
+  // and Codex, #1252). The verdict is kept for the settings it was reached on,
+  // so switching the example character or the topic does not repeat it.
   let configured = configuredContentBundle(contentBundle, settings);
-  let refused = null;
-  const ruleProblem = derivedStatRuleProblems(configured.derivedStatRules, {
-    attributeIds: (configured.attributes || []).map((attribute) => attribute.id),
-    classFields: ['maxHp'],
-  })[0];
-  const floorProblem = derivedStatFloorProblems(configured)[0];
-  if (ruleProblem || floorProblem) {
-    refused = ruleProblem ? `${ruleProblem.path}: ${ruleProblem.msg}` : floorProblem.message;
-    configured = contentBundle;
-  }
+  let refused = forcedRefusal || refusalFor(settings, configured);
+  if (refused) configured = contentBundle;
   // A NEW CHARACTER IS BORN BY THE REAL DOOR. `createRunState` folds the
   // class's starting relics into its derived rules (a Reaver's Forsaken
   // Medallion is +10 HP), so an example read off the raw table would show a
   // number no new Reaver has. The run's own rule snapshot is what it uses.
-  // Born first, because a refusal at that door decides which bundle every
-  // other example reads.
-  // A character in play is shown from its own attributes, but a run is still
-  // born here: it is the check that the bundle is one the game would apply
-  // (Codex, on #1252), so an unrelated refusal cannot put numbers under a
-  // current character that no run will receive.
-  const classOf = (bundle) => statsExampleSubject(settings, null, bundle).classId;
-  const born = (bundle) => createRunState({ seed: 0, classId: classOf(bundle), registries: createRegistries(bundle) });
-  let newRun;
-  try {
-    newRun = born(configured);
-  } catch (error) {
-    if (configured === contentBundle) throw error;
-    refused = error.message;
-    configured = contentBundle;
-    newRun = born(configured);
+  // A character in play is shown from its own attributes instead.
+  const registries = createRegistries(configured);
+  let newRun = null;
+  if (!previewAttributes) {
+    try {
+      newRun = createRunState({ seed: 0, classId: statsExampleSubject(settings, null, configured).classId, registries });
+    } catch (error) {
+      if (configured === contentBundle) throw error;
+      refused = error.message;
+      configured = contentBundle;
+      return previewContext(settings, previewAttributes, previewLevel, refused);
+    }
   }
-  if (previewAttributes) newRun = null;
   const subject = statsExampleSubject(settings, previewAttributes, configured, previewLevel);
   const lazy = (build) => { let value; let done = false; return () => { if (!done) { value = build(); done = true; } return value; }; };
   return {
-    configured, subject, settings, refused,
+    configured, subject, settings, refused, registries,
     derived: lazy(() => resolveDerivedStatRules(configured.derivedStatRules, {
       attributeIds: (configured.attributes || []).map((attribute) => attribute.id),
       classFields: ['maxHp', 'maxMana'],
@@ -332,7 +332,20 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
   if (derivedId) attempt(() => {
     const example = derivedExample(ctx, derivedId);
     if (derivedId === 'draw') example.legacy = 'Used by LAN co-op and older saved fights. Solo fights use the hand rules above.';
-    if (derivedId === 'poise') example.legacy = ratingsOn ? 'Used only when ratings are off.' : 'Ratings are off, so this is the Poise combat uses.';
+    if (derivedId === 'poise') {
+      example.legacy = ratingsOn ? 'Used only when ratings are off.' : 'Ratings are off: combat uses this, plus worn armour and relic Poise.';
+      // What combat stamps is the whole threshold (`playerPoiseThresholdReceipt`):
+      // this row, the body armour worn and the relics' Poise (Codex, #1252).
+      if (!ratingsOn && ctx.newRun()) {
+        const threshold = playerPoiseThresholdReceipt(ctx.registries, ctx.newRun());
+        const parts = [`${num(threshold.attribute)} from attributes`];
+        if (threshold.equipment) parts.push(`${num(threshold.equipment)} from armour`);
+        if (threshold.relic) parts.push(`${num(threshold.relic)} from relics`);
+        example.lines.push({ label: 'Poise in combat', expression: parts.join(' + '), total: threshold.value });
+      } else if (!ratingsOn) {
+        example.hint = `${example.hint} Worn armour and relic Poise add on top in combat.`;
+      }
+    }
     return example;
   });
   return {
