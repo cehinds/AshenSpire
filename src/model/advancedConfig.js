@@ -1,4 +1,5 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
+import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
@@ -203,37 +204,15 @@ const RETIRED_BALANCE_PATHS = new Set([
   'equipment.swapAllowancePerTurn',
 ]);
 
-// A note a player can act on, for the rows whose own name is not enough. The
-// rest get "Applies to a new run.", which is what the screen used to paste
-// over the engine's spelling anyway.
-const BALANCE_NOTES = Object.freeze({
-  // `combat.js` uses this ONLY when no hand rules are handed in, and the
-  // shipped game always hands them in (`main.js` resolves them for every
-  // fight), so the live capacity is Advanced → Hand & Draw → Hand capacity.
-  // Saying so is the difference between a fallback and a second answer.
-  handMax: 'Fallback hand capacity, used only when hand rules are unavailable.'
-    + ' The capacity a fight actually uses is Hand & Draw → Hand capacity → Base hand capacity.',
-  // THE LEGACY POISE METER. `dealPoiseDamage` hands every hit to the ratings
-  // path while combat ratings are on (engine/actions.js), so these rows are
-  // live only with Stats & Defence → General → "Enable ratings, Poise & Ward"
-  // off. They sit beside the rows that replace them, and say which.
-  'stagger.player.actionLoss': 'Only while combat ratings are off. With ratings on, Breaks → Poise action loss sets this.',
-  'stagger.player.statuses.vulnerable': 'Only while combat ratings are off. With ratings on, a break costs actions and applies no status.',
-  'stagger.player.statuses.weak': 'Only while combat ratings are off. With ratings on, a break costs actions and applies no status.',
-  'poise.growthMult': 'Only while combat ratings are off. With ratings on, Breaks → Break threshold multiplier sets this.',
-  'poise.playerImpactPerHit': 'Only while combat ratings are off. With ratings on, the Impact rows set how much each hit fills the meter.',
-  'poise.onFill.0.stacks': 'Only while combat ratings are off. With ratings on, a break skips the enemy’s next turn instead.',
-  // THE SWAP-COST NUMBERS the "Weapon swap cost" picker chooses between. The
-  // picker is the control; these say which rule each number belongs to, so
-  // turning a `gear` flag is not mistaken for picking a rule.
-  'equipment.swapCost': 'Base swap cost under the Flat and Talisman & relic rules, and for a weapon no category matches. The rule itself is “Weapon swap cost” above.',
-  'equipment.swapCostRules.0.gear': 'Flat rule: also apply talisman and relic modifiers. On makes Flat the same as Talisman & relic — pick the rule with “Weapon swap cost” instead.',
-  'equipment.swapCostRules.1.gear': 'Talisman & relic rule: apply talisman and relic modifiers. Off makes it the same as Flat.',
-  'equipment.swapCostRules.2.gear': 'Weapon category rule: also apply talisman and relic modifiers.',
-  'equipment.swapCostByCategory.0.cost': 'Swap cost for a heavy weapon, under the Weapon category rule only.',
-  'equipment.swapCostByCategory.1.cost': 'Swap cost for a flourish weapon, under the Weapon category rule only.',
-  flaskCapacity: 'Each class’s HP flasks plus Mana flasks (Progression → the class) must add up to this, or a new run is refused. Applies to a new run.',
-});
+// THE NOTES LIVE BESIDE THEIR NUMBERS, in content/balance.js (owner,
+// 2026-09-23: "move the descriptions into balance.js"). A `BALANCE_NOTES`
+// table sat here and gave every generated row it did not name "Applies to a
+// new run." — the same five words under most of 325 rows. Every sentence it
+// held now sits beside its own number, with the facts it established kept:
+// the legacy poise and stagger rows are live only while combat ratings are
+// off; `handMax` is a fallback a solo fight never reads; each class's flasks
+// must add up to `flaskCapacity`; and the swap-cost numbers belong to the
+// rule the "Weapon swap cost" picker chooses, not to the `gear` flags.
 
 // ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
 //
@@ -320,10 +299,23 @@ function balanceLabel(path) {
   return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
 }
 
-function leafRows(value, path = [], rows = []) {
+// EVERY GENERATED ROW SAYS WHAT IT DOES. This used to read `Authored balance
+// value: <path>. Applies to a new run.` for all 325 of them — one sentence,
+// repeated, saying only what the key beside it already said (owner,
+// 2026-09-21: "the description for most of the settings say the same thing and
+// aren't very helpful descriptions"). The sentences sit beside their numbers
+// in content/balance.js, and model/balanceNotes.js reads them and fills in
+// every name from the bundle; the old line survives only as the fallback for a
+// number with no sentence, and a test holds that fallback at zero.
+//
+// `parent` is the object or array the leaf sits in, handed down so a row
+// inside an authored list (a swap-cost category, an armoury view, a flask
+// growth row) can name itself by its own tag or id instead of by its index.
+function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
     const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -332,7 +324,15 @@ function leafRows(value, path = [], rows = []) {
       def: value,
       ...domain,
       label: balanceLabel(path),
-      note: (Object.hasOwn(BALANCE_NOTES, joined) && BALANCE_NOTES[joined]) || 'Applies to a new run.',
+      // The flag, not the sentence, is what marks a generated row: the Advanced
+      // panel used to recognise one by the boilerplate it carried, which meant
+      // giving a row a real description would have quietly changed how it drew.
+      generatedBalance: true,
+      // The whole note, closing clause included: a row the game does not read
+      // must not end by promising it applies to a new run, so the note beside
+      // the number decides that rather than this line appending it to
+      // everything.
+      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
       ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
@@ -340,7 +340,7 @@ function leafRows(value, path = [], rows = []) {
     return rows;
   }
   if (!value || typeof value !== 'object') return rows;
-  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows);
+  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows, bundle, value);
   return rows;
 }
 
@@ -559,7 +559,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 ]);
 
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  const generated = leafRows(bundle.balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
   return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 

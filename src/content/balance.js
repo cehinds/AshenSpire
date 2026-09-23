@@ -4,6 +4,98 @@
 
 import { tooltipHelp } from './tooltipHelp.js';
 
+// ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
+//
+// Every object below carries a `[NOTE]` block beside its own numbers: the
+// sentence Settings → Advanced shows under each row. They lived in
+// model/balanceNotes.js until the owner asked for them here, and the reason
+// is the one this file's header gives for the numbers — a description kept in
+// a second file drifts from the number it describes, because nobody editing
+// the number sees it. Two of the sentences reviewed in #1243 had been copied
+// from a comment in this file that the code had since outgrown.
+//
+// THE KEY IS A SYMBOL, and that is what lets a sentence sit inside an object
+// the engine reads as numbers. `Object.keys`, `Object.entries`, JSON and
+// structuredClone all skip it, so `validate.js`'s unknown-field checks,
+// model/advancedConfig.js's `leafRows` and every engine reader walk past it:
+// `balance.shop.sellFraction` is still 0.5 and `balance.shop` still has the
+// keys it had. `Symbol.for`, so a second copy of this module shares the key.
+//
+// HOW TO WRITE ONE. A key names a number by its path under the object that
+// holds the block:
+//
+//   sellFraction: 'What the merchant pays …'           this one number
+//   '{kind}Cost.{rarity}.{end}': 'The {band} of …'     every number of a family
+//   '{statId}.perLevel': { text: '…', inert: true }    a number nothing reads
+//
+// `{name}` in a key captures a path segment. In a sentence, `{name}` is a
+// blank model/balanceNotes.js fills with a NAME — a relic's from the relic, a
+// class's from the class — and `{a name}` fills it with its article too.
+// Nothing there writes prose; the phrases it picks between are `balanceWords`
+// below. Every note but an inert one ends with `balanceWords.newRun`; an
+// inert one says nothing reads it, and does not then promise to apply.
+//
+// A number with no note falls back to "Authored balance value: <path>", and
+// tests/advanced-config.test.mjs fails on it. So does a note naming a number
+// that is not here, which is what keeps a sentence and its number together:
+// rename the number without moving its sentence and the test says so.
+export const NOTE = Symbol.for('ashenspire.balance.note');
+
+// The vocabulary the note blanks are filled from. Words, not rules: a phrase
+// here is what a blank reads as, and model/balanceNotes.js only chooses one.
+export const balanceWords = Object.freeze({
+  newRun: 'Applies to a new run.',
+  // What a relic's or a talent's variable NAMES — one vocabulary, because the
+  // nodes that read these rows (content/source/nodeEffects.json) share it.
+  effects: Object.freeze({
+    block: 'how much Block it grants',
+    draw: 'how many cards it draws',
+    heal: 'how much HP it heals',
+    strength: 'how much Strength it grants',
+    damage: 'how much damage it deals',
+    poiseDamage: 'how much Poise damage it deals',
+    gainEnergy: 'how many actions it gives back',
+    restoreMana: 'how much Mana it restores',
+    restoreStamina: 'how much Stamina it restores',
+    starstoneCharge: 'how many Starstone Charges it grants',
+    bleed: 'how many stacks of Bleed it applies',
+    venom: 'how many stacks of Venom it applies',
+    crimsonBlight: 'how many stacks of Crimson Blight it applies',
+    prepared: 'how many stacks of Prepared it grants',
+    madness: 'how many stacks of Madness it costs you',
+    frail: 'how many stacks of Frail it costs you',
+    weak: 'how many stacks of Weak it applies to the foe',
+    vulnerable: 'how many stacks of Vulnerable it applies to the foe',
+    loseHp: 'how much HP it costs you',
+    n: 'how many cards you play per trigger: it fires on every Nth card of the fight, not after N quiet ones',
+  }),
+  // A pool is a door, and a sentence reads better naming the door than the id.
+  pools: Object.freeze({
+    normal: 'a normal fight',
+    elite: 'an elite fight',
+    boss: 'a boss fight',
+    treasure: 'a treasure node',
+    shop: 'a merchant',
+    shrine: 'a shrine',
+    merchant: 'a merchant',
+  }),
+  // The two ends of an authored [low, high] band.
+  bands: Object.freeze(['low end', 'high end']),
+  // An enemy stat as the game writes it, not as the key spells it.
+  stats: Object.freeze({ hp: 'HP', damage: 'damage', block: 'Block', poise: 'Poise' }),
+  shopNouns: Object.freeze({ card: 'card', relic: 'relic', armament: 'armament', weaponArt: 'weapon art', flask: 'flask' }),
+  flaskKinds: Object.freeze({ hp: 'Crimson', mana: 'Azure' }),
+  // Where a talent sits. `{tier}` and `{owners}` are filled from the tree.
+  talentPlace: Object.freeze({
+    tiered: 'a tier-{tier} {owners} talent',
+    untiered: 'a {owners} talent',
+    unplaced: 'a class talent',
+  }),
+  // Who takes an enemy's on-fill stacks: itself, or the target a row names.
+  onFill: Object.freeze({ self: 'an enemy takes itself', other: "an enemy's fill applies to" }),
+});
+
+
 export const balance = {
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
@@ -11,7 +103,12 @@ export const balance = {
     label: 'Arcane Exposure',
     // Explicit carrier schools. Physical/holy/fire are currently unmapped and
     // therefore add zero even if a malformed card tries to author buildup.
-    schoolBuildupMultipliers: { magic: 1, arcane: 1 }, // PROVISIONAL
+    schoolBuildupMultipliers: {
+      magic: 1, arcane: 1,
+      [NOTE]: {
+        '{school}': 'Multiplies the Arcane Exposure {a school} card builds on its target. 0 means {school} damage never builds Exposure at all.',
+      },
+    }, // PROVISIONAL
   },
   // Focus properties (docs/proposal-progression-and-property-system.md §7.2,
   // §10): what an Arcane Break, or a hit, is worth to the caster whose focus
@@ -29,6 +126,15 @@ export const balance = {
     // least this on a card that costs Mana): an empty caster still works toward
     // a break with action-only spells, a Mana spell works faster.
     buildupPerManaSpell: 5, // PROVISIONAL
+    [NOTE]: {
+      siphonRefund: 'Mana the Siphon focus property hands back when you break a foe\'s Arcane Exposure.',
+      siphonRefundMastered: 'Mana Siphon hands back instead, once the focus skill reaches the mastery level below.',
+      siphonMasteryLevel: 'The focus skill level at which Siphon starts paying its mastered refund.',
+      overchargeBuildupMult: 'Multiplies the Arcane Exposure each hit builds while a focus carries Overcharge.',
+      staggerBreakPoise: 'Poise damage Stagger Break deals to a foe whose Arcane Exposure you break.',
+      resonanceSpreadPct: 'Percent of a broken foe\'s Exposure threshold that Resonance pours into every OTHER foe.',
+      buildupPerManaSpell: 'The least Arcane Exposure a card that costs Mana must build per hit, so a Mana spell always works toward a break faster than an action-only one.',
+    },
   },
   energy: 3,
   draw: 5,
@@ -52,6 +158,17 @@ export const balance = {
   // 11 since plan phase 5a: the class ability card joins the kit beside the
   // signature (roleCopies.ability below; the composed plan grants it first).
   startingDeckSize: 11,
+  [NOTE]: {
+    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Progression › Stat conversions is the row that moves them. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
+    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Progression › Stat conversions is the row that moves it.', inert: true },
+    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Hand & Draw → Hand capacity → Base hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
+    flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it or a new run is refused.',
+    flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
+    startingCinders: 'Cinders a new run opens with.',
+    startingDeckSize: 'How many cards a new character\'s deck holds, the class ability and signature included.',
+    graceRefillAtRunStart: { text: 'A retired flag: it once refilled flask charges the moment a run started, as though a grace had already been touched. Nothing reads it now.', inert: true },
+    'flaskGrowth.{i}.amount': 'How many extra {flaskKind} flask charges carrying {carrier} adds to the run\'s capacity.',
+  },
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -68,19 +185,36 @@ export const balance = {
     // blow that draws blood rocks the player by this much; the ruleset's
     // weapon impact replaces it wherever a ruleset is handed in.
     playerImpactPerHit: 2, // PROVISIONAL
+    [NOTE]: {
+      growthMult: 'How much a Poise threshold grows each time the meter fills, so the second stagger of a fight is dearer than the first. Only while combat ratings are off; with ratings on, Break threshold multiplier sets this.',
+      playerImpactPerHit: 'Poise the player loses per enemy hit that lands, outside a ruleset that states its own weapon impact. Only while combat ratings are off; with ratings on, the impact rows set how much each hit fills the meter.',
+      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. Only while combat ratings are off; with ratings on, a break skips the enemy\'s next turn instead.',
+    },
   },
 
   // WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter
   // filling takes this many actions off the NEXT turn and applies these
   // statuses (ordinary decay). The engine reads the map; it names no status.
   stagger: {
-    player: { actionLoss: 1, statuses: { vulnerable: 2, weak: 2 } },
+    player: {
+      actionLoss: 1, statuses: { vulnerable: 2, weak: 2 },
+      [NOTE]: {
+        actionLoss: 'Actions taken off the player\'s NEXT turn when their Poise meter fills. Only while combat ratings are off; with ratings on, Poise action loss sets this.',
+        'statuses.{status}': 'Stacks of {statusName} the player takes when their own Poise meter fills. Only while combat ratings are off; with ratings on, a break costs actions and applies no status.',
+      },
+    },
   },
 
   // MANA IS THE THIRD COST LINE, NEVER THE FIRST (plan phase 8, proposal §7.1):
   // a card that costs Mana costs at least this much action and stamina too.
   // validate.js refuses a card under either floor by name.
-  mana: { minActionCost: 1, minStaminaCost: 1 },
+  mana: {
+    minActionCost: 1, minStaminaCost: 1,
+    [NOTE]: {
+      minActionCost: 'The least action a card that costs Mana must also cost — Mana is the third cost line, never the first.',
+      minStaminaCost: 'The least Stamina a card that costs Mana must also cost.',
+    },
+  },
 
   // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
   // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
@@ -88,7 +222,14 @@ export const balance = {
   // `minimumStepLevels` levels (the proposal's "+1 every 2 levels"). Character
   // level lands in phase 6; until then every run reads as level 0 and the
   // floor is `minimum`. model/loadout.js deckMinimum is the one reader.
-  deck: { minimum: 8, minimumStepLevels: 2, minimumPerStep: 1 },
+  deck: {
+    minimum: 8, minimumStepLevels: 2, minimumPerStep: 1,
+    [NOTE]: {
+      minimum: 'The fewest cards a run may leave the Armoury holding, at character level 0.',
+      minimumStepLevels: 'How many character levels apart each rise in that deck floor sits.',
+      minimumPerStep: 'How far the deck floor rises at each of those steps.',
+    },
+  },
 
   // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
   // One curve shape for every track: the step from level n costs
@@ -101,19 +242,48 @@ export const balance = {
   // evaded (light; medium reads half of each), one XP per buildupPerXp arcane
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
-    xp: { base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5 },
+    xp: {
+      base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      [NOTE]: {
+        base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
+        growth: 'Those tracks: how much dearer each level step is than the one before it.',
+        roundTo: 'Those tracks: every step cost is rounded to a multiple of this.',
+        perHit: 'Skill XP for a hit or block a track\'s card lands on a live target.',
+        perWinEquipped: 'Skill XP each equipped track earns for a won fight.',
+        killMult: 'Multiplies that win award for the one track that landed the killing blow.',
+        impactPerXp: 'Impact a heavy-armoured wearer must absorb per point of armour skill XP. Medium armour earns half as fast; light earns none this way.',
+        evadeXp: 'Armour skill XP for evading a hit in light armour. Medium armour earns half.',
+        buildupPerXp: 'Arcane Exposure buildup a caster must deal per point of focus skill XP.',
+      },
+    },
     // The class track (plan phase 5b): a slower curve; paid by the run's
     // owner for a won fight, more for a boss (the owner knows the door's
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
-    class: { xp: { base: 60, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5] },
+    class: {
+      xp: { base: 60, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      [NOTE]: {
+        'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
+        'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
+        'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
+        'xp.perWin': 'Class XP for a won fight.',
+        'xp.bossKill': 'Class XP for killing an act boss, on top of the win.',
+        'xp.perQuest': 'Class XP for a completed quest.',
+        'tierAt.{i}': 'The class level at which tier {ordinal} of the class tree opens.',
+      },
+    },
     // The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
     // `draftSize` cards of the track's schools; at most `draftsPerCombat`
     // drafts per track per reward door, the rest queue; a rarity is drafted
     // from the level its row names (the game has no legendary rarity, so the
     // proposal's fourth row has no seat); at `upgradeAt` every deck card of
     // the track's schools is upgraded, the shrine keeping the rest.
-    rarityUnlock: { common: 1, uncommon: 4, rare: 7 },
+    rarityUnlock: {
+      common: 1, uncommon: 4, rare: 7,
+      [NOTE]: {
+        '{rarity}': 'The skill-track level at which {rarity} cards start appearing in that track\'s drafts.',
+      },
+    },
     draftSize: 3,
     draftsPerCombat: 1,
     upgradeAt: 5,
@@ -121,6 +291,12 @@ export const balance = {
     // weapon groups the card names (its item-type tags) is multiplied by
     // this, through the `favored` property the card carries.
     favoredXpMult: 1.25,
+    [NOTE]: {
+      draftSize: 'How many cards a skill draft lays out for you to take one of.',
+      draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
+      upgradeAt: 'The track level at which every card of that track\'s schools in your deck is upgraded.',
+      favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',
+    },
   },
 
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
@@ -132,11 +308,19 @@ export const balance = {
     // reading against the OLD faucet for a week; both are re-tuned against
     // this one now (2026-09-11) — the shop by this same ×3, the level ladder
     // by measurement, each explained where it lives.
-    cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
+    cinders: {
+      normal: [45, 75], elite: [105, 150], boss: [225, 270],
+      [NOTE]: {
+        '{kind}.{end}': 'The {band} of the cinders that {pool} pays.',
+      },
+    },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },
       boss: { common: 45, uncommon: 40, rare: 15 },
+      [NOTE]: {
+        '{kind}.{rarity}': 'How often {pool} offers {a rarity} card, weighed against the other rarities in its row. Classes with a table of their own use that instead.',
+      },
     },
     // Caster rewards favor uncommon/rare cards when the skill gate allows them.
     rarityWeightsByClass: {
@@ -150,10 +334,18 @@ export const balance = {
         elite: { common: 25, uncommon: 50, rare: 25 },
         boss: { common: 20, uncommon: 45, rare: 35 },
       },
+      [NOTE]: {
+        '{classId}.{kind}.{rarity}': 'The {className}\'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row.',
+      },
     },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    [NOTE]: {
+      cardChoices: 'How many cards a reward door lays out to choose from.',
+      flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
+      flaskDropStepPct: 'How far that chance falls after a drop, and rises after a miss.',
+    },
   },
 
   shop: {
@@ -187,6 +379,14 @@ export const balance = {
     // price, one word flips it. 0 turns the buy-back off at the table without
     // touching the Settings toggle that owns the feature's visibility.
     sellFraction: 0.5,
+    [NOTE]: {
+      removeBase: 'What the first card removal of a run costs at the merchant.',
+      removeStep: 'How much each further removal adds to that price.',
+      sellFraction: 'What the merchant pays for a relic, flask or armament of yours, as a fraction of the cheapest he would sell that kind for, so the same piece fetches the same cinders every visit. Below 1 selling always loses on the trade, which is the point of it; at 1 or above a relic or flask sells for at least what he charges, while armaments stop selling altogether. 0 takes every buy-back to nothing.',
+      '{kind}Cost.{rarity}.{end}': 'The {band} of what the merchant charges for {a costItem}.',
+      '{kind}Cost.{end}': 'The {band} of what the merchant charges for {a costItem}.',
+      '{kind}Stock': 'How many {stockNoun}s the merchant puts on the shelf each visit.',
+    },
   },
 
   // WHAT A REST RESTORES is the location's tag set (plan phase 7): a place
@@ -202,21 +402,41 @@ export const balance = {
   rest: {
     hpSmallPct: 25,
     hpPartialPct: 35,
-    mana: { mode: 'floorOrFull', flat: 3, floorPct: 50 },
+    mana: {
+      mode: 'floorOrFull', flat: 3, floorPct: 50,
+      [NOTE]: {
+        flat: 'Mana a flat-mode rest restores, as a fixed number of points.',
+        floorPct: 'The percent of max Mana a floor-mode rest tops you up TO. Already at or above it, you go to full instead.',
+      },
+    },
+    [NOTE]: {
+      hpSmallPct: 'Percent of max HP a rough camp\'s small rest hands back.',
+      hpPartialPct: 'Percent of max HP a shrine\'s rest hands back.',
+    },
   },
 
   // The seeded route's town budget (plan phase 7): at most this many towns —
   // the atlas's start and city nodes — per difficulty act, so attrition
   // between towns is the run's tension. generateJourney rejects a route over
   // it and rolls again.
-  atlas: { townsPerActMax: 1 },
+  atlas: {
+    townsPerActMax: 1,
+    [NOTE]: {
+      townsPerActMax: 'The most towns — start and city nodes — a generated act may hold. A route over it is rejected and rolled again, so attrition between towns is the run\'s tension.',
+    },
+  },
 
   // Smithing promotes the owned armament, not one card copy. The model owns
   // the transaction; balance owns the tier ceiling, price, and reward faucet.
   smithing: {
     // Item/tier costs, card changes, and requirement changes are authored in
     // itemUpgradeChanges.csv. Balance owns only the reward faucet.
-    rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+    rewardByPool: {
+      normal: 0, elite: 1, boss: 1, treasure: 0,
+      [NOTE]: {
+        '{kind}': 'How many Smithing Stones {pool} pays out.',
+      },
+    },
 
     // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
     // A smith does three things: upgrade an item (the tier promotion above),
@@ -230,11 +450,18 @@ export const balance = {
       offeredAt: {
         shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
         merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
+        [NOTE]: {
+          '{kind}.chance': 'Percent chance {pool} offers the smith\'s services on a visit. 100 is always and rolls nothing; 0 is never.',
+        },
       },
       // Priced in Smithing Stones, the same purse as an upgrade. Free by the
       // owner's word, configurable because he said so in the same breath.
       extract: { cost: 0 },
       install: { cost: 0 },
+      [NOTE]: {
+        'extract.cost': 'Smithing Stones to pull a card out of an item\'s mount so it becomes the run\'s own.',
+        'install.cost': 'Smithing Stones to fit a run-owned card into an open or emptied mount.',
+      },
     },
   },
 
@@ -259,6 +486,14 @@ export const balance = {
       damage: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
       block: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
       poise: { perLevel: 1, rounding: 'round', min: 0, max: 999 },
+      [NOTE]: {
+        '{statId}.perLevel': { text: 'How much {stat} an enemy would gain per level of enemy level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
+        '{statId}.min': { text: 'The lowest {stat} that scaling may produce, whatever the level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
+        '{statId}.max': { text: 'The highest {stat} that scaling may produce, whatever the level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
+      },
+    },
+    [NOTE]: {
+      playerStartingLevel: { text: 'The character level a run would begin at. Authored and not yet read: the level planner that would consult it is called from nowhere, and a climb takes its level from the levels it has earned instead.', inert: true },
     },
   },
 
@@ -306,14 +541,30 @@ export const balance = {
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
-    xp: { base: 100, growth: 1.15, roundTo: 10 },
+    xp: {
+      base: 100, growth: 1.15, roundTo: 10,
+      [NOTE]: {
+        base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
+        growth: 'The character level curve: how much dearer each step is than the one before it.',
+        roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
+      },
+    },
     // The maxima bump cadence is authored on the derived-stat rows that carry
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
     combatWin: 50,
-    kill: { normal: 25, elite: 75, boss: 200 },
+    kill: {
+      normal: 25, elite: 75, boss: 200,
+      [NOTE]: {
+        '{kind}': 'Character XP for killing an enemy out of the roster {pool} draws from.',
+      },
+    },
     quest: 125,
+    [NOTE]: {
+      combatWin: 'Character XP for winning a fight, before any kill awards.',
+      quest: 'Character XP for a completed quest.',
+    },
   },
   levelUp: {
     // What a level GRANTS: attribute points, waiting on the ledger until the
@@ -352,6 +603,12 @@ export const balance = {
     // one number here, no code.
     tierSizeMin: 1,
     tierSizeMax: 20,
+    [NOTE]: {
+      pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
+      pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
+      tierSizeMin: { text: 'The lowest value Stat points per tier accepts, and nothing reads it from here: that row takes its bounds from the authored table. 1 is arithmetic, not taste: a tier is floor(points ÷ tier size).', inert: true },
+      tierSizeMax: { text: 'The highest value Stat points per tier accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
+    },
   },
 
   // ---- what a grace hands back ----------------------------------------------
@@ -371,7 +628,16 @@ export const balance = {
   gauntlet: {
     healPct: 15,
     rewardChoices: 3,
-    rarityWeights: { common: 60, uncommon: 35, rare: 5 },
+    rarityWeights: {
+      common: 60, uncommon: 35, rare: 5,
+      [NOTE]: {
+        '{rarity}': 'Headless gauntlet only: how often its reward is {a rarity} card, weighed against the other rarities.',
+      },
+    },
+    [NOTE]: {
+      healPct: 'Headless gauntlet only: percent of max HP healed between its fights.',
+      rewardChoices: 'Headless gauntlet only: how many cards its reward lays out.',
+    },
   },
 
   // ---- Forsaken Together (co-op) ------------------------------------------
@@ -379,6 +645,11 @@ export const balance = {
     headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
     mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
     reviveHp: 1, // downed-but-not-dead members revive next floor at this HP (StS2)
+    [NOTE]: {
+      headcountHpFactor: 'Co-op: enemy HP is multiplied by 1 + this × (party size − 1), so each extra body at the table adds one more share of the same fight. 0 leaves a four-hander reading exactly like a solo climb.',
+      mendHealPct: 'Co-op: percent of an ally\'s max HP that Mend at a shrine restores.',
+      reviveHp: 'Co-op: the HP a downed-but-not-dead member comes back at on the next floor.',
+    },
   },
 
   // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
@@ -386,6 +657,11 @@ export const balance = {
     hpPerLoop: 0.35, // +% enemy HP per completed cycle
     strPerLoop: 1, // +Strength per completed cycle
     actsPerCycle: 3, // acts before the spire loops (also the act count)
+    [NOTE]: {
+      hpPerLoop: 'Endless Spire: the fraction of extra enemy HP each completed cycle adds.',
+      strPerLoop: 'Endless Spire: Strength enemies gain per completed cycle.',
+      actsPerCycle: 'Endless Spire: acts before the spire loops. It is also the act count of an ordinary climb.',
+    },
   },
   // ---- Seats (SPEC §13.3) ------------------------------------------------------
   // One multiplier per TIER. A seat's rosters were authored at its baseTier
@@ -396,7 +672,12 @@ export const balance = {
   // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
   // bosses weighted together). Tier 1 is 1 by definition and the validator
   // holds it there.
-  seatTiers: { 1: 1, 2: 1.5, 3: 1.9 },
+  seatTiers: {
+    1: 1, 2: 1.5, 3: 1.9,
+    [NOTE]: {
+      '{tier}': 'Enemy HP multiplier for a tier-{tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1.',
+    },
+  },
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
@@ -404,6 +685,14 @@ export const balance = {
     expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
     hoarderShopMult: 2, // Hoarder: ×shop price
     lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)
+    [NOTE]: {
+      toughElitesHpMult: 'Custom Climb, Tough Elites: multiplies elite and boss HP.',
+      bigBossesHpMult: 'Custom Climb, Dread Bosses: multiplies act boss HP.',
+      hoarderCinders: 'Custom Climb, Hoarder: bonus cinders the run starts with.',
+      expensiveShopsMult: 'Custom Climb, Greedy Merchants: multiplies every shop price.',
+      hoarderShopMult: 'Custom Climb, Hoarder: multiplies every shop price, the other half of its bargain.',
+      lessHealingMult: 'Custom Climb, Scarce Embers: multiplies all healing — shrine rests and the between-act refill alike.',
+    },
   },
 
   // ---- presentation config (read by the UI layer, never by the engine) ----
@@ -1106,7 +1395,12 @@ export const balance = {
   // cost node (content/source/nodes.csv cost.action/stamina/mana) with no
   // amount of its own. Bound in variableBindings.csv; read into the generated
   // framework data at build.
-  costs: { action: 1, stamina: 1, mana: 1 },
+  costs: {
+    action: 1, stamina: 1, mana: 1,
+    [NOTE]: {
+      '{resource}': 'The {resource} a card pays when it carries {a resource} cost with no amount of its own.',
+    },
+  },
   // The class tree's numbers (plan phase 5b): one row per node, read by its
   // variable bindings; the tree itself is content/source/classTree.csv.
   classTree: {
@@ -1182,7 +1476,10 @@ export const balance = {
     },
     shadow: {
         block: 3
-    }
+    },
+  [NOTE]: {
+    '{node}.{variable}': '{talent}, {talentPlace} — {effect}.{blurbSuffix}',
+  },
 },
 
   powers: {
@@ -1239,6 +1536,9 @@ export const balance = {
     lodestarShard: { restoreMana: 1 },
     waxenSeal: { heal: 3 },
     whetstonePouch: { bleed: 2 },
+    [NOTE]: {
+      '{relic}.{variable}': '{relicName} — {effect}.',
+    },
   },
   equipment: {
     startingKitDiscovery: {
@@ -1246,8 +1546,16 @@ export const balance = {
       // or item silhouette leaks through character creation.
       undiscoveredPresentation: 'hidden',
       receiptLimit: 64,
+      [NOTE]: {
+        receiptLimit: 'How many armament-discovery receipts a profile keeps. Past it the oldest are dropped; the discoveries themselves are kept forever.',
+      },
     },
-    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1, ability: 1 },
+    roleCopies: {
+      attack: 4, guard: 4, technique: 1, signature: 1, ability: 1,
+      [NOTE]: {
+        '{role}': 'Copies of the {role} card a starting deck holds. It decides the deck only while the composed starting deck below is off, and must then sum to the starting deck size by hand; the Armoury reads it either way.',
+      },
+    },
 
     // ---- Composed starting deck (togglable) ---------------------------------
     // `roleCopies` above is a FIXED distribution that must sum to
@@ -1313,6 +1621,13 @@ export const balance = {
       classes: {
         reaver: { strikeBias: 0.5 },
         starseer: { strikeBias: 0.5 },
+        [NOTE]: {
+          '{classId}.strikeBias': 'The {className}\'s filler split: the share of its base cards that are attacks, the rest guards. 0.5 is even.',
+        },
+      },
+      [NOTE]: {
+        enabled: 'Compose the starting deck from granted cards plus filler. Off falls back to the fixed role copies above, which must sum to the deck size by hand.',
+        defaultStrikeBias: 'The filler split for a class with no bias of its own: the share of base cards that are attacks, the rest guards.',
       },
     },
 
@@ -1320,6 +1635,9 @@ export const balance = {
       common: { attack: 0, guard: 0 },
       uncommon: { attack: 1, guard: 1 },
       rare: { attack: 2, guard: 2 },
+      [NOTE]: {
+        '{rarity}.{role}': 'Added to the {role} value of a card minted from {a rarity} piece, on top of the profile\'s base and attribute tier.',
+      },
     },
     roleSources: {
       attack: [{ slot: 'rightHand' }],
@@ -1350,7 +1668,13 @@ export const balance = {
         granted: { accepts: ['extractable'], fallback: null },
       },
       fallbackByItem: {},
-      extraMounts: { enabled: false, perItem: 1, kind: 'granted' },
+      extraMounts: {
+        enabled: false, perItem: 1, kind: 'granted',
+        [NOTE]: {
+          enabled: 'Open mounts on an item beyond the ones it was authored with — the seam a later rune feature needs. Off is the shipped game.',
+          perItem: 'How many extra mounts each item gets when that is on.',
+        },
+      },
     },
     enabled: true,
 
@@ -1567,7 +1891,13 @@ export const balance = {
 
     // Floors of the mod system, so a piece can't be authored past the point
     // where the card stops making sense.
-    limits: { minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6 },
+    limits: {
+      minCost: 0, minDamage: 0, minBlock: 0, maxHits: 6,
+      [NOTE]: {
+        maxHits: 'The most hits a modded attack card may be pushed to.',
+        'min{field}': 'The lowest {fieldWords} a modded card may be pushed to, so a piece cannot be authored past the point where its card stops making sense.',
+      },
+    },
 
     // ---- Where armaments come from ------------------------------------------
     // You start bare-handed and the run arms you. A found piece is yours for
@@ -1598,16 +1928,43 @@ export const balance = {
       reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
-      chance: { treasure: 60, elite: 30, boss: 100, shop: 0 },
+      chance: {
+        treasure: 60, elite: 30, boss: 100, shop: 0,
+        [NOTE]: {
+          '{kind}': 'Percent chance {pool} yields an armament.',
+        },
+      },
       rarityWeights: {
         treasure: { common: 55, uncommon: 35, rare: 10 },
         elite: { common: 40, uncommon: 45, rare: 15 },
         boss: { common: 15, uncommon: 45, rare: 40 },
+        [NOTE]: {
+          '{kind}.{rarity}': 'How often an armament from {pool} is {rarity}, weighed against the other rarities in its row.',
+        },
       },
       // A duplicate is a non-event, so drops prefer something you have never
       // held. With nothing new left the node gives cinders instead.
       preferUnfound: true,
       consolationCinders: 40,
+      [NOTE]: {
+        enabled: 'Whether nodes drop armaments at all.',
+        requireFound: 'A piece must be found before it can be equipped. Off makes every authored armament available from the start — a sandbox for testing the mod system without playing for it.',
+        permanentOnFind: 'A found piece is remembered across runs, so a climb that ends badly still widens the wardrobe.',
+        preferUnfound: 'Drops prefer a piece you have never held, a duplicate being a non-event.',
+        consolationCinders: 'Cinders handed over instead when there is nothing new left for a drop to give.',
+      },
+    },
+    [NOTE]: {
+      enabled: 'The armament system itself. Off takes the Armoury out of combat.',
+      swapCost: 'What switching prepared weapon sets costs mid-fight, in actions: the price under the Flat and Talisman & relic rules, and for a weapon no category row matches. Weapon swap cost chooses the rule.',
+      swapAllowancePerTurn: { text: 'A separate per-turn swap budget that actions never touch, and nothing reads it: it is consulted only when swaps are paid from an allowance, and no setting chooses that mode.', inert: true },
+      swapEndsTurn: 'A swap ends your turn outright.',
+      allowChangesInCombat: 'The Armoury stays actionable during your combat turn: replacing, moving or unequipping a carried piece is priced like a set swap.',
+      restampHand: 'A swap rewrites the Strikes and Defends already in your hand. Off, only cards drawn after the swap carry the new numbers.',
+      storageSlots: 'Pieces you may carry unslotted. Hand slots lock in combat; storage is what you carry beside them.',
+      'swapCostRules.{i}.gear': 'The {ruleLabel} pricing rule: whether talismans and relics adjust the swap cost it arrives at. This does not choose the rule; Weapon swap cost does.',
+      'swapCostByCategory.{i}.cost': 'What a swap costs when the drawn weapon is tagged {tag}. Read only under the Weapon category rule, and the first matching row wins.',
+      'views.{i}.figure': 'Whether the {viewId} Armoury view draws the dressed class figure beside the slots.',
     },
   },
 };
