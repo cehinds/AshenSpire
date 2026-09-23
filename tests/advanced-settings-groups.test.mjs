@@ -28,7 +28,6 @@ test('Progression is the one driver: pool first, then each class, and the tier s
     'gameConfig.combatRatings.ratings.ward.base']) {
     assert.ok(stats.rows.some(row => row.key === key), `${key} sits under Stats & resources`);
   }
-  assert.equal(advancedSection({ key: 'statTierSize' }), 'Progression', 'the tier size left the Classes tab with it');
 
   const assign = groups.find(group => group.id === 'Assign points');
   // His sentence, in his order: the baseline he names first is the row he sees
@@ -42,7 +41,8 @@ test('Progression is the one driver: pool first, then each class, and the tier s
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
   ]);
-  assert.ok(!assign.rows.some(row => row.key === 'statTierSize'), 'points, not tiers');
+  assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'),
+    'the tier dial retired with ruleset 6 — every stat states its own weights');
 
   // The floor under all of it, on screen beside the scale that has to clear it.
   const requirements = groups.find(group => group.id === 'Equipment requirements');
@@ -50,13 +50,10 @@ test('Progression is the one driver: pool first, then each class, and the tier s
   assert.ok(requirements.rows.some(row => row.key === 'gameConfig.equipmentRequirements.ashStaff.intelligence'),
     'and every authored minimum has a row of its own');
 
-  // The tier size AND its own bounds: one dial, one place.
+  // What is left under General once the tier dial retired (ruleset 6).
   const general = groups.find(group => group.id === 'General');
   assert.deepEqual(general.rows.map(row => row.key).sort(), [
     'creationAutoAdvance',
-    'gameConfig.balance.levelUp.tierSizeMax',
-    'gameConfig.balance.levelUp.tierSizeMin',
-    'statTierSize',
   ]);
 
   for (const id of CLASS_TOPICS) {

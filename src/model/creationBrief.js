@@ -154,6 +154,22 @@ function ratingWeightFacts(registries, attributeId) {
 }
 
 /**
+ * attributeCycle(weight, perIncrease) → the fewest points n (up to 100) for
+ * which `n × weight` is whole AND divides evenly by `perIncrease`: after n
+ * points every floor in `floor(floor(n × weight) / perIncrease)` has landed
+ * exactly, so "+X every n points" is what the rule pays, not an average.
+ */
+function attributeCycle(weight, perIncrease) {
+  for (let n = 1; n <= 100; n += 1) {
+    const weighted = n * weight;
+    if (Math.abs(weighted - Math.round(weighted)) > 1e-9) continue;
+    const increases = Math.round(weighted) / perIncrease;
+    if (Math.abs(increases - Math.round(increases)) <= 1e-9 && Math.round(increases) > 0) return n;
+  }
+  return null;
+}
+
+/**
  * One attribute-card model for every authored attribute.
  *
  * `attributes` may be an in-progress allocation, so this door deliberately
@@ -193,14 +209,18 @@ export function attributeCardModels(registries, attributes, { projection = null,
         const perIncrease = Number.isFinite(row?.pointsPerIncrease) ? row.pointsPerIncrease : 1;
         const gain = Number.isFinite(row?.gain) ? row.gain : 1;
         if (!Number.isFinite(weight) || weight <= 0) return { label: presentation[id].label, perTier: null, points: 1 };
-        // WHAT ONE OF *MY* POINTS BUYS, said the way the player asks it. A
+        // WHAT MY POINTS BUY, said as the CADENCE THE FLOORS ACTUALLY PAY. A
         // weight of 4 is "+4 every 1 point"; a weight of 0.2 is "+1 every 5
-        // points", never "+0.2 per point" — the term is floored, so a fifth
-        // of a point is nothing until five of them arrive. The epsilon is the
-        // same one the rule's floor takes: 1 / 0.2 is 5.000000000000001.
-        const rate = (weight * gain) / perIncrease;
-        if (rate >= 1) return { label: presentation[id].label, perTier: Math.round(rate * 100) / 100, points: 1 };
-        return { label: presentation[id].label, perTier: 1, points: Math.round((1 / rate) * 100 + 1e-9) / 100 };
+        // points", never "+0.2 per point" — the term is floored, so a fifth of
+        // a point is nothing until five arrive. An average rate would lie the
+        // same way whenever the steps are uneven: under a divisor of 3 a weight
+        // of 4 pays +1, +1, +2 across three points, so the card says "+4
+        // every 3 points" rather than "+1.33 every 1" (Codex, #1253). The
+        // cycle is the fewest points after which every floor lands exactly;
+        // a rule with no such cycle short enough to read says it scales.
+        const cycle = attributeCycle(weight, perIncrease);
+        if (cycle === null) return { label: presentation[id].label, perTier: null, points: 1 };
+        return { label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id);

@@ -11,7 +11,7 @@ const words = value => value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\./
 // the creation pool, each class's table, level-up, the tier size — is filed
 // under Progression, in that reading order.
 export function advancedSection(row) {
-  if (['creationAutoAdvance', 'statTierSize'].includes(row.key)) return 'Progression';
+  if (row.key === 'creationAutoAdvance') return 'Progression';
   return row.advancedGroup || 'Gameplay';
 }
 
@@ -56,12 +56,8 @@ function topic(row, section) {
     // His words, verbatim: "the assign points should be about how many points
     // should be available and the total amount of points on a character, not
     // how many stat points per tier. That should be under General."
-    if (['statTierSize', 'creationAutoAdvance'].includes(key)) return 'General';
+    if (key === 'creationAutoAdvance') return 'General';
     if (/enemyScaling/.test(key)) return 'Enemy scaling';
-    // The tier size's own bounds go where the tier size went. Leaving them
-    // under Level-up would put one dial and its limits in two tabs, which is
-    // the complaint this whole change answers.
-    if (/tierSize/.test(key)) return 'General';
     if (/levelUp/.test(key)) return 'Level-up';
     if (/xp|Multiplier/.test(key)) return 'Experience & rewards';
     return 'Starting values';

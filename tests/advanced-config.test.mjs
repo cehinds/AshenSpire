@@ -68,9 +68,9 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
   assert.equal(contentBundle.balance.xp.combatWin, 50);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
-  // The tier dial's key still imports, and does not write the table: a
-  // ruleset-6 table has no tier, so the dial reaches a run as an override layer
-  // (settings.js derivedStatDialOptions) and the configured table stays valid.
+  // The retired tier dial's key does not write the table: a ruleset-6 table
+  // has no tier, so writing one would fail validation and throw every other
+  // configured value away.
   assert.equal(configured.derivedStatRules.defaults.pointsPerTier, undefined);
   assert.deepEqual(configured.derivedStatRules.defaults, contentBundle.derivedStatRules.defaults);
 });
@@ -211,4 +211,22 @@ test('mobile and unsupported desktop export fall back to a local browser downloa
   assert.equal(anchor.download, 'ashen-spire-game-config.json');
   assert(clicked);
   assert(revoked);
+});
+
+// Ruleset 6 retired every per-stat tier and the "Stat points per tier" dial
+// with its bounds. An exported file naming any of them still imports: those
+// entries are skipped with one named warning, everything else lands.
+test('an export naming a retired stat tier imports, skipping only that entry', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  Object.assign(file.overrides, {
+    'gameConfig.derivedStatRules.rules.hp.gainPerTier': 7,
+    'gameConfig.derivedStatRules.defaults.pointsPerTier': 2,
+    'gameConfig.balance.levelUp.tierSizeMax': 30,
+  });
+  const text = JSON.stringify(file);
+  const warnings = [];
+  const imported = parseAdvancedConfigFile(text, contentBundle, {}, [], warnings);
+  assert.deepEqual(imported, { 'gameConfig.derivedStatRules.rules.hp.constitution': 5 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /direct attribute weights/);
 });

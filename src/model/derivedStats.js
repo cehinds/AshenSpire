@@ -477,7 +477,10 @@ export function resolveDerivedStatRules(source, options = {}) {
   // of field names.
   const replayed = {
     rulesetVersion: source.rulesetVersion,
-    defaults: normalizeDefaultsPatch({ ...source.defaults }),
+    // `perLevel: 0` UNDER a legacy table's defaults: rulesets 1–5 had no
+    // table-wide level term, and a v3 envelope requires one, so a restored
+    // v2 snapshot re-stamped as v3 must carry it or its NEXT load refuses it.
+    defaults: { perLevel: 0, ...normalizeDefaultsPatch({ ...source.defaults }) },
     // ONLY THE ROWS THE TABLE ACTUALLY CARRIES. Mapping the whole id list
     // would invent a baseless row for a version that never had one.
     rules: Object.fromEntries(DERIVED_STAT_IDS
@@ -498,6 +501,14 @@ export function resolveDerivedStatRules(source, options = {}) {
     if (layer.rules) {
       for (const [id, patch] of Object.entries(layer.rules)) {
         if (!replayed.rules[id]) throw new Error(`Derived-stat override patches '${id}', which this ruleset ${replayed.rulesetVersion} table does not carry`);
+        // `gainPerTier` and `sourceStat` describe a SINGLE-STAT TIERED row. On a
+        // ruleset-6 row, whose weight already carries the coefficient, the same
+        // words would multiply it twice (hp: floor(4 × CON) × 4) — refused by
+        // name rather than guessed at.
+        if (isUnifiedRuleset(replayed.rulesetVersion) && plainObject(patch)
+          && (own(patch, 'gainPerTier') || own(patch, 'sourceStat'))) {
+          throw new Error(`Derived-stat override patches '${id}' with ${own(patch, 'gainPerTier') ? 'gainPerTier' : 'sourceStat'}, which a ruleset ${replayed.rulesetVersion} row does not have — set the attribute weight instead`);
+        }
         Object.assign(replayed.rules[id], normalizeRulePatch(patch, opts.attributeIds));
       }
     }
@@ -569,7 +580,12 @@ export function levelBonus(row, level) {
     return Math.floor((level - 1) / term.every) * term.gain;
   }
   if (!Number.isFinite(term) || term === 0) return 0;
-  const every = Number.isInteger(row.perLevelEvery) && row.perLevelEvery > 0 ? row.perLevelEvery : 1;
+  // A normalized ruleset 1–5 cadence pays `steps × gain` UNROUNDED, exactly as
+  // its `{ every, gain }` did; only the ruleset-6 decimal is floored.
+  if (Number.isInteger(row.perLevelEvery) && row.perLevelEvery > 0) {
+    return Math.floor((level - 1) / row.perLevelEvery) * term;
+  }
+  const every = 1;
   const steps = Math.floor((level - 1) / every);
   const round = typeof Math[row.rounding] === 'function' ? Math[row.rounding] : Math.floor;
   const raw = steps * term;
@@ -744,7 +760,7 @@ function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitO
         }
         // A whole weight is one unit per point, so "+N per point" IS N more
         // weight; a tiered (normalized legacy) row still takes it on `gain`.
-        if (relicFoldTarget(row) === 'gain') row.gain += term.amountPerTier;
+        if (relicFoldTarget(row) === 'gain') row.gain = (row.gain === undefined ? 1 : row.gain) + term.amountPerTier;
         else row[term.sourceStat] += term.amountPerTier;
       }
     }
@@ -827,7 +843,10 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
   throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, { ...options, unified: rowsAreUnified, carriers: true }));
   const rules = {
     rulesetVersion: source.rulesetVersion,
-    defaults: normalizeDefaultsPatch({ ...source.defaults }),
+    // `perLevel: 0` UNDER a legacy table's defaults: rulesets 1–5 had no
+    // table-wide level term, and a v3 envelope requires one, so a restored
+    // v2 snapshot re-stamped as v3 must carry it or its NEXT load refuses it.
+    defaults: { perLevel: 0, ...normalizeDefaultsPatch({ ...source.defaults }) },
     rules: Object.fromEntries(Object.entries(source.rules)
       .map(([id, row]) => [id, normalizeRule({ ...source.defaults, ...row })])),
   };

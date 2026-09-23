@@ -479,3 +479,86 @@ test('an attribute card never promises more than the rule pays', async () => {
   assert.ok(Number(stated) <= raised.maxHp - run.maxHp,
     `the card states ${stated} HP a point and the run pays ${raised.maxHp - run.maxHp}`);
 });
+
+// ---- ruleset 6 review findings (Codex, #1253) ------------------------------
+
+// A card states the cadence the floors PAY. Under a divisor of 3, HP's weight
+// of 4 pays +1, +1, +2 across three Constitution points; "+1.33 every 1" was
+// an average no single point ever delivered.
+test('an attribute card states the floored cadence, not an average rate', async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 11,
+    derivedStatOptions: { explicitOverride: { defaults: { pointsPerIncrease: 3 } } } });
+  const card = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
+    .find((row) => row.id === 'constitution');
+  assert.ok(card.reveal.lines.includes('HP +4 every 3 points'), card.reveal.lines.join(' | '));
+  assert.ok(!card.reveal.lines.some((line) => /\d\.\d/.test(line) && line.startsWith('HP')), 'no fractional HP promise');
+  // And the shipped rule, with no divisor, reads point for point.
+  const stock = createRunState({ registries, classId: 'reaver', seed: 11 });
+  const stockCard = attributeCardModels(registries, stock.attributes, { projection: statProjection(registries, stock) })
+    .find((row) => row.id === 'constitution');
+  assert.ok(stockCard.reveal.lines.includes('HP +4 every 1 point'), stockCard.reveal.lines.join(' | '));
+});
+
+// The Poise pool's per-level growth reaches the meter, not only the sheet.
+test('the Poise pool grows with the level on the meter as on the sheet', async () => {
+  const { playerPoiseThresholdReceipt, statProjection } = await import('../src/model/statProjection.js');
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.poise.perLevel': 1 });
+  const registries = createRegistries({ ...configured, balance: { ...configured.balance,
+    combatRatings: { ...configured.balance.combatRatings, enabled: false } } });
+  const run = createRunState({ registries, classId: 'reaver', seed: 12 });
+  const atOne = playerPoiseThresholdReceipt(registries, run).attribute;
+  run.level = { ...run.level, level: 4 };
+  assert.equal(playerPoiseThresholdReceipt(registries, run).attribute, atOne + 3, 'three levels, three points');
+  assert.equal(statProjection(registries, run).derived.find((row) => row.id === 'poise').levelBonus, 3,
+    'and the sheet says the same');
+});
+
+// ---- ruleset 6 review findings (internal review, #1253) --------------------
+
+// A v2 snapshot restored once is handed back as v3 and written to the next
+// save. Its normalized defaults had no `perLevel`, which the v3 validator
+// requires, so the SECOND load refused the save and archived the run.
+test('a restored v2 snapshot restores again as v3', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { restoreDerivedStatRuleSnapshot } = await import('../src/model/derivedStats.js');
+  const save = JSON.parse(readFileSync(new URL('./fixtures/run-save-hp-5597166.json', import.meta.url), 'utf8'));
+  const options = { attributeIds: contentBundle.attributes.map((row) => row.id), classFields: ['maxHp'], damageSchools: [] };
+  const once = restoreDerivedStatRuleSnapshot(save.derivedStatRuleSnapshot, options);
+  assert.equal(once.snapshotVersion, 3);
+  const twice = restoreDerivedStatRuleSnapshot(structuredClone(once), options);
+  const thrice = restoreDerivedStatRuleSnapshot(structuredClone(twice), options);
+  assert.deepEqual(thrice, twice, 'from the second restore on, a restore changes nothing');
+  const attributes = save.attributes;
+  const classDef = contentBundle.classes.find((row) => row.id === save.class);
+  for (const id of Object.keys(once.rules.rules)) {
+    assert.equal(deriveStat(twice.rules, id, { attributes, classDef, level: 7 }).value,
+      deriveStat(once.rules, id, { attributes, classDef, level: 7 }).value, `${id} prices the same`);
+  }
+});
+
+// A normalized `{ every, gain }` cadence pays `steps × gain` unrounded, as it
+// always did; only the ruleset-6 decimal is floored.
+test('a legacy level cadence is not rounded, a ruleset-6 decimal is', async () => {
+  const { levelBonus } = await import('../src/model/derivedStats.js');
+  assert.equal(levelBonus({ perLevel: 0.5, perLevelEvery: 5 }, 6), 0.5, 'legacy: one step of 0.5');
+  assert.equal(levelBonus({ perLevel: { every: 5, gain: 0.5 } }, 11), 1, 'retired shape read directly');
+  assert.equal(levelBonus({ perLevel: 0.2 }, 5), 0, 'decimal: four fifths is not yet a point');
+  assert.equal(levelBonus({ perLevel: 0.2 }, 6), 1, 'decimal: five fifths is one');
+});
+
+// `gainPerTier` / `sourceStat` describe a single-stat TIERED row; on a
+// ruleset-6 row whose weight already carries the coefficient they would
+// multiply it twice, so a layer that spells them is refused by name.
+test('a ruleset-6 table refuses a legacy per-row gain layer by name', async () => {
+  const { resolveDerivedStatRules } = await import('../src/model/derivedStats.js');
+  const options = { attributeIds: contentBundle.attributes.map((row) => row.id), classFields: ['maxHp'] };
+  assert.throws(() => resolveDerivedStatRules(contentBundle.derivedStatRules,
+    { ...options, explicitOverride: { rules: { hp: { pointsPerTier: 1, gainPerTier: 4 } } } }), /gainPerTier/);
+  // A table-wide legacy divisor still means what it did.
+  const divided = resolveDerivedStatRules(contentBundle.derivedStatRules,
+    { ...options, explicitOverride: { defaults: { pointsPerTier: 2 } } });
+  assert.equal(divided.rules.hp.pointsPerIncrease, 2);
+});

@@ -86,11 +86,6 @@ let panelSettings = null;
 let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
-// RULESET 6 HAS NO TIER (content/derivedStats.js): every row states a decimal
-// weight per attribute. The tier dial survives as a divisor over those weights
-// (an override layer on `pointsPerIncrease`), so its shipping value is 1 — the
-// weights as written — and at 1 it adds no layer at all.
-const STAT_TIER_IDENTITY = 1;
 // `retired: true` is a row that keeps its KEY so an exported configuration
 // still imports and still applies, and stays off the screen because nothing a
 // player can reach depends on it — today, the creation pools of the modes
@@ -568,8 +563,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
   // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS THE IDENTITY (1) — the
-  // ruleset-6 weights as written, see STAT_TIER_IDENTITY.
+  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -598,16 +592,6 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: STAT_TIER_IDENTITY,
-    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
-    label: 'Stat points per tier', applied: numberAppliedHtml,
-    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
-    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
-    // progress — which is correct, and which means turning this dial and loading
-    // an existing save shows NOTHING. It is written on the row because the
-    // alternative is him concluding the dial is broken. The middle sentence is
-    // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'Divides what every point buys across HP, Mana, Stamina, Actions, draw and Poise — type any whole number from 1 to 20. 1 uses the weights under Stats & resources exactly as written; 2 makes every stat need twice the points for the same step. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -1233,17 +1217,18 @@ function graceRefillAppliedHtml(settings, r) {
  */
 /**
  * resolveLevelUpValue(settings) → how many stat points one level grants.
- * resolveStatTierSize(settings) → how many points buy one tier.
  *
- * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * HIS LEVEL DIAL, resolved the way every other row in this file is: a stored
  * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
  * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
  * the same reason. A hand-edited profile or an older build's value must behave
  * exactly like an absent one, because the alternative is a run created under a
  * number nothing in the game admits to.
  *
- * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
- * from content, so neither of these functions contains a number.
+ * IT RETURNS THE ROW'S OWN `def` WHEN UNSET, and the row derives that `def`
+ * from content, so this function contains no number. (Its sibling, the "Stat
+ * points per tier" dial, was retired with ruleset 6: every stat now states its
+ * own decimal weight per attribute.)
  */
 /**
  * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
@@ -1370,31 +1355,7 @@ function numberAppliedHtml(settings, row) {
   return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
 }
 
-export function resolveStatTierSize(settings) {
-  return resolveNumberRow(settings, settingsRow('statTierSize'));
-}
 
-/**
- * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
- * with, or `{}` when the dial is at its shipping value.
- *
- * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
- * already takes layered overrides — `modeModifiers`, `runModifiers`,
- * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
- * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
- * derived stats, and a row may still say otherwise". The shape he asked about
- * already existed; this hands it a number.
- *
- * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
- * no override layer at all, so its snapshot is byte-identical to one created
- * before this dial existed. Turning the dial and turning it back leaves no
- * residue in a save.
- */
-export function derivedStatDialOptions(settings) {
-  const size = resolveStatTierSize(settings);
-  if (size === STAT_TIER_IDENTITY) return {};
-  return { explicitOverride: { defaults: { pointsPerIncrease: size } } };
-}
 
 export function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');

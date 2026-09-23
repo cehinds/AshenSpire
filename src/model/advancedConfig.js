@@ -116,13 +116,17 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier,
+//   derivedStatRules.defaults.pointsPerTier,
+//   balance.levelUp.tierSizeMin / .tierSizeMax
 //                                           ruleset 6 (owner, 2026-09-21): HP,
 //                                           Mana and every pool read as the
 //                                           ratings do — a decimal weight per
 //                                           attribute — so a tier and its gain
-//                                           have no row left to land on.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.rules\.[^.]+\.(pointsPerTier|gainPerTier))$/;
+//                                           have no row left to land on, and
+//                                           the "Stat points per tier" dial
+//                                           and its bounds retired with them.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.[^.]+\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
@@ -513,8 +517,8 @@ export function advancedConfigRows(bundle) {
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
-  if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
+    // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
     if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
@@ -584,11 +588,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  // THE TIER DIAL DOES NOT WRITE THE TABLE. A ruleset-6 table has no tier to
-  // write (content/derivedStats.js) and refuses a `pointsPerTier` by name, so
-  // setting it here would fail validation and throw every other configured
-  // value away. The dial reaches a new run as an override LAYER instead —
-  // `derivedStatDialOptions` in settings.js, handed to run creation by main.js.
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was
@@ -802,7 +801,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
-    if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
   // A file exported before the per-item rows became the item's own ratings

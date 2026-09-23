@@ -126,7 +126,8 @@ import { playerLevel } from '../src/model/levels.js';
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { advancedConfigSettings } from '../src/model/advancedConfig.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -6939,69 +6940,34 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(createSaveManager(mixedStore).loadRun(REG) !== null,
       'AND A MIXED-VALUE RUN STILL LOADS — turning the dial mid-climb cannot archive a save');
 
-    // ---- DIAL 2: the tier size --------------------------------------------
-    // Through the REAL door a new run is born with: the settings resolver, then
-    // createRunState's derivedStatOptions. Nothing here hand-builds an override
-    // layer, or the test would be measuring a shape the game cannot reach.
-    eq(JSON.stringify(derivedStatDialOptions({})), '{}',
-      'at the shipping value the dial adds NO override layer at all');
-    eq(resolveStatTierSize({}), 1, 'and the shipping tier size is the identity — ruleset 6 weights as written');
-    eq(resolveLevelUpValue({}), 1, "and the level value's default is his own number");
-    // ⚠ THIS CELL CHANGED WHEN THE CONTROL DID, and the old expectation is the
-    // record of it: while the tier size was a 1-2-3-5 LADDER, 99 was "a value
-    // the row does not offer" and resolved to the DEFAULT. It is a typed field
-    // now, so 99 is in the wrong PLACE rather than off the list, and the honest
-    // answer is the domain's ceiling. Constantine's purpose clause is why the
-    // control moved: a ladder cannot express 4 or 7.
-    // THE CONTROL ITSELF, ASSERTED — and this line exists because a plant found
-    // it missing. `resolveNumberRow` is TYPE-BLIND: it reads min/max off the row
-    // and clamps, so reverting this row to a chip ladder left every value cell
-    // below GREEN while the screen went back to four buttons. The resolver is not
-    // the control, and only one of them is what he asked to change.
-    const tierRow = settingsRow('statTierSize');
-    eq(tierRow.type, 'number', 'the tier size is a TYPED FIELD — a ladder cannot express 4 or 7');
-    eq(tierRow.min, REG.balance.levelUp.tierSizeMin, 'its floor is authored');
-    eq(tierRow.max, REG.balance.levelUp.tierSizeMax, 'and so is its ceiling');
-    assert(!tierRow.choices, 'and it offers no chip list at all — the domain replaced the ladder');
-    eq(resolveStatTierSize({ statTierSize: 99 }), 20, 'a value past the ceiling CLAMPS to it — it is a field, not a list');
-    eq(resolveStatTierSize({ statTierSize: 4 }), 4, 'and 4 — which no ladder here ever offered — is simply legal');
-    eq(resolveStatTierSize({ statTierSize: 7 }), 7, 'as is 7, which is the pair his sentence needed');
-    eq(resolveStatTierSize({ statTierSize: 0 }), 1, 'ZERO CLAMPS UP: floor(points / 0) is not a tier, it is a division by zero');
-    eq(resolveStatTierSize({ statTierSize: 'lots' }), 1, 'unreadable is unset — the shipping default');
-    eq(resolveLevelUpValue({ levelUpValue: 'lots' }), 1, 'and so is a value that is not a number at all');
-    const dialled = derivedStatDialOptions({ statTierSize: 2 });
-    const born = (opts) => createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG, derivedStatOptions: opts });
-    const at5 = born(derivedStatDialOptions({}));
-    const at1 = born(dialled);
-    // RULESET 6 HAS NO TIER: a default run is born with the weights exactly
-    // as written and no divisor at all, and the DIAL arrives as one — 2 halves
-    // what every point buys, which is the property this block is about.
-    eq(at5.derivedStatRuleSnapshot.rules.rules.hp.pointsPerIncrease, undefined, 'a default run stamps the weights as written, with no divisor');
-    eq(at1.derivedStatRuleSnapshot.rules.rules.hp.pointsPerIncrease, 2, 'and the dialled run stamps its explicit 2-point divisor');
-    // ⚠ HP IS THE CELL THAT MATTERS AND IT IS WHY THE RESTATEMENT HAD TO GO.
-    // `hp` used to author `pointsPerTier: 5` on its own row, and a row beats
-    // the defaults it is merged over — so this assertion is the one that would
-    // have caught the dial silently skipping the stat it exists for.
-    for (const id of ['hp', 'mana', 'energy', 'draw', 'stamina']) {
-      eq(at1.derivedStatRuleSnapshot.rules.rules[id].pointsPerIncrease, 2,
-        `${id} answers the tier dial — every derived stat, not just the ones that inherited`);
-    }
-    assert(at1.maxHp < at5.maxHp, 'at a 2-point tier the same CON is worth less HP — the dial reaches the game');
+    // ---- DIAL 2 IS RETIRED (ruleset 6, owner 2026-09-21) ------------------
+    // "Stat points per tier" divided every stat by one number. Since ruleset 6
+    // each stat states its own decimal weight per attribute (Advanced →
+    // Progression → Stats & resources), which says everything the dial said and
+    // per stat — "I'd like all the resources and stats to be in the same format
+    // so that there was no confusion". The row is gone; a stored value is not
+    // exported and an imported one is skipped with a named warning.
+    let tierRowGone = false;
+    try { settingsRow('statTierSize'); } catch { tierRowGone = true; }
+    assert(tierRowGone, 'no settings row offers a tier size any more');
+    eq(JSON.stringify(advancedConfigSettings({ statTierSize: 2 })), '{}', 'a stored tier size is not exported');
 
-    // ⚠ THE OTHER DOOR, and it is here because a plant proved my own comment
-    // wrong. `hp` used to author `pointsPerTier: 5` on its own row, restating
-    // `defaults.pointsPerTier`. I claimed that copy would make HIS DIAL skip
-    // HP; it would not — a dial arrives as an override LAYER, and a layer's
-    // `defaults` is assigned over every row, so it reaches HP either way.
-    // Restoring the line leaves every other cell in this suite green.
-    //
-    // WHAT THE COPY ACTUALLY BREAKS is the door a designer uses when they edit
-    // the content file directly: a row's own value beats the defaults it is
-    // merged over, so editing `defaults` there moves four stats and silently
-    // leaves HP behind. One intent, two doors, two answers. This cell is that
-    // door, and it is the only thing in the tree that can fail on the copy.
-    // Ruleset 6's fallback is the level term: a row that states its own keeps
-    // it, a row that states none inherits the table's.
+    // A RUN THE DIAL ALREADY SHAPED KEEPS IT. Saves born under the old dial
+    // carry the layer in their snapshot, and the engine still reads one.
+    const dialled = createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG,
+      derivedStatOptions: { explicitOverride: { defaults: { pointsPerTier: 2 } } } });
+    const stock = createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG });
+    assert(dialled.maxHp < stock.maxHp, 'the layer still reaches every row');
+    const store = createMemoryStorage();
+    dialled.seedString = 'TIER1';
+    createSaveManager(store).saveRun(dialled);
+    const reloaded = createSaveManager(store).loadRun(REG);
+    assert(reloaded !== null, 'a dialled run loads');
+    eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerIncrease, 2, 'and still carries ITS OWN divisor');
+    eq(reloaded.maxHp, dialled.maxHp, 'so its HP is not re-stated behind the player');
+
+    // Ruleset 6's content fallback is the level term: a row that states its
+    // own keeps it, a row that states none inherits the table's.
     const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, perLevel: 0.5 } };
     const byHand = resolveDerivedStatRules(edited, {
       attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
@@ -7012,31 +6978,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(byHand.rules.poise.perLevel, 0.5, 'Poise inherits the edited fallback default');
     assert(!validateContent({ ...contentBundle, derivedStatRules: { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } } }).ok,
       'and a ruleset-6 table that spells a tier is refused — there is none to set');
-
-    // AND THE POINTS ARE NOW VISIBLE, which is the sentence his ask is made of.
-    // A two-point tier pays on every SECOND point — the dial's whole purpose —
-    // so the two levels below cross exactly one boundary between them.
-    awardLevelXp(REG, at1, xpToNextLevel(REG, 1) + xpToNextLevel(REG, 2));
-    const at1Hp = at1.maxHp;
-    applyLevelUp(REG, at1, 'constitution');
-    applyLevelUp(REG, at1, 'constitution');
-    assert(at1.maxHp > at1Hp, 'at a 2-point tier, two CON points cross the boundary and move max HP');
-    awardLevelXp(REG, at5, xpToNextLevel(REG, 1));
-    const at5Hp = at5.maxHp;
-    applyLevelUp(REG, at5, 'constitution');
-    eq(at5.maxHp, at5Hp + 4, 'under the shipping per-CON formula one point adds the authored four HP (ruleset 6)');
-
-    // A RUN IN PROGRESS KEEPS THE RULES IT WAS BORN UNDER. This is what the
-    // settings row's note promises a player, and it is the behaviour that makes
-    // the dial safe rather than a defect.
-    const store = createMemoryStorage();
-    at1.seedString = 'TIER1';
-    createSaveManager(store).saveRun(at1);
-    const reloaded = createSaveManager(store).loadRun(REG);
-    assert(reloaded !== null, 'a dialled run loads');
-    eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerIncrease, 2,
-      'and still carries ITS OWN divisor — the 2 he typed, whatever the setting says today');
-    eq(reloaded.maxHp, at1.maxHp, 'so its HP is not re-stated behind the player');
   });
 
   // ---- 60d. the typed level value, and every door a field opens ------------
