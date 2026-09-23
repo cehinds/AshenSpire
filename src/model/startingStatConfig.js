@@ -1,4 +1,5 @@
 import { ratingIds } from './ratingFormula.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 
 const PREFIX = 'gameConfig.startingStats.';
 // A pool that shares a rating's name is labelled as a pool so the two rows
@@ -354,6 +355,40 @@ function dialLabel(key) {
   return DIAL_LABELS[key.slice(key.lastIndexOf('.') + 1)] || key;
 }
 
+/**
+ * derivedStatFloorProblems(bundle) → [{ path, keys, message }]
+ *
+ * THE ONE POOL A RUN CANNOT HOLD AT ZERO. `validateRunShape` refuses a run with
+ * `maxMana <= 0`, and since ruleset 6 every input to Mana is a dial: a base and
+ * a weight per attribute. Set them all to zero and a new run is born invalid —
+ * it cannot be saved or restored (Codex, #1253). So Mana is priced here for the
+ * weakest character creation allows — every attribute at the mode's floor, at
+ * level 1 — and refused by name if that is below one. HP is clamped to 1 at the
+ * run door and Stamina, Actions and draw may be 0, so Mana is the only row.
+ */
+export function derivedStatFloorProblems(bundle) {
+  const table = bundle?.derivedStatRules;
+  const rule = table?.rules?.mana;
+  const mode = (bundle?.creationModes || []).find((row) => row.id === bundle?.attributeRules?.defaultMode);
+  if (!rule || !mode || !Array.isArray(bundle.attributes)) return [];
+  const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
+  const attributes = Object.fromEntries(bundle.attributes.map((row) => [row.id, floor]));
+  let value;
+  try {
+    const resolved = resolveDerivedStatRules(table, { attributeIds: bundle.attributes.map((row) => row.id), classFields: ['maxHp'] });
+    value = deriveStat(resolved, 'mana', { attributes, classDef: {}, level: 1 }).value;
+  } catch {
+    return []; // a malformed table is the schema's to name, not this check's
+  }
+  if (value >= 1) return [];
+  const keys = ['base', ...bundle.attributes.map((row) => row.id)].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
+  return [{
+    path: 'derivedStatRules.rules.mana',
+    keys,
+    message: `Mana would be ${value} for a character at the lowest starting value (${floor} in every attribute), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
+  }];
+}
+
 export function startingStatRows(bundle) {
   const rows = [];
   const add = (key, def, label, topic, extra = {}) => rows.push({
@@ -460,6 +495,9 @@ export function startingStatRows(bundle) {
       if (!Number.isFinite(value)) continue;
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stats & resources', {
         min, step,
+        // Whole points only: every other term is floored, so a fractional base
+        // would be the one way a pool stopped being a whole number.
+        ...(field === 'base' ? { integer: true } : {}),
         configPath: ['derivedStatRules', 'rules', id, field],
         note: `${note} The value you set is the value a new run is born with; nothing rescales it.`,
       });

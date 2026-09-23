@@ -5,7 +5,7 @@ import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migra
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
-  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
+  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
@@ -645,7 +645,8 @@ function structuralKeys(message) {
  * old string list for callers that only want the first sentence.
  */
 export function advancedConfigProblemRows(bundle, settings = {}) {
-  const problems = [...startingStatPoolProblems(bundle, settings)];
+  const problems = [...startingStatPoolProblems(bundle, settings),
+    ...derivedStatFloorProblems(configuredContentBundle(bundle, settings)).map(({ keys, message }) => ({ keys, message }))];
   const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);

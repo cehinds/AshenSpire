@@ -211,6 +211,13 @@ function validateUnifiedRule(out, value, path, options, partial) {
   }
   if (!partial && !own(value, 'base')) problem(out, `${path}.base`, 'missing');
   validateBase(out, value.base, `${path}.base`, { required: !partial, classFields: options.classFields });
+  // A BASE IS WHOLE POINTS on an authored ruleset-6 row. Every term after it is
+  // floored, so a fractional base is the only way a pool could stop being a
+  // whole number — and the run door refuses a fractional Actions or draw
+  // (Codex, #1253). Carrier rows are snapshots the host already resolved.
+  if (!options.carriers && Number.isFinite(value.base) && !Number.isInteger(value.base)) {
+    problem(out, `${path}.base`, 'must be a whole number');
+  }
   validatePoints(out, value.pointsPerIncrease, `${path}.pointsPerIncrease`, false);
   validateGain(out, value.gain, `${path}.gain`, false, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);

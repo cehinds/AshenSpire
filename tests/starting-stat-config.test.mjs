@@ -583,3 +583,27 @@ test('a run lists a stat on the card its own snapshot scales it with', async () 
   const preview = attributeCardModels(moved, run.attributes).find((card) => card.id === 'strength').reveal.lines;
   assert.ok(preview.includes('HP +4 every 1 point'), preview.join(' | '));
 });
+
+// Codex (#1253): a fractional Actions/draw base made a run the run door
+// refuses, and zeroing every Mana input made one with 0 Mana, which no save
+// can hold. Both are refused where they are set, by name.
+test('a stat base is whole points, and Mana cannot be configured to zero', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  const { advancedConfigProblemRows, advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const said = (bundle) => validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+
+  const fractional = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.energy.base': 3.5 });
+  assert.match(said(fractional), /rules\.energy\.base: must be a whole number/);
+  const row = advancedConfigRows(contentBundle).find((r) => r.key === 'gameConfig.derivedStatRules.rules.energy.base');
+  assert.equal(row.integer, true, 'the row takes whole numbers only');
+
+  const zero = { 'gameConfig.derivedStatRules.rules.mana.base': 0, 'gameConfig.derivedStatRules.rules.mana.wisdom': 0 };
+  assert.match(said(configuredContentBundle(contentBundle, zero)), /derivedStatRules\.rules\.mana: Mana would be 0/);
+  const problems = advancedConfigProblemRows(contentBundle, zero);
+  const mana = problems.find((p) => /Mana would be 0/.test(p.message));
+  assert.ok(mana && mana.keys.includes('gameConfig.derivedStatRules.rules.mana.base'), 'and the Settings rows say so');
+  // One point of Mana from the weakest allocation is enough.
+  assert.ok(!advancedConfigProblemRows(contentBundle, { 'gameConfig.derivedStatRules.rules.mana.base': 0 })
+    .some((p) => /Mana would be/.test(p.message)), 'base 0 with WIS 1 still yields 1');
+  assert.ok(validateContent(contentBundle).ok, 'the shipped table passes both');
+});

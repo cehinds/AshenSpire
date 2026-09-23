@@ -48,6 +48,7 @@ import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js'
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
+import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
@@ -1242,6 +1243,9 @@ function collectContentProblems(bundle, errors = []) {
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.
   for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
+  // Mana must be at least 1 for the weakest character creation allows: a run
+  // born with 0 Mana fails its own shape check (model/startingStatConfig.js).
+  for (const problem of derivedStatFloorProblems(b)) err(problem.path, problem.message);
 
   // Relic modifier tags are a compact passive DSL. The tag is the behavior;
   // every other word is data. Validate the exact row here so a typo never
