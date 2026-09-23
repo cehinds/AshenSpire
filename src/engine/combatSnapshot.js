@@ -98,7 +98,7 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
@@ -138,9 +138,11 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
-    // A snapshot written before this field existed carries null, which is
-    // exactly what the restore door read from an absent field before.
-    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || null,
+    // A snapshot written before this field existed has none of its own, so it
+    // reads the RUN's — the same shape fallbackAttackSlotCount above uses, the
+    // run being the authority and the snapshot's copy the optimisation. Null
+    // only for a caller that has neither.
+    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || fallbackDerivedStatRuleSnapshot || null,
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,

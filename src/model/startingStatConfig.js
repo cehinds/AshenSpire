@@ -1,3 +1,4 @@
+import { presetGearProblems } from './attributes.js';
 import { ownKey } from './settingOverrides.js';
 
 // The general switch over every stat's "attribute points per increase". A
@@ -224,7 +225,8 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
 
 /**
  * defaultModeHoldsItsKits(bundle, settings) → can the mode creation offers
- * still dress every class, with THIS requirement table in force?
+ * still dress every class — its kit and the outfits creation offers it —
+ * with THIS requirement table in force?
  *
  * THE DIAL THAT COULD THROW AWAY EVERY OTHER DIAL. `validateContent` refuses a
  * preset that cannot hold the kit its class starts in, and `rebuildRegistries`
@@ -252,6 +254,31 @@ function defaultModeHoldsItsKits(bundle, settings) {
     for (const id of ids) {
       const value = values[id];
       if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
+    }
+    // The OUTFITS creation offers the class are held to the same door: a raise
+    // the preset cannot wear fails validateContent just as a kit raise does
+    // (Codex, #1255). The class survives it either way it can be born: in the
+    // preset it falls back to, or in the per-cell edit made alongside the
+    // raise, when that edit is itself a whole allocation that holds its kit —
+    // raising Vigil and giving the Reaver the Strength to wear it is one
+    // change, not two (Codex, #1255).
+    const wearsOutfits = (preset) => !presetGearProblems({
+      presets: { [modeId]: { [classId]: preset } },
+      defaultMode: modeId,
+      startingKits: [],
+      equipmentRequirements: bundle.equipment?.equipmentRequirements || [],
+      creationClasses: bundle.characterCreation?.classes || {},
+    }).length;
+    if (!wearsOutfits(values)) {
+      const edited = Object.fromEntries(ids.map((id) => [id,
+        Number(settings[`gameConfig.attributeRules.presets.${modeId}.${classId}.${id}`] ?? values[id])]));
+      const inForce = resolved.mode || mode;
+      const expected = inForce.baseline * ids.length + inForce.bonusPool;
+      const floor = inForce.belowBaseline === 'forbid' ? Math.max(inForce.minimum, inForce.baseline) : inForce.minimum;
+      const whole = ids.every((id) => Number.isInteger(edited[id]) && edited[id] >= Math.max(floor, kitMinimum(needs, classId, id))
+        && edited[id] <= ceiling)
+        && ids.reduce((sum, id) => sum + edited[id], 0) === expected;
+      if (!whole || !wearsOutfits(edited)) return false;
     }
   }
   return true;

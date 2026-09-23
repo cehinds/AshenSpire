@@ -2134,7 +2134,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createCombat({
     ratingsRules: registries.balance.combatRatings || null,
     handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
     registries,

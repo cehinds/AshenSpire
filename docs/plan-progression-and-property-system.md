@@ -565,7 +565,43 @@ and then back to Intelligence 8, because review found the first version of
 that preset could not hold the Ash Staff or the Nightweave its own class
 starts in. `validateContent` refuses that by name now — summing to the mode
 total was never enough, and nothing cross-read the presets against the
-equipment minima until this phase broke it. Snapshots of ruleset 1 and 2 are
+equipment minima until this phase broke it. A second review round moved that
+rule into `model/attributes.js` (`presetGearProblems`) and pointed the
+**Advanced settings** door at it too, because a preset edit Settings accepted
+and the boot then refused made `main.js` throw away the whole game
+configuration behind a generic "unchanged" notice; the same round extended it
+from the kit's two hands to the class's starting armour, which is green today
+and was the other half of the defect the check was added for.
+
+That review round also closed three live defects in what phase 9 had already
+shipped. The run's derived-stat rules reached `createCombat` but **not** the
+combat snapshot, so a fight saved under an Advanced tier-size override came
+back priced by the live table — the snapshot carries them now, with the run's
+own as the fallback for a save written before the field, the way
+`fallbackAttackSlotCount` works. The creation screen's point editor had **one**
+door-opener, the mode `<select>`, which with a single visible mode can never
+fire `change` twice: a player who committed an allocation and then met an
+equipment minimum they could not meet had no way back to the points short of
+changing class or leaving creation. An explicit "Edit points" button is that
+way back, and it is a revision — the committed numbers are on the steppers and
+Cancel puts them back, while entering from the select is still a fresh
+allocation. And `resourceStrip` drew two chips labelled Poise whenever a
+caller passed the projection unfiltered; the drop moved into the component,
+which is where the second chip comes from. (By the time #1255 landed, the live
+Character step filtered the row itself; the component catalogue's specimen was
+the caller still drawing two.)
+
+Three quieter ones landed with them: the equipment screen's seal now reads
+`armamentLevels` like the mutation it seals, so it cannot refuse in words an
+item an upgrade made holdable; `equipmentRequirementReceipt` resolves an
+outfit's upgrade level under `armor/<classId>/<id>` rather than the weapon
+namespace, so an outfit no longer reads a same-named weapon's smithing level
+(no armour tier can author a requirement delta yet — `itemUpgradeTagMatchesKind`
+admits only `equipmentPoise` for armour — so this is the right key, not a live
+reduction); and a run whose snapshot predates ruleset 5 keeps the Poise
+attribute term phase 8 priced it by — Constitution one-for-one, the shipped
+`balance.poise.playerPerConstitution` — instead of falling through to the live
+row (#1255 corrected an earlier version of this fix that zeroed the term). Snapshots of ruleset 1 and 2 are
 migration inputs and now migrate onto 5 rather than 4, so such a save's pools
 change; 3 and 4 are preserved verbatim. `docs/BALANCE.md` is regenerated: the tier-1 boss band moved UP across the
 board — Reaver 78/80/72 → 95/98/94, Rogue and Herald at or near 100 with ten to

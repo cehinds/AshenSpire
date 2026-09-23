@@ -1,4 +1,5 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
+import { presetGearProblems } from './attributes.js';
 import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
@@ -828,7 +829,19 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       const valid = values.every((value, index) => Number.isInteger(value)
         && value >= Math.max(floor, kitMinimum(needs, classDef.id, configured.attributes[index].id))
         && value <= mode.maximum)
-        && values.reduce((sum, value) => sum + value, 0) === expected;
+        && values.reduce((sum, value) => sum + value, 0) === expected
+        // ...and the ARMOUR creation offers the class, which validateContent
+        // refuses on the same terms (presetGearProblems) and which the kit
+        // floor above does not read. Without it Settings promised this class
+        // its authored attributes while the boot threw every setting away
+        // (review, #1255).
+        && !presetGearProblems({
+          presets: { [mode.id]: { [classDef.id]: preset } },
+          defaultMode: mode.id,
+          startingKits: [],
+          equipmentRequirements: configured.equipment?.equipmentRequirements || [],
+          creationClasses: configured.characterCreation?.classes || {},
+        }).length;
       if (!valid) configured.attributeRules.presets[mode.id][classDef.id] = structuredClone(defaultPresets[mode.id][classDef.id]);
     }
   }
@@ -884,14 +897,17 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
   // The floor a class cell is judged against is the CONFIGURED one: he can now
   // lower what a starting kit asks for, and a cell refused against the authored
   // table would be refused for a requirement no run would ever enforce.
-  const needs = kitAttributeMinimums(bundleWithConfiguredEquipment(bundle, settings));
+  const withEquipment = bundleWithConfiguredEquipment(bundle, settings);
+  const needs = kitAttributeMinimums(withEquipment);
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
   const cellKey = (classId, attributeId) => `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classId}.${attributeId}`;
+  const edited = {};
   for (const classDef of bundle.classes) {
     const values = bundle.attributes.map((attribute) => {
       return Number(settings[cellKey(classDef.id, attribute.id)] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
     });
+    edited[classDef.id] = Object.fromEntries(bundle.attributes.map((attribute, index) => [attribute.id, values[index]]));
     const outside = bundle.attributes.filter((attribute, index) => !Number.isInteger(values[index])
       || values[index] < floor || values[index] > mode.maximum);
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -914,6 +930,33 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
         keys: [cellKey(classDef.id, attribute.id)],
         message: `${classDef.name}: ${attribute.label} ${values[index]} is below the ${need.minimum} the ${need.kit} kit ('${need.itemId}') this class starts in asks for. ${classDef.name} keeps its authored attributes until it can hold its own kit; every other setting you changed is still applied.`,
       });
+    });
+  }
+  // THE SAME QUESTION THE BOOT ASKS, for the half the kit floor above does
+  // not reach. kitAttributeMinimums reads the baseline kit's two hands;
+  // validateContent also refuses a preset that cannot hold the ARMOUR
+  // creation offers that class, and main.js answers that refusal by throwing
+  // away the WHOLE game configuration — every unrelated Advanced setting with
+  // it — behind a generic "unchanged" notice, while this row read as applied.
+  // Asking it here means the edit is refused where it is made, in words. The
+  // kits are passed empty so the hands are said once, by the cell check above,
+  // and the minima are the CONFIGURED ones for the same reason the kit floor
+  // reads them: the boot validates the configured bundle, so judging armour
+  // against the authored table would refuse a preset a lowered minimum admits
+  // and pass one a raised minimum then fails (review, #1217 and #1255).
+  const byName = new Map(bundle.classes.map((row) => [row.id, row.name || row.id]));
+  for (const problem of presetGearProblems({
+    presets: { [modeId]: edited },
+    defaultMode: modeId,
+    startingKits: [],
+    equipmentRequirements: (withEquipment.equipment || {}).equipmentRequirements || [],
+    creationClasses: (withEquipment.characterCreation || {}).classes || {},
+  })) {
+    const [, , , classId, attributeId] = problem.path.split('.');
+    const attributeLabel = bundle.attributes.find((row) => row.id === attributeId)?.label || attributeId;
+    problems.push({
+      keys: [cellKey(classId, attributeId)],
+      message: `${byName.get(classId) || classId}: ${attributeLabel} ${problem.msg}. Authored defaults stay active until the set is valid.`,
     });
   }
   return [...problems, ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];

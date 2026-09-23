@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "A stat's own number wins over the every-stat one, by a switch, and a setting that does nothing right now is greyed out",
     "detail": "Under Character & progression → Stat conversions, the old Stat points per tier is now Attribute points per increase — every stat. Every stat's row names the attribute that drives it, for example HP — Constitution points per increase, and nothing on screen says \"tier\" any more. A new switch, Every stat uses the same attribute points per increase, decides which number applies. With the switch off (the default, which is the game as it shipped), every stat uses its own number and the every-stat number is greyed out. Turning it on makes every stat follow the every-stat number; each stat then has its own switch, which starts off, and turning one on gives just that stat its own number again. A greyed-out number shows the value it is following, so the number you see is always the one in use. If you had already changed the old tier number, nothing changes for you: the switch starts on. The same idea now covers the other places where one class or item can differ from the rest. Starseer and Herald's own reward rarity, Reaver and Starseer's own strike bias, and each item's own equipment requirement each have a uses its own switch; turn one off and that class or item follows the shared value. Settings that do nothing in the current setup are greyed out with a line saying which switch turns them on: every combat rating while ratings are off, the older poise settings while ratings are on, equipment drop numbers while drops are off, extra card mounts, and the swap costs for rules you are not using. No setting lost its value, and configuration files you exported before still import.",
-    "build": "0.7.1.412",
+    "build": "0.7.1.414",
     "pullRequest": 1260,
     "url": "https://github.com/cehinds/AshenSpire/pull/1260"
+  },
+  {
+    "id": "pr-1255",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
+    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
+    "build": "0.7.1.403",
+    "pullRequest": 1255,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1255"
   },
   {
     "id": "pr-1243",

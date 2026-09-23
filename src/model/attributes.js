@@ -91,6 +91,21 @@ export function creationMode(source, modeId = defaultCreationModeId(source)) {
   return mode;
 }
 
+/**
+ * creationModeHasPoints(mode) → does this mode give a player points to place?
+ *
+ * Yes when any allocation can MOVE: a bonus pool to spend, or — with none —
+ * baseline points that may be taken from one stat and put on another
+ * (below-baseline allowed, with room both under and over the baseline).
+ * Reading the pool alone made such a mode preset-only, so creation never
+ * opened the editor for a redistribution the mode permits (Codex, #1255).
+ */
+export function creationModeHasPoints(mode) {
+  if (!mode) return false;
+  if (mode.bonusPool > 0) return true;
+  return mode.belowBaseline !== 'forbid' && mode.minimum < mode.baseline && mode.maximum > mode.baseline;
+}
+
 export function creationModeSnapshot(source, modeId = defaultCreationModeId(source)) {
   return structuredClone(creationMode(source, modeId));
 }
@@ -345,6 +360,60 @@ export function attributeContentProblems(source) {
       const path = `attributeRules.presets.${modeId}.${classId}`;
       if (!Object.hasOwn(byClass, classId)) out.push({ path, msg: 'missing class × mode preset cell' });
       else out.push(...allocationProblems(t, classId, modeId, byClass[classId], path));
+    }
+  }
+  return out;
+}
+
+/**
+ * A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S STARTING GEAR (plan phase 9).
+ * The rebase moved every attribute and every equipment minimum at once, and
+ * nothing cross-read the two: the Starseer's preset lost the Intelligence its
+ * own staff asks for, so creation refused the character the table had just
+ * authored. Summing to the mode total is not enough — the gear the class
+ * starts in has to be holdable by the points the class starts with.
+ *
+ * ONE HOME, TWO DOORS. The content door (model/validate.js) and the Advanced
+ * settings door (model/advancedConfig.js) both ask this question, and they
+ * must answer it the same way: Settings used to accept a preset edit that the
+ * boot then threw the WHOLE configuration away over, behind a generic
+ * "unchanged" notice (review, #1217).
+ *
+ * WHAT IS CROSS-READ: the baseline kit's two hands, and every armour creation
+ * offers that class. The armour half is green today — every class's default
+ * outfit carries no minimum — and it is written anyway, because the defect
+ * this check was added for named the Nightweave as well as the Ash Staff, and
+ * a door that covers half of what it claims is a door that goes quiet on the
+ * other half (review, #1217).
+ *
+ * `presets` is the whole `attributeRules.presets` table, so a caller editing
+ * one mode passes its own edit rather than the content's.
+ */
+export function presetGearProblems({ presets, defaultMode, startingKits, equipmentRequirements, creationClasses }) {
+  const out = [];
+  const byClass = plainObject(presets) ? presets[defaultMode] : null;
+  const reqRows = Array.isArray(equipmentRequirements) ? equipmentRequirements : [];
+  if (!plainObject(byClass) || !reqRows.length) return out;
+  const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
+  const check = (classId, itemId, what) => {
+    const allocation = byClass[classId];
+    if (!plainObject(allocation)) return;
+    for (const row of minimaFor(itemId)) {
+      const have = allocation[row.attributeId];
+      if (!Number.isInteger(row.minimum) || !Number.isInteger(have) || have >= row.minimum) continue;
+      out.push({
+        path: `attributeRules.presets.${defaultMode}.${classId}.${row.attributeId}`,
+        msg: `is ${have}, but the class's ${what} '${itemId}' asks ${row.minimum} — the preset cannot hold the gear it starts in`,
+      });
+    }
+  };
+  for (const kit of Array.isArray(startingKits) ? startingKits : []) {
+    if (!kit || !kit.baseline) continue;
+    for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) check(kit.classId, itemId, 'baseline kit item');
+  }
+  for (const [classId, row] of Object.entries(plainObject(creationClasses) ? creationClasses : {})) {
+    for (const armourId of Array.isArray(row && row.armourIds) ? row.armourIds : []) {
+      check(classId, armourId, 'starting armour');
     }
   }
   return out;
