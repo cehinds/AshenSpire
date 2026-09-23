@@ -7,7 +7,7 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
-  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
+  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
@@ -125,12 +125,25 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier — <id> is one
+//                                           of the six stat ids, never a
+//                                           wildcard, so a typo such as `hhp`
+//                                           is still refused as unknown,
+//   derivedStatRules.defaults.pointsPerTier,
+//   balance.levelUp.tierSizeMin / .tierSizeMax
+//                                           ruleset 6 (owner, 2026-09-21): HP,
+//                                           Mana and every pool read as the
+//                                           ratings do — a decimal weight per
+//                                           attribute — so a tier and its gain
+//                                           have no row left to land on, and
+//                                           the "Stat points per tier" dial
+//                                           and its bounds retired with them.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -205,8 +218,8 @@ const RETIRED_BALANCE_PATHS = new Set([
   //     'allowance', which is authored text and has no row.
   'levelUp.pointsPerLevelMin',
   'levelUp.pointsPerLevelMax',
-  'levelUp.tierSizeMin',
-  'levelUp.tierSizeMax',
+  // (`levelUp.tierSizeMin/Max` left with the tier dial itself — ruleset 6,
+  // #1253 — and are skipped on import as RETIRED_KEYS, not kept as rows.)
   ...['hp', 'damage', 'block', 'poise'].flatMap((stat) => ['perLevel', 'min', 'max']
     .map((leaf) => `levels.enemyScaling.${stat}.${leaf}`)),
   'equipment.swapAllowancePerTurn',
@@ -576,8 +589,8 @@ export function advancedConfigRows(bundle) {
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
-  if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
+    // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
     if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
@@ -653,8 +666,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was
@@ -724,7 +735,8 @@ function structuralKeys(message) {
  * old string list for callers that only want the first sentence.
  */
 export function advancedConfigProblemRows(bundle, settings = {}) {
-  const problems = [...startingStatPoolProblems(bundle, settings)];
+  const problems = [...startingStatPoolProblems(bundle, settings),
+    ...derivedStatFloorProblems(configuredContentBundle(bundle, settings)).map(({ keys, message }) => ({ keys, message }))];
   const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
@@ -910,7 +922,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
-    if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
   // A file exported before the per-item rows became the item's own ratings

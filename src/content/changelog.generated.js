@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1253",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
+    "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
+    "build": "0.7.1.407",
+    "pullRequest": 1253,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
     "id": "pr-1258",
     "date": "2026-09-23",
     "group": "2026-09-23",

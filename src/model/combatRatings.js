@@ -260,9 +260,19 @@ export function combatRatingRows(bundle) {
   add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
     note: 'Scales the floored attribute total of every rating at once. 1 leaves the formulas as written.',
   });
+  // THE FIVE FORMULAS SIT WITH THE POOLS, NOT A TAB AWAY (owner, 2026-09-21:
+  // "I'd like all the resources and stats to be in the same format … they are
+  // way too separated"). HP, Mana, Stamina, Actions, draw and Poise are now
+  // written the way these are — a base and a decimal weight per attribute
+  // (content/derivedStats.js, ruleset 6) — so all eleven read side by side
+  // under Advanced → Progression → Stats & resources, row for row. What stays
+  // under Ratings & Resistance is everything that is NOT a formula: the
+  // multiplier, the resistance curve, impact, breaks, status weights and the
+  // per-item bonuses.
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${ratingLabel(id)} — ${words(field)}`, `${ratingLabel(id)} formula`, {
+      `${ratingLabel(id)} — ${words(field)}`, 'Stats & resources', {
+        advancedGroup: 'Progression',
         note: field === 'base' ? 'Added after the global multiplier, then equipment and other bonuses.'
           : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
       });
