@@ -149,7 +149,10 @@ export function equipmentRequirementRows(bundle) {
       cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
       type: 'number', integer: true, step: 1, min: 0, max: TOTAL_MAX, def: row.minimum,
       key,
-      gate: { key: ownKey(key), own, inherited: (settings) => scaledRequirement(row.minimum, settings) },
+      // The value shown while the switch is off is the one a new run uses: the
+      // scaled table when it is admitted, the authored one when the multiplier
+      // asks for more than a character can carry and is refused (Codex, #1260).
+      gate: { key: ownKey(key), own, inherited: (settings) => admittedRequirement(bundle, row, settings) },
       label: `${names[row.itemId] || row.itemId} — ${labels[row.attributeId] || row.attributeId} required`,
       searchPath: `equipment requirement ${row.itemId} ${row.attributeId}`,
       note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Used only while the switch above is on. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
@@ -174,6 +177,11 @@ function requirementScale(settings = {}) {
 
 function scaledRequirement(minimum, settings) {
   return Math.max(0, Math.min(TOTAL_MAX, Math.round(minimum * requirementScale(settings))));
+}
+
+function admittedRequirement(bundle, row, settings) {
+  const table = bundleWithConfiguredEquipment(bundle, settings).equipment?.equipmentRequirements || [];
+  return table.find((entry) => entry.itemId === row.itemId && entry.attributeId === row.attributeId)?.minimum ?? row.minimum;
 }
 
 export function resolveEquipmentRequirements(bundle, settings = {}) {

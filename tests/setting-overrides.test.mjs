@@ -218,3 +218,14 @@ test('a snapshot from before ratings keeps its poise and stagger tuning', () => 
   assert.equal(current.balance.combatRatings.enabled, true);
   assert.equal(current.balance.stagger.player.statuses.weak, contentBundle.balance.stagger.player.statuses.weak, 'ratings on: set aside');
 });
+
+// Codex, on #1260: a multiplier the pools cannot carry is refused whole, and
+// the game keeps the authored table; the greyed-out row shows that, not the
+// refused product.
+test('a disabled requirement shows the value a new run uses when the multiplier is refused', () => {
+  const refused = { 'gameConfig.equipmentRequirements.scale': 2, [OWN_REQUIREMENT]: false };
+  const gate = closedGate(refused, row(REQUIREMENT));
+  assert.match(gateSentence(gate, refused), /\(3\)/, 'authored 3, not the refused 6');
+  const admitted = { 'gameConfig.equipmentRequirements.scale': 0.5, [OWN_REQUIREMENT]: false };
+  assert.match(gateSentence(closedGate(admitted, row(REQUIREMENT)), admitted), /\(2\)/);
+});

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "A class or item's own value wins over the shared one, by a switch, and a setting that does nothing right now is greyed out",
     "detail": "Starseer and Herald's own reward rarity, Reaver and Starseer's own strike bias, and each item's own equipment requirement now each have a uses its own switch, directly above the numbers it governs. Turn one off and that class or item follows the shared value; the greyed-out number shows the value it is following, so the number you see is always the one in use, and the one you typed comes back when you turn the switch on again. Settings that do nothing in the current setup are greyed out too, with a line saying which switch turns them on: every combat rating while ratings are off, the older poise settings and the Poise pool while ratings are on, equipment drop numbers while drops are off, extra card mounts, the swap costs for rules you are not using, and formation movement's own settings while movement is off. A value stored in a greyed-out setting is set aside rather than applied, so it can no longer make the game throw out the rest of your configuration. No setting lost its value, and configuration files you exported before still import.",
-    "build": "0.7.1.426",
+    "build": "0.7.1.427",
     "pullRequest": 1260,
     "url": "https://github.com/cehinds/AshenSpire/pull/1260"
   },
