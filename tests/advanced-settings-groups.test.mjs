@@ -749,7 +749,11 @@ test('a refused configuration is named, and the example shows the rules a run ke
   assert.match(flasks.refused, /flask/i);
   // Hand rules are applied from settings regardless, and the notice says so
   // rather than claiming every rule shown is authored (Codex, #1252).
-  assert.match(flasks.refused, /Hand rules still apply as set/);
+  assert.match(flasks.refused, /a valid group applies as set/);
+  // A refused hand group itself falls back to its defaults, and the notice
+  // says that too (Codex, #1252).
+  const badHand = statsTopicPreview({ 'gameConfig.handRules.starting.minimum': 9, 'gameConfig.handRules.starting.maximum': 2 }, 'Draw & hand');
+  assert.match(badHand.refused, /refused uses its defaults/);
   const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
   assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
   assert.equal(flasks.examples[0].kind, 'derived');
