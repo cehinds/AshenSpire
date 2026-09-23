@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1243",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every setting in Advanced now says what it does, and the sentence sits beside its number",
+    "detail": "The 306 balance rows under Advanced had readable names, but the line under each name was still the same five words, Applies to a new run, on nearly every one. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The six legacy Poise and stagger rows say they only work while combat ratings are off, and name the rating row that takes over when they are on. The swap-cost numbers say which rule they price, and that choosing the rule is Weapon swap cost's job, not theirs. Two rows say plainly that nothing reads them, rather than promising to apply to a new run. The sentences are written beside their numbers in the balance table itself, so whoever changes a number reads what it does in the same place, and a test fails if a number is renamed and its sentence left behind. Names come from the game: renaming a relic renames its rows, and a new relic describes itself.",
+    "build": "0.7.1.385",
+    "pullRequest": 1243,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1243"
+  },
+  {
     "id": "pr-1256",
     "date": "2026-09-23",
     "group": "2026-09-23",
