@@ -3937,8 +3937,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    faces are bundled (assets/fonts/, CREDITS.md) under their own "AS Lore"
    names, so none of them changes the game's headings or body text. The lore
    window sizes in rem against the 62.5% root (1rem = 10px at Text M); the
-   inspection line uses the card-inspection pane's 16px floor formula directly,
-   so it reads the same in playing-card and equipment inspection. */
+   inspection line is 1.6rem (16px at Text M, so Text size grows it) with the
+   card-inspection pane's zoom floor, the same in playing-card and equipment
+   inspection. */
 /* FONT LICENCES — carried here so the notices travel inside every build,
    single-file and mobile alike (the same text is assets/fonts/OFL.txt).
 
@@ -4084,13 +4085,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 button.inspection-lore-line { cursor:pointer; }
 button.inspection-lore-line:hover { border-color:var(--gold); }
 button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
-.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * max(16px, calc(16px / var(--ui-zoom, 1)))); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* ONE LINE, like creation flavor (SPEC): a long identity ends in an ellipsis;
    the whole of it opens in the lore modal from this same line. */
 /* A line with nothing behind it (an equipment blurb) has no modal to open,
    so it wraps in full rather than hide words a touch player cannot reach. */
 p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; text-overflow:clip; }
-.inspection-lore-line .lore-read { flex:none; font-size:calc(0.75 * max(16px, calc(16px / var(--ui-zoom, 1)))); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+.inspection-lore-line .lore-read { flex:none; font-size:calc(0.75 * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
 .lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
 .lore-modal-text p { margin:0; }
 .lore-modal-text .lore-identity { font-size:calc(var(--lore-size) + 0.2rem); font-style:var(--lore-identity-slant); }
