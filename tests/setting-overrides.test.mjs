@@ -14,7 +14,7 @@ import { resolveEquipmentRequirements, SHARED_RATE_KEY, EVERY_STAT_RATE_LABEL } 
 import { validateContent } from '../src/model/validate.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { categoryHandler, derivedStatDialOptions, closedGate, gateSentence, refreshGates, settingsRow } from '../src/ui/screens/settings.js';
+import { categoryHandler, derivedStatDialOptions, closedGate, gateSentence, refreshGates, settingsRow, pinSharedRateBeforeDial } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 
 const OWN_HP = 'gameConfig.own.derivedStatRules.rules.hp.pointsPerTier';
@@ -297,4 +297,18 @@ test('a row closed by both its feature and its own switch names the feature', ()
   const deckOff = { 'gameConfig.balance.equipment.startingDeck.enabled': false, 'gameConfig.own.balance.equipment.startingDeck.classes.reaver.strikeBias': false };
   const strike = row('gameConfig.balance.equipment.startingDeck.classes.reaver.strikeBias');
   assert.match(gateSentence(closedGate(deckOff, strike), deckOff), /Starting Deck — Enabled” is on/);
+});
+
+// Codex, on #1260 (the fourth door): whichever way a profile came in, the
+// general switch is pinned at its current state the moment the every-stat
+// number is edited, so moving the number back to 5 cannot flip the mode.
+test('editing the every-stat number pins the general switch first', () => {
+  const legacy = { statTierSize: 3 };
+  assert.deepEqual(pinSharedRateBeforeDial(legacy, 'statTierSize'), { [SHARED_RATE_KEY]: true });
+  legacy.statTierSize = 5;
+  assert.equal(hpRule(born(legacy)), 5, 'the mode stays on after the number returns to 5');
+  const fresh = {};
+  assert.deepEqual(pinSharedRateBeforeDial(fresh, 'statTierSize'), { [SHARED_RATE_KEY]: false }, 'a default profile pins OFF');
+  assert.equal(pinSharedRateBeforeDial({ [SHARED_RATE_KEY]: true }, 'statTierSize'), null, 'an explicit switch is left alone');
+  assert.equal(pinSharedRateBeforeDial({ statTierSize: 3 }, 'levelUpValue'), null, 'other numbers pin nothing');
 });

@@ -903,6 +903,26 @@ export function gateSentence(gate, settings) {
   return `Used only while ${name} is set to ${String(label).toUpperCase()}.`;
 }
 
+/**
+ * pinSharedRateBeforeDial(settings, key) → the change it wrote, or null.
+ *
+ * THE ROOT OF FOUR CODEX FINDINGS ON #1260. The general switch's DEFAULT is
+ * read off the every-stat number (a profile that had moved it follows it), so
+ * while the switch is unstored, moving that number back to 5 silently turned
+ * the mode off. Boot, archive restore and import each wrote the switch, and
+ * then a fourth door (the startup recovery restore) turned up. The number is
+ * only ever changed HERE, so the switch is pinned here, at its current
+ * effective state, before the number moves — whichever door the profile came
+ * in through.
+ */
+export function pinSharedRateBeforeDial(settings, key) {
+  if (key !== 'statTierSize' || typeof settings[SHARED_RATE_KEY] === 'boolean') return null;
+  const flag = rowByKey(SHARED_RATE_KEY)?.flag;
+  if (!flag) return null;
+  settings[SHARED_RATE_KEY] = flagOn(settings, flag);
+  return { [SHARED_RATE_KEY]: settings[SHARED_RATE_KEY] };
+}
+
 export function closedGate(settings, row) {
   return (row.gates || []).find((gate) => !gateOpen(settings, gate, rowByKey)) || null;
 }
@@ -2453,6 +2473,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // number the row can take.
       const { value: val, refusal } = commitNumberRow(settings, row, raw);
       mirror(val);
+      const pinned = pinSharedRateBeforeDial(settings, key);
+      if (pinned) onChange(pinned);
       settings[key] = val;
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
