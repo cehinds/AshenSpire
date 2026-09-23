@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Card lore is one line in inspection, and the whole of it opens in its own window — set in the type you choose",
     "detail": "Inspect any card and its lore is a single line: what the thing is and whose (Art of the sellswords of the Bastion.). Press it and the lore window opens over the card with the full description — a little history, told from one side, and a closing line set apart. Every card's lore has been rewritten this way. A new Advanced tab, Text & lore, sets how it reads: the typeface (eight faces now ship with the game, plus Georgia), size, letter and line spacing, and italic or upright, with the identity line and the lore window each adjustable. Interface text size and readable headings stay where they were, under Accessibility. No card's rules or numbers changed.",
-    "build": "0.7.1.413",
+    "build": "0.7.1.415",
     "pullRequest": 1264,
     "url": "https://github.com/cehinds/AshenSpire/pull/1264"
   },
