@@ -61,7 +61,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -122,6 +122,7 @@ import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.j
 import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
 import { levelProblems } from '../src/model/state.js';
 import { playerLevel } from '../src/model/levels.js';
+import { advancedConfigProblems, configuredContentBundle } from '../src/model/advancedConfig.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
@@ -9756,8 +9757,94 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       presets: { ...contentBundle.attributeRules.presets, lean: { ...contentBundle.attributeRules.presets.lean,
         starseer: { ...contentBundle.attributeRules.presets.lean.starseer, intelligence: 2, strength: 2 } } } } };
     const kitSaid = validateContent(kitBreak).errors.map((e) => `${e.path}: ${e.msg}`);
-    assert(kitSaid.some((e) => /cannot hold the kit it starts in/.test(e)),
+    assert(kitSaid.some((e) => /baseline kit item 'ashStaff'.*cannot hold the gear it starts in/.test(e)),
       `and a preset that cannot is refused at the content door, by name: ${kitSaid.slice(0, 2).join(' | ')}`);
+    // THE SAME QUESTION AT THE SETTINGS DOOR (review, #1217): a preset edit in
+    // Advanced that every cell-range and total check admits, but the boot then
+    // refuses — throwing away the WHOLE game configuration behind a generic
+    // notice — is refused where it is made instead.
+    const settingMode = contentBundle.attributeRules.defaultMode;
+    const settingCells = { strength: 1, dexterity: 2, constitution: 2, wisdom: 2, intelligence: 1 };
+    const settingEdit = Object.fromEntries(Object.entries(settingCells)
+      .map(([id, value]) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value]));
+    eq(Object.values(settingCells).reduce((a, b) => a + b, 0), 8,
+      'the edit totals the mode pool, so only the gear rule can refuse it');
+    const settingSaid = advancedConfigProblems(contentBundle, settingEdit);
+    assert(settingSaid.some((line) => /straightSword/.test(line) && /Strength 1/.test(line)),
+      `and Advanced settings refuses the same edit, by name: ${settingSaid.join(' | ') || '(nothing)'}`);
+    eq(advancedConfigProblems(contentBundle, {}).length, 0, 'while the authored presets pass it');
+    // AND THE ARMOUR HALF, which the per-cell kit floor does not reach: it
+    // reads the baseline kit's two hands only. No outfit creation offers
+    // carries a minimum today, so the case is built rather than found — a
+    // door that covers half of what it claims goes quiet on the other half.
+    // `vigil` is an outfit creation really offers the Reaver; it is given a
+    // Strength 3 minimum here, above the edit's 1 and at the authored preset's 3.
+    const armourBundle = {
+      ...contentBundle,
+      equipment: {
+        ...contentBundle.equipment,
+        equipmentRequirements: [...contentBundle.equipment.equipmentRequirements,
+          { itemId: 'vigil', attributeId: 'strength', minimum: 3 }],
+      },
+    };
+    const armourSaid = advancedConfigProblems(armourBundle, settingEdit);
+    assert(armourSaid.some((line) => /vigil/.test(line) && /starting armour/.test(line) && /Strength is 1\b/.test(line)),
+      `the starting armour is asked for too: ${armourSaid.join(' | ') || '(nothing)'}`);
+    eq(advancedConfigProblems(armourBundle, {}).length, 0, 'while the authored presets still pass it');
+    // AND AGAINST THE CONFIGURED MINIMUM, not the authored one: the boot
+    // validates the configured bundle, so Settings must judge the same number.
+    // Lowering the plate's Strength to the edit's own 1 admits it.
+    const loweredSaid = advancedConfigProblems(armourBundle,
+      { ...settingEdit, 'gameConfig.equipmentRequirements.vigil.strength': 1 });
+    assert(!loweredSaid.some((line) => /vigil/.test(line)),
+      `a lowered armour minimum admits the preset it now fits: ${loweredSaid.join(' | ') || '(nothing)'}`);
+    // AND THE BOOT HONOURS WHAT SETTINGS SAYS. A preset that clears the sword
+    // but not the armour keeps its class's authored attributes — that class
+    // alone — so the configured bundle still validates, rather than failing
+    // validateContent and costing the owner every other setting.
+    const armourOnlyEdit = Object.fromEntries(Object.entries({ strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 })
+      .map(([id, value]) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value]));
+    const booted = configuredContentBundle(armourBundle, armourOnlyEdit);
+    eq(JSON.stringify(booted.attributeRules.presets[settingMode].reaver),
+      JSON.stringify(armourBundle.attributeRules.presets[settingMode].reaver),
+      'the Reaver falls back to its authored attributes');
+    assert(validateContent(booted).ok,
+      `and the configured bundle still validates: ${validateContent(booted).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    // A RAISED OUTFIT MINIMUM is held at the same door as a raised kit one: the
+    // authored preset (Strength 3) cannot wear vigil at 4, and falling back to
+    // it cannot help, so the raise is refused whole and the bundle validates.
+    const raised = configuredContentBundle(armourBundle, { 'gameConfig.equipmentRequirements.vigil.strength': 4 });
+    eq(raised.equipment.equipmentRequirements.find((row) => row.itemId === 'vigil').minimum, 3,
+      'a raise the preset cannot wear is refused');
+    assert(validateContent(raised).ok,
+      `and the bundle it leaves still validates: ${validateContent(raised).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    const raisedSaid = advancedConfigProblems(armourBundle, { 'gameConfig.equipmentRequirements.vigil.strength': 4 });
+    assert(raisedSaid.length > 0, `and Settings says so: ${raisedSaid.join(' | ') || '(nothing)'}`);
+    // ...but the same raise made TOGETHER with a Reaver allocation that can
+    // wear it is one change, and it is admitted whole (Codex, #1255).
+    const together = {
+      'gameConfig.equipmentRequirements.vigil.strength': 4,
+      ...Object.fromEntries(Object.entries({ strength: 4, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 })
+        .map(([id, value]) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value])),
+    };
+    const both = configuredContentBundle(armourBundle, together);
+    eq(both.equipment.equipmentRequirements.find((row) => row.itemId === 'vigil').minimum, 4,
+      'a raise made with an allocation that wears it is admitted');
+    eq(both.attributeRules.presets[settingMode].reaver.strength, 4, 'and so is the allocation');
+    assert(validateContent(both).ok,
+      `and the bundle validates: ${validateContent(both).errors.slice(0, 2).map((e) => `${e.path}: ${e.msg}`).join(' | ')}`);
+    eq(advancedConfigProblems(armourBundle, together).length, 0, 'and Settings has nothing to say about it');
+    // A MODE HAS POINTS WHEN ANY CAN MOVE, not only when it has a bonus pool
+    // (Codex, #1255): zero bonus points with redistribution allowed still opens
+    // the editor; zero bonus with nothing movable does not.
+    const lean = contentBundle.creationModes.find((row) => row.id === settingMode);
+    assert(creationModeHasPoints(lean), 'the shipped mode has points to place');
+    assert(creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 1, maximum: 4, belowBaseline: 'allow' }),
+      'a zero-bonus mode that permits redistribution is editable');
+    assert(!creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 1, maximum: 4, belowBaseline: 'forbid' }),
+      'one that forbids going below baseline has nothing to move');
+    assert(!creationModeHasPoints({ bonusPool: 0, baseline: 2, minimum: 2, maximum: 2, belowBaseline: 'allow' }),
+      'nor does one pinned at its baseline');
 
     // ARMOUR ASKS TOO, and a gate that read only the weapons would have left
     // every armour minimum unenforced while the table said otherwise.

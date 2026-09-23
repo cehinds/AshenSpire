@@ -46,7 +46,7 @@ import { wornZoneOf, handZoneOf } from './zones.js';
 import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
-import { attributeContentProblems } from './attributes.js';
+import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
@@ -595,36 +595,17 @@ function collectContentProblems(bundle, errors = []) {
         }
       }
     }
-    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S KIT (plan phase 9). The
-    // rebase moved every attribute and every equipment minimum at once, and
-    // nothing cross-read the two: the Starseer's preset lost the Intelligence
-    // its own staff asks for, so creation refused the character the table had
-    // just authored. Summing to the mode total is not enough — the kit the
-    // class starts in has to be wearable by the points the class starts with.
-    const presetTables = (b.attributeRules || {}).presets;
-    const kitRows = ((b.equipment || {}).startingKits) || [];
-    const reqRows = ((b.equipment || {}).equipmentRequirements) || [];
-    if (presetTables && typeof presetTables === 'object' && kitRows.length && reqRows.length) {
-      const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
-      const defaultMode = (b.attributeRules || {}).defaultMode;
-      const byClass = presetTables[defaultMode];
-      if (byClass && typeof byClass === 'object') {
-        for (const kit of kitRows) {
-          if (!kit || !kit.baseline) continue;
-          const allocation = byClass[kit.classId];
-          if (!allocation) continue;
-          for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
-            for (const row of minimaFor(itemId)) {
-              const have = allocation[row.attributeId];
-              if (Number.isInteger(row.minimum) && Number.isInteger(have) && have < row.minimum) {
-                err(`attributeRules.presets.${defaultMode}.${kit.classId}.${row.attributeId}`,
-                  `is ${have}, but the class's baseline kit item '${itemId}' asks ${row.minimum} — the preset cannot hold the kit it starts in`);
-              }
-            }
-          }
-        }
-      }
-    }
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S STARTING GEAR (plan
+    // phase 9). The rule and its wording live in model/attributes.js so the
+    // Advanced settings door asks the same question of an edited preset
+    // (review, #1217); this door asks it of the authored content.
+    for (const problem of presetGearProblems({
+      presets: (b.attributeRules || {}).presets,
+      defaultMode: (b.attributeRules || {}).defaultMode,
+      startingKits: ((b.equipment || {}).startingKits) || [],
+      equipmentRequirements: ((b.equipment || {}).equipmentRequirements) || [],
+      creationClasses: ((b.characterCreation || {}).classes) || {},
+    })) err(problem.path, problem.msg);
     const poise = b.balance.poise;
     if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
     else {
