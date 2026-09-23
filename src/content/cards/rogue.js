@@ -45,7 +45,7 @@ export const rogueCards = [
   },
   {
     id: 'smokePellet', name: 'Smoke Pellet', class: 'rogue', rarity: 'special', cost: 0, type: 'skill',
-    flavor: "Tallow and ash, sold by a surgeon who never asked. — Frozen-dock cant",
+    flavor: "Tallow and ash, rolled in a chandler's back room. — Frozen-dock cant",
     keywords: ['exhaust'], icon: '🌫',
     effects: [{ op: 'block', target: 'self', amount: 3 }, prepare()],
     textTemplate: 'Gain {block} Block. Become Prepared. Exhaust.',
@@ -283,7 +283,7 @@ export const rogueCards = [
   },
   {
     id: 'smokeBomb', name: 'Smoke Bomb', class: 'rogue', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '💨',
-    flavor: "Kiln ash in a bladder. The watch still swears it was a ghost. — Frozen-dock cant",
+    flavor: "Pig's bladder, split seam. The watch still swears it was a ghost. — Frozen-dock cant",
     effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 3 }],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Exhaust.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 4 }] },

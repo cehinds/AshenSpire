@@ -415,7 +415,7 @@ export const starseerCards = [
   },
   {
     id: 'starstoneKris', name: 'Starstone Kris', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
-    flavor: "The kris was starstone. It warmed only in the apprentice's hand. — Astronomer's chart margin",
+    flavor: "Starstone kris. The apprentice wrapped it; it frosted the cloth. — Astronomer's chart margin",
     keywords: [], icon: '🔪',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -461,7 +461,7 @@ export const starseerCards = [
   },
   {
     id: 'starcaller', name: 'Starcaller', class: 'starseer', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
-    flavor: "The apprentices chanted to the sky in rhythm. Sometimes it answered. — Astronomer's chart margin",
+    flavor: "The apprentices chanted in rhythm. Eleven falls that night. He noted both. — Astronomer's chart margin",
     keywords: [], icon: '⭐',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6, hits: { f: 'energySpent' } },
@@ -574,7 +574,7 @@ export const starseerCards = [
   },
   {
     id: 'celestialLance', name: 'Celestial Lance', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
-    flavor: "The Spire's needle was aimed at a star no chart named. — Astronomer's chart margin",
+    flavor: "Chart 58: a line of light, horizon to zenith, one breath long. — Astronomer's chart margin",
     keywords: [], icon: '🔱',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: CHARGED } },

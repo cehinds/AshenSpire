@@ -150,7 +150,7 @@ export const heraldCards = [
   },
   {
     id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
-    flavor: "We share the warmth, and all are warm alike. — Chapel liturgy",
+    flavor: "We pass one cup along the pews, and every mouth is red. — Chapel liturgy",
     keywords: [], icon: '☣',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 2 }],
     textTemplate: 'Apply {crimsonBlight} Crimson Blight to ALL enemies.',
@@ -218,7 +218,7 @@ export const heraldCards = [
   },
   {
     id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
-    flavor: "We tend the red flowers where the names were buried. — Chapel liturgy",
+    flavor: "We tend the red flowers on the graves, and they spread. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
@@ -362,7 +362,7 @@ export const heraldCards = [
   },
   {
     id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'skill',
-    flavor: "We loose the red moths from the ossuary; they seek names. — Chapel liturgy",
+    flavor: "We loose the red moths from the ossuary; they know the way. — Chapel liturgy",
     keywords: [], icon: '🦋',
     effects: [
       { op: 'loseHp', target: 'self', amount: 4 },

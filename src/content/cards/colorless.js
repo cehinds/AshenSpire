@@ -45,7 +45,7 @@ export const colorlessCards = [
   },
   {
     id: 'fieldDressing', name: 'Field Dressing', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
-    flavor: "Clean rag under the third stone. Put one back. — Cairn-scratch",
+    flavor: "A clean rag tied to the cairn. Somebody boiled it first. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🩹',
     effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP. Exhaust.',
@@ -137,7 +137,7 @@ export const colorlessCards = [
   },
   {
     id: 'quickGuard', name: 'Quick Guard', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "Arm up, eyes open, keep walking. — Cairn-scratch",
+    flavor: "Buckler up, eyes on the road, keep walking. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -154,7 +154,7 @@ export const colorlessCards = [
   },
   {
     id: 'sweepingBlow', name: 'Sweeping Blow', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'attack',
-    flavor: "They come in packs on the viaduct. Swing wide. — Cairn-scratch",
+    flavor: "They come three abreast on the viaduct. Keep the rail behind you. — Cairn-scratch",
     keywords: [], icon: '🌀',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }],
     textTemplate: 'Deal {damage} damage to ALL enemies.',

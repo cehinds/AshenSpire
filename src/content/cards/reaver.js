@@ -149,7 +149,7 @@ export const reaverCards = [
   },
   {
     id: 'ironResolve', name: 'Iron Resolve', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
-    flavor: "The wall does not ask whether it is tired. — Warden's field-book",
+    flavor: "Back to the wall. The wall never asks if it is tired. — Warden's field-book",
     keywords: [], icon: '⛨',
     effects: [
       { op: 'block', target: 'self', amount: 5, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
@@ -463,7 +463,7 @@ export const reaverCards = [
   },
   {
     id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
-    flavor: "Paid in advance. Nobody said the job was over. — Warden's field-book",
+    flavor: "Take the pay in advance. Hold the gate until told otherwise. — Warden's field-book",
     keywords: ['innate', 'exhaust'], icon: '📜',
     effects: [{ op: 'enterStance', stance: 'gorefire' }],
     textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
