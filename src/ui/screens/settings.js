@@ -34,6 +34,7 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
+import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -94,7 +95,10 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // near-identical "starting stat pool" rows for one reachable pool; this is the
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
+  // An override switch shows its EFFECTIVE state: stored, else on when the
+  // class ships its own value or a profile already pinned one.
+  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
@@ -867,6 +871,82 @@ export function resolveArmamentsPhonePlacement(settings = {}) {
 
 function rowNote(settings, row) {
   return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+// ---- A ROW THAT DOES NOTHING RIGHT NOW IS DISABLED, AND SAYS WHY ----------
+//
+// (owner, 2026-09-23: "Disable fields if toggle isn't on.") `gates` on a row
+// (model/advancedConfig.js, model/startingStatConfig.js) name the switch that
+// decides whether it takes effect. While any gate is closed the row's controls
+// are disabled and a line under its label says which switch opens it; an
+// override row also shows the value it is inheriting in place of its own, so
+// the number on screen is always the number in force. Its own stored value is
+// kept, and comes back when the switch does.
+const GATED_ROWS = ROWS.filter((row) => row.gates?.length);
+const rowByKey = (key) => ROWS.find((row) => row.key === key);
+
+function inheritedValue(gate, settings) {
+  if (gate.inherited) return gate.inherited(settings);
+  if (!gate.inheritedKey) return undefined;
+  const row = rowByKey(gate.inheritedKey);
+  return Object.hasOwn(settings, gate.inheritedKey) ? settings[gate.inheritedKey] : row?.def;
+}
+
+export function gateSentence(gate, settings) {
+  const switchRow = rowByKey(gate.key);
+  const name = `“${switchRow?.label || gate.key}”`;
+  if (gate.own) {
+    const value = inheritedValue(gate, settings);
+    const from = gate.inheritedKey ? `“${rowByKey(gate.inheritedKey)?.label || gate.inheritedKey}”` : 'the authored value × the multiplier';
+    return `Following ${from}${value === undefined ? '' : ` (${value})`}. Turn on ${name} to set this one.`;
+  }
+  if (gate.when === false) return `Used only while ${name} is off.`;
+  if (gate.when === undefined || gate.when === true) return `Used only while ${name} is on.`;
+  const label = switchRow?.choiceLabels?.[gate.when] || gate.when;
+  return `Used only while ${name} is set to ${String(label).toUpperCase()}.`;
+}
+
+export function closedGate(settings, row) {
+  return (row.gates || []).find((gate) => !gateOpen(settings, gate, rowByKey)) || null;
+}
+
+export function refreshGates(container, settings) {
+  const controls = new Map();
+  for (const el of container.querySelectorAll('[data-key]')) {
+    if (!controls.has(el.dataset.key)) controls.set(el.dataset.key, []);
+    controls.get(el.dataset.key).push(el);
+  }
+  for (const row of GATED_ROWS) {
+    const els = controls.get(row.key);
+    if (!els) continue;
+    const closed = closedGate(settings, row);
+    const inherited = closed?.own ? inheritedValue(closed, settings) : undefined;
+    for (const el of els) {
+      el.disabled = !!closed;
+      el.setAttribute('aria-disabled', String(!!closed));
+      if (el.tagName !== 'INPUT' || el.type === 'checkbox' || el.type === 'color') continue;
+      if (closed && inherited !== undefined) {
+        el.value = String(inherited);
+        el.dataset.showingInherited = '1';
+      } else if (!closed && el.dataset.showingInherited) {
+        delete el.dataset.showingInherited;
+        el.value = String(settings[row.key] ?? row.def);
+      }
+    }
+    const wrapper = els[0].closest('.set-row');
+    if (!wrapper) continue;
+    wrapper.classList.toggle('set-row-gated', !!closed);
+    let hint = wrapper.querySelector('.set-gate-note');
+    if (closed) {
+      if (!hint) {
+        hint = (wrapper.ownerDocument || document).createElement('span');
+        hint.className = 'ls-hint set-note set-gate-note';
+        (wrapper.querySelector('.as-labelstack') || wrapper).append(hint);
+      }
+      hint.textContent = gateSentence(closed, settings);
+      hint.hidden = false;
+    } else if (hint) hint.hidden = true;
+  }
 }
 
 function refreshConditionNotes(container, settings) {
@@ -1970,6 +2050,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // legal re-entry clears exactly the message it replaced.
   const typedRefusals = new Map();
   const reportAdvancedProblems = () => {
+    refreshGates(container, settings);
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
@@ -2341,6 +2422,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+      // A profile key can be what a gated row inherits, so the inherited
+      // values and their sentences are redrawn whatever the key (Codex, #1260).
+      else refreshGates(container, settings);
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.
@@ -2634,6 +2718,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[select.dataset.key] = select.value;
       onChange({ [select.dataset.key]: select.value });
       if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       refreshApplied(container, settings);
       refreshConditionNotes(container, settings);
       anchorPressed(container, select, wasAt);
@@ -2653,6 +2738,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.

@@ -13,6 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
+import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -581,9 +582,120 @@ const LEGACY_BALANCE_PATHS = new Set([
   'levelUp.pointsPerLevel',
 ]);
 
+// ---- PER-CLASS VALUES THAT WIN OVER A GLOBAL, BY A SWITCH (2026-09-23) -----
+//
+// A class's reward-rarity table replaces the global one outright, and a class's
+// strike bias replaces the default — but nothing on screen said which was in
+// force, or let a class go back to following the global. Each now has a
+// "uses its own …" switch (model/settingOverrides.js). It starts ON because
+// these classes ship their own values; turning it off drops the class entry
+// from the configured bundle, so the engine's own fallback — the global —
+// applies.
+function balanceOwnRows(bundle) {
+  const rows = [];
+  const className = (id) => bundle.classes?.find((row) => row.id === id)?.name || word(id);
+  for (const classId of Object.keys(bundle.balance?.rewards?.rarityWeightsByClass || {})) {
+    const member = `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeightsByClass.${classId}`;
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Rewards', key: ownKey(member), def: true,
+      own: { member, defaultOn: true, dropPath: ['balance', 'rewards', 'rarityWeightsByClass', classId] },
+      label: `${className(classId)} uses its own reward rarity`, searchPath: `rewards rarity ${classId} own override`,
+      note: `On: ${className(classId)}'s combat rewards use the table below. Off: they use Reward rarity, like every other class. Applies to a new run.`,
+    });
+  }
+  for (const [classId, entry] of Object.entries(bundle.balance?.equipment?.startingDeck?.classes || {})) {
+    if (!Number.isFinite(entry?.strikeBias)) continue;
+    const member = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.classes.${classId}.strikeBias`;
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Equipment', key: ownKey(member), def: true,
+      // The whole class entry goes: validation requires an entry to carry a
+      // strike bias, and the bias is all an entry holds.
+      own: { member, defaultOn: true, dropPath: ['balance', 'equipment', 'startingDeck', 'classes', classId] },
+      label: `${className(classId)} uses its own strike bias`, searchPath: `starting deck strike bias ${classId} own override`,
+      note: `On: ${className(classId)}'s starting deck uses its own strike bias. Off: it uses the default strike bias. Applies to a new run.`,
+    });
+  }
+  return rows;
+}
+
+// ---- A ROW THAT DOES NOTHING RIGHT NOW IS DISABLED, AND SAYS WHY ---------
+//
+// Each rule names the switch whose value decides whether a row takes effect
+// (`gate`, read by model/settingOverrides.js `gateOpen`). The engine already
+// ignores these rows in that state; the screen now shows it instead of
+// accepting a number that does nothing.
+const RATINGS_SWITCH = `${ADVANCED_CONFIG_PREFIX}combatRatings.enabled`;
+const DECK_SWITCH = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.enabled`;
+// Drops that stay live with drops off: `consolationCinders` (paid for every
+// boss once nothing drops), `requireFound` (ownership) and `permanentOnFind`
+// (trader purchases) are read whether or not drops are on (review, #1260), so
+// only the roll itself is gated.
+const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights|preferUnfound)(\.|$)/;
+function enableGates(key, swapRuleIds = []) {
+  const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
+  if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
+  // The older poise meter, and the derived Poise rule, run only with ratings off.
+  if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  // Formation movement's own rules do nothing while movement is off: a move is
+  // refused before cost, selection or activation is read (formationMovement.js).
+  // The shared selection colour stays live — it also marks cards and menus.
+  if (/^gameConfig\.presentation\.(movementNeedsSelection|movementCostsAction|tileActivation|moveActivation)$/.test(key)) {
+    return [{ key: `${ADVANCED_CONFIG_PREFIX}presentation.movementEnabled` }];
+  }
+  if (DROP_ROLL.test(key)) return [{ key: `${balance}equipment.drops.enabled` }];
+  const mounts = `${balance}equipment.cardMounts.extraMounts`;
+  if (key.startsWith(`${mounts}.`) && key !== `${mounts}.enabled`) return [{ key: `${mounts}.enabled` }];
+  if (key.startsWith(`${balance}equipment.startingDeck.`) && key !== DECK_SWITCH) return [{ key: DECK_SWITCH }];
+  if (key.startsWith(`${balance}equipment.roleCopies.`)) return [{ key: DECK_SWITCH, when: false }];
+  if (key.startsWith(`${balance}equipment.swapCostByCategory.`)) return [{ key: 'swapCostRule', when: 'category' }];
+  // The rule a `swapCostRules.<n>` row belongs to is read from the content by
+  // index, so reordering the rules cannot gate the wrong row (review, #1260).
+  const rule = key.match(/^gameConfig\.balance\.equipment\.swapCostRules\.(\d+)\./);
+  if (rule && swapRuleIds[Number(rule[1])]) return [{ key: 'swapCostRule', when: swapRuleIds[Number(rule[1])] }];
+  return [];
+}
+
+function withGates(rows, bundle) {
+  const swapRuleIds = (bundle.balance?.equipment?.swapCostRules || []).map((rule) => rule.id);
+  const owns = rows.filter((row) => row.own);
+  const inheritedKey = (key) => {
+    const rarity = key.match(/^gameConfig\.balance\.rewards\.rarityWeightsByClass\.[^.]+\.(.+)$/);
+    if (rarity) return `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeights.${rarity[1]}`;
+    if (/startingDeck\.classes\.[^.]+\.strikeBias$/.test(key)) return `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.defaultStrikeBias`;
+    return null;
+  };
+  return rows.map((row) => {
+    // An override switch keeps its `own`, and also takes the gates of the row
+    // it governs: a class's strike-bias switch does nothing while the starting
+    // deck rules are off (Codex, on #1260).
+    if (row.own) {
+      const gates = [...enableGates(row.own.member, swapRuleIds), ...(row.gates || [])];
+      return gates.length ? { ...row, gates } : row;
+    }
+    // THE SUBSYSTEM FIRST. When both are closed the screen names the first,
+    // and "turn on its own switch" is the wrong advice while the whole feature
+    // is off — that switch is itself disabled (Codex, on #1260).
+    const gates = [...enableGates(row.key, swapRuleIds), ...(row.gate ? [row.gate] : [])];
+    const owner = owns.find((toggle) => toggle.own.dropPath && (row.key === toggle.own.member || row.key.startsWith(`${toggle.own.member}.`)));
+    if (owner) gates.push({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });
+    return gates.length ? { ...row, gates } : row;
+  });
+}
+
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
+}
+
+/**
+ * Every override switch's `own`, for the readers that must honour them.
+ * Cached per bundle: `configuredContentBundle` asks on every call, and
+ * rebuilding every row for it doubled that call's cost (review, #1260).
+ */
+const OWNS_BY_BUNDLE = new WeakMap();
+export function advancedConfigOwns(bundle) {
+  if (!OWNS_BY_BUNDLE.has(bundle)) OWNS_BY_BUNDLE.set(bundle, advancedConfigRows(bundle).filter((row) => row.own).map((row) => row.own));
+  return OWNS_BY_BUNDLE.get(bundle);
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
@@ -624,7 +736,11 @@ function setPath(target, path, value) {
 }
 
 export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
-  const settings = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
+  const raw = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
+  // A specific value whose "uses its own" switch is off is not applied: the
+  // global it would otherwise override decides (model/settingOverrides.js).
+  const owns = advancedConfigOwns(bundle);
+  const settings = withoutUnowned(raw, owns);
   const configured = cloneConfigurableBundle(bundle);
   // EQUIPMENT REQUIREMENTS RESOLVE FIRST, because every floor the starting-stat
   // dials are measured against is read off that table (kitAttributeMinimums).
@@ -635,6 +751,23 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
+  const rowFor = (key) => rows.find((candidate) => candidate.key === key) || null;
+  // A ROW WHOSE FEATURE IS SWITCHED OFF IS NOT APPLIED (Codex, on #1260). The
+  // engine ignores it in that state and the screen disables it, so a stored
+  // value there — even an invalid one — can neither be corrected nor be allowed
+  // to refuse the whole configuration (which would fall back to authored
+  // content and drop every unrelated setting). It is applied, and validated,
+  // again the moment its switch is back on and the row is editable. Only gates
+  // on configuration switches are read here: a profile-only switch (the swap
+  // rule picker) is not in a run's snapshot to be read.
+  // A snapshot from before combat ratings existed is played with ratings OFF
+  // (see `ratingsVersion` below), whatever its settings say, so its gates are
+  // read that way too — otherwise its poise and stagger tuning, which is in
+  // force exactly then, would be set aside (review, #1260).
+  const legacyRatings = Boolean(settingsOrSnapshot?.overrides) && settingsOrSnapshot.ratingsVersion !== 1;
+  const gateSettings = legacyRatings ? { ...settings, [RATINGS_SWITCH]: false } : settings;
+  const dormant = (row) => (row.gates || []).some((gate) => !gate.own
+    && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(gateSettings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
@@ -643,7 +776,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     // refuse the WHOLE configuration over it (tierSizeMin 15 over tierSizeMax
     // 3) — naming a row no longer on screen. Retired preset cells are not
     // inert: a non-default mode's cells are still validated and applied.
-    if (!row?.configPath || row.inert) continue;
+    if (!row?.configPath || row.inert || dormant(row)) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'
@@ -699,7 +832,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     }
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
-  if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  if (legacyRatings) configured.balance.combatRatings.enabled = false;
   // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
   // switched on. Written HERE, after that decision, for two reasons: the
   // requirement pass above restates both equipment arrays, so columns written
@@ -709,6 +842,13 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // its equip load moved by a dial that changes nothing else (review, #1242).
   if (configured.balance.combatRatings.enabled) {
     applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
+  }
+  // A per-class value switched off leaves the class following the global:
+  // drop its entry and the engine's own fallback applies.
+  for (const own of owns) {
+    if (!own.dropPath || ownOn(raw, own)) continue;
+    const parent = own.dropPath.slice(0, -1).reduce((node, key) => node?.[key], configured);
+    if (parent && typeof parent === 'object') delete parent[own.dropPath.at(-1)];
   }
   return configured;
 }
@@ -818,7 +958,13 @@ export function advancedConfigProblems(bundle, settings = {}) {
 
 export function advancedConfigStructuralProblems(bundle, settings = {}) {
   const configured = configuredContentBundle(bundle, settings);
-  const problems = [...handRulesSettingsProblems(settings), ...combatRatingProblems(resolveCombatRatings(settings, bundle))];
+  // DORMANT RATINGS ARE NOT JUDGED (Codex, on #1260). With ratings off their
+  // rows are disabled — so an invalid pair there could neither be fixed nor
+  // stop refusing the whole configuration, which then fell back to authored
+  // content with ratings ON. They are judged again the moment ratings are
+  // switched back on, when the rows are editable.
+  const ratings = resolveCombatRatings(settings, bundle);
+  const problems = [...handRulesSettingsProblems(settings), ...(ratings.enabled ? combatRatingProblems(ratings) : [])];
   const walk = (value, path = []) => {
     if (!value || typeof value !== 'object') return;
     if (Array.isArray(value)) {
@@ -829,6 +975,7 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
       return;
     }
     for (const [key, child] of Object.entries(value)) {
+      if (!ratings.enabled && path.length === 1 && key === 'combatRatings') continue;
       if (key.endsWith('Min')) {
         const maxKey = `${key.slice(0, -3)}Max`;
         if (Number.isFinite(child) && Number.isFinite(value[maxKey]) && child > value[maxKey]) {

@@ -649,6 +649,12 @@ input[type="range"] { min-height: var(--tap-floor); }
 .as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
 .as-row.setting .set-applied-slot:empty { display: none; }
 .as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+/* A row that does nothing while a switch is off (settings.js refreshGates):
+   the label dims, the control is disabled, and the gate line says which switch
+   opens it. The line keeps full ink — it is the answer to "why is this grey". */
+.as-row.setting.set-row-gated .ls-label { color: var(--ink-dim); }
+.as-row.setting.set-row-gated .r-trail { opacity: 0.55; }
+.as-row.setting .set-gate-note { color: var(--ink); font-style: italic; }
 .as-row.setting .ls-hint code { color: var(--ink-dim); }
 .set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
 .set-section-head + .as-hairline { margin: 1.4rem 0; }
