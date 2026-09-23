@@ -2436,6 +2436,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+      // A profile key can be what a gated row inherits ("Attribute points per
+      // increase — every stat" is `statTierSize`), so the inherited values and
+      // their sentences are redrawn whatever the key (Codex, on #1260).
+      else refreshGates(container, settings);
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.

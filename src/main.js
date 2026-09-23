@@ -20,7 +20,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, migrateSharedRate, presentationConfig } from './model/advancedConfig.js';
 import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
@@ -303,6 +303,10 @@ let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 // the readers each apply for themselves — one that skipped it would show a
 // different number from one that did. Rewritten once, here, so the settings
 // row, the item card, the export and the fight are looking at one key.
+// The every-stat attribute number became a switch plus a number (#1260). A
+// profile that had moved the number gets its switch written ON, once, and
+// saved — independent of the item-rating migration below.
+if (migrateSharedRate(activeSettings, contentBundle)) saves.saveMeta(activeMeta);
 if (hasLegacyItemRatingSettings(activeSettings)) {
   // Whatever the rewrite could not carry across exactly — a fractional plus, a
   // sum past a row's ceiling, a set's Poise that is also its weight — is said

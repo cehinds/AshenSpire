@@ -101,13 +101,27 @@ export function currentAdvancedKey(key) {
  */
 export { hasLegacyItemRatingSettings };
 
+/**
+ * migrateSharedRate(settings, bundle) → true when it wrote the switch.
+ *
+ * A profile that moved the old every-stat number keeps what it did: its
+ * general switch is written ON, explicitly, so the configuration snapshot
+ * (which carries gameConfig keys, not the profile dial) agrees with the dial,
+ * and setting the dial back to 5 later does not silently turn the mode off.
+ * main.js runs it on every boot and saves when it wrote (Codex, on #1260: it
+ * used to ride only the item-rating migration's guard).
+ */
+export function migrateSharedRate(settings, bundle) {
+  if (!settings || typeof settings !== 'object' || !bundle) return false;
+  const shared = sharedRateFlag(bundle);
+  if (typeof settings[shared.key] === 'boolean' || !shared.defaultOn(settings)) return false;
+  settings[shared.key] = true;
+  return true;
+}
+
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
-  // A profile that moved the old every-stat number keeps what it did: its
-  // general switch is written ON, so the configuration snapshot (which carries
-  // gameConfig keys, not the profile dial) agrees with the dial.
-  const shared = sharedRateFlag(bundle);
-  if (typeof settings[shared.key] !== 'boolean' && shared.defaultOn(settings)) settings[shared.key] = true;
+  migrateSharedRate(settings, bundle);
   const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
   if (migrated === settings) return settings;
   for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
@@ -643,7 +657,14 @@ function withGates(rows) {
     return null;
   };
   return rows.map((row) => {
-    if (row.own) return row;
+    // An override switch keeps its `own`, and also takes the gates of the row
+    // it governs: a class's strike-bias switch does nothing while the starting
+    // deck rules are off, a Poise switch nothing while ratings are on (Codex,
+    // on #1260).
+    if (row.own) {
+      const gates = [...(row.gates || []), ...enableGates(row.own.member)];
+      return gates.length ? { ...row, gates } : row;
+    }
     const gates = [...(row.gate ? [row.gate] : []), ...enableGates(row.key)];
     const owner = owns.find((toggle) => toggle.own.dropPath && (row.key === toggle.own.member || row.key.startsWith(`${toggle.own.member}.`)));
     if (owner) gates.unshift({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });

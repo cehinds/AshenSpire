@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile, normalizeAdvancedSettings } from '../src/model/advancedConfig.js';
+import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile, normalizeAdvancedSettings, migrateSharedRate } from '../src/model/advancedConfig.js';
 import { resolveEquipmentRequirements, SHARED_RATE_KEY, EVERY_STAT_RATE_LABEL } from '../src/model/startingStatConfig.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -172,4 +172,29 @@ test('every new switch is a known key, so a configuration file carrying them imp
   const file = { [SHARED_RATE_KEY]: true, [OWN_HP]: true, 'gameConfig.own.balance.rewards.rarityWeightsByClass.herald': false };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(file), contentBundle), file);
   assert.ok(advancedConfigRows(contentBundle).some((candidate) => candidate.key === SHARED_RATE_KEY));
+});
+
+// Codex, on #1260: the migration rode the item-rating guard, so a profile with
+// only the old dial never had its switch written — and setting the dial back
+// to 5 later would have turned the mode off in silence.
+test('the shared-rate migration runs on its own and sticks when the dial returns to 5', () => {
+  const profile = { statTierSize: 3 };
+  assert.equal(migrateSharedRate(profile, contentBundle), true);
+  assert.equal(profile[SHARED_RATE_KEY], true);
+  assert.equal(migrateSharedRate(profile, contentBundle), false, 'written once');
+  profile.statTierSize = 5;
+  assert.equal(row('statTierSize').gates && closedGate(profile, row('statTierSize')), null, 'the mode stays on');
+  assert.equal(migrateSharedRate({}, contentBundle), false, 'a default profile is left alone');
+});
+
+// Codex, on #1260: an override switch must also go dead with the subsystem
+// its row belongs to.
+test('an override switch is disabled while the rows it governs do nothing', () => {
+  const strike = 'gameConfig.own.balance.equipment.startingDeck.classes.reaver.strikeBias';
+  assert.equal(closedGate({}, row(strike)), null);
+  assert.ok(closedGate({ 'gameConfig.balance.equipment.startingDeck.enabled': false }, row(strike)), 'deck rules off');
+  const poise = 'gameConfig.own.derivedStatRules.rules.poise.pointsPerTier';
+  const shared = { [SHARED_RATE_KEY]: true };
+  assert.ok(closedGate(shared, row(poise)), 'ratings on: the derived Poise rule is not used');
+  assert.equal(closedGate({ ...shared, 'gameConfig.combatRatings.enabled': false }, row(poise)), null);
 });
