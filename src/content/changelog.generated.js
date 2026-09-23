@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1249",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Settings rows the game names for itself now read like the ones written by hand",
+    "detail": "Three tabs under Ratings & Resistance spoke in two voices at once. Break threshold multiplier sat two rows from Poise Action Loss and Recovery Per Turn; Magic impact sat beside Enemy Physical. The difference was not a decision anyone made — a row named by a person got a sentence, and a row the game named for itself got every word capitalised, and both kinds share these lists. Enemy attack types was the worst of it, because seventy of the enemy moves have no written-out name at all, so the internal spelling is the label: Halberd Sweep type next to Slash type, with nothing but how the move happened to be typed deciding which. Now the thing a row belongs to is still a name — Wyrm Aspirant — and the row itself is a phrase: Poise action loss, Recovery per turn, Enemy physical, Wyrm Aspirant — Halberd sweep type. Nothing else moved: an acronym stays an acronym, and no setting changed its value, its key or where it lives.",
+    "build": "0.7.1.378",
+    "pullRequest": 1249,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1249"
+  },
+  {
     "id": "pr-1248",
     "date": "2026-09-21",
     "group": "2026-09-21",
