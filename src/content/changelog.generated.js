@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1255",
+    "id": "pr-1243",
     "date": "2026-09-23",
     "group": "2026-09-23",
-    "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
-    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
-    "build": "0.7.1.400",
-    "pullRequest": 1255,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1255"
+    "summary": "Every setting in Advanced now says what it does, and the sentence sits beside its number",
+    "detail": "The 792 balance rows under Advanced had readable names, but the line under each name was still the same five words, Applies to a new run, on nearly every one. That includes the 486 card-value rows — what each Action, Mana and Stamina a card costs is worth, the weight of each status it applies, and each card's own bonus — which now say which of a card's numbers they set: a physical attack's damage, a physical card's Block, a magic card's damage and Block, or an attack's impact. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The six legacy Poise and stagger rows say they only work while combat ratings are off, and name the rating row that takes over when they are on. The swap-cost numbers say which rule they price, and that choosing the rule is Weapon swap cost's job, not theirs. Two rows say plainly that nothing reads them, rather than promising to apply to a new run. The sentences are written beside their numbers in the balance table itself, so whoever changes a number reads what it does in the same place, and a test fails if a number is renamed and its sentence left behind. Names come from the game: renaming a relic renames its rows, and a new relic describes itself.",
+    "build": "0.7.1.395",
+    "pullRequest": 1243,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1243"
   },
   {
     "id": "pr-1259",
