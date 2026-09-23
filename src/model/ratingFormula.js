@@ -16,13 +16,21 @@ export const defaultRatingFormula = Object.freeze({
 export function attributeRatingReceipt(config, attributes, id) {
   const rule = config?.ratings?.[id];
   if (!rule) throw new Error(`Missing ${id} rating formula`);
+  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
+    attributeId,
+    attributes?.[attributeId] || 0,
+  ]));
+  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
+    attributeId,
+    rule[attributeId],
+  ]));
   const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
     attributeId,
-    Math.floor((attributes?.[attributeId] || 0) * rule[attributeId] + 1e-9),
+    Math.floor(values[attributeId] * weights[attributeId] + 1e-9),
   ]));
   const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
   const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
-  return { id, base: rule.base, multiplier: config.multiplier ?? 1, terms, weighted, attribute, value: rule.base + attribute };
+  return { id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute, value: rule.base + attribute };
 }
 
 export function equipmentRatingBase(piece, id, profile = null) {
@@ -37,15 +45,21 @@ export function equipmentRatingBase(piece, id, profile = null) {
 export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId) {
   if (!ratingIds.includes(id)) throw new Error(`Unknown equipment rating '${id}'`);
   const attribute = attributeRatingReceipt(config, attributes, id);
-  const equipmentBase = equipmentRatingBase(piece, id, profile);
+  // THE ITEM'S RATING IS ITS OWN NUMBER, NOT A PLUS ON TOP OF IT (#1242). A
+  // rating the item has a column for was written onto the piece by
+  // `applyItemRatingConfig`, so `equipmentRatingBase` already reads it; one it
+  // has no column for travels in the rules as `itemRatings` and REPLACES the
+  // authored base. The old `bonuses.<item>` table is not read: a saved fight
+  // still carries it, but the registries it is restored into already hold
+  // authored + plus on the piece, and adding it here scored the plus twice.
   const itemKey = piece?.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : piece ? `armament:${piece.id}` : null;
-  const itemBonus = itemKey ? config?.bonuses?.[itemKey]?.[id] || 0 : 0;
+  const configured = itemKey ? config?.itemRatings?.[itemKey]?.[id] : undefined;
+  const equipmentBase = Number.isFinite(configured) ? configured : equipmentRatingBase(piece, id, profile);
   return {
     id,
     attributeBase: attribute.base,
     attributeValue: attribute.value,
     equipmentBase,
-    itemBonus,
-    value: attribute.value + equipmentBase + itemBonus,
+    value: attribute.value + equipmentBase,
   };
 }

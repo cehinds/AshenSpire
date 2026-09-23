@@ -59,15 +59,21 @@ test('magic impacts Ward, physical impacts Poise, breaks cost next-turn Actions'
 test('weapon impact categories and per-card overrides are configurable', () => {
   const c = fight();
   assert.equal(attackImpact(c, c.player, magical), 1);
+  // A Strike the weapon lends, as the engine carries it — cardId included. The
+  // card has a cost-derived Poise value (SPEC §3.4), and the weapon's weight
+  // still decides (SPEC §13.4): otherwise every weapon would hit alike.
+  const strikePoise = registries.cards.get('strike').cardRatingValues.poise;
   for (const item of registries.equipment.armaments) {
     const w = item.weight || 0;
-    assert.equal(attackImpact(c, c.player, {
-      damageSchool: 'physical', sourceArmamentId: item.id,
-    }), w <= 3 ? 1 : w <= 6 ? 2 : w <= 8 ? 3 : 4);
+    assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: item.id }), w <= 3 ? 1 : w <= 6 ? 2 : w <= 8 ? 3 : 4);
   }
-  for (const [id, expected] of [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]]) {
-    assert.equal(attackImpact(c, c.player, { damageSchool: 'physical', sourceArmamentId: id }), expected);
-  }
+  const byWeapon = [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]];
+  for (const [id, expected] of byWeapon) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
+  assert.ok(byWeapon.some(([, expected]) => expected !== strikePoise), 'the weights disagree with the card value, so the test can tell them apart');
+  // No weapon behind it: the card's own Poise value, not the flat unarmed 1.
+  assert.equal(attackImpact(c, c.player, physical), strikePoise);
+  // An enemy's blow carries no card value: its category default still holds.
+  assert.equal(attackImpact(c, c.enemies[0], { damageSchool: 'physical' }), c.ratingsRules.impact.enemyPhysical);
   c.ratingsRules.attackImpact.strike = 0;
   assert.equal(attackImpact(c, c.player, magical), 0);
 });
@@ -191,12 +197,27 @@ test('every rating is the sum of its floored attribute terms times one global mu
     'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
   }, contentBundle);
   assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 6);
+
+  const zeroWeights = resolveCombatRatings(Object.fromEntries(
+    ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
+      .map(id => [`gameConfig.combatRatings.ratings.ar.${id}`, 0]),
+  ), contentBundle);
+  const zeroReceipt = ratingReceipt(registries, run, zeroWeights);
+  const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
+  const zeroHtml = renderPlayerPoise({
+    ratings: zeroReceipt.totals,
+    ratingSources: zeroReceipt.sources,
+    ratingAttributes: zeroReceipt.attributeReceipts,
+    note: '',
+  });
+  assert.match(zeroHtml, /data-rating-id="ar"[\s\S]*?No weighted attributes[\s\S]*?global × \(<b>0<\/b>\)/);
+  assert.doesNotMatch(zeroHtml, /global × \(\)/);
 });
 
 test('weapon cards add their source equipment rating without a tier', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
-  const { renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
+  const { renderPlayerPoise, renderRoleCopies } = await import('../src/ui/components/equipmentReceipts.js');
   const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
   const currentRegistries = createRegistries(configured);
   const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
@@ -226,6 +247,16 @@ test('weapon cards add their source equipment rating without a tier', async () =
   assert.doesNotMatch(html, /pointsPerTier/);
   assert.match(html, /5 base \+ 3 AR \(weapon\) \+ 0 rarity =/);
   assert.match(html, /3 base \+ 5 DR \(shield\) \+ 0 rarity =/);
+
+  const ratingHtml = renderPlayerPoise(surface.poise);
+  assert.deepEqual(surface.poise.ratingAttributes.ar.values,
+    { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 });
+  for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
+  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>3<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Dexterity <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?= <strong>7<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>0<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>12<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
 
 test('an equipment card uses only its source item rating', () => {
@@ -486,7 +517,10 @@ test('a run born on the lean pool is rated on the attributes it shows', async ()
   assert.equal(ward, 4, 'a base of 1, WIS 2 and INT 3 under the authored 1 and 0.5 weights — sixteen while the divisor stood');
 });
 
-test('armour, relic and status bonuses are additive and counted once', async () => {
+// The armour half of this reads the item's OWN rating now (#1242): a set's AR
+// has no authored column, so it travels in the rules and the receipt takes it
+// once. Relic and status bonuses are still bonuses, and still additive.
+test('armour ratings, relic and status bonuses are additive and counted once', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { equippedPieces } = await import('../src/model/loadout.js');
   const { ratingSourceKey } = await import('../src/model/combatRatings.js');
@@ -495,13 +529,225 @@ test('armour, relic and status bonuses are additive and counted once', async () 
   const armor = equippedPieces(registries, run.loadout, 'reaver').find(p => p.kind === 'armor');
   const rules = resolveCombatRatings({}, contentBundle);
   const before = ratingReceipt(registries, run, rules).totals;
-  rules.bonuses[ratingSourceKey(armor)] = { ar: 3 };
+  rules.itemRatings[ratingSourceKey(armor)] = { ar: 3 };
   rules.bonuses['relic:' + run.relics[0]] = { ar: 7 };
   const after = ratingReceipt(registries, run, rules).totals;
   assert.equal(after.ar - before.ar, 10);
   const c = fight({ 'gameConfig.combatRatings.bonuses.status:strength.ar': 2 });
   applyStatus(c, c.player, 'strength', 2, c.player);
   assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
+});
+
+// THE ROW IS THE ITEM'S NUMBER, NOT A PLUS ON TOP OF IT (owner, 2026-09-21:
+// "if I edit the AR in the settings for straight sword to 2 then it should show
+// 2 on the card and in combat + AR bonuses"). One setting, and every reader —
+// the item card, the rating receipt, the fight — says the same number. #1246
+// has since authored the sword AT 2, so the test moves it to 4: a number the
+// authored data does not already hold, or it would pass without the row.
+test('an item rating setting IS the item’s rating, on the card and in combat', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { equipmentCardModel } = await import('../src/model/equipmentCard.js');
+  const settings = { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 4 };
+  const authored = contentBundle.equipment.armaments.find(p => p.id === 'straightSword');
+  assert.notEqual(authored.attackRating, 4, 'the authored sword is the thing being moved');
+
+  const configured = configuredContentBundle(contentBundle, settings);
+  const sword = configured.equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 4, 'the column the card prints carries the configured number');
+  const tuned = createRegistries(configured);
+  assert.equal(equipmentCardModel(tuned, sword).facts.find(f => f.label === 'Attack').value, 4);
+
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
+  const rules = resolveCombatRatings(settings, contentBundle);
+  const receipt = ratingReceipt(tuned, run, rules);
+  const source = receipt.sources.find(s => s.name === 'Straight Sword');
+  assert.equal(source.ar, 4, `not ${authored.attackRating}, and not ${authored.attackRating} + 4`);
+  assert.equal(source.effectiveRatings.ar, 4, 'and a card sourced from the sword reads the same number');
+  const attributes = receipt.sources.find(s => s.name === 'Attributes').ar;
+  assert.equal(receipt.totals.ar, attributes + 4, 'the item’s own AR, with the attribute bonus on top');
+});
+
+// "if a staff says PR of 1 then my wizard with a +2 to PR should have a PR of
+// +3 for all cards that scale off PR" — the magical weapon's Attack Rating is
+// PR, so the PR row is the one that moves its column. The staff is authored at
+// 1 now, so the row moves it to 3 and the caster's +2 makes 5.
+test('a magical weapon’s PR row is its Attack Rating, and attribute PR adds to it', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const settings = { 'gameConfig.combatRatings.itemRatings.armament:ashStaff.pr': 3 };
+  assert.notEqual(contentBundle.equipment.armaments.find(p => p.id === 'ashStaff').attackRating, 3);
+  const configured = configuredContentBundle(contentBundle, settings);
+  const staff = configured.equipment.armaments.find(p => p.id === 'ashStaff');
+  assert.equal(staff.attackRating, 3);
+  const tuned = createRegistries(configured);
+  const run = createRunState({ seed: 7, classId: 'starseer', registries: tuned });
+  run.loadout.sets.rightHand[0] = 'ashStaff';
+  run.attributes = { ...run.attributes, wisdom: 2, intelligence: 2 };
+  const rules = resolveCombatRatings(settings, contentBundle);
+  const receipt = ratingReceipt(tuned, run, rules);
+  assert.equal(receipt.sources.find(s => s.name === 'Ash Staff').pr, 3);
+  assert.equal(receipt.totals.pr, 5, 'WIS 2 and INT 2 at 0.5 each is +2, and the staff says 3');
+  // …and the card the staff lends reads the same sum (#1246's direct rating).
+  const { effectiveEquipmentRating } = await import('../src/model/ratingFormula.js');
+  assert.equal(effectiveEquipmentRating(tuned.balance.combatRatings, run.attributes, staff, { ratingId: 'pr' }, 'pr').value, 5);
+});
+
+// A rating no item column can hold is still the item's rating: it travels in
+// the run's rules instead of on the piece, and the receipt adds it once.
+test('a rating with no item column is carried by the rules, not lost', () => {
+  const rules = resolveCombatRatings({ 'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4 }, contentBundle);
+  assert.deepEqual(rules.itemRatings['armament:straightSword'], { ward: 4 });
+  assert.equal(rules.itemRatings['armament:straightSword'].ar, undefined, 'AR has a column and is not kept twice');
+});
+
+// A configuration exported before the rows became values still imports, and
+// what it meant — authored plus the plus — is what it lands as.
+test('a stored per-item bonus is read as the value it used to make', () => {
+  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: legacy });
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle),
+    { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5 });
+  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 5, '2 authored + the 3 the old dial added');
+});
+
+// Copilot, on #1242: a saved fight carries its own rules, `bonuses.<item>` and
+// all, and is restored into registries rebuilt from the RUN's configuration
+// snapshot — where the same plus has already become the item's value. Adding
+// the old table on top of the new column would score the plus twice.
+test('a resumed fight scores an old per-item plus once, not twice', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
+  // What `main.js resumeRun` does: registries from the run's own snapshot.
+  const tuned = createRegistries(configuredContentBundle(contentBundle, legacy));
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
+  const attributes = ratingReceipt(tuned, run, resolveCombatRatings({}, contentBundle))
+    .sources.find(s => s.name === 'Attributes').ar;
+
+  // The rules the fight opened under, written by the old build: the plus is
+  // still in `bonuses`, keyed by the item.
+  const saved = resolveCombatRatings({}, contentBundle);
+  saved.bonuses['armament:straightSword'] = { ar: 3 };
+  const resumed = ratingReceipt(tuned, run, saved);
+  const sword = resumed.sources.find(s => s.name === 'Straight Sword');
+  assert.equal(sword.ar, 5, 'authored 2 + the 3, once');
+  assert.equal(sword.effectiveRatings.ar, 5, 'on the card path too');
+  assert.equal(resumed.totals.ar, attributes + 5, 'not 8, which is what adding both homes gives');
+  const { effectiveEquipmentRating } = await import('../src/model/ratingFormula.js');
+  const piece = tuned.equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(effectiveEquipmentRating(saved, run.attributes, piece, { ratingId: 'ar' }, 'ar').equipmentBase, 5,
+    'the card value a resumed fight deals reads the plus once as well');
+});
+
+// An item's rating is a whole number in the column it is written to, and the
+// row's ceiling is the old one, so the two sums the migration cannot keep
+// exactly are named at the import door rather than found later.
+test('a legacy bonus that cannot be kept exactly says so', () => {
+  const warnings = [];
+  const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
+  const fractional = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 0.5 }),
+    contentBundle, {}, [], warnings);
+  assert.deepEqual(fractional, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 3 }, '2.5 rounds');
+  assert.match(warnings.join(' '), /rounded/);
+  assert.match(warnings.join(' '), /Straight Sword AR 2\.5→3/);
+
+  const capped = [];
+  const big = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 999 }),
+    contentBundle, {}, [], capped);
+  assert.deepEqual(big, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 999 });
+  assert.match(capped.join(' '), /stopped there/);
+});
+
+// One number, one row, wherever it is read: the profile itself is brought
+// forward at boot, so the settings row cannot open on a different value from
+// the one the card and the fight are using.
+test('a stored profile is rewritten to the rows this build has', async () => {
+  const { normalizeAdvancedSettings, advancedConfigRows, advancedConfigExport } = await import('../src/model/advancedConfig.js');
+  const profile = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'settings.musicEnabled': true };
+  assert.equal(normalizeAdvancedSettings(profile, contentBundle), profile, 'the same object main.js holds');
+  assert.deepEqual(profile, {
+    'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5,
+    'settings.musicEnabled': true,
+  }, 'the old key is gone and unrelated settings are untouched');
+
+  // Which is what closes the gap the reviewer named: the row now opens on the
+  // number the card shows.
+  const row = advancedConfigRows(contentBundle).find(r => r.key === 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar');
+  assert.equal(profile[row.key], 5);
+  assert.equal(row.def, 2, 'and the authored value is still what Reset returns it to');
+  assert.match(advancedConfigExport(profile), /itemRatings\.armament:straightSword\.ar/);
+});
+
+// ARMOUR, which every test above left alone: a set authors one rating column
+// (its Poise threshold, which is also its weight), keys itself by class, and
+// authors no attack rating at all.
+test('a set’s Poise is its own value, its weight follows it, and it has no AR column', async () => {
+  const { itemRatingColumn, authoredItemRatings } = await import('../src/model/combatRatings.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { pieceWeight } = await import('../src/model/statProjection.js');
+  const authored = contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
+  assert.equal(authored.poiseThreshold, 8);
+  assert.equal(itemRatingColumn(contentBundle.equipment, authored, 'poise'), 'poiseThreshold');
+  for (const id of ['ar', 'dr', 'pr', 'ward']) {
+    assert.equal(itemRatingColumn(contentBundle.equipment, authored, id), null, `${id} has no armour column to stamp`);
+  }
+
+  const settings = { 'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 3 };
+  const configured = configuredContentBundle(contentBundle, settings);
+  const set = configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
+  assert.equal(set.poiseThreshold, 3, 'the armour key parses through its two colons');
+  assert.equal(authoredItemRatings(configured.equipment, set).poise, 3);
+  assert.equal(pieceWeight(set), 3, 'a set’s Poise IS its weight — the row’s note says so');
+  assert.equal(contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8,
+    'and the authored bundle is untouched');
+
+  // A rating a set has no column for still reaches combat, through the rules.
+  const tuned = createRegistries(configured);
+  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
+  const rules = resolveCombatRatings({ ...settings, 'gameConfig.combatRatings.itemRatings.armor:reaver:default.ar': 4 }, contentBundle);
+  assert.deepEqual(rules.itemRatings['armor:reaver:default'], { ar: 4 }, 'Poise has a column and is not kept twice');
+  assert.equal(ratingReceipt(tuned, run, rules).sources.find(s => s.name === set.name).ar, 4);
+});
+
+// Switching the ratings system off switches its rows off with it. It matters
+// most for armour: a set's Poise is its weight, so a dial that changes nothing
+// else must not quietly move what the set costs to wear.
+test('with ratings off, an item rating moves nothing', () => {
+  const settings = {
+    'gameConfig.combatRatings.enabled': false,
+    'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 1,
+    'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 99,
+  };
+  const configured = configuredContentBundle(contentBundle, settings);
+  assert.equal(configured.balance.combatRatings.enabled, false);
+  assert.equal(configured.equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
+  assert.equal(configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
+  // And an older run, which `configuredContentBundle` forces off by version.
+  const older = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 1 } });
+  assert.equal(older.balance.combatRatings.enabled, false);
+  assert.equal(older.equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
+});
+
+// ONE STORED NUMBER, ONE ANSWER. A hand-edited profile can hold anything; the
+// settings panel floors it into the row's domain and shows what it floored to,
+// and the column has to agree with what the panel shows or the two are back to
+// disagreeing — which is the defect this change exists to end.
+test('a stored number reads the same in the panel and on the item', async () => {
+  const { resolveNumberRow } = await import('../src/ui/screens/settings.js');
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const key = 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar';
+  const row = advancedConfigRows(contentBundle).find(r => r.key === key);
+  for (const raw of [2.7, 1500, -4, '3', 0]) {
+    const settings = { [key]: raw };
+    const shown = resolveNumberRow(settings, row);
+    const onItem = configuredContentBundle(contentBundle, settings).equipment.armaments.find(p => p.id === 'straightSword').attackRating;
+    assert.equal(onItem, shown, `stored ${JSON.stringify(raw)}: the panel shows ${shown} and the sword carries ${onItem}`);
+  }
+  // Unreadable is unset, in both, which is the authored value.
+  for (const raw of ['', null, 'lots']) {
+    const settings = { [key]: raw };
+    assert.equal(resolveNumberRow(settings, row), 2);
+    assert.equal(configuredContentBundle(contentBundle, settings).equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
+  }
 });
 
 // AR, DR and PR are acronyms. Poise and Ward are words, and every surface in
@@ -521,8 +767,11 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
     const formula = rows.filter(row => row.statTopic === `${expected} formula`);
     assert.ok(formula.length >= 3, `${expected} has a formula group of its own`);
     assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
-    assert.ok(rows.some(row => row.key.endsWith(`.${id}`) && / — additional /.test(row.label)
-      && row.label.endsWith(expected)), `an equipment bonus row spells ${id} as "${expected}"`);
+    // The per-item rows are the item's own ratings now (#1242), so they read
+    // "Straight Sword — AR" rather than "— additional AR"; the spelling rule
+    // is the same.
+    assert.ok(rows.some(row => row.key.includes('.itemRatings.') && row.key.endsWith(`.${id}`)
+      && row.label.endsWith(` — ${expected}`)), `an equipment rating row spells ${id} as "${expected}"`);
   }
 
   // The falsifier, stated as its own line: the two that are NOT acronyms are
@@ -532,4 +781,67 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
     'no row shouts a rating whose name is an ordinary word');
   // And the three that ARE acronyms are never softened into words.
   assert.ok(!rows.some(row => /\b(Ar|Dr|Pr)\b/.test(row.label)), 'AR, DR and PR stay acronyms');
+});
+
+// A NAME IS A HEADING; A PHRASE IS A SENTENCE. `words()` capitalises every
+// word, which is right for "Wandering Soldier" and wrong for "Poise Action
+// Loss" — and Breaks carried both at once, the hand-written "Break threshold
+// multiplier" two rows from the key-derived "Recovery Per Turn".
+//
+// The general Advanced-label test cannot catch this either — "Recovery Per
+// Turn" opens with a capital and carries no unsplit camelCase, so it passes
+// whichever way it is cased.
+test('a key-derived label reads like the hand-written one beside it', async () => {
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const rows = combatRatingRows(contentBundle);
+  const labelOf = (key) => rows.find(row => row.key.endsWith(key))?.label;
+
+  // The four that were shouted, spelled out. Each sits in a tab whose other
+  // rows are hand-written sentences, named here so the comparison is explicit.
+  assert.equal(labelOf('breaks.poiseActionLoss'), 'Poise action loss');
+  assert.equal(labelOf('breaks.wardActionLoss'), 'Ward action loss');
+  assert.equal(labelOf('breaks.recoveryPerTurn'), 'Recovery per turn');
+  assert.equal(labelOf('breaks.thresholdGrowth'), 'Break threshold multiplier');
+  assert.equal(labelOf('impact.enemyPhysical'), 'Enemy physical');
+  assert.equal(labelOf('impact.magic'), 'Magic impact');
+
+  // The rule, not the six examples: in each of these tabs no leaf shouts a
+  // second word. A SUBJECT still may — "Wyrm Aspirant" is a name — so this
+  // reads only what follows the em dash.
+  for (const topic of ['Breaks', 'Impact']) {
+    for (const row of rows.filter(r => r.statTopic === topic)) {
+      const cut = row.label.lastIndexOf(' — ');
+      const leaf = cut < 0 ? row.label : row.label.slice(cut + 3);
+      for (const word of leaf.split(' ').slice(1)) {
+        assert.ok(/^[a-z0-9]/.test(word) || /^(AR|DR|PR|HP|Poise|Ward)$/.test(word),
+          `${topic}: "${row.label}" reads as a phrase, not a heading — "${word}" is capitalised`);
+      }
+    }
+  }
+});
+
+// AN ENEMY MOVE IS A NAME, and combat already spells it as one: "Halberd
+// Sweep" on the move card, the current intent and the history. #1249 briefly
+// sentence-cased the settings row to "Halberd sweep type", which put the same
+// move in two spellings on two screens — the complaint the whole label pass
+// answers. So the row is tied to what combat shows, move by move, rather than
+// to a casing rule of its own: whatever the move card calls a move, the
+// settings row calls it too.
+test('an enemy attack-type row names the move the way combat does', async () => {
+  const { combatRatingRows } = await import('../src/model/combatRatings.js');
+  const { enemyMoveCards } = await import('../src/model/enemyMoveCards.js');
+  const labels = new Map(combatRatingRows(contentBundle).map(row => [row.key, row.label]));
+
+  let checked = 0;
+  for (const enemy of contentBundle.enemies) {
+    for (const card of enemyMoveCards(enemy)) {
+      const key = `gameConfig.combatRatings.enemyAttackType.${enemy.id}:${card.moveId}`;
+      assert.equal(labels.get(key), `${enemy.name} — ${card.name} type`,
+        `${enemy.name}'s ${card.moveId} is spelled the same in settings as on its move card`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked > 70, 'every move, including the multi-word ones, is compared');
+  assert.equal(labels.get('gameConfig.combatRatings.enemyAttackType.wyrmAspirant:halberdSweep'),
+    'Wyrm Aspirant — Halberd Sweep type');
 });

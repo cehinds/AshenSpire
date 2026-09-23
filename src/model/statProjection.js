@@ -37,7 +37,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
     return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
       raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
       equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
-      ratings: receipt.totals, ratingSources: receipt.sources,
+      ratings: receipt.totals, ratingSources: receipt.sources, ratingAttributes: receipt.attributeReceipts,
       note: 'Poise resists physical attacks and stagger. Ward resists magical attacks and disruption. Status resistance follows each effect’s configured weights.' };
   }
   const levels = run.itemUpgradeLevels || {};

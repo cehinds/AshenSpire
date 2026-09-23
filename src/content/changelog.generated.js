@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1247",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing base and upgraded numbers exactly, apart from Blight Nova and Last Stand, whose scaling now sits on top of a small cost-derived base that both cards print; moving a shared multiplier recalculates the whole matching card set deterministically. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.384",
+    "pullRequest": 1247,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
+  },
+  {
+    "id": "pr-1242",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every weapon's and every set's ratings are yours to set, and the number you type is the number the card shows",
+    "detail": "Advanced → Ratings & Resistance had a row for each item's AR, DR, PR, Poise and Ward, and every one of them was an extra stacked on top of whatever the item already had — so typing 3 into the straight sword's row made it fight at 5 while its card still said 2, and there was no way to make a weapon weaker than it was authored. Those rows are the item's own numbers now. Each opens on the value the item ships with, and whatever you leave there is that item's rating everywhere: on its card, in the Armoury comparison, and in the fight, with your attributes, relics and any status bonuses added on top of it exactly as before. Set the straight sword to 4 and it is a 4-Attack sword that your Strength still improves, on the card it prints and on every Strike it lends; a staff at 1 carried by a caster with +2 from Wisdom and Intelligence rates 3 on every card that reads it. A weapon's Attack Rating is read as AR when it swings and as PR when it casts, so a staff or sceptre is tuned on its PR row and a blade on its AR row — the row that has nowhere to print on the card says so itself. Numbers you had already tuned are kept: an old extra is read as the total it used to make, in your profile and in any configuration file you exported before today, which still imports — and where it cannot be kept exactly (a fraction, or armour Poise, which is also what a set weighs) the game says so. These rows only apply while ratings are switched on. A climb already in progress keeps the rules it was born under.",
+    "build": "0.7.1.382",
+    "pullRequest": 1242,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1242"
+  },
+  {
+    "id": "pr-1250",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "An enemy's move is spelled the same in settings as in the fight",
+    "detail": "The last settings pass lowered the second word of every enemy move under Enemy attack types, so the Wyrm Aspirant's Halberd Sweep — which is what its move card, its intent and its history call it in combat — read Halberd sweep type in settings. A move is a name, so the settings row now spells it exactly as the fight does: Wyrm Aspirant — Halberd Sweep type. The field names beside it stay as phrases — Poise action loss, Recovery per turn — because those are descriptions, not names. No setting changed its value or key.",
+    "build": "0.7.1.380",
+    "pullRequest": 1250,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1250"
+  },
+  {
+    "id": "pr-1249",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Settings rows the game names for itself now read like the ones written by hand",
+    "detail": "Three tabs under Ratings & Resistance spoke in two voices at once. Break threshold multiplier sat two rows from Poise Action Loss and Recovery Per Turn; Magic impact sat beside Enemy Physical. The difference was not a decision anyone made — a row named by a person got a sentence, and a row the game named for itself got every word capitalised, and both kinds share these lists. Enemy attack types was the worst of it, because seventy of the enemy moves have no written-out name at all, so the internal spelling is the label: Halberd Sweep type next to Slash type, with nothing but how the move happened to be typed deciding which. Now the thing a row belongs to is still a name — Wyrm Aspirant — and the row itself is a phrase: Poise action loss, Recovery per turn, Enemy physical, Wyrm Aspirant — Halberd sweep type. Nothing else moved: an acronym stays an acronym, and no setting changed its value, its key or where it lives.",
+    "build": "0.7.1.378",
+    "pullRequest": 1249,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1249"
+  },
+  {
+    "id": "pr-1248",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "Every combat rating now shows its complete calculation",
+    "detail": "AR, DR, PR, Poise and Ward used to stop at a total, leaving no way to tell which attribute, weapon, shield, armour or relic produced it. Open Show calculations on the character review or in the Armoury and each rating now names the attribute values it read, their weights, each contribution rounded down on its own, the global multiplier, the base, every named equipment or relic addition, and the final result. A Reaver's AR now reads Strength 3 × 0.5 → floor = 1, then 0 base + floor(1 global × 1) + 2 Straight Sword = 3; DR, PR, Poise and Ward follow the same receipt instead of asking the player to trust five unexplained numbers. A configuration with no weighted attributes says so plainly and calculates from zero instead of printing an empty formula.",
+    "build": "0.7.1.376",
+    "pullRequest": 1248,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1248"
+  },
+  {
     "id": "pr-1246",
     "date": "2026-09-21",
     "group": "2026-09-21",
@@ -21,16 +71,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.372",
     "pullRequest": 1245,
     "url": "https://github.com/cehinds/AshenSpire/pull/1245"
-  },
-  {
-    "id": "pr-1247",
-    "date": "2026-09-21",
-    "group": "2026-09-21",
-    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
-    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and physical or magical impact uses Poise or Ward. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing base and upgraded numbers exactly, so an untouched game keeps its balance; moving a shared multiplier recalculates the whole matching card set deterministically. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
-    "build": "0.7.1.376",
-    "pullRequest": 1247,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
   },
   {
     "id": "pr-1241",
