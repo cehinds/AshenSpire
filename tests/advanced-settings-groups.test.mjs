@@ -747,6 +747,11 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // A refusal on another tab no longer blanks every example.
   const flasks = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, settingsStatsExampleClass: 'reaver' }, 'HP');
   assert.match(flasks.refused, /flask/i);
+  // Hand rules are applied from settings regardless, and the notice says so
+  // rather than claiming every rule shown is authored (Codex, #1252).
+  assert.match(flasks.refused, /Hand rules still apply as set/);
+  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
+  assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);
   assert.match(statsTopicPreviewHtml({ 'gameConfig.balance.flaskCapacity': 9 }, 'HP'), /set-example-refused/);

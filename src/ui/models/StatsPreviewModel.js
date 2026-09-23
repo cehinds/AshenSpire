@@ -372,6 +372,9 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
     attributes: attributeList(subject),
     examples,
     problem: null,
-    refused: ctx.refused ? `These settings are refused (${ctx.refused}), so a new run keeps the authored rules until they are corrected. The example shows those rules.` : null,
+    // Hand rules are read from the settings at every fight (`main.js`
+    // `enterCombat`), not from the content bundle, so a refusal leaves them in
+    // force and the notice says so (Codex, on #1252).
+    refused: ctx.refused ? `These settings are refused (${ctx.refused}), so a new run keeps the authored stat and rating rules until they are corrected, and the example shows those. Hand rules still apply as set.` : null,
   };
 }
