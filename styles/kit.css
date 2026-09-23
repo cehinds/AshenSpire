@@ -3938,7 +3938,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-card .card-info-button { top:-44px; }
 .inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
 .inspection-lore summary { cursor:pointer; }
-.inspection-lore p { font-style:italic; margin:8px 0 0; }
+.inspection-lore p { font-style:italic; margin:8px 0 0; white-space:pre-line; line-height:1.55; max-width:62ch; }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
 /* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
    is worn and held in the order the sections ask for it — with the receipts
