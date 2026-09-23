@@ -1282,8 +1282,8 @@ function selftestPlants() {
       // blank screen.
       name: 'Display renders no rows at all (the empty edge)',
       file: 'src/ui/screens/settings.js',
-      find: '  const rows = ROWS.filter((r) => r.cat === cat);',
-      replace: '  const rows = ROWS.filter((r) => r.cat === cat && cat !== \'Display\');',
+      find: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);',
+      replace: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired && cat !== \'Display\');',
       expectRed: /FINDING D0\/population/,
     },
     // -----------------------------------------------------------------------

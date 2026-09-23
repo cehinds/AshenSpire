@@ -694,7 +694,7 @@ const ADVANCED_GROUPS = Object.freeze([
   // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
   // holds authored constants, so it is exactly where someone looking for an
   // animation switch lands. One clause ends that walk.
-  { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
+  { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
   { id: 'Hand & Draw', label: 'Hand & Draw', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
   { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact, breaks and status resistance — and the older poise meter used when ratings are off.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },

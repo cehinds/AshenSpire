@@ -59,11 +59,26 @@ test('magic impacts Ward, physical impacts Poise, breaks cost next-turn Actions'
 test('weapon impact categories and per-card overrides are configurable', () => {
   const c = fight();
   assert.equal(attackImpact(c, c.player, magical), 1);
+  // A Strike the weapon lends, as the engine carries it — cardId included. The
+  // card has a cost-derived Poise value (SPEC §3.4), and the weapon's weight
+  // still decides (SPEC §13.4): otherwise every weapon would hit alike.
+  const strikePoise = registries.cards.get('strike').cardRatingValues.poise;
   for (const item of registries.equipment.armaments) {
     const w = item.weight || 0;
     assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: item.id }), w <= 3 ? 1 : w <= 6 ? 2 : w <= 8 ? 3 : 4);
   }
-  for (const [id, expected] of [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]]) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
+  const byWeapon = [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]];
+  for (const [id, expected] of byWeapon) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
+  assert.ok(byWeapon.some(([, expected]) => expected !== strikePoise), 'the weights disagree with the card value, so the test can tell them apart');
+  // No weapon behind it: the card's own Poise value, not the flat unarmed
+  // default. Read off a card whose value differs from that default, or the
+  // assertion could not tell the two apart (Strike's is 1, the same as it).
+  const heavy = registries.cards.ids().map(id => registries.cards.get(id))
+    .find(def => def.type === 'attack' && def.cardRatingValues?.poise > c.ratingsRules.impact.unarmed);
+  assert.ok(heavy, 'some physical attack carries a Poise value above the unarmed default');
+  assert.equal(attackImpact(c, c.player, { cardId: heavy.id, type: 'attack', damageSchool: 'physical' }), heavy.cardRatingValues.poise);
+  // An enemy's blow carries no card value: its category default still holds.
+  assert.equal(attackImpact(c, c.enemies[0], { damageSchool: 'physical' }), c.ratingsRules.impact.enemyPhysical);
   c.ratingsRules.attackImpact.strike = 0;
   assert.equal(attackImpact(c, c.player, magical), 0);
 });

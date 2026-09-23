@@ -104,6 +104,12 @@ function topic(row, section) {
     return 'Appearance';
   }
   if (section === 'Combat') {
+    // Card values (#1247): what each card-value table pays per resource.
+    if (/damage\.attackCards/.test(key)) return 'AR card values';
+    if (/damage\.defenseCards/.test(key)) return 'DR card values';
+    if (/damage\.potencyCards/.test(key)) return 'PR card values';
+    if (/damage\.poiseCards/.test(key)) return 'Poise card values';
+    if (/damage\.wardCards/.test(key)) return 'Ward card values';
     if (/^(arcaneE|e)xposure\./.test(path)) return 'Exposure';
     if (/^(deck\.|startingDeckSize)/.test(path)) return 'Deck';
     if (/^(costs|mana)\./.test(path)) return 'Actions & costs';
@@ -180,7 +186,10 @@ export function advancedSubgroups(rows, section) {
     byOrder(['Combat rewards', 'Reward rarity', ...result.filter((group) => group.id.startsWith('Rarity · ')).map((group) => group.id),
       'Shop stock & services', ...shop, 'Smithing', 'Flasks']);
   }
-  if (section === 'Combat') byOrder(['Actions & costs', 'Deck', 'Exposure']);
+  if (section === 'Combat') {
+    byOrder(['Actions & costs', 'AR card values', 'DR card values', 'PR card values', 'Poise card values', 'Ward card values',
+      'Deck', 'Exposure']);
+  }
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
     // rescaled by it. Equipment requirements come second because they are the

@@ -93,10 +93,107 @@ export const balanceWords = Object.freeze({
   }),
   // Who takes an enemy's on-fill stacks: itself, or the target a row names.
   onFill: Object.freeze({ self: 'an enemy takes itself', other: "an enemy's fill applies to" }),
+  // What each card-value table under `damage` values. model/attackCardDamage.js
+  // routes a card by type and school: attack damage and Block through AR, DR or
+  // PR, and an attack's impact through Poise or Ward.
+  cardValues: Object.freeze({
+    attackCards: "a physical attack's damage",
+    defenseCards: "a physical card's Block",
+    potencyCards: "a magic card's damage and Block",
+    poiseCards: "a physical attack's impact, which fills Poise",
+    wardCards: "a magical attack's impact, which fills Ward",
+  }),
 });
 
 
+const cardValueStatusMultipliers = {
+  strength: 1,
+  dexterity: 1,
+  weak: 1,
+  vulnerable: 1,
+  frail: 1,
+  bleed: 1,
+  frost: 1,
+  insanity: 1,
+  bleedResist: 1,
+  frostResist: 1,
+  insanityResist: 1,
+  frostExposed: 1,
+  insanityExposed: 1,
+  crimsonBlight: 1,
+  burn: 1,
+  regen: 1,
+  madness: 1,
+  staggered: 1,
+  rallyingStandard: 1,
+  rallyingStandardUp: 1,
+  unbreakable: 1,
+  unbreakableUp: 1,
+  goreblood: 1,
+  sanguinePact: 1,
+  starstoneCharge: 1,
+  stargazer: 1,
+  astralArmor: 1,
+  constellation: 1,
+  azureCoil: 1,
+  waxingMoon: 1,
+  moonlitShield: 1,
+  astromancer: 1,
+  thornHalo: 1,
+  communion: 1,
+  lifeTithe: 1,
+  stigmata: 1,
+  zealotry: 1,
+  emberTide: 1,
+  harbingerOfBlight: 1,
+  bloodUnction: 1,
+  ironVow: 1,
+  bulwarkEcho: 1,
+  prepared: 1,
+  venom: 1,
+  afterimage: 1,
+  deadlyTempo: 1,
+  opportunist: 1,
+  envenom: 1,
+  glassCannon: 1,
+  magicVulnerable: 1,
+};
+
+const cardValueRule = () => ({
+  globalMultiplier: 1,
+  actionCostMultiplier: 1,
+  manaCostMultiplier: 2,
+  staminaCostMultiplier: 1,
+  statusEffectReductionMultiplier: 1,
+  // The card-value model derives applicable preservation bonuses from authored
+  // card faces. Keeping this map empty avoids a second hand-maintained roster.
+  cardBonuses: {},
+  statusMultipliers: { ...cardValueStatusMultipliers },
+});
+
 export const balance = {
+  // Primary card values and physical/magical impact are derived from costs:
+  // floor(global × (AP×action + MP×mana + SP×stamina)
+  //       − statusEffectReduction × Σ(each distinct applied status))
+  // + the value type's card-specific bonus.
+  // The registry projects these values from the authored card data, so changing
+  // any row here recalculates the whole applicable card corpus deterministically.
+  damage: {
+    attackCards: cardValueRule(),
+    defenseCards: cardValueRule(),
+    potencyCards: cardValueRule(),
+    poiseCards: cardValueRule(),
+    wardCards: cardValueRule(),
+    [NOTE]: {
+      '{config}.globalMultiplier': 'Multiplies the cost-derived part of {valueOf}: the card\'s action, Mana and Stamina costs, each weighed by its own row, added up and scaled by this before statuses are taken off and the result is rounded down.',
+      '{config}.actionCostMultiplier': 'What each Action a card costs is worth toward {valueOf}.',
+      '{config}.manaCostMultiplier': 'What each point of Mana a card costs is worth toward {valueOf}.',
+      '{config}.staminaCostMultiplier': 'What each point of Stamina a card costs is worth toward {valueOf}.',
+      '{config}.statusEffectReductionMultiplier': 'How hard a card\'s statuses weigh against {valueOf}: the weights of every distinct status it applies are added up, multiplied by this, and taken off before rounding down.',
+      '{config}.statusMultipliers.{status}': 'The weight {statusLabel} carries against {valueOf} when a card applies it. 0 means applying it costs the card nothing.',
+      '{config}.cardBonuses.{cardId}': '{cardName}: a signed bonus added to {valueOf} after the cost-derived value is rounded down. The result never falls below 0.',
+    },
+  },
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
   arcaneExposure: {

@@ -10,6 +10,7 @@ import {
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
+import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
@@ -56,6 +57,12 @@ function numberDomain(value) {
 // that validation caps at 100, a cap that must be positive. The row says so,
 // so a value the editor accepts is a value a run can start on.
 const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
+// A card-value bonus is SIGNED (SPEC §3.4: "The signed card-specific bonus is
+// added after flooring"), and validation accepts any finite number. Read off
+// the shipped value alone, a bonus that ships at 0 or above would floor at 0,
+// and a card could never be made weaker than its cost says.
+const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
+const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
@@ -314,7 +321,7 @@ function balanceLabel(path) {
 function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
     const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
@@ -561,7 +568,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 ]);
 
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
   return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
 }
 
@@ -585,6 +592,7 @@ export function advancedConfigSnapshot(settings = {}) {
 }
 
 function cloneConfigurableBundle(bundle) {
+  bundle = materializeCardValueBonuses(bundle);
   return {
     ...bundle,
     balance: structuredClone(bundle.balance),

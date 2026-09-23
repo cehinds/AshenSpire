@@ -349,7 +349,13 @@ test('every note in balance.js sits beside a number it describes', async () => {
   const { balance, NOTE } = await import('../src/content/balance.js');
   const { noteMatches } = await import('../src/model/balanceNotes.js');
 
-  const leaves = [];
+  // THE NUMBERS SETTINGS SHOWS, not only the ones typed in balance.js. The
+  // card-value tables (`damage.*.cardBonuses`) are empty in the authored table
+  // and filled per card when the rows are built (materializeCardValueBonuses),
+  // so a note for them describes numbers that exist only once materialised.
+  const leaves = [...new Set([
+    ...advancedConfigRows(contentBundle).filter((row) => row.generatedBalance).map((row) => row.searchPath),
+  ])];
   (function walk(value, path) {
     if (typeof value === 'number' || typeof value === 'boolean') { leaves.push(path.join('.')); return; }
     if (!value || typeof value !== 'object') return;

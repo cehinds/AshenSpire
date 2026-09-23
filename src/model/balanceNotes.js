@@ -69,13 +69,20 @@ const look = (table, key) => (table && Object.hasOwn(table, key) ? table[key] : 
 // relic list per leaf is the kind of cost that only shows up on a phone.
 const INDEXES = new WeakMap();
 function indexes(bundle) {
-  if (!bundle || typeof bundle !== 'object') return { relics: new Map(), nodes: new Map(), classes: new Map(), talents: new Map() };
+  if (!bundle || typeof bundle !== 'object') return { relics: new Map(), nodes: new Map(), classes: new Map(), talents: new Map(), cards: new Map(), cardsByName: new Map(), statuses: new Map() };
   const cached = INDEXES.get(bundle);
   if (cached) return cached;
   const built = {
     relics: new Map((bundle.relics || []).map((relic) => [relic.id, relic])),
     nodes: new Map((bundle.nodes || []).map((node) => [node.id, node])),
     classes: new Map((bundle.classes || []).map((classDef) => [classDef.id, classDef])),
+    cards: new Map((bundle.cards || []).map((card) => [card.id, card])),
+    cardsByName: (bundle.cards || []).reduce((map, card) => {
+      if (!map.has(card.name)) map.set(card.name, []);
+      map.get(card.name).push(card);
+      return map;
+    }, new Map()),
+    statuses: new Map((bundle.statuses || []).map((status) => [status.id, status])),
     talents: (bundle.classTree || []).reduce((map, row) => {
       // A LIST PER NODE, not a row per node. `new Map(rows.map(...))` let the
       // last tree that claimed a node win in silence, so a talent shared by
@@ -127,6 +134,21 @@ const FILLERS = Object.freeze({
   stockNoun: (c) => word(c.kind).toLowerCase(),
   fieldWords: (c) => word(c.field).toLowerCase(),
   ordinal: (c) => String(Number(c.i) + 1),
+  valueOf: (c) => look(balanceWords.cardValues, c.config) || word(c.config).toLowerCase(),
+  // A card by its name — and, where two cards share one ("Enter: Bulwark" is a
+  // Reaver card and a colorless one), by its class too, then its id, so two
+  // rows never describe themselves with the same words.
+  cardName: (c, { bundle }) => {
+    const { cards, cardsByName } = indexes(bundle);
+    const card = cards.get(c.cardId);
+    if (!card || !card.name) return word(c.cardId);
+    const namesakes = cardsByName.get(card.name) || [];
+    if (namesakes.length < 2) return card.name;
+    const owner = className(bundle, card.class || 'colorless');
+    const sameOwner = namesakes.filter((other) => (other.class || 'colorless') === (card.class || 'colorless'));
+    return sameOwner.length < 2 ? `${card.name} (${owner})` : `${card.name} (${owner}, ${card.id})`;
+  },
+  statusLabel: (c, { bundle }) => (indexes(bundle).statuses.get(c.status) || {}).name || word(c.status),
 
   // A talent's place in the tree. The three phrases are balance.js's; this
   // only picks one and names the classes, so a talent shared by two trees
