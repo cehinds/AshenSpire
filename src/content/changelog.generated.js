@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1261",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Towns keep a quest board, and taking or turning in a quest is a conversation",
+    "detail": "Every town's inn now has a Quest board beside its rest: it lists the quests posted anywhere in town, whether each can be taken, is under way, is ready to hand in or is done, and a journal of the quests your run has started and finished — the Grave of the Nameless as well as the wardens' surveys. The warden's spot on the town map opens the same board. Taking a quest or turning one in is no longer a button press: the Road Warden speaks, and you answer — Accept the quest or Not now, and on your return, after the report of what you found, Collect 25 cinders. A quest pays its reward once, even across a reload, and shows as done on the board afterwards. Reading the board costs nothing; the inn's rest is still waiting when you close it.",
+    "build": "0.7.1.405",
+    "pullRequest": 1261,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1261"
+  },
+  {
     "id": "pr-1255",
     "date": "2026-09-23",
     "group": "2026-09-23",
