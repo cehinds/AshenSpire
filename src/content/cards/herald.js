@@ -392,13 +392,13 @@ export const heraldCards = [
       { op: 'damage', target: 'enemy', amount: 5, hits: { f: 'energySpent' } },
       { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 2 } },
     ],
-    textTemplate: 'Deal {damage} damage once per Energy spent, then heal 2 per Energy.',
+    textTemplate: 'Deal {damage} damage, scaling with Energy spent, then heal 2 per Energy.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7, hits: { f: 'energySpent' } },
         { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
       ],
-      textTemplate: 'Deal {damage} damage once per Energy spent, then heal 3 per Energy.',
+      textTemplate: 'Deal {damage} damage, scaling with Energy spent, then heal 3 per Energy.',
     },
   },
   {
@@ -446,12 +446,13 @@ export const heraldCards = [
       { op: 'damage', target: 'allEnemies', amount: 4, hits: { f: 'energySpent' } },
       { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
     ],
-    textTemplate: 'Deal {damage} damage to ALL enemies once per Energy spent. Then heal 3 per Energy.',
+    textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent. Then heal 3 per Energy.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'allEnemies', amount: 6, hits: { f: 'energySpent' } },
         { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
       ],
+      textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent. Then heal 3 per Energy.',
     },
   },
 

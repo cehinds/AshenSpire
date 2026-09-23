@@ -447,8 +447,11 @@ export const reaverCards = [
     flavor: "Court surgeons sewed knights to their swords. Learn from it. — Warden's field-book",
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
-    textTemplate: 'Deal {damage} damage to a random enemy once per Energy spent.',
-    upgrade: { effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }] },
+    textTemplate: 'Deal {damage} damage to a random enemy, scaling with Energy spent.',
+    upgrade: {
+      effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }],
+      textTemplate: 'Deal {damage} damage to a random enemy, scaling with Energy spent.',
+    },
   },
   {
     id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill',

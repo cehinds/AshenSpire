@@ -947,6 +947,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    // The resolved face's Poise/Ward values: a staff's Strike resolves
+    // magical and carries Ward, which the registry def cannot (attackImpact).
+    ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
 
@@ -1106,6 +1109,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+      ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
