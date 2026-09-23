@@ -971,7 +971,13 @@ export function advancedConfigProblems(bundle, settings = {}) {
 
 export function advancedConfigStructuralProblems(bundle, settings = {}) {
   const configured = configuredContentBundle(bundle, settings);
-  const problems = [...handRulesSettingsProblems(settings), ...combatRatingProblems(resolveCombatRatings(settings, bundle))];
+  // DORMANT RATINGS ARE NOT JUDGED (Codex, on #1260). With ratings off their
+  // rows are disabled — so an invalid pair there could neither be fixed nor
+  // stop refusing the whole configuration, which then fell back to authored
+  // content with ratings ON. They are judged again the moment ratings are
+  // switched back on, when the rows are editable.
+  const ratings = resolveCombatRatings(settings, bundle);
+  const problems = [...handRulesSettingsProblems(settings), ...(ratings.enabled ? combatRatingProblems(ratings) : [])];
   const walk = (value, path = []) => {
     if (!value || typeof value !== 'object') return;
     if (Array.isArray(value)) {
@@ -982,6 +988,7 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
       return;
     }
     for (const [key, child] of Object.entries(value)) {
+      if (!ratings.enabled && path.length === 1 && key === 'combatRatings') continue;
       if (key.endsWith('Min')) {
         const maxKey = `${key.slice(0, -3)}Max`;
         if (Number.isFinite(child) && Number.isFinite(value[maxKey]) && child > value[maxKey]) {

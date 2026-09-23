@@ -312,3 +312,21 @@ test('editing the every-stat number pins the general switch first', () => {
   assert.equal(pinSharedRateBeforeDial({ [SHARED_RATE_KEY]: true }, 'statTierSize'), null, 'an explicit switch is left alone');
   assert.equal(pinSharedRateBeforeDial({ statTierSize: 3 }, 'levelUpValue'), null, 'other numbers pin nothing');
 });
+
+// Codex, on #1260: rows disabled while ratings are off cannot be corrected,
+// so their values are not judged until ratings come back on.
+test('invalid rating values are not judged while ratings are off', async () => {
+  const { advancedConfigStructuralProblems } = await import('../src/model/advancedConfig.js');
+  const broken = { 'gameConfig.combatRatings.impact.lightMaxWeight': 100, 'gameConfig.combatRatings.impact.mediumMaxWeight': 50 };
+  assert.ok(advancedConfigStructuralProblems(contentBundle, broken).length > 0, 'with ratings on, the pair is refused');
+  assert.deepEqual(advancedConfigStructuralProblems(contentBundle, { ...broken, 'gameConfig.combatRatings.enabled': false }), [],
+    'with ratings off, the dormant pair refuses nothing');
+});
+
+// Codex, on #1260: a blank dial is unset, as the row reads it.
+test('a blank every-stat number does not switch the shared mode on', () => {
+  for (const blank of ['', '   ', null]) {
+    assert.equal(migrateSharedRate({ statTierSize: blank }, contentBundle), false, JSON.stringify(blank));
+    assert.equal(row(OWN_HP).resolve({ statTierSize: blank }), true, 'every stat keeps its own number');
+  }
+});

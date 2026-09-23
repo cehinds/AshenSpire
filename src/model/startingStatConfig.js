@@ -21,8 +21,12 @@ export function sharedRateFlag(bundle) {
     key: SHARED_RATE_KEY,
     // Reads the profile dial AND its configuration-file / snapshot spelling,
     // so a file imported mid-session agrees with the profile (review, #1260).
+    // A blank dial is unset, as the row and the configured bundle read it
+    // (Codex, on #1260) — `Number('')` is 0, which would switch the mode on.
     defaultOn: (settings) => {
-      const dial = Number(settings.statTierSize ?? settings['gameConfig.derivedStatRules.defaults.pointsPerTier']);
+      const raw = settings.statTierSize ?? settings['gameConfig.derivedStatRules.defaults.pointsPerTier'];
+      if (raw === '' || raw === null || raw === undefined || (typeof raw === 'string' && !raw.trim())) return false;
+      const dial = Number(raw);
       return Number.isFinite(dial) && dial !== shipped;
     },
   };
