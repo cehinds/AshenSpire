@@ -251,3 +251,15 @@ test('the creation preview and the run it starts show the same stats', () => {
   assert.equal(hpRule(preview), 3);
   assert.equal(configuredContentBundle(contentBundle, {}).derivedStatRules.rules.hp.pointsPerTier, 1, 'switch off: the table is untouched');
 });
+
+// Codex, on #1260: the third door a profile comes in through.
+test('importing a file with the older dial writes the shared switch in the same change', () => {
+  const file = { 'gameConfig.derivedStatRules.defaults.pointsPerTier': 3 };
+  // The settings screen hands its own rows in, which is what makes the dial's
+  // snapshot spelling a known key.
+  const screenRows = [settingsRow('statTierSize')];
+  const changes = parseAdvancedConfigFile(advancedConfigExport(file), contentBundle, {}, screenRows);
+  assert.equal(changes[SHARED_RATE_KEY], true);
+  const plain = parseAdvancedConfigFile(advancedConfigExport({ [HP_TIER]: 2 }), contentBundle, {}, screenRows);
+  assert.equal(Object.hasOwn(plain, SHARED_RATE_KEY), false, 'a file without the dial adds nothing');
+});

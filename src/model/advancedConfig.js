@@ -1042,6 +1042,12 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   }
   const problems = advancedConfigProblems(bundle, { ...current, ...changes });
   if (problems.length) throw new Error(`Nothing was imported. ${problems[0]}`);
+  // AN IMPORTED OLDER DIAL IS BROUGHT FORWARD IN THE SAME CHANGE (Codex, on
+  // #1260). Every door that puts a profile in place — boot, archive restore,
+  // and this import — writes the shared switch explicitly, so no later edit of
+  // the dial can flip the mode by changing what its default is derived from.
+  const merged = { ...current, ...changes };
+  if (migrateSharedRate(merged, bundle)) changes[sharedRateFlag(bundle).key] = true;
   return changes;
 }
 
