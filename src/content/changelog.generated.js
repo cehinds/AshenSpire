@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every setting in Advanced now says what it does",
     "detail": "The 323 balance rows under Advanced already had readable names, but the line under each name was still the same five words, Applies to a new run, on every one of them. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade and the same piece fetches the same cinders on every visit. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The swap cost beside heavy is only used under the Weapon category rule, where the first matching row wins. A card drawn past your hand limit goes to the discard rather than being lost, and a solo fight takes that limit from Hand & Draw rather than from this row. Fourteen rows now say that nothing reads them. These are the enemy-level scaling table and the retired run-start flask refill, and their sentences say so instead of promising to apply to a new run, because a setting you can change that then does nothing is worse than one that explains nothing. The names in every sentence come from the game itself, so renaming a relic renames its rows, and adding one gives it a description automatically. A test fails any balance setting that ships with no sentence, reuses another row's sentence, or both says nothing reads it and promises it applies to a new run.",
-    "build": "0.7.1.383",
+    "build": "0.7.1.385",
     "pullRequest": 1243,
     "url": "https://github.com/cehinds/AshenSpire/pull/1243"
+  },
+  {
+    "id": "pr-1244",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
+    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "build": "0.7.1.384",
+    "pullRequest": 1244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
   },
   {
     "id": "pr-1242",
