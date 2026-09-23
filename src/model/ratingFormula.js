@@ -45,15 +45,21 @@ export function equipmentRatingBase(piece, id, profile = null) {
 export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId) {
   if (!ratingIds.includes(id)) throw new Error(`Unknown equipment rating '${id}'`);
   const attribute = attributeRatingReceipt(config, attributes, id);
-  const equipmentBase = equipmentRatingBase(piece, id, profile);
+  // THE ITEM'S RATING IS ITS OWN NUMBER, NOT A PLUS ON TOP OF IT (#1242). A
+  // rating the item has a column for was written onto the piece by
+  // `applyItemRatingConfig`, so `equipmentRatingBase` already reads it; one it
+  // has no column for travels in the rules as `itemRatings` and REPLACES the
+  // authored base. The old `bonuses.<item>` table is not read: a saved fight
+  // still carries it, but the registries it is restored into already hold
+  // authored + plus on the piece, and adding it here scored the plus twice.
   const itemKey = piece?.kind === 'armor' ? `armor:${piece.classId}:${piece.id}` : piece ? `armament:${piece.id}` : null;
-  const itemBonus = itemKey ? config?.bonuses?.[itemKey]?.[id] || 0 : 0;
+  const configured = itemKey ? config?.itemRatings?.[itemKey]?.[id] : undefined;
+  const equipmentBase = Number.isFinite(configured) ? configured : equipmentRatingBase(piece, id, profile);
   return {
     id,
     attributeBase: attribute.base,
     attributeValue: attribute.value,
     equipmentBase,
-    itemBonus,
-    value: attribute.value + equipmentBase + itemBonus,
+    value: attribute.value + equipmentBase,
   };
 }
