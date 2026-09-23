@@ -50,7 +50,11 @@ export function statsExampleSubject(settings = {}, previewAttributes = null, con
   if (previewAttributes) {
     const attributes = Object.fromEntries((configured.attributes || []).map((attribute) => [attribute.id, Number(previewAttributes[attribute.id]) || 0]));
     const level = Number.isInteger(previewLevel) && previewLevel >= 1 ? previewLevel : 1;
-    return { current: true, label: `Your current character (level ${level})`, classDef: null, attributes, shortLabel, level };
+    // THESE SETTINGS, YOUR ATTRIBUTES. A run keeps the rules it was born
+    // under (`derivedStatRuleSnapshot`), and every row here applies to a new
+    // run, so the example is what these settings make of the character in
+    // play, and says so rather than claiming to be its sheet (Codex, #1252).
+    return { current: true, label: `Your attributes at level ${level}, under these settings`, classDef: null, attributes, shortLabel, level };
   }
   const classes = configured.classes || [];
   const classDef = classes.find((row) => row.id === settings[STATS_EXAMPLE_CLASS_KEY]) || classes[0] || {};
@@ -205,7 +209,7 @@ function derivedExample(ctx, statId) {
     hint: [
       ...steps.map(([id, { more, gain }]) => `${more} more ${short(id)} would add ${num(gain)} to ${label}.`),
       'Each term rounds down on its own.',
-      subject.current ? 'Not included: relics, equipment, and permanent changes from events (such as lost max HP).' : '',
+      subject.current ? 'Your run in progress keeps the rules it started with; these apply to a new run. Not included: relics, equipment, and permanent changes from events (such as lost max HP).' : '',
     ].filter(Boolean).join(' '),
     sense: presentation.sense || '',
   };
@@ -315,7 +319,7 @@ function overviewExample(ctx) {
       : [(({ lines: [first] }) => ({ label: 'Poise', expression: first.expression, total: first.total }))(derivedExample(ctx, 'poise'))]),
   ];
   return { kind: 'overview', id: 'overview', title: 'Stat block', lines, hint: ctx.subject.current
-    ? 'At your current level. Not included: relics, equipment, and permanent changes from events.'
+    ? 'At your current level, under these settings; your run in progress keeps the rules it started with. Not included: relics, equipment, and permanent changes from events.'
     : 'Starting relics included; equipment adds on top.', sense: '' };
 }
 

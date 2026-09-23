@@ -683,6 +683,11 @@ test('the worked example recomputes from the edited values and shows the whole s
   const edited = { settingsStatsExampleClass: 'starseer', 'gameConfig.derivedStatRules.rules.mana.base': 3 };
   assert.equal(statsTopicPreview(edited, 'Mana').examples[0].lines[0].total, born('starseer', edited).maxMana, 'an edit reaches the example as it reaches a run');
   assert.match(statsTopicPreview({}, 'Overview', { constitution: 2 }, 11).examples[0].hint, /current level/);
+  // A run keeps the rules it started with, so an in-run example is labelled as
+  // these settings applied to the character, not as its sheet (Codex, #1252).
+  const inPlay = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 }, 1);
+  assert.match(inPlay.subject.label, /under these settings/);
+  assert.match(inPlay.examples[0].hint, /run in progress keeps the rules it started with/);
 
   // Hand rules: every term of the opening hand is on the line.
   const hand = statsTopicPreview({
