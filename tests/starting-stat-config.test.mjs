@@ -148,12 +148,15 @@ test('a refused value is named on its own row and costs nothing but itself', asy
   const settings = {
     'gameConfig.startingStats.lean.total': 6,
     'gameConfig.balance.startingCinders': 99,
-    'gameConfig.classes.reaver.maxHp': 61,
+    // Was the Reaver's Base HP, retired in #1256 (the derived HP rule
+    // overwrites it at birth, so it is no longer applied). Any other live
+    // value makes the same point.
+    'gameConfig.balance.rewards.cardChoices': 4,
   };
   const configured = configuredContentBundle(contentBundle, settings);
   assert.equal(validateContent(configured).ok, true, 'the bundle still validates, so nothing is thrown away');
   assert.equal(configured.balance.startingCinders, 99, 'an unrelated valid setting survives the refusal');
-  assert.equal(configured.classes.find(row => row.id === 'reaver').maxHp, 61);
+  assert.equal(configured.balance.rewards.cardChoices, 4);
   assert.equal(configured.creationModes.find(row => row.id === 'lean').baseline * 5
     + configured.creationModes.find(row => row.id === 'lean').bonusPool, 8, 'the refused pool holds at its last good value');
 

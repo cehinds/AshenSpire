@@ -94,6 +94,7 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -162,7 +163,7 @@ function graceRefillRows() {
   const cap = flaskSlotCap(balance);
   return graceRefillTable(balance).map((row) => ({
     cat: 'Advanced',
-    advancedGroup: 'Tuning',
+    advancedGroup: 'Rewards',
     key: GRACE_REFILL_KEY(row.kind),
     type: 'choice',
     def: String(row.count),
@@ -289,7 +290,7 @@ const ROWS = [
   // Shrine open: Rest once, Smith while you have Stones, Level while you have
   // cinders, and leave when you choose. Conservative default, as his own
   // data-driven instruction for an unsettled 'maybe' asks.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
     note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
@@ -299,9 +300,9 @@ const ROWS = [
   // matches the shipped creation layout (content/source/characterCreation.json
   // `equipmentAutoAdvance`), which stays the screen's fallback when no
   // settings bag reaches it.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
     note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
@@ -341,7 +342,12 @@ const ROWS = [
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true,
+  // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
+  // the header model receives it and prints nothing — and the co-op header's
+  // `.mh-seed` has no rule under the `hide-header-seed` class main.js sets, so
+  // this switch moved nothing anywhere. The key stays so a settings file that
+  // names it still imports.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true, retired: true,
     note: 'Show the run seed in the map header bar.' },
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
@@ -406,7 +412,7 @@ const ROWS = [
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects', selfEvident: true,
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
@@ -464,7 +470,7 @@ const ROWS = [
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
   // E2 (#247): the recorded answer on the row — Sell is its own bar at the
   // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
@@ -472,7 +478,7 @@ const ROWS = [
   // settingOn so the default's polarity has one home, here. ONE ROW, appended
   // on purpose while another seat serializes this file for E3 — named in the
   // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shopSell', def: true, label: 'Merchant buys back',
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: 'Merchant buys back',
     note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
@@ -497,7 +503,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
   // speed is a row there and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
     choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
     // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
     // tonight was that a long note plus a chip strip squeezes the text column
@@ -519,7 +525,7 @@ const ROWS = [
   // claim at authoring; Saga's #290 review ruled it owed the moment Marina
   // released that claim ("manual has a reader and no writer a player can
   // reach").
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
     choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
     note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
@@ -536,7 +542,7 @@ const ROWS = [
   // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
   // carried four of a six-step ladder for a night because someone typed the
   // list; a fourth rule row is a row in balance.js and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+  { cat: 'Advanced', advancedGroup: 'Equipment', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
     choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
     // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
     // a long note squeezes the text column beside a chip strip. Three chips,
@@ -573,19 +579,19 @@ const ROWS = [
   // The ladder is the contract: a card you opened to read is never smaller
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
     def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
     note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_mobile', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
     def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
     note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
     def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
     note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
     def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
     note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
     note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
@@ -641,38 +647,49 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  // ---- ONE HOME PER SETTING (owner, 2026-09-23) ----------------------------
+  //
+  // "a lot of the advanced settings have settings duplicated in multiple
+  // sections making it hard to tell which does what." Sixteen tabs became
+  // thirteen, read top to bottom as: the run's content (opening, character,
+  // combat, hand, defence, rewards, equipment, world), then how it is drawn
+  // (interface, battlefield, layout), then files and diagnostics.
+  //
+  //   Rules      gone — its skills, talents and XP went to Progression, its
+  //              relic values to Equipment, rest / co-op / gauntlet / endless
+  //              to World, costs and deck limits to Combat.
+  //   Gameplay   gone — each preference joined the subject it changes.
+  //   Tuning     gone — the swap-cost rule sits with the swap-cost numbers.
+  //   Card size  folded into Layout with the wireframe and window sizes: every
+  //              "how big is it drawn" control in one tab.
+  //   Debug      folded into Import, export & debug.
+  //
+  // Where two rows still touch one quantity (the tier dial and each stat's
+  // own tier; the legacy poise meter and the ratings breaks; the fallback hand
+  // size and the hand rules) they now share a topic and the row note names
+  // the winner. Rows that moved nothing are retired: off the screen, still
+  // importable.
+  //
+  // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
+  // last had "Rules" open lands on the first tab rather than a blank panel.
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
-  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
-  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  // ONE TAB FOR ONE IDEA (owner, 2026-09-20). "Class defaults" was its own tab
-  // and held the class tables and the tier size while the creation pool sat
-  // here — one concept, two menus, and the two disagreed. Class defaults are
-  // now topics under Progression. The id is GONE rather than emptied because an
-  // emptied one draws a blank panel in silence: advanced group ids are not a
-  // declared surface (src/ui/surfaces.js declares overlayTab, settingsCategory,
-  // armouryView, armourySubject and menuAct — not these), so `assertSurfaces`
-  // would not catch it. A stored id that is gone is resolved by
-  // `activeAdvancedGroup`, which both the painter and the reset button read.
-  { id: 'Progression', label: 'Progression', tip: 'The points a new character starts with: the creation pool, each class’s defaults, level-up and stat conversions.' },
-  // THE TIP CARRIES A FORWARDING ADDRESS, and it is the other half of the
-  // report: this section is NAMED for combat and holds authored constants, so
-  // it is exactly where someone looking for an animation switch lands and finds
-  // nothing they recognise. One clause ends that walk.
-  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
-  { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
-  { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
-  { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
-  { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
-  { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, stat conversions, skills and talents.' },
+  // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
+  // holds authored constants, so it is exactly where someone looking for an
+  // animation switch lands. One clause ends that walk.
+  { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
+  { id: 'Hand & Draw', label: 'Hand & Draw', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
+  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact, breaks and status resistance — and the older poise meter used when ratings are off.' },
+  { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
+  { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
+  { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
+  { id: 'Battlefield', label: 'Battlefield', tip: 'Formation layout, grid, character placement and formation movement.' },
   // The wireframe decisions the drawings leave open, one topic per family of
-  // surfaces. Separate from Interface because these are not "extra controls":
-  // they answer which wireframe a whole family of surfaces draws, and the
-  // answer reaches every door, menu and scene at once.
-  { id: 'Wireframes', label: 'Wireframes', tip: 'How windows, menus and scenes are laid out. Every choice starts where the game already draws it.' },
-  { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
-  { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
-  { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Export', label: 'Import / Export', tip: 'Load or save game configuration as a portable JSON file.' },
+  // surfaces, now beside the other size controls (cards, the settings window):
+  // every "how big and where" answer in one place.
+  { id: 'Wireframes', label: 'Layout', tip: 'How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.' },
+  { id: 'Export', label: 'Import, export & debug', tip: 'Load or save game configuration as a portable JSON file, and diagnostics.' },
   { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
   { id: 'About', label: 'About', tip: 'Version and credits.' },
 ]);
@@ -692,6 +709,18 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
  * last-open tab was that one met it on first launch of the new build.
  */
 export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
+
+/**
+ * formationLayoutRows() → the rows the formation editor edits, found by TOPIC
+ * in whichever tab files them. The mount named its tab ('Interface') and the
+ * topic moved to Battlefield under it, handing the editor no rows: every
+ * number threw on `row.max` and Apply saved nothing (Codex, on #1256). Asking
+ * every tab means the next move cannot do that again.
+ */
+export function formationLayoutRows() {
+  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(ROWS, id))
+    .find((group) => group.id === 'Formation layout')?.rows || [];
+}
 
 export function activeAdvancedGroup(settings) {
   const stored = settings?.[ADVANCED_CAT_KEY];
@@ -731,9 +760,9 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat)) };
+  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
   if (SECTIONS[cat]) return SECTIONS[cat];
-  const rows = ROWS.filter((r) => r.cat === cat);
+  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);
   return rows.length ? { rows } : null;
 }
 
@@ -1796,7 +1825,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
     }
   } else {
-    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   if (!headerTools) {
@@ -1858,8 +1887,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     else container.querySelector('.set-panel')?.prepend(sections);
   };
   const wire = () => {
-  mountFormationSettings(container, settings, onChange,
-    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
+  mountFormationSettings(container, settings, onChange, formationLayoutRows());
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -2055,7 +2083,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const currentGroup = activeAdvancedGroup(settings);
       const groups = advancedSubgroups(ROWS, currentGroup);
       const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
-      const rows = button.dataset.resetConfig === 'all' ? ROWS
+      // Reset all also clears inert retired keys: they are off the screen, so
+      // this is the only door that can take a stale one out of a profile.
+      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);

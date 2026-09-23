@@ -14,8 +14,12 @@ test('grouping keeps every Advanced option reachable exactly once', () => {
 
 // The owner's four asks, as one structure (2026-09-20): class defaults live in
 // Progression, one driver holds the creation pool, "Assign points" is about
-// points rather than tiers, and the tier size sits under General.
-test('Progression is the one driver: pool first, then each class, and the tier size under General', () => {
+// points rather than tiers. The tier size first sat under General; since
+// 2026-09-23 ("settings duplicated in multiple sections") it leads Stat
+// conversions, because it REPLACES every per-stat tier there while it is off
+// its default, and a dial a topic away from the rows it overrides is the
+// duplication he reported.
+test('Progression is the one driver: pool first, then each class, and the tier dial leads the rows it overrides', () => {
   const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Progression');
   // 2026-09-21: "I want level up and starting stats to be together too", and
   // every stat and resource in one format beside them — so the three read in a
@@ -50,15 +54,15 @@ test('Progression is the one driver: pool first, then each class, and the tier s
   assert.ok(requirements.rows.some(row => row.key === 'gameConfig.equipmentRequirements.ashStaff.intelligence'),
     'and every authored minimum has a row of its own');
 
-  // What is left under General once the tier dial retired (ruleset 6).
+  // What is left under General once the tier dial retired (ruleset 6, #1253).
   const general = groups.find(group => group.id === 'General');
-  assert.deepEqual(general.rows.map(row => row.key).sort(), [
-    'creationAutoAdvance',
-  ]);
+  assert.deepEqual(general.rows.map(row => row.key), ['creationAutoAdvance']);
+  assert.ok(!groups.some(group => group.id === 'Stat conversions'), 'no tier topic survives ruleset 6');
 
   for (const id of CLASS_TOPICS) {
     const group = groups.find(candidate => candidate.id === id);
-    assert.equal(group.rows.length, 8, `${id} keeps five attributes, base HP and two flask rows`);
+    // Base HP is retired: the derived HP rule overwrites it at run creation.
+    assert.equal(group.rows.length, 7, `${id} keeps five attributes and two flask rows`);
     assert.ok(group.rows.every(row => row.key.includes(`.${id.toLowerCase()}.`)));
   }
 });
@@ -325,11 +329,14 @@ test('every Advanced row reads like every other Advanced row', async () => {
   const spelled = new Map(generated.map(row => [row.searchPath, row.label]));
   assert.equal(spelled.get('handMax'), 'Hand max');
   assert.equal(spelled.get('startingCinders'), 'Starting cinders');
-  assert.equal(spelled.get('levels.enemyScaling.hp.perLevel'), 'Levels · Enemy Scaling · HP — Per level');
+  assert.equal(spelled.get('levels.playerStartingLevel'), 'Levels — Player starting level');
   assert.equal(spelled.get('rest.hpSmallPct'), 'Rest — HP small %', 'an acronym survives inside a sentence-case leaf');
   // `levels.enemyScaling.{hp,damage,block,poise}.perLevel` were four rows all
   // called "Per Level" before the context was added — this is that, asserted.
-  const scaling = generated.filter(row => row.searchPath.startsWith('levels.enemyScaling.'));
+  // (They are retired now, inert #238 content, but still labelled for import.)
+  const scaling = advancedConfigRows(contentBundle).filter(row => row.searchPath?.startsWith('levels.enemyScaling.'));
+  assert.equal(spelled.get('levels.enemyScaling.hp.perLevel'), undefined, 'enemy scaling is off the screen');
+  assert.equal(scaling.find(row => row.searchPath === 'levels.enemyScaling.hp.perLevel').label, 'Levels · Enemy Scaling · HP — Per level');
   assert.equal(new Set(scaling.map(row => row.label)).size, scaling.length,
     'no two enemy-scaling rows share a label');
 
@@ -457,4 +464,89 @@ test('a setting that moves nothing is off the screen and still imports', async (
   const handMax = rows.find(candidate => candidate.key === 'gameConfig.balance.handMax');
   assert.ok(!handMax.retired, 'handMax is read (engine/combat.js, engine/actions.js) and stays');
   assert.match(handMax.note, /Hand & Draw/, 'and points at the row a fight actually uses');
+});
+
+// ---- ONE HOME PER SETTING (owner, 2026-09-23) -------------------------------
+// "a lot of the advanced settings have settings duplicated in multiple sections
+// making it hard to tell which does what." Three properties, asserted together:
+// the catch-all tabs are gone, rows that share a quantity share a topic, and a
+// row that moved nothing is off the screen but still imports.
+test('every setting has one home, and rows sharing a quantity sit together', async () => {
+  const { ADVANCED_GROUP_IDS } = await import('../src/ui/screens/settings.js');
+  const { WITHOUT_RATINGS, DRAW_FALLBACK } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  for (const gone of ['Rules', 'Gameplay', 'Tuning', 'Card size', 'Debug']) {
+    assert.ok(!ADVANCED_GROUP_IDS.includes(gone), `${gone} is not a tab of its own any more`);
+  }
+  const rows = categoryHandler('Advanced').rows;
+  for (const row of rows) assert.ok(ADVANCED_GROUP_IDS.includes(advancedSection(row)), `${row.key} is filed under a real tab`);
+
+  const where = (key) => {
+    const row = rows.find(candidate => candidate.key === key);
+    assert.ok(row, `${key} is on the screen`);
+    const section = advancedSection(row);
+    const sub = advancedSubgroups(rows, section).find(group => group.rows.includes(row));
+    return `${section} → ${sub.id}`;
+  };
+  // The legacy poise meter sits with the ratings rows that replace it.
+  for (const key of ['gameConfig.balance.poise.growthMult', 'gameConfig.balance.stagger.player.actionLoss',
+    'gameConfig.derivedStatRules.rules.poise.base']) {
+    assert.equal(where(key), `Ratings & Resistance → ${WITHOUT_RATINGS}`);
+  }
+  // The fallback hand size and the legacy draw sit with the hand rules.
+  for (const key of ['gameConfig.balance.handMax', 'gameConfig.derivedStatRules.rules.draw.base']) {
+    assert.equal(where(key), `Hand & Draw → ${DRAW_FALLBACK}`);
+  }
+  assert.equal(where('swapCostRule'), 'Equipment → Equipment swapping', 'the swap rule sits with its numbers');
+  assert.equal(where('gameConfig.balance.equipment.swapCost'), 'Equipment → Equipment swapping');
+  assert.equal(where('gameConfig.progression.rewardMultiplier'), 'Rewards → Combat rewards', 'the Cinder multiplier sits with the Cinders');
+  assert.equal(rows.find(row => row.key === 'gameConfig.progression.rewardMultiplier').label, 'Cinder gain multiplier',
+    'and no longer claims to multiply experience');
+  assert.equal(where('shopSell'), 'Rewards → Shop stock & services');
+  assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
+
+  // The formation editor is mounted with the rows of its topic, wherever that
+  // topic is filed. It looked under Interface after the topic moved to
+  // Battlefield and got none (Codex, on #1256).
+  const { formationLayoutRows } = await import('../src/ui/screens/settings.js');
+  const formation = advancedSubgroups(rows, 'Battlefield').find(group => group.id === 'Formation layout');
+  assert.ok(formation && formation.rows.length > 0, 'Battlefield opens on the formation layout');
+  assert.deepEqual(formationLayoutRows().map(row => row.key), formation.rows.map(row => row.key),
+    'the editor is handed exactly the rows its topic shows');
+});
+
+test('a row that moved nothing is retired: off the screen, still importable', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { advancedConfigRows, advancedConfigExport, parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
+  const all = advancedConfigRows(contentBundle);
+  const shown = new Set(categoryHandler('Advanced').rows.map(row => row.key));
+  const retired = [
+    'gameConfig.balance.levelUp.pointsPerLevelMin', 'gameConfig.balance.levelUp.pointsPerLevelMax',
+    'gameConfig.balance.levels.enemyScaling.hp.perLevel', 'gameConfig.balance.levels.enemyScaling.poise.max',
+    'gameConfig.balance.equipment.swapAllowancePerTurn',
+    ...contentBundle.classes.map(classDef => `gameConfig.classes.${classDef.id}.maxHp`),
+  ];
+  for (const key of retired) {
+    const row = all.find(candidate => candidate.key === key);
+    assert.ok(row, `${key} is still known`);
+    assert.equal(row.retired, true, `${key} is retired`);
+    assert.ok(!shown.has(key), `${key} is off the screen`);
+  }
+  assert.ok(!shown.has('mapHeaderSeed'), 'the seed toggle the header never honoured is off the screen');
+  const legacy = { 'gameConfig.balance.levelUp.pointsPerLevelMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
+    'an exported file naming a retired key still imports');
+
+  // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
+  // land in the bundle and refuse the whole configuration over a row no longer
+  // on screen.
+  const { configuredContentBundle, advancedConfigStructuralProblems } = await import('../src/model/advancedConfig.js');
+  const stale = { 'gameConfig.balance.levelUp.pointsPerLevelMin': 15, 'gameConfig.balance.levelUp.pointsPerLevelMax': 3, 'gameConfig.classes.reaver.maxHp': 500 };
+  assert.deepEqual(advancedConfigStructuralProblems(contentBundle, stale), [], 'an inert value cannot refuse the configuration');
+  const configured = configuredContentBundle(contentBundle, stale);
+  assert.equal(configured.balance.levelUp.pointsPerLevelMin, contentBundle.balance.levelUp.pointsPerLevelMin);
+  // The tier dial's bounds are not rows at all since ruleset 6 (#1253): the dial
+  // is gone, and its keys are skipped on import with the named warning.
+  assert.ok(!all.some(candidate => candidate.key === 'gameConfig.balance.levelUp.tierSizeMin'), 'tier bounds are not rows');
+  assert.equal(configured.classes.find(classDef => classDef.id === 'reaver').maxHp,
+    contentBundle.classes.find(classDef => classDef.id === 'reaver').maxHp);
 });

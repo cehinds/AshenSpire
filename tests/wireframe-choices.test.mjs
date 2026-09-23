@@ -124,7 +124,7 @@ test('the scene switches move WGS6 and WGS7 and nothing else', () => {
 });
 
 test('the Wireframes tab: one drop-down row per choice, filed under its family', () => {
-  const rows = categoryHandler('Advanced').rows.filter((row) => row.advancedGroup === 'Wireframes');
+  const rows = categoryHandler('Advanced').rows.filter((row) => row.wireframeTopic);
   assert.deepEqual(rows.map((row) => row.key), [...WIREFRAME_CHOICE_KEYS], 'derived from the catalogue, in its order');
   for (const row of rows) {
     const spec = wireframeChoiceSpec(row.key);
@@ -136,7 +136,9 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
     assert.deepEqual(Object.values(row.choiceLabels), spec.options.map((entry) => entry.label));
     assert.equal(row.label, spec.label);
   }
-  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes');
+  // The Layout tab (id Wireframes) opens on the three families, in catalogue
+  // order; card sizes and the window follow them (2026-09-23).
+  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes').slice(0, WIREFRAME_CHOICE_GROUPS.length);
   assert.deepEqual(groups.map((group) => group.id), WIREFRAME_CHOICE_GROUPS.map((group) => group.label));
   assert.deepEqual(groups.map((group) => group.rows.map((row) => row.key)),
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));

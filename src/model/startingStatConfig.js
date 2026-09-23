@@ -389,6 +389,22 @@ export function derivedStatFloorProblems(bundle) {
   }];
 }
 
+// ONE ANSWER PER NUMBER (#1256, owner 2026-09-23: "multiple settings changing
+// the same setting"). Two derived rows share their quantity with another row,
+// and the note is where the row says which one is in force, so nobody sets
+// both and wonders why one did nothing:
+//   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
+//     solo fight — draws by Hand & Draw → Turn draws instead.
+//   - Poise is the threshold only while combat ratings are off; with them on,
+//     the Poise rating formula sets it.
+// (The "Stat points per tier" sentence #1256 carried here is gone with the
+// dial itself — ruleset 6 has no tier, #1253.)
+function derivedRowNote(id) {
+  if (id === 'draw') return ' Only for fights without hand rules (co-op and older saves); solo fights use Hand & Draw → Turn draws.';
+  if (id === 'poise') return ' Only while combat ratings are off; otherwise the Poise rating formula sets the threshold.';
+  return '';
+}
+
 export function startingStatRows(bundle) {
   const rows = [];
   const add = (key, def, label, topic, extra = {}) => rows.push({
@@ -499,7 +515,7 @@ export function startingStatRows(bundle) {
         // would be the one way a pool stopped being a whole number.
         ...(field === 'base' ? { integer: true } : {}),
         configPath: ['derivedStatRules', 'rules', id, field],
-        note: `${note} The value you set is the value a new run is born with; nothing rescales it.`,
+        note: `${note}${derivedRowNote(id)} The value you set is the value a new run is born with; nothing rescales it.`,
       });
     }
   }
