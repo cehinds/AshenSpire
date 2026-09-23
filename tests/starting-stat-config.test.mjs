@@ -509,9 +509,11 @@ test('an attribute card states the floored cadence, not an average rate', async 
 // The Poise pool's per-level growth reaches the meter, not only the sheet.
 test('the Poise pool grows with the level on the meter as on the sheet', async () => {
   const { playerPoiseThresholdReceipt, statProjection } = await import('../src/model/statProjection.js');
-  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.poise.perLevel': 1 });
-  const registries = createRegistries({ ...configured, balance: { ...configured.balance,
-    combatRatings: { ...configured.balance.combatRatings, enabled: false } } });
+  // The pool is read only while ratings are off, and its rows are set aside
+  // while they are on (#1260), so ratings are switched off by their own row.
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.poise.perLevel': 1,
+    'gameConfig.combatRatings.enabled': false });
+  const registries = createRegistries(configured);
   const run = createRunState({ registries, classId: 'reaver', seed: 12 });
   const atOne = playerPoiseThresholdReceipt(registries, run).attribute;
   run.level = { ...run.level, level: 4 };
