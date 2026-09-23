@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Every setting in Advanced now says what it does",
     "detail": "The 323 balance rows under Advanced already had readable names, but the line under each name was still the same five words, Applies to a new run, on every one of them. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade and the same piece fetches the same cinders on every visit. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The swap cost beside heavy is only used under the Weapon category rule, where the first matching row wins. A card drawn past your hand limit goes to the discard rather than being lost, and a solo fight takes that limit from Hand & Draw rather than from this row. Fourteen rows now say that nothing reads them. These are the enemy-level scaling table and the retired run-start flask refill, and their sentences say so instead of promising to apply to a new run, because a setting you can change that then does nothing is worse than one that explains nothing. The names in every sentence come from the game itself, so renaming a relic renames its rows, and adding one gives it a description automatically. A test fails any balance setting that ships with no sentence, reuses another row's sentence, or both says nothing reads it and promises it applies to a new run.",
-    "build": "0.7.1.379",
+    "build": "0.7.1.381",
     "pullRequest": 1243,
     "url": "https://github.com/cehinds/AshenSpire/pull/1243"
+  },
+  {
+    "id": "pr-1250",
+    "date": "2026-09-21",
+    "group": "2026-09-21",
+    "summary": "An enemy's move is spelled the same in settings as in the fight",
+    "detail": "The last settings pass lowered the second word of every enemy move under Enemy attack types, so the Wyrm Aspirant's Halberd Sweep — which is what its move card, its intent and its history call it in combat — read Halberd sweep type in settings. A move is a name, so the settings row now spells it exactly as the fight does: Wyrm Aspirant — Halberd Sweep type. The field names beside it stay as phrases — Poise action loss, Recovery per turn — because those are descriptions, not names. No setting changed its value or key.",
+    "build": "0.7.1.380",
+    "pullRequest": 1250,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1250"
   },
   {
     "id": "pr-1249",
