@@ -140,7 +140,8 @@ function runTool(root, tool, args, timeoutMs, env) {
  *   prep    — [[cmd, ...argv]] run in the copy AFTER the edits and BEFORE the
  *             tool; each must exit 0 or the plant is a hard red.
  *   expectRed — RegExp the failing run's output must match
- *   args    — argv for THIS plant's run, replacing the shared `args`. For a
+ *   args    — argv for THIS plant's run, replacing the shared `args` (the
+ *             top-level option below). For a
  *             defect that only exists at one shape: the creation menu's zoom
  *             arithmetic renders correctly at --ui-zoom 1.00 and wrongly
  *             either side of it, so a plant of it run only at a 1.00 shape is

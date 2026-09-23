@@ -108,10 +108,22 @@
 // new number to this file — it reuses P2's tolerance through gapChecks.
 //
 // BOUNDARIES, and they are real.
-//   · THREE SURFACES, NOT EVERY PLACED THING — and this bullet said TWO until
-//     2026-08-17, when the flask menu became placeAnchored's third caller. The
-//     tooltip, the quick-nav panel and the flask action menu are its callers
-//     today; all three are measured here. tutorial.js still places its own bubble
+//   · FOUR SURFACES, NOT EVERY PLACED THING — and this bullet said TWO until
+//     2026-08-17, when the flask menu became placeAnchored's third caller, and
+//     THREE until #1244 made character creation's header menu its fourth. The
+//     tooltip, the quick-nav panel, the flask action menu and the creation
+//     menu are its callers today; all four are measured here.
+//   · P6 CANNOT SEE WHETHER ☰ CLOSES THE MENU, and that defect shipped. The
+//     menu is opened with `.click()`, a synthesized activation with no
+//     pointerdown/pointerup — so popover light dismiss never runs here. Until
+//     #1244 the ☰ called `togglePopover()` from a click listener: light
+//     dismiss shut the menu on pointerup and the click re-opened it, so with
+//     real CDP input, mouse and touch alike, it read open/open/open/open and
+//     could never be put away. Every P6 above was green on that build. The
+//     fix is `popovertarget` (the browser owns the toggle); the receipt is a
+//     hand measurement with real input, true/false/true/false after it —
+//     a receipt, not coverage. Real input is actionreach's and
+//     screenreach's door, not this one. tutorial.js still places its own bubble
 //     in the veil's local space with its own clamp, and main.js's ?shot=fx points
 //     are a third hand-rolled site. Neither is measured here and neither is
 //     converted — `unknown`, named rather than implied.
@@ -148,8 +160,9 @@
 //     check: P3 stays the hand because the hand is where the corpus can plant,
 //     and a one-off measurement is a receipt, not coverage.
 //   · A RED P1 TAKES P2 WITH IT AND THE DENOMINATOR MOVES SILENTLY. gapChecks
-//     returns after a P1 finding, so a run with an undeclared gap prints 5
-//     checks where the clean run prints 7. It cannot hide a VERDICT — P1 is
+//     returns after a P1 finding, so a run with an undeclared gap on ONE
+//     surface prints one check fewer than the clean run, per shape. It cannot
+//     hide a VERDICT — P1 is
 //     already red and the exit is 1 — but "N check(s)" in the summary is not a
 //     constant and must not be read as a coverage number.
 //   · P3 IS VACUOUS ON A HAND OF ONE. It counts SIBLINGS touched; with a single
@@ -171,7 +184,7 @@
 //     hand, with an injected 4000-character description — the panel stayed on
 //     screen and scrolled inside itself — but that is a receipt, not coverage:
 //     no plant in this corpus renders a long flask.
-//   · LINUX HEADLESS CHROMIUM, two shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
+//   · LINUX HEADLESS CHROMIUM, three shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
 //     NOT. Law 4 clause 3 says the gap must not answer the Text-size dial;
 //     measured at 1200x730 with ?shotSettings textSize S/M/L/XL, html font-size
 //     9/10/11/12 px, the declared gap stays "14px" and the rendered separation
@@ -301,51 +314,49 @@ if (process.argv.includes('--selftest')) {
         expectRed: /P5 /,
       },
       {
-        // THE SHIPPED DEFECT, PUT BACK BYTE-FOR-BYTE: the creation menu takes
-        // its placement arithmetic back, zoom read off <html> and all. This is
-        // the only plant in the corpus that names its own shape, and it has to:
-        // the old arithmetic is CORRECT at --ui-zoom 1.00, which is what the
-        // corpus's shared 1200x730 resolves to, so run there it is a false
-        // NOT-CAUGHT. Measured through this door at each shape: 1200x730 (1.00)
-        // green, 390x844 (0.90) red on align:'end' only — 37 local px off, still
-        // on the screen — and 1920x1080 (1.48) red on ON SCREEN, the menu at
-        // (1580.8,72.7)-(1800.8,304.7) in a 1297.3-wide room. The plant names
-        // the shape that reproduces the REPORTED symptom, so the red it is
-        // graded on is the invisibility and not a near miss.
+        // THE SHIPPED DEFECT, PUT BACK: the creation menu takes its placement
+        // arithmetic back, zoom read off <html> and all. The only plant in the
+        // corpus that names its own shape, and it has to: that arithmetic is
+        // CORRECT at --ui-zoom 1.00, which is what the shared 1200x730
+        // resolves to, so run there it is a false NOT-CAUGHT. Measured at each
+        // shape: 1200x730 (1.00) green; 390x844 (0.90) red on align:'end' only,
+        // 37 local px off and still on the screen; 1920x1080 (1.48) red on ON
+        // SCREEN, the menu at (1580.8,72.7)-(1800.8,304.7) in a 1297.3-wide
+        // room. It names the shape that reproduces the REPORTED symptom, so
+        // the red it is graded on is the invisibility and not a near miss.
         name: 'the creation menu takes its placement back — and reads the zoom off <html>, which never carries it',
         args: ['--only', '1920x1080'],
         file: 'src/ui/screens/customize.js',
-        // Written as joined lines rather than a template literal: the
-        // replacement is itself template-literal code, backticks and all.
-        find: [
-          '      const view = viewportLocalBox();',
-          "      const at = placeAnchored(headTools, menu, { intent: 'under', align: 'end', view });",
-        ].join('\n'),
+        find: "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+        // Joined lines: the replacement is template-literal code, backticks
+        // and all. Only `find` has to be a literal (tools/plantsites.mjs reads
+        // it statically); a replacement is never scanned.
         replace: [
           '      const rect = menu.getBoundingClientRect(); /* planted: the second copy, back */',
           '      const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;',
           '      headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;',
           '      headTools.style.top = `${(rect.bottom + 8) / zoom}px`;',
-          '      const view = viewportLocalBox();',
-          '      const at = { top: headTools.getBoundingClientRect().top };',
         ].join('\n'),
         expectRed: /P6 .*OFF THE SCREEN/,
       },
       {
-        // THE SECOND OPEN, and it needs NO shape of its own: the corpus's
-        // shared 1200x730 is only the shape the tool BOOTS at, and the
-        // second-open claim resizes to its own tight pair regardless. Caught
-        // by Copilot on #1244 before this line existed, so the plant is a
-        // defect that shipped in review rather than one invented for the
-        // corpus. Note what it is NOT: the cap does not simply persist — it is
-        // recomputed on every open. It is that placeAnchored MEASURES the
-        // capped box, so clampBox is told the menu is short and leaves it
-        // where a short menu would fit.
-        name: 'the creation menu measures the cap its LAST open wrote as this open\'s box',
+        // THE CAP GOES ON AFTER THE PLACEMENT — what flask.js and quicknav.js
+        // both do, and what this call site did until review. No shape of its
+        // own: the tight-window claim resizes to its own heights regardless.
+        // placeAnchored then measures the FULL menu, it does not fit under the
+        // button, and clampBox slides it up over the button before the cap
+        // applies. Every shape-height P6 is green on this plant; only the
+        // tight-window one can see it, which is the reason that one exists.
+        name: 'the creation menu is capped AFTER it is placed, so a short window slides it over its own button',
         file: 'src/ui/screens/customize.js',
-        find: "      headTools.style.maxHeight = '';",
-        replace: '      /* planted: last open\'s cap left on, and measured as this one\'s box */',
-        expectRed: /P6 .*previous open changed this one/,
+        find: "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+        replace: [
+          "      headTools.style.maxHeight = ''; /* planted: placed at full height, capped afterwards */",
+          "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+          "      const placedTop = anchorLocalBox(VIEWPORT_ORIGIN, headTools).top;",
+          '      headTools.style.maxHeight = `${Math.max(0, view.height - placedTop - PAD * 2)}px`;',
+        ].join('\n'),
+        expectRed: /P6 .*is NOT under/,
       },
       {
         // The gap loses its home on THIS surface. A second site for the P1
@@ -743,35 +754,39 @@ async function main() {
         else if (cz.p.left <= 4.5) ok('P6', shape, `right-alignment WAIVED — the bound moved it (menu left ${cz.p.left.toFixed(1)} is on the screen margin)`);
         else bad('P6', shape, `align: 'end' did not hold — menu right ${cz.p.right.toFixed(1)} vs button right ${cz.a.right.toFixed(1)} local px, and the menu is not against the bound`);
       }
-      // P6 AGAIN, ON THE SECOND OPEN. The menu writes its own `max-height`
-      // from the room it was bound to, and an inline cap left over from a
-      // previous open is NOT a measurement of this one: placeAnchored zeroes
-      // left/top before measuring for exactly that reason, but it cannot see a
-      // property written from outside it. A stale cap makes it read a SHORT
-      // box, and clampBox — told the menu is short — leaves it lower than it
-      // needed to and caps it there.
+      // P6 AT A TIGHT WINDOW — the claims that only exist where the menu is
+      // taller than the room under its button, which no shape above is.
       //
-      // THE HEIGHTS ARE FIXED AND NOT THE SHAPE'S, WHICH IS THE WHOLE POINT.
-      // The defect only exists where the clamp ENGAGES: given room to spare,
-      // `under` puts the menu at anchor.bottom + gap whatever height it thinks
-      // the menu is, and the cap is recomputed generously either way. Written
-      // against the shape's own height this check PASSED ON THE BROKEN BUILD
-      // at 1200x730 — 730 px is not tight. So it runs at TIGHT (the clamp
-      // engages, some of the menu is hidden) after TIGHTER (which leaves the
-      // smaller cap behind), and refuses to report a pass if TIGHT turns out
-      // not to be tight at this width. Measured at 1280 wide before the
-      // `maxHeight = ''` line: top 92.9 instead of 4, 318.4 local px of menu
-      // shown instead of 407.3 — 89 px more of it hidden with the room to
-      // show it sitting empty.
+      //   UNDER, STILL. The menu caps itself to the room below the ☰ and
+      //   the cap has to go on BEFORE placeAnchored measures it. Capped after
+      //   (what flask.js and quicknav.js both do), placeAnchored measures the
+      //   FULL menu, finds it does not fit under the button, and clampBox
+      //   slides it up over the button before the cap applies. Measured at
+      //   1200x260 with the cap last: menu top 4.0 against a button bottom of
+      //   58.0 — `under` asked for, and the menu on the control that summoned
+      //   it. Every shape-height P6 above was green on that build: 730 px is
+      //   not tight, so the question never came up.
+      //   AND THE SECOND OPEN EQUALS THE FIRST. An inline cap left over from a
+      //   previous open is not a measurement of this one; when the cap was
+      //   written after placement, a stale smaller one was measured as this
+      //   open's box (Copilot, #1244): at 1280x260 after an open at 1280x160,
+      //   top 92.9 instead of 4 and 89 local px more of the menu hidden.
+      //
+      // THE HEIGHTS ARE FIXED, NOT THE SHAPE'S, and the check refuses to call
+      // itself green if TIGHT turns out not to be tight at this width — a menu
+      // that fits whole means none of this was measured. 200, not 260: at 260
+      // the menu overflowed by 5-6 local px at every width, so a token change
+      // shrinking it that much would have turned this red about the constant.
       await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`);
       if (czOpen) {
-        const TIGHT = 260; const TIGHTER = 160;
+        const TIGHT = 200; const TIGHTER = 140;
         const box = () => ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-          const p = document.querySelector('.cz-head-tools'); if (!p) return null; const r = p.getBoundingClientRect();
-          return { top: r.top/z, shown: r.height/z, hidden: p.scrollHeight - p.clientHeight }; })()`);
+          const p = document.querySelector('.cz-header-menu'); const b = document.querySelector('.cz-menu-button');
+          if (!p || !b || !p.matches(':popover-open')) return null; const r = p.getBoundingClientRect();
+          return { top: r.top/z, shown: r.height/z, hidden: p.scrollHeight - p.clientHeight, buttonBottom: b.getBoundingClientRect().bottom/z }; })()`);
         const at = async (h) => { await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S); await wait(400); };
         const openIt = async () => { await ev(`document.querySelector('.cz-menu-button').click(); true`); await wait(250); return box(); };
-        const shut = async () => { await ev(`document.querySelector('.cz-head-tools')?.hidePopover?.(); true`); await wait(120); };
+        const shut = async () => { await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`); await wait(120); };
         await at(TIGHT);
         const fresh = await openIt(); await shut();
         await at(TIGHTER); await openIt(); await shut();
@@ -779,15 +794,14 @@ async function main() {
         const again = await openIt(); await shut();
         await at(vp.h);
         if (!fresh || !again) {
-          bad('P6', shape, `the menu left the DOM between opens at ${vp.w}x${TIGHT} — the second open was not measured`);
+          bad('P6', shape, `the menu did not open at ${vp.w}x${TIGHT} — the tight-window claims were not measured`);
         } else if (!(fresh.hidden > 0)) {
-          // NOT A PASS. If the menu fits whole at TIGHT then the clamp never
-          // engaged and this ran the motions over a defect it cannot express.
-          bad('P6', shape, `${vp.w}x${TIGHT} is not tight enough at this width — the menu fits whole (0 px hidden), so the clamp never engaged and the second-open claim measured nothing. Lower TIGHT for this width rather than reading this as green`);
-        } else if (Math.abs(again.top - fresh.top) <= 0.5 && Math.abs(again.shown - fresh.shown) <= 0.5) {
-          ok('P6', shape, `at ${vp.w}x${TIGHT} the second open matches the first — top ${again.top.toFixed(1)}, ${again.shown.toFixed(1)} of ${(again.shown + again.hidden).toFixed(1)} local px shown — after an open at ${vp.w}x${TIGHTER}`);
+          bad('P6', shape, `${vp.w}x${TIGHT} is not tight at this width — the menu fits whole (0 px hidden), so the tight-window claims measured nothing. Lower TIGHT for this width rather than reading this as green`);
         } else {
-          bad('P6', shape, `at ${vp.w}x${TIGHT} a previous open changed this one — top ${again.top.toFixed(1)} vs ${fresh.top.toFixed(1)}, ${again.shown.toFixed(1)} vs ${fresh.shown.toFixed(1)} local px shown (${again.hidden - fresh.hidden} more px of menu hidden). The cap it wrote last time is being measured as this time's box`);
+          if (fresh.top >= fresh.buttonBottom - 0.5) ok('P6', shape, `at ${vp.w}x${TIGHT} the menu is still UNDER ☰ (top ${fresh.top.toFixed(1)} ≥ button bottom ${fresh.buttonBottom.toFixed(1)}) and scrolls ${fresh.hidden} px inside itself`);
+          else bad('P6', shape, `at ${vp.w}x${TIGHT} the menu is NOT under ☰ — top ${fresh.top.toFixed(1)} against button bottom ${fresh.buttonBottom.toFixed(1)} local px. It was placed at its full height and capped afterwards, so the bound slid it over the button that summoned it`);
+          if (Math.abs(again.top - fresh.top) <= 0.5 && Math.abs(again.shown - fresh.shown) <= 0.5) ok('P6', shape, `at ${vp.w}x${TIGHT} the second open matches the first — top ${again.top.toFixed(1)}, ${again.shown.toFixed(1)} local px shown — after an open at ${vp.w}x${TIGHTER}`);
+          else bad('P6', shape, `at ${vp.w}x${TIGHT} a previous open changed this one — top ${again.top.toFixed(1)} vs ${fresh.top.toFixed(1)}, ${again.shown.toFixed(1)} vs ${fresh.shown.toFixed(1)} local px shown (${again.hidden - fresh.hidden} more px of menu hidden). A cap it wrote last time is being measured as this time's box`);
         }
       }
     }
