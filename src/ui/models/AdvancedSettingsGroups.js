@@ -71,7 +71,14 @@ function topic(row, section) {
     if (/settings.*Percent|uprightGate/.test(key)) return 'Window';
     return 'Appearance';
   }
-  if (section === 'Combat') return /poise/.test(key) ? 'Poise' : 'Exposure';
+  if (section === 'Combat') {
+    if (/damage\.attackCards/.test(key)) return 'AR card values';
+    if (/damage\.defenseCards/.test(key)) return 'DR card values';
+    if (/damage\.potencyCards/.test(key)) return 'PR card values';
+    if (/damage\.poiseCards/.test(key)) return 'Poise card values';
+    if (/damage\.wardCards/.test(key)) return 'Ward card values';
+    return /poise/.test(key) ? 'Poise' : 'Exposure';
+  }
   if (section === 'Rewards') {
     if (/^(flask|grace)|rewards.flask/.test(path)) return 'Flasks';
     if (/^shop\./.test(path)) {

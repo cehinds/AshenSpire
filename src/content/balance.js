@@ -4,7 +4,85 @@
 
 import { tooltipHelp } from './tooltipHelp.js';
 
+const cardValueStatusMultipliers = {
+  strength: 1,
+  dexterity: 1,
+  weak: 1,
+  vulnerable: 1,
+  frail: 1,
+  bleed: 1,
+  frost: 1,
+  insanity: 1,
+  bleedResist: 1,
+  frostResist: 1,
+  insanityResist: 1,
+  frostExposed: 1,
+  insanityExposed: 1,
+  crimsonBlight: 1,
+  burn: 1,
+  regen: 1,
+  madness: 1,
+  staggered: 1,
+  rallyingStandard: 1,
+  rallyingStandardUp: 1,
+  unbreakable: 1,
+  unbreakableUp: 1,
+  goreblood: 1,
+  sanguinePact: 1,
+  starstoneCharge: 1,
+  stargazer: 1,
+  astralArmor: 1,
+  constellation: 1,
+  azureCoil: 1,
+  waxingMoon: 1,
+  moonlitShield: 1,
+  astromancer: 1,
+  thornHalo: 1,
+  communion: 1,
+  lifeTithe: 1,
+  stigmata: 1,
+  zealotry: 1,
+  emberTide: 1,
+  harbingerOfBlight: 1,
+  bloodUnction: 1,
+  ironVow: 1,
+  bulwarkEcho: 1,
+  prepared: 1,
+  venom: 1,
+  afterimage: 1,
+  deadlyTempo: 1,
+  opportunist: 1,
+  envenom: 1,
+  glassCannon: 1,
+  magicVulnerable: 1,
+};
+
+const cardValueRule = () => ({
+  globalMultiplier: 1,
+  actionCostMultiplier: 1,
+  manaCostMultiplier: 2,
+  staminaCostMultiplier: 1,
+  statusEffectReductionMultiplier: 1,
+  // The card-value model derives applicable preservation bonuses from authored
+  // card faces. Keeping this map empty avoids a second hand-maintained roster.
+  cardBonuses: {},
+  statusMultipliers: { ...cardValueStatusMultipliers },
+});
+
 export const balance = {
+  // Primary card values and physical/magical impact are derived from costs:
+  // floor(global × (AP×action + MP×mana + SP×stamina)
+  //       − statusEffectReduction × Σ(each distinct applied status))
+  // + the value type's card-specific bonus.
+  // The registry projects these values from the authored card data, so changing
+  // any row here recalculates the whole applicable card corpus deterministically.
+  damage: {
+    attackCards: cardValueRule(),
+    defenseCards: cardValueRule(),
+    potencyCards: cardValueRule(),
+    poiseCards: cardValueRule(),
+    wardCards: cardValueRule(),
+  },
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
   arcaneExposure: {

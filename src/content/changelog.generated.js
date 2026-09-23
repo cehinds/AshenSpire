@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
     "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
-    "build": "0.7.1.390",
+    "build": "0.7.1.392",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1247",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing damage, Block and poise-damage numbers exactly, base and upgraded; moving a shared multiplier recalculates the whole matching card set deterministically. What an untouched game does change is impact: a card hit now lands its Poise or Ward value instead of a flat 1, so a cheap card or one that applies statuses can land none, while a weapon's hit keeps its weight and a card that deals its own poise damage keeps the old default beside it. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.390",
+    "pullRequest": 1247,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
   },
   {
     "id": "pr-1251",
