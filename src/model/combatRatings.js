@@ -322,7 +322,21 @@ export function combatRatingRows(bundle) {
         note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
       });
   }
-  for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${card.name} — impact override`, 'Attack overrides', {
+  // TWO CARDS, ONE NAME. The Reaver's own "Enter: Bulwark" and the one the
+  // Guardian shield creates for any class are two cards (`enterBulwark`,
+  // `guardianBulwark`); so are the Rogue's "Hamstring" attack and the colorless
+  // "Hamstring" skill. Their override rows both read "<name> — impact override",
+  // so an edit to one gave no way to know which card it changed. A name that
+  // is shared says whose card it is, in the words the armour rows above use;
+  // a name that is not shared stays as it was.
+  const cardNameCount = new Map();
+  for (const card of bundle.cards) cardNameCount.set(card.name, (cardNameCount.get(card.name) || 0) + 1);
+  const cardLabel = (card) => {
+    if ((cardNameCount.get(card.name) || 0) < 2) return card.name;
+    const owner = !card.class || card.class === 'colorless' ? 'All classes' : (classNames.get(card.class) || words(card.class));
+    return `${card.name} (${owner})`;
+  };
+  for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${cardLabel(card)} — impact override`, 'Attack overrides', {
     min: -1, max: 99, integer: true, step: 1, note: '-1 uses attack type and weapon weight. 0 causes no impact. Other values override impact per hit.',
   });
   return rows;
