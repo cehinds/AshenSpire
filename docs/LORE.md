@@ -474,6 +474,12 @@ the Astronomer's chart margins, and Herald lines from Chapel liturgy. Each
 fragment is at most twelve words, followed by its source attribution. These
 are authored directly beside their cards in `src/content/cards/`.
 
+The second pass gives every remaining combat card a line: 150 more fragments
+across the four class pools, the colorless pool and the armament Arts, so no
+card in `src/content/cards/` is without flavor. Colorless and armament lines
+carry the Forsaken attribution *Cairn-scratch*; the status and curse cards and
+the co-op cards keep the unattributed lines they already had.
+
 The seed lines below are writing prompts, not verbatim shipping copy: shorten
 them to the rules and preserve §2's reveal boundary. In particular, Astral
 Insight hints at the fourth hearth rather than quoting the hearth-room page.

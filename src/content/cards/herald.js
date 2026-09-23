@@ -44,6 +44,7 @@ export const heraldCards = [
   },
   {
     id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We lay a hand upon the brow, and the warmth goes in. — Chapel liturgy",
     keywords: [], icon: '🦠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -59,6 +60,7 @@ export const heraldCards = [
   },
   {
     id: 'flagellation', name: 'Flagellation', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "We lash ourselves, that the fire need not. — Chapel liturgy",
     keywords: [], icon: '⛓',
     effects: [
       { op: 'loseHp', target: 'self', amount: 2 },
@@ -74,6 +76,7 @@ export const heraldCards = [
   },
   {
     id: 'penance', name: 'Penance', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "We kneel on the cold stone and are forgiven. — Chapel liturgy",
     keywords: [], icon: '🙏',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -115,6 +118,7 @@ export const heraldCards = [
   },
   {
     id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We open the graves and offer what is left. — Chapel liturgy",
     keywords: [], icon: '🪦',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
@@ -130,6 +134,7 @@ export const heraldCards = [
   },
   {
     id: 'bloodletting', name: 'Bloodletting', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    flavor: "We bleed into the bowl before we bless the bread. — Chapel liturgy",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
@@ -145,6 +150,7 @@ export const heraldCards = [
   },
   {
     id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "We share the warmth, and all are warm alike. — Chapel liturgy",
     keywords: [], icon: '☣',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 2 }],
     textTemplate: 'Apply {crimsonBlight} Crimson Blight to ALL enemies.',
@@ -152,6 +158,7 @@ export const heraldCards = [
   },
   {
     id: 'cullTheWeak', name: 'Cull the Weak', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "We gather the failing first, that they not linger. — Chapel liturgy",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -167,6 +174,7 @@ export const heraldCards = [
   },
   {
     id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "We pour from one cup into another and call it communion. — Chapel liturgy",
     keywords: [], icon: '➕',
     effects: [{ op: 'heal', target: 'self', amount: 6 }],
     textTemplate: 'Heal {heal} HP.',
@@ -192,6 +200,7 @@ export const heraldCards = [
   // ---- Uncommons -----------------------------------------------------------------
   {
     id: 'martyrBlood', name: "Martyr's Blood", class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "We spend ourselves at the altar, and the censer swings faster. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🥀',
     effects: [
       { op: 'loseHp', target: 'self', amount: 5 },
@@ -209,6 +218,7 @@ export const heraldCards = [
   },
   {
     id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "We tend the red flowers where the names were buried. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
@@ -234,6 +244,7 @@ export const heraldCards = [
   },
   {
     id: 'thornHaloCard', name: 'Thorn Halo', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "We crown the Saint in briar; every thorn is a name. — Chapel liturgy",
     keywords: [], icon: '🌿',
     effects: [{ op: 'applyStatus', target: 'self', status: 'thornHalo', stacks: one }],
     textTemplate: 'At the start of your turn, apply 1 Crimson Blight to ALL enemies.',
@@ -265,6 +276,7 @@ export const heraldCards = [
   },
   {
     id: 'plagueBearer', name: 'Plague Bearer', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We carry the censer through the ward, and every door opens. — Chapel liturgy",
     keywords: [], icon: '🐀',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -282,6 +294,7 @@ export const heraldCards = [
   },
   {
     id: 'exsanguinate', name: 'Exsanguinate', class: 'herald', rarity: 'uncommon', cost: 1, type: 'attack',
+    flavor: "We give until the vessel is light enough to rise. — Chapel liturgy",
     keywords: [], icon: '🔻',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
@@ -297,6 +310,7 @@ export const heraldCards = [
   },
   {
     id: 'stigmataCard', name: 'Stigmata', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "We wear the marks openly, as the Saints did. — Chapel liturgy",
     keywords: [], icon: '🩹',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stigmata', stacks: one }],
     textTemplate: 'Whenever you lose HP, heal 2 HP.',
@@ -304,6 +318,7 @@ export const heraldCards = [
   },
   {
     id: 'scourge', name: 'Scourge', class: 'herald', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "We walk the nave with the scourge, and the pews answer. — Chapel liturgy",
     keywords: [], icon: '🌊',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 6 },
@@ -319,6 +334,7 @@ export const heraldCards = [
   },
   {
     id: 'reclamation', name: 'Reclamation', class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "We take back the warmth we lent the dying. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🍂',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies', per: 2 } },
@@ -336,6 +352,7 @@ export const heraldCards = [
   // ---- Rares -----------------------------------------------------------------------
   {
     id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "We are cut down in winter and rise in the unturned spring. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🌸',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'missingHp', of: 'self' }] } },
@@ -345,6 +362,7 @@ export const heraldCards = [
   },
   {
     id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "We loose the red moths from the ossuary; they seek names. — Chapel liturgy",
     keywords: [], icon: '🦋',
     effects: [
       { op: 'loseHp', target: 'self', amount: 4 },
@@ -368,6 +386,7 @@ export const heraldCards = [
   },
   {
     id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We drink from the chalice, and it drinks from us. — Chapel liturgy",
     keywords: [], icon: '🔺',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5, hits: { f: 'energySpent' } },
@@ -384,6 +403,7 @@ export const heraldCards = [
   },
   {
     id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We read the names aloud, all of them, all at once. — Chapel liturgy",
     keywords: [], icon: '💥',
     effects: [
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
@@ -412,6 +432,7 @@ export const heraldCards = [
   },
   {
     id: 'zealotryCard', name: 'Zealotry', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "We bless every wound as a door the fire walks through. — Chapel liturgy",
     keywords: [], icon: '⚡',
     effects: [{ op: 'applyStatus', target: 'self', status: 'zealotry', stacks: one }],
     textTemplate: 'Whenever you lose HP, deal 3 damage to a random enemy.',
@@ -419,6 +440,7 @@ export const heraldCards = [
   },
   {
     id: 'bloodHarvest', name: 'Blood Harvest', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We reap the field of the marked, and give thanks. — Chapel liturgy",
     keywords: [], icon: '🌾',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 4, hits: { f: 'energySpent' } },
@@ -439,6 +461,7 @@ export const heraldCards = [
   // HP-for-damage attack and a Blight-fed power) — rounding the pool to 36.
   {
     id: 'painOffering', name: 'Pain Offering', class: 'herald', rarity: 'common', cost: 0, type: 'attack',
+    flavor: "We give a little now, that we are not asked later. — Chapel liturgy",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'loseHp', target: 'self', amount: 2 },
@@ -454,6 +477,7 @@ export const heraldCards = [
   },
   {
     id: 'witheringTouch', name: 'Withering Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We touch the stalk, and the field forgets its spring. — Chapel liturgy",
     keywords: [], icon: '🦠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -469,6 +493,7 @@ export const heraldCards = [
   },
   {
     id: 'desperateRite', name: 'Desperate Rite', class: 'herald', rarity: 'uncommon', cost: 1, type: 'attack',
+    flavor: "When the bier is ready, we pray louder. — Chapel liturgy",
     keywords: [], icon: '🔺',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9, if: { p: 'not', pred: { p: 'hpBelowPct', of: 'self', pct: 50 } } },
@@ -492,6 +517,7 @@ export const heraldCards = [
   },
   {
     id: 'bloodOfferingRite', name: 'Blood Offering', class: 'herald', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "We fill the bowl ourselves; nobody else is left to. — Chapel liturgy",
     keywords: [], icon: '⚰',
     effects: [
       { op: 'loseHp', target: 'self', amount: 6 },
@@ -507,6 +533,7 @@ export const heraldCards = [
   },
   {
     id: 'harbingerOfBlightCard', name: 'Harbinger of Blight', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "We go before the fire, and it follows us gladly. — Chapel liturgy",
     keywords: [], icon: '❀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfBlight', stacks: one }],
     textTemplate: 'Whenever Crimson Blight is applied to an enemy, heal 1 HP.',
@@ -516,6 +543,7 @@ export const heraldCards = [
   // ---- Content-pass additions (round 4) --------------------------------------
   {
     id: 'blightwardLash', name: 'Blightward Lash', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "We scourge the rot from the flesh, and the flesh with it. — Chapel liturgy",
     keywords: [], icon: '🦠',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -533,6 +561,7 @@ export const heraldCards = [
   },
   {
     id: 'lastMercy', name: "Last Mercy", class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "We warm the dying hand, that the fire finds it gentle. — Chapel liturgy",
     keywords: [], icon: '🙏',
     effects: [
       { op: 'heal', target: 'self', amount: 5 },
@@ -551,6 +580,7 @@ export const heraldCards = [
   // heals and braces in the same breath.
   {
     id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: "We give the name. We keep the warmth. — Chapel liturgy",
     keywords: [], icon: '📿',
     effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],
     textTemplate: 'Heal {heal}. Gain {block} Block.',

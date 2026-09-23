@@ -18,6 +18,7 @@ export const reaverCards = [
   {
     // Shared basic (all three classes start with Strikes/Defends — colorless).
     id: 'strike', name: 'Strike', class: 'colorless', rarity: 'starter', cost: 1, type: 'attack',
+    flavor: "Never marked. Never promised. Never warm. — Cairn-scratch",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
     textTemplate: 'Deal {damage} damage.',
@@ -25,6 +26,7 @@ export const reaverCards = [
   },
   {
     id: 'defend', name: 'Defend', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    flavor: "The cairn says: hold. It does not say what for. — Cairn-scratch",
     keywords: [], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 5 }],
     textTemplate: 'Gain {block} Block.',
@@ -32,6 +34,7 @@ export const reaverCards = [
   },
   {
     id: 'technique', name: 'Footwork', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    flavor: "Climbers before you cut steps. Use them. — Cairn-scratch",
     keywords: [], icon: '✧',
     effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Draw {draw} card.',
@@ -44,6 +47,7 @@ export const reaverCards = [
   // Weight Class the player stands in (mechanics.json), not by this cost.
   {
     id: 'evasiveGuard', name: 'Evasive Guard', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
+    flavor: "The cairn is broken swords. Move, and yours stays whole. — Cairn-scratch",
     keywords: [], icon: '🌀',
     effects: [{ op: 'block', target: 'self', amount: 1 }, { op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.',
@@ -51,6 +55,7 @@ export const reaverCards = [
   },
   {
     id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    flavor: "Heavy packs stay on the road. So do their owners. — Cairn-scratch",
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
     textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
@@ -80,6 +85,7 @@ export const reaverCards = [
   // ---- Commons ---------------------------------------------------------------
   {
     id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, staminaCost: 1, type: 'attack',
+    flavor: "Swing wide at the gate; the dead come in crowds. — Warden's field-book",
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 8 },
@@ -95,6 +101,7 @@ export const reaverCards = [
   },
   {
     id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
+    flavor: "The shield is iron. Use the rim, not the face. — Warden's field-book",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -110,6 +117,7 @@ export const reaverCards = [
   },
   {
     id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: "Short steps on the courtyard stones; the frost takes long ones. — Warden's field-book",
     keywords: [], icon: '👣',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -125,6 +133,7 @@ export const reaverCards = [
   },
   {
     id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
+    flavor: "Take the blow on the boss, then answer it. — Warden's field-book",
     keywords: [], icon: '↩',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
@@ -140,6 +149,7 @@ export const reaverCards = [
   },
   {
     id: 'ironResolve', name: 'Iron Resolve', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "The wall does not ask whether it is tired. — Warden's field-book",
     keywords: [], icon: '⛨',
     effects: [
       { op: 'block', target: 'self', amount: 5, if: { p: 'not', pred: { p: 'inStance', stance: 'bulwark' } } },
@@ -155,6 +165,7 @@ export const reaverCards = [
   },
   {
     id: 'serratedBlade', name: 'Serrated Blade', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "File the teeth each dawn; the bell no longer tells you when. — Warden's field-book",
     keywords: [], icon: '🪚',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
@@ -195,6 +206,7 @@ export const reaverCards = [
   },
   {
     id: 'riposte', name: 'Riposte', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "Let them lean in. The guard is the door. — Warden's field-book",
     keywords: [], icon: '⚔',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -210,6 +222,7 @@ export const reaverCards = [
   },
   {
     id: 'rend', name: 'Rend', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "Weald rot bleeds black. Cut anyway. — Warden's field-book",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -227,6 +240,7 @@ export const reaverCards = [
   },
   {
     id: 'cleavingBlow', name: 'Cleaving Blow', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
+    flavor: "Hounds come low and many. Cut low and once. — Warden's field-book",
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 7 },
@@ -244,6 +258,7 @@ export const reaverCards = [
   // ---- Uncommons --------------------------------------------------------------
   {
     id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    flavor: "Heel on the chest, not the throat; the throat still bites. — Warden's field-book",
     keywords: [], icon: '🦶',
     effects: [
       { op: 'damage', target: 'enemy', amount: 12 },
@@ -291,6 +306,7 @@ export const reaverCards = [
   },
   {
     id: 'hemorrhage', name: 'Hemorrhage', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "Do not stitch a wound you opened on purpose. — Warden's field-book",
     keywords: ['exhaust'], icon: '🩸',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: { f: 'stacks', status: 'bleed', of: 'target' } },
@@ -303,6 +319,7 @@ export const reaverCards = [
   },
   {
     id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
+    flavor: "Two blades for a gate two men wide. — Warden's field-book",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
@@ -310,6 +327,7 @@ export const reaverCards = [
   },
   {
     id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'skill',
+    flavor: "Lock rims at the Fell Courtyard. Nobody leaves the line. — Warden's field-book",
     keywords: [], icon: '🧱',
     effects: [
       { op: 'block', target: 'self', amount: 12 },
@@ -325,6 +343,7 @@ export const reaverCards = [
   },
   {
     id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'attack',
+    flavor: "Boot them off the stair; the drop does the rest. — Warden's field-book",
     keywords: ['exhaust'], icon: '🥾',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -342,6 +361,7 @@ export const reaverCards = [
   },
   {
     id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: "Guard up, then go. The flame will not wait. — Warden's field-book",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 8 },
@@ -357,6 +377,7 @@ export const reaverCards = [
   },
   {
     id: 'impale', name: 'Impale', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "Pin what falls. Fallen things in the weald get up. — Warden's field-book",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },
@@ -372,6 +393,7 @@ export const reaverCards = [
   },
   {
     id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'skill',
+    flavor: "Shout the bell-roll when the bell is cracked. — Warden's field-book",
     keywords: ['exhaust'], icon: '📣',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
@@ -403,6 +425,7 @@ export const reaverCards = [
   },
   {
     id: 'goreblood', name: "Goreblood", class: 'reaver', rarity: 'rare', cost: 3, type: 'power',
+    flavor: "Log the blows you took. Then stop counting. — Warden's field-book",
     keywords: [], icon: '♛',
     effects: [{ op: 'applyStatus', target: 'self', status: 'goreblood', stacks: one }],
     textTemplate: 'Poise thresholds no longer increase after filling.',
@@ -410,6 +433,7 @@ export const reaverCards = [
   },
   {
     id: 'unbreakable', name: 'Unbreakable', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
+    flavor: "Hold the gate until relieved. Log that nobody came. — Warden's field-book",
     keywords: [], icon: '⬟',
     effects: [{ op: 'applyStatus', target: 'self', status: 'unbreakable', stacks: one }],
     textTemplate: 'Block no longer expires at the start of your turn. (Block capped at 30.)',
@@ -420,6 +444,7 @@ export const reaverCards = [
   },
   {
     id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', staminaCost: 1, type: 'attack',
+    flavor: "Court surgeons sewed knights to their swords. Learn from it. — Warden's field-book",
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
     textTemplate: 'Deal {damage} damage to a random enemy once per Energy spent.',
@@ -438,6 +463,7 @@ export const reaverCards = [
   },
   {
     id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
+    flavor: "Paid in advance. Nobody said the job was over. — Warden's field-book",
     keywords: ['innate', 'exhaust'], icon: '📜',
     effects: [{ op: 'enterStance', stance: 'gorefire' }],
     textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
@@ -451,6 +477,7 @@ export const reaverCards = [
   },
   {
     id: 'ruinousBlow', name: 'Ruinous Blow', class: 'reaver', rarity: 'rare', cost: 3, type: 'attack',
+    flavor: "Bring the whole blade down. There is no second gate. — Warden's field-book",
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 20 },
@@ -466,6 +493,7 @@ export const reaverCards = [
   },
   {
     id: 'bloodhuntersStrike', name: "Bloodhunter's Strike", class: 'reaver', rarity: 'rare', cost: 1, type: 'attack',
+    flavor: "Follow the red through the briar; it always ends somewhere. — Warden's field-book",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -481,6 +509,7 @@ export const reaverCards = [
   },
   {
     id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "Their blood on your gauntlet weighs less than your own. — Warden's field-book",
     keywords: [], icon: '🩸',
     effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
     textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
@@ -493,6 +522,7 @@ export const reaverCards = [
   // and a Poise-scaling finisher) — rounding the pool to 36.
   {
     id: 'goreslash', name: 'Goreslash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "Short cut, deep cut. The long ones are for songs. — Warden's field-book",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -508,6 +538,7 @@ export const reaverCards = [
   },
   {
     id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: "Knees soft, shield high, back to the Bastion wall. — Warden's field-book",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -523,6 +554,7 @@ export const reaverCards = [
   },
   {
     id: 'flameToBlade', name: 'Flame to Blade', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "Oil the edge, then light it. Mind your sleeve. — Warden's field-book",
     keywords: [], icon: '🔥',
     effects: [
       { op: 'damage', target: 'enemy', amount: 8 },
@@ -564,6 +596,7 @@ export const reaverCards = [
   },
   {
     id: 'poiseBreaker', name: 'Poise Breaker', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    flavor: "Hit the knee twice; Warden or hound, it bends the same. — Warden's field-book",
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 11 },
@@ -583,6 +616,7 @@ export const reaverCards = [
   // ---- Content-pass additions (round 4) --------------------------------------
   {
     id: 'rondelParry', name: 'Rondel Parry', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Catch the edge on the rondel. Keep the wrist loose. — Warden's field-book",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -598,6 +632,7 @@ export const reaverCards = [
   },
   {
     id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "Plate is a promise. Break it and see what's under. — Warden's field-book",
     keywords: [], icon: '⚒',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9 },

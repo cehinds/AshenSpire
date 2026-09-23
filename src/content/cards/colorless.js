@@ -12,6 +12,7 @@ export const colorlessCards = [
   // lend mounted copies; the smith uses the existing extractable tag rules.
   {
     id: 'katanaDrawCut', name: 'Draw Cut', class: 'colorless', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
+    flavor: "A curved blade from past the marches. Nobody here forged it. — Cairn-scratch",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 9 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
     textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
@@ -19,6 +20,7 @@ export const colorlessCards = [
   },
   {
     id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    flavor: "Too heavy to carry far. Carry it anyway. — Cairn-scratch",
     keywords: [], icon: '⚒',
     effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
@@ -27,6 +29,7 @@ export const colorlessCards = [
   // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
   {
     id: 'honedEdge', name: 'Honed Edge', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Whetstone left on the cairn. Take it. Leave one. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🔩',
     effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
     textTemplate: 'Gain {strength} Strength. Exhaust.',
@@ -34,6 +37,7 @@ export const colorlessCards = [
   },
   {
     id: 'ironSkin', name: 'Iron Skin', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Cold iron on the chest. It does not warm either. — Cairn-scratch",
     keywords: [], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 8 }],
     textTemplate: 'Gain {block} Block.',
@@ -41,6 +45,7 @@ export const colorlessCards = [
   },
   {
     id: 'fieldDressing', name: 'Field Dressing', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "Clean rag under the third stone. Put one back. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🩹',
     effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP. Exhaust.',
@@ -48,6 +53,7 @@ export const colorlessCards = [
   },
   {
     id: 'hex', name: 'Hex', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    flavor: "A scratched sign on the door. Whatever lives there leaves. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🕯',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
@@ -63,6 +69,7 @@ export const colorlessCards = [
   },
   {
     id: 'transmute', name: 'Transmute', class: 'colorless', rarity: 'rare', cost: 1, type: 'skill',
+    flavor: "A cinder in the palm, spent before it cools. — Cairn-scratch",
     keywords: ['exhaust'], icon: '⚗',
     effects: [
       { op: 'gainEnergy', amount: 2 },
@@ -80,6 +87,7 @@ export const colorlessCards = [
     // The pool's first colorless ATTACK — a neutral multi-hit that rides
     // Strength/Vulnerable well in any class.
     id: 'twinFang', name: 'Twin Fang', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "Two knives. One for the hound, one for its handler. — Cairn-scratch",
     keywords: [], icon: '🗡',
     effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
@@ -87,6 +95,7 @@ export const colorlessCards = [
   },
   {
     id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, type: 'skill',
+    flavor: "Ash in the eyes works on the corrupted too. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🌪',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2 }],
     textTemplate: 'Apply {weak} Weak to ALL enemies. Exhaust.',
@@ -94,6 +103,7 @@ export const colorlessCards = [
   },
   {
     id: 'hamstring', name: 'Hamstring', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    flavor: "Go for the legs. Everything here still walks. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🦵',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 2 }],
     textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Exhaust.',
@@ -101,6 +111,7 @@ export const colorlessCards = [
   },
   {
     id: 'masterOfStrategy', name: 'Master of Strategy', class: 'colorless', rarity: 'rare', cost: 0, type: 'skill',
+    flavor: "Maps scratched on the cairn stones. Some of them are true. — Cairn-scratch",
     keywords: ['exhaust'], icon: '📜',
     effects: [{ op: 'draw', amount: 3 }],
     textTemplate: 'Draw {draw} cards. Exhaust.',
@@ -110,6 +121,7 @@ export const colorlessCards = [
   // ---- Content-pass additions (round 5) --------------------------------------
   {
     id: 'bashingBlow', name: 'Bashing Blow', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "A cudgel is a stick that learned a trade. — Cairn-scratch",
     keywords: [], icon: '🔨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
@@ -125,6 +137,7 @@ export const colorlessCards = [
   },
   {
     id: 'quickGuard', name: 'Quick Guard', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Arm up, eyes open, keep walking. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -141,6 +154,7 @@ export const colorlessCards = [
   },
   {
     id: 'sweepingBlow', name: 'Sweeping Blow', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'attack',
+    flavor: "They come in packs on the viaduct. Swing wide. — Cairn-scratch",
     keywords: [], icon: '🌀',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }],
     textTemplate: 'Deal {damage} damage to ALL enemies.',
@@ -148,6 +162,7 @@ export const colorlessCards = [
   },
   {
     id: 'enfeeble', name: 'Enfeeble', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "Salt in the wound slows them. Salt is cheap. — Cairn-scratch",
     keywords: ['exhaust'], icon: '💀',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 3 }],
     textTemplate: 'Apply {vulnerable} Vulnerable to ALL enemies. Exhaust.',
@@ -155,6 +170,7 @@ export const colorlessCards = [
   },
   {
     id: 'colossusSmash', name: 'Colossus Smash', class: 'colorless', rarity: 'rare', cost: 2, type: 'attack',
+    flavor: "The Goldbough Avatar still kneels. Aim for the joints. — Cairn-scratch",
     keywords: [], icon: '💥',
     effects: [
       { op: 'damage', target: 'enemy', amount: 18 },

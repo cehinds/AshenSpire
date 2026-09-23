@@ -2,6 +2,7 @@
 export const armamentCards = [
   {
     id: 'shieldGuardian', name: 'Guardian', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
+    flavor: "A shield on the cairn, strap cut to fit someone else. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'addCard', card: 'guardianBulwark', pile: 'hand', position: 'bottom' }],
     textTemplate: 'Gain {block} Block. Add a temporary Enter: Bulwark to your hand. It costs 1 Energy and Exhausts. Exhaust.',
@@ -9,12 +10,14 @@ export const armamentCards = [
   },
   {
     id: 'guardianBulwark', name: 'Enter: Bulwark', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
+    flavor: "The Wardens drilled two stances. The shield remembers the second. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🛡', effects: [{ op: 'enterStance', stance: 'bulwark' }],
     textTemplate: 'Enter Bulwark Stance. Exhaust.',
     upgrade: { effects: [{ op: 'enterStance', stance: 'bulwark' }, { op: 'block', target: 'self', amount: 3 }], textTemplate: 'Enter Bulwark Stance. Gain {block} extra Block. Exhaust.' },
   },
   {
     id: 'shieldBastion', name: 'Bastion', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
+    flavor: "A tower shield from the Bastion. Heavy as the city. — Cairn-scratch",
     keywords: ['exhaust'], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 12 }, { op: 'applyStatus', target: 'self', status: 'weak', stacks: 1 }],
     textTemplate: 'Gain {block} Block. Gain {weak} Weak. Exhaust.',
@@ -22,6 +25,7 @@ export const armamentCards = [
   },
   {
     id: 'spikedReprisal', name: 'Spiked Reprisal', class: 'colorless', rarity: 'special', cost: 1, type: 'attack',
+    flavor: "Nails driven through the boss. Somebody wanted it to hurt. — Cairn-scratch",
     keywords: [], icon: '🛡', damageSchool: 'physical', exposureBuildupPerHit: 0,
     effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
     textTemplate: 'Gain {block} Block. Deal {damage} damage. Apply {bleed} Bleed.',
@@ -29,6 +33,7 @@ export const armamentCards = [
   },
   {
     id: 'rimeThrust',
+    flavor: "Marches steel. The frost never leaves the blade. — Cairn-scratch",
     name: 'Rime Thrust',
     class: 'colorless',
     rarity: 'special',
@@ -52,6 +57,7 @@ export const armamentCards = [
   },
   {
     id: 'kilnCleave',
+    flavor: "Forged in the Dead Foundry. Still hot along the spine. — Cairn-scratch",
     name: 'Kiln Cleave',
     class: 'colorless',
     rarity: 'special',
@@ -77,6 +83,7 @@ export const armamentCards = [
   },
   {
     id: 'vesperWard',
+    flavor: "A Chapel ward, rung at vespers. The bell is gone. — Cairn-scratch",
     name: 'Vesper Ward',
     class: 'colorless',
     rarity: 'special',
