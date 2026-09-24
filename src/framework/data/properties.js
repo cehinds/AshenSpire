@@ -402,6 +402,8 @@ export const properties = {
       "parentId": "equipment",
       "domain": "EQUIPMENT",
       "visibility": "SECONDARY",
+      "playerTermId": "term.dualWield",
+      "tooltipTermId": "term.tooltip.dualWield",
       "priority": 16
     },
     {

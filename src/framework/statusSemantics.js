@@ -19,6 +19,7 @@ import {
   applyStatus as adoptedApplyStatus,
   removeStatus as adoptedRemoveStatus,
   decayAtTurnEnd as adoptedDecayAtTurnEnd,
+  advanceStatusClock as adoptedAdvanceStatusClock,
   getMult as adoptedGetMult,
   getAdd as adoptedGetAdd,
   getFlag as adoptedGetFlag,
@@ -32,6 +33,7 @@ export const hasStatus = adoptedHasStatus;
 export const applyStatus = adoptedApplyStatus;
 export const removeStatus = adoptedRemoveStatus;
 export const decayAtTurnEnd = adoptedDecayAtTurnEnd;
+export const advanceStatusClock = adoptedAdvanceStatusClock;
 export const getMult = adoptedGetMult;
 export const getAdd = adoptedGetAdd;
 export const getFlag = adoptedGetFlag;

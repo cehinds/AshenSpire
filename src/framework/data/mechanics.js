@@ -17,6 +17,7 @@ export const mechanics = {
     "capacityBase": 0,
     "capacityPerConstitution": 2,
     "capacityPerStrength": 1,
+    "itemWeightScale": 0.2,
     "classes": [
       {
         "id": "light",
@@ -52,6 +53,7 @@ export const mechanics = {
         "dodgeActionCost": 2
       }
     ],
+    "itemWeightScaleNote": "Owner's call, 2026-09-24: rescale item weights, not capacity, after the lean attribute rebase (2026-09-20) cut capacity (2*CON + STR) to 3-12 while authored weights stayed on the old scale, so every creatable start was Heavy. Every piece weight (an armament's authored weight, an armour's poise threshold) is multiplied by this and kept to a tenth. Chosen with tools/weightclass-census.mjs over 0.15-0.25: at 0.2 the class-preset starts are 84 Light and 28 Medium with none Heavy, and every class still reaches Heavy with its heaviest kit (Reaver 94%, Rogue and Herald 116%, Starseer 193%). 0.18 is the lowest scale at which the Reaver reaches Heavy; above 0.22 preset starts turn Heavy. The min-capacity allocation (Constitution and Strength at their minimum) has 14 Heavy starts of 76 at 0.2; no scale both keeps those off Heavy and lets the Reaver reach Heavy.",
     "capacityBaseNote": "Was 50, then 5. Validated by tools/weightclass-census.mjs (2026-09-01). The census covers the creator's space: the two VISIBLE creation modes (standard, pointbuy), and for each not only the class preset but the two allocation boundaries that bracket capacity (Constitution and Strength at their legal minimum, and at their legal maximum), every armour choice, and each hand chosen independently (empty allowed, the same armament twice refused), with every pair passed through the creator's own requirement gate (startingHandsRequirementFailure — a sheet that cannot hold a Greatsword does not start with one; 100 pairs refused). Reachability is every ordered pair of distinct armaments through a real loadout with the outfit at its highest Smithing tier, at the standard preset. Base 50 left even the heaviest reachable kit Light: the class did not exist for the player. Base 5 (the first retune) leaves no class able to reach Heavy at the standard preset (Reaver 76%, Starseer 74%, Rogue 74%, Herald 71%). Bases 0 and 1 are the only ones at which every class reaches Heavy (base 0: Reaver 86%, Starseer 86%, Rogue 86%, Herald 82%; base 2 already loses the Herald at 77%); 0 is chosen because capacity is then exactly 2*CON + STR with no free constant. At 0 the preset starts are 200 Light and 24 Medium; the min-capacity boundary starts are 144 Light and 28 Medium and the max-capacity boundary 172 Light and 4 Medium — no creatable start is Heavy, because the same requirements that gate a heavy armament also demand the Strength that raises capacity."
   },
   "dodgeRoll": {
