@@ -17,11 +17,14 @@
 // seat its order put there; the tier is what those numbers were balanced for.
 //
 // Run: node tools/balance.mjs   (or `node tools/balance.mjs > docs/BALANCE.md`)
+//      node tools/balance.mjs --check   exit 1 when docs/BALANCE.md is stale
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { affordableCards, refusalsFor } from './simbot.mjs';
 import { createRunState } from '../src/model/state.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
 
@@ -46,54 +49,28 @@ function enemyStats(def) {
   return { hp: avgHp(def), dps, heal, poise: def.poiseMax };
 }
 
-// --- naive bot: leftmost affordable card, aim at first living enemy ---------
+// --- naive bot: leftmost card affordable in every pool, aim at first living enemy
+// (tools/simbot.mjs). A card the engine still refuses is set aside for the
+// turn and the bot plays on, rather than ending the turn with cards unplayed.
 const firstLiving = (c) => c.enemies.find((e) => e.alive);
-function affordable(c) {
-  return c.piles.hand.find((h) => {
-    const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
-    if ((def.keywords || []).includes('unplayable')) return false;
-    const cost = def.cost === 'X' ? 0 : def.cost;
-    return cost <= c.player.energy && (def.manaCost || 0) <= c.player.mana;
-  });
-}
 function botStep(c) {
-  const card = affordable(c);
+  const refused = refusalsFor(c);
+  const card = affordableCards(REG, c, refused)[0];
   if (!card) { dispatch(c, { type: 'endTurn' }); return; }
   const tgt = firstLiving(c);
   try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id }); }
-  catch { dispatch(c, { type: 'endTurn' }); }
+  catch { refused.add(card.instanceId); }
 }
 
 function newRun(classId) {
   return createRunState({ seed: 1, classId, registries: REG });
 }
 
-// The run's own stamped pools, by name — createPlayerCombatEntity REFUSES an
-// unstamped energyMax/drawPerTurn since the derived-stat train, and this tool
-// crashed on its first createCombat from the day that landed until 2026-08-15:
-// the third dead simulator of the same class (runsim and measure-classes were
-// the first two, repaired 2026-08-14). Same fix, same shape.
-function stampedPlayer(run, cls) {
-  return {
-    classId: run.class, attributes: run.attributes, loadout: run.loadout,
-    maxHp: run.maxHp, hp: run.maxHp,
-    maxMana: run.maxMana, mana: run.maxMana,
-    maxStamina: run.maxStamina, stamina: run.maxStamina,
-    energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
-    equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-    deck: run.deck, relicIds: [cls.startingRelic],
-  };
-}
-
 // Measured unopposed DPS: bot vs. the dummy for T player turns.
 function measureDps(classId, T = 10) {
-  const cls = REG.classes.get(classId);
   const run = newRun(classId);
-  const c = createCombat({
-    registries: REG, rng: createRng(0xba1a),
-    player: stampedPlayer(run, cls),
-    enemyIds: ['balanceDummy'],
-  });
+  // The live door (engine/runCombat.js): the fight a fresh character gets.
+  const c = createRunCombat({ registries: REG, rng: createRng(0xba1a), run, enemyIds: ['balanceDummy'] });
   let guard = 0;
   while (c.turn <= T && !c.result && guard++ < 4000) botStep(c);
   const dmg = c.eventLog.filter((e) => e.type === 'damageDealt' && e.sourceId === 'player').reduce((a, e) => a + e.amount, 0);
@@ -102,15 +79,11 @@ function measureDps(classId, T = 10) {
 
 // Bot fights one encounter from full HP; returns { win, hpLost }.
 function simFight(classId, enemyIds, seed) {
-  const cls = REG.classes.get(classId);
   const run = newRun(classId);
-  const c = createCombat({
-    registries: REG, rng: createRng(seed),
-    player: stampedPlayer(run, cls),
-    enemyIds,
-  });
+  const c = createRunCombat({ registries: REG, rng: createRng(seed), run, enemyIds });
   let guard = 0;
-  while (!c.result && guard++ < 8000) botStep(c);
+  // A fight still open after 150 turns is conceded, as in runsim.mjs.
+  while (!c.result && guard++ < 8000 && c.turn <= 150) botStep(c);
   // run.maxHp, NOT cls.maxHp: HP has been DERIVED (class base + vigour per
   // point, D17) since the derived-stat train — the class field alone is the
   // wrong denominator for every class.
@@ -320,7 +293,24 @@ P('- It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is');
 P('  unbeatable by construction). Every other number above is a report.');
 P('');
 
-console.log(out.join('\n'));
+// `--check` is the drift gate: regenerate, compare with the committed
+// docs/BALANCE.md, and exit 1 naming the first line that moved. The document
+// is generated, so a content or engine change that moves a number and did not
+// regenerate it is red (tests/balance-doc.test.mjs runs this).
+if (process.argv.includes('--check')) {
+  const { readFileSync } = await import('node:fs');
+  const committed = readFileSync(new URL('../docs/BALANCE.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n');
+  const fresh = out.join('\n').split('\n');
+  const at = fresh.findIndex((line, i) => line !== committed[i]);
+  if (at >= 0 || committed.length !== fresh.length) {
+    const line = at >= 0 ? at : Math.min(fresh.length, committed.length);
+    console.error(`docs/BALANCE.md is stale at line ${line + 1}:\n  committed: ${committed[line] ?? '(end of file)'}\n  generated: ${fresh[line] ?? '(end of file)'}\nRegenerate: node tools/balance.mjs > docs/BALANCE.md`);
+    process.exit(1);
+  }
+  console.log('docs/BALANCE.md is current (balance --check)');
+} else {
+  console.log(out.join('\n'));
+}
 
 // THE ONE ASSERTION, and it is the reason this tool is kept rather than
 // deleted: SPEC §9's acceptance criterion — no encounter unbeatable by

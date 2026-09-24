@@ -657,16 +657,17 @@ export function prologueTint(config, settings = {}, customization = {}) {
   return accent;
 }
 
-// Resolve the real destination NAME without drawing gameplay RNG or assigning a
-// class a region. It used to resolve a painting too; the final scene no longer
-// swaps its artwork for the destination's, and nothing in src/ read `art` — the
-// only thing keeping it alive was a test asserting it. A branch whose sole
-// consumer is its own test is not a feature, it is a claim about behaviour that
-// does not happen.
+// The last painting follows the actual starting region, independently of class.
+// World Journey currently starts at Crownfall; resolve the atlas region so a
+// later profile can use the same selection without consuming any gameplay RNG.
 export function prologueDestination(run = {}) {
   const start = run.journey?.anchors?.start;
-  if (start) return {name: ATLAS.nodes[start]?.displayName || start};
-  return {name: SEATS.find(s=>s.id===run.seatOrder?.[0])?.name || 'Crownfall'};
+  if (start) {
+    const art = { 'hollow-weald': 'weald', 'pale-marches': 'marches', 'cinder-reach': 'reach' }[ATLAS.regionOf(start)] || 'crownfall';
+    return {name: ATLAS.nodes[start]?.displayName || start, art};
+  }
+  const seat = SEATS.find(s=>s.id===run.seatOrder?.[0]);
+  return {name: seat?.name || 'Crownfall', art: seat?.id || 'crownfall'};
 }
 
 export function shouldPlayPrologue(settings = {}, seen = false) {

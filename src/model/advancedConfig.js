@@ -19,8 +19,8 @@ export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
-  playerSpriteScale: 0.9,
-  enemySpriteScale: 0.9,
+  playerSpriteScale: 1,
+  enemySpriteScale: 2,
   playerSpawnRow: 'C',
   enemySpawnRow: 'C',
   playerSpawnColumn: '2',
@@ -33,7 +33,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   frontLayer: 0, backLayer: 200,
   rowALayer: 0, rowBLayer: 0, rowCLayer: 0, rowDLayer: 0, rowELayer: 0, rowFLayer: 0,
   gridShape: 'wide-rhombus', gridLayer: 'behind',
-  playerGridColor: '#d5cc63', enemyGridColor: '#e1a679',
+  playerGridColor: '#0000ff', enemyGridColor: '#ff0000',
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });
@@ -70,6 +70,17 @@ const BALANCE_DOMAINS = Object.freeze({
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
   'atlas.townsPerActMax': Object.freeze({ min: 1 }),
+  // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
+  // read off 5 tops out at 50, which would refuse an exported file written on
+  // the old bases (100, 60, 30) and every larger tuning — and a refused value
+  // aborts the whole import. These are costs and awards with no natural cap.
+  'level.xp.base': Object.freeze({ max: 1000 }),
+  'skill.xp.base': Object.freeze({ max: 1000 }),
+  'skill.class.xp.base': Object.freeze({ max: 1000 }),
+  'xp.combatWin': Object.freeze({ max: 1000 }),
+  'xp.kill.normal': Object.freeze({ max: 1000 }),
+  'xp.kill.elite': Object.freeze({ max: 1000 }),
+  'xp.kill.boss': Object.freeze({ max: 2000 }),
 });
 
 // A balance path this build renamed keeps its stored override: the old key is
@@ -81,7 +92,41 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
 });
 
 export function currentAdvancedKey(key) {
+  if (key === LEGACY_CINDER_KEY) return CINDER_KEY;
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
+}
+
+// THE CINDER MULTIPLIER CHANGED WHAT IT MULTIPLIES (owner, 2026-09-24). His ×20
+// is baked into the authored table now (content/balance.js `rewards.cinders`),
+// so every reader of that table pays the same, and the row is a new key,
+// `progression.cinderMultiplier`, that scales the ×20 table (1 keeps it). The
+// old `progression.rewardMultiplier` scaled the ×1 table, so a stored or
+// exported value is carried across as value ÷ 20: his 20 becomes 1, a 2
+// becomes 0.1, and payouts are unchanged. When both keys are present the new
+// one wins and the old is dropped. A `settings.`-prefixed copy (the export's
+// per-row mirror) is carried the same way.
+const CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.cinderMultiplier`;
+const LEGACY_CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`;
+const LEGACY_CINDER_SCALE = 20;
+const LEGACY_CINDER_KEYS = Object.freeze({
+  [LEGACY_CINDER_KEY]: CINDER_KEY,
+  [`settings.${LEGACY_CINDER_KEY}`]: `settings.${CINDER_KEY}`,
+});
+const legacyCinderValue = (raw) => (typeof raw === 'number' && Number.isFinite(raw) ? raw / LEGACY_CINDER_SCALE : raw);
+
+function withLegacyCinderMultiplier(entries) {
+  if (!entries.some(([key]) => key in LEGACY_CINDER_KEYS)) return entries;
+  const present = new Set(entries.map(([key]) => key));
+  return entries
+    .filter(([key]) => !(key in LEGACY_CINDER_KEYS) || !present.has(LEGACY_CINDER_KEYS[key]))
+    .map(([key, value]) => (key in LEGACY_CINDER_KEYS ? [LEGACY_CINDER_KEYS[key], legacyCinderValue(value)] : [key, value]));
+}
+
+const LEGACY_CINDER_WARNING = 'The Cinder gain multiplier now scales a table that already pays twenty times the old Cinders, so the old multiplier was carried across divided by 20 (20 became 1) and payouts are unchanged.';
+
+/** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
+export function hasLegacyAdvancedSettings(settings = {}) {
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY);
 }
 
 /**
@@ -105,6 +150,11 @@ export { hasLegacyItemRatingSettings };
 
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
+  if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
+    if (!Object.hasOwn(settings, CINDER_KEY)) settings[CINDER_KEY] = legacyCinderValue(settings[LEGACY_CINDER_KEY]);
+    delete settings[LEGACY_CINDER_KEY];
+    if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
+  }
   const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
   if (migrated === settings) return settings;
   for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
@@ -155,7 +205,7 @@ function withoutSupersededLegacy(entries) {
   // They are translated by scene id before anything looks a row up, so an
   // exported file written before the reorder still imports, and lands on the
   // scene it was written for. See migratePrologueEntries.
-  return migratePrologueEntries(entries
+  return migratePrologueEntries(withLegacyCinderMultiplier(entries)
     .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
     .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
@@ -588,12 +638,15 @@ function progressionRows(bundle) {
     {
       // Cinders only — it never touched XP, whatever its old label said — so it
       // is filed with the Cinders it multiplies (Rewards → Combat rewards).
-      cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.05,
+      // A new key (was `progression.rewardMultiplier`, which scaled a table
+      // twenty times smaller; see LEGACY_CINDER_KEY). Steps of 0.01 so a
+      // carried-across 0.1 or 0.025 is a value the row can show and keep.
+      cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.01,
       min: 0, max: 20, def: 1,
-      key: `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`,
+      key: CINDER_KEY,
       label: 'Cinder gain multiplier',
-      note: 'Multiply Cinders earned from combat rewards. 1 keeps authored rewards. Applies to a new run.',
-      specialKey: 'rewardMultiplier', searchPath: 'progression experience exp cinder reward gain multiplier',
+      note: 'Multiply Cinders earned from combat rewards. 1 keeps the authored table. Applies to a new run.',
+      specialKey: 'cinderMultiplier', searchPath: 'progression experience exp cinder reward gain multiplier',
     },
   ];
 }
@@ -810,8 +863,11 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
     for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));
   }
-  const rewardMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`]);
-  if (Number.isFinite(rewardMultiplier) && configured.balance.rewards?.cinders) {
+  // Read through the legacy map, so a run snapshot that still carries the old
+  // `rewardMultiplier` pays what it paid when it was written.
+  const cinderSetting = Object.fromEntries(withLegacyCinderMultiplier(Object.entries(settings)))[CINDER_KEY];
+  const rewardMultiplier = cinderSetting === undefined ? NaN : Number(cinderSetting);
+  if (Number.isFinite(rewardMultiplier) && rewardMultiplier !== 1 && configured.balance.rewards?.cinders) {
     for (const range of Object.values(configured.balance.rewards.cinders)) {
       if (!Array.isArray(range)) continue;
       for (let index = 0; index < range.length; index += 1) range[index] = Math.max(0, Math.round(range[index] * rewardMultiplier));
@@ -1096,6 +1152,9 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
   const overrides = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  // The old Cinder multiplier is carried across as ÷ 20 by withoutSupersededLegacy
+  // below, before an unknown key could refuse the file; said here, once.
+  if (Object.keys(overrides).some((key) => key in LEGACY_CINDER_KEYS && !Object.hasOwn(overrides, LEGACY_CINDER_KEYS[key]))) warnings.push(LEGACY_CINDER_WARNING);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
