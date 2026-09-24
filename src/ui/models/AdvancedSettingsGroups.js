@@ -22,30 +22,85 @@ export function advancedSection(row) {
   if (row.key === 'creationAutoAdvance') return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
   if (BATTLEFIELD.test(row.key)) return 'Battlefield';
-  // The legacy draw and poise conversions share their quantity with a whole
-  // tab each; they are filed beside the rows that win (see `topic`).
-  if (/^gameConfig\.derivedStatRules\.rules\.draw\./.test(row.key)) return 'Hand & Draw';
-  if (/^gameConfig\.derivedStatRules\.rules\.poise\./.test(row.key)) return 'Ratings & Resistance';
   return row.advancedGroup || 'Interface';
 }
 
-// The topic that holds every row whose quantity another row replaces while a
-// switch is on. Named once: `topic` files into it and `advancedSubgroups`
-// sorts it last.
+// The subsections that hold every row whose quantity another row replaces
+// while a switch is on. Named once: `statsSection` files into them and
+// `advancedSubgroups` draws them after every row that is in force.
 export const WITHOUT_RATINGS = 'Without ratings (legacy poise)';
 export const DRAW_FALLBACK = 'Co-op & legacy fallback';
 
+// ---- ONE TOPIC PER TRAIT (owner, 2026-09-21) --------------------------------
+//
+// "I'm editing the same thing in multiple locations … think 3NF but for the
+// menus", and "stat conversion should be its own section under stats, and have
+// sub sections for actions, draw, hp, stamina mana, etc, but it should include
+// everything pertaining to that trait instead of in 5 different menus".
+// Actions, Draw, HP, Stamina, Mana, Poise and Ward were spread over Hand &
+// Draw, Stats & Defence, Progression → Stats & resources and the Combat
+// constants. They are one Advanced → Stats tab: a topic per trait, each with
+// every row that decides it, drawn in short subsections.
+const DERIVED_TOPICS = Object.freeze({ energy: 'Actions', draw: 'Draw & hand', hp: 'HP', stamina: 'Stamina', mana: 'Mana', poise: 'Poise' });
+const RATING_TOPICS = Object.freeze({ ar: 'Attack rating (AR)', dr: 'Defence rating (DR)', pr: 'Power rating (PR)', poise: 'Poise', ward: 'Ward' });
+
+/** The Stats topics, in reading order: resources first, then the ratings, then the tables. */
+export const STATS_TOPICS = Object.freeze([
+  'Overview', 'Actions', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
+  'Attack rating (AR)', 'Defence rating (DR)', 'Power rating (PR)',
+  'Resistance', 'Impact', 'Breaks', 'Status resistance', 'Status bonuses',
+]);
+
+// Subsections inside a Stats topic, in the order they are drawn. A topic
+// shows only the ones it has rows for.
+const STATS_SECTIONS = Object.freeze([
+  'Ratings', 'Rating formula', 'Formula', 'Level growth',
+  'Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards', DRAW_FALLBACK,
+  'Resistance & breaks', 'Mana cards', WITHOUT_RATINGS,
+]);
+
+const statsPath = (row) => row.key.replace(/^gameConfig\.(balance\.)?/, '');
+
+function statsTopic(row) {
+  const path = statsPath(row);
+  if (row.derivedStatId) return DERIVED_TOPICS[row.derivedStatId] || words(row.derivedStatId);
+  if (row.handTopic || path === 'handMax') return 'Draw & hand';
+  if (/^(poise|stagger)\./.test(path)) return 'Poise';
+  if (/^mana\./.test(path)) return 'Mana';
+  const rating = /^combatRatings\.ratings\.(\w+)\./.exec(path);
+  if (rating) return RATING_TOPICS[rating[1]] || words(rating[1]);
+  if (/^combatRatings\.(resistance\.physicalK|breaks\.poiseActionLoss)$/.test(path)) return 'Poise';
+  if (/^combatRatings\.(resistance\.magicalK|breaks\.wardActionLoss)$/.test(path)) return 'Ward';
+  if (!row.statTopic || row.statTopic === 'General') return 'Overview';
+  return row.statTopic;
+}
+
+/**
+ * statsSection(row) → the subsection heading a Stats row is drawn under, or
+ * null for a topic that is one flat list (the per-item tables).
+ */
+export function statsSection(row) {
+  const path = statsPath(row);
+  if (row.derivedStatId === 'poise' || /^(poise|stagger)\./.test(path)) return WITHOUT_RATINGS;
+  if (row.derivedStatId === 'draw' || path === 'handMax') return DRAW_FALLBACK;
+  if (row.settingSection) return row.settingSection;
+  if (/^mana\./.test(path)) return 'Mana cards';
+  if (/^combatRatings\.(enabled|multiplier)$/.test(path)) return 'Ratings';
+  if (/^combatRatings\.ratings\./.test(path)) return 'Rating formula';
+  if (/^combatRatings\.(resistance\.(physicalK|magicalK)|breaks\.(poise|ward)ActionLoss)$/.test(path)) return 'Resistance & breaks';
+  return null;
+}
+
 // ---- ONE READING ORDER FOR THE WHOLE CLIMB (owner, 2026-09-21, #1253) -------
 //
-// "I want level up and starting stats to be together too", and the stat and
-// resource formulas with them: what a character opens with, what a level adds,
-// and what every point of every attribute is worth — in that order, with
-// nothing between them. The floors and the per-class tables follow, because
-// they are bounded by the three above rather than read alongside them.
+// "I want level up and starting stats to be together too": what a character
+// opens with, then what a level adds, with nothing between them. What every
+// point of every attribute is worth is a topic per trait under Stats, each
+// with its own growth per level. The floors and the per-class tables follow,
+// because they are bounded by the two above rather than read alongside them.
 const PROGRESSION_TOPIC_ORDER = Object.freeze([
   'Assign points',
   'Level-up',
-  'Stats & resources',
   'Equipment requirements',
 ]);
 
@@ -78,12 +133,10 @@ function talentTopic(path) {
 }
 
 function topic(row, section) {
+  // A row's own-value switch (#1260) is filed where the row it gates is.
   const key = row.own ? memberOfOwnKey(row.key) : row.key;
+  if (section === 'Stats') return statsTopic(key === row.key ? row : { ...row, key });
   const path = key.replace(/^gameConfig\.(balance\.)?/, '');
-  // Rows that share a quantity with another tab's rows are filed together,
-  // before any row's own topic is consulted.
-  if (section === 'Hand & Draw' && (path === 'handMax' || /^derivedStatRules\.rules\.draw\./.test(path))) return DRAW_FALLBACK;
-  if (section === 'Ratings & Resistance' && (/^(poise|stagger)\./.test(path) || /^derivedStatRules\.rules\.poise\./.test(path))) return WITHOUT_RATINGS;
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
@@ -184,10 +237,24 @@ export function advancedSubgroups(rows, section) {
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   };
-  if (section === 'Hand & Draw') byOrder(['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards', DRAW_FALLBACK]);
+  if (section === 'Stats') {
+    byOrder(STATS_TOPICS);
+    // Each subsection is one unbroken run of rows, so its heading is drawn
+    // once, and the rows a switch turns off come after every row in force. A
+    // stable sort keeps the authored order inside a subsection.
+    const rank = (id) => (STATS_SECTIONS.indexOf(id) < 0 ? STATS_SECTIONS.length : STATS_SECTIONS.indexOf(id));
+    for (const group of result) {
+      // An override switch (#1260) ranks with the row it governs, so the
+      // re-sort cannot pull it away from the number it gates.
+      const governed = (row) => (row.own ? group.rows.find((other) => !other.own
+        && (other.key === memberOfOwnKey(row.key) || other.key.startsWith(`${memberOfOwnKey(row.key)}.`))) || row : row);
+      group.rows = group.rows
+        .map((row, index) => ({ row, index, at: rank(statsSection(governed(row))) }))
+        .sort((a, b) => a.at - b.at || a.index - b.index)
+        .map(({ row }) => row);
+    }
+  }
   if (section === 'Battlefield') byOrder(['Formation layout', 'Formation grid', 'Characters', 'Movement']);
-  // The rows a switch turns off go last, after every row that is in force.
-  if (section === 'Ratings & Resistance') result.sort((a, b) => Number(a.id === WITHOUT_RATINGS) - Number(b.id === WITHOUT_RATINGS));
   // Modals, then Menus, then Scenes: outermost surface first, and the order the
   // catalogue itself is written in — discovered, not restated, so the two
   // cannot disagree about which family comes first. Cards and the settings
@@ -212,21 +279,13 @@ export function advancedSubgroups(rows, section) {
   if (section === 'Progression') {
     // Assign points first: it is the driver, and every class table under it is
     // rescaled by it. Level-up next, because a level spends the same points on
-    // the same rows; then the rows themselves, in the one format (#1253); then
-    // the equipment floor under all of it — the least a character can carry is
+    // the same rows (what those points turn into is under Stats); then the
+    // equipment floor under all of it — the least a character can carry is
     // whatever the starting kits ask for — and only then the class tables they
     // bound. A topic not named here keeps its discovered order, after the
     // named ones.
     byOrder([...PROGRESSION_TOPIC_ORDER, ...CLASS_TOPICS, 'Experience',
       'Skill xp', 'Skill class', 'Skill unlocks', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
-    // The pools he named first ("mp hp and every resource"), then the ratings
-    // they now read like — each block in its own authored order.
-    const stats = result.find((group) => group.id === 'Stats & resources');
-    if (stats) {
-      const pool = (row) => (row.key.startsWith('gameConfig.derivedStatRules.') ? 0 : 1);
-      stats.rows = stats.rows.map((row, index) => [row, index])
-        .sort(([a, i], [b, j]) => pool(a) - pool(b) || i - j).map(([row]) => row);
-    }
   }
   return result;
 }

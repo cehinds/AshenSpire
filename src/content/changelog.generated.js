@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1261",
+    "id": "pr-1252",
     "date": "2026-09-23",
     "group": "2026-09-23",
-    "summary": "Towns keep a quest board, and taking or turning in a quest is a conversation",
-    "detail": "Every town's inn now has a Quest board beside its rest: it lists the quests posted anywhere in town, whether each can be taken, is under way, is ready to hand in or is done, and a journal of the quests your run has started and finished — the Grave of the Nameless as well as the wardens' surveys. The warden's spot on the town map opens the same board. Taking a quest or turning one in is no longer a button press: the Road Warden speaks, and you answer — Accept the quest or Not now, and on your return, after the report of what you found, Collect 25 cinders. A quest pays its reward once, even across a reload, and shows as done on the board afterwards. Reading the board costs nothing; the inn's rest is still waiting when you close it.",
-    "build": "0.7.1.429",
-    "pullRequest": 1261,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1261"
+    "summary": "Every stat has one topic in Settings, and each one shows its sum as you change it",
+    "detail": "Actions, Draw, HP, Stamina, Mana, Poise and Ward were spread over Hand & Draw, Stats & Defence, Character & progression's stat formulas and the Poise, stagger and Mana rows under Combat. Advanced now has one Stats tab with a topic for each trait, and each topic holds all of it under short headings: its formula (a starting value, what each attribute point is worth, and what each level adds), its rating formula, its resistance and break rows, and for Poise and Draw the older rows used only when ratings are off or in co-op. Draw & hand keeps the opening hand, turn draws, hand capacity and discards together. Above the controls, a worked example shows the whole calculation and total for your current character, or outside a run for a new character of the class you pick, with starting relics included — for example HP at level 1: 30 base + 10 from Forsaken Medallion + CON 2 × 4 → 8 = 48. It updates as soon as you change a number, says how many more points of an attribute would raise the stat, and Overview shows the full stat block. Labels now name the trait and what the number buys (HP per Constitution point, Opening hand — Base cards).",
+    "build": "0.7.1.437",
+    "pullRequest": 1252,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1252"
   },
   {
     "id": "pr-1260",
