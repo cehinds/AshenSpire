@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1294",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Fights pay their normal Cinders again",
+    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders. Character creation now offers two ways to set your stats: Standard opens on your class's own spread — mostly 1s, with its three points already placed (the Starseer starts with Intelligence 3) — ready to go, and Assign points starts every stat at 1 with 3 points for you to place, a number you can change in Advanced settings. Your opening hand now depends on your class: a base of 3 (Reaver), 4 (Rogue, Herald) or 5 (Starseer), plus one card once your class's main stat reaches 3, so a Standard character opens with 4 to 6 cards.",
+    "build": "0.7.1.486",
+    "pullRequest": 1294,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+  },
+  {
     "id": "pr-1304",
     "date": "2026-09-24",
     "group": "2026-09-24",
