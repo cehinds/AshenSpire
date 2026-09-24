@@ -519,7 +519,8 @@ const OPTIONS = [
 
 test('the co-op reward door lays out the chest and sends the index tapped; a stale catch-up option is disabled', async () => {
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const { app, sent } = await mountCoopScreen({
       ...baseSnap, party: partyRows(),
@@ -548,13 +549,15 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     assert.equal(cu.sent.at(-1).t, 'catchupChoice');
     assert.equal(cu.sent.at(-1).pick.chestIndex, 0);
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
 
 test('couch co-op: each local seat stages its own reward pick; switching seats neither loses nor transfers it (PR #1287 review)', async () => {
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     // Two seats on one screen whose offers serialize identically.
     const offer = () => ({ pool: 'elite', cardIds: ['stomp', 'executioner'], cinders: 1, chest: { options: OPTIONS } });
@@ -588,6 +591,7 @@ test('couch co-op: each local seat stages its own reward pick; switching seats n
     assert.equal(sent.at(-1).pick.cardId, null);
     assert.equal(sent.at(-1).pick.chestIndex, 0);
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
@@ -609,7 +613,8 @@ test('a seat that re-sends its chest pick is granted the chest once', () => {
 
 test('one elite door: the card AND a chest option are staged and land together (Codex P1)', async () => {
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const offer = { pool: 'elite', cardIds: ['stomp', 'executioner'], cinders: 1, chest: { options: OPTIONS } };
     const { app, sent } = await mountCoopScreen({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: offer } } });
@@ -642,6 +647,7 @@ test('one elite door: the card AND a chest option are staged and land together (
     assert.equal(m.run.deck.length, deck + 1);
     assert.equal(m.run.cinders, cinders + 90);
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
@@ -756,7 +762,8 @@ for (const row of NO_SUBSTITUTE_ROWS) {
 
 test('the catch-up screen keeps a boss choice selectable and draws a spent treasure relic disabled', async () => {
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const ids = BOSS_IDS.slice(0, 3);
     const boss = await mountCoopScreen({
@@ -781,6 +788,7 @@ test('the catch-up screen keeps a boss choice selectable and draws a spent treas
     tr.app.querySelector('.coop-continue').click();
     assert.equal(tr.sent.at(-1).pick.takeRelic, false, 'the disabled take is not staged');
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
@@ -843,7 +851,8 @@ test('a finale that arrives while the enemy turn plays is still played before th
   const realInterval = globalThis.setInterval;
   const queued = [];
   globalThis.setTimeout = (fn, _ms, ...a) => { queued.push(() => fn(...a)); return queued.length; };
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   const tick = () => new Promise((r) => setImmediate(r));
   try {
     const S = party('FINALEPACE');
@@ -875,6 +884,7 @@ test('a finale that arrives while the enemy turn plays is still played before th
     assert.ok(app.querySelector('.coop-continue'), 'then the reward door drew');
   } finally {
     globalThis.setTimeout = realTimeout;
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
@@ -896,7 +906,8 @@ test('the LAN host sends a refused reward or catch-up choice back, and the scree
   assert.equal(applyGameIntent(S, 'p1', { t: 'noSuchIntent' }).handled, false);
 
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const { deliver, message } = await mountCoopBoard();
     deliver({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: chestOffer([purse]) } } });
@@ -905,6 +916,7 @@ test('the LAN host sends a refused reward or catch-up choice back, and the scree
     assert.ok(shown, 'the refusal is announced');
     assert.match(shown.textContent, /already chosen/);
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
@@ -913,7 +925,8 @@ test('the LAN host sends a refused reward or catch-up choice back, and the scree
 
 test('co-op damage floats carry solo\'s within-tier --dmg-scale, so 24 reads bigger than 16', async () => {
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const { guardHitFloatParts } = await import('../src/ui/fx.js');
     const S = party('DMGSCALE');
@@ -953,6 +966,7 @@ test('co-op damage floats carry solo\'s within-tier --dmg-scale, so 24 reads big
     assert.equal(scaleOf('-24'), want(24));
     assert.notEqual(scaleOf('-16'), scaleOf('-24'), 'two hits in one tier do not render the same size');
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });

@@ -166,7 +166,8 @@ const baseSnap = { actNumber: 1, floor: 4, seedString: 'X', endless: false, seat
 test('the co-op reward screen lays out one option per boss relic and sends the one tapped', async () => {
   // coop.js starts pad/fullscreen polls on mount; unref'd so the file can exit.
   const realInterval = globalThis.setInterval;
-  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const liveIntervals = []; // cleared in finally: a mounted screen's gamepad poll must not outlive the test
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
   try {
     const { app, sent } = await mountCoopScreen({
       ...baseSnap, party: partyRows(),
@@ -205,6 +206,7 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
     elite.app.querySelector('.coop-continue').click();
     assert.equal(elite.sent.at(-1).pick.relicId, 'forsakenMedallion');
   } finally {
+    for (const h of liveIntervals) clearInterval(h);
     globalThis.setInterval = realInterval;
   }
 });
