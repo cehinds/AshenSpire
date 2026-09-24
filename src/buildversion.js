@@ -247,7 +247,7 @@ export const RUN_PATH = 'UNPLACED';
 // ---------------------------------------------------------------------------
 // THE EDITION — WHICH OF THE TWO SINGLE FILES THIS IS. `full` carries assets/
 // as authored; `mobile` carries the shrunken twins from assets-mobile/ and is
-// held under 50 MB (tools/mobileart-policy.mjs). Same digest, same ordinal,
+// held under 30 MB (tools/mobileart-policy.mjs). Same digest, same ordinal,
 // different art — so this is the one fact that tells a bug report's screenshot
 // of a soft sprite from a bug about the sprite. The source tree served by
 // tools/serve.mjs IS the full art, so `full` is this file's honest resting

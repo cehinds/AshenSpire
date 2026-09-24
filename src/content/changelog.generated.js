@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
     "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
-    "build": "0.7.1.459",
+    "build": "0.7.1.457",
     "pullRequest": 1275,
     "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
+    "id": "pr-1273",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "New characters start on the owner's tuned rules, the stat choice reads Assigned, and the mobile edition is under 30 MB",
+    "detail": "The owner's saved game configuration is now what every new player starts with: fixed turn draws, with Intelligence growing your opening hand, turn draws and hand capacity; three flask charges shared between Crimson and Azure; 20 cinders to start and twenty times the cinders from every fight; quicker levels, weapon and class skills; HP, Mana, Stamina, Actions and draw that read several attributes instead of one; new attack, defence and resistance weights; and a two-row battlefield with larger enemies. The one stat allocation at character creation is now called Assigned. The mobile download shrank from 49 MB to 29 MB — its art is recompressed smaller, with backdrops kept sharper than the rest — and plays the same. Settings you have already chosen keep their values.",
+    "build": "0.7.1.456",
+    "pullRequest": 1273,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
     "id": "pr-1270",
