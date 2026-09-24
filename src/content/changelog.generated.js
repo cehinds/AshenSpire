@@ -3,14 +3,34 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1294",
+    "id": "pr-1281",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Fights pay their normal Cinders again",
-    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders.",
+    "summary": "Behind the scenes: every card, relic and event has a way in",
+    "detail": "Nothing you play changes. A new check walks the game's content and finds a route by which each card, relic and event can actually reach a player, so nothing authored sits unreachable.",
+    "build": "0.7.1.466",
+    "pullRequest": 1281,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1281"
+  },
+  {
+    "id": "pr-1280",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: leaving a fight and coming back is now tested",
+    "detail": "Nothing you play changes. A new automated test abandons a run in the middle of a fight, reloads it, and checks that you land back at the fight's start with the same deck, HP and enemies, as the spec promises.",
     "build": "0.7.1.465",
-    "pullRequest": 1294,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+    "pullRequest": 1280,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1280"
+  },
+  {
+    "id": "pr-1275",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
+    "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
+    "build": "0.7.1.464",
+    "pullRequest": 1275,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1275"
   },
   {
     "id": "pr-1274",
@@ -43,6 +63,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last journey scene shows the road you actually set out on",
+    "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
+    "build": "0.7.1.456",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Herald phones get the full-body figure too",
+    "detail": "The Herald's new full-body painting from #1268 reached desktop but not the phone edition, which kept showing the old head-and-shoulders crop. The five Herald sprites in the mobile art set now show the whole figure, boots included, as they do on desktop.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
+  },
+  {
     "id": "pr-1272",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -61,6 +101,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.449",
     "pullRequest": 1267,
     "url": "https://github.com/cehinds/AshenSpire/pull/1267"
+  },
+  {
+    "id": "pr-1268",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The Herald's full-body portrait ships",
+    "detail": "The Herald's sprites are recut from a full-body plate, in one pose-cutout pass that cut all four classes. The Herald's anchor, measured on the old bust, is cleared rather than carried onto art it was never measured against.",
+    "build": "0.7.1.447",
+    "pullRequest": 1268,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1268"
+  },
+  {
+    "id": "pr-1269",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: a written drive to a shippable 1.0",
+    "detail": "Nothing you see in the game changes. The repository gains a /finish skill: a resumable checklist that runs waves of parallel agents, one reviewed pull request per task, within the game's specification and contribution rules.",
+    "build": "0.7.1.446",
+    "pullRequest": 1269,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1269"
   },
   {
     "id": "pr-1266",
@@ -141,6 +201,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1262",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: a written production-polish pass",
+    "detail": "Nothing you see in the game changes. The repository gains a /polish skill: a production-polish prompt and roadmap template, which acts only on request and leaves release decisions and the specification's rules to the owner.",
+    "build": "0.7.1.405",
+    "pullRequest": 1262,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1262"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: the card wireframes describe the card the game draws now",
+    "detail": "Nothing you see in the game changes. A new wireframe document and its generator record the playing card as it is currently drawn, and the card-anatomy mockup is redrawn to match.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",
