@@ -596,13 +596,18 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      // THE COUNTERS THE SAVE HOLDS: the auto picks draw before any row lands,
-      // so a refused save must also hand the draws back — to the counters the
-      // last landed save wrote (none yet: those before the picks) — or a retry
-      // picks a different card, relic or chest option than a reload would.
+      // THE COUNTERS THE SAVE HOLDS: each row's auto pick is drawn just
+      // before that row lands (resolved one row at a time, in plan order), so
+      // every landed save carries only the draws of the rows it holds. A
+      // refused save hands its row's draw back — to the counters the last
+      // landed save wrote — so a retry picks the same card, relic or chest
+      // option a reload of that checkpoint would, whichever row refused.
       let savedCounters = rng && rng.getCounters ? rng.getCounters() : null;
-      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
-      for (const row of toTake) {
+      let took = 0;
+      for (const planRow of plan.rows) {
+        const [row] = resolveContinue({ ...plan, rows: [planRow] }, states, mode, pickFn).take;
+        if (!row) continue;
+        took++;
         const before = snapshotForRollback();
         // A chest pick that cannot land (the bag filled after the plan was
         // drawn) falls back to another takeable option rather than dropping
@@ -623,7 +628,7 @@ export function mountRewards(app, {
           if (savedCounters) savedCounters = rng.getCounters();
         }
       }
-      if (toTake.length) sfx.play('rewardTake');
+      if (took) sfx.play('rewardTake');
       onDone(chosenCardId);
     };
     // The action is registered in secondbeat's enumerable table, so native

@@ -191,6 +191,35 @@ test('a refused Continue hands its auto-pick draws back, so the retry picks what
   }
 }));
 
+test('a Continue refused at a LATER choice row hands back only that row\'s draw, so the retry picks what a reload would', () => withDom((dom) => {
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  const saves = { loadMeta: () => ({ settings: { rewardCollect: 'auto' } }), saveMeta() {} };
+  const cardIds = REG.cards.all().filter((c) => c.rarity !== 'starter' && !c.unplayable).slice(0, 3).map((c) => c.id);
+  assert.equal(cardIds.length, 3);
+  // Two choice rows (the card offer, then the boss relic), both drawn on the
+  // cardRewards stream. The first save lands; the second (the relic's) is
+  // refused once, then the retry lands.
+  const collect = (seed, refuseSecond) => {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = freshRun();
+    const rng = createRng(seed);
+    let saveCalls = 0;
+    const onPersist = () => { saveCalls++; return !(refuseSecond && saveCalls === 2); };
+    mountRewards(app, { registries: REG, run, rng, saves, checkpoint: { states: {}, chosenCardId: null, chosenRelicId: null }, rewards: { ...offer(), cardIds }, onDone() {}, onPersist });
+    if (refuseSecond) {
+      assert.throws(() => app.querySelector('#reward-continue').click(), /Reward save was refused/);
+      assert.deepEqual(run.relics, [], 'the refused relic save granted nothing');
+      assert.equal(run.deck.length, 1, 'the card row landed before the refusal');
+    }
+    app.querySelector('#reward-continue').click();
+    return { deck: run.deck.map((c) => c.cardId), relics: run.relics, counters: rng.getCounters() };
+  };
+  for (let seed = 1; seed <= 12; seed++) {
+    assert.deepEqual(collect(seed, true), collect(seed, false), `seed ${seed}: same card, same relic, same counters`);
+  }
+}));
+
 test('a corrupt or stale boss relic choice is refused at the save doors, by name', async () => {
   const { createRunState, validateRunShape } = await import('../src/model/state.js');
   const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
