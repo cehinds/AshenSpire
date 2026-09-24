@@ -13,7 +13,8 @@ test('every canonical equipment item has complete card facts, bonuses and availa
     assert.equal(m.name, p.name);
     assert.equal(m.bonuses.length, p.mods.filter(raw => !(p.kind === 'armor' && /^defend\.block=[+-]/.test(raw))).length);
     assert.equal(m.tags.length, p.tags.length);
-    assert.ok(m.facts.every(f => Number.isFinite(f.value) && f.explanation));
+    // A scaling grade (SPEC §13.4o) is a letter fact; every other fact is a number.
+    assert.ok(m.facts.every(f => (f.grade ? /^[A-Z]$/.test(f.value) : Number.isFinite(f.value)) && f.explanation));
     assert.ok(m.bonuses.every(b => b.explanation && !b.label.includes('undefined')));
     assert.ok(existsSync(p.kind === 'armor' ? armourMenuAsset(p.classId,p.id) : armamentIconAsset(p)), p.id);
   }

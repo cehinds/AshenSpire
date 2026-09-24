@@ -54,6 +54,7 @@ import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
+import { weaponScalingProblems } from './ratingFormula.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
   itemRefIdentity,
@@ -677,6 +678,14 @@ function collectContentProblems(bundle, errors = []) {
       for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
+    }
+  }
+  // Weapon scaling grades (SPEC §13.4o): the anchor and the grade table the
+  // run snapshots at birth. Refused by name, never clamped.
+  if (b.balance && b.balance.weaponScaling !== undefined) {
+    for (const problem of weaponScalingProblems(b.balance.weaponScaling)) {
+      const [path, ...rest] = problem.split(': ');
+      err(path, rest.join(': '));
     }
   }
   if (b.balance && b.balance.deck !== undefined) {

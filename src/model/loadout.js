@@ -4,7 +4,7 @@ import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
-import { defaultRatingFormula, effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
+import { defaultRatingFormula, effectiveEquipmentRating, ratingIds, weaponScalingProblems } from './ratingFormula.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -369,6 +369,23 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!pieces.some((piece) => piece.id === row.itemId)) problems.push(`equipmentRequirements.csv: unknown item '${row.itemId}'`);
     if (!attributeIds.has(row.attributeId)) problems.push(`equipmentRequirements.csv: unknown attribute '${row.attributeId}'`);
     if (!Number.isInteger(row.minimum) || row.minimum < 0) problems.push(`${key}: minimum must be a non-negative integer`);
+  }
+  // WEAPON SCALING GRADES (SPEC §13.4o): a junction row names a real armament,
+  // a real attribute and a grade the balance table prices. Armour carries no
+  // attack rating, so an armour row is refused rather than silently ignored.
+  const gradeTable = registries.balance?.weaponScaling?.grades || {};
+  const scalingKeys = new Set();
+  for (const row of eq.weaponScaling || []) {
+    const key = `${row.itemId}:${row.attributeId}`;
+    if (scalingKeys.has(key)) problems.push(`weaponScaling.csv: duplicate '${key}'`);
+    scalingKeys.add(key);
+    if (!(eq.armaments || []).some((piece) => piece.id === row.itemId)) {
+      problems.push((eq.armour || []).some((piece) => piece.id === row.itemId)
+        ? `weaponScaling.csv: '${row.itemId}' is armour — only an armament's attack rating is graded`
+        : `weaponScaling.csv: unknown item '${row.itemId}'`);
+    }
+    if (!attributeIds.has(row.attributeId)) problems.push(`weaponScaling.csv: unknown attribute '${row.attributeId}'`);
+    if (!Object.hasOwn(gradeTable, row.grade)) problems.push(`weaponScaling.csv: ${key} grade '${row.grade}' is not in balance.weaponScaling.grades (${Object.keys(gradeTable).join(', ') || 'none'})`);
   }
   const exceptionKeys = new Set();
   for (const row of eq.cardEquipmentExceptions || []) {
@@ -1032,7 +1049,12 @@ export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
     }
   }
   const rarityBonuses = structuredClone(((registries.balance || {}).equipment || {}).rarityBonuses || {});
-  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses }, registries);
+  // THE GRADE TABLE RIDES THE RUN (SPEC §13.4o), so a retune of
+  // balance.weaponScaling never re-prices a climb in progress, and a run born
+  // before the table existed (no field) keeps reading every weapon flat.
+  const liveScaling = (registries.balance || {}).weaponScaling;
+  const weaponScaling = liveScaling ? { anchor: liveScaling.anchor, grades: Object.fromEntries(Object.entries(liveScaling.grades || {})) } : undefined;
+  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses, ...(weaponScaling ? { weaponScaling } : {}) }, registries);
 }
 
 /** Validate and clone a saved equipment scaling snapshot without live-data repair. */
@@ -1072,6 +1094,10 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
     for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
   }
+  if (snapshot.weaponScaling !== undefined) {
+    const problems = weaponScalingProblems(snapshot.weaponScaling, 'equipment profile snapshot weaponScaling');
+    if (problems.length) throw new Error(problems.join('; '));
+  }
   if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
   for (const [rarity, bonuses] of Object.entries(snapshot.rarityBonuses)) {
     if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) throw new Error(`rarityBonuses.${rarity} must be an object`);
@@ -1110,7 +1136,12 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
   const ratingConfig = registries.balance?.combatRatings || defaultRatingFormula;
-  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId);
+  // The run's own grade table (SPEC §13.4o) prices the ATTACK role only — the
+  // strike the weapon throws; its guard and technique cards keep the flat
+  // rating. A snapshot born before the table has none, and every weapon it
+  // holds reads flat.
+  const scaling = row.role === 'attack' ? (equipmentProfileRuleSnapshot.weaponScaling || null) : null;
+  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, scaling);
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
   const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
@@ -1130,6 +1161,24 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
     cap: rule.cap,
     value,
   };
+}
+
+/**
+ * deckCardReceipt(registries, run, inst, attributes) → the amount receipt the
+ * next stampDeck would write onto this equipment-bound instance, priced at
+ * `attributes` (the run's own when omitted) — the same row construction
+ * stampDeck uses, so a surface asking "what would one more point do to this
+ * Strike" reads the one door, never a copy (SPEC §13.4o). Null for an
+ * instance that no equipment role prices.
+ */
+export function deckCardReceipt(registries, run, inst, attributes = run.attributes) {
+  if (!inst || !(inst.equipmentRole === 'attack' || inst.kitRole)) return null;
+  const snapshot = restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries);
+  const profile = profileById(registries, inst.profileId);
+  if (!profile) return null;
+  const owner = inst.kitRole ? inst.grantedBy : inst.weaponId;
+  const piece = owner ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null : null;
+  return roleAmountReceipt(registries, { role: inst.kitRole || 'attack', profile, piece }, attributes, snapshot);
 }
 
 /** Calculation receipts for card base + source-equipment rating + rarity. */

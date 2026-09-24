@@ -49,7 +49,7 @@ export const MAX_SKILL_ROWS = 3;
  * door and it crosses the save: main.js composes it here rather than inline,
  * so what a reload resumes is the same derivation a test can hold.
  */
-export function combatXpGains({ receipt = null, awards = [], levelGained = 0 } = {}) {
+export function combatXpGains({ receipt = null, awards = [], levelGained = 0, levelUps = 0 } = {}) {
   const tracks = {};
   const add = (id, xp) => {
     if (typeof id !== 'string' || !id || !(Number.isFinite(xp) && xp > 0)) return;
@@ -57,7 +57,12 @@ export function combatXpGains({ receipt = null, awards = [], levelGained = 0 } =
   };
   for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
   for (const award of awards || []) if (award) add(award.skillId, award.gained);
-  return { level: Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0, tracks };
+  // `levelUps` — the character levels this fight CLIMBED (SPEC §13.4o), the
+  // one fact the spoils door's level banner needs and cannot re-derive: the
+  // ledger it reads is already paid. Written only when positive, so an offer
+  // that climbed nothing (and one saved before the field) has the old shape.
+  const climbed = Number.isInteger(levelUps) && levelUps > 0 ? levelUps : 0;
+  return { level: Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0, tracks, ...(climbed ? { levelUps: climbed } : {}) };
 }
 
 /** A class row from either registry shape (a registry, or the authored array). */
@@ -160,4 +165,20 @@ export function rewardProgress(registries, run, gains = null, { maxSkills = MAX_
   const character = characterProgress(registries, run, level);
   const { rows, hidden } = skillProgress(registries, run, tracks, { maxSkills });
   return Object.freeze({ character, skills: Object.freeze(rows), hidden });
+}
+
+/**
+ * levelUpMoment(run, gains) → { level, levelUps, points } | null — the spoils
+ * door's level banner (SPEC §13.4o): drawn when this fight climbed at least
+ * one character level. The level and the waiting points are read LIVE off the
+ * run (a reload after assigning at a shrine would not re-open this door), the
+ * climb off the offer's receipt. An offer without `levelUps` — one that
+ * climbed nothing, or one saved before the field — is no banner.
+ */
+export function levelUpMoment(run, gains) {
+  const levelUps = gains && Number.isInteger(gains.levelUps) && gains.levelUps > 0 ? gains.levelUps : 0;
+  if (!levelUps) return null;
+  const ledger = levelOf(run);
+  const points = Number.isInteger(ledger.unspentPoints) && ledger.unspentPoints > 0 ? ledger.unspentPoints : 0;
+  return Object.freeze({ level: characterLevel(run), levelUps, points });
 }

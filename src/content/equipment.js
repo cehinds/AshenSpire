@@ -25,6 +25,7 @@ import { basicCardProfiles } from './generated/basicCardProfiles.js';
 import { cardExposure } from './generated/cardExposure.js';
 import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
+import { weaponScaling } from './generated/weaponScaling.js';
 import { itemUpgradeChanges } from './generated/itemUpgradeChanges.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
 import { equipmentGrants } from './generated/equipmentGrants.js';
@@ -49,10 +50,17 @@ export function itemTypeLabel(tag) {
     .join(' ');
 }
 
-function normPiece(row) {
+function normPiece(row, { armour = false } = {}) {
   const attributes = Object.fromEntries(equipmentRequirements
     .filter((requirement) => requirement.itemId === row.id)
     .map((requirement) => [requirement.attributeId, requirement.minimum]));
+  // SCALING GRADES (SPEC §13.4o): the junction rows for this piece, as one map
+  // the rating door reads. Absent when the piece has none — an ungraded
+  // weapon keeps the flat rating byte for byte. Armour rows are refused at
+  // the content door (loadout.js validateEquipment), never silently kept.
+  const scaling = armour ? {} : Object.fromEntries(weaponScaling
+    .filter((grade) => grade.itemId === row.id)
+    .map((grade) => [grade.attributeId, grade.grade]));
   // TAGS ARE NOT HERE. They are rows in content/source/tagging.csv, and
   // model/registries.js stamps `entityTags`, `itemTypeTags`, `itemTypes` and
   // the gameplay `tags` set onto the piece at boot — the same four fields this
@@ -64,6 +72,7 @@ function normPiece(row) {
     artKey: row.artKey || row.id,
     mods: list(row.mods),
     ...(Object.keys(attributes).length ? { requirements: { attributes } } : {}),
+    ...(Object.keys(scaling).length ? { scaling } : {}),
   };
 }
 
@@ -82,7 +91,7 @@ export const ARMAMENTS = weapons.map((row) => ({
 }));
 
 /** Every armour set. `id` is unique per class, not globally — key by both. */
-export const ARMOUR = outfits.map((row) => ({ ...normPiece(row), kind: 'armor' }));
+export const ARMOUR = outfits.map((row) => ({ ...normPiece(row, { armour: true }), kind: 'armor' }));
 
 /** Slot definitions, ordered. */
 export const SLOTS = equipSlots
@@ -154,6 +163,9 @@ export const STARTING_KITS = startingKits.map((row) => ({ ...row }));
 
 /** Raw item/stat minima retained so validation can detect duplicate authored rows. */
 export const EQUIPMENT_REQUIREMENTS = equipmentRequirements.map((row) => ({ ...row }));
+
+/** Raw weapon scaling grades (SPEC §13.4o), retained so validation can name a bad row. */
+export const WEAPON_SCALING = weaponScaling.map((row) => ({ ...row }));
 
 /** Exact item/tier upgrade facts. Interpretation belongs to model/itemUpgrades.js. */
 export const ITEM_UPGRADE_CHANGES = itemUpgradeChanges.map((row) => ({ ...row }));

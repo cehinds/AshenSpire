@@ -753,6 +753,28 @@ export const balance = {
       pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
     },
   },
+  // ---- weapon scaling grades (SPEC §13.4o) -----------------------------------
+  // A weapon's grade for an attribute (content/source/weaponScaling.csv) prices
+  // that attribute's points ABOVE `anchor` in the weapon's attack rating; at or
+  // below it every weapon reads the flat rating weight, so a stock lean
+  // character (class stat 3) opens on the damage it always had and each point
+  // a level buys shows. The run snapshots this table at birth
+  // (equipmentProfileRuleSnapshot.weaponScaling): a run born before it reads
+  // every weapon flat.
+  //   S 2.0  +2 a point        A 1.5  +1, +2, +1 …     B 1.0  +1 a point
+  //   C 0.75 three in four     D 0.5  one in two (the flat rate)
+  weaponScaling: {
+    anchor: 3,
+    grades: {
+      S: 2, A: 1.5, B: 1, C: 0.75, D: 0.5,
+      [NOTE]: {
+        '{grade}': 'Weapon scaling: what one attribute point above the anchor adds to a weapon graded {grade} for that attribute (floored per attribute).',
+      },
+    },
+    [NOTE]: {
+      anchor: 'Weapon scaling: attribute points up to this value read the flat rating weight on every weapon; each point above it is paid at the weapon\'s grade.',
+    },
+  },
 
   // ---- what a grace hands back ----------------------------------------------
   // Grace refills the current Crimson/Azure counts to the allocation stored on

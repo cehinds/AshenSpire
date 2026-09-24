@@ -62,7 +62,8 @@ import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { rewardProgress } from '../../model/rewardprogress.js';
+import { rewardProgress, levelUpMoment } from '../../model/rewardprogress.js';
+import { reducedMotionRequested } from '../motion.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId } from '../../model/skills.js';
@@ -109,6 +110,11 @@ export function mountRewards(app, {
   // offer saved before the receipt existed) moved nothing, so it draws the
   // spoils alone rather than a heading with no gains under it.
   const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
+  // THE LEVEL MOMENT (SPEC §13.4o): a fight that climbed a character level
+  // says so at the top of the door, not only as a bar in the side column —
+  // the level and the waiting points read live, the climb off the receipt.
+  const levelMoment = rewards.xpGains ? levelUpMoment(run, rewards.xpGains) : null;
+  let levelBannerFresh = true;
   const states = {
     ...(checkpoint?.states || {}),
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
@@ -448,10 +454,13 @@ export function mountRewards(app, {
       // already announces progress.
       status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
-      body: el('div', { class: 'reward-claim-layout' }, [
-        el('div', { class: 'class-row reward-menu', html: rowsHtml }),
-        sideColumn(claim),
-      ]),
+      body: [
+        levelBanner(),
+        el('div', { class: 'reward-claim-layout' }, [
+          el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+          sideColumn(claim),
+        ]),
+      ].filter(Boolean),
       foot,
     });
 
@@ -520,6 +529,24 @@ export function mountRewards(app, {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
     }
+  }
+
+  // The banner rises once, on the door's first draw; a redraw (a take, a Back
+  // from the chooser) shows it still, and reduced motion never animates it.
+  function levelBanner() {
+    if (!levelMoment) return null;
+    const motion = levelBannerFresh && !reducedMotionRequested() ? 'rise' : 'still';
+    levelBannerFresh = false;
+    const points = levelMoment.points;
+    return el('div', {
+      class: 'reward-level-banner', role: 'status', dataset: { levelBanner: '', motion, levelUps: levelMoment.levelUps },
+    }, [
+      el('span', { class: 'rlb-glyph', 'aria-hidden': 'true', text: '✦' }),
+      el('span', { class: 'rlb-title', text: t('reward.levelUp.title', { level: levelMoment.level }) }),
+      el('span', { class: 'rlb-points', text: points
+        ? t('reward.levelUp.points', { points, plural: points === 1 ? '' : 's' })
+        : t('reward.levelUp.assigned') }),
+    ]);
   }
 
   // The W1t claim-status column: every row's state, then the one choice still
@@ -880,6 +907,9 @@ export function mountRewards(app, {
   }
 
   sfx.play('victory');
+  // The level's own chime, a beat after the fanfare so the two do not mask
+  // each other — once per door, never per redraw.
+  if (levelMoment) setTimeout(() => sfx.play('levelUp'), 650);
   grantCinders();
   renderMenu();
 }

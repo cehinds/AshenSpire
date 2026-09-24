@@ -1004,6 +1004,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelUp.title",
+    "extends": "",
+    "short": "Level {level}",
+    "full": "You reached character level {level}.",
+    "tip": "Level up"
+  },
+  {
+    "id": "reward.levelUp.points",
+    "extends": "",
+    "short": "{points} point{plural} to assign at a Shrine",
+    "full": "Your levels earned attribute points; assign them at any Shrine's Level up.",
+    "tip": ""
+  },
+  {
+    "id": "reward.levelUp.assigned",
+    "extends": "",
+    "short": "Every point assigned",
+    "full": "No attribute point is waiting to be assigned.",
+    "tip": ""
+  },
+  {
     "id": "title.save.eyebrow",
     "extends": "",
     "short": "Your climb",
