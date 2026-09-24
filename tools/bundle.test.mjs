@@ -179,9 +179,13 @@ function runEolSelftest() {
     `plant exit ${cssPlantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${cssPlantedOut?.length ?? 0}`);
 
   const binaryPlantedDir = sandbox();
+  // The misclassification is planted on the ONE binary this case inspects.
+  // Planting all of '.webp' as text decoded ~240 MB of art through U+FFFD and
+  // the planted build itself died of heap exhaustion on the CI runner (SIGABRT)
+  // before it could be measured; one file carries the same defect.
   const binaryPlanted = patchTool(binaryPlantedDir,
-    "const TEXT_ASSET_EXTS = new Set(['.svg']);",
-    "const TEXT_ASSET_EXTS = new Set(['.svg', '.webp']);");
+    "  if (!TEXT_ASSET_EXTS.has(extname(absPath).toLowerCase())) return bytes;",
+    `  if (!TEXT_ASSET_EXTS.has(extname(absPath).toLowerCase()) && !absPath.endsWith(${JSON.stringify(binaryRel.split('/').pop())})) return bytes;`);
   const binaryPlantedRun = build(binaryPlantedDir);
   const binaryPlantedOut = buildDigest(binaryPlantedDir, binaryPlantedRun, binaryRel);
   const binarySource = readFileSync(resolve(binaryPlantedDir, binaryRel));
