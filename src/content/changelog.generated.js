@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
     "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
-    "build": "0.7.1.454",
+    "build": "0.7.1.457",
     "pullRequest": 1275,
     "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last journey scene shows the road you actually set out on",
+    "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
+    "build": "0.7.1.451",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
   },
   {
     "id": "pr-1271",
