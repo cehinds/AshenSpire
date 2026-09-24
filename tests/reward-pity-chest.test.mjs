@@ -699,3 +699,14 @@ test('an owned chest upgrade whose card was upgraded since is spent, not takeabl
   const { take } = resolveContinue({ rows: [spent] }, {}, 'auto', () => 0);
   assert.equal(take[0].optionIndex, 1, 'auto-collect never picks the spent upgrade');
 });
+
+test('the pity counters are refused at the shape door unless the game could have written them (#1287)', () => {
+  const run = newRun(5);
+  const cfg = r.balance.rewards.cardPity;
+  const shape = (fields) => validateRunShape({ ...run, ...fields }).join(' | ');
+  assert.equal(shape({}), '', 'absent reads as the start');
+  assert.equal(shape({ cardRarityOffset: cfg.offsetStart, cardRewardsSinceRare: 0 }), '');
+  assert.equal(shape({ cardRarityOffset: cfg.offsetMax, cardRewardsSinceRare: 12 }), '');
+  for (const bad of [1.5, -1, NaN, Infinity]) assert.match(shape({ cardRewardsSinceRare: bad }), /cardRewardsSinceRare must be a non-negative integer/);
+  for (const bad of [0.5, cfg.offsetStart - 1, cfg.offsetMax + 1, 1e9, -Infinity]) assert.match(shape({ cardRarityOffset: bad }), /cardRarityOffset must be an integer in/);
+});

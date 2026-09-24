@@ -363,7 +363,9 @@ choice, §6.1).
 | `run.cardRewardsSinceRare` | consecutive card offers that showed no rare | reads as `0` |
 
 They are written lazily on the first card offer that reads them (the `flaskChancePct`
-precedent), so no migration invents them. Pity applies to the **card offer of a normal,
+precedent), so no migration invents them. When present, the shape door (`validateRunShape`) requires
+`cardRewardsSinceRare` a non-negative integer and `cardRarityOffset` an integer within
+`[cardPity.offsetStart, cardPity.offsetMax]`. Pity applies to the **card offer of a normal,
 elite or boss fight** (`rollCardRewardIds` handed the `run`); a boss offer reads the boss
 pool's authored weights and moves the same counters. It does not apply to Chaos Rewards
 (equal odds) or to skill/class drafts, and neither moves the counters.
