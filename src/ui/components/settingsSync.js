@@ -8,7 +8,7 @@
 
 import { contentBundle } from '../../content/index.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { saveJsonFile } from '../../model/advancedConfig.js';
+import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
   SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
