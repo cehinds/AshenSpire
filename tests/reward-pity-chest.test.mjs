@@ -719,7 +719,13 @@ test('the pity counters are refused at the shape door unless the game could have
   assert.equal(shape({ cardRarityOffset: cfg.offsetStart, cardRewardsSinceRare: 0 }), '');
   assert.equal(shape({ cardRarityOffset: cfg.offsetMax, cardRewardsSinceRare: 12 }), '');
   for (const bad of [1.5, -1, NaN, Infinity]) assert.match(shape({ cardRewardsSinceRare: bad }), /cardRewardsSinceRare must be a non-negative integer/);
-  for (const bad of [0.5, cfg.offsetStart - 1, cfg.offsetMax + 1, 1e9, -Infinity]) assert.match(shape({ cardRarityOffset: bad }), /cardRarityOffset must be an integer in/);
+  for (const bad of [0.5, NaN, -Infinity]) assert.match(shape({ cardRarityOffset: bad }), /cardRarityOffset must be an integer/);
+  // An integer outside today's band is a save from before a retune: it loads,
+  // and the offer reads it as the nearest edge.
+  for (const old of [cfg.offsetStart - 1, cfg.offsetMax + 1, 1e9]) assert.equal(shape({ cardRarityOffset: old }), '');
+  const stale = { ...newRun(5), cardRarityOffset: 1e9 };
+  rollCardRewardIds(r, createRng(3), { classId: 'reaver', pool: 'normal', run: stale });
+  assert.ok(stale.cardRarityOffset <= cfg.offsetMax, 'the reader clamps a stale offset into the band');
 });
 
 test('manual: with one slot free the chest\'s armament is the player\'s to take over the standalone drop (#1287)', async () => {

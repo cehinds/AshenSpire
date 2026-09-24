@@ -140,6 +140,9 @@ function cardPityState(registries, run) {
   const cfg = registries.balance.rewards.cardPity;
   if (!cfg) return null;
   if (!Number.isFinite(run.cardRarityOffset)) run.cardRarityOffset = cfg.offsetStart;
+  // A save from before a cardPity retune may hold an offset outside today's
+  // band; it reads as the nearest edge (SPEC §3.8.1).
+  run.cardRarityOffset = Math.min(cfg.offsetMax, Math.max(cfg.offsetStart, Math.round(run.cardRarityOffset)));
   if (!Number.isInteger(run.cardRewardsSinceRare) || run.cardRewardsSinceRare < 0) run.cardRewardsSinceRare = 0;
   return cfg;
 }

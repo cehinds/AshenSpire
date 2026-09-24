@@ -1,5 +1,4 @@
 import { retiredAttackSlots } from './cardRemoval.js';
-import { balance as contentBalance } from '../content/balance.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -836,21 +835,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }
-  // Card-rarity pity (SPEC §3.8.1): the counter is a count of offers, and
-  // the offset only ever moves by whole steps between the authored start
-  // (where a rare resets it) and the cap. A value outside that is not one
-  // the game can write.
+  // Card-rarity pity (SPEC §3.8.1): the counter is a count of offers and
+  // the offset moves by whole steps. The offset's authored range is NOT
+  // checked here: a later retune of cardPity must not refuse older saves —
+  // the reader clamps an out-of-range offset to the current band.
   if (run.cardRewardsSinceRare !== undefined && (!Number.isInteger(run.cardRewardsSinceRare) || run.cardRewardsSinceRare < 0)) {
     problems.push('cardRewardsSinceRare must be a non-negative integer');
   }
-  if (run.cardRarityOffset !== undefined) {
-    const pity = contentBalance.rewards?.cardPity;
-    const lo = pity ? pity.offsetStart : -Infinity;
-    const hi = pity ? pity.offsetMax : Infinity;
-    if (!Number.isInteger(run.cardRarityOffset) || run.cardRarityOffset < lo || run.cardRarityOffset > hi) {
-      problems.push(`cardRarityOffset must be an integer in [${lo}, ${hi}] (balance.rewards.cardPity)`);
-    }
+  if (run.cardRarityOffset !== undefined && !Number.isInteger(run.cardRarityOffset)) {
+    problems.push('cardRarityOffset must be an integer');
   }
+
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
