@@ -34,18 +34,15 @@ export const derivedStatRules = {
     cap: null,
   },
   rules: {
-    // One more action every five points of Dexterity.
-    energy: { base: 3, dexterity: 0.2 },
-    // One more card every five points of Intelligence, and one at level 11
-    // and every ten after.
-    draw: { base: 3, intelligence: 0.2, perLevel: 0.1 },
-    // 30 + 4 x CON, and a point per level.
-    hp: { base: 30, constitution: 4, perLevel: 1 },
-    // The body's own reserve: the pool IS Constitution.
-    stamina: { base: 1, constitution: 1, perLevel: 0.2 },
-    // WIS is the only authored Mana authority — classes carry no second base
-    // pool that can drift from this row.
-    mana: { base: 1, wisdom: 1, perLevel: 0.2 },
+    // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
+    // pool reads a spread of attributes, not one.
+    energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
+    draw: { base: 3, dexterity: 0.25, wisdom: 0.25, intelligence: 0.5, perLevel: 0.1 },
+    hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, wisdom: 0.1, perLevel: 0.2 },
+    // WIS leads Mana; classes carry no second base pool that can drift from
+    // this row.
+    mana: { base: 1, strength: 0.1, constitution: 0.25, wisdom: 0.5, intelligence: 0.3, perLevel: 0.2 },
     // The Poise vessel. Armour and relics remain the two external addends,
     // exactly as HP's equipment bonus is.
     poise: { base: 1, constitution: 1 },

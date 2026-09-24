@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1284",
+    "id": "pr-1273",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Every fight opens with full Stamina, and the Starseer can fight with no Mana left",
-    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer was hit hardest by that, so its kit is rebuilt around it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and as plain spells they build 1 Arcane Exposure per hit instead of 5. Arcane Ward blocks 7 instead of 4. Starstone Shard adds 14 Max HP and 3 Mana, so a new Starseer starts on 48 HP. Lodestar Shard restores 3 Mana as each fight begins. The Starseer starts with 3 Crimson flask charges and 1 Azure instead of 2 and 2. Over 60 simulated runs a class, the Reaver now wins 32, the Starseer 21, the Rogue 33 and the Herald 31. Before, they won 4, 1, 29 and 34.",
-    "build": "0.7.1.467",
-    "pullRequest": 1284,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1284"
+    "summary": "New characters start on the owner's tuned rules, the stat choice reads Assigned, and the mobile edition is under 30 MB",
+    "detail": "The owner's saved game configuration is now what every new player starts with: fixed turn draws, with Intelligence growing your opening hand, turn draws and hand capacity; three flask charges shared between Crimson and Azure; 20 cinders to start and twenty times the cinders from every fight; quicker levels, weapon and class skills; HP, Mana, Stamina, Actions and draw that read several attributes instead of one; new attack, defence and resistance weights; and a two-row battlefield with larger enemies. The one stat allocation at character creation is now called Assigned. The mobile download shrank from 49 MB to 29 MB — its art is recompressed smaller, with backdrops kept sharper than the rest — and plays the same. Settings you have already chosen keep their values.",
+    "build": "0.7.1.456",
+    "pullRequest": 1273,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
     "id": "pr-1270",

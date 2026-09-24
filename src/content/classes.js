@@ -10,7 +10,7 @@ export const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'forsakenMedallion',
     kitRelic: 'ashenGrip',
     startingSignatureCard: 'gorefireSlash',
@@ -40,7 +40,9 @@ export const classes = [
     maxHp: 72,
     // A2 Starseer starvation: { hp: 2, mana: 2 } -> { hp: 3, mana: 1 }
     // (plan A2, `node tools/runsim.mjs 60`: Starseer 1/60 -> 21/60 with the other A2 Starseer rows; 82/200 alone).
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    // Re-based onto the three-charge flask (#1273): { hp: 1, mana: 2 } -> { hp: 2, mana: 1 },
+    // the same one-charge shift from Azure to Crimson, matching the other classes.
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'starstoneShard',
     kitRelic: 'lodestarShard',
     startingSignatureCard: 'starstonePebble',
@@ -66,7 +68,7 @@ export const classes = [
     glyph: '🗡',
     name: 'Rogue',
     maxHp: 74,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'cutpursesCoin',
     kitRelic: 'whetstonePouch',
     startingSignatureCard: 'ambush',
@@ -88,7 +90,7 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'goldFigurine',
     kitRelic: 'waxenSeal',
     startingSignatureCard: 'urgentHeal',
