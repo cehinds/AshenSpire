@@ -12,9 +12,11 @@
 // main.js cannot be imported headless (it mounts the DOM), so `enterCombat`
 // below mirrors main.js enterCombat's non-UI half line for line: the entry
 // receipt, the persist BEFORE the fight is built, and the createCombat player
-// literal. The reload mirrors loadActiveSlot: loadRun → createRng(seed,
-// streamCounters) → enterCombat(..., { resuming: true }).
+// literal. The reload mirrors main.js resumeRun: loadRun → createRng(seed,
+// streamCounters) → enterCombat(..., { resuming: true }). The last test reads
+// src/main.js as text and fails if the ordering this mirror depends on moves.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -157,7 +159,7 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   assert.notDeepEqual(view(combat).hand, opening.hand, 'two cards left the opening hand');
 
   // Walk away: no Save Game, no commitCombatSnapshot. Everything in memory is
-  // gone; only the slot survives. This is loadActiveSlot's order.
+  // gone; only the slot survives. This is resumeRun's order.
   const reloaded = saves.loadRun(registries);
   assert.ok(reloaded, 'the slot written at combat entry loads');
   assert.deepEqual(reloaded.combatEntered, { nodeId, encounterId },
@@ -175,4 +177,34 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   assert.deepEqual(again.discard, [], 'nothing played before the abandon is in the discard pile');
   assert.equal(again.playerHp, hpAtEntry, 'player HP is restored to the entry value');
   assert.deepEqual(again.counters, opening.counters, 'the restart consumed exactly the draws the first entry did');
+});
+
+// The mirror above is only as good as its parity with main.js. These are the
+// orderings it copies; if main.js moves one, this fails instead of the mirror
+// silently drifting.
+function functionBody(source, name) {
+  const start = source.indexOf(`function ${name}(`);
+  assert.ok(start >= 0, `src/main.js still defines ${name}`);
+  const next = source.indexOf('\nfunction ', start + 1);
+  return source.slice(start, next < 0 ? undefined : next);
+}
+
+test('M2 parity: main.js still orders entry persist, snapshot guard and reload rng as mirrored here', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const enter = functionBody(main, 'enterCombat');
+  assert.match(enter, /storedSnapshot && !storedSnapshot\.result \? storedSnapshot : null/,
+    'enterCombat still discards a snapshot that already carries a result');
+  const persistAt = enter.indexOf('if (!resuming) persist();');
+  assert.ok(persistAt >= 0, 'enterCombat still persists the entry receipt when not resuming');
+  const buildAt = Math.min(...['createCombat(', 'restoreCombatSnapshot('].map((needle) => {
+    const at = enter.indexOf(needle);
+    assert.ok(at >= 0, `enterCombat still calls ${needle}`);
+    return at;
+  }));
+  assert.ok(persistAt < buildAt, 'the entry persist still happens before the fight is built');
+  const resume = functionBody(main, 'resumeRun');
+  const rngAt = resume.indexOf('rng = createRng(run.seed, run.streamCounters);');
+  const reenterAt = resume.indexOf('{ resuming: true }');
+  assert.ok(rngAt >= 0, 'resumeRun still rebuilds the rng from the saved stream counters');
+  assert.ok(reenterAt > rngAt, 'resumeRun still re-enters the fight after rebuilding the rng');
 });
