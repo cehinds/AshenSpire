@@ -147,7 +147,7 @@ jobs:
       contents: read
       pages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
           fetch-depth: 0
@@ -177,9 +177,7 @@ jobs:
           if [ -n "$missing" ]; then
             echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
           fi
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - uses: ./.github/actions/setup-node
       # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
       # runs on pushes to dev, test, release AND main, and it assembles a site
       # out of all four branches' histories — series deliberately mixed, which
@@ -199,17 +197,6 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      # SAY THAT THE SITE IS BEHIND, BECAUSE NOBODY WAS BEING TOLD.
-      #
-      # #553: after #543 correctly took the deploy credential off the push path,
-      # nothing republished — and nothing SAID nothing had republished, so /dev
-      # /test /release served stale builds for hours with every run green.
-      #
-      # A first attempt at this fixed it by publishing automatically behind a
-      # repository-variable switch. That was rejected: publishing the site is an
-      # owner action, taken deliberately each time, and a standing switch is a
-      # delegation to every future push. So this step reports; it does not
-      # publish, and nothing here should ever grow the ability to.
       # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
       #
       # #553: after #543 correctly took the deploy credential off the push path,
