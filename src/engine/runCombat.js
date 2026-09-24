@@ -16,7 +16,7 @@
 import { createCombat } from './combat.js';
 import { resolveHandRules } from '../model/handRules.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
-import { staminaAtCombatStart } from '../framework/resources.js';
+import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
@@ -25,9 +25,9 @@ export function runCombatPlayer(run) {
   // A refill also settles the Stamina deficit an equipment swap carried, so
   // the next swap cannot take the refilled points back.
   const stamina = staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina });
-  const equipmentPoolDeficits = stamina === run.stamina || !run.equipmentPoolDeficits
-    ? run.equipmentPoolDeficits
-    : { ...run.equipmentPoolDeficits, stamina: Math.max(0, run.maxStamina - stamina) };
+  const equipmentPoolDeficits = run.equipmentPoolDeficits
+    ? { ...run.equipmentPoolDeficits, stamina: staminaDeficitAtCombatStart(run.equipmentPoolDeficits.stamina) }
+    : run.equipmentPoolDeficits;
   return {
     classId: run.class,
     attributes: run.attributes,

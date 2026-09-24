@@ -74,3 +74,15 @@ export function staminaAtCombatStart({ currentStamina, maxStamina }) {
   if (rule === 'carry') return currentStamina;
   throw new Error(`mechanics.stamina.combatStartRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
 }
+
+/**
+ * The Stamina deficit an equipment swap carried, as a fight opens under the
+ * same rule: a 'full' refill leaves no deficit at all, so a later swap cannot
+ * take refilled points back; 'carry' keeps the deficit as it stands.
+ */
+export function staminaDeficitAtCombatStart(carriedDeficit) {
+  const rule = mechanics.stamina.combatStartRefill;
+  if (rule === 'full') return 0;
+  if (rule === 'carry') return carriedDeficit;
+  throw new Error(`mechanics.stamina.combatStartRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
+}

@@ -58,3 +58,11 @@ test('the refill settles a Stamina deficit an equipment swap carried, and keeps 
   assert.equal(combat.equipmentPoolDeficits.hp, 3);
   assert.equal(combat.equipmentPoolDeficits.mana, 1);
 });
+
+test('the refill settles a carried Stamina deficit even when the pool already reads full', () => {
+  const run = createRunState({ seed: 10, classId: 'reaver', registries });
+  run.stamina = run.maxStamina; // recovered to a smaller vessel, deficit still hidden
+  run.equipmentPoolDeficits = { hp: 0, mana: 0, stamina: run.maxStamina + 2 };
+  const combat = createRunCombat({ registries, rng: createRng(10), run, enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.equipmentPoolDeficits.stamina, 0);
+});

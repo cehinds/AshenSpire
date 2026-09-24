@@ -46,10 +46,12 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
  * less the code (~8.3 MB at 0.7.1) and base64 growth (4/3). A twin tree over
  * this is caught by --check before anyone builds with it.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 41_000_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_500_000;
 // Was 40 MB. Raised 2026-09-24 when the prologue's eight path-step images
-// (#1285) took the twin tree to ~40.3 MB inlined; the bundle cap above, the
-// owner's number, is unchanged and verify-shipped still holds the file to it.
+// (#1285) took the twin tree to 40,295,512 bytes inlined. Measured headroom:
+// that tree bundles to 49,757,112 bytes, so art can grow by ~0.24 MB before the
+// 50 MB cap above (the owner's number, unchanged) refuses the bundle; this
+// ceiling stays inside that headroom, so the pre-build check still fails first.
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
