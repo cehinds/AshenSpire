@@ -232,3 +232,29 @@ export function newlyFullIds(previous, fullIds = []) {
   const fresh = new Set([...next].filter((id) => !(previous && previous.has(id))));
   return { fresh, next };
 }
+
+/**
+ * pacedArtPreview(pv, shown, before) -> the preview an Art card in hand is
+ * drawn from during paced playback (SPEC 7.4, 12.2.1). `pv` is the live
+ * previewCard answer, `shown` the artUnleashFor answer against the SHOWN
+ * charge, `before` the card's pre-dispatch preview (captured when the
+ * display snapshot was taken, or null). The face follows the shown meter:
+ * not unleashed before the hit that fills it has played, and still
+ * unleashed until the beat that spends it. Playing a full Art empties the
+ * live meter at dispatch, so the live preview has lost the unleashed line
+ * and its `unleashed.N` numbers; those come from `before`, which was
+ * resolved by the same math before the play.
+ */
+export function pacedArtPreview(pv, shown, before = null) {
+  if (!pv || !pv.artCharge || !shown || shown.ready === pv.artCharge.unleashed) return pv;
+  const { textTemplate, shortTemplate, ...rest } = pv.artCharge;
+  if (!shown.ready) return { ...pv, artCharge: { ...rest, value: shown.value, unleashed: false } };
+  const source = textTemplate ? pv : (before && before.artCharge && before.artCharge.textTemplate ? before : null);
+  if (!source) return { ...pv, artCharge: { ...rest, value: shown.value, unleashed: false } };
+  const unleashedTokens = Object.fromEntries(Object.entries(source.tokens || {}).filter(([key]) => key.startsWith('unleashed.')));
+  return {
+    ...pv,
+    tokens: { ...(pv.tokens || {}), ...unleashedTokens },
+    artCharge: { ...rest, value: shown.value, unleashed: true, textTemplate: source.artCharge.textTemplate, ...(source.artCharge.shortTemplate ? { shortTemplate: source.artCharge.shortTemplate } : {}) },
+  };
+}

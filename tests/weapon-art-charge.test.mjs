@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -435,4 +435,40 @@ test('a status that remembers the weapon\'s card and strikes back later charges 
   }
   assert.ok(struckBack > 0, 'the fixture really struck back with the staff\'s card');
   assert.equal(combat.artCharge.ashStaff || 0, 0);
+});
+
+test('paced playback: a full Art being played stays drawn unleashed until its play beat', async () => {
+  const combat = fight();
+  const max = artChargeMax(registries, 'greatsword');
+  for (let i = 0; i < max; i++) play(combat, kitAttack('greatsword'));
+  const art = everyCard(combat).find(artOf('greatsword'));
+  // The display snapshot is taken before the dispatch: the shown map and the
+  // Art's unleashed preview both come from there.
+  const shownCharge = { ...combat.artCharge };
+  const before = previewCard(combat, art.instanceId);
+  assert.equal(before.artCharge.unleashed, true);
+  play(combat, artOf('greatsword'));
+  assert.equal(combat.artCharge.greatsword, 0, 'dispatch emptied the live meter before the first paint');
+  const live = previewCard(combat, art.instanceId);
+  assert.equal(live.artCharge.textTemplate, undefined, 'the live preview has lost the unleashed line');
+  const shown = artUnleashFor(combat, art, shownCharge);
+  assert.equal(shown.ready, true, 'the shown meter is still full during the wind-up');
+  const pv = pacedArtPreview(live, shown, before);
+  assert.equal(pv.artCharge.unleashed, true, 'the card stays unleashed until its cardPlayed beat');
+  assert.equal(pv.artCharge.textTemplate, before.artCharge.textTemplate);
+  assert.equal(pv.artCharge.shortTemplate, before.artCharge.shortTemplate);
+  assert.deepEqual([pv.tokens['unleashed.0'], pv.tokens['unleashed.1']], [before.tokens['unleashed.0'], before.tokens['unleashed.1']]);
+  assert.equal(pv.artCharge.value, max);
+  // Once the spend beat plays, the shown meter empties and the face follows.
+  const spent = artUnleashFor(combat, art, advanceArtChargeDisplay({ ...shownCharge }, [{ type: 'artUnleashed', weaponId: 'greatsword' }]));
+  const after = pacedArtPreview(live, spent, before);
+  assert.equal(after.artCharge.unleashed, false);
+  assert.equal(after.artCharge.textTemplate, undefined);
+  // No template anywhere: never drawn unleashed.
+  assert.equal(pacedArtPreview(live, shown, null).artCharge.unleashed, false);
+  // The screen captures the pre-dispatch previews in its snapshot and draws from them.
+  const { readFile } = await import('node:fs/promises');
+  const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(screen, /artPreviews\[inst\.instanceId\] = previewCard\(combat, inst\.instanceId\)/);
+  assert.match(screen, /pv = pacedArtPreview\(pv, artUnleashFor\(combat, inst, shownArtCharge\(\)\), disp && disp\.artPreviews/);
 });

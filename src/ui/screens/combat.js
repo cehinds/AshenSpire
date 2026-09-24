@@ -32,7 +32,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
-import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand } from '../../model/artCharge.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -805,7 +805,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], artCharge: { ...(combat.artCharge || {}) } };
+    // A full Art's unleashed preview, taken before the dispatch that spends
+    // its meter, so the card stays drawn unleashed until its play beat.
+    const artPreviews = {};
+    for (const inst of combat.piles.hand) {
+      if (!artUnleashFor(combat, inst)?.ready) continue;
+      try { artPreviews[inst.instanceId] = previewCard(combat, inst.instanceId); } catch { /* not previewable: drawn plain */ }
+    }
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], artCharge: { ...(combat.artCharge || {}) }, artPreviews };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -1584,11 +1591,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // During paced playback the Art's face reads the SHOWN charge: no
           // unleashed line before the hit that fills the meter has played.
           if (pv && pv.artCharge) {
-            const shown = artUnleashFor(combat, inst, shownArtCharge());
-            if (shown && shown.ready !== pv.artCharge.unleashed) {
-              const { textTemplate, ...rest } = pv.artCharge;
-              pv = { ...pv, artCharge: { ...rest, value: shown.value, unleashed: shown.ready && !!textTemplate, ...(shown.ready && textTemplate ? { textTemplate } : {}) } };
-            }
+            // A full Art being played has already emptied the live meter, so
+            // its unleashed line comes from the pre-dispatch preview until
+            // the beat that spends it.
+            pv = pacedArtPreview(pv, artUnleashFor(combat, inst, shownArtCharge()), disp && disp.artPreviews ? disp.artPreviews[inst.instanceId] : null);
           }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
