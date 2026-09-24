@@ -2203,7 +2203,15 @@ function validateWeaponArtCharge(b, vctx) {
     }
   }
   const forms = b.weaponArtUnleashed;
-  if (forms === undefined) return;
+  if (forms === undefined) {
+    // A missing table is not "nothing to check": with the meter rules set, or
+    // any combat-kit Art to unleash, every Art is owed a form (SPEC §12.2.1).
+    const kitArt = armaments.find((piece) => piece && piece.weaponCardPackage && piece.weaponCardPackage.combatKit && piece.weaponCardPackage.combatKit.artCardId);
+    if (rules !== undefined || kitArt) {
+      err('weaponArtUnleashed', `is missing, but ${rules !== undefined ? 'balance.weaponArtCharge is set' : `the combat-kit Art of '${kitArt.id}' needs an unleashed form`}; the table must be present`);
+    }
+    return;
+  }
   if (!isPlainObject(forms)) { err('weaponArtUnleashed', 'must be an object keyed by Weapon Art card id'); return; }
   const cards = new Map((Array.isArray(b.cards) ? b.cards : []).map((card) => [card && card.id, card]));
   for (const [cardId, form] of Object.entries(forms)) {

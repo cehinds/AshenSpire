@@ -258,6 +258,13 @@ test('content validation refuses malformed meter rules and unleashed forms', () 
   assert.match(problems(badOp), /weaponArtUnleashed\.twinFang\.effects/);
   const badRule = { ...contentBundle, balance: { ...contentBundle.balance, weaponArtCharge: { ...rules, maxByWeapon: { noSuchWeapon: 3 } } } };
   assert.match(problems(badRule), /maxByWeapon\.noSuchWeapon/);
+  // The whole table missing is refused by name, not skipped.
+  const noTable = { ...contentBundle };
+  delete noTable.weaponArtUnleashed;
+  assert.match(problems(noTable), /weaponArtUnleashed: .*missing.*balance\.weaponArtCharge is set/);
+  const noTableNoRules = { ...noTable, balance: { ...contentBundle.balance } };
+  delete noTableNoRules.balance.weaponArtCharge;
+  assert.match(problems(noTableNoRules), /weaponArtUnleashed: .*missing.*combat-kit Art of/);
 });
 
 test('the unleashed line is compact enough for a resting card, with a phone form', () => {
