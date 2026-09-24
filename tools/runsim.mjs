@@ -6,7 +6,8 @@
 // greedy bot as the tests (leftmost affordable card, first living target),
 // with a simple pilot for run decisions:
 //   path: prefer a shrine node when hurt, else first reachable;
-//   rewards: always take the first card; elite/boss relics accepted;
+//   rewards: always take the first card (rarity pity applies); the elite
+//   chest and the boss relic choice are taken by seeded auto-pick;
 //   shrine: rest when below 60% HP, else smith (upgrade first unupgraded);
 //   merchant: skipped (no purchases); events: first affordable choice
 //   (startCombat consequences are fought); treasure: take the relic.
@@ -39,8 +40,9 @@ import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollClassDraftIds, rollFlaskDrop,
   rollRelicReward,
-  autoPickBossRelic,
+  autoPickBossRelic, rollEliteChest,
 } from '../src/engine/encounters.js';
+import { autoTakeChest } from '../src/model/rewardChest.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
@@ -316,13 +318,15 @@ function afterVictory(run, rng, pool) {
     }
   }
   skillDraftsTaken += drafts;
-  const cards = drafts || classDrafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+  const cards = drafts || classDrafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
   if (pool === 'elite') {
-    const r = rollRelicReward(REG, rng, run.relics);
-    if (r) run.relics.push(r);
+    // SPEC §3.8.1: the elite chest, taken the way the reward screen's
+    // auto-collect takes it — a seeded pick among the takeable options. The
+    // bot has no armament bag, so an armament piece is never takeable here.
+    autoTakeChest(REG, run, rollEliteChest(REG, rng, run), (n) => rng.int('cardRewards', 0, n - 1));
   }
 }
 

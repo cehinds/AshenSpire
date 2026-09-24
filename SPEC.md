@@ -405,6 +405,17 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   while the bag is full. An old save whose pending elite offer still carries `relicId`
   resumes with its relic row, unchanged.
 
+**Simulators and co-op.** The balance simulators (`tools/runsim.mjs`,
+`tools/measure-classes.mjs`) hand the run to every card offer, so pity moves as in play, and
+roll the elite chest in place of the old relic: `autoTakeChest` (`model/rewardChest.js`)
+passes it through the reward plan's auto-collect, a seeded `cardRewards` pick among the
+takeable options (the bot has no armament bag, so an armament piece is never takeable
+there). The co-op host (`tools/session.mjs`) hands each seat's run to its card offer, so
+each seat carries its own pity counters. **Co-op elites keep the single random relic**, not
+the chest: the chest's `upgrade` and `armament` options name a deck instance and an armament
+bag that a seat's catch-up replay (docs/MULTIPLAYER.md) cannot hold stable, and the boss
+relic-choice pattern the co-op screen shares covers relic ids only.
+
 **Acceptance.** Tests prove the offset arithmetic, the guarantee firing after
 `rareGuaranteeAfter` rare-less offers, byte-identical offers for one seed, three distinct
 categories in a chest, that taking an option grants exactly it, and that a run without the

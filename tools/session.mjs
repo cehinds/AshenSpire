@@ -782,8 +782,10 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- rewards + catch-up --------------------------------------------------
   function rollRewardFor(m, pool) {
+    // Handed the seat's run, the offer reads and moves that seat's card-rarity
+    // pity (SPEC §3.8.1), as the solo door does.
     const cardIds = rollCardRewardIds(registries, m.rng, {
-      classId: m.classId, pool, relicIds: m.run.relics,
+      classId: m.classId, pool, relicIds: m.run.relics, run: m.run,
     });
     // Co-op-only cards (StS2): with a real party, every combat reward carries
     // one team-play option on top of the normal class picks.
@@ -799,6 +801,9 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!relicIds.length) cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
       return { pool, cardIds, cinders, flaskId, relicId: null, relicIds };
     }
+    // Co-op elites keep the single random relic rather than the solo elite
+    // chest (SPEC §3.8.1): a chest's upgrade and armament options need a deck
+    // and an armament bag the seat's catch-up replay cannot hold stable.
     const relicId = pool === 'elite' ? rollRelicReward(registries, m.rng, m.run.relics) : null;
     return { pool, cardIds, cinders, flaskId, relicId };
   }

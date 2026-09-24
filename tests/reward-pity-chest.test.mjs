@@ -10,7 +10,7 @@ import {
   rollCardRewardIds, pityWeights, rollEliteChest, chestUpgradeable, CHEST_CATEGORIES,
 } from '../src/engine/encounters.js';
 import { rewardPlan, resolveContinue } from '../src/model/rewardplan.js';
-import { applyChestOption } from '../src/model/rewardChest.js';
+import { applyChestOption, autoTakeChest } from '../src/model/rewardChest.js';
 
 const r = createRegistries(contentBundle);
 const pity = r.balance.rewards.cardPity;
@@ -301,4 +301,27 @@ test('save shape: a taken chest names its option; an old relic offer still valid
   const back = deserializeRun(serializeRun(run));
   assert.equal(back.cardRarityOffset, undefined);
   assert.deepEqual(validateRunShape(back), []);
+});
+
+test('autoTakeChest: a bot door takes one takeable option, seeded', () => {
+  const chest = { options: [
+    { category: 'armament', armamentId: 'longsword' },
+    { category: 'cinders', cinders: 50, smithingStones: 1 },
+  ] };
+  // No bag slot: the armament piece is not takeable, so pick(0) lands on the purse.
+  const run = newRun();
+  const cinders = run.cinders;
+  const relics = [...run.relics];
+  const got = autoTakeChest(r, run, chest, () => 0);
+  assert.equal(got.category, 'cinders');
+  assert.equal(run.cinders, cinders + 50);
+  assert.deepEqual(run.relics, relics, 'nothing else in the chest moves');
+  assert.equal(autoTakeChest(r, run, null, () => 0), null);
+  // Seeded: one seed, one chest, one taken option.
+  const take = (seed) => {
+    const rr = newRun(seed);
+    const rng = createRng(seed);
+    return autoTakeChest(r, rr, rollEliteChest(r, rng, rr), (n) => rng.int('cardRewards', 0, n - 1));
+  };
+  assert.deepEqual(take(21), take(21));
 });

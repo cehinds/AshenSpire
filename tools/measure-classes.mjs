@@ -75,8 +75,9 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
-  autoPickBossRelic,
+  autoPickBossRelic, rollEliteChest,
 } from '../src/engine/encounters.js';
+import { autoTakeChest } from '../src/model/rewardChest.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 
 const REG = createRegistries(contentBundle);
@@ -709,13 +710,15 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
 
 function afterVictory(run, rng, pool) {
   run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
   if (pool === 'elite') {
-    const r = rollRelicReward(REG, rng, run.relics);
-    if (r) run.relics.push(r);
+    // SPEC §3.8.1: the elite chest, taken the way the reward screen's
+    // auto-collect takes it — a seeded pick among the takeable options. The
+    // bot has no armament bag, so an armament piece is never takeable here.
+    autoTakeChest(REG, run, rollEliteChest(REG, rng, run), (n) => rng.int('cardRewards', 0, n - 1));
   }
 }
 

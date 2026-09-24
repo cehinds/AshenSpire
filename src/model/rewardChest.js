@@ -7,6 +7,7 @@
 
 import { isItemOwned } from './loadout.js';
 import { sourceArmamentId } from './smithing.js';
+import { rewardPlan, resolveContinue } from './rewardplan.js';
 
 /**
  * True for a deck instance an elite chest may upgrade in place: an ordinary
@@ -65,4 +66,22 @@ export function applyChestOption(registries, run, option, { collectArmament = nu
     default:
       return false;
   }
+}
+
+/**
+ * autoTakeChest(registries, run, chest, pick, { armamentSlotsFree, collectArmament })
+ * → the option granted, or null. A player-less elite door (simulators, bots):
+ * the chest goes through the reward plan and its auto-collect exactly as the
+ * reward screen's Continue does — `pick(n)` chooses among the TAKEABLE
+ * options (an armament piece needs a free bag slot), then applyChestOption
+ * grants it. The caller supplies the seeded pick (the game's is
+ * `rng.int('cardRewards', 0, n - 1)`).
+ */
+export function autoTakeChest(registries, run, chest, pick, { armamentSlotsFree = 0, collectArmament = null } = {}) {
+  if (!chest) return null;
+  const plan = rewardPlan({ chest }, { flaskSlotsFree: 0, armamentSlotsFree });
+  const row = resolveContinue(plan, {}, 'auto', pick).take.find((r) => r.kind === 'chest');
+  if (!row) return null;
+  const option = row.options[row.optionIndex];
+  return applyChestOption(registries, run, option, { collectArmament }) ? option : null;
 }
