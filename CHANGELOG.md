@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-24
 
+- **Text is easier to read in the colour-blind-safe and dark palettes** ([#1291](https://github.com/cehinds/AshenSpire/pull/1291), `0.7.1.475`). Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.
 - **Reading a card no longer hides behind other panels** ([#1288](https://github.com/cehinds/AshenSpire/pull/1288), `0.7.1.473`). Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.
 - **The map re-centres when your screen changes size** ([#1289](https://github.com/cehinds/AshenSpire/pull/1289), `0.7.1.471`). Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.
 - **Behind the scenes: the combat card hotkeys are tested** ([#1278](https://github.com/cehinds/AshenSpire/pull/1278), `0.7.1.469`). Nothing you play changes. The rule for what a key does in a fight — `1` to `9` pick a card from your hand and `Q` the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.

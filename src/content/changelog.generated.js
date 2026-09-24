@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1291",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Text is easier to read in the colour-blind-safe and dark palettes",
+    "detail": "Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.",
+    "build": "0.7.1.475",
+    "pullRequest": 1291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1291"
+  },
+  {
     "id": "pr-1288",
     "date": "2026-09-24",
     "group": "2026-09-24",
