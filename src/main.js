@@ -20,7 +20,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyAdvancedSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -85,7 +85,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -306,7 +306,7 @@ let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 // the readers each apply for themselves — one that skipped it would show a
 // different number from one that did. Rewritten once, here, so the settings
 // row, the item card, the export and the fight are looking at one key.
-if (hasLegacyItemRatingSettings(activeSettings)) {
+if (hasLegacyAdvancedSettings(activeSettings)) {
   // Whatever the rewrite could not carry across exactly — a fractional plus, a
   // sum past a row's ceiling, a set's Poise that is also its weight — is said
   // here as well as at the import door, so a profile is never migrated in
@@ -810,7 +810,11 @@ function applyDisplaySettings(settings) {
   // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
   applyLoreType(settings);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
-  document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
+  // A profile that never touched the row — or holds a value the row does not
+  // offer — gets the row's default (compact), as the settings screen shows it.
+  const densityRow = settingsRow('mapHeaderDensity');
+  const density = densityRow.choices.includes(settings.mapHeaderDensity) ? settings.mapHeaderDensity : densityRow.def;
+  document.body.classList.toggle('map-compact', density === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
   // The quick-menu experiment. Handed to the component the same way input.js is

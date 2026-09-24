@@ -35,8 +35,16 @@ test('the level bar reads the same step the shrine spends', () => {
   assert.equal(start.pointsLabel, '');
   assert.equal(start.remaining, start.xpToNext);
 
+  // A 100 XP first step, set here, so a quarter is whole numbers; the stock
+  // first step is far shorter.
+  const hundred = {
+    ...registries,
+    balance: { ...registries.balance, level: { ...registries.balance.level, xp: { ...registries.balance.level.xp, base: 100 } } },
+  };
+  assert.equal(levelXpToNext(hundred, 1), 100);
+  assert.equal(levelUpPlan(hundred, run).xpToNext, 100, 'the shrine spends the same step the bar reads');
   run.level.xp = 25;
-  const quarter = levelProgress(registries, run);
+  const quarter = levelProgress(hundred, run);
   assert.equal(quarter.pct, 25, '25 of a 100 XP step is a quarter of a bar');
   assert.equal(quarter.remaining, 75);
   assert.equal(quarter.value, '25 / 100 XP');

@@ -48,9 +48,12 @@ export const creationModes = [
   // door against the total of the mode it was created under, and save.js
   // ARCHIVES what fails there. tuned2 stays in this table, and leaves creation
   // through characterCreation.visibleModeIds.
+  // THE LABEL IS 'Assigned' (owner, 2026-09-24: "Standard isn't an option for
+  // stats and tuned should say assigned"). The id stays `lean`: saves and
+  // exported configurations key on it.
   {
     id: 'lean',
-    label: 'Lean',
+    label: 'Assigned',
     baseline: 1,
     bonusPool: 3,
     minimum: 1,

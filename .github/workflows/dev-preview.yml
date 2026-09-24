@@ -198,7 +198,7 @@ jobs:
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the dev-standalone artifact from"
             echo "this same run: AshenSpire.html is the full game (~250 MB) and"
-            echo "AshenSpire-mobile.html the same build with its art shrunk under 50 MB."
+            echo "AshenSpire-mobile.html the same build with its art shrunk under 30 MB."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."

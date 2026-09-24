@@ -73,7 +73,7 @@ export function handRulesRows(attributes = []) {
     }
   };
   addGroupRows('starting');
-  add('drawMode', 'fill', 'How cards are drawn each turn', groups.turn, {
+  add('drawMode', handRulesDefaults.drawMode, 'How cards are drawn each turn', groups.turn, {
     type: 'choice', dropdown: true, choices: ['fill', 'fixed'],
     choiceLabels: { fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
     note: 'Fill draws until your hand reaches capacity. Fixed draws the turn amount below, never past capacity.',
@@ -81,7 +81,7 @@ export function handRulesRows(attributes = []) {
   add('reshuffle', true, 'Reshuffle when empty', groups.turn, { note: 'Shuffle the discard pile back into the draw pile when it runs out.' });
   addGroupRows('turn');
   addGroupRows('capacity');
-  add('overflow', 'keep', 'When your hand is over capacity', groups.capacity, {
+  add('overflow', handRulesDefaults.overflow, 'When your hand is over capacity', groups.capacity, {
     type: 'choice', dropdown: true, choices: ['keep', 'discard'],
     choiceLabels: { keep: 'Keep cards; stop drawing', discard: 'Discard excess at turn end' },
     note: 'Whether retained cards past capacity stay (and block draws) or are discarded at turn end.',
