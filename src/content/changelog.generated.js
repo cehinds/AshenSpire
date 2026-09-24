@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Every stat is set the same way, in one place, and read from one table",
     "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your hand sizes, HP, Actions and the combat ratings read as before at the starting attributes. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
-    "build": "0.7.1.468",
+    "build": "0.7.1.471",
     "pullRequest": 1296,
     "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1302",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map's music follows where you stand, and the bright map tracks are gone",
+    "detail": "The two recorded map tracks were too upbeat for a land after the Burning and have been withdrawn; the map plays its generated score again. The map now asks for music by region — the Hollow Weald, the Pale Marches, the Cinder Reach, the Drowned Coast and the Ashen Crown each have their own slot, with slow, dark prompts in music/PROMPTS.md — and a region without a recorded track plays the plain map music. The victory hymn is cut from three minutes to its first full phrase, about a minute.",
+    "build": "0.7.1.469",
+    "pullRequest": 1302,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1302"
   },
   {
     "id": "pr-1281",
