@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import {
   rollCardRewardIds, pityWeights, rollEliteChest, chestUpgradeable, CHEST_CATEGORIES,
@@ -231,4 +231,74 @@ test('the chest is one choice row in the reward menu, auto-collect picks one', (
   assert.deepEqual(picks, [0, 2]);
   // Manual Continue leaves it.
   assert.equal(resolveContinue(plan, {}, 'manual').take.length, 0);
+});
+
+test('the reward door: open the chest, pick one, Confirm grants exactly it', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] } };
+    const checkpoint = { states: {}, chosenCardId: null };
+    const relicId = r.relics.all().find((x) => x.rarity === 'common').id;
+    const rewards = { chest: { options: [
+      { category: 'relic', relicId },
+      { category: 'armament', armamentId: 'greatsword' },
+      { category: 'cinders', cinders: 90, smithingStones: 1 },
+    ] } };
+    let writes = 0;
+    mountRewards(app, { registries: r, run, checkpoint, rewards, onDone() {}, onPersist() { writes++; } });
+    app.querySelector('[data-kind="chest"]').click();
+    const tiles = app.querySelectorAll('.reward-row .reward-chest-option');
+    assert.equal(tiles.length, 3);
+    assert.equal(tiles[1].disabled, true, 'a full bag locks the armament option');
+    const confirm = app.querySelector('#reward-card-confirm');
+    assert.equal(confirm.disabled, true);
+    tiles[2].click();
+    assert.equal(run.cinders, 0, 'selection never collects');
+    confirm.click();
+    confirm.click();
+    assert.equal(run.cinders, 90);
+    assert.equal(run.smithingStones, 1);
+    assert.deepEqual(run.relics, [], 'the relic stays in the chest');
+    assert.equal(checkpoint.states.chest, 'taken');
+    assert.equal(checkpoint.chosenChestIndex, 2);
+    assert.equal(writes, 1, 'one persist for one take');
+    app.remove();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+});
+
+test('save shape: a taken chest names its option; an old relic offer still validates', () => {
+  const run = newRun(3);
+  const pending = (rewards, extra = {}) => ({
+    schemaVersion: 1, source: 'elite', after: 'map', rewards, states: {}, chosenCardId: null,
+    chosenDraftCardIds: {}, chosenDraftNodeIds: {}, ...extra,
+  });
+  const chest = { options: [{ category: 'cinders', cinders: 90, smithingStones: 1 }, { category: 'relic', relicId: 'forsakenMedallion' }] };
+  run.pendingReward = pending({ cinders: 10, chest });
+  assert.deepEqual(validateRunShape(run), []);
+  run.pendingReward = pending({ cinders: 10, chest }, { states: { chest: 'taken' }, chosenChestIndex: 1 });
+  assert.deepEqual(validateRunShape(run), []);
+  run.pendingReward = pending({ cinders: 10, chest }, { states: { chest: 'taken' } });
+  assert.ok(validateRunShape(run).some((p) => p.includes('chosenChestIndex')));
+  run.pendingReward = pending({ cinders: 10, chest }, { chosenChestIndex: 5 });
+  assert.ok(validateRunShape(run).some((p) => p.includes('chosenChestIndex')));
+  // A normal fight's offer carries `chest: null`; an old elite offer a relicId.
+  run.pendingReward = pending({ cinders: 10, chest: null, relicId: 'forsakenMedallion' }, { states: { relic: 'taken' } });
+  assert.deepEqual(validateRunShape(run), []);
+  // A save without the pity counters round-trips and still validates.
+  delete run.pendingReward;
+  delete run.cardRarityOffset;
+  delete run.cardRewardsSinceRare;
+  const back = deserializeRun(serializeRun(run));
+  assert.equal(back.cardRarityOffset, undefined);
+  assert.deepEqual(validateRunShape(back), []);
 });

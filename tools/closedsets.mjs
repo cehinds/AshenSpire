@@ -331,5 +331,8 @@ if (!RUN_AS_CLI) {
   console.log(JSON.stringify(sets, null, 2));
   process.exit(sets.some((s) => !s.readers.length) ? 1 : 0);
 } else {
-  process.exit(report(ROOT).code);
+  // exitCode, not exit(): the table is ~15 KB, and process.exit() drops
+  // stdout writes still queued on a pipe — under the suite's load the
+  // harness read a table cut off before its RESULT line (check 53).
+  process.exitCode = report(ROOT).code;
 }
