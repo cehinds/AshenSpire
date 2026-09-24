@@ -10,11 +10,11 @@ import {
   advancedConfigExport,
   configuredContentBundle,
   presentationConfig,
-  saveAdvancedConfigFile,
   parseAdvancedConfigFile,
   normalizeAdvancedSettings,
   bringProfileForward,
 } from '../src/model/advancedConfig.js';
+import { saveAdvancedConfigFile } from '../src/ui/services/saveJsonFile.js';
 
 test('settings files round trip and leave unrelated settings untouched', () => {
   const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };

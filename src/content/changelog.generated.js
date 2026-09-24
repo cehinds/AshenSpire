@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
     "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305 and #1307, which landed without entries, get their receipts below.",
-    "build": "0.7.1.477",
+    "build": "0.7.1.483",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1306",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\".",
+    "build": "0.7.1.482",
+    "pullRequest": 1306,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1306"
   },
   {
     "id": "pr-1284",
