@@ -1316,7 +1316,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       badge.appendChild(artChargePips(charge.value, charge.max));
       if (charge.unleashed) {
         const form = unleashedFormFor(registries, inst.cardId);
-        badge.appendChild(el('span', { text: t('combat.art.unleashed') }));
+        // The card's own unleashed strip (card.js) prints the bonus, so the
+        // marker is the pips alone and moves clear of that strip.
         badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : t('combat.art.unleashed');
       }
       node.appendChild(badge);

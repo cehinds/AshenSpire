@@ -1549,7 +1549,19 @@
   font-size: calc(10px / var(--ui-zoom, 1)); color: #f7e08c; white-space: nowrap; font-weight: 700; text-transform: uppercase;
 }
 .hand .card[data-art-charge='full'] { box-shadow: 0 0 0 2px #f3d57a, 0 0 16px #f3d57a99; }
-.hand .card[data-art-charge='full'] .art-charge-card { border-color: #f3d57a; }
+.hand .card[data-art-charge='full'] .art-charge-card { border-color: #f3d57a; top: 13%; }
+/* The unleashed strip (card.js): the full bonus at the foot of the art band,
+   wrapping rather than clipping, so it reads in full at resting size. */
+.card .art .cd-unleashed {
+  position: absolute; left: calc(3px / var(--ui-zoom, 1)); right: calc(3px / var(--ui-zoom, 1)); bottom: calc(2px / var(--ui-zoom, 1)); z-index: 2;
+  padding: calc(1px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); border: 1px solid #f3d57a; border-radius: calc(6px / var(--ui-zoom, 1));
+  background: #120d09e6; color: #f7e08c; font-size: calc(10px / var(--ui-zoom, 1)); font-weight: 700; line-height: 1.2;
+  text-align: center; white-space: normal; overflow-wrap: break-word; pointer-events: none;
+}
+/* In an overlapping hand only a card's left step is uncovered at rest
+   (--hand-hit-width, hand.js), so the strip keeps to that step and wraps. */
+.hand .card .art .cd-unleashed { max-width: calc(var(--hand-hit-width, 100%) - 10px / var(--ui-zoom, 1)); text-align: left; }
+.card .cd-unleashed-short { display: none; }
 .hand .card[data-art-charge='full'].art-charge-flash { animation: art-charge-flash 700ms ease-out 2; }
 .reduced-motion .combat .art-charge-row.flash,
 .reduced-motion .hand .card.art-charge-flash { animation: none; }
@@ -1564,7 +1576,10 @@
   .combat .art-charge-row { padding: calc(2px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); }
   /* Overlapping cards cover each other's right side, so the pips sit on the
      card's top-left edge, above the cost — the part every card keeps visible. */
-  .hand .card .art-charge-card { left: calc(2px / var(--ui-zoom, 1)); right: auto; top: calc(-8px / var(--ui-zoom, 1)); z-index: 5; }
+  .hand .card .art .cd-unleashed { left: calc(1px / var(--ui-zoom, 1)); max-width: calc(var(--hand-hit-width, 100%) - 4px / var(--ui-zoom, 1)); font-size: calc(9px / var(--ui-zoom, 1)); line-height: 1.15; padding-inline: calc(2px / var(--ui-zoom, 1)); }
+  .hand .card .art .cd-unleashed-long { display: none; }
+  .hand .card .art .cd-unleashed-short { display: inline; }
+  .hand .card .art-charge-card, .hand .card[data-art-charge='full'] .art-charge-card { left: calc(2px / var(--ui-zoom, 1)); right: auto; top: calc(-8px / var(--ui-zoom, 1)); z-index: 5; }
 }
 /* ---------- combat juice (SPEC §7.4): damage scale, hit-stop, kill cam ----------
    Decisions and every number: CombatJuiceModel.js + combatJuiceModel.json.

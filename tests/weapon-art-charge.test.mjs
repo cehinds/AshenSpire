@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -137,7 +137,9 @@ test('a full meter unleashes the Art: its extra effects resolve and the meter em
   assert.deepEqual([pv.artCharge.value, pv.artCharge.max], [max, max]);
   // The printed card text gains the unleashed line, its numbers bound as
   // ordinary template tokens (SPEC §3.13).
-  assert.equal(pv.artCharge.textTemplate, 'Unleashed: +{unleashed.0} Poise, apply {unleashed.1} Vulnerable.');
+  assert.equal(pv.artCharge.textTemplate, '★ +{unleashed.0} Poise, +{unleashed.1} Vulnerable');
+  // The phone hand's wording keeps the same tokens in fewer letters.
+  assert.equal(pv.artCharge.shortTemplate, '★ +{unleashed.0} Poise, +{unleashed.1} Vuln.');
   assert.deepEqual([pv.tokens['unleashed.0'], pv.tokens['unleashed.1']], [4, 1]);
   const enemy = combat.enemies[0];
   const poiseBefore = enemy.poiseMeter.value;
@@ -230,4 +232,21 @@ test('content validation refuses malformed meter rules and unleashed forms', () 
   assert.match(problems(badOp), /weaponArtUnleashed\.twinFang\.effects/);
   const badRule = { ...contentBundle, balance: { ...contentBundle.balance, weaponArtCharge: { ...rules, maxByWeapon: { noSuchWeapon: 3 } } } };
   assert.match(problems(badRule), /maxByWeapon\.noSuchWeapon/);
+});
+
+test('the unleashed line is compact enough for a resting card, with a phone form', () => {
+  assert.equal(shortStatusName('Bleed'), 'Bleed');
+  assert.equal(shortStatusName('Crimson Blight'), 'Blight');
+  assert.equal(shortStatusName('Vulnerable'), 'Vuln.');
+  const r = createRegistries(contentBundle);
+  const name = (id) => r.statuses.get(id).name;
+  // Every authored unleashed form prints a line a resting desktop card holds
+  // in at most two strip lines, and a phone line no longer than it.
+  for (const [cardId, form] of Object.entries(contentBundle.weaponArtUnleashed)) {
+    const long = unleashedTemplate(form, name).replace(/\{unleashed\.\d+\}/g, '9');
+    const short = unleashedTemplate(form, name, { short: true }).replace(/\{unleashed\.\d+\}/g, '9');
+    assert.ok(long.startsWith('★ '), cardId);
+    assert.ok(long.length <= 34, `${cardId}: '${long}' is too long for the strip`);
+    assert.ok(short.length <= long.length, cardId);
+  }
 });

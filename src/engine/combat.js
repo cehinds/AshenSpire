@@ -1223,11 +1223,13 @@ export function previewCard(combat, cardInstanceId, targetId) {
   // whose lender has a meter.
   const unleash = artUnleashFor(combat, inst);
   let unleashedText = null;
+  let unleashedShort = null;
   if (unleash && unleash.ready) {
     // The unleashed line joins the card text (SPEC §3.13): its tokens are
     // resolved here by the same math the play will run.
     const statusName = (id) => (combat.registries.statuses.has(id) ? combat.registries.statuses.get(id).name : id);
     unleashedText = unleashedTemplate(unleash.form, statusName);
+    unleashedShort = unleashedTemplate(unleash.form, statusName, { short: true });
     unleash.form.effects.forEach((eff, i) => {
       const primary = firstResolvedTarget(combat, action, eff);
       let value;
@@ -1239,7 +1241,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     });
   }
   return {
-    ...(unleash ? { artCharge: { weaponId: unleash.weaponId, value: unleash.value, max: unleash.max, unleashed: unleash.ready, ...(unleashedText ? { textTemplate: unleashedText } : {}) } } : {}),
+    ...(unleash ? { artCharge: { weaponId: unleash.weaponId, value: unleash.value, max: unleash.max, unleashed: unleash.ready, ...(unleashedText ? { textTemplate: unleashedText, shortTemplate: unleashedShort } : {}) } } : {}),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

@@ -144,26 +144,45 @@ export function artChargeSnapshotProblems(value) {
 }
 
 /**
- * unleashedTemplate(form, statusName) → the card-text line (SPEC §3.13) for an
- * unleashed form: "Unleashed: +{unleashed.0} damage, …". Each value token is
+ * shortStatusName(name) → the phone strip's word for a status: a name of six
+ * letters or fewer as it is ("Bleed"), the last word of a longer multi-word
+ * name when that is short ("Crimson Blight" → "Blight"), else its first four
+ * letters and a stop ("Vulnerable" → "Vuln.").
+ */
+export function shortStatusName(name = '') {
+  const s = String(name);
+  if (s.length <= 6) return s;
+  const last = s.split(/\s+/).pop();
+  if (last !== s && last.length <= 6) return last;
+  return `${s.slice(0, 4)}.`;
+}
+
+/**
+ * unleashedTemplate(form, statusName, { short }) → the card-text line (SPEC §3.13) for an
+ * unleashed form: "★ +{unleashed.0} damage, +{unleashed.1} Bleed". Compact on
+ * purpose — it must fit a resting hand card in full; the ★ is the Unleashed
+ * mark the meter and the card's edge already explain. `short` is the phone
+ * hand's wording (dmg, shortStatusName), where only a card's uncovered step
+ * shows at rest. Each value token is
  * `unleashed.<effect index>`, filled by previewCard with the same evaluator
  * the play uses, so the printed number is the number that lands.
  */
-export function unleashedTemplate(form, statusName = (id) => id) {
+export function unleashedTemplate(form, statusName = (id) => id, { short = false } = {}) {
   const parts = [];
+  const name = short ? (id) => shortStatusName(statusName(id)) : statusName;
   (form && form.effects || []).forEach((eff, i) => {
     const tok = `{unleashed.${i}}`;
     const hits = typeof eff.hits === 'number' && eff.hits > 1 ? `×${eff.hits}` : '';
-    const all = eff.target === 'allEnemies' ? ' to all' : '';
+    const all = eff.target === 'allEnemies' ? (short ? ' all' : ' to all') : '';
     switch (eff.op) {
-      case 'damage': parts.push(`+${tok}${hits} damage${all}`); break;
+      case 'damage': parts.push(`+${tok}${hits} ${short ? 'dmg' : 'damage'}${all}`); break;
       case 'poiseDamage': parts.push(`+${tok} Poise${all}`); break;
       case 'block': parts.push(`+${tok} Block`); break;
       case 'draw': parts.push(`draw ${tok}`); break;
       case 'heal': parts.push(`heal ${tok}`); break;
-      case 'applyStatus': parts.push(`${eff.target === 'self' ? 'gain' : 'apply'} ${tok} ${statusName(eff.status)}${all}`); break;
+      case 'applyStatus': parts.push(`+${tok} ${name(eff.status)}${all}`); break;
       default: parts.push(eff.op);
     }
   });
-  return parts.length ? `Unleashed: ${parts.join(', ')}.` : '';
+  return parts.length ? `★ ${parts.join(', ')}` : '';
 }
