@@ -574,6 +574,11 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
+      // THE COUNTERS THE SAVE HOLDS: the auto picks draw before any row lands,
+      // so a refused save must also hand the draws back — to the counters the
+      // last landed save wrote (none yet: those before the picks) — or a retry
+      // picks a different card, relic or chest option than a reload would.
+      let savedCounters = rng && rng.getCounters ? rng.getCounters() : null;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
         const before = snapshotForRollback();
@@ -590,8 +595,10 @@ export function mountRewards(app, {
             persistProgress();
           } catch (error) {
             restoreRollback(before, row);
+            if (savedCounters) rng.restoreCounters(savedCounters);
             throw error;
           }
+          if (savedCounters) savedCounters = rng.getCounters();
         }
       }
       if (toTake.length) sfx.play('rewardTake');

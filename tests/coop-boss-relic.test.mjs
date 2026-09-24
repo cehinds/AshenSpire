@@ -92,6 +92,35 @@ test('a seat may skip the boss relic, and a legacy takeRelic keeps one, never tw
   assert.deepEqual(seat(S, 'p2').run.relics.slice(b2), [BOSS[0]], 'a bare takeRelic keeps the first offered');
 });
 
+test('a seat that sends its pick twice keeps one relic and one card, never two', () => {
+  // The co-op screen stays up after a seat's first tap while the others
+  // choose, and re-sends its whole pick on the next tap: a second message
+  // naming ANOTHER boss relic (or the same card) must land nothing new.
+  const S = party();
+  const offer = () => ({ pool: 'boss', cardIds: ['stomp'], cinders: 0, relicId: null, relicIds: BOSS.slice(0, 3) });
+  openReward(S, { p1: offer(), p2: offer() });
+  const m = seat(S, 'p1');
+  const relics = m.run.relics.length;
+  const deck = m.run.deck.length;
+  S.chooseReward('p1', { cardId: 'stomp', takeRelic: true, relicId: BOSS[0] });
+  S.chooseReward('p1', { cardId: 'stomp', takeRelic: true, relicId: BOSS[1] });
+  assert.deepEqual(m.run.relics.slice(relics), [BOSS[0]], 'one boss relic from one choice');
+  assert.equal(m.run.deck.length, deck + 1, 'the card lands once');
+});
+
+test('a seat that took its card first may still take its relic, once', () => {
+  const S = party();
+  const offer = () => ({ pool: 'boss', cardIds: ['stomp'], cinders: 0, relicId: null, relicIds: BOSS.slice(0, 3) });
+  openReward(S, { p1: offer(), p2: offer() });
+  const m = seat(S, 'p1');
+  const relics = m.run.relics.length;
+  const deck = m.run.deck.length;
+  S.chooseReward('p1', { cardId: 'stomp' });
+  S.chooseReward('p1', { cardId: 'stomp', takeRelic: true, relicId: BOSS[2] });
+  assert.deepEqual(m.run.relics.slice(relics), [BOSS[2]]);
+  assert.equal(m.run.deck.length, deck + 1);
+});
+
 test('a missed boss door replays as the same choice on catch-up', () => {
   const S = party();
   const m = seat(S, 'p1');
