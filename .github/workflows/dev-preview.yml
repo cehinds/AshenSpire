@@ -146,6 +146,9 @@ jobs:
           # pass, so the copies that used to place those by hand are gone with it.
           node tools/bundle.mjs --external-art --out preview
           cp preview/AshenSpire.html preview/index.html
+          # The shipped score (music/manifest.json + tracks). A served page with
+          # the music-folder setting blank reads it from beside itself.
+          cp -r music preview/music
           # The standalone is uploaded as its OWN artifact rather than nested
           # here — see the two upload steps below for why.
           mkdir -p standalone

@@ -434,6 +434,19 @@ function assemble(outDir, keep) {
           writeFileSync(destination, tile);
         }
       }
+      // The shipped score belongs to this exact build too, read the same way:
+      // a served page with the music-folder setting blank fetches music/ from
+      // beside itself (content/music.js SHIPPED_MUSIC_FOLDER), so the mobile
+      // page needs its own copy for the same reason as the detail tiles.
+      const musicFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'music']).toString('utf8').trim().split('\n').filter(Boolean);
+      for (const file of musicFiles) {
+        const blob = gitBuf(['show', `${b.sha}:${file}`]);
+        for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
+          const destination = join(base, file);
+          mkdirSync(dirname(destination), {recursive:true});
+          writeFileSync(destination, blob);
+        }
+      }
       writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
@@ -446,6 +459,8 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
+      const score = join(outDir, branch, String(builds[0].ordinal), 'music');
+      if (existsSync(score)) cpSync(score, join(latest, 'music'), {recursive:true});
       const mobile = join(outDir, branch, String(builds[0].ordinal), 'mobile');
       if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }

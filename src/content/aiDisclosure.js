@@ -164,7 +164,7 @@ export const AI_DISCLOSURE = Object.freeze({
   runtimeCheck: Object.freeze({
     claim: RUNTIME_CLAIM,
     verifyWith: `node tools/ai-disclosure.mjs --evidence`,
-    networkNote: `A separate grep for network primitives returns exactly two sites in the whole game, both local and neither AI: src/net/lan.js (LAN co-op against the game's own launcher) and src/ui/audio.js (the player's own configured music folder).`,
+    networkNote: `A separate grep for network primitives returns exactly two sites in the whole game, both local and neither AI: src/net/lan.js (LAN co-op against the game's own launcher) and src/ui/audio.js (the music folder: the player's own, or the shipped music/ beside the page).`,
   }),
 });
 
