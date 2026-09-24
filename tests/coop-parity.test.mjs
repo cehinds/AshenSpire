@@ -352,6 +352,22 @@ test('a restored offer or catch-up entry naming unknown content is refused at th
   assert.deepEqual(run.relics, relics);
 });
 
+test('a restored offer or catch-up entry whose chest has an empty or non-list options is refused (PR #1287 review)', () => {
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  for (const chest of [{ options: [] }, { options: {} }]) {
+    const S = party();
+    openReward(S, { p1: { ...chestOffer([purse]), chest }, p2: chestOffer([purse]) });
+    const R = restoreSession(REG, JSON.parse(JSON.stringify(S.serialize())));
+    assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], `live offer chest ${JSON.stringify(chest)} is refused`);
+    assert.match(R.refusedMembers()[0].reason, /chest has no options/);
+
+    const T = party();
+    seat(T, 'p2').catchup.push({ type: 'reward', offer: { ...chestOffer([purse]), chest }, act: 1, floor: 1 });
+    const U = restoreSession(REG, JSON.parse(JSON.stringify(T.serialize())));
+    assert.deepEqual(U.refusedMembers().map((r) => r.id), ['p2'], `catch-up chest ${JSON.stringify(chest)} is refused`);
+  }
+});
+
 // ---- the co-op screen's chest door --------------------------------------------
 
 function mountCoopScreen(snapshot, { myIds } = {}) {

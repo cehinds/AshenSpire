@@ -132,7 +132,10 @@ function offerReferenceProblems(registries, offer, path) {
   }
   if (offer.flaskId && !registries.flasks.has(offer.flaskId)) problems.push(`${path} flask '${offer.flaskId}' is unknown`);
   if (offer.chest != null) {
-    const options = offer.chest && Array.isArray(offer.chest.options) ? offer.chest.options : null;
+    // A generated offer omits `chest` when nothing can be built, so an
+    // explicitly empty list is corrupt: the door would draw no chest and
+    // Continue/Skip all would silently forfeit it.
+    const options = offer.chest && Array.isArray(offer.chest.options) && offer.chest.options.length ? offer.chest.options : null;
     if (!options) problems.push(`${path} chest has no options`);
     for (const [i, option] of (options || []).entries()) {
       const shape = chestOptionShapeProblems(option, `${path} chest option ${i}`);
