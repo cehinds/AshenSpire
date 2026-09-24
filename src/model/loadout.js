@@ -1772,7 +1772,11 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // (priorityAttackRefs) are not counted here: they are dealt inside the attack
   // quota by quotaRefs, so counting them again would charge them twice.
   const hasCombatKit = ['right', 'left'].some((hand) => handSource(registries, loadout, classId, hand).package?.combatKit);
-  if (techniqueRow && techniqueRow.profile && !hasCombatKit) {
+  // The unarmed technique IS the Dodge Roll, and every deck already carries
+  // one item-owned Dodge Roll (desiredGrantInstances), so it is not granted a
+  // second time as a technique slot.
+  const unarmedDodge = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique)?.baseCardId;
+  if (techniqueRow && techniqueRow.profile && !hasCombatKit && techniqueRow.profile.baseCardId !== unarmedDodge) {
     grants.push({
       source: grantSourceFor(cfg, 'weapon'),
       cardId: techniqueRow.profile.baseCardId,
@@ -2038,6 +2042,33 @@ function pieceFamily(piece) {
  * stamped non-equipment card as immutable, so patching `cardId` alone would
  * leave a Dodge Roll wearing Crimson Cleave's stamp.
  */
+// The Dodge Roll's id named its owner hand until 2026-09-24
+// (`weaponArt:unarmed:left:dodgeRoll`); a saved run or combat pile still
+// holding that spelling is the same card under the owner-free id.
+function currentInstanceId(inst) {
+  const m = /^weaponArt:unarmed:(?:left|right|body):(.+)$/.exec(inst.instanceId || '');
+  if (m) inst.instanceId = `weaponArt:unarmed:${m[1]}`;
+  return inst.instanceId;
+}
+
+// The Dodge Roll changes owner — hand, body, or a smith-emptied art mount
+// that falls back to it — without leaving the pile it is in. Before the sweep,
+// an unwanted Dodge Roll takes the id of a wanted one no pile holds yet, so
+// the sweep adopts it where it sits rather than dropping it and minting a
+// copy into the discard.
+function carryDodgeRoll(registries, piles, wanted) {
+  const dodgeId = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique)?.baseCardId;
+  if (!dodgeId) return;
+  const all = piles.flat();
+  const held = new Set(all.map((inst) => inst && currentInstanceId(inst)));
+  const open = [...wanted.values()].filter((d) => d.equipmentRole === 'weaponArt' && d.cardId === dodgeId && !held.has(d.instanceId));
+  for (const inst of all) {
+    if (!open.length) return;
+    if (!isItemOwned(inst) || inst.equipmentRole !== 'weaponArt' || inst.cardId !== dodgeId || wanted.has(inst.instanceId)) continue;
+    inst.instanceId = open.shift().instanceId;
+  }
+}
+
 function adoptWanted(inst, wanted) {
   if (inst.cardId !== wanted.cardId || (inst.upgraded === true) !== (wanted.upgraded === true)) return wanted;
   // Older combat snapshots omitted ownership metadata. Adopt it without moving
@@ -2056,10 +2087,11 @@ export function reconcileGrantedCards(registries, run) {
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
+  carryDodgeRoll(registries, [run.deck], wanted);
   const kept = [];
   for (const inst of run.deck) {
     if (!isItemOwned(inst)) { kept.push(inst); continue; }
-    const want = wanted.get(inst.instanceId);
+    const want = wanted.get(currentInstanceId(inst));
     if (!want) continue;
     present.add(inst.instanceId);
     kept.push(adoptWanted(inst, want));
@@ -2135,27 +2167,48 @@ function desiredGrantInstances(registries, run) {
     }
   }
 
-  // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
-  // (the owner's rule, 2026-09-02) — not only when both are. With one hand
-  // armed, the technique slot is that armament's (its installed art, A-6)
-  // and the EMPTY hand contributes the unarmed technique as a weapon-art
-  // instance of its own, minted and dropped here as the hands change, so
-  // filling the hand takes the dodge away and emptying it brings it back.
-  // Both hands empty is the unarmed package (every technique slot is the
-  // Dodge Roll already); a two-handed armament fills both hands.
-  const armed = ['right', 'left'].filter((hand) => handSource(registries, run.loadout, run.class, hand).piece);
+  // EVERYONE HAS THE DODGE (the owner's rule, 2026-09-24, widening the
+  // 2026-09-02 empty-hand rule): holding equipment never costs the Dodge Roll.
+  // Exactly one rides in every composed deck. An empty hand still owns it
+  // (`unarmed:<hand>`, right first), so filling that hand moves it rather than
+  // removing it; with no empty hand — both armed, or a two-handed armament —
+  // the body owns it (`unarmed:body`). An art mount already holding the Dodge
+  // Roll (a smith's emptied mount falls back to it) counts: one, not two.
+  const empty = ['right', 'left'].filter((hand) => !handSource(registries, run.loadout, run.class, hand).piece);
   const twoHanded = sources.right?.package?.handsRequired === 2 || sources.left?.package?.handsRequired === 2;
-  if (armed.length === 1 && !twoHanded) {
-    const empty = armed[0] === 'right' ? 'left' : 'right';
-    const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
-    const alreadyInstalled = profile && desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId);
-    if (profile && profile.baseCardId && !alreadyInstalled) {
-      desired.push({
-        instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
-        cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
-        grantSource: weaponSource,
-      });
-    }
+  const owner = twoHanded || !empty.length ? 'body' : empty[0];
+  const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
+  // A run saved while the unarmed technique slot still dealt the Dodge Roll
+  // keeps that run-owned copy; it counts as the one only while both hands are
+  // empty — the restamp that follows rebinds a technique slot to an armed
+  // hand's technique, and then that copy is no longer a Dodge Roll.
+  const legacyTechniqueDodge = empty.length === 2 && !twoHanded
+    && (run.deck || []).some((c) => c && c.equipmentRole === 'technique' && c.cardId === profile?.baseCardId);
+  const alreadyInstalled = profile && (
+    desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId)
+    || legacyTechniqueDodge);
+  if (profile && profile.baseCardId && !alreadyInstalled) {
+    // One id whoever owns it, so a swap that moves it between a hand and the
+    // body re-attributes the card in whatever pile it sits in instead of
+    // dropping it and minting a fresh copy into the discard.
+    desired.push({
+      instanceId: `weaponArt:unarmed:${profile.baseCardId}`,
+      cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${owner}`,
+      grantSource: weaponSource,
+    });
+  }
+
+  // Exactly one: two emptied art mounts (both hands' Weapon Arts extracted)
+  // each fall back to the Dodge Roll. The first — right hand before left, the
+  // order the arts were composed in — owns it; the others lend nothing.
+  if (profile && profile.baseCardId) {
+    let seen = false;
+    desired = desired.filter((d) => {
+      if (d.equipmentRole !== 'weaponArt' || d.cardId !== profile.baseCardId) return true;
+      if (seen) return false;
+      seen = true;
+      return true;
+    });
   }
 
   // EXTRA MOUNTS a smith has filled on worn pieces (the rune seam).
@@ -2250,14 +2303,18 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
-  const desired = desiredGrantInstances(registries, run);
+  // Combat's swap hands in a synthetic run with an empty deck; the piles are
+  // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
+  const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];
+  const desired = desiredGrantInstances(registries, { ...run, deck });
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
+  carryDodgeRoll(registries, [piles.hand, piles.draw, piles.discard, piles.exhaust], wanted);
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = [];
     for (const inst of pile) {
       if (!isItemOwned(inst)) { kept.push(inst); continue; }
-      const want = wanted.get(inst.instanceId);
+      const want = wanted.get(currentInstanceId(inst));
       if (!want) continue;
       present.add(inst.instanceId);
       kept.push(adoptWanted(inst, want));

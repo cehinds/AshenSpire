@@ -12,11 +12,14 @@ export function carryCapacity({ constitution, strength, bonuses = 0 }) {
 }
 
 export function equipLoad({ mainHandWeight = 0, offHandWeight = 0, armorWeight = 0, otherCountedWeight = 0 }) {
-  return mainHandWeight + offHandWeight + armorWeight + otherCountedWeight;
+  // Rounded to a tenth: scaled piece weights (itemWeightScale) are tenths.
+  return Math.round((mainHandWeight + offHandWeight + armorWeight + otherCountedWeight) * 10) / 10;
 }
 
 export function loadPercent(load, capacity) {
-  return Math.floor((100 * load) / Math.max(1, capacity));
+  // Loads are tenths (itemWeightScale); work in whole tenths so 4.6 / 10 is
+  // 46%, not the 45% that 100 * 4.6 = 459.99… floors to.
+  return Math.floor((10 * Math.round(10 * load)) / Math.max(1, capacity));
 }
 
 export function weightClassFor(percent) {
