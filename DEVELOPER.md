@@ -752,9 +752,10 @@ falsifier), not deferred.
    event system, which is the first thing that can grant Guilt).
 2. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
    a generic choose-one UI primitive is an M2/M3 feature.
-3. **Goreblood** freezes Poise thresholds as well as Bleed (the
-   `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
-   card text says so honestly).
+
+Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
+thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
+only Poise, and the card text and tooltip say Poise only.
 
 ## Dodge outcome presentation
 
