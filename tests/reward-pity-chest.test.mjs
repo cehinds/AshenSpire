@@ -538,8 +538,11 @@ test('an owned chest upgrade must name the deck card it shows, at both save door
   };
   assert.equal(load([good]), '');
   assert.match(load([mismatched]), /not the offered/);
-  assert.match(load([good], (raw) => { raw.deck.find((c) => c.instanceId === target.instanceId).upgraded = true; }),
-    /is not a card the chest may upgrade/);
+  // One the chest may no longer upgrade (a skill threshold's reconcile at the
+  // load door can upgrade that very instance) is not a refusal: it loads, and
+  // the plan draws the option spent (#1287).
+  assert.equal(load([good], (raw) => { raw.deck.find((c) => c.instanceId === target.instanceId).upgraded = true; }), '');
+  assert.match(load([missing]), /names no card in the deck/);
   // The grant refuses a mismatch rather than upgrading a card the chooser never showed.
   const copy = structuredClone(run);
   assert.equal(applyChestOption(r, copy, mismatched), false);
@@ -684,4 +687,15 @@ test('a refused save rolls back the flask growth a relic grant applied', async (
       else globalThis[key] = value;
     }
   }
+});
+
+test('an owned chest upgrade whose card was upgraded since is spent, not takeable (#1287)', () => {
+  const chest = { options: [{ category: 'upgrade', mode: 'owned', instanceId: 'x', cardId: 'y' }, { category: 'cinders', cinders: 5, smithingStones: 0 }] };
+  const open = rewardPlan({ chest }, { flaskSlotsFree: 0, armamentSlotsFree: 0 }).rows.find((row) => row.kind === 'chest');
+  assert.deepEqual(open.takeable, [true, true]);
+  const spent = rewardPlan({ chest }, { flaskSlotsFree: 0, armamentSlotsFree: 0, chestOptionsSpent: [true, false] }).rows.find((row) => row.kind === 'chest');
+  assert.deepEqual(spent.takeable, [false, true]);
+  assert.equal(spent.blockedBy, null);
+  const { take } = resolveContinue({ rows: [spent] }, {}, 'auto', () => 0);
+  assert.equal(take[0].optionIndex, 1, 'auto-collect never picks the spent upgrade');
 });

@@ -150,7 +150,12 @@ const KINDS = {
     row: (r, facts) => ({
       options: r.chest.options.map((o) => ({ ...o })),
       choice: r.chest.options.length > 1,
-      takeable: r.chest.options.map((o) => !(o.category === 'armament' && o.armamentId && !(chestArmamentSlots(r, facts) > 0))),
+      // An owned upgrade whose card is no longer one the chest may upgrade
+      // (a skill threshold upgraded it since the offer was drawn — SPEC
+      // §3.8.1) is spent: shown, locked, never auto-picked. The caller states
+      // which (`facts.chestOptionsSpent`, by option index); this file never reads the deck.
+      takeable: r.chest.options.map((o, i) => !(facts.chestOptionsSpent && facts.chestOptionsSpent[i])
+        && !(o.category === 'armament' && o.armamentId && !(chestArmamentSlots(r, facts) > 0))),
     }),
     blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || chestArmamentSlots(r, facts) > 0 ? null : 'storage'),
   },

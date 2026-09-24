@@ -422,9 +422,13 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   hold, by name — so a corrupt or stale save is archived, never mounted. While the chest is
   still open (no `states.chest`), an `owned` upgrade must name the card the chooser shows
   (`chestOptionDeckProblems`): the shape door refuses an `instanceId` absent from `run.deck`
-  or carrying a different `cardId`, and the load door also refuses one the chest may no
-  longer upgrade (`chestUpgradeable`). `applyChestOption` refuses the same mismatch and
-  grants nothing. Auto-collect picks one of the
+  or carrying a different `cardId`, and the load door refuses the same two. An instance the
+  chest may no longer upgrade (`chestUpgradeable` false — typically because the load door's
+  own skill-threshold reconcile upgraded it after the offer was drawn) is **not** a refusal:
+  the save loads, and the reward plan draws that option **spent** (`facts.chestOptionsSpent`,
+  shown locked with its reason, never picked by auto-collect), leaving the chest's other
+  options to choose from. `applyChestOption` refuses the mismatch and the spent card alike
+  and grants nothing. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
   while the bag is full — and while the door's own armament row is still pending it needs
   **two** free slots, since that row claims one first (it is listed and auto-collected before

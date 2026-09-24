@@ -134,8 +134,12 @@ function pendingRewardReferenceProblems(pending, registries, run) {
   }
   for (const option of (rewards.chest && Array.isArray(rewards.chest.options) && rewards.chest.options) || []) {
     problems.push(...chestOptionReferenceProblems(registries, option));
-    // An open chest's owned upgrade must still be one the chest may upgrade.
-    if (!(pending.states && pending.states.chest)) problems.push(...chestOptionDeckProblems(registries, run, option, 'chest upgrade'));
+    // An open chest's owned upgrade must still name the card the chooser
+    // shows (present, same cardId). One the chest may no longer upgrade is
+    // NOT refused: the load door's own skill reconcile (below) can upgrade
+    // that very instance, and refusing it would archive the next load
+    // forever. The reward plan draws it spent instead (SPEC §3.8.1).
+    if (!(pending.states && pending.states.chest)) problems.push(...chestOptionDeckProblems(null, run, option, 'chest upgrade'));
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
   for (const relicId of Array.isArray(rewards.relicIds) ? rewards.relicIds : []) {

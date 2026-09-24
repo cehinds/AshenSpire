@@ -74,7 +74,7 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { applyChestOption, landChestPick } from '../../model/rewardChest.js';
+import { applyChestOption, chestUpgradeable, landChestPick } from '../../model/rewardChest.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', chest: '▣', relic: '◆' };
 
@@ -124,6 +124,10 @@ export function mountRewards(app, {
     // in the bag (counted above), a skipped one needs no slot, so the chest's
     // piece need not leave one for it (model/rewardplan.js).
     armamentRowSettled: !!checkpoint?.states?.armament,
+    // An owned chest upgrade whose card has since been upgraded (a skill
+    // threshold's reconcile) is spent, not a refused save (SPEC §3.8.1).
+    chestOptionsSpent: (rewards.chest?.options || []).map((o) => o?.category === 'upgrade' && o.mode === 'owned'
+      && !chestUpgradeable(registries, run, (run.deck || []).find((c) => c.instanceId === o.instanceId))),
   });
   // The fight's progression, derived once: the ledgers are already paid and
   // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
