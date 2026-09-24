@@ -42,8 +42,21 @@ export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'cla
 export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}` : kind);
 
-/** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.options) ? row.options : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
+/** The ids a choice row picks among: a card draft's cards, a class draft's nodes, a boss's relics. */
+export const pickIds = (row) => (Array.isArray(row.options) ? row.options : Array.isArray(row.nodeIds) ? row.nodeIds
+  : Array.isArray(row.relicIds) ? row.relicIds : row.cardIds || []);
+
+/**
+ * offeredRelicIds(offer) → the relic ids an offer lays out (SPEC §6.1): a
+ * boss's `relicIds` choice, or the single `relicId` elites and treasure (and
+ * pre-choice boss saves) carry. The one reading of "which relics are on the
+ * table", shared by the solo menu, the co-op screen and the co-op host.
+ */
+export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
+  : Array.isArray(offer.relicIds) ? offer.relicIds.filter(Boolean) : []);
+
+/** The field a choice row's pick lands in, by kind. */
+const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -130,8 +143,14 @@ const KINDS = {
     blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
   relic: {
-    present: (r) => !!r.relicId,
-    row: (r) => ({ relicId: r.relicId }),
+    // A boss offers a CHOICE of distinct boss relics (`relicIds`, SPEC §6.1);
+    // elites and treasure carry the single `relicId` they always did. One
+    // row either way: 2+ ids is a choice, one id is a plain take.
+    present: (r) => offeredRelicIds(r).length > 0,
+    row: (r) => {
+      const ids = offeredRelicIds(r);
+      return !r.relicId && ids.length > 1 ? { relicIds: ids, choice: true } : { relicId: ids[0] };
+    },
     blocked: () => null,
   },
 };
@@ -182,10 +201,10 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
         // Only a takeable option may be picked; the seeded pick chooses among them.
         const open = row.options.map((_, i) => i).filter((i) => row.takeable[i]);
         take.push({ ...row, optionIndex: open[pick(open.length) % open.length] });
-      } else if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
+      } else if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || (row.kind === 'relic' && row.choice)) {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
-        take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id } : { cardId: id }) });
+        take.push({ ...row, [pickField(row.kind)]: id });
       } else {
         take.push(row);
       }
@@ -236,7 +255,7 @@ export function unseenIds(rewards = {}, possessions = {}) {
   const draftIds = (rewards.skillDrafts || []).flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
-    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    relics: [...new Set(offeredRelicIds(rewards))].filter((id) => !holds(possessions.relics, id)),
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
   };

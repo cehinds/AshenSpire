@@ -41,7 +41,9 @@ import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
+  rollBossRelicChoices,
 } from '../src/engine/encounters.js';
+import { offeredRelicIds } from '../src/model/rewardplan.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
@@ -788,11 +790,16 @@ export function createSession({ registries, seedString, endless = false, restore
     if (livingMembers().length > 1) {
       cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
     }
-    const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
+    let cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
-    const relicId = pool === 'elite' || pool === 'boss'
-      ? rollRelicReward(registries, m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
-      : null;
+    if (pool === 'boss') {
+      // SPEC §6.1, the solo door's rule per seat: a choice of distinct boss
+      // relics the seat does not hold; none left pays the consolation.
+      const relicIds = rollBossRelicChoices(registries, m.rng, m.run.relics);
+      if (!relicIds.length) cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
+      return { pool, cardIds, cinders, flaskId, relicId: null, relicIds };
+    }
+    const relicId = pool === 'elite' ? rollRelicReward(registries, m.rng, m.run.relics) : null;
     return { pool, cardIds, cinders, flaskId, relicId };
   }
 
@@ -817,8 +824,21 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'reward', pool, offers: pending, chosen: {}, afterReward: null };
   }
 
+  /**
+   * The one relic a reward pick lands (SPEC §6.1), or null. `relicId` names
+   * one of the offered ids — the boss choice's door; a bare `takeRelic` takes
+   * the single relic, or on a choice the first offered (a legacy client or a
+   * bot that never names one). Anything not on the table lands nothing, so a
+   * seat can never take two nor one the host did not offer.
+   */
+  function pickedRelic(offer, { relicId = null, takeRelic = false } = {}) {
+    const ids = offeredRelicIds(offer);
+    if (relicId) return ids.includes(relicId) ? relicId : null;
+    return takeRelic ? ids[0] || null : null;
+  }
+
   // A present member takes their card/relic pick (or skips with null).
-  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false } = {}) {
+  function chooseReward(memberId, { cardId = null, takeRelic = false, relicId = null, flask = false } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
@@ -826,8 +846,9 @@ export function createSession({ registries, seedString, endless = false, restore
     if (cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
-    if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
-      m.run.relics.push(offer.relicId);
+    const relic = pickedRelic(offer, { relicId, takeRelic });
+    if (relic && !m.run.relics.includes(relic)) {
+      m.run.relics.push(relic);
     }
     if (flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
       m.run.flasks.push({ flaskId: offer.flaskId });
@@ -1201,8 +1222,9 @@ export function createSession({ registries, seedString, endless = false, restore
       // the relics the seat held then). The seat is owed a relic, not this
       // one: a substitute is rolled against the relics in hand now (Codex on
       // #548).
-      if (pick && pick.takeRelic && offer.relicId) {
-        const id = m.run.relics.includes(offer.relicId) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : offer.relicId;
+      const chosen = pick ? pickedRelic(offer, pick) : null;
+      if (chosen) {
+        const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : chosen;
         if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
       }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
@@ -1454,6 +1476,9 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
+    // The per-seat offer roll, handed out read-only so a test can read the
+    // boss door's shape (SPEC §6.1) without walking a party to a boss.
+    rollRewardFor: (memberId, pool) => rollRewardFor(members.get(memberId), pool),
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

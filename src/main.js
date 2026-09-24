@@ -64,6 +64,7 @@ import {
   rollFlaskDrop,
   rollRelicReward,
   rollEliteChest,
+  rollBossRelicChoices,
   buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
@@ -2425,13 +2426,17 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = rollSkillDrafts('boss');
     const bossClassDrafts = rollClassDrafts();
+    // SPEC §6.1: a choice of distinct boss relics, keep one. An empty pool
+    // (every boss relic held) pays cinders where the relic stood.
+    const bossRelicIds = rollBossRelicChoices(registries, rng, run.relics);
     const bossRewards = {
       title: victoryTitle(enc),
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0)
+        + (bossRelicIds.length ? 0 : registries.balance.rewards.bossRelicConsolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
       cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      relicIds: bossRelicIds,
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2511,6 +2516,7 @@ function beginPendingReward(rewards, { source, after }) {
     chosenCardId: null,
     chosenDraftCardIds: {},
     chosenDraftNodeIds: {},
+    chosenRelicId: null,
   };
   persist();
   return mountPendingReward();
@@ -2943,11 +2949,17 @@ function coopShotParty() {
     { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
 }
-function coopRewardShot() {
+function coopRewardShot(pose = null) {
+  // `?shotReward=bossRelic`: the boss door's choice of three (SPEC §6.1), the
+  // pool's first three in authored order — the host's own shape, no roll.
+  const boss = pose === 'bossRelic';
+  const offer = boss
+    ? { pool: 'boss', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 240, flaskId: null, relicId: null, relicIds: rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, []) }
+    : { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' };
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
     seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
+    scene: { kind: 'reward', pool: offer.pool, chosen: {}, afterReward: null, offers: { p1: offer } },
     party: coopShotParty(),
   };
 }
@@ -3426,7 +3438,17 @@ if (shotState === 'combat-test') {
       // What the fight paid, authored like the rest of the pose.
       xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 }, ...(pose === 'levelup' ? { levelUps: 1 } : {}) },
     };
-    if (pose === 'pending') {
+    // `?shotReward=bossRelic` poses a BOSS door (SPEC §6.1): the relic row is
+    // a choice of three distinct boss relics, the pool's first three the run
+    // does not hold — authored order, no roll — mounted through the real
+    // checkpoint door so the pick persists like a live one.
+    if (pose === 'bossRelic') {
+      delete shotOffer.relicId;
+      delete shotOffer.flaskId;
+      shotOffer.title = 'BOSS DEFEATED';
+      shotOffer.relicIds = rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, run.relics);
+      beginPendingReward(shotOffer, { source: 'boss', after: 'map' });
+    } else if (pose === 'pending') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved
@@ -3490,7 +3512,7 @@ if (shotState === 'combat-test') {
   }
   coopStubMount(coopMapShot(w == null ? 0 : Number(w)), 'p1');
 } else if (shotState === 'coopreward') {
-  coopStubMount(coopRewardShot(), 'p1');
+  coopStubMount(coopRewardShot(shotParams.get('shotReward')), 'p1');
 } else if (shotState === 'coopshrine') {
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {

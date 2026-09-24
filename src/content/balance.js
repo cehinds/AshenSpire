@@ -500,8 +500,14 @@ export const balance = {
         smithingStones: 'How many Smithing Stones an elite chest\'s purse holds.',
       },
     },
+    // SPEC §6.1: a boss lays out this many distinct boss relics; you keep one.
+    bossRelicChoices: 3,
+    // Paid instead when every boss relic is already held.
+    bossRelicConsolationCinders: 60,
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
+      bossRelicChoices: 'How many different boss relics a boss lays out to choose one from.',
+      bossRelicConsolationCinders: 'Cinders a boss pays instead of a relic when you already hold every boss relic it could offer.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
       flaskDropStepPct: 'How far that chance falls after a drop, and rises after a miss.',
     },

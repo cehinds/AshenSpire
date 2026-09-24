@@ -75,6 +75,7 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
+  autoPickBossRelic,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 
@@ -795,8 +796,10 @@ function simulateRun(classId, seed, policy = POLICY) {
         afterVictory(run, rng, pool);
         if (act === 1) stats.act1Curve.push([pick.floor, run.hp / run.maxHp]);
         if (pool === 'boss') {
-          const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
+          // SPEC §6.1: the boss lays out its choice; the bot keeps one by seeded pick.
+          const boss = autoPickBossRelic(REG, rng, run.relics);
           if (boss) run.relics.push(boss);
+          else run.cinders += REG.balance.rewards.bossRelicConsolationCinders || 0;
           break;
         }
       } else if (kind === 'shrine') {

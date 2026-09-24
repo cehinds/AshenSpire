@@ -1578,6 +1578,12 @@ body.reduced-motion .reward-level-banner, body.reduced-motion .reward-level-bann
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+/* SPEC §6.1: the boss relic choice — three class-pick tiles stacked as full
+   rows, so each relic's whole rule reads before the pick (the md door is too
+   narrow for three readable columns). The ring is the shared `is-chosen`. */
+.reward-door .reward-relic-row { flex-direction: column; flex-wrap: nowrap; gap: .8rem; align-items: stretch; width: 100%; padding: .2rem 0; }
+.reward-door .reward-relic-row .reward-relic { flex: 0 0 auto; width: 100%; max-width: none; height: auto; min-height: 0; text-align: left; white-space: normal; }
+.reward-door .reward-relic-row .reward-relic h3 { white-space: normal; }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);

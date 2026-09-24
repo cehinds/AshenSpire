@@ -402,6 +402,55 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.relic.bossTitle",
+    "extends": "",
+    "short": "Boss relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.choose",
+    "extends": "",
+    "short": "Choose a relic",
+    "full": "Opens the boss's relics; Back returns here.",
+    "tip": "Choose a relic"
+  },
+  {
+    "id": "reward.relic.eyebrow",
+    "extends": "",
+    "short": "Choose a boss relic",
+    "full": "Keep one; the others stay behind.",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.aria",
+    "extends": "",
+    "short": "Boss relic choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.chosen",
+    "extends": "",
+    "short": "<b>{name}</b> is yours.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.confirm",
+    "extends": "common.confirm",
+    "short": "",
+    "full": "Keep the chosen relic.",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.skip",
+    "extends": "common.skip",
+    "short": "",
+    "full": "Leave every boss relic behind.",
+    "tip": "Skip the boss relic"
+  },
+  {
     "id": "reward.card.joins",
     "extends": "",
     "short": "<b>{name}</b> joins the deck.",

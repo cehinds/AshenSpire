@@ -87,6 +87,13 @@ reward.chest.upgrade.rare,,<b>{name}</b> joins the deck already upgraded.,,
 reward.chest.weaponArt,,<b>{name}</b> joins the deck.,,
 reward.chest.purse,,{cinders} cinders and {stones} Smithing Stone{plural}.,,
 reward.chest.purseName,,{cinders} cinders,,
+reward.relic.bossTitle,,Boss relic,,
+reward.relic.choose,,Choose a relic,Opens the boss's relics; Back returns here.,Choose a relic
+reward.relic.eyebrow,,Choose a boss relic,Keep one; the others stay behind.,
+reward.relic.aria,,Boss relic choices,,
+reward.relic.chosen,,<b>{name}</b> is yours.,,
+reward.relic.confirm,common.confirm,,Keep the chosen relic.,
+reward.relic.skip,common.skip,,Leave every boss relic behind.,Skip the boss relic
 reward.card.joins,,<b>{name}</b> joins the deck.,,
 reward.card.chooseOne,,Choose one of {count}.,,
 reward.card.offered,,One card offered.,,

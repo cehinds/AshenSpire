@@ -128,6 +128,8 @@ export function mountRewards(app, {
   const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
   // The elite chest's pick (SPEC §3.8.1): the index of the option taken.
   let chosenChestIndex = Number.isInteger(checkpoint?.chosenChestIndex) ? checkpoint.chosenChestIndex : null;
+  // The boss relic kept from a choice row (SPEC §6.1); a pre-choice save has none.
+  let chosenRelicId = checkpoint?.chosenRelicId || null;
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
   function persistProgress() {
@@ -137,6 +139,7 @@ export function mountRewards(app, {
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
       if (chosenChestIndex !== null) checkpoint.chosenChestIndex = chosenChestIndex;
+      checkpoint.chosenRelicId = chosenRelicId;
     }
     if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
   }
@@ -203,6 +206,9 @@ export function mountRewards(app, {
       return true;
     },
     relic(row) {
+      // A choice row lands exactly one relic: the pick, and only if not held.
+      if (!row.relicId || run.relics.includes(row.relicId)) return false;
+      if (row.choice) chosenRelicId = row.relicId;
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
@@ -228,8 +234,8 @@ export function mountRewards(app, {
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? {
-      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'relic' ? {
+      deck: [...run.deck], chosenCardId, chosenRelicId, relics: [...run.relics], chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
       coreTags: row.kind === 'classDraft' ? [...(run.coreTags || [])] : null,
@@ -246,6 +252,8 @@ export function mountRewards(app, {
       if (cardBefore) {
         run.deck.splice(0, run.deck.length, ...cardBefore.deck);
         chosenCardId = cardBefore.chosenCardId;
+        chosenRelicId = cardBefore.chosenRelicId;
+        run.relics.splice(0, run.relics.length, ...cardBefore.relics);
         for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
         Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
         if (cardBefore.skills) run.skills = cardBefore.skills;
@@ -353,6 +361,15 @@ export function mountRewards(app, {
         return { title: t('reward.kind.chest'), body: `${t('reward.chest.chooseOne', { count: row.options.length })}<br><span style="color:var(--muted)">${names}</span>` };
       }
       case 'relic': {
+        if (row.choice) {
+          const title = t('reward.relic.bossTitle');
+          if (state === 'taken') {
+            const def = registries.relics.get(chosenRelicId);
+            return { title, body: t('reward.relic.chosen', { name: esc(`${def.icon || '◆'} ${def.name}`) }) };
+          }
+          const names = row.relicIds.map((id) => esc(registries.relics.get(id).name)).join(' · ');
+          return { title, body: `${t('reward.card.chooseOne', { count: row.relicIds.length })}<br>${names}` };
+        }
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
       }
@@ -365,7 +382,7 @@ export function mountRewards(app, {
     switch (row.kind) {
       case 'card':
       case 'skillDraft': return row.cardIds.some((id) => marks.cards.includes(id));
-      case 'relic': return marks.relics.length > 0;
+      case 'relic': return (row.choice ? row.relicIds : [row.relicId]).some((id) => marks.relics.includes(id));
       case 'flask': return marks.flasks.length > 0;
       case 'armament': return marks.armaments.length > 0;
       default: return false;
@@ -477,13 +494,14 @@ export function mountRewards(app, {
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
         if (row.kind === 'chest') return `<div class="tt-title">${esc(tTip('reward.kind.chest'))}</div>${esc(tFull('reward.kind.chest'))}`;
-        const offer = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        const offer = row.kind === 'relic' && row.choice ? 'reward.relic.choose'
+          : row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
         if (row.kind === 'chest') return renderChestChooser(row);
-        if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') return renderChooser(row);
+        if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || (row.kind === 'relic' && row.choice)) return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -673,17 +691,23 @@ export function mountRewards(app, {
     // with the node's glyph, name and its rule's sentence, the numbers read
     // through the node's bindings — the same selection path as a card.
     const isNodeRow = row.kind === 'classDraft';
-    const ids = isNodeRow ? row.nodeIds : row.cardIds;
-    const pickField = isNodeRow ? 'nodeId' : 'cardId';
+    // A boss's relic choice (SPEC §6.1) rides the same select-then-Confirm
+    // door as a card: tiles in a radiogroup, one pick, plus a Skip that
+    // leaves every relic behind.
+    const isRelicRow = row.kind === 'relic';
+    const ids = isNodeRow ? row.nodeIds : isRelicRow ? row.relicIds : row.cardIds;
+    const pickField = isNodeRow ? 'nodeId' : isRelicRow ? 'relicId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const skipButton = isRelicRow ? button({ label: t('reward.relic.skip'), id: 'reward-relic-skip', className: 'subtle' }) : null;
     const confirmButton = button({
-      label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+      label: t(isRelicRow ? 'reward.relic.confirm' : 'reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: isRelicRow ? t('reward.relic.eyebrow') : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
       title: rewards.title || t('reward.title.victory'),
-      body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
-      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+      attrs: isRelicRow ? { dataset: { size: 'md', rewardChooser: 'relic' } } : {},
+      body: el('div', { class: `reward-row${isRelicRow ? ' reward-relic-row' : ''}`, role: 'radiogroup', 'aria-label': t(isRelicRow ? 'reward.relic.aria' : 'reward.card.aria') }),
+      foot: modalFooter({ secondary: [backButton, skipButton].filter(Boolean), primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
     let selectedCardId = pendingByKey[row.key] || null;
@@ -723,7 +747,23 @@ export function mountRewards(app, {
       tile.addEventListener('click', () => selectCard(nodeId));
       strip.appendChild(tile);
     }
-    for (const cardId of isNodeRow ? [] : ids) {
+    for (const relicId of isRelicRow ? ids : []) {
+      const def = registries.relics.get(relicId);
+      const tile = el('button', { class: 'class-pick reward-relic reward-pick', type: 'button', role: 'radio', 'aria-checked': String(relicId === selectedCardId), dataset: { pickId: relicId, relicId } }, [
+        el('div', { class: 'glyph', text: def.icon || '◆' }),
+        el('div', { class: 'cp-body' }, [el('h3', { text: def.name }), el('p', { text: relicText(def, registries) })]),
+      ]);
+      if (marks.relics.includes(relicId)) {
+        tile.dataset.new = '1';
+        tile.querySelector('h3').append(document.createTextNode(' '), el('span', { class: 'chip reward-new', text: t('reward.card.new') }));
+      }
+      tile.classList.toggle('reward-selected', relicId === selectedCardId);
+      tile.classList.toggle('is-chosen', relicId === selectedCardId);
+      attachTooltip(tile, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
+      tile.addEventListener('click', () => selectCard(relicId));
+      strip.appendChild(tile);
+    }
+    for (const cardId of isNodeRow || isRelicRow ? [] : ids) {
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -790,6 +830,16 @@ export function mountRewards(app, {
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
     back.addEventListener('click', () => renderMenu(row.key));
+    if (skipButton) {
+      attachTooltip(skipButton, () => `<div class="tt-title">${esc(tTip('reward.relic.skip'))}</div>${esc(tFull('reward.relic.skip'))}`);
+      skipButton.addEventListener('click', () => {
+        if (taken()) return;
+        states[row.key] = 'skipped';
+        delete pendingByKey[row.key];
+        persistProgress();
+        renderMenu(row.key);
+      });
+    }
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
