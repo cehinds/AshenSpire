@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1254",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "New players start with the owner's chosen defaults",
+    "detail": "Rewards are collected by hand rather than all at once, a Shrine stays open for Rest, Smith and Level until you leave, and flasks can be drunk from the map. The city title holds for 2 seconds, and the short-screen warning is off, so a sideways phone draws the board anyway. Settings you have already chosen keep their values.",
+    "build": "0.7.1.443",
+    "pullRequest": 1254,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1254"
+  },
+  {
     "id": "pr-1264",
     "date": "2026-09-23",
     "group": "2026-09-23",

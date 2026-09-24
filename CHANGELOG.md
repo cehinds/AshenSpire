@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-24
+
+- **New players start with the owner's chosen defaults** ([#1254](https://github.com/cehinds/AshenSpire/pull/1254), `0.7.1.443`). Rewards are collected by hand rather than all at once, a Shrine stays open for Rest, Smith and Level until you leave, and flasks can be drunk from the map. The city title holds for 2 seconds, and the short-screen warning is off, so a sideways phone draws the board anyway. Settings you have already chosen keep their values.
+
 ## 2026-09-23
 
 - **Card lore is one line in inspection, and the whole of it opens in its own window — set in the type you choose** ([#1264](https://github.com/cehinds/AshenSpire/pull/1264), `0.7.1.441`). Inspect any card and its lore is a single line: what the thing is and whose (*Art of the sellswords of the Bastion.*). Press it and the lore window opens over the card with the full description — a little history, told from one side, and a closing line set apart. Every card's lore has been rewritten this way. A new Advanced tab, **Text & lore**, sets how it reads: the typeface (eight faces now ship with the game, plus Georgia), size, letter and line spacing, and italic or upright, with the identity line and the lore window each adjustable. Interface text size and readable headings stay where they were, under Accessibility. No card's rules or numbers changed.
