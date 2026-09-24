@@ -79,6 +79,10 @@ amended before code moves.
   (`runsim.mjs` ~256, `balance.mjs` ~56) and end the turn when a card throws.
   - [ ] Build sim fights through the same factory the game uses.
   - [ ] Bot picks only affordable cards and continues the turn on refusal.
+  - [ ] Write Mana and Stamina back after each fight, as `onCombatEnd`
+    does (`src/main.js` ~2320). Both sim copies persist only HP
+    (`runsim.mjs` ~284, `measure-classes.mjs` ~705), so every fight starts
+    on pre-fight pools and cross-fight starvation (A2) is invisible.
   - [ ] Regenerate `docs/BALANCE.md` (stale: Reaver HP 66 documented vs 48
     live; Starseer vs packHunt 100% documented vs ~19% live) and gate it in CI.
   - [ ] Record the baseline per class over ≥ 40 seeded runs. The review's
@@ -146,8 +150,12 @@ amended before code moves.
 - [ ] Root-cause the red suites — never skip or quarantine:
   - [ ] `shared-armor.test.mjs` 16/18 (`'Requires STR 3'` vs `/12/`, likely
     the old stat scale).
-  - [ ] `framework.test.mjs` 4 (`equipment.dualWield has no playerTermId`,
-    cutover gate), reachable only via `tools/framework-gate.mjs`.
+  - [ ] `framework.test.mjs` 11 of 82, reachable only via
+    `tools/framework-gate.mjs`: `equipment.dualWield` has no
+    `playerTermId`/`tooltipTermId`, the cutover gate, status semantics,
+    weapon-art and grant reconciliation (creation, equip, mid-combat swap,
+    removal candidates), the Armoury equip-load receipt, and the unarmed
+    and one-empty-hand Dodge Roll composition. Re-run before scoping.
   - [ ] `seats.test.mjs` 1/13 (act map byte-identical).
 - [ ] Move slow tool self-tests (`screen-census --selftest` and others) to
   their own CI job; the core suite currently takes over 5 minutes.
@@ -214,9 +222,9 @@ amended before code moves.
   - [ ] 11 px minimum on eyebrow/status tokens
     (`styles/responsive-type.css`).
   - [ ] Reconcile the 26 viewport `@media` queries with `data-layout`.
-- [ ] **Large screens (S–M).** Resting card width is fixed
-  (`CardSizeModel.js` ~535); scale with zoom above 1 and cap End Turn at
-  ~2.5 card widths.
+- [ ] **Large screens (S).** Cap End Turn at ~2.5 card widths. Card width
+  already grows with the body-wide `zoom: var(--ui-zoom)`
+  (`styles/base.css` ~293), so do not scale it again.
 - [ ] **Phone combat (M).** First intent badge clipped; overlapping intents
   cut "3×2" to "3×"; right card overflows; Potions/ACTIONS labels overflow;
   25 px pips (need 44 px). Scale formation to stage height, cap the hand at
@@ -466,7 +474,9 @@ amended before code moves.
   authored bundle in CI and only overrides at runtime.
 - [ ] **Minify and lazy-load (S).** ~9 MB of unminified code;
   `config/generated/ui.js` 1.1 MB pretty JSON (503 KB compact); load
-  `changelog.generated.js` and `worldAtlas.js` when their screens open.
+  `changelog.generated.js` when its screen opens. `worldAtlas.js` feeds
+  journey generation, encounters, save validation and `atlasQuests`, so
+  defer it only to the run-loading boundary, never to the atlas screen.
 - [ ] **Render keys and observers (S).** Combat memo keys `JSON.stringify` the
   whole player and each enemy per render; seven `MutationObserver`s watch the
   document subtree only to detect their own removal — one disposal registry
