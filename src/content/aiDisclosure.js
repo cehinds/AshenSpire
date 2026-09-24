@@ -57,7 +57,7 @@ const STORE_LEAD = `Ashen Spire was built by AI under human direction. The game�
 // this tree derives it. It is not made derived here rather than being given a
 // plausible machine answer; see the session log.
 export const AI_DISCLOSURE = Object.freeze({
-  updated: '2026-09-03',
+  updated: '2026-09-24',
 
   // TRUE again since 2026-09-03, on the CORRECTED wording below.
   //
@@ -103,7 +103,12 @@ export const AI_DISCLOSURE = Object.freeze({
   // Nothing in the game reads this flag to decide whether to render — the
   // acknowledgement always shows. It marks whose words these are. Edit the text
   // below and it returns to `false`, same rule, no exceptions.
-  approved: true,
+  //
+  // RETURNED TO `false` ON 2026-09-24 (#1274), by that rule: the store lead, the
+  // Audio section and the While-you-play section were edited to name the four
+  // ElevenLabs Music tracks the hosted builds now play. The wording above is
+  // the maker seat's until Constantine reads and approves it.
+  approved: false,
 
   /**
    * storeForm — the text pasted into Steam's AI-disclosure field, and the lead
