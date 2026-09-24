@@ -1561,7 +1561,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35, dx = 0, receiptRow = null) => {
+    const put = (sel, cls, text, dy = 0.35, dx = 0, receiptRow = null, scale = 1) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -1571,6 +1571,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
+      // SPEC §7.4 combat juice, as solo's floatNum: bigger hits read bigger
+      // INSIDE their size tier (fx.js guardHitFloatParts().damage.scale).
+      if (Number.isFinite(scale) && scale !== 1) el.style.setProperty('--dmg-scale', String(scale));
       const centre = b.left + b.width / 2 + dx;
       const top = b.top + b.height * dy;
       el.style.left = `${centre}px`;
@@ -1673,7 +1676,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (!amount) continue;
         const part = guardHitFloatParts({ amount, blocked: 0 }).damage;
         receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + amount);
-        put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow);
+        put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow, part.scale);
         recoil(`${sel} .sprite`, amount >= 12);
       } else {
         const parts = guardHitFloatParts(ev);
@@ -1684,7 +1687,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           playPoseOn(app.querySelector(sel), 'guardHit', 220);
         }
         if (parts.damage) {
-          put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, receiptRow);
+          put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, receiptRow, parts.damage.scale);
           recoil(`${sel} .sprite`, parts.residual >= 12);
         }
       }

@@ -630,3 +630,51 @@ test('the LAN host sends a refused reward or catch-up choice back, and the scree
     globalThis.setInterval = realInterval;
   }
 });
+
+// ---- damage floats scale inside their tier, as solo's do (SPEC §7.4) ----------
+
+test('co-op damage floats carry solo\'s within-tier --dmg-scale, so 24 reads bigger than 16', async () => {
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const { guardHitFloatParts } = await import('../src/ui/fx.js');
+    const S = party('DMGSCALE');
+    fight(S);
+    const fightSnap = JSON.parse(JSON.stringify(S.snapshot()));
+    const { app, deliver } = await mountCoopBoard();
+    // Record every --dmg-scale the screen writes, per element.
+    const doc = globalThis.document;
+    const make = doc.createElement.bind(doc);
+    doc.createElement = (tag) => {
+      const el = make(tag);
+      const props = {};
+      el.style.setProperty = (k, v) => { props[k] = v; };
+      el.style.getPropertyValue = (k) => props[k] ?? '';
+      return el;
+    };
+    // The board sets figure ids through `dataset`, which the fake DOM's
+    // selector matcher cannot see: resolve the bare `[data-eid="…"]` anchor
+    // lookup the float spawner makes.
+    const find = (n, id) => { for (const c of n.children) { if (c.dataset?.eid === id) return c; const f = find(c, id); if (f) return f; } return null; };
+    const qs = app.querySelector.bind(app);
+    app.querySelector = (sel) => { const m = /^\[data-eid="([^"]+)"\]$/.exec(sel); return m ? find(app, m[1]) : qs(sel); };
+    deliver(fightSnap);
+    const enemy = fightSnap.scene.enemies[0];
+    const hit = structuredClone(fightSnap);
+    hit.scene.receiptSeq = (Number(fightSnap.scene.receiptSeq) || 0) + 1;
+    hit.scene.events = [
+      { type: 'damageDealt', sourceId: 'p1', targetId: enemy.id, amount: 16, blocked: 0 },
+      { type: 'damageDealt', sourceId: 'p2', targetId: enemy.id, amount: 24, blocked: 0 },
+    ];
+    deliver(hit);
+    const floats = app.querySelectorAll('.float-num').filter((el) => /^-\d+$/.test(el.textContent));
+    const scaleOf = (text) => floats.find((el) => el.textContent === text)?.style.getPropertyValue('--dmg-scale');
+    const want = (n) => String(guardHitFloatParts({ amount: n }).damage.scale);
+    assert.ok(floats.length >= 2, 'both hits float');
+    assert.equal(scaleOf('-16'), want(16));
+    assert.equal(scaleOf('-24'), want(24));
+    assert.notEqual(scaleOf('-16'), scaleOf('-24'), 'two hits in one tier do not render the same size');
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
+});
