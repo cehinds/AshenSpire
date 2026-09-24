@@ -1482,8 +1482,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }
         : latest;
       pacing = false;
-      render();
-      if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
+      if (latest.finale && latest.scene?.kind !== 'combat') {
+        // The fight ended while the enemy turn played: the finale frame gets
+        // its floats, hit-stop and kill cam before the next scene (SPEC §7.4),
+        // never skipped straight to the door it settled into.
+        playFinale(latest);
+      } else {
+        render();
+        if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
+      }
     }
   }
 

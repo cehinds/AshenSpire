@@ -519,3 +519,84 @@ test('a flask-growth relic from a co-op chest grows the seat\'s flask belt at on
   assert.ok(m1.run.relics.includes('goldenSprout'));
   assert.equal(m1.run.flaskCharges.capacity, capacity + 1, 'Golden Sprout\'s growth binds when the relic lands');
 });
+
+// ---- the finale behind an enemy-turn replay (SPEC §7.4, co-op) -----------------
+
+// The combat board on the fake DOM: the reward helper plus the few element
+// methods the board's sprites and flask row reach for.
+function mountCoopBoard() {
+  const dom = rewardDom();
+  Object.assign(globalThis, dom);
+  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  globalThis.location = { search: '', href: 'http://localhost/', hash: '' };
+  globalThis.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+  globalThis.MutationObserver = class { observe() {} disconnect() {} };
+  globalThis.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  globalThis.CSS = { escape: (s) => s };
+  globalThis.getComputedStyle = () => ({ getPropertyValue: () => '', opacity: '0' });
+  dom.window.matchMedia = globalThis.matchMedia;
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  dom.document.documentElement = dom.document.createElement('html');
+  const EP = Object.getPrototypeOf(dom.document.createElement('div'));
+  Object.assign(EP, {
+    getAnimations: () => [],
+    animate: () => ({ cancel() {}, finished: Promise.resolve(), addEventListener() {} }),
+    focus() {}, scrollIntoView() {},
+    prepend(n) { n.remove(); n.parentNode = this; this.children.unshift(n); },
+    replaceChildren(...c) { this.children.forEach((x) => { x.parentNode = null; }); this.children = []; this.append(...c); },
+    insertBefore(n) { this.appendChild(n); return n; },
+    contains(n) { return n === this || this.children.some((c) => c.contains(n)); },
+    replaceWith(n) { const p = this.parentNode; if (!p) return; n.remove(); n.parentNode = p; p.children[p.children.indexOf(this)] = n; this.parentNode = null; },
+  });
+  return import('../src/ui/screens/coop.js').then(({ mountCoop }) => {
+    const conn = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
+    const app = dom.document.createElement('main');
+    dom.document.body.append(app);
+    mountCoop(app, { registries: REG, conn, myId: 'p1', meta: {}, onSettingsChange() {}, onLeave() {} });
+    return { app, deliver: (snapshot) => conn._h.onMessage({ t: 'state', snapshot }) };
+  });
+}
+
+test('a finale that arrives while the enemy turn plays is still played before the next scene', async () => {
+  // Timers are held and released by hand, so the test can look at the board
+  // between the replay's end and the next scene.
+  const realTimeout = globalThis.setTimeout;
+  const realInterval = globalThis.setInterval;
+  const queued = [];
+  globalThis.setTimeout = (fn, _ms, ...a) => { queued.push(() => fn(...a)); return queued.length; };
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const tick = () => new Promise((r) => setImmediate(r));
+  try {
+    const S = party('FINALEPACE');
+    fight(S);
+    const fightSnap = JSON.parse(JSON.stringify(S.snapshot()));
+    const { app, deliver } = await mountCoopBoard();
+    deliver(fightSnap);
+    assert.ok(app.querySelector('.combat.coop'), 'the board is up');
+
+    const enemy = fightSnap.scene.enemies[0];
+    const enemyTurn = structuredClone(fightSnap);
+    enemyTurn.scene.turn += 1;
+    enemyTurn.scene.receiptSeq = (Number(fightSnap.scene.receiptSeq) || 0) + 1;
+    enemyTurn.scene.events = [{ type: 'enemyMoveStarted', sourceId: enemy.id, enemyId: enemy.enemyId, moveId: 'x', kind: 'attack' }];
+    deliver(enemyTurn); // the replay starts and holds the render
+    const finale = { ...structuredClone(fightSnap.scene), result: 'victory', events: [] };
+    deliver({
+      ...structuredClone(fightSnap), finale,
+      scene: { kind: 'reward', pool: 'normal', chosen: {}, afterReward: null, offers: { p1: { pool: 'normal', cardIds: ['stomp'], cinders: 1 } } },
+    });
+
+    let sawFinale = false;
+    for (let i = 0; i < 60 && !app.querySelector('.coop-continue'); i++) {
+      for (const fn of queued.splice(0)) fn();
+      await tick();
+      if (app.querySelector('.turn-ribbon')?.textContent === 'Victory') sawFinale = true;
+    }
+    assert.ok(sawFinale, 'the fight-ending frame played on the board');
+    assert.ok(app.querySelector('.coop-continue'), 'then the reward door drew');
+  } finally {
+    globalThis.setTimeout = realTimeout;
+    globalThis.setInterval = realInterval;
+  }
+});
