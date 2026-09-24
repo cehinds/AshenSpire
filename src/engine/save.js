@@ -136,6 +136,9 @@ function pendingRewardReferenceProblems(pending, registries) {
     problems.push(...chestOptionReferenceProblems(registries, option));
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  for (const relicId of Array.isArray(rewards.relicIds) ? rewards.relicIds : []) {
+    if (!registries.relics.has(relicId)) problems.push(`boss relic choice '${relicId}' is unknown`);
+  }
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
   if (rewards.armamentId
       && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {

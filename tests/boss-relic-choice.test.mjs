@@ -148,3 +148,38 @@ test('a checkpoint saved with the chooser pending re-mounts the same choice, not
   assert.equal(app.querySelectorAll('.reward-row .reward-relic').length, 3);
   assert.deepEqual(run.relics, []);
 }));
+
+test('a corrupt or stale boss relic choice is refused at the save doors, by name', async () => {
+  const { createRunState, validateRunShape } = await import('../src/model/state.js');
+  const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
+  const run = createRunState({ registries: REG, classId: 'reaver', seed: 4 });
+  const pending = (rewards, extra = {}) => ({
+    schemaVersion: 1, source: 'boss', after: 'advanceAct', rewards, states: {}, chosenCardId: null,
+    chosenDraftCardIds: {}, chosenDraftNodeIds: {}, ...extra,
+  });
+  const shape = (rewards, extra) => { run.pendingReward = pending(rewards, extra); return validateRunShape(run).join(' | '); };
+  const ids = BOSS.slice(0, 3);
+  assert.equal(shape({ relicIds: ids }), '');
+  assert.equal(shape({ relicIds: ids }, { states: { relic: 'taken' }, chosenRelicId: ids[1] }), '');
+  assert.equal(shape({ relicIds: [] }), '', 'an empty pool (consolation) is a valid offer');
+  assert.match(shape({ relicIds: 'x' }), /relicIds must be an array of relic ids/);
+  assert.match(shape({ relicIds: [ids[0], 3] }), /relicIds must be an array of relic ids/);
+  assert.match(shape({ relicIds: [ids[0], ids[0]] }), /relicIds must be distinct/);
+  assert.match(shape({ relicIds: ids }, { states: { relic: 'taken' }, chosenRelicId: 'other' }), /chosenRelicId must belong to pendingReward\.rewards\.relicIds/);
+  assert.match(shape({ relicIds: ids }, { chosenRelicId: ids[0] }), /chosenRelicId requires relic Taken state/);
+  assert.match(shape({ relicIds: ids }, { states: { relic: 'taken' } }), /relic Taken state requires chosenRelicId/);
+  assert.match(shape({ relicIds: ids }, { states: { relic: 'taken' }, chosenRelicId: 7 }), /chosenRelicId must be null or a non-empty string/);
+  // Well-shaped but naming a relic the content does not hold: the load door refuses.
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const load = (relicIds) => {
+    delete run.pendingReward;
+    saves.saveRun(run, createRng(1));
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    raw.pendingReward = pending({ relicIds });
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    return saves.loadRun(REG) ? '' : saves.runStatus().reason;
+  };
+  assert.equal(load(ids), '');
+  assert.match(load([ids[0], 'noSuchRelic']), /boss relic choice 'noSuchRelic' is unknown/);
+});

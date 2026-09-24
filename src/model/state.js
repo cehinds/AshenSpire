@@ -975,6 +975,28 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (pending.states?.chest === 'taken' && !Number.isInteger(idx)) problems.push('pendingReward chest Taken state requires chosenChestIndex');
         }
       }
+      // The boss relic choice (SPEC §6.1): distinct ids; the pick is one of them,
+      // held only by a Taken row, and a Taken choice (2+ ids) names its pick.
+      {
+        const relicIds = pending.rewards?.relicIds;
+        const chosen = pending.chosenRelicId;
+        let offered = null;
+        if (relicIds !== undefined && relicIds !== null) {
+          if (!Array.isArray(relicIds) || relicIds.some((id) => typeof id !== 'string' || !id)) {
+            problems.push('pendingReward.rewards.relicIds must be an array of relic ids');
+          } else if (new Set(relicIds).size !== relicIds.length) {
+            problems.push('pendingReward.rewards.relicIds must be distinct');
+          } else offered = relicIds;
+        }
+        if (chosen !== undefined && chosen !== null) {
+          if (typeof chosen !== 'string' || !chosen) problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
+          else if (!(offered || []).includes(chosen)) problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicIds');
+          if (pending.states?.relic !== 'taken') problems.push('pendingReward chosenRelicId requires relic Taken state');
+        }
+        if (offered && offered.length > 1 && !pending.rewards.relicId && pending.states?.relic === 'taken' && !chosen) {
+          problems.push('pendingReward relic Taken state requires chosenRelicId');
+        }
+      }
       if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
           && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
         problems.push('pendingReward.chosenCardId must be null or a non-empty string');
