@@ -110,6 +110,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { SHIPPED_MUSIC_FOLDER } from './content/music.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
@@ -845,8 +846,11 @@ function applyDisplaySettings(settings) {
   audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
-  // re-fetching the manifest on every unrelated settings tweak).
-  const folder = settings.musicFolder || '';
+  // re-fetching the manifest on every unrelated settings tweak). Blank means the
+  // score shipped beside the page (content/music.js SHIPPED_MUSIC_FOLDER) when
+  // served over http(s); a file:// page cannot fetch it and keeps the synth.
+  const served = /^https?:$/.test(globalThis.location?.protocol || '');
+  const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
   if (folder !== lastMusicFolder) {
     lastMusicFolder = folder;
     audio.configureMusic({ folder });
