@@ -1101,7 +1101,11 @@ function wireStepper(wrap, { read, commit, min, max, step }) {
   const stepOnce = (b, times = 1) => {
     if (locked()) return;
     const by = Number(b.dataset.stepBy) || step;
-    const next = Math.min(max, Math.max(min, round(read() + Number(b.dataset.step) * by * times)));
+    // Step from what the field shows: a number typed but not yet committed
+    // (a press does not blur the field) is the one the player means.
+    const typed = field && field.value.trim() !== '' ? Number(field.value) : NaN;
+    const base = Number.isFinite(typed) ? typed : read();
+    const next = Math.min(max, Math.max(min, round(base + Number(b.dataset.step) * by * times)));
     commit(next);
     sync();
   };
@@ -2306,6 +2310,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // rebuilt; the rail, the header tools and the page-level listeners stay.
   let searchTimer = null;
   function repaintPanel({ keepScroll = false } = {}) {
+    // The formation editor holds an unapplied draft in its DOM; apply it before
+    // the pane it lives in is rebuilt, or stay put when it cannot be applied.
+    if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
     if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
@@ -2399,7 +2406,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const rules = resolveHandRules(settings, contentBundle.attributes);
     // The Stats → Draw & hand worked example states the hand these rules deal
     // (`refreshStatsPreviews`); what is left here is which rows apply.
-    const section = container.querySelector('[data-advanced-panel="Stats"]');
+    // The whole pane, not just Stats: a search result lists these rows too.
+    const section = container;
     if (section) {
       for (const row of handRulesRows(contentBundle.attributes)) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
@@ -2792,6 +2800,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('[data-reset-key]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.resetKey;
+      if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
       delete settings[key];
       typedRefusals.delete(key);
       onChange({ [key]: undefined });
@@ -3299,8 +3308,11 @@ function settingsHeaderTools() {
     + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
     + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
     + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
-    + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
-  tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
+    + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>' : '') + '</div></details>';
+  const exportItem = tools.querySelector('[data-export-settings]');
+  // Import and export are debug tools (owner, 2026-09-24): a release build has
+  // neither the menu item, the Load button, nor the export prompt on Done.
+  if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
     build: { contentVersion: contentBundle.version },
     includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
   });
@@ -3331,7 +3343,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
     body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel }); },
-    secondary: [load],
+    secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
   });
@@ -3355,7 +3367,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   });
   done.addEventListener('click', () => {
     if (!applyPendingFormationSettings(door.body)) return;
-    if (settings.promptSettingsExport === false) { door.close(); return; }
+    if (!pageDebug() || settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });
     const body = document.createElement('div');

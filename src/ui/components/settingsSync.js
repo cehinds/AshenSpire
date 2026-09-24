@@ -172,6 +172,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       busy(btn, true, 'Saving…');
       try {
         const text = profileText(settings, keys, { contentVersion: contentBundle.version });
+        // Never upload a file another device's import would refuse.
+        profileChanges(text, contentBundle, {}, rows, keys);
         const result = await pushProfile(cfg, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile (${Object.keys(JSON.parse(text).overrides).length} settings)` });
         write(SYNC_STORAGE.lastSha, result.sha || '');
         status(result.unchanged ? 'The profile on GitHub already matches this device.'

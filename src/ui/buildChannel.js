@@ -35,7 +35,8 @@ export const DEBUG_STORAGE_KEY = 'ashenspire.debug';
 export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   // No page at all (Node: the test suite, the tools) is a developer's seat.
   if (!loc || runPath === 'source tree') return 'dev';
-  const path = decodeURIComponent(String(loc?.pathname || ''));
+  let path = String(loc?.pathname || '');
+  try { path = decodeURIComponent(path); } catch { /* a malformed %-escape: read it raw */ }
   const host = String(loc?.hostname || '');
   const protocol = String(loc?.protocol || '');
   const served = path.match(/\/(dev|test|release|main)\/(?:\d+|latest)(?:\/|$)/);

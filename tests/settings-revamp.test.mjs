@@ -102,6 +102,9 @@ test('a sync config falls back field by field and refuses path tricks', () => {
   assert.equal(cfg.path, SYNC_DEFAULTS.path);
   assert.equal(syncConfig({ owner: 'a b' }).owner, SYNC_DEFAULTS.owner);
   assert.equal(syncConfig({ path: 'p.txt' }).path, SYNC_DEFAULTS.path, 'a profile is a .json file');
+  for (const branch of ['dev', 'test', 'release', 'main']) assert.equal(syncConfig({ branch }).branch, SYNC_DEFAULTS.branch, `never ${branch}`);
+  assert.equal(syncConfig({ path: 'package.json' }).path, SYNC_DEFAULTS.path, 'a profile lives under settings-profiles/');
+  assert.equal(syncConfig({ path: 'settings-profiles/phone.json' }).path, 'settings-profiles/phone.json');
 });
 
 test('a profile round-trips through the import door, and loading clears what it does not name', () => {
@@ -181,4 +184,8 @@ test('the sync panel’s token field and switch are never wired as settings', as
     const tag = panel.slice(panel.lastIndexOf('<', panel.indexOf(hook)), panel.indexOf('>', panel.indexOf(hook)));
     assert.ok(!tag.includes('data-key'), `${hook} carries no setting key`);
   }
+});
+
+test('a malformed page path does not break channel detection', () => {
+  assert.equal(buildChannel({ pathname: '/AshenSpire/dev/12/%E0%A4%A', hostname: 'cehinds.github.io', protocol: 'https:' }, 'standalone file'), 'dev');
 });

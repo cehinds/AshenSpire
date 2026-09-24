@@ -69,7 +69,8 @@ stamped with its branch.
 | any other file | unknown | only with `?debug=1` (remembered; `?debug=0` forgets) |
 
 A release build's Advanced tab keeps **Interface, Text & lore, Changelog and
-About**. Stored values are untouched. Hiding a section changes what is drawn,
+About**. It also has no *Load settings* button, no *Export configuration* menu
+item and no export prompt on Done. Stored values are untouched. Hiding a section changes what is drawn,
 not what a profile holds.
 
 **Defaults on GitHub (R6)**: Advanced → **Defaults & sync** (dev/test only).
@@ -86,6 +87,9 @@ not what a profile holds.
 - Loading needs no token because the repository is public. Saving needs a
   fine-grained token with *Contents: read and write*. The token is kept in that
   browser's storage only: it is never exported, synced or written into a save.
+- The profile can never target `dev`, `test`, `release` or `main`, and it
+  always lives under `settings-profiles/`. A save first checks the file against
+  the import rules, so it can't upload something another device would refuse.
 - The file uses the same format as *Export configuration*, and it goes through
   the same all-or-nothing import check, so a downloaded export can be committed
   by hand as a profile.

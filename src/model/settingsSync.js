@@ -41,7 +41,9 @@ export const SYNC_STORAGE = Object.freeze({
 
 const SAFE_SEGMENT = /^[A-Za-z0-9._-]+$/;
 const SAFE_BRANCH = /^[A-Za-z0-9._/-]+$/;
-const SAFE_PATH = /^[A-Za-z0-9._/-]+\.json$/;
+const SAFE_PATH = /^settings-profiles\/[A-Za-z0-9._/-]+\.json$/;
+// A profile never lands on a branch that builds or ships.
+const PROTECTED_BRANCHES = new Set(['dev', 'test', 'release', 'main']);
 
 /** syncConfig(raw) → a complete, validated config; bad fields fall back. */
 export function syncConfig(raw = {}) {
@@ -49,7 +51,7 @@ export function syncConfig(raw = {}) {
   return {
     owner: pick('owner', SAFE_SEGMENT),
     repo: pick('repo', SAFE_SEGMENT),
-    branch: pick('branch', SAFE_BRANCH),
+    branch: PROTECTED_BRANCHES.has(raw?.branch) ? SYNC_DEFAULTS.branch : pick('branch', SAFE_BRANCH),
     base: pick('base', SAFE_BRANCH),
     path: pick('path', SAFE_PATH),
   };
