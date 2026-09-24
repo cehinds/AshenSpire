@@ -1,5 +1,6 @@
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
+import { placePrologueCharacter } from '../prologueCharacter.js';
 import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
@@ -48,13 +49,13 @@ function rowIndex() {
  * renderer supplies the preview; no second drawing path can drift from play.
  * Writes use the same keys and onChange callback as Settings and JSON exports.
  */
-export function openPrologueSceneEditor(settings, onChange, { sceneId = null } = {}) {
+export function openPrologueSceneEditor(settings, onChange, { sceneId = null, tab = 'Words & artwork' } = {}) {
   const initial = prologueConfig(settings);
   const first = prologueSequence(initial)[0];
   let selected = initial.scenes.some(scene => scene.id === sceneId) ? sceneId : initial.scenes[first]?.id;
   let path = 'crownfall';
   let layout = matchMedia('(max-width: 760px) and (orientation: portrait)').matches ? 'mobile' : 'desktop';
-  let group = 'Words & artwork';
+  let group = tab;
   let cleanup = null;
   let refreshTimer = null;
   const rows = rowIndex();
@@ -112,6 +113,44 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
       journey: path === 'crownfall' ? { anchors: { start: 'crownfall' } } : undefined };
     cleanup = mountPrologue(viewport, { settings, run, startScene: index, preview: true, editorPreview: true, forceLayout: layout });
   };
+  let drag = null;
+  const clamp = value => Math.max(0, Math.min(100, Math.round(value)));
+  viewport.addEventListener('pointerdown', event => {
+    if (scope !== 'scene' || group !== 'Traveller') return;
+    const actor = event.target.closest?.('.prologue-actor');
+    const stage = actor?.closest('.prologue-stage');
+    const position = configScene()?.actor?.[layout];
+    if (!stage || !position) return;
+    drag = { id: event.pointerId, actor, stage, position: { ...position }, x: event.clientX, y: event.clientY };
+    viewport.setPointerCapture(event.pointerId);
+    viewport.classList.add('pse-dragging');
+    event.preventDefault();
+  });
+  viewport.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const rect = drag.stage.getBoundingClientRect();
+    drag.next = {
+      ...drag.position,
+      x: clamp(drag.position.x + (event.clientX - drag.x) / rect.width * 100),
+      y: clamp(drag.position.y + (event.clientY - drag.y) / rect.height * 100),
+    };
+    placePrologueCharacter(drag.actor, drag.next);
+  });
+  const finishDrag = event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const { actor, position, next } = drag;
+    if (event.type === 'pointerup' && next) {
+      saved(prologueSettingKey(['scenes', selected, 'actor', layout, 'x']), next.x);
+      saved(prologueSettingKey(['scenes', selected, 'actor', layout, 'y']), next.y);
+      drawFields();
+      schedulePreview();
+    } else placePrologueCharacter(actor, position);
+    viewport.classList.remove('pse-dragging');
+    viewport.releasePointerCapture(event.pointerId);
+    drag = null;
+  };
+  viewport.addEventListener('pointerup', finishDrag);
+  viewport.addEventListener('pointercancel', finishDrag);
   const schedulePreview = () => {
     clearTimeout(refreshTimer);
     refreshTimer = setTimeout(preview, 180);
@@ -216,6 +255,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
     const groups = scope === 'defaults' ? STAGE_GROUPS
       : [...SCENE_GROUPS.filter(([name]) => name !== 'Traveller' || scene.actor), ...STAGE_GROUPS];
     if (!groups.some(([name]) => name === group)) group = groups[0][0];
+    viewport.classList.toggle('pse-positioning', scope === 'scene' && group === 'Traveller');
     for (const [name] of groups) {
       const tab = element('button', `pse-tab${name === group ? ' on' : ''}`, name);
       tab.type = 'button'; tab.setAttribute('role', 'tab');
@@ -236,11 +276,25 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
     }
     if (scope === 'scene' && SCENE_GROUPS.some(([name]) => name === group)) {
       if (group === 'Traveller') {
-        fields.append(element('p', 'pse-group-help', `Adjust the ${layout} traveller while watching the live preview. Use Preview size above to switch to the other layout.`));
+        fields.append(element('p', 'pse-group-help', `Drag the traveller in the painting, or use these controls. The foot position moves up or down the scene. Switch Preview size above to set ${layout === 'mobile' ? 'desktop' : 'mobile'} placement separately.`));
         for (const axis of ['x', 'y', 'height']) {
           const key = prologueSettingKey(['scenes', selected, 'actor', layout, axis]);
           const row = rows.get(key);
-          if (row) fields.append(field(row, scene.actor?.[layout]?.[axis], key));
+          if (row) {
+            const control = field(row, scene.actor?.[layout]?.[axis], key);
+            const numberInput = control.querySelector('input[type=number]');
+            const slider = element('input', 'pse-position-slider');
+            slider.type = 'range'; slider.min = row.min; slider.max = row.max; slider.step = row.step ?? 1;
+            slider.value = numberInput.value;
+            slider.setAttribute('aria-label', `${row.label} slider`);
+            slider.addEventListener('input', () => {
+              numberInput.value = slider.value;
+              numberInput.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            numberInput.addEventListener('input', () => { slider.value = numberInput.value; });
+            control.append(slider);
+            fields.append(control);
+          }
         }
       } else {
         const names = SCENE_GROUPS.find(([name]) => name === group)[1];
