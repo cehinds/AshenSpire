@@ -974,7 +974,8 @@ export const ORDER_SCOPE = [
   `  within-date order in dates before ${WITHIN_DATE_FROM} (matched pair by pair against the pin, not refused one by one) ·`,
   '  that a receipt\'s build actually contains its change, or that its PR merged ·',
   '  that a release heading\'s version matches buildordinal.json\'s release ·',
-  '  receipts whose stamp is prose rather than <release>.<ordinal> (they have no build to order).',
+  '  receipts whose stamp is prose rather than <release>.<ordinal> (they have no build to order) ·',
+  '  Markdown it does not scan for — a heading or receipt written as raw HTML (`<h2>`, `<li>`) or inside an HTML block is not seen.',
 ].join('\n');
 
 function realCalendarDate(date) {
@@ -995,26 +996,47 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   // And EVERY heading's date is ordered, not only a heading with receipts under
   // it: an empty `## 2020-01-01` on top rendered an old date above the newest
   // group and passed, because the receipt groups never held it (#1279 review).
-  // The same holds for a SETEXT heading (a line underlined with `-` or `=`)
-  // and for an ATX heading of any other level: each renders as a heading this
-  // parser does not group on, so the file admits none of them (#1279 review).
-  // The one exception is the title, `# ` on the first line. A `-`/`=` line is
-  // refused after any non-blank line, even where CommonMark would read it as a
-  // thematic break, since the file has no use for either.
+  // The same holds for a SETEXT heading (a line underlined with `-` or `=`),
+  // for an ATX heading of any other level, and for any heading or receipt
+  // inside a BLOCK CONTAINER (`> `, a list item, deeper indent): each renders,
+  // and none is grouped or read by parseChangelog, so its date and its build
+  // went unweighed (#1279 review, six shapes in turn). So the class is closed
+  // rather than the shapes: every line is stripped of container prefixes —
+  // any run of `>`, list markers (`-` `*` `+` `1.` `1)`) and whitespace, nested
+  // to any depth — and then
+  //   · a stripped line shaped as a heading (ATX `#`…, or a setext `-`/`=`
+  //     underline after a non-blank line) must be a bare `## ` line at column
+  //     0; the `# ` title on line 1 is the one exception;
+  //   · a line carrying a receipt (a pull-request link and a four-part build
+  //     stamp) must be a top-level `- ` bullet.
+  // It over-fires on purpose: a `-`/`=` line CommonMark would read as a
+  // thematic break, or `##` in an indented code block, is refused too, since
+  // this file uses neither.
+  const stripContainers = (text) => {
+    let rest = text;
+    for (;;) {
+      const next = rest.replace(/^[ \t]*(?:>|[-*+](?=[ \t]|$)|\d{1,9}[.)](?=[ \t]|$))/, '');
+      if (next === rest) return rest.replace(/^[ \t]+/, '');
+      rest = next;
+    }
+  };
+  const RECEIPT_LINK = /\[#\d+\]\([^)\s]*\/pull\/\d+\)/;
+  const RECEIPT_STAMP = /`\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+`/;
   let newerHeading = null;
-  let previous = '';
+  let priorContent = '';
   const lines = markdown.split(/\r?\n/);
   for (const [index, line] of lines.entries()) {
-    const prior = previous;
-    previous = line;
-    if (/^ {0,3}##(?:[ \t]|$)/.test(line) && !line.startsWith('## ')) {
-      throw new Error(`check-order: heading '${line}' renders as a level-2 heading but is not written '## ' at the start of the line, so the receipts under it would be dated by the heading above`);
+    const content = stripContainers(line);
+    const prior = priorContent;
+    priorContent = content;
+    if (/^#{1,6}(?:[ \t]|$)/.test(content) && !line.startsWith('## ') && !(index === 0 && line.startsWith('# '))) {
+      throw new Error(`check-order: heading '${line}' is not written as a bare '## ' group heading at the start of the line — it renders as a heading this file does not group on, so the receipts under it would be dated by the heading above`);
     }
-    if (/^ {0,3}#{1,6}(?:[ \t]|$)/.test(line) && !line.startsWith('## ') && !(index === 0 && line.startsWith('# '))) {
-      throw new Error(`check-order: heading '${line}' is not a '## ' group heading — only the title may use another level, and receipts under it would be dated by the heading above`);
-    }
-    if (/^ {0,3}(?:=+|-+)[ \t]*$/.test(line) && prior.trim() !== '') {
+    if (/^(?:=+|-+)[ \t]*$/.test(content) && prior.trim() !== '') {
       throw new Error(`check-order: line '${line}' underlines '${prior}' as a setext heading, which this file does not use — a date is a '## ' heading, and the receipts under this one would be dated by the heading above`);
+    }
+    if (RECEIPT_LINK.test(line) && RECEIPT_STAMP.test(line) && !line.startsWith('- ')) {
+      throw new Error(`check-order: line '${line}' carries a receipt but is not a top-level '- ' bullet, so no check would read its build`);
     }
     if (!line.startsWith('## ')) continue;
     const heading = line.slice(3).trim();
@@ -1179,11 +1201,17 @@ async function orderCorpus(ordinalFile) {
     ['receipt past buildordinal.json spelling the release with a leading zero', top(`## 2099-01-01\n\n${r(990001, n + 2, `0${rel}`)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['receipt citing a later release than buildordinal.json\'s', top(`## 2099-01-01\n\n${r(990001, 0, next)}\n`), null, 'a receipt cannot name a build that has not happened'],
-    ['heading indented one space (Markdown still renders it)', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m} ## 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'is not written \'## \''],
-    ['heading written with a tab after the hashes', top(`##\t2020-01-01\n\n${r(990001, n)}\n`), null, 'is not written \'## \''],
+    ['heading indented one space (Markdown still renders it)', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m} ## 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'bare \'## \' group heading'],
+    ['heading written with a tab after the hashes', top(`##\t2020-01-01\n\n${r(990001, n)}\n`), null, 'bare \'## \' group heading'],
     ['setext date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}2020-01-01\n----------\n\n${r(990001, n)}\n\n`), null, 'as a setext heading'],
     ['setext level-1 date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}2020-01-01\n===\n\n${r(990001, n)}\n\n`), null, 'as a setext heading'],
-    ['level-3 date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}### 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'is not a \'## \' group heading'],
+    ['level-3 date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}### 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'bare \'## \' group heading'],
+    ['heading inside a block quote', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}> ## 2020-01-01\n>\n> ${r(990001, n)}\n\n`), null, 'bare \'## \' group heading'],
+    ['receipt inside a block quote, naming a build that does not exist', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}> ${r(990001, 999, '9.9.9')}\n\n`), null, 'not a top-level \'- \' bullet'],
+    ['heading inside a list item', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}- ## 2020-01-01\n\n`), null, 'bare \'## \' group heading'],
+    ['heading inside a block quote inside an ordered list item', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}1. > ## 2020-01-01\n\n`), null, 'bare \'## \' group heading'],
+    ['heading indented four spaces under a list item', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}${r(990001, n)}\n\n    ## 2020-01-01\n\n`), null, 'bare \'## \' group heading'],
+    ['receipt nested as a sub-bullet', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}  ${r(990001, 999, '9.9.9')}\n\n`), null, 'not a top-level \'- \' bullet'],
     ['empty date heading above the newest group', top(`## 2020-01-01\n`), null, 'headings run newest first'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
