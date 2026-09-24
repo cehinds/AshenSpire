@@ -493,7 +493,8 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   // A FULL ART CHARGE UNLEASHES THIS PLAY (SPEC §12.2.1 items 5 and 10): the
   // solo play door's rule, on the acting seat's meter.
-  const unleashedEffects = takeArtUnleash(C, inst);
+  const unleash = takeArtUnleash(C, inst);
+  const unleashedEffects = unleash ? unleash.effects : null;
   if (unleashedEffects) {
     meta.unleashed = true;
     for (const action of F.cardActions(C, { effects: unleashedEffects }, p, target, cardRef, meta)) C.enqueue(action);
@@ -505,6 +506,8 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
+  // The spend receipts follow the play they belong to (SPEC §12.2.1 item 5).
+  if (unleash) unleash.announce();
   drainQueue(C);
   endArtChargeResolution(C);
 

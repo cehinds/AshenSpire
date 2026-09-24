@@ -54,6 +54,24 @@ function play(combat, pred) {
 const kitAttack = (weaponId) => (c) => c.kitRole === 'attack' && c.grantedBy === weaponId;
 const artOf = (weaponId) => (c) => c.equipmentRole === 'weaponArt' && c.grantedBy === weaponId;
 
+test('paced playback: a full Art\'s spend receipts share its cardPlayed beat, not the payment beat before it', async () => {
+  const { groupBeats } = await import('../src/ui/fx.js');
+  const combat = fight();
+  const max = artChargeMax(registries, 'greatsword');
+  for (let i = 0; i < max; i++) play(combat, kitAttack('greatsword'));
+  const { ref, events } = play(combat, artOf('greatsword'));
+  const played = events.find((e) => e.type === 'cardPlayed' && e.cardInstanceId === ref.instanceId);
+  assert.equal(played.unleashed, true);
+  const beat = groupBeats(events).find((b) => b.events.includes(played));
+  for (const type of ['artChargeChanged', 'artUnleashed']) {
+    const spend = events.find((e) => e.type === type && (type === 'artUnleashed' || e.reason === 'unleash'));
+    assert.ok(spend, type);
+    assert.ok(beat.events.includes(spend), `${type} plays in the Art's own beat`);
+  }
+  // Receipts follow the announcement, so the HUD empties as the play animates.
+  assert.ok(events.indexOf(played) < events.findIndex((e) => e.type === 'artUnleashed'));
+});
+
 test('a fight starts with every meter empty, sized from balance data', () => {
   const combat = fight();
   assert.deepEqual(combat.artCharge, {});

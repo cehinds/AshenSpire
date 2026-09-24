@@ -109,6 +109,10 @@ test('a full seat unleashes its Art; only that seat\'s meter empties', () => {
   const events = S.snapshot().scene.events;
   assert.ok(events.some((e) => e.type === 'artUnleashed' && e.playerId === 'p1' && e.weaponId === 'straightSword'));
   assert.equal(events.find((e) => e.type === 'cardPlayed' && e.cardInstanceId === art.instanceId).unleashed, true);
+  // The spend receipts follow the play they belong to, as solo's do (SPEC §12.2.1 item 5).
+  const playedAt = events.findIndex((e) => e.type === 'cardPlayed' && e.cardInstanceId === art.instanceId);
+  assert.ok(playedAt < events.findIndex((e) => e.type === 'artUnleashed' && e.playerId === 'p1'));
+  assert.ok(playedAt < events.findIndex((e) => e.type === 'artChargeChanged' && e.reason === 'unleash' && e.playerId === 'p1'));
   assert.equal(C.players.get('p1').artCharge.straightSword, 0);
   assert.equal(C.players.get('p2').artCharge.straightSword, 2, 'the teammate keeps its charge');
 });

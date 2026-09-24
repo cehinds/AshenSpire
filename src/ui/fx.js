@@ -653,7 +653,7 @@ export function animateEvents(events, ctx, done) {
 // Turn boundaries become banner beats. Click skips to the end state.
 // ---------------------------------------------------------------------------
 
-function groupBeats(events) {
+export function groupBeats(events) {
   const beats = [];
   let cur = { actorId: null, banner: null, kind: null, events: [] };
   const push = () => {

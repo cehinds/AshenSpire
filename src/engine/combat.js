@@ -991,7 +991,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // A FULL ART CHARGE UNLEASHES THIS PLAY (SPEC §12.2.1): the Art's authored
   // unleashed effects follow its own, with the same source, target and card,
   // and the meter empties. Payment and targeting above are untouched.
-  const unleashedEffects = takeArtUnleash(combat, inst);
+  const unleash = takeArtUnleash(combat, inst);
+  const unleashedEffects = unleash ? unleash.effects : null;
   if (unleashedEffects) {
     meta.unleashed = true;
     for (const action of F.cardActions(combat, { effects: unleashedEffects }, p, target, cardRef, meta)) combat.enqueue(action);
@@ -1010,6 +1011,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     manaSpent: manaCost,
     staminaSpent: staminaCost,
   });
+  // The spend receipts follow the play they belong to (SPEC §12.2.1 item 5).
+  if (unleash) unleash.announce();
   drainQueue(combat);
   // The card has resolved: its last weapon hit credits no later stagger or
   // burst (SPEC §12.2.1 item 4).

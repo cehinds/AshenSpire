@@ -110,16 +110,24 @@ export function attachArtCharge(combat) {
 }
 
 /**
- * takeArtUnleash(combat, inst) → the unleashed form's effects when this play
- * unleashes (the meter is emptied and the receipts are emitted), else null.
- * Called by the play door AFTER payment and BEFORE the play is announced.
+ * takeArtUnleash(combat, inst) → `{ effects, announce }` when this play
+ * unleashes (the meter is emptied at once), else null. Called by the play door
+ * AFTER payment and BEFORE the play is announced; the door calls `announce()`
+ * right AFTER `cardPlayed`, so the spend receipts (`artChargeChanged` reason
+ * `unleash`, then `artUnleashed`) follow the play they belong to — paced
+ * playback groups a beat from `cardPlayed` on, and receipts emitted before it
+ * would land in the payment beat, emptying the meter and the card's unleashed
+ * face while the card is still in hand (SPEC §12.2.1 item 5).
  */
 export function takeArtUnleash(combat, inst) {
   const unleash = artUnleashFor(combat, inst);
   if (!unleash || !unleash.ready) return null;
   combat.artCharge = combat.artCharge || {};
   combat.artCharge[unleash.weaponId] = 0;
-  combat.emit('artChargeChanged', { ...seatOf(combat), weaponId: unleash.weaponId, value: 0, max: unleash.max, amount: -unleash.value, reason: 'unleash' });
-  combat.emit('artUnleashed', { ...seatOf(combat), weaponId: unleash.weaponId, cardId: inst.cardId, cardInstanceId: inst.instanceId });
-  return unleash.form.effects;
+  const seat = seatOf(combat);
+  const announce = () => {
+    combat.emit('artChargeChanged', { ...seat, weaponId: unleash.weaponId, value: 0, max: unleash.max, amount: -unleash.value, reason: 'unleash' });
+    combat.emit('artUnleashed', { ...seat, weaponId: unleash.weaponId, cardId: inst.cardId, cardInstanceId: inst.instanceId });
+  };
+  return { effects: unleash.form.effects, announce };
 }
