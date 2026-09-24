@@ -135,7 +135,9 @@ for (const [id, classId, slot, pool] of [
     assert.equal(run[maxKey], initialMax + (level === 6 ? 1 : 0), `${id}: final equipped maximum at level ${level}`);
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: leveling carries spent ${pool} at level ${level}`);
     assert.deepEqual(run.equipmentPoolBonuses, bonuses, `${id}: leveling preserves signed equipment bonuses`);
-    assert.equal(receipt.thresholds, level === 6 ? 3 : 0, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
+    // Ruleset 6: HP's growth is a decimal 1 per level, so it moves at EVERY
+    // level; Mana and Stamina's 0.2 first reaches a whole point at level 6.
+    assert.equal(receipt.thresholds, level === 6 ? 3 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
   }
   const beforeAssignment = run[maxKey];
   for (let point = 0; point < 5; point++) {
@@ -147,7 +149,9 @@ for (const [id, classId, slot, pool] of [
   // lean creation mode converts at its own scale, so a point is that many
   // tiers of it. Read off the run's own snapshot rather than restated here.
   const poolRow = run.derivedStatRuleSnapshot.rules.rules[pool];
-  const perPoint = Math.round(poolRow.gainPerTier / poolRow.pointsPerTier);
+  const weight = pool === 'mana' ? poolRow.wisdom : poolRow.constitution;
+  // Ruleset 6: the row's weight on the attribute IS what a point buys.
+  const perPoint = Math.floor(weight + 1e-9);
   assert.equal(run[maxKey], beforeAssignment + 5 * perPoint, `${id}: each assigned point raises the equipped pool`);
 }
 console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');

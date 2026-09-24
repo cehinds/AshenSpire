@@ -8,9 +8,10 @@ import { previewPrologue } from './prologue.js';
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
-import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
+import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
@@ -22,7 +23,6 @@ import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
-import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
@@ -34,6 +34,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
+import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -87,10 +88,6 @@ let panelSettings = null;
 let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
-// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
-// value the engine actually resolves rows against, so the row that turns it
-// reads it from there and a copy cannot drift.
-const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // `retired: true` is a row that keeps its KEY so an exported configuration
 // still imports and still applies, and stays off the screen because nothing a
 // player can reach depends on it — today, the creation pools of the modes
@@ -98,7 +95,10 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // near-identical "starting stat pool" rows for one reachable pool; this is the
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
+  // An override switch shows its EFFECTIVE state: stored, else on when the
+  // class ships its own value or a profile already pinned one.
+  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
@@ -574,9 +574,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
   // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
-  // `derivedStatRules.defaults` — its one home, one import away, so this row
-  // cannot drift from the rule it turns.
+  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -605,16 +603,6 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
-    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
-    label: 'Stat points per tier', applied: numberAppliedHtml,
-    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
-    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
-    // progress — which is correct, and which means turning this dial and loading
-    // an existing save shows NOTHING. It is written on the row because the
-    // alternative is him concluding the dial is broken. The middle sentence is
-    // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Set to anything but 5, it replaces every stat’s own "stat points per increase" — the rows below, and the Draw and Poise ones filed under Hand & Draw and Stats & Defence. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -690,13 +678,17 @@ const ADVANCED_GROUPS = Object.freeze([
   // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
   // last had "Rules" open lands on the first tab rather than a blank panel.
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
-  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, stat conversions, skills and talents.' },
+  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, skills and talents. What the points turn into is under Stats.' },
   // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
   // holds authored constants, so it is exactly where someone looking for an
   // animation switch lands. One clause ends that walk.
   { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
-  { id: 'Hand & Draw', label: 'Hand & Draw', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact, breaks and status resistance — and the older poise meter used when ratings are off.' },
+  // ONE TAB PER IDEA, AND STATS IS ONE IDEA (owner, 2026-09-21). Hand & Draw,
+  // Stats & Defence, Progression → Stats & resources and the Poise, Stagger
+  // and Mana constants were four doors onto the same traits. Each trait is one
+  // topic here (models/AdvancedSettingsGroups.js) with a live worked example
+  // (models/StatsPreviewModel.js).
+  { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
@@ -739,9 +731,40 @@ export function formationLayoutRows() {
     .find((group) => group.id === 'Formation layout')?.rows || [];
 }
 
+// Tabs merged into Stats, and topics that moved there out of tabs that still
+// exist. A profile last left on one of them opens on Stats rather than on the
+// first tab, or on an unrelated first topic of the tab it was in (Codex, on
+// #1252).
+const MERGED_ADVANCED_GROUPS = Object.freeze({ 'Ratings & Resistance': 'Stats', 'Hand & Draw': 'Stats' });
+const MOVED_ADVANCED_TOPICS = Object.freeze({
+  Progression: ['Stat conversions', 'Stats & resources'],
+  Combat: ['Poise', 'Stagger', 'Mana'],
+  Rules: ['Poise', 'Stagger', 'Mana'],
+});
+
 export function activeAdvancedGroup(settings) {
-  const stored = settings?.[ADVANCED_CAT_KEY];
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
+  const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
   return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+}
+
+// The Stats topic a migrated profile lands on: where the rows it was last
+// looking at went, not Overview.
+const MIGRATED_STATS_TOPICS = Object.freeze({ 'Hand & Draw': 'Draw & hand', Poise: 'Poise', Stagger: 'Poise', Mana: 'Mana' });
+
+/** storedAdvancedTopic(settings, groupId) → the topic id a tab opens on, or undefined for its first. */
+export function storedAdvancedTopic(settings, groupId) {
+  const stored = settings?.[`settingsAdvancedSubgroup.${groupId}`];
+  if (stored !== undefined || groupId !== 'Stats') return stored;
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  const old = settings?.[`settingsAdvancedSubgroup.${raw}`];
+  // A topic that kept its name under Stats (Resistance, Impact, Breaks, the
+  // per-item tables) reopens as itself (Codex, on #1252).
+  if (MERGED_ADVANCED_GROUPS[raw] && advancedSubgroups(ROWS, 'Stats').some((group) => group.id === old)) return old;
+  // Stats & Defence's own General and legacy-poise topics.
+  if (raw === 'Ratings & Resistance') return { General: 'Overview', 'Without ratings (legacy poise)': 'Poise' }[old];
+  return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[old];
 }
 
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
@@ -859,6 +882,82 @@ export function resolveArmamentsPhonePlacement(settings = {}) {
 
 function rowNote(settings, row) {
   return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+// ---- A ROW THAT DOES NOTHING RIGHT NOW IS DISABLED, AND SAYS WHY ----------
+//
+// (owner, 2026-09-23: "Disable fields if toggle isn't on.") `gates` on a row
+// (model/advancedConfig.js, model/startingStatConfig.js) name the switch that
+// decides whether it takes effect. While any gate is closed the row's controls
+// are disabled and a line under its label says which switch opens it; an
+// override row also shows the value it is inheriting in place of its own, so
+// the number on screen is always the number in force. Its own stored value is
+// kept, and comes back when the switch does.
+const GATED_ROWS = ROWS.filter((row) => row.gates?.length);
+const rowByKey = (key) => ROWS.find((row) => row.key === key);
+
+function inheritedValue(gate, settings) {
+  if (gate.inherited) return gate.inherited(settings);
+  if (!gate.inheritedKey) return undefined;
+  const row = rowByKey(gate.inheritedKey);
+  return Object.hasOwn(settings, gate.inheritedKey) ? settings[gate.inheritedKey] : row?.def;
+}
+
+export function gateSentence(gate, settings) {
+  const switchRow = rowByKey(gate.key);
+  const name = `“${switchRow?.label || gate.key}”`;
+  if (gate.own) {
+    const value = inheritedValue(gate, settings);
+    const from = gate.inheritedKey ? `“${rowByKey(gate.inheritedKey)?.label || gate.inheritedKey}”` : 'the authored value × the multiplier';
+    return `Following ${from}${value === undefined ? '' : ` (${value})`}. Turn on ${name} to set this one.`;
+  }
+  if (gate.when === false) return `Used only while ${name} is off.`;
+  if (gate.when === undefined || gate.when === true) return `Used only while ${name} is on.`;
+  const label = switchRow?.choiceLabels?.[gate.when] || gate.when;
+  return `Used only while ${name} is set to ${String(label).toUpperCase()}.`;
+}
+
+export function closedGate(settings, row) {
+  return (row.gates || []).find((gate) => !gateOpen(settings, gate, rowByKey)) || null;
+}
+
+export function refreshGates(container, settings) {
+  const controls = new Map();
+  for (const el of container.querySelectorAll('[data-key]')) {
+    if (!controls.has(el.dataset.key)) controls.set(el.dataset.key, []);
+    controls.get(el.dataset.key).push(el);
+  }
+  for (const row of GATED_ROWS) {
+    const els = controls.get(row.key);
+    if (!els) continue;
+    const closed = closedGate(settings, row);
+    const inherited = closed?.own ? inheritedValue(closed, settings) : undefined;
+    for (const el of els) {
+      el.disabled = !!closed;
+      el.setAttribute('aria-disabled', String(!!closed));
+      if (el.tagName !== 'INPUT' || el.type === 'checkbox' || el.type === 'color') continue;
+      if (closed && inherited !== undefined) {
+        el.value = String(inherited);
+        el.dataset.showingInherited = '1';
+      } else if (!closed && el.dataset.showingInherited) {
+        delete el.dataset.showingInherited;
+        el.value = String(settings[row.key] ?? row.def);
+      }
+    }
+    const wrapper = els[0].closest('.set-row');
+    if (!wrapper) continue;
+    wrapper.classList.toggle('set-row-gated', !!closed);
+    let hint = wrapper.querySelector('.set-gate-note');
+    if (closed) {
+      if (!hint) {
+        hint = (wrapper.ownerDocument || document).createElement('span');
+        hint.className = 'ls-hint set-note set-gate-note';
+        (wrapper.querySelector('.as-labelstack') || wrapper).append(hint);
+      }
+      hint.textContent = gateSentence(closed, settings);
+      hint.hidden = false;
+    } else if (hint) hint.hidden = true;
+  }
 }
 
 function refreshConditionNotes(container, settings) {
@@ -1263,17 +1362,18 @@ function graceRefillAppliedHtml(settings, r) {
  */
 /**
  * resolveLevelUpValue(settings) → how many stat points one level grants.
- * resolveStatTierSize(settings) → how many points buy one tier.
  *
- * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * HIS LEVEL DIAL, resolved the way every other row in this file is: a stored
  * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
  * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
  * the same reason. A hand-edited profile or an older build's value must behave
  * exactly like an absent one, because the alternative is a run created under a
  * number nothing in the game admits to.
  *
- * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
- * from content, so neither of these functions contains a number.
+ * IT RETURNS THE ROW'S OWN `def` WHEN UNSET, and the row derives that `def`
+ * from content, so this function contains no number. (Its sibling, the "Stat
+ * points per tier" dial, was retired with ruleset 6: every stat now states its
+ * own decimal weight per attribute.)
  */
 /**
  * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
@@ -1400,31 +1500,7 @@ function numberAppliedHtml(settings, row) {
   return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
 }
 
-export function resolveStatTierSize(settings) {
-  return resolveNumberRow(settings, settingsRow('statTierSize'));
-}
 
-/**
- * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
- * with, or `{}` when the dial is at its shipping value.
- *
- * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
- * already takes layered overrides — `modeModifiers`, `runModifiers`,
- * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
- * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
- * derived stats, and a row may still say otherwise". The shape he asked about
- * already existed; this hands it a number.
- *
- * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
- * no override layer at all, so its snapshot is byte-identical to one created
- * before this dial existed. Turning the dial and turning it back leaves no
- * residue in a save.
- */
-export function derivedStatDialOptions(settings) {
-  const size = resolveStatTierSize(settings);
-  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
-  return { explicitOverride: { defaults: { pointsPerTier: size } } };
-}
 
 export function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');
@@ -1754,7 +1830,42 @@ export function compactAdvancedRow(row, groupId, subgroupId) {
   return compact;
 }
 
-function categoryHtml(cat, settings, saves) {
+// ---- Advanced → Stats: the live worked example ------------------------------
+//
+// Computed by models/StatsPreviewModel.js from the same configured bundle a new
+// run is born from, and redrawn after every edit (`refreshStatsPreviews`), so
+// the numbers under a dial are the ones the dial produces.
+// The last example drawn, keyed by everything it reads, so the render that
+// paints the panel and the refresh that follows it compute it once.
+let lastStatsPreview = { key: null, html: '' };
+
+export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null) {
+  const key = JSON.stringify([topic, previewAttributes, previewLevel, settings]);
+  if (key === lastStatsPreview.key) return lastStatsPreview.html;
+  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel);
+  lastStatsPreview = { key, html };
+  return html;
+}
+
+function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel) {
+  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel);
+  if (!preview) return '';
+  if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
+  const classes = statsExampleClasses();
+  const who = preview.subject.current || classes.length < 2
+    ? `<span>${esc(preview.subject.label)}</span>`
+    : `<label class="set-example-who">Example character <select data-stats-example-class aria-label="Example character">${classes.map((entry) => `<option value="${esc(entry.id)}"${entry.id === preview.subject.classId ? ' selected' : ''}>New ${esc(entry.label)}</option>`).join('')}</select></label>`;
+  const examples = preview.examples.map((example) => `<div class="set-example-block${example.off ? ' is-off' : ''}" data-stat-example="${esc(example.id)}">`
+    + `<div class="set-example-title">${esc(example.title)}${example.legacy ? ` <small>${esc(example.legacy)}</small>` : ''}</div>`
+    + (example.lines.length ? `<dl class="set-example-lines">${example.lines.map((line) => `<div><dt>${esc(line.label)}</dt><dd><span class="set-example-math">${esc(line.expression)}</span> <b class="set-example-total">= ${esc(String(line.total))}</b>${line.capped != null ? ` <small>(capped at ${esc(String(line.capped))})</small>` : ''}</dd></div>`).join('')}</dl>` : '')
+    + (example.hint ? `<p class="set-example-hint">${esc(example.hint)}</p>` : '')
+    + '</div>').join('');
+  return `<div class="set-example" aria-live="polite"><div class="set-example-head"><strong>Worked example</strong>${who}</div>`
+    + (preview.refused ? `<p class="set-example-refused" role="status">${esc(preview.refused)}</p>` : '')
+    + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
+}
+
+function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null) {
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
@@ -1792,7 +1903,7 @@ function categoryHtml(cat, settings, saves) {
           + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
       }
       const subgroups = advancedSubgroups(h.rows, group.id);
-      const selected = settings[`settingsAdvancedSubgroup.${group.id}`];
+      const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
@@ -1800,8 +1911,19 @@ function categoryHtml(cat, settings, saves) {
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
+          // Only the topic on screen computes its example; the others fill in
+          // when opened (`refreshStatsPreviews`), so an edit costs one example.
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${sub === activeSub && group.id === active ? statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel) : ''}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
-            : sub.rows.map(row => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join(''))
+            : sub.rows.map((row, rowIndex) => {
+              // A Stats topic reads as short subsections (Formula, Level
+              // growth, Starting hand, …): a heading wherever the section
+              // changes. `advancedSubgroups` keeps each one contiguous.
+              const section = group.id === 'Stats' ? statsSection(row) : null;
+              const heading = section && section !== (rowIndex ? statsSection(sub.rows[rowIndex - 1]) : null)
+                ? `<h4 class="set-subsection-heading" data-subsection="${esc(section)}">${esc(section)}</h4>` : '';
+              return heading + settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id));
+            }).join(''))
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
@@ -1835,7 +1957,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null }) {
   panelSettings = settings;
   let html = '';
   let cats = [];
@@ -1880,7 +2002,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel)}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
@@ -1958,13 +2080,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -1984,22 +2106,49 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // reaches `settings`, so the model has nothing to report. Keyed by row, so a
   // legal re-entry clears exactly the message it replaced.
   const typedRefusals = new Map();
+  // Only the topic on screen draws its example. A search can open several
+  // topics at once; they show their rows without an example until it clears.
+  const drawnPreviews = new WeakMap();
+  const refreshStatsPreviews = () => {
+    const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
+    container.querySelectorAll('[data-stats-preview]').forEach((node) => {
+      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel) : '';
+      if (drawnPreviews.get(node) === html) return;
+      node.innerHTML = html;
+      drawnPreviews.set(node, html);
+      node.querySelector('[data-stats-example-class]')?.addEventListener('change', (event) => {
+        settings[STATS_EXAMPLE_CLASS_KEY] = event.target.value;
+        onChange({ [STATS_EXAMPLE_CLASS_KEY]: event.target.value });
+        refreshStatsPreviews();
+        // The picker was redrawn under the focus; hand it back.
+        node.querySelector('[data-stats-example-class]')?.focus();
+      });
+    });
+  };
+  // A subsection whose every row is hidden (fixed-draw rows while drawing to
+  // capacity, or a search) draws no heading over nothing.
+  const syncSubsectionHeadings = () => {
+    container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      let node = heading.nextElementSibling;
+      let visible = false;
+      while (node && !node.classList.contains('set-subsection-heading')) {
+        if (node.classList.contains('set-row') && !node.hidden) { visible = true; break; }
+        node = node.nextElementSibling;
+      }
+      heading.hidden = !visible;
+    });
+  };
   const reportAdvancedProblems = () => {
+    refreshGates(container, settings);
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
     const rules = resolveHandRules(settings, contentBundle.attributes);
-    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    // The Stats → Draw & hand worked example states the hand these rules deal
+    // (`refreshStatsPreviews`); what is left here is which rows apply.
+    const section = container.querySelector('[data-advanced-panel="Stats"]');
     if (section) {
-      let summary = section.querySelector('[data-hand-summary]');
-      if (!summary) {
-        summary = document.createElement('p');
-        summary.dataset.handSummary = '';
-        summary.className = 'set-group-summary';
-        summary.setAttribute('aria-live', 'polite');
-        section.querySelector('.set-group-summary').after(summary);
-      }
-      summary.textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {}) + ' Stat bonuses use whole intervals above the baseline.';
       for (const row of handRulesRows(contentBundle.attributes)) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
@@ -2014,6 +2163,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         });
       }
     }
+    refreshStatsPreviews();
+    syncSubsectionHeadings();
     // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
     //
     // This used to be one notice at the top of Settings carrying `problems[0]`
@@ -2067,6 +2218,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
       filterAdvancedRows();
+      refreshStatsPreviews();
     });
   });
 
@@ -2100,6 +2252,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
     const count = section.querySelector('[data-config-count]');
     if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
+    syncSubsectionHeadings();
+    refreshStatsPreviews();
   };
   if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
   container.querySelectorAll('.set-advanced-group').forEach(section => {
@@ -2117,6 +2271,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       syncTopicPicker();
       if (advancedSearch) advancedSearch.value = '';
       filterAdvancedRows();
+      refreshStatsPreviews();
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2140,7 +2295,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings);
       const groups = advancedSubgroups(ROWS, currentGroup);
-      const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
+      const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
@@ -2158,7 +2313,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
       onChange(changed);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
     };
   });
 
@@ -2214,7 +2369,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -2271,7 +2426,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -2356,6 +2511,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+      // A profile key can be what a gated row inherits, so the inherited
+      // values and their sentences are redrawn whatever the key (Codex, #1260).
+      else refreshGates(container, settings);
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.
@@ -2439,7 +2597,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2649,6 +2807,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[select.dataset.key] = select.value;
       onChange({ [select.dataset.key]: select.value });
       if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       refreshApplied(container, settings);
       refreshConditionNotes(container, settings);
       anchorPressed(container, select, wasAt);
@@ -2668,6 +2827,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
@@ -2797,7 +2957,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(cat, settings, saves);
+    panel.innerHTML = categoryHtml(cat, settings, saves, previewAttributes, previewLevel);
     panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
     // A tab switch is a new screenful. Start it at the top, or the player lands
     // mid-way down a section they have never seen.
@@ -2897,7 +3057,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -2914,7 +3074,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel }); },
     secondary: [load],
     primary: done,
     footSize: 'short',
@@ -2933,7 +3093,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

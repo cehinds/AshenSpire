@@ -48,6 +48,7 @@ import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js'
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
+import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
@@ -672,7 +673,7 @@ function collectContentProblems(bundle, errors = []) {
     const lu = b.balance.levelUp;
     if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
     else {
-      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
     }
@@ -1225,6 +1226,9 @@ function collectContentProblems(bundle, errors = []) {
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.
   for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
+  // Mana must be at least 1 for the weakest character creation allows: a run
+  // born with 0 Mana fails its own shape check (model/startingStatConfig.js).
+  for (const problem of derivedStatFloorProblems(b)) err(problem.path, problem.message);
 
   // Relic modifier tags are a compact passive DSL. The tag is the behavior;
   // every other word is data. Validate the exact row here so a typo never

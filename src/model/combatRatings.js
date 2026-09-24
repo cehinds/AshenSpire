@@ -251,20 +251,29 @@ export function migrateCombatRatingSettings(settings = {}, bundle, warnings = nu
 export function combatRatingRows(bundle) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
-    cat: 'Advanced', advancedGroup: 'Ratings & Resistance', statTopic: topic,
+    cat: 'Advanced', advancedGroup: 'Stats', statTopic: topic,
     key: prefix + path, def, label,
     ...(typeof def === 'number' ? { type: 'number', min: 0, max: 999, step: 0.01, integer: false } : {}),
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
-  add('enabled', true, 'Enable ratings, Poise & Ward', 'General');
-  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
-    note: 'Scales the floored attribute total of every rating at once. 1 leaves the formulas as written.',
+  add('enabled', true, 'Enable ratings, Poise & Ward', 'General', {
+    note: 'On: AR, DR, PR, Poise and Ward come from the rating formulas under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
   });
+  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
+    note: 'Scales the attribute part of every rating at once, before each base is added. 1 leaves the formulas as written.',
+  });
+  // THE FIVE FORMULAS SIT WITH THE POOLS (owner, 2026-09-21: "I'd like all
+  // the resources and stats to be in the same format … they are way too
+  // separated"). HP, Mana, Stamina, Actions, draw and Poise are written the way
+  // these are — a base and a decimal weight per attribute (content/
+  // derivedStats.js, ruleset 6) — and every one of them is a topic of Advanced
+  // → Stats (models/AdvancedSettingsGroups.js), so a rating's formula sits
+  // beside the trait it rates.
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${ratingLabel(id)} — ${words(field)}`, `${ratingLabel(id)} formula`, {
-        note: field === 'base' ? 'Added after the global multiplier, then equipment and other bonuses.'
-          : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
+      field === 'base' ? `${ratingLabel(id)} — Base` : `${ratingLabel(id)} per ${words(field)} point`, `${ratingLabel(id)} formula`, {
+        note: field === 'base' ? 'Added after the attribute total and the multiplier; equipment and other bonuses add on top.'
+          : 'How much each point of this attribute is worth. Each attribute is rounded down on its own: 0.5 gives 1 per 2 points, 0.25 gives nothing until 4. Set 0 to ignore it.',
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {

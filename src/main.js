@@ -24,7 +24,7 @@ import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredCon
 import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
-import { createRunState, createDeck, createIdGen } from './model/state.js';
+import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
@@ -84,7 +84,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -1031,18 +1031,9 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   const seed = seedFromString(asked);
   const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
   rebuildRegistries(configSnapshot);
-  // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
-  // 2026-08-17: "let's make the increment of 5 points for reasonable change be
-  // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
-  // later content change can never re-stat a climb in progress, which is right
-  // and which means this dial has exactly one moment to apply: here. At the
-  // shipping value `derivedStatDialOptions` returns {} and the snapshot is
-  // byte-identical to one made before the dial existed. The settings row says
-  // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
     profileMeta: saves.loadMeta(),
-    derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1446,6 +1437,7 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
+    previewLevel: run ? characterLevelOf(run) : null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });

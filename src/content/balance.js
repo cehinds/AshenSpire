@@ -256,9 +256,9 @@ export const balance = {
   // signature (roleCopies.ability below; the composed plan grants it first).
   startingDeckSize: 11,
   [NOTE]: {
-    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Progression › Stat conversions is the row that moves them. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
-    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Progression › Stat conversions is the row that moves it.', inert: true },
-    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Hand & Draw → Hand capacity → Base hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
+    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
+    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Stats → Draw & hand is where it is set.', inert: true },
+    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Stats → Draw & hand → Hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
     flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.',
     flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
     startingCinders: 'Cinders a new run opens with.',
@@ -686,25 +686,9 @@ export const balance = {
     // 5: the silent plausible answer is the dangerous one).
     pointsPerLevelMin: 1,
     pointsPerLevelMax: 20,
-    // How many points buy one tier of a derived stat — the DOMAIN, not a ladder,
-    // for the same reason the level value stopped being one. His purpose clause
-    // was "that way I can test each", and a 1-2-3-5 ladder cannot express 4 or
-    // 7. (The four-chip shape a previous seat measured — 92.1 px at 390x844
-    // against 301.2 for a seven-chip row — is why a LADDER could never have been
-    // widened to cover the domain instead: a typed field has no chip count.)
-    //
-    // MIN IS 1 AND IT IS ARITHMETIC, NOT TASTE. The tier is `floor(points /
-    // pointsPerTier)`, so 0 divides by zero, and the content door already
-    // refuses a non-positive value by name (model/validate.js). 20 is the
-    // ceiling for the same reason as the level value's: an experimental bound,
-    // one number here, no code.
-    tierSizeMin: 1,
-    tierSizeMax: 20,
     [NOTE]: {
       pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
       pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
-      tierSizeMin: { text: 'The lowest value Stat points per tier accepts, and nothing reads it from here: that row takes its bounds from the authored table. 1 is arithmetic, not taste: a tier is floor(points ÷ tier size).', inert: true },
-      tierSizeMax: { text: 'The highest value Stat points per tier accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
     },
   },
 
