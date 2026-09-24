@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-23",
     "summary": "Card lore is one line in inspection, and the whole of it opens in its own window — set in the type you choose",
     "detail": "Inspect any card and its lore is a single line: what the thing is and whose (Art of the sellswords of the Bastion.). Press it and the lore window opens over the card with the full description — a little history, told from one side, and a closing line set apart. Every card's lore has been rewritten this way. A new Advanced tab, Text & lore, sets how it reads: the typeface (eight faces now ship with the game, plus Georgia), size, letter and line spacing, and italic or upright, with the identity line and the lore window each adjustable. Interface text size and readable headings stay where they were, under Accessibility. No card's rules or numbers changed.",
-    "build": "0.7.1.439",
+    "build": "0.7.1.441",
     "pullRequest": 1264,
     "url": "https://github.com/cehinds/AshenSpire/pull/1264"
+  },
+  {
+    "id": "pr-1261",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Towns keep a quest board, and taking or turning in a quest is a conversation",
+    "detail": "Every town's inn now has a Quest board beside its rest: it lists the quests posted anywhere in town, whether each can be taken, is under way, is ready to hand in or is done, and a journal of the quests your run has started and finished — the Grave of the Nameless as well as the wardens' surveys. The warden's spot on the town map opens the same board. Taking a quest or turning one in is no longer a button press: the Road Warden speaks, and you answer — Accept the quest or Not now, and on your return, after the report of what you found, Collect 25 cinders. A quest pays its reward once, even across a reload, and shows as done on the board afterwards. Reading the board costs nothing; the inn's rest is still waiting when you close it.",
+    "build": "0.7.1.439",
+    "pullRequest": 1261,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1261"
   },
   {
     "id": "pr-1252",
