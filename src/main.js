@@ -110,7 +110,8 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
-import { SHIPPED_MUSIC_FOLDER } from './content/music.js';
+import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
+import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
@@ -1097,7 +1098,9 @@ function startClimb() {
 function showPrologue() {
   const openingRun = run;
   const settings = { ...saves.loadMeta().settings, ...run.advancedConfigSnapshot?.overrides };
-  audio.music('map');
+  // The region's map context, so a prologue that keeps its music hands it to
+  // showMap() unchanged instead of restarting it.
+  audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   mountPrologue(app, {
     // The opening may take the music with it, scene by scene (Advanced →
     // Opening → Music); `map` above is what it starts over.
@@ -1774,7 +1777,8 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap() {
-  audio.music('map');
+  // The map's music follows the region it stands in (content/music.js).
+  audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   if (run.legacyDungeon) return showLegacyDungeon();
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,

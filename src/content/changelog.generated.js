@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "A restored profile shows its real Cinder multiplier straight away",
     "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
-    "build": "0.7.1.468",
+    "build": "0.7.1.471",
     "pullRequest": 1295,
     "url": "https://github.com/cehinds/AshenSpire/pull/1295"
+  },
+  {
+    "id": "pr-1302",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map's music follows where you stand, and the bright map tracks are gone",
+    "detail": "The two recorded map tracks were too upbeat for a land after the Burning and have been withdrawn; the map plays its generated score again. The map now asks for music by region — the Hollow Weald, the Pale Marches, the Cinder Reach, the Drowned Coast and the Ashen Crown each have their own slot, with slow, dark prompts in music/PROMPTS.md — and a region without a recorded track plays the plain map music. The victory hymn is cut from three minutes to its first full phrase, about a minute.",
+    "build": "0.7.1.469",
+    "pullRequest": 1302,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1302"
   },
   {
     "id": "pr-1281",
