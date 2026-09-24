@@ -10,7 +10,8 @@
 // hold a value an import would refuse, and a downloaded export can be
 // committed by hand as a profile.
 //
-// WHERE IT LIVES. `settings-profiles/default.json` on its own branch,
+// WHERE IT LIVES. `settings-profiles/<name>.json` (`default` unless this
+// device picked another named profile) on its own branch,
 // `settings-profiles`, created from `dev` on the first save. No workflow runs
 // on that branch (pages-builds, tests and CI watch dev/test/release/main), so
 // a save costs no Actions minutes and cannot turn a build red. The repository
@@ -37,7 +38,44 @@ export const SYNC_STORAGE = Object.freeze({
   auto: 'ashenspire.sync.auto',
   lastSha: 'ashenspire.sync.lastSha',
   lastAt: 'ashenspire.sync.lastAt',
+  includeDevice: 'ashenspire.sync.includeDevice',
 });
+
+// NAMED PROFILES. Each profile is `settings-profiles/<name>.json` on the sync
+// branch (desk, phone, balance-a…); `default` is the one a new device uses.
+export const PROFILE_DIR = 'settings-profiles';
+export const DEFAULT_PROFILE = 'default';
+const PROFILE_NAME = /^[A-Za-z0-9._-]{1,40}$/;
+
+/** validProfileName(name) → true for a bare name that is safe as one path segment. */
+export function validProfileName(name) {
+  return typeof name === 'string' && PROFILE_NAME.test(name) && !name.includes('..');
+}
+
+/** normalizeProfileName(text) → the typed name without spaces or a trailing `.json`, or null when unsafe. */
+export function normalizeProfileName(text) {
+  const name = String(text ?? '').trim().replace(/\.json$/i, '');
+  return validProfileName(name) ? name : null;
+}
+
+/** profilePath(name) → `settings-profiles/<name>.json`; throws on an unsafe name. */
+export function profilePath(name) {
+  if (!validProfileName(name)) throw new Error(`“${name}” is not a profile name — use 1–40 letters, digits, dot, dash or underscore.`);
+  return `${PROFILE_DIR}/${name}.json`;
+}
+
+/** profileName(cfg) → the name of the profile `cfg.path` points at (`default` for the stock path). */
+export function profileName(cfg) {
+  const path = String(cfg?.path || SYNC_DEFAULTS.path);
+  return path.slice(PROFILE_DIR.length + 1).replace(/\.json$/, '');
+}
+
+// PER-DEVICE KEYS. These describe the screen and the hands holding it, not the
+// player: a profile saved on a desktop must not shrink a phone's text. They are
+// left out of a profile, and a profile that carries them does not move them,
+// unless this device opts in (SYNC_STORAGE.includeDevice).
+export const DEVICE_KEYS = Object.freeze(['uiScale', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement']);
+const DEVICE_KEY_SET = new Set(DEVICE_KEYS);
 
 const SAFE_SEGMENT = /^[A-Za-z0-9._-]+$/;
 const SAFE_BRANCH = /^[A-Za-z0-9._/-]+$/;
@@ -70,9 +108,17 @@ export function profileWebUrl(cfg) {
   return `https://github.com/${cfg.owner}/${cfg.repo}/blob/${cfg.branch.split('/').map(encodeURIComponent).join('/')}/${encodePath(cfg.path)}`;
 }
 
-/** exportKeys(rows, controlTypes) → the non-`gameConfig.` keys a profile carries. */
-export function profileKeys(rows, controlTypes = new Set(['button', 'action', 'sceneList'])) {
-  return rows.filter((row) => !row.retired && !controlTypes.has(row.type) && !String(row.key).startsWith(ADVANCED_CONFIG_PREFIX)).map((row) => row.key);
+const CONTROL_TYPES = new Set(['button', 'action', 'sceneList']);
+
+/**
+ * profileKeys(rows, { includeDevice, controlTypes }) → the non-`gameConfig.`
+ * keys a profile carries. DEVICE_KEYS are left out unless `includeDevice`.
+ * (A Set as the second argument is still read as `controlTypes`.)
+ */
+export function profileKeys(rows, options = {}) {
+  const { includeDevice = false, controlTypes = CONTROL_TYPES } = options instanceof Set ? { controlTypes: options } : (options || {});
+  return rows.filter((row) => !row.retired && !controlTypes.has(row.type) && !String(row.key).startsWith(ADVANCED_CONFIG_PREFIX)
+    && (includeDevice || !DEVICE_KEY_SET.has(row.key))).map((row) => row.key);
 }
 
 /** profileText(settings, keys, build) → the JSON a profile file holds. */
@@ -86,12 +132,14 @@ export function profileText(settings, keys, build = {}) {
  * `changes` is what the profile sets. `cleared` is every key this device has
  * set that the profile does not mention — a profile is the WHOLE picture, so
  * loading it returns those to their defaults. Throws, changing nothing, on a
- * file the import door refuses.
+ * file the import door refuses. A per-device key (DEVICE_KEYS) that `keys`
+ * does not own is neither applied from the file nor cleared.
  */
 export function profileChanges(text, bundle, settings, rows, keys) {
   const warnings = [];
   const changes = parseAdvancedConfigFile(text, bundle, {}, rows, warnings);
   const owned = new Set(keys);
+  for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
   const cleared = Object.keys(settings || {}).filter((key) => settings[key] !== undefined
     && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key)));
   return { changes, cleared, warnings };
@@ -150,6 +198,31 @@ export async function fetchProfile(cfg, { token = '', fetch = globalThis.fetch }
   const body = await res.json();
   if (typeof body?.content !== 'string') throw new Error('GitHub answered with something that is not a file.');
   return { text: fromBase64(body.content), sha: body.sha };
+}
+
+/** profilesListUrl(cfg) → the contents API address of the profile folder on the sync branch. */
+export function profilesListUrl(cfg) {
+  return `${api(cfg)}/contents/${PROFILE_DIR}?ref=${encodeURIComponent(cfg.branch)}`;
+}
+
+/**
+ * listProfiles(cfg, { token, fetch }) → sorted names of the `*.json` profiles
+ * on the sync branch; [] when the folder (or the branch) does not exist yet.
+ */
+export async function listProfiles(cfg, { token = '', fetch = globalThis.fetch } = {}) {
+  const url = profilesListUrl(cfg);
+  let res = await fetch(url, { headers: headers(token), cache: 'no-store' });
+  // Same as fetchProfile: a refused token must not hide a public list.
+  if (res.status === 401 && token) res = await fetch(url, { headers: headers(''), cache: 'no-store' });
+  if (res.status === 404) return [];
+  if (!res.ok) throw await failure(res, 'Listing the profiles');
+  const body = await res.json();
+  if (!Array.isArray(body)) throw new Error('GitHub answered with something that is not a folder.');
+  const names = body
+    .filter((entry) => (entry?.type ?? 'file') === 'file' && typeof entry?.name === 'string' && entry.name.endsWith('.json'))
+    .map((entry) => entry.name.slice(0, -'.json'.length))
+    .filter(validProfileName);
+  return [...new Set(names)].sort((a, b) => a.localeCompare(b));
 }
 
 async function ensureBranch(cfg, token, fetch) {

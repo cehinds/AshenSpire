@@ -10,7 +10,7 @@ import { contentBundle } from '../../content/index.js';
 import { saveJsonFile } from '../../model/advancedConfig.js';
 import {
   SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
-  fetchProfile, pushProfile, profileWebUrl,
+  fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
 
@@ -58,6 +58,9 @@ export function applyProfile(settings, onChange, parsed) {
 /** True when this device loads the profile at startup. */
 export function autoLoadEnabled() { return read(SYNC_STORAGE.auto) === '1'; }
 
+/** True when this device saves and loads its screen settings (DEVICE_KEYS) with the profile. */
+export function includeDeviceEnabled() { return read(SYNC_STORAGE.includeDevice) === '1'; }
+
 export async function autoLoadProfile({ settings, onChange, rows, fetch = globalThis.fetch, stillWanted = () => true }) {
   if (!autoLoadEnabled()) return { applied: 0, reason: 'off' };
   const cfg = deviceSyncConfig();
@@ -67,7 +70,7 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
   // Arrived after the game went on without it: change nothing mid-session and
   // leave the sha unrecorded, so the next start loads it.
   if (!stillWanted()) return { applied: 0, reason: 'late' };
-  const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeys(rows));
+  const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeys(rows, { includeDevice: includeDeviceEnabled() }));
   const applied = applyProfile(settings, onChange, parsed);
   write(SYNC_STORAGE.lastSha, remote.sha || '');
   write(SYNC_STORAGE.lastAt, new Date().toISOString());
@@ -75,24 +78,73 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
 }
 
 export function renderSettingsSync(mount, { settings, onChange, rows, afterApply = () => {} }) {
-  const keys = profileKeys(rows);
+  // Read at each use: the per-device toggle changes which keys a profile owns.
+  const profileKeysNow = () => profileKeys(rows, { includeDevice: includeDeviceEnabled() });
   const labelOf = new Map(rows.map((row) => [row.key, String(row.label || row.key).replace(/<[^>]*>/g, '')]));
   let cfg = deviceSyncConfig();
   let pending = null;
   // Each load and each location change takes a new generation; a load that
   // finishes under an older one is dropped, never shown under the new place.
   let generation = 0;
+  // The named profiles on the sync branch: null until listed. A listing that
+  // finishes after the location changed is dropped, like a stale load.
+  let profiles = null;
+  let listGeneration = 0;
+  let listNote = '';
+  const deviceLabels = DEVICE_KEYS.filter((key) => labelOf.has(key)).map((key) => labelOf.get(key)).join(', ');
+
+  const pickerOptions = () => {
+    const active = profileName(cfg);
+    const names = [...new Set([...(profiles || []), active])].sort((a, b) => a.localeCompare(b));
+    return names.map((name) => `<option value="${esc(name)}"${name === active ? ' selected' : ''}>${esc(name)}${profiles && !profiles.includes(name) ? ' (not saved yet)' : ''}</option>`).join('');
+  };
+  const fillPicker = () => {
+    const select = mount.querySelector('[data-sync-profile]');
+    if (select) select.innerHTML = pickerOptions();
+    const note = mount.querySelector('[data-sync-list-note]');
+    if (note) note.textContent = listNote;
+  };
+  const refreshProfiles = async () => {
+    const mine = ++listGeneration;
+    const from = cfg;
+    listNote = 'Listing profiles…';
+    fillPicker();
+    try {
+      const names = await listProfiles(from, { token: read(SYNC_STORAGE.token) || '' });
+      if (mine !== listGeneration || [from.owner, from.repo, from.branch].join('/') !== [cfg.owner, cfg.repo, cfg.branch].join('/')) return;
+      profiles = names;
+      listNote = names.length ? `${names.length} profile${names.length === 1 ? '' : 's'} on ${from.branch}.` : `No profiles on ${from.branch} yet.`;
+    } catch (error) {
+      if (mine !== listGeneration) return;
+      listNote = error.message;
+    }
+    fillPicker();
+  };
+  const useProfile = (name) => {
+    let path;
+    try { path = profilePath(name); } catch (error) { status(error.message); return; }
+    if (path === cfg.path) { status(`Already using the “${name}” profile.`); return; }
+    cfg = syncConfig({ ...cfg, path });
+    generation += 1;
+    pending = null;
+    write(SYNC_STORAGE.config, JSON.stringify(cfg));
+    write(SYNC_STORAGE.lastSha, null);
+    draw();
+    status(`Now using the “${name}” profile. Save, Load and start-up loading use it on this device.`);
+  };
 
   const draw = () => {
     const token = read(SYNC_STORAGE.token);
     const auto = read(SYNC_STORAGE.auto) === '1';
+    const includeDevice = includeDeviceEnabled();
+    const active = profileName(cfg);
     const lastAt = read(SYNC_STORAGE.lastAt);
     mount.innerHTML = `<div class="set-sync">
       <p class="set-note">Your defaults are one file on GitHub. Save them from any device, and every other device can load them —
         on request, or each time the game starts. Loading replaces this device's settings with the file's; a preview shows what will change first.</p>
       <div class="set-card-list">
         <div class="as-row setting set-row set-row-wide">
-          <span class="as-labelstack"><span class="ls-label">Profile</span>
+          <span class="as-labelstack"><span class="ls-label">Profile: <b class="set-sync-active" data-sync-active>${esc(active)}</b></span>
             <span class="ls-hint set-note"><a href="${esc(profileWebUrl(cfg))}" target="_blank" rel="noopener">${esc(`${cfg.owner}/${cfg.repo} · ${cfg.branch} · ${cfg.path}`)}</a>${lastAt ? ` · last loaded here ${esc(new Date(lastAt).toLocaleString())}` : ''}</span></span>
           <span class="r-trail set-sync-acts">
             <button type="button" class="as-btn" data-sync="save"${token ? '' : ' disabled title="Add a token below to save"'}>Save my settings to GitHub</button>
@@ -100,6 +152,22 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           </span>
         </div>
         <div class="set-sync-preview" data-sync-preview hidden></div>
+        <div class="as-row setting set-row set-row-wide">
+          <span class="as-labelstack"><span class="ls-label">Named profile</span>
+            <span class="ls-hint set-note">Keep several (desk, phone, balance-a…). Pick one, or type a new name — it is created on the first save.
+              <span data-sync-list-note>${esc(listNote)}</span></span></span>
+          <span class="r-trail set-sync-acts">
+            <select class="set-sync-select" data-sync-profile aria-label="Named profile">${pickerOptions()}</select>
+            <button type="button" class="as-btn" data-sync="list">Refresh list</button>
+            <input type="text" class="set-text" data-sync-name autocomplete="off" spellcheck="false" maxlength="45" placeholder="new name, e.g. phone" aria-label="Profile name">
+            <button type="button" class="as-btn" data-sync="name">Use name</button>
+          </span>
+        </div>
+        <div class="as-row setting set-row">
+          <span class="as-labelstack"><span class="ls-label">Include this device's screen settings</span>
+            <span class="ls-hint set-note">On this device only. Off: ${esc(deviceLabels || 'screen settings')} stay out of what you save and are left alone when you load. On: they are saved and loaded like everything else.</span></span>
+          <span class="r-trail"><button type="button" class="as-toggle toggle${includeDevice ? ' on' : ''}" role="switch" aria-checked="${includeDevice}" data-sync="device" aria-label="Include this device's screen settings"><span class="knob"></span></button></span>
+        </div>
         <div class="as-row setting set-row">
           <span class="as-labelstack"><span class="ls-label">Load when the game starts</span>
             <span class="ls-hint set-note">On this device only. Loads a new version of the file once; changes you make here afterwards stay until the file changes again.</span></span>
@@ -154,7 +222,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       const remote = await fetchProfile(from, { token: read(SYNC_STORAGE.token) || '' });
       if (mine !== generation || !btn.isConnected) return;
       if (!remote) { status('There is no profile there yet. Save one from a device first.'); return; }
-      const parsed = profileChanges(remote.text, contentBundle, settings, rows, keys);
+      const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeysNow());
       const diff = profileDiff(settings, parsed);
       pending = { parsed, sha: remote.sha };
       // Already matching IS loaded: record this version, or the next start
@@ -194,13 +262,15 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('save', async (btn) => {
       busy(btn, true, 'Saving…');
       try {
+        const keys = profileKeysNow();
         const text = profileText(settings, keys, { contentVersion: contentBundle.version });
         // Never upload a file another device's import would refuse.
         profileChanges(text, contentBundle, {}, rows, keys);
-        const result = await pushProfile(cfg, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile (${Object.keys(JSON.parse(text).overrides).length} settings)` });
+        const result = await pushProfile(cfg, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile ${profileName(cfg)} (${Object.keys(JSON.parse(text).overrides).length} settings)` });
         write(SYNC_STORAGE.lastSha, result.sha || '');
         status(result.unchanged ? 'The profile on GitHub already matches this device.'
-          : `Saved${result.branchCreated ? ` — created the ${cfg.branch} branch` : ''}. Other devices can load it now.`);
+          : `Saved the “${profileName(cfg)}” profile${result.branchCreated ? ` — created the ${cfg.branch} branch` : ''}. Other devices can load it now.`);
+        if (profiles && !profiles.includes(profileName(cfg))) { profiles = [...profiles, profileName(cfg)].sort((a, b) => a.localeCompare(b)); fillPicker(); }
       } catch (error) { status(error.message); } finally { busy(btn, false, 'Save my settings to GitHub'); }
     });
     on('auto', (btn) => {
@@ -208,6 +278,25 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       write(SYNC_STORAGE.auto, next ? '1' : null);
       btn.classList.toggle('on', next);
       btn.setAttribute('aria-checked', String(next));
+    });
+    on('device', (btn) => {
+      const next = !includeDeviceEnabled();
+      write(SYNC_STORAGE.includeDevice, next ? '1' : null);
+      // What a load would do has changed: an open preview is no longer true.
+      generation += 1;
+      pending = null;
+      const box = mount.querySelector('[data-sync-preview]');
+      if (box) { box.hidden = true; box.innerHTML = ''; }
+      btn.classList.toggle('on', next);
+      btn.setAttribute('aria-checked', String(next));
+    });
+    on('list', () => { refreshProfiles(); });
+    mount.querySelector('[data-sync-profile]')?.addEventListener('change', (event) => useProfile(event.currentTarget.value));
+    on('name', () => {
+      const typed = mount.querySelector('[data-sync-name]').value;
+      const name = normalizeProfileName(typed);
+      if (!name) { status(typed.trim() ? 'Use 1–40 letters, digits, dot, dash or underscore for a profile name.' : 'Type a profile name first.'); return; }
+      useProfile(name);
     });
     on('token', () => {
       const value = mount.querySelector('[data-sync-token]').value.trim();
@@ -218,12 +307,12 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     });
     on('forget', () => { write(SYNC_STORAGE.token, null); draw(); status('Token removed from this device.'); });
     on('copy', async (btn) => {
-      const text = profileText(settings, keys, { contentVersion: contentBundle.version });
+      const text = profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version });
       try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { console.log(text); btn.textContent = 'In console'; }
       setTimeout(() => { if (btn.isConnected) btn.textContent = 'Copy JSON'; }, 1800);
     });
-    on('download', () => saveJsonFile(profileText(settings, keys, { contentVersion: contentBundle.version }), {
-      filename: 'ashen-spire-settings-profile.json', description: 'Ashen Spire settings profile',
+    on('download', () => saveJsonFile(profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version }), {
+      filename: `ashen-spire-settings-${profileName(cfg)}.json`, description: 'Ashen Spire settings profile',
     }));
     on('where', () => {
       const raw = {};
@@ -233,10 +322,15 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       pending = null;
       write(SYNC_STORAGE.config, JSON.stringify(cfg));
       write(SYNC_STORAGE.lastSha, null);
+      profiles = null;
+      listNote = '';
       draw();
+      refreshProfiles();
       status('Profile location saved on this device.');
     });
   }
 
   draw();
+  // Listed once on open, without holding the panel up.
+  refreshProfiles();
 }
