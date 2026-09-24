@@ -43,6 +43,7 @@ import {
   autoPickBossRelic, rollEliteChest,
 } from '../src/engine/encounters.js';
 import { autoTakeChest } from '../src/model/rewardChest.js';
+import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
@@ -327,6 +328,7 @@ function afterVictory(run, rng, pool) {
     // auto-collect takes it — a seeded pick among the takeable options. The
     // bot has no armament bag, so an armament piece is never takeable here.
     autoTakeChest(REG, run, rollEliteChest(REG, rng, run), (n) => rng.int('cardRewards', 0, n - 1));
+    syncFlaskGrowth(REG, run); // a chest relic that grows the flask binds the moment it is held, as in play
   }
 }
 
@@ -431,7 +433,7 @@ function simulateRun(classId, seed, ds = null) {
         if (pool === 'boss') {
           // SPEC §6.1: the boss lays out its choice; the bot keeps one by seeded pick.
           const boss = autoPickBossRelic(REG, rng, run.relics);
-          if (boss) run.relics.push(boss);
+          if (boss) { run.relics.push(boss); syncFlaskGrowth(REG, run); }
           else run.cinders += REG.balance.rewards.bossRelicConsolationCinders || 0;
           break; // act cleared
         }
@@ -473,7 +475,7 @@ function simulateRun(classId, seed, ds = null) {
         }
       } else if (kind === 'treasure') {
         const r = rollRelicReward(REG, rng, run.relics);
-        if (r) run.relics.push(r);
+        if (r) { run.relics.push(r); syncFlaskGrowth(REG, run); }
       } // merchant: skip
 
       nextIds = map.nodes[currentId].next;
