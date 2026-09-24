@@ -110,10 +110,16 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     caption.dataset.position = String(stage.textPosition || 'bottom-center');
     root.classList.toggle('prologue-has-box', stage.textBox !== false);
     root.classList.toggle('prologue-box-hidden', stage.textBox !== false && stage.textBoxVisible === false);
+    root.classList.toggle('prologue-fixed-caption', stage.captionFixedHeight === true);
+    root.classList.toggle('prologue-banner-box', stage.bannerBox !== false);
     root.classList.toggle('prologue-outlined', stage.textOutline === true && Number(stage.textOutlineWidth) > 0);
     root.style.setProperty('--prologue-text-scale', String(stage.textScale ?? 1));
     root.style.setProperty('--prologue-text-align', stage.textAlign || 'center');
     root.style.setProperty('--prologue-box', prologueBoxBackground(stage));
+    root.style.setProperty('--prologue-caption-vh', String(Number(stage.captionHeightVh) || 18));
+    const bannerHex = /^#([0-9a-f]{6})$/i.exec(stage.bannerBoxColor || '#100e0c')?.[1] || '100e0c';
+    const bannerRgb = [0, 2, 4].map(index => parseInt(bannerHex.slice(index, index + 2), 16));
+    root.style.setProperty('--prologue-banner-box', `rgba(${bannerRgb.join(',')},${Math.max(0, Math.min(1, Number(stage.bannerBoxOpacity ?? 1)))})`);
     root.style.setProperty('--prologue-outline-color', stage.textOutlineColor || '#100e0c');
     root.style.setProperty('--prologue-outline-width', `${Number(stage.textOutlineWidth) || 0}px`);
     // BARE NUMBERS, because a percentage margin measures the container's WIDTH
