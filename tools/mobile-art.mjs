@@ -33,7 +33,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import {
   MOBILE_ASSET_DIR, POLICY, MOBILE_ART_INLINED_BUDGET_BYTES,
-  inlinedBytes, webpDimensions, twinDimensions,
+  inlinedBytes, distinctInlinedBytes, webpDimensions, twinDimensions,
 } from './mobileart-policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -76,6 +76,7 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
   let checks = 0;
   let rawBytes = 0;
   let inlined = 0;
+  const inlinedFiles = [];
   const wanted = runtimeArt(srcDir);
   if (!wanted.length) findings.push(`no runtime art found under ${posix(relative(TREE, srcDir) || srcDir)} — nothing to twin`);
   const twins = new Set(walk(twinDir).map((abs) => posix(relative(twinDir, abs))));
@@ -87,7 +88,7 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
     const src = readFileSync(abs);
     const out = readFileSync(resolve(twinDir, rel));
     rawBytes += out.length;
-    inlined += inlinedBytes(out.length);
+    inlinedFiles.push(out);
     if (extname(rel).toLowerCase() === '.webp') {
       const s = webpDimensions(src);
       const t = webpDimensions(out);
@@ -119,6 +120,9 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
   findings.push(...stray.slice(0, listAtMost).map((s) => `stray file with no source under assets/: ${name(s)}`));
   if (stray.length > listAtMost) findings.push(`… and ${stray.length - listAtMost} more stray files`);
   checks += 1;
+  // The bundle inlines each distinct image once (duplicates are aliased), so
+  // the budget is held to that, not to the sum of every path.
+  inlined = distinctInlinedBytes(inlinedFiles);
   if (inlined > budget) findings.push(`the twin tree inlines to ${inlined} bytes, over the ${budget}-byte budget — tighten tools/mobileart-policy.mjs or cut art`);
   return { findings, checks, files: wanted.length, rawBytes, inlined };
 }

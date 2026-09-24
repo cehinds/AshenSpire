@@ -152,3 +152,18 @@ Highest value first.
   No page errors. Timings are in §3.
 - Not covered: saving to GitHub with a real token and loading on a second
   device. Both paths are tested only against the fake GitHub.
+
+## 6. Mobile art budget (owner's call, 2026-09-24)
+
+#1285's prologue steps took the mobile art 0.3 MB over its 40 MB budget.
+Per the owner: **raise, then optimize.**
+
+- `MOBILE_ART_INLINED_BUDGET_BYTES` raised 40 → 41 MB. The mobile file keeps
+  its 50 MB ceiling, which `verify-shipped` still enforces.
+- The bundler now inlines each **distinct** image once. 50 images were
+  byte-identical to another path, such as an outfit's menu and detail plate or
+  a portrait shared by two sets. A repeated path now becomes an alias of the
+  first key, and the budget check counts distinct content the same way.
+- Result: the mobile art inlines to 39.89 MB, under the old 40 MB, with no
+  pixel changed. The full file dropped 257.8 → 255.1 MB and the mobile file
+  49.8 → 49.4 MB.

@@ -10,6 +10,8 @@
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here
 // changes what the mobile bundle carries, so it moves build identity.
 
+import { createHash } from 'node:crypto';
+
 /** Where the shrunken twins live, mirroring assets/ path for path. */
 export const MOBILE_ASSET_DIR = 'assets-mobile';
 
@@ -45,12 +47,37 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
  * Where the mobile art itself has to land for the bundle to fit: the budget
  * less the code (~8.3 MB at 0.7.1) and base64 growth (4/3). A twin tree over
  * this is caught by --check before anyone builds with it.
+ *
+ * Counted as the bundle inlines it: each DISTINCT image once
+ * (see `distinctInlinedBytes`), because the bundler maps byte-identical files
+ * to one data URI.
+ *
+ * Raised 40 → 41 MB on the owner's call (2026-09-24), when #1285's prologue
+ * steps took the tree 0.3 MB over. The mobile file keeps its own 50 MB ceiling
+ * above (MOBILE_BUNDLE_BUDGET_BYTES), which verify-shipped still enforces.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_000_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 41_000_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
   return Math.ceil(n / 3) * 4;
+}
+
+/**
+ * distinctInlinedBytes(buffers) → what a set of files costs the bundle when
+ * each distinct content is inlined once (tools/bundle.mjs aliases duplicates).
+ * Content is compared byte for byte, keyed by a SHA-1 of the bytes.
+ */
+export function distinctInlinedBytes(buffers, hash = (buf) => createHash('sha1').update(buf).digest('hex')) {
+  const seen = new Set();
+  let total = 0;
+  for (const buf of buffers) {
+    const id = hash(buf);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    total += inlinedBytes(buf.length);
+  }
+  return total;
 }
 
 /**
