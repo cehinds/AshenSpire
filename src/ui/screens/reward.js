@@ -905,9 +905,21 @@ export function mountRewards(app, {
       attachTooltip(skipButton, () => `<div class="tt-title">${esc(tTip('reward.relic.skip'))}</div>${esc(tFull('reward.relic.skip'))}`);
       skipButton.addEventListener('click', () => {
         if (taken()) return;
+        // A skip is a decision the save must carry: a refused save puts the
+        // row (and the unconfirmed pick) back so the choice can be retried.
+        const before = snapshotForRollback();
+        const pending = pendingByKey[row.key];
         states[row.key] = 'skipped';
         delete pendingByKey[row.key];
-        persistProgress();
+        try {
+          persistProgress();
+        } catch {
+          restoreRollback(before, row);
+          if (pending !== undefined) pendingByKey[row.key] = pending;
+          message.textContent = t('reward.card.saveFailed');
+          message.hidden = false;
+          return;
+        }
         renderMenu(row.key);
       });
     }

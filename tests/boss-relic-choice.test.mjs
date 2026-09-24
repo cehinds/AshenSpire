@@ -137,6 +137,25 @@ test('Skip leaves every boss relic behind', () => withDom(() => {
   assert.equal(done, false);
 }));
 
+test('a refused save puts a boss relic Skip back, so the choice can be retried', () => withDom(() => {
+  const app = document.createElement('main'); document.body.append(app);
+  const run = freshRun();
+  const checkpoint = { states: {}, chosenCardId: null, chosenRelicId: null };
+  let refuse = true;
+  mountRewards(app, { registries: REG, run, checkpoint, rewards: offer(), onDone() {}, onPersist: () => !refuse });
+  app.querySelector('[data-kind="relic"]').click();
+  const checkpointBefore = structuredClone(checkpoint);
+  app.querySelector('#reward-relic-skip').click();
+  assert.deepEqual(checkpoint, checkpointBefore, 'the refused skip leaves the checkpoint as it was');
+  assert.ok(app.querySelector('#reward-relic-skip'), 'the chooser stays open');
+  // The choice is still live: a relic can be kept on retry.
+  refuse = false;
+  app.querySelectorAll('.reward-row .reward-relic')[2].click();
+  app.querySelector('#reward-card-confirm').click();
+  assert.deepEqual(run.relics, [BOSS[2]]);
+  assert.equal(checkpoint.states.relic, 'taken');
+}));
+
 test('a checkpoint saved with the chooser pending re-mounts the same choice, nothing granted', () => withDom(() => {
   const run = freshRun();
   // An older checkpoint has no chosenRelicId field at all.
