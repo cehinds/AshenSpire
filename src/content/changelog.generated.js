@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Guilt costs its HP at the end of your turn, in co-op too",
     "detail": "Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.",
-    "build": "0.7.1.482",
+    "build": "0.7.1.489",
     "pullRequest": 1286,
     "url": "https://github.com/cehinds/AshenSpire/pull/1286"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Text is easier to read in the colour-blind-safe and dark palettes",
     "detail": "Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.",
-    "build": "0.7.1.480",
+    "build": "0.7.1.487",
     "pullRequest": 1291,
     "url": "https://github.com/cehinds/AshenSpire/pull/1291"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Reading a card no longer hides behind other panels",
     "detail": "Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.",
-    "build": "0.7.1.478",
+    "build": "0.7.1.485",
     "pullRequest": 1288,
     "url": "https://github.com/cehinds/AshenSpire/pull/1288"
   },
@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The map re-centres when your screen changes size",
     "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
-    "build": "0.7.1.476",
+    "build": "0.7.1.483",
     "pullRequest": 1289,
     "url": "https://github.com/cehinds/AshenSpire/pull/1289"
   },
@@ -48,7 +48,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the combat card hotkeys are tested",
     "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
-    "build": "0.7.1.474",
+    "build": "0.7.1.481",
     "pullRequest": 1278,
     "url": "https://github.com/cehinds/AshenSpire/pull/1278"
   },
@@ -58,9 +58,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
     "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
-    "build": "0.7.1.472",
+    "build": "0.7.1.479",
     "pullRequest": 1279,
     "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1284",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Every fight opens with full Stamina, casters can fight with no Mana left, and bosses grow with the order you meet them in",
+    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer and the Herald were hit hardest by running out of Mana, so their attacks no longer need it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and the Herald's Blight Touch costs Stamina but no Mana; as spells that spend no Mana they build 1 Arcane Exposure per hit instead of 5. Arcane Ward gives 3 more Block. Starstone Shard adds 14 Max HP and 2 Magic damage instead of 1, so a new Starseer starts on 48 HP. With the quicker levels a climb now earns, bosses were the only fights still likely to end a run, and most runs got past them. The regions come in a different order every run, so a boss is now scaled by when you meet it rather than by which region it lives in: your first boss has 20% less HP and hits 20% softer, and your second and final bosses have 2.2 times the HP and hit 1.5 times as hard, on top of the usual growth from region to region. A boss met earlier than its region used to come also hits softer to match its lower HP. Over 240 simulated runs a class in randomly ordered regions, the Reaver now wins 105, the Starseer 103, the Rogue 135 and the Herald 135 (44%, 43%, 56% and 56%), where before this change they won 180, 28, 183 and 159.",
+    "build": "0.7.1.475",
+    "pullRequest": 1284,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1284"
+  },
+  {
+    "id": "pr-1295",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A restored profile shows its real Cinder multiplier straight away",
+    "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1295,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1295"
+  },
+  {
+    "id": "pr-1308",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two checks broken by the Crownfall landmark update pass again",
+    "detail": "Nothing you play changes. The phone edition's copy of the Crownfall prologue painting is resized to match its new source, and the scene editor's traveller resize handle now lands on the traveller at every interface zoom instead of drifting away from it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1308,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1308"
   },
   {
     "id": "pr-1302",
@@ -123,16 +153,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
-    "id": "pr-1270",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "The balance simulator now plays by the game's rules",
-    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
-    "build": "0.7.1.455",
-    "pullRequest": 1270,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
-  },
-  {
     "id": "pr-1285",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -141,6 +161,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.456",
     "pullRequest": 1285,
     "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1270",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The balance simulator now plays by the game's rules",
+    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
+    "build": "0.7.1.455",
+    "pullRequest": 1270,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
     "id": "pr-1271",

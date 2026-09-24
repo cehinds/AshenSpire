@@ -1395,6 +1395,24 @@ function collectContentProblems(bundle, errors = []) {
           if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
         }
       }
+      // balance.bossTiers (§13.3): one { hp, damage } per tier, both positive.
+      const bossTable = b.balance.bossTiers;
+      if (!isPlainObject(bossTable)) {
+        err('balance.bossTiers', 'must be an object keyed by tier (1..actsPerCycle), each { hp, damage } with positive multipliers');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const row = bossTable[tier];
+          if (!isPlainObject(row)) { err(`balance.bossTiers.${tier}`, `tier ${tier} needs a { hp, damage } row`); continue; }
+          for (const field of ['hp', 'damage']) {
+            if (typeof row[field] !== 'number' || !(row[field] > 0)) err(`balance.bossTiers.${tier}.${field}`, `needs a positive multiplier (got ${JSON.stringify(row[field])})`);
+          }
+          for (const field of Object.keys(row)) if (field !== 'hp' && field !== 'damage') err(`balance.bossTiers.${tier}.${field}`, 'unknown field (a tier row is { hp, damage })');
+        }
+        for (const key of Object.keys(bossTable)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.bossTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
+      }
     }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
