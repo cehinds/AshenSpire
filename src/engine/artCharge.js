@@ -1,0 +1,91 @@
+// src/engine/artCharge.js — the Weapon Art charge meter's bus listener and
+// its spend (SPEC §12.2.1). ONE LISTENER, no per-weapon code: which weapon a
+// hit belongs to, how big its meter is and what its unleashed form does are
+// all read through model/artCharge.js from balance and content data.
+//
+//   damageDealt by the player on an enemy, amount > 0, card lent by an
+//   equipped armament W that is not W's Art          → +gainPerHit to W
+//   enemyStaggered while W's hit is the last one      → +gainOnStagger to W
+//   procBurst / status meterFilled on an enemy, same  → +gainOnBurst to W
+//
+// The "last hit" weapon lives only for the current card's resolution: a
+// `cardPlayed` announcement and `playerTurnEnd` clear it, and an Art's own hit
+// clears it, so an Art never charges its own meter. Headless; no RNG.
+
+import { artChargeRules, artChargeMax, artChargeValue, artUnleashFor, isWeaponEquipped, lendingWeaponOf } from '../model/artCharge.js';
+
+function charge(combat, weaponId, amount, reason) {
+  if (!weaponId || !(amount > 0)) return;
+  const max = artChargeMax(combat.registries, weaponId);
+  if (!max || !isWeaponEquipped(combat, weaponId)) return;
+  const before = artChargeValue(combat, weaponId);
+  const value = Math.min(max, before + amount);
+  if (value === before) return;
+  combat.artCharge = combat.artCharge || {};
+  combat.artCharge[weaponId] = value;
+  combat.emit('artChargeChanged', { weaponId, value, max, amount: value - before, reason });
+}
+
+function isEnemy(combat, id) {
+  return (combat.enemies || []).some((enemy) => enemy.id === id);
+}
+
+/** recordArtCharge(combat, event) — called by the bus after every event. */
+export function recordArtCharge(combat, event) {
+  const rules = artChargeRules(combat.registries);
+  if (!rules || !combat.player || combat.players) return;
+  switch (event.type) {
+    case 'cardPlayed':
+    case 'playerTurnEnd':
+      combat._artChargeLastHit = null;
+      return;
+    case 'damageDealt': {
+      if (event.sourceId !== combat.player.id || !isEnemy(combat, event.targetId) || !(event.amount > 0)) return;
+      if (event.equipmentRole === 'weaponArt') { combat._artChargeLastHit = null; return; }
+      const weaponId = lendingWeaponOf(combat.registries, event);
+      if (!weaponId || !isWeaponEquipped(combat, weaponId)) return;
+      combat._artChargeLastHit = weaponId;
+      charge(combat, weaponId, rules.gainPerHit, 'hit');
+      return;
+    }
+    case 'enemyStaggered':
+      if (combat._artChargeLastHit) charge(combat, combat._artChargeLastHit, rules.gainOnStagger, 'stagger');
+      return;
+    case 'procBurst':
+    case 'meterFilled':
+      // A status build-up burst only; the Poise meter's own fill is counted
+      // by the enemyStaggered it causes, never twice.
+      if (!event.status || !isEnemy(combat, event.targetId)) return;
+      if (combat._artChargeLastHit) charge(combat, combat._artChargeLastHit, rules.gainOnBurst, 'burst');
+      return;
+    default:
+  }
+}
+
+/** Hook the bus: every emitted event is recorded after its triggers fired. */
+export function attachArtCharge(combat) {
+  const inner = combat.emit;
+  combat.artCharge = combat.artCharge || {};
+  combat._artChargeLastHit = null;
+  combat.emit = (type, payload) => {
+    const event = inner(type, payload);
+    recordArtCharge(combat, event);
+    return event;
+  };
+  return combat;
+}
+
+/**
+ * takeArtUnleash(combat, inst) → the unleashed form's effects when this play
+ * unleashes (the meter is emptied and the receipts are emitted), else null.
+ * Called by the play door AFTER payment and BEFORE the play is announced.
+ */
+export function takeArtUnleash(combat, inst) {
+  const unleash = artUnleashFor(combat, inst);
+  if (!unleash || !unleash.ready) return null;
+  combat.artCharge = combat.artCharge || {};
+  combat.artCharge[unleash.weaponId] = 0;
+  combat.emit('artChargeChanged', { weaponId: unleash.weaponId, value: 0, max: unleash.max, amount: -unleash.value, reason: 'unleash' });
+  combat.emit('artUnleashed', { weaponId: unleash.weaponId, cardId: inst.cardId, cardInstanceId: inst.instanceId });
+  return unleash.form.effects;
+}

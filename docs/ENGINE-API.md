@@ -484,7 +484,7 @@ current dispatch's `events`.
 | `cardExhausted` | `{ cardInstanceId, cardId, reason: 'played'\|'ethereal'\|'effect' }` |
 | `cardDiscarded` | `{ cardInstanceId, cardId, reason: 'turnEnd'\|'handFull'\|'effect' }` |
 | `deckShuffled` | `{ size }` |
-| `damageDealt` | `{ sourceId, targetId, amount, blocked, isAttack }` — amount is final post-modifier damage; `amount − blocked` hit HP |
+| `damageDealt` | `{ sourceId, targetId, amount, blocked, isAttack }` — amount is final post-modifier damage; `amount − blocked` hit HP. A card-dealt hit also carries `cardInstanceId`, `sourceHand`, `grantedBy`, and (when present) `sourceArmamentId` and `equipmentRole` |
 | `blockGained` | `{ targetId, amount }` (post-modifier, post-cap) |
 | `hpLost` | `{ targetId, amount, cause: 'attack'\|'effect' }` |
 | `healed` | `{ targetId, amount, requested }` |
@@ -501,6 +501,8 @@ current dispatch's `events`.
 | `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
+| `artChargeChanged` | `{ weaponId, value, max, amount, reason: 'hit'\|'stagger'\|'burst'\|'unleash' }` — a Weapon Art charge meter moved (SPEC §12.2.1) |
+| `artUnleashed` | `{ weaponId, cardId, cardInstanceId }` — a full meter turned this Art play into its unleashed form; that play's `cardPlayed` carries `unleashed: true` |
 | `questCompleted` | `{ questId, source: 'event'\|'atlas' }` — emitted only by the quest door (`engine/quests.js completeQuest`), at most once per quest per run; `commitEventChoice` and `atlasQuestAction` return it in their `events` and call `ctx.emit` when the caller supplies one |
 
 (Run-level `executeRunEffects` additionally emits a non-bus `cindersChanged

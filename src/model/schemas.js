@@ -159,6 +159,9 @@ export const EVENTS = Object.freeze([
   'rested',
   'flaskUsed',
   'relicTriggered',
+  // The Weapon Art charge meters (SPEC §12.2.1, engine/artCharge.js).
+  'artChargeChanged',
+  'artUnleashed',
 ]);
 
 // The events only the run-level door emits (engine/locations.js): a status,

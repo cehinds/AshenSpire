@@ -114,6 +114,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tagFamilyDomains', // family x domain — which words each family may carry
   'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'propertyRules', // what each `property` tag confers (content/propertyRules.js)
+  'weaponArtUnleashed', // each combat-kit Weapon Art's unleashed form (SPEC §12.2.1)
   // THE TREE the five tag tables and the property rules are views of
   // (content/source/nodes.csv and companions; treeProblems checks it).
   'nodes', // id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
@@ -858,6 +859,11 @@ function collectContentProblems(bundle, errors = []) {
   // may name are exactly the ones the ledger can hold.
   const skillIds = new Set(skillTracks(b).map((t) => t.id));
   const vctx = { ids, err, tagIds, nodeIds, skillIds };
+
+  // WEAPON ART CHARGE (SPEC §12.2.1): the meter's numbers and each combat-kit
+  // Art's unleashed form. Refused by name here so a malformed row never
+  // reaches the engine's one reader (model/artCharge.js).
+  validateWeaponArtCharge(b, vctx);
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -2164,6 +2170,51 @@ function isPlainObject(v) {
 // ---------------------------------------------------------------------------
 
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat'];
+
+const WEAPON_ART_CHARGE_KEYS = Object.freeze(['defaultMax', 'maxByWeapon', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']);
+function validateWeaponArtCharge(b, vctx) {
+  const { err } = vctx;
+  const rules = b.balance && b.balance.weaponArtCharge;
+  const armaments = (b.equipment && Array.isArray(b.equipment.armaments)) ? b.equipment.armaments : [];
+  const nonNegInt = (value) => Number.isInteger(value) && value >= 0;
+  if (rules !== undefined) {
+    if (!isPlainObject(rules)) err('balance.weaponArtCharge', 'must be an object { defaultMax, maxByWeapon, gainPerHit, gainOnStagger, gainOnBurst }');
+    else {
+      for (const key of Object.keys(rules)) if (!WEAPON_ART_CHARGE_KEYS.includes(key)) err(`balance.weaponArtCharge.${key}`, 'Unknown field');
+      for (const key of ['defaultMax', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']) {
+        if (!nonNegInt(rules[key])) err(`balance.weaponArtCharge.${key}`, `must be a non-negative integer, got ${JSON.stringify(rules[key])}`);
+      }
+      if (rules.maxByWeapon !== undefined) {
+        if (!isPlainObject(rules.maxByWeapon)) err('balance.weaponArtCharge.maxByWeapon', 'must be an object keyed by armament id');
+        else for (const [id, max] of Object.entries(rules.maxByWeapon)) {
+          if (!armaments.some((piece) => piece && piece.id === id)) err(`balance.weaponArtCharge.maxByWeapon.${id}`, `unknown armament '${id}'`);
+          if (!nonNegInt(max)) err(`balance.weaponArtCharge.maxByWeapon.${id}`, `must be a non-negative integer, got ${JSON.stringify(max)}`);
+        }
+      }
+    }
+  }
+  const forms = b.weaponArtUnleashed;
+  if (forms === undefined) return;
+  if (!isPlainObject(forms)) { err('weaponArtUnleashed', 'must be an object keyed by Weapon Art card id'); return; }
+  const cards = new Map((Array.isArray(b.cards) ? b.cards : []).map((card) => [card && card.id, card]));
+  for (const [cardId, form] of Object.entries(forms)) {
+    const path = `weaponArtUnleashed.${cardId}`;
+    const card = cards.get(cardId);
+    if (!card) { err(path, `unknown card '${cardId}'`); continue; }
+    if (!isPlainObject(form)) { err(path, 'must be { effects }'); continue; }
+    for (const key of Object.keys(form)) if (key !== 'effects') err(`${path}.${key}`, 'Unknown field');
+    validateEffects(form.effects, `${path}.effects`, vctx);
+    if (!Array.isArray(form.effects) || !form.effects.length) { err(`${path}.effects`, 'must list at least one effect'); continue; }
+    const cardTargetsEnemy = (card.effects || []).some((eff) => eff && eff.target === 'enemy');
+    form.effects.forEach((eff, i) => {
+      if (eff && eff.target === 'enemy' && !cardTargetsEnemy) err(`${path}.effects[${i}].target`, `'${cardId}' never asks for an enemy target, so its unleashed form may not target 'enemy'`);
+    });
+  }
+  for (const piece of armaments) {
+    const artCardId = piece && piece.weaponCardPackage && piece.weaponCardPackage.combatKit && piece.weaponCardPackage.combatKit.artCardId;
+    if (artCardId && !Object.hasOwn(forms, artCardId)) err(`weaponArtUnleashed.${artCardId}`, `combat-kit Art of '${piece.id}' has no unleashed form`);
+  }
+}
 
 export function validateEffects(effects, path, vctx) {
   const { err } = vctx;

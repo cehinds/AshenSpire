@@ -15,6 +15,7 @@ import { rogueCards } from './cards/rogue.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
 import { armamentCards } from './cards/armaments.js';
+import { weaponArtUnleashed } from './weaponArtUnleashed.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
@@ -71,6 +72,8 @@ export const contentBundle = {
   version: '0.7.1',
   balance,
   cards,
+  // Each combat-kit Weapon Art's unleashed form (SPEC §12.2.1).
+  weaponArtUnleashed,
   relics,
   statuses,
   stances,

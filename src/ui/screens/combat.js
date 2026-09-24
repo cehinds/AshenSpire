@@ -31,6 +31,8 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
+import { artChargeView, unleashedFormFor } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -1283,6 +1285,46 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let handRenderKey = null;
   const enemyFrames = new Map();
 
+  // Which weapons' Art meters were full at the last paint, so a meter flashes
+  // once when it FILLS rather than on every repaint while full.
+  let artChargeFullBefore = new Set();
+  function newlyFullArtCharges(rows) {
+    const full = new Set(rows.filter((row) => row.full).map((row) => row.weaponId));
+    const fresh = new Set([...full].filter((id) => !artChargeFullBefore.has(id)));
+    artChargeFullBefore = full;
+    return fresh;
+  }
+  function statusDisplayName(id) {
+    try { return registries.statuses.get(id).name || id; } catch { return id; }
+  }
+  // The Art card in hand wears its weapon's pips, and the Unleashed marker
+  // when the meter is full (the preview's answer is the play's answer).
+  function decorateArtChargeCards(handList) {
+    for (const node of app.querySelectorAll('.hand .card .art-charge-card')) node.remove();
+    for (const inst of handList) {
+      const node = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(inst.instanceId)}"]`);
+      if (!node) continue;
+      let charge = null;
+      try { charge = previewCard(combat, inst.instanceId).artCharge || null; } catch { charge = null; }
+      const wasFull = node.dataset.artCharge === 'full';
+      if (!charge) { delete node.dataset.artCharge; node.classList.remove('art-charge-flash'); continue; }
+      node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
+      node.classList.toggle('art-charge-flash', charge.unleashed && !wasFull);
+      const badge = el('span', { class: 'art-charge-card' });
+      badge.appendChild(artChargePips(charge.value, charge.max));
+      if (charge.unleashed) {
+        const form = unleashedFormFor(registries, inst.cardId);
+        badge.appendChild(el('span', { text: 'Unleashed' }));
+        badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : 'Unleashed';
+      }
+      node.appendChild(badge);
+      const label = node.getAttribute('aria-label');
+      const row = { name: registries.equipment.armaments.find((a) => a.id === charge.weaponId)?.name || charge.weaponId, artName: inst.cardId, value: charge.value, max: charge.max, full: charge.unleashed };
+      node.dataset.artChargeLabel = artChargeLabel(row);
+      if (label && !label.includes('Art charge') && !label.includes('Art charged')) node.setAttribute('aria-label', `${label}. ${node.dataset.artChargeLabel}`);
+    }
+  }
+
   function renderPlayer() {
     const zone = $('.player-zone');
     const p = combat.player;
@@ -1290,7 +1332,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings(), combat.artCharge]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1316,6 +1358,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    // THE WEAPON ART CHARGE METERS (SPEC §12.2.1): one pip bar per equipped
+    // weapon with a meter; a meter that filled since the last paint flashes.
+    const chargeRows = artChargeView(combat);
+    const chargeEl = artChargeMeter(chargeRows, { flashIds: newlyFullArtCharges(chargeRows) });
+    if (chargeEl) {
+      for (const node of chargeEl.querySelectorAll('.art-charge-row')) {
+        const row = chargeRows.find((r) => r.weaponId === node.dataset.weaponId);
+        const form = row && unleashedFormFor(registries, row.artCardId);
+        node.tabIndex = 0;
+        attachTooltip(node, () => `<div class="tt-title">${esc(row.name)} · Art charge ${row.value}/${row.max}</div>${esc(`Hits with ${row.name}'s cards fill this. When full, ${row.artName} is unleashed on its next play${form ? `: ${unleashedSummary(form.effects, statusDisplayName)}` : ''}.`)}`);
+      }
+    }
     if (combat.foundation && p.evade > 0) {
       const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
@@ -1340,7 +1394,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const slots = {
       role: 'player',
       entityId: 'player',
-      leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
+      // The Art charge meters ride overhead, where an enemy shows its intent.
+      leading: [chargeEl, combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
       blockBadge: blockBadge(p),
@@ -1493,7 +1548,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings(), combat.artCharge]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1517,6 +1572,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
     });
+    decorateArtChargeCards(handList);
     syncHandPager(handList);
     handRenderKey = key;
   }

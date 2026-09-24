@@ -158,6 +158,10 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     // The card that landed it, for the readers that pay by the piece that lent
     // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
     ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
+    // …and which armament lent it and in what role, for the Weapon Art
+    // charge meters (engine/artCharge.js, SPEC §12.2.1).
+    ...(carrier && carrier.instanceId && carrier.sourceArmamentId ? { sourceArmamentId: carrier.sourceArmamentId } : {}),
+    ...(carrier && carrier.instanceId && carrier.equipmentRole ? { equipmentRole: carrier.equipmentRole } : {}),
     blockRemaining: target.block,
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
