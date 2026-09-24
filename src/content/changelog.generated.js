@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1304",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A save from a newer build is kept, not thrown away",
+    "detail": "Opening a run saved by a newer version of the game used to archive it and empty its slot, so going back to the newer build found the run gone. Now the slot keeps it untouched and says \"Saved by a newer build. Update to continue.\"; Continue on it opens a notice with one button, \"Keep it and close\", and nothing is written. Custom Climb, when every slot is full, now asks before replacing slot 1, the same way Customize does. Behind the scenes, one real save from every run format the game has ever written is now tested to load.",
+    "build": "0.7.1.484",
+    "pullRequest": 1304,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1304"
+  },
+  {
     "id": "pr-1306",
     "date": "2026-09-24",
     "group": "2026-09-24",
