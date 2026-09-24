@@ -185,6 +185,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
       derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+      ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
     }).value);
   }
   return combat;

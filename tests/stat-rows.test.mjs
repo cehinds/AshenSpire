@@ -275,3 +275,20 @@ test('an old run keeps the hand it was born with, from its own configuration sna
   // The live profile has been converted and holds no hand-rule keys.
   assert.equal(statRow(registries, run, 'handSize', { settings: {} }).base, 9);
 });
+
+test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with its level and bounds', async () => {
+  const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 999, 'gameConfig.derivedStatRules.rules.ar.max': 999 });
+  assert.equal(configured.derivedStatRules.rules.hp.max, undefined);
+  assert.equal(configured.balance.combatRatings.ratings.ar.max, undefined);
+  assert.equal(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 500 }).derivedStatRules.rules.hp.max, 500);
+  const { playerPoiseThresholdReceipt } = await import('../src/model/statProjection.js');
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const run = createRunState({ seed: 2, classId: 'reaver', registries });
+  const rules = structuredClone(run.derivedStatRuleSnapshot);
+  rules.rules.rules.poise = { ...rules.rules.rules.poise, perLevel: 1, max: 6 };
+  const base = { loadout: run.loadout, relics: [], class: 'reaver', attributes: run.attributes, derivedStatRuleSnapshot: rules };
+  const bare = { ...base, loadout: { ...run.loadout } };
+  const attributePart = (level) => playerPoiseThresholdReceipt({ ...registries, balance: { ...registries.balance, combatRatings: undefined } }, { ...bare, level: { level } }).attribute;
+  assert.equal(attributePart(20), 6, 'held to its max');
+  assert(attributePart(1) <= attributePart(3));
+});

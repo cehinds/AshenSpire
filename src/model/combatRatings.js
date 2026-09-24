@@ -3,7 +3,7 @@ import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { evaluate } from './formulas.js';
 import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
-import { LEGACY_RATING_FORMULA, STAT_ROW_KEY_PREFIX, legacyRatingFormulaFromSettings } from './statRows.js';
+import { LEGACY_RATING_FORMULA, STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX, legacyRatingFormulaFromSettings } from './statRows.js';
 import { resolvedRuleRow } from './derivedStats.js';
 
 export { ratingIds };
@@ -376,6 +376,7 @@ export function resolveCombatRatings(rawSettings, bundle) {
       const value = Number(settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`]);
       if (settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`] !== undefined && Number.isFinite(value) && value >= 0) row[field] = value;
     }
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
     return [id, row];
   }));
   for (const row of combatRatingRows(bundle)) {

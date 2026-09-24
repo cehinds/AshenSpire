@@ -93,6 +93,8 @@ export function createCombat({
         // snapshot's number, and an Advanced tier override moves one and
         // not the other (Codex, #1217).
         derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
+        // …and its level, or a row's `perLevel` never reaches the meter.
+        ...(Number.isInteger(player.level) ? { level: { level: player.level } } : {}),
       }).value
       : 0);
   const combat = {
@@ -765,6 +767,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     loadout: combat.loadout, relics: p.relicIds || [], class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
@@ -874,6 +877,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
     attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
   refreshCombatRatings(combat);

@@ -25,6 +25,8 @@ import { HAND_STAT_IDS, RATING_STAT_IDS, isStatRowRuleset, resolvedRuleRow, stat
 export const STAT_ROW_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
 export const STAT_ROW_FIELDS = Object.freeze(['base', ...STAT_ROW_ATTRIBUTE_IDS, 'perLevel', 'min', 'max']);
 export const STAT_ROW_KEY_PREFIX = 'gameConfig.derivedStatRules.rules.';
+/** The Max a settings row opens on when the row has none: it means no ceiling, not a cap at 999. */
+export const STAT_ROW_NO_MAX = 999;
 
 // ---- THE FROZEN RULESET-6 NUMBERS ------------------------------------------
 //

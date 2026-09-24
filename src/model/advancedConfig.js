@@ -13,7 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, hasLegacyStatSettings, migrateLegacyStatSettings } from './statRows.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, migrateLegacyStatSettings } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -866,6 +866,10 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       ? { classesById }
       : configured;
     setPath(root, row.configPath, value);
+  }
+  // A Max left at the editor's "no ceiling" value is no bound at all (Codex, #1296).
+  for (const row of Object.values(configured.derivedStatRules?.rules || {})) {
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
   }
   const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
   if (Number.isFinite(xpMultiplier) && configured.balance.xp) {

@@ -1,7 +1,7 @@
 // One read model for character stats on every non-combat comparison surface.
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
-import { deriveStat, deriveStatIncrease, isStatRowRuleset, levelBonus, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { deriveStat, isStatRowRuleset, resolvedRuleRow, ruleWeights, statRowValue } from './derivedStats.js';
 
 const RATING_ONLY = new Set(['ar', 'dr', 'pr', 'ward']);
 import { equippedPieces, runMods } from './loadout.js';
@@ -88,10 +88,10 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // the sheet (statProjection below prices every row at the run's level) while
   // the meter this receipt stamps stayed at level 1 (Codex, #1253).
   const level = Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1;
+  // THE ONE ROW FORMULA (ruleset 7), bounds included, so the meter and the
+  // sheet agree on a row with a min or max (Codex, #1296).
   const attribute = poiseRule
-    ? (Number.isFinite(poiseRule.base) ? poiseRule.base : 0)
-      + deriveStatIncrease(poiseRule, { attributes: poiseAttributes, statId: 'poise' }).value
-      + levelBonus(poiseRule, level)
+    ? statRowValue({ ...poiseRule, base: Number.isFinite(poiseRule.base) ? poiseRule.base : 0 }, { attributes: poiseAttributes, level, statId: 'poise' }).value
     : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({

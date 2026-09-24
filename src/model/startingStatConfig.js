@@ -1,6 +1,7 @@
 import { presetGearProblems } from './attributes.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { ownKey } from './settingOverrides.js';
+import { STAT_ROW_NO_MAX } from './statRows.js';
 
 const PREFIX = 'gameConfig.startingStats.';
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
@@ -615,7 +616,7 @@ export function startingStatRows(bundle) {
       // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
       // 'classField' }`, which resolves per class at the run door; a number row
       // for it would overwrite the reference with one value for every class.
-      const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? 999) : (rule[field] ?? 0);
+      const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? STAT_ROW_NO_MAX) : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
         // A hand holds at least one card (model/derivedStats.js).
