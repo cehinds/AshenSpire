@@ -74,8 +74,9 @@ Items marked **(owner ruling)** change a number or rule the owner approved or
 SPEC states. They go to the owner with simulator evidence first; SPEC is
 amended before code moves.
 
-- [ ] **A1 Simulator parity (S–M).** `tools/runsim.mjs` and
-  `tools/balance.mjs` do not pass `handRules`/`ratingsRules` the way
+- [ ] **A1 Simulator parity (S–M).** `tools/runsim.mjs`,
+  `tools/balance.mjs` and `tools/measure-classes.mjs` (a third copy, ~538)
+  all need the same cutover; they do not pass `handRules`/`ratingsRules` the way
   `src/main.js` (~2124) builds live combat; their bots ignore Stamina
   (`runsim.mjs` ~256, `balance.mjs` ~56) and end the turn when a card throws.
   - [ ] Build sim fights through the same factory the game uses.
@@ -151,7 +152,9 @@ amended before code moves.
 - [ ] Discover `tests/**/*.test.mjs` instead of the hand-typed list in
   `tests/run-node.mjs`: 31 test files are not in its list, and about 17 of
   them (including `seats`, `shared-armor`, `framework`) run in no CI job.
-- [ ] Root-cause the red suites — never skip or quarantine:
+- [ ] Root-cause the red suites — never skip or quarantine. Run every
+  discovered file first; this list is what was red on review and may not be
+  complete:
   - [ ] `shared-armor.test.mjs` 16/18 (`'Requires STR 3'` vs `/12/`, likely
     the old stat scale).
   - [ ] `framework.test.mjs` 11 of 82, reachable only via
@@ -161,6 +164,8 @@ amended before code moves.
     removal candidates), the Armoury equip-load receipt, and the unarmed
     and one-empty-hand Dodge Roll composition. Re-run before scoping.
   - [ ] `seats.test.mjs` 1/13 (act map byte-identical).
+  - [ ] `bossDestinationLabels.test.mjs` 2/3.
+  - [ ] `combat-touch-inspect.test.mjs` (the file exits non-zero).
 - [ ] Move slow tool self-tests (`screen-census --selftest` and others) to
   their own CI job; the core suite currently takes over 5 minutes.
 - [ ] Report suite runtime before and after.
@@ -481,7 +486,9 @@ amended before code moves.
 
 - [ ] **Trigger scan (S–M).** `scanTriggers` (`src/engine/triggers.js` ~68)
   sorts mounts and walks every rule, status and phase on every event (11%
-  self time). Index by `trigger.on` when mounts and statuses change.
+  self time). Index by `trigger.on`, rebuilt when mounts, statuses or the
+  player's stance change (`enterStance` sets `stanceId` mid-combat and stances
+  contribute hooks, `triggers.js` ~94).
 - [ ] **Load receipt (S).** `effectiveCost` calls `playerWeightClass()`
   twice per card play, rebuilding the loadout each time (11.5% inclusive).
   Cache per combat, invalidate on equipment change. In co-op, `setActive`
