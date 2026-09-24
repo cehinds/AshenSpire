@@ -238,8 +238,17 @@ export function mountRewards(app, {
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'relic' ? {
-      deck: [...run.deck], chosenCardId, chosenRelicId, relics: [...run.relics], chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'relic' || row.kind === 'chest' ? {
+      // A chest upgrade flips `upgraded` on an instance in place, so the chest's
+      // snapshot holds copies; the other kinds only add or remove instances.
+      deck: row.kind === 'chest' ? structuredClone(run.deck) : [...run.deck],
+      chosenCardId, chosenRelicId, relics: [...run.relics], chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+      // The chest's other grants: its purse, and the bag its armament lands in
+      // (restored so a retried Confirm is not refused as a duplicate).
+      chest: row.kind === 'chest' ? {
+        chosenChestIndex, cinders: run.cinders, smithingStones: run.smithingStones,
+        storage: Array.isArray(run.loadout?.storage) ? [...run.loadout.storage] : null,
+      } : null,
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
       coreTags: row.kind === 'classDraft' ? [...(run.coreTags || [])] : null,
@@ -264,6 +273,12 @@ export function mountRewards(app, {
         if (cardBefore.coreTags) run.coreTags = cardBefore.coreTags;
         for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
         Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
+        if (cardBefore.chest) {
+          chosenChestIndex = cardBefore.chest.chosenChestIndex;
+          run.cinders = cardBefore.chest.cinders;
+          run.smithingStones = cardBefore.chest.smithingStones;
+          if (cardBefore.chest.storage) run.loadout.storage.splice(0, run.loadout.storage.length, ...cardBefore.chest.storage);
+        }
         delete states[row.key];
         if (checkpoint) {
           for (const key of Object.keys(checkpoint)) delete checkpoint[key];

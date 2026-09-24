@@ -407,7 +407,9 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   `upgrade` prefers an owned card with chance `eliteChest.upgradeOwnedPct`.
 - **Claim.** The chest is one reward row (key `chest`), a choice like the card offer. Picking
   an option grants exactly that option and nothing else; its index is kept on the reward
-  checkpoint (`chosenChestIndex`) so a reload resumes it. Auto-collect picks one of the
+  checkpoint (`chosenChestIndex`) so a reload resumes it. The grant and its Taken state cross
+  one save door: if that save is refused, the grant is rolled back (deck, relics, cinders,
+  Smithing Stones, the armament bag, `chosenChestIndex`) and Confirm can be pressed again. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
   while the bag is full — and while the door's own armament row is still pending it needs
   **two** free slots, since that row claims one first (it is listed and auto-collected before

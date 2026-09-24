@@ -355,6 +355,53 @@ test('a chest pick that fails to land falls back to another takeable option', ()
   assert.equal(run.cinders, cinders + 90);
 });
 
+test('a refused save leaves the chest untouched, and Confirm works on retry', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    for (const [index, check] of [
+      [0, (run) => assert.equal(run.deck[0].upgraded, true)],
+      [1, (run) => assert.equal(run.cinders, 90)],
+      [2, (run) => assert.deepEqual(run.loadout.storage, ['greatsword'])],
+    ]) {
+      const app = document.createElement('main'); document.body.append(app);
+      const cardId = r.classes.get('reaver').cardPool.find((id) => r.cards.get(id).upgrade);
+      const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [{ instanceId: 'c1', cardId, upgraded: false }], flasks: [], relics: [], loadout: { storage: [] } };
+      const checkpoint = { states: {}, chosenCardId: null };
+      const rewards = { chest: { options: [
+        { category: 'upgrade', mode: 'owned', instanceId: 'c1', cardId },
+        { category: 'cinders', cinders: 90, smithingStones: 1 },
+        { category: 'armament', armamentId: 'greatsword' },
+      ] } };
+      const collect = (id) => { if (run.loadout.storage.includes(id)) return false; run.loadout.storage.push(id); return true; };
+      let refuse = true;
+      mountRewards(app, { registries: r, run, checkpoint, rewards, onDone() {}, onPersist: () => !refuse, onCollectArmament: collect });
+      app.querySelector('[data-kind="chest"]').click();
+      const before = structuredClone(run);
+      app.querySelectorAll('.reward-row .reward-chest-option')[index].click();
+      const confirm = app.querySelector('#reward-card-confirm');
+      confirm.click();
+      assert.deepEqual(run, before, `option ${index}: a refused save rolls the grant back`);
+      assert.equal(checkpoint.states.chest, undefined);
+      assert.equal(checkpoint.chosenChestIndex, undefined);
+      refuse = false;
+      confirm.click();
+      check(run);
+      assert.equal(checkpoint.states.chest, 'taken');
+      assert.equal(checkpoint.chosenChestIndex, index);
+      app.remove();
+    }
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+});
+
 test('save shape: a taken chest names its option; an old relic offer still validates', () => {
   const run = newRun(3);
   const pending = (rewards, extra = {}) => ({
