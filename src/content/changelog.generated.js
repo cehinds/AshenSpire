@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1275",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
+    "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
+    "build": "0.7.1.453",
+    "pullRequest": 1275,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
     "id": "pr-1272",
     "date": "2026-09-24",
     "group": "2026-09-24",
