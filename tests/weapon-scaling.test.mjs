@@ -11,6 +11,8 @@ import {
 import { createEquipmentProfileRuleSnapshot, deckCardReceipt, restoreEquipmentProfileRuleSnapshot, validateEquipment } from '../src/model/loadout.js';
 import { validateContent } from '../src/model/validate.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
+import { configuredContentBundle } from '../src/model/advancedConfig.js';
+import { levelUpPreview, weaponScalingFacts } from '../src/model/levelUpPreview.js';
 
 const registries = createRegistries(contentBundle);
 const scaling = registries.balance.weaponScaling;
@@ -132,6 +134,29 @@ test('the run snapshots the grade table; a snapshot without it prices a graded w
   assert.equal(flat.rating.scaling, undefined);
   // At the preset's own STR 3 the two agree: creation damage did not move.
   assert.equal(deckCardReceipt(registries, run, strike).value, deckCardReceipt(registries, legacy, strike).value);
+});
+
+test('under the combat-ratings module the stamp and the preview read flat, as the fight does', () => {
+  // Regression: the fight prices a strike off the player's own ratings there
+  // (engine/combatRatings.js), which the grades never touch, yet the stamp,
+  // the Level-up preview and the shrine fact priced the grade: "Strike 8 ->
+  // 14" for a hit that landed 10.
+  const on = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.combatRatings.enabled': true }));
+  assert.equal(on.balance.combatRatings.enabled, true);
+  const run = createRunState({ seed: 5, classId: 'reaver', registries: on });
+  run.level.unspentPoints = 3;
+  const strike = run.deck.find((card) => card.equipmentRole === 'attack');
+  const high = { ...run.attributes, strength: 6 };
+  const receipt = deckCardReceipt(on, run, strike, high);
+  assert.equal(receipt.rating.scaling, undefined, 'no grade priced under the ratings module');
+  assert.equal(receipt.rating.attributeValue, attributeRatingReceipt(on.balance.combatRatings, high, 'ar').value);
+  const row = levelUpPreview(on, run, { strength: 3 }).rows.find((r) => r.role === 'attack' && r.pieceId === 'straightSword');
+  const flatGain = attributeRatingReceipt(on.balance.combatRatings, high, 'ar').value - attributeRatingReceipt(on.balance.combatRatings, run.attributes, 'ar').value;
+  assert.equal(row.after - row.before, flatGain, 'the preview moves by the flat rating only');
+  assert.deepEqual(weaponScalingFacts(on, run), {}, 'no "+N dmg next point" fact the fight would not pay');
+  // Off (the default), the same run prices the grade: 1 + 3 at STR 6.
+  const offRun = createRunState({ seed: 5, classId: 'reaver', registries });
+  assert.equal(deckCardReceipt(registries, offRun, offRun.deck.find((card) => card.equipmentRole === 'attack'), { ...offRun.attributes, strength: 6 }).rating.attributeValue, 4);
 });
 
 test('the snapshot door and the content door refuse a bad grade table or row by name', () => {

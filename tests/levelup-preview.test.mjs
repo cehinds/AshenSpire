@@ -9,6 +9,8 @@ import { applyLevelUp, awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { levelUpPreview, levelUpValues, weaponScalingFacts } from '../src/model/levelUpPreview.js';
 import { combatXpGains, levelUpMoment } from '../src/model/rewardprogress.js';
+import { createCombat } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -66,6 +68,29 @@ test('a Reaver\'s two points of Strength show the Strike rising, and Constitutio
   const hp = preview.changed.find((row) => row.id === 'stat:hp');
   assert.ok(hp && hp.after > hp.before);
   assert.deepEqual(levelUpPreview(registries, run, {}).changed, [], 'no pending point, no change');
+});
+
+test('Assign alone moves the deck: the next fight deals the previewed Strike, no restamp between', () => {
+  // Regression: applyLevelUp re-derived the pools but left every stamped card
+  // at its old amount, and combat copies the stamp in — so the Strike the
+  // preview promised arrived one fight late. Nothing here restamps by hand.
+  const run = runWithPoints('reaver', 3);
+  const preview = levelUpPreview(registries, run, { strength: 3 });
+  for (let i = 0; i < 3; i++) applyLevelUp(registries, run, 'strength');
+  const cardRows = preview.rows.filter((row) => row.kind === 'card');
+  assert.ok(cardRows.some((row) => row.after > row.before), 'a card moves');
+  for (const row of cardRows) {
+    const inst = run.deck.find((c) => `card:${c.kitRole || c.equipmentRole}:${c.profileId}:${c.sourceArmamentId || '-'}` === row.id);
+    assert.ok(inst, `${row.label} is in the deck`);
+    assert.equal(inst.profileReceipt.value, row.after, `${row.label}: the run holds ${inst.profileReceipt.value}, the preview said ${row.after}`);
+  }
+  const combat = createCombat({ registries, rng: createRng(5), enemyIds: [contentBundle.enemies[0].id], player: {
+    ...structuredClone(run), classId: run.class, relicIds: run.relics,
+  } });
+  const strike = preview.changed.find((row) => row.role === 'attack' && row.pieceId === 'straightSword');
+  const inFight = Object.values(combat.piles).flat().filter((c) => c.equipmentRole === 'attack' && c.sourceArmamentId === 'straightSword');
+  assert.ok(inFight.length > 0);
+  for (const c of inFight) assert.equal(c.profileReceipt.value, strike.after);
 });
 
 test('the preview refuses what applyLevelUp refuses', () => {
