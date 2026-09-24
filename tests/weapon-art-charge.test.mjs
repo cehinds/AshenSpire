@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -331,6 +331,36 @@ test('paced playback: the shown charge advances beat by beat and lands on the li
   assert.equal(before.greatsword, 0);
   // An artUnleashed beat alone (no change event) still empties it.
   assert.deepEqual(advanceArtChargeDisplay({ greatsword: max }, [{ type: 'artUnleashed', weaponId: 'greatsword' }]), { greatsword: 0 });
+});
+
+// PR review: the HUD meter filled on its beat, but the Art card already in
+// hand (full edge, pips, unleashed strip/tab) waited for the timeline to end,
+// because only the four card events repainted the hand.
+test('paced playback: the beat that fills or empties a meter repaints the hand, so the Art card in hand follows it', async () => {
+  const combat = fight();
+  const max = artChargeMax(registries, 'greatsword');
+  for (let i = 0; i < max - 1; i++) play(combat, kitAttack('greatsword'));
+  // Keep the Art in hand, as the player sees it while the filling hit plays.
+  const art = everyCard(combat).find(artOf('greatsword'));
+  for (const pile of Object.values(combat.piles)) { const i = pile.indexOf(art); if (i >= 0) pile.splice(i, 1); }
+  combat.piles.hand.push(art);
+  const { events } = play(combat, kitAttack('greatsword'));
+  const fill = events.find((e) => e.type === 'artChargeChanged' && e.value === max);
+  assert.ok(fill, 'the hit fills the meter');
+  assert.ok(combat.piles.hand.includes(art), 'the Art card is still in hand');
+  // The fill beat on its own (no card event in it) repaints the hand.
+  assert.equal(beatRepaintsHand([fill]), true, 'artChargeChanged repaints the hand');
+  const unleash = play(combat, artOf('greatsword')).events.find((e) => e.type === 'artUnleashed');
+  assert.ok(unleash);
+  assert.equal(beatRepaintsHand([unleash]), true, 'artUnleashed repaints the hand');
+  // The card moves still repaint; a bare hit or status beat still does not.
+  for (const type of ['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']) assert.equal(beatRepaintsHand([{ type }]), true, type);
+  assert.equal(beatRepaintsHand(events.filter((e) => e.type === 'damageDealt' || e.type === 'hpLost')), false);
+  assert.equal(beatRepaintsHand([]), false);
+  // The screen's beat callback asks this predicate.
+  const { readFile } = await import('node:fs/promises');
+  const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.ok(/if \(beatRepaintsHand\(beat\.events\)\) renderHand\(\)/.test(screen), 'onBeatApplied repaints the hand through beatRepaintsHand');
 });
 
 // On a phone (portrait or landscape) the next card covers all but the Art

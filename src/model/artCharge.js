@@ -209,6 +209,19 @@ export function advanceArtChargeDisplay(charge, events = []) {
 }
 
 /**
+ * beatRepaintsHand(events) -> boolean: whether a paced-playback beat changes
+ * what the displayed hand shows. The four card events move cards between
+ * piles; the two charge events move the shown meter, and an Art card in hand
+ * wears that meter (its full edge, pips and unleashed strip/tab), so a beat
+ * that fills or empties it must repaint the hand ON that beat, not at the end
+ * of the timeline (SPEC 12.2.1).
+ */
+export const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted', 'artChargeChanged', 'artUnleashed']);
+export function beatRepaintsHand(events = []) {
+  return events.some((event) => !!event && HAND_BEAT_EVENTS.has(event.type));
+}
+
+/**
  * newlyFullIds(previous, fullIds) -> { fresh, next }: which ids are full now
  * that were not at the last paint (`fresh`), and the set to remember for the
  * next paint (`next`). A meter or an Art card flashes once when it FILLS,

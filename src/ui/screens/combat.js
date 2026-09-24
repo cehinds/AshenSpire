@@ -32,7 +32,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
-import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds } from '../../model/artCharge.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -104,9 +104,8 @@ function pileButton(kind, label) {
   return node;
 }
 
-// The event types that move the displayed hand between beats — the same four
-// applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
-const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+// The event types that repaint the displayed hand between beats live with the
+// charge display rules in model/artCharge.js (beatRepaintsHand).
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -2248,10 +2247,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
           }
           // The displayed hand (disp.hand) moves only on the four card events
-          // applyBeatToDisp handles; every other beat — a hit, a heal, a
-          // status — re-rendered every card in the hand for no change. The
-          // flush and the terminal callback still render the whole board.
-          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
+          // applyBeatToDisp handles, and the Art cards in it wear the shown
+          // charge, which moves on the two charge events; every other beat — a
+          // hit, a heal, a status — re-rendered every card in the hand for no
+          // change. The flush and the terminal callback still render the
+          // whole board.
+          if (beatRepaintsHand(beat.events)) renderHand();
           renderControls();
           showPileFeedback(beat.events);
         },
