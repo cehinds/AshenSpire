@@ -146,6 +146,12 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       const parsed = profileChanges(remote.text, contentBundle, settings, rows, keys);
       const diff = profileDiff(settings, parsed);
       pending = { parsed, sha: remote.sha };
+      // Already matching IS loaded: record this version, or the next start
+      // would treat it as new and overwrite edits made here since.
+      if (!diff.length) {
+        write(SYNC_STORAGE.lastSha, remote.sha || '');
+        write(SYNC_STORAGE.lastAt, new Date().toISOString());
+      }
       const box = mount.querySelector('[data-sync-preview]');
       box.hidden = false;
       box.innerHTML = diff.length

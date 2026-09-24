@@ -247,3 +247,9 @@ test('a volume slider takes every whole percent, and a compact slider widens for
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /if \(v > Number\(slider\.max\)\) slider\.max = /, 'a committed value past the span widens it');
 });
+
+test('a profile that already matches is recorded as loaded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!diff\.length\) \{\s*write\(SYNC_STORAGE\.lastSha, remote\.sha/);
+});
