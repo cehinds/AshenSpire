@@ -19,6 +19,8 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+const STORAGE_REFUSED = 'This browser would not save that choice (storage is off or full here), so it is unchanged.';
+
 /** write(key, value) → true when storage now holds exactly that (or nothing, for a clear). */
 function write(key, value) {
   const clear = value === null || value === undefined || value === '';
@@ -308,13 +310,13 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     });
     on('auto', (btn) => {
       const next = read(SYNC_STORAGE.auto) !== '1';
-      write(SYNC_STORAGE.auto, next ? '1' : null);
+      if (!write(SYNC_STORAGE.auto, next ? '1' : null)) { status(STORAGE_REFUSED); return; }
       btn.classList.toggle('on', next);
       btn.setAttribute('aria-checked', String(next));
     });
     on('device', (btn) => {
       const next = !includeDeviceEnabled();
-      write(SYNC_STORAGE.includeDevice, next ? '1' : null);
+      if (!write(SYNC_STORAGE.includeDevice, next ? '1' : null)) { status(STORAGE_REFUSED); return; }
       // What a load would do has changed: an open preview is no longer true,
       // and the loaded version must be read again under the new scope.
       write(SYNC_STORAGE.lastSha, null);

@@ -461,3 +461,15 @@ test('navigate() reads its own cursor, and a refused token write is reported', a
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, value\)\) \{/);
 });
+
+test('release promotions and Clear hidden tuning cover every debug-only row, not only gameConfig.*', async () => {
+  const { promotionFor, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const values = { shrineMultiUse: true, screenShake: false, 'gameConfig.combatRatings.multiplier': 2 };
+  assert.deepEqual(promotionFor({ digest: 'x', values }, false).values, { screenShake: false });
+  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['gameConfig.combatRatings.multiplier', 'shrineMultiUse']);
+  assert.deepEqual(hiddenTuningKeys(values, true), [], 'debug builds show them all');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.auto, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.includeDevice, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
+});

@@ -193,38 +193,43 @@ function graceRefillRows() {
 }
 
 /**
- * hiddenTuningKeys(settings, debug) → stored `gameConfig.*` keys whose rows this
- * build does not show. On a release build these still apply, but nothing on
- * screen can see or reset them — so the options menu offers to clear them.
+ * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
+ * every row of a debug-only section (tuning or not — `shrineMultiUse`, say),
+ * and any `gameConfig.*` key no shown row carries. On a release build these
+ * still apply, but nothing on screen can see or reset them — so the options
+ * menu offers to clear them.
  */
 export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
   if (debug) return [];
-  const shown = releaseShownKeys();
-  return Object.keys(settings).filter((key) => settings[key] !== undefined && key.startsWith('gameConfig.') && !shown.has(key));
+  const hidden = releaseHidden();
+  return Object.keys(settings).filter((key) => settings[key] !== undefined && hidden(key));
 }
 
-/** releaseShownKeys() → every key a release build's visible rows show. */
-function releaseShownKeys() {
+/** releaseHidden() → key => true when a release build shows no row for it. */
+function releaseHidden() {
   const shown = new Set();
+  const debugOnly = new Set();
   const advanced = categoryHandler('Advanced')?.rows || [];
-  for (const group of visibleAdvancedGroups(false)) {
+  const releaseGroups = new Set(visibleAdvancedGroups(false).map((group) => group.id));
+  for (const group of visibleAdvancedGroups(true)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
-    for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) shown.add(row.key);
+    const into = releaseGroups.has(group.id) ? shown : debugOnly;
+    for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) into.add(row.key);
   }
-  return shown;
+  for (const row of ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
+  return (key) => !shown.has(key) && (debugOnly.has(key) || key.startsWith('gameConfig.'));
 }
 
 /**
  * promotionFor(defaults, debug) → the promotion this build applies. A release
- * build never applies hidden tuning it cannot show or let the player clear for
- * good, so those keys are left out there (and a value an earlier promotion
- * seeded for one is withdrawn by the seed's own "dropped key" rule).
+ * build never applies a value it has no row for (the player could neither see
+ * nor reset it), so those keys are left out there — and a value an earlier
+ * promotion seeded for one is withdrawn by the seed's own "dropped key" rule.
  */
 export function promotionFor(defaults, debug = pageDebug()) {
   if (debug) return defaults;
-  const shown = releaseShownKeys();
-  const values = Object.fromEntries(Object.entries(defaults?.values || {})
-    .filter(([key]) => !key.startsWith('gameConfig.') || shown.has(key)));
+  const hidden = releaseHidden();
+  const values = Object.fromEntries(Object.entries(defaults?.values || {}).filter(([key]) => !hidden(key)));
   return { ...defaults, values };
 }
 
