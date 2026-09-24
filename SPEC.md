@@ -343,10 +343,72 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 |---|---|---|
 | Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
 | Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
-| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Rewards | rarity rolls + pity/decay counters (§3.8.1), `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay, card pity, elite chest |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+
+#### 3.8.1 Card-rarity pity and the elite chest *(game-feel rework, 2026-09-24)*
+
+Two reward rules that make a run's spoils feel earned rather than flat. Both are seeded (the
+same seed replays the same offers), both read every number from `balance.rewards`, and both
+leave the boss reward path alone.
+
+**Card-rarity pity (the StS rare offset).** A run carries two counters:
+
+| Field | Meaning | Absent in an old save |
+|---|---|---|
+| `run.cardRarityOffset` | percentage points added to the rare chance of each card slot | reads as `cardPity.offsetStart` |
+| `run.cardRewardsSinceRare` | consecutive card offers that showed no rare | reads as `0` |
+
+They are written lazily on the first card offer that reads them (the `flaskChancePct`
+precedent), so no migration invents them. Pity applies to the **card offer of a normal or
+elite fight** (`rollCardRewardIds` handed the `run`). It does not apply to boss offers, to
+Chaos Rewards (equal odds), or to skill/class drafts, and none of those move the counters.
+
+For each card slot, with `w` the pool's authored weights (the class's own row when it has one):
+
+- `baseRarePct = 100 × w.rare / (w.common + w.uncommon + w.rare)`
+- `rarePct = clamp(baseRarePct + offset, 0, 100)`; the remaining `100 − rarePct` is split
+  between common and uncommon in their authored ratio. A rarity the pool cannot fill is
+  dropped from the roll, as before.
+- After the slot is shown: a **common** raises `offset` by `cardPity.offsetStep` (capped at
+  `cardPity.offsetMax`); a **rare** resets it to `cardPity.offsetStart`; an uncommon leaves it.
+
+**Hard guarantee.** When an offer begins with `cardRewardsSinceRare ≥ cardPity.rareGuaranteeAfter`
+and its slots rolled no rare, the **last** slot is replaced by a rare from the pool not already
+offered (stream `cardRewards`), and the offset resets. After every offer the counter is `0` if
+any rare was shown, else it grows by one. A class pool with no rare card leaves the offer as
+rolled. Shipped values: `offsetStart −5`, `offsetStep 1`, `offsetMax 40`, `rareGuaranteeAfter 4`.
+
+**The elite chest.** An elite fight no longer drops one random relic. In its place the offer
+carries `rewards.chest = { options: [ … ] }`: a visible choice of **one** of up to
+`eliteChest.choices` (3) big rewards, each from a **distinct category**. Cinders, the card
+offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
+
+| Category | Option shape | Grants |
+|---|---|---|
+| `relic` | `{ category, relicId }` | the relic (same pool as the old elite relic: common/uncommon/rare, unowned, never quest-pool) |
+| `upgrade` | `{ category, mode: 'owned', instanceId, cardId }` or `{ category, mode: 'rare', cardId }` | `owned`: that ordinary run-owned deck card becomes upgraded; `rare`: a rare card from the class pool joins the deck already upgraded |
+| `armament` | `{ category, armamentId }` or `{ category, weaponArtId }` | the armament through the reward collector (a guaranteed elite-weighted armament roll); when none is left to find, a mountable weapon art the deck lacks joins as a card |
+| `cinders` | `{ category, cinders, smithingStones }` | a bonus purse: cinders from `eliteChest.cinders` and `eliteChest.smithingStones` Stones |
+
+- **Draw.** Categories are drawn by `eliteChest.categoryWeights` without replacement
+  (stream `relicRewards`). A category whose payload cannot be built (no relic left, no
+  upgradeable card and no rare, no armament and no weapon art) is dropped and the draw moves
+  on, so the chest may offer fewer than three; with none, the offer carries no chest.
+  `upgrade` prefers an owned card with chance `eliteChest.upgradeOwnedPct`.
+- **Claim.** The chest is one reward row (key `chest`), a choice like the card offer. Picking
+  an option grants exactly that option and nothing else; its index is kept on the reward
+  checkpoint (`chosenChestIndex`) so a reload resumes it. Auto-collect picks one of the
+  takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
+  while the bag is full. An old save whose pending elite offer still carries `relicId`
+  resumes with its relic row, unchanged.
+
+**Acceptance.** Tests prove the offset arithmetic, the guarantee firing after
+`rareGuaranteeAfter` rare-less offers, byte-identical offers for one seed, three distinct
+categories in a chest, that taking an option grants exactly it, and that a run without the
+counters loads and defaults them.
 
 **Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
 

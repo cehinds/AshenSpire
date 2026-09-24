@@ -18,6 +18,7 @@ import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/q
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
+import { chestUpgradeable } from '../model/rewardChest.js';
 import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
 import { classDraftPool } from '../model/classTree.js';
 
@@ -70,10 +71,16 @@ export function cardRewardRarityWeights(registries, { classId, pool = 'normal', 
 }
 
 /**
- * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
- * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
+ * rollCardRewardIds(registries, rng, { classId, pool, relicIds, run }) →
+ * distinct card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
+ *
+ * Handed the `run`, the offer reads and moves the card-rarity pity (SPEC
+ * §3.8.1): `run.cardRarityOffset` shifts every slot's rare chance and
+ * `run.cardRewardsSinceRare` forces a rare into the last slot once enough
+ * offers went without one. Without a run — a boss door, a tool — or under
+ * Chaos Rewards, the roll is the plain weighted one and no counter moves.
  */
-export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, run = null }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
@@ -91,13 +98,17 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
   const total = rarities.reduce((a, r) => a + weights[r], 0);
   if (!total) return [];
 
+  const pity = run && !flatRarity ? cardPityState(registries, run) : null;
   const picks = [];
+  const pickedRarities = [];
   let guard = 0;
   while (picks.length < count && guard++ < 100) {
-    let roll = rng.float('cardRewards') * total;
+    const slotWeights = pity ? pityWeights(weights, rarities, run.cardRarityOffset) : weights;
+    const slotTotal = rarities.reduce((a, r) => a + slotWeights[r], 0);
+    let roll = rng.float('cardRewards') * slotTotal;
     let rarity = rarities[rarities.length - 1];
     for (const r of rarities) {
-      roll -= weights[r];
+      roll -= slotWeights[r];
       if (roll < 0) {
         rarity = r;
         break;
@@ -106,8 +117,52 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     const options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
     picks.push(rng.pick('cardRewards', options));
+    pickedRarities.push(rarity);
+    if (pity) advanceCardPity(pity, run, rarity);
+  }
+  if (pity) {
+    if (!pickedRarities.includes('rare') && run.cardRewardsSinceRare >= pity.rareGuaranteeAfter && picks.length) {
+      const rares = (byRarity.rare || []).filter((id) => !picks.includes(id));
+      if (rares.length) {
+        picks[picks.length - 1] = rng.pick('cardRewards', rares);
+        pickedRarities[pickedRarities.length - 1] = 'rare';
+        advanceCardPity(pity, run, 'rare');
+      }
+    }
+    run.cardRewardsSinceRare = pickedRarities.includes('rare') ? 0 : run.cardRewardsSinceRare + 1;
   }
   return picks;
+}
+
+/** The pity knobs, with the run's counters defaulted in place (old saves). */
+function cardPityState(registries, run) {
+  const cfg = registries.balance.rewards.cardPity;
+  if (!cfg) return null;
+  if (!Number.isFinite(run.cardRarityOffset)) run.cardRarityOffset = cfg.offsetStart;
+  if (!Number.isInteger(run.cardRewardsSinceRare) || run.cardRewardsSinceRare < 0) run.cardRewardsSinceRare = 0;
+  return cfg;
+}
+
+function advanceCardPity(cfg, run, rarity) {
+  if (rarity === 'common') run.cardRarityOffset = Math.min(cfg.offsetMax, run.cardRarityOffset + cfg.offsetStep);
+  else if (rarity === 'rare') run.cardRarityOffset = cfg.offsetStart;
+}
+
+/**
+ * pityWeights(weights, rarities, offset) → percentages per rarity (SPEC
+ * §3.8.1): the rare share of the authored row plus `offset` points, clamped
+ * to [0, 100]; the rest split between the other rarities in their ratio.
+ * A row the pool cannot fill a rare for is returned unchanged.
+ */
+export function pityWeights(weights, rarities, offset) {
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!rarities.includes('rare') || !total) return weights;
+  const rarePct = Math.min(100, Math.max(0, (100 * weights.rare) / total + offset));
+  const others = rarities.filter((r) => r !== 'rare');
+  const otherTotal = others.reduce((a, r) => a + weights[r], 0);
+  const out = { rare: others.length ? rarePct : 100 };
+  for (const r of others) out[r] = otherTotal ? ((100 - rarePct) * weights[r]) / otherTotal : 0;
+  return out;
 }
 
 /**
@@ -216,12 +271,16 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
  * something new and returns null when there is nothing left to give (the
  * caller pays consolation cinders instead).
  */
-export function rollArmamentDrop(registries, rng, { source, found = [], carried = [] } = {}) {
+export function rollArmamentDrop(registries, rng, { source, found = [], carried = [], guaranteed = false } = {}) {
   const cfg = (registries.balance.equipment || {}).drops || {};
   if (!cfg.enabled) return null;
-  const chance = (cfg.chance || {})[source];
-  if (!chance) return null;
-  if (rng.int('armaments', 1, 100) > chance) return null;
+  // `guaranteed` (the elite chest's armament, SPEC §3.8.1) skips the chance
+  // roll only: the rarity weights and the prefer-unfound rule still apply.
+  if (!guaranteed) {
+    const chance = (cfg.chance || {})[source];
+    if (!chance) return null;
+    if (rng.int('armaments', 1, 100) > chance) return null;
+  }
 
   const weights = (cfg.rarityWeights || {})[source] || {};
   const seen = new Set([...found, ...carried]);
@@ -256,6 +315,75 @@ export function rollArmamentDrop(registries, rng, { source, found = [], carried 
     if (pieceRoll < 0) return piece.id;
   }
   return candidates[candidates.length - 1].id;
+}
+
+// ---------------------------------------------------------------------------
+// The elite chest (SPEC §3.8.1)
+// ---------------------------------------------------------------------------
+
+/** The chest's closed category set, in the order the chest lays them out. */
+export { chestUpgradeable };
+
+export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
+
+/**
+ * rollEliteChest(registries, rng, run, { found }) → { options } | null.
+ * Up to `balance.rewards.eliteChest.choices` options, each of a DISTINCT
+ * category drawn by `categoryWeights` without replacement (stream
+ * 'relicRewards'). A category that cannot build a payload is dropped and the
+ * draw moves on; no buildable category at all rolls no chest. Pure apart from
+ * the rng: the run is read, never written. `found` is the profile's found
+ * armaments (the armament roll's prefer-unfound input).
+ */
+export function rollEliteChest(registries, rng, run, { found = [] } = {}) {
+  const cfg = registries.balance.rewards.eliteChest;
+  if (!cfg || !(cfg.choices > 0)) return null;
+  const builders = {
+    relic() {
+      const relicId = rollRelicReward(registries, rng, run.relics || []);
+      return relicId ? { category: 'relic', relicId } : null;
+    },
+    upgrade() {
+      const owned = (run.deck || []).filter((inst) => chestUpgradeable(registries, run, inst));
+      const rares = registries.classes.get(run.class).cardPool.filter((id) => {
+        const def = registries.cards.get(id);
+        return def && def.rarity === 'rare';
+      });
+      const preferOwned = rng.int('cardRewards', 1, 100) <= cfg.upgradeOwnedPct;
+      if (owned.length && (preferOwned || !rares.length)) {
+        const inst = rng.pick('cardRewards', owned);
+        return { category: 'upgrade', mode: 'owned', instanceId: inst.instanceId, cardId: inst.cardId };
+      }
+      return rares.length ? { category: 'upgrade', mode: 'rare', cardId: rng.pick('cardRewards', rares) } : null;
+    },
+    armament() {
+      const armamentId = rollArmamentDrop(registries, rng, { source: 'elite', found, carried: carriedIds(run.loadout), guaranteed: true });
+      if (armamentId) return { category: 'armament', armamentId };
+      const inDeck = new Set((run.deck || []).map((c) => c.cardId));
+      const arts = eligibleWeaponArts(registries).filter((id) => !inDeck.has(id));
+      return arts.length ? { category: 'armament', weaponArtId: rng.pick('armaments', arts) } : null;
+    },
+    cinders() {
+      const [lo, hi] = cfg.cinders;
+      return { category: 'cinders', cinders: rng.int('misc', lo, hi), smithingStones: cfg.smithingStones };
+    },
+  };
+  let remaining = CHEST_CATEGORIES.filter((c) => (cfg.categoryWeights[c] || 0) > 0);
+  const options = [];
+  while (options.length < cfg.choices && remaining.length) {
+    const total = remaining.reduce((a, c) => a + cfg.categoryWeights[c], 0);
+    let roll = rng.float('relicRewards') * total;
+    let category = remaining[remaining.length - 1];
+    for (const c of remaining) {
+      roll -= cfg.categoryWeights[c];
+      if (roll < 0) { category = c; break; }
+    }
+    remaining = remaining.filter((c) => c !== category);
+    const option = builders[category]();
+    if (option) options.push(option);
+  }
+  options.sort((a, b) => CHEST_CATEGORIES.indexOf(a.category) - CHEST_CATEGORIES.indexOf(b.category));
+  return options.length ? { options } : null;
 }
 
 // ---------------------------------------------------------------------------

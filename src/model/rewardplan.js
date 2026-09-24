@@ -28,7 +28,7 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'chest', 'relic']);
 
 /**
  * A row's KEY is what its state is kept under (`states[key]`): the kind for
@@ -43,7 +43,7 @@ export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:$
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}` : kind);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
+export const pickIds = (row) => (Array.isArray(row.options) ? row.options : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -117,6 +117,18 @@ const KINDS = {
     // excluded from every future drop.
     blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
+  chest: {
+    // The elite chest (SPEC §3.8.1): pick ONE of its options. `takeable` is
+    // per option — an armament cannot land in a full bag — derived here the
+    // armament row's way, so the chooser and auto-collect read one answer.
+    present: (r) => !!r.chest && Array.isArray(r.chest.options) && r.chest.options.length > 0,
+    row: (r, facts) => ({
+      options: r.chest.options.map((o) => ({ ...o })),
+      choice: r.chest.options.length > 1,
+      takeable: r.chest.options.map((o) => !(o.category === 'armament' && o.armamentId && !(facts.armamentSlotsFree > 0))),
+    }),
+    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || facts.armamentSlotsFree > 0 ? null : 'storage'),
+  },
   relic: {
     present: (r) => !!r.relicId,
     row: (r) => ({ relicId: r.relicId }),
@@ -136,7 +148,7 @@ export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSl
   for (const kind of REWARD_KIND_ORDER) {
     const d = KINDS[kind];
     if (!d.present(rewards)) continue;
-    for (const fields of d.rows ? d.rows(rewards) : [d.row(rewards)]) {
+    for (const fields of d.rows ? d.rows(rewards) : [d.row(rewards, facts)]) {
       rows.push({ kind, key: rowKey(kind, fields), blockedBy: d.blocked(rewards, facts), ...fields });
     }
   }
@@ -166,7 +178,11 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
+      if (row.kind === 'chest') {
+        // Only a takeable option may be picked; the seeded pick chooses among them.
+        const open = row.options.map((_, i) => i).filter((i) => row.takeable[i]);
+        take.push({ ...row, optionIndex: open[pick(open.length) % open.length] });
+      } else if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id } : { cardId: id }) });

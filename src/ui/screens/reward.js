@@ -72,8 +72,9 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { applyChestOption } from '../../model/rewardChest.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', chest: '▣', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -119,6 +120,8 @@ export function mountRewards(app, {
   const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
   // The class drafts' picks (plan phase 5b), keyed by row key: tree nodes.
   const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
+  // The elite chest's pick (SPEC §3.8.1): the index of the option taken.
+  let chosenChestIndex = Number.isInteger(checkpoint?.chosenChestIndex) ? checkpoint.chosenChestIndex : null;
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
   function persistProgress() {
@@ -127,6 +130,7 @@ export function mountRewards(app, {
       checkpoint.chosenCardId = chosenCardId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
+      if (chosenChestIndex !== null) checkpoint.chosenChestIndex = chosenChestIndex;
     }
     if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
   }
@@ -199,6 +203,18 @@ export function mountRewards(app, {
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+    // The elite chest: exactly the one option picked (model/rewardChest.js).
+    chest(row) {
+      const option = row.options[row.optionIndex];
+      if (!option || !row.takeable[row.optionIndex]) return false;
+      if (!applyChestOption(registries, run, option, { collectArmament: onCollectArmament })) return false;
+      if (option.category === 'relic') {
+        syncFlaskGrowth(registries, run);
+        recordSeen('relic', [option.relicId]);
+      }
+      chosenChestIndex = row.optionIndex;
+      return true;
+    },
   };
 
   function take(row, viaKind) {
@@ -323,6 +339,13 @@ export function mountRewards(app, {
             : name,
         };
       }
+      case 'chest': {
+        if (state === 'taken' && Number.isInteger(chosenChestIndex)) {
+          return { title: t('reward.kind.chest'), body: t('reward.chest.took', { name: esc(chestOptionView(row.options[chosenChestIndex]).name) }) };
+        }
+        const names = row.options.map((o) => esc(chestOptionView(o).label)).join(' · ');
+        return { title: t('reward.kind.chest'), body: `${t('reward.chest.chooseOne', { count: row.options.length })}<br><span style="color:var(--muted)">${names}</span>` };
+      }
       case 'relic': {
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
@@ -444,11 +467,13 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
+        if (row.kind === 'chest') return `<div class="tt-title">${esc(tTip('reward.kind.chest'))}</div>${esc(tFull('reward.kind.chest'))}`;
         const offer = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
+        if (row.kind === 'chest') return renderChestChooser(row);
         if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
@@ -739,6 +764,119 @@ export function mountRewards(app, {
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
     back.addEventListener('click', () => renderMenu(row.key));
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
+  }
+
+  // ---- the elite chest (SPEC §3.8.1) ----------------------------------------
+  // What one option reads as: its category word, a glyph, a name and the
+  // sentence of what taking it does. Every sentence is a uiStrings row.
+  function chestOptionView(option) {
+    switch (option && option.category) {
+      case 'relic': {
+        const def = registries.relics.get(option.relicId);
+        return { label: t('reward.chest.cat.relic'), glyph: def.icon || '◆', name: def.name, text: esc(relicText(def, registries)) };
+      }
+      case 'upgrade': {
+        const def = registries.cards.get(option.cardId);
+        const upgraded = (def.upgrade && def.upgrade.name) || `${def.name}+`;
+        return {
+          label: t('reward.chest.cat.upgrade'), glyph: '✚', name: upgraded,
+          text: option.mode === 'owned'
+            ? t('reward.chest.upgrade.owned', { name: esc(def.name), upgraded: esc(upgraded) })
+            : t('reward.chest.upgrade.rare', { name: esc(upgraded) }),
+        };
+      }
+      case 'armament': {
+        if (option.weaponArtId) {
+          const def = registries.cards.get(option.weaponArtId);
+          return { label: t('reward.chest.cat.weaponArt'), glyph: '✦', name: def.name, text: t('reward.chest.weaponArt', { name: esc(def.name) }) };
+        }
+        const a = (registries.equipment.armaments || []).find((x) => x.id === option.armamentId);
+        const effects = modEffectLines(registries, a).join(', ');
+        return { label: t('reward.chest.cat.armament'), glyph: '⚔', name: a ? a.name : option.armamentId, text: esc(effects || t('reward.armament.plain')) };
+      }
+      case 'cinders':
+        return {
+          label: t('reward.chest.cat.cinders'), glyph: '◉', name: t('reward.chest.purseName', { cinders: option.cinders }),
+          text: t('reward.chest.purse', { cinders: option.cinders, stones: option.smithingStones, plural: option.smithingStones === 1 ? '' : 's' }),
+        };
+      default:
+        return { label: '', glyph: '?', name: String(option && option.category), text: '' };
+    }
+  }
+
+  // Select one option, then Confirm — the card chooser's two beats. An
+  // option the bag cannot hold is drawn locked with its reason.
+  function renderChestChooser(row) {
+    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const confirmButton = button({
+      label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+    });
+    door({
+      eyebrow: t('reward.chest.eyebrow'),
+      title: rewards.title || t('reward.title.victory'),
+      attrs: { dataset: { size: 'md', rewardDetail: 'chest' } },
+      body: el('div', { class: 'reward-row reward-chest-row', role: 'radiogroup', 'aria-label': t('reward.chest.aria') }),
+      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+    });
+    const strip = app.querySelector('.reward-row');
+    const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
+    strip.after(message);
+    let selected = Number.isInteger(pendingByKey[row.key]) ? pendingByKey[row.key] : null;
+    let confirming = false;
+    const select = (index) => {
+      selected = index;
+      pendingByKey[row.key] = index;
+      for (const tile of strip.querySelectorAll('.reward-pick')) {
+        const on = Number(tile.dataset.optionIndex) === index;
+        tile.classList.toggle('reward-selected', on);
+        tile.classList.toggle('is-chosen', on);
+        tile.setAttribute('aria-checked', String(on));
+      }
+      confirmButton.disabled = false;
+      message.hidden = true;
+    };
+    row.options.forEach((option, index) => {
+      const view = chestOptionView(option);
+      const open = row.takeable[index];
+      const body = el('div', { class: 'cp-body' }, [
+        el('span', { class: 'as-eyebrow reward-chest-cat', text: view.label }),
+        el('h3', { text: view.name }),
+        el('p', { html: open ? view.text : `${view.text}<br><span style="color:var(--muted)">${esc(t('reward.chest.unavailable'))}</span>` }),
+      ]);
+      const tile = el('button', {
+        class: `class-pick reward-chest-option reward-pick${open ? '' : ' locked'}`, type: 'button', role: 'radio',
+        'aria-checked': String(index === selected), dataset: { optionIndex: String(index), category: option.category },
+      }, [el('div', { class: 'glyph', text: view.glyph }), body]);
+      if (!open) tile.disabled = true;
+      tile.classList.toggle('reward-selected', index === selected);
+      tile.classList.toggle('is-chosen', index === selected);
+      if (open) tile.addEventListener('click', () => select(index));
+      attachTooltip(tile, () => `<div class="tt-title">${esc(view.label)}</div>${esc(open ? view.name : tFull('reward.chest.unavailable'))}`);
+      strip.appendChild(tile);
+    });
+    confirmButton.disabled = selected === null;
+    confirmButton.addEventListener('click', () => {
+      if (selected === null || confirming || states[row.key]) return;
+      confirming = true;
+      confirmButton.disabled = true;
+      try {
+        if (!take({ ...row, optionIndex: selected }, row.key)) {
+          message.textContent = t('reward.chest.unavailable');
+          message.hidden = false;
+          confirming = false;
+          confirmButton.disabled = false;
+        }
+      } catch {
+        message.textContent = t('reward.card.saveFailed');
+        message.hidden = false;
+        confirming = false;
+        confirmButton.disabled = false;
+      }
+    });
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
+    back.addEventListener('click', () => renderMenu(row.key));
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick:not(.locked)') || focusFirst('#reward-back'), 0);
   }
 
   sfx.play('victory');
