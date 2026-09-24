@@ -231,3 +231,10 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
   assert.ok(html.includes('data-reset-key="musicEnabled"') && html.includes('data-modified="true"'));
   assert.doesNotMatch(html, /data-reset-key="musicEnabled"[^>]*hidden/);
 });
+
+test('while searching, the scoped reset resets the shown results and says so', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /query \? settingsSearchHits\(query\)\.slice\(0, SEARCH_LIMIT\)\.map\(\(hit\) => hit\.row\)/);
+  assert.ok(screen.includes("'Reset these results'"));
+});

@@ -2324,6 +2324,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, searchQuery());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
     panel.dataset.searching = String(!!searchQuery());
+    const groupReset = headerTools.querySelector('[data-reset-config="group"]');
+    if (groupReset) groupReset.textContent = searchQuery() ? 'Reset these results' : 'Reset this group';
     wire();
     panel.scrollTop = scroll;
     if (panel.parentElement) panel.parentElement.scrollTop = outer;
@@ -2556,7 +2558,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
+      // While a search is open the pane shows its matches, so "this group" IS
+      // the matches — never the section that was open behind the search.
+      const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
+        : query ? settingsSearchHits(query).slice(0, SEARCH_LIMIT).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
