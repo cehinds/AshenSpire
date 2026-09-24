@@ -4,7 +4,7 @@
       "reaver": { "x": 50, "y": 35 },
       "starseer": { "x": 48, "y": 37 },
       "rogue": { "x": 49, "y": 35 },
-      "herald": { "x": 50, "y": 61 }
+      "herald": null
     }
   }
 }

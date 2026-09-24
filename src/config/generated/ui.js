@@ -18,7 +18,7 @@
 // source content/config/ui/components/workspace.json 0cf6a3c4756f2b16
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
 // source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
-// source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
+// source content/config/ui/presentation/classArtAnchors.json feef8a503a056875
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
@@ -1613,10 +1613,7 @@ export const uiConfig = deepFreeze({
             "x": 49,
             "y": 35
           },
-          "herald": {
-            "x": 50,
-            "y": 61
-          }
+          "herald": null
         }
       }
     },
