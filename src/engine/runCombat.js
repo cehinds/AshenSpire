@@ -20,6 +20,14 @@ import { staminaAtCombatStart } from '../framework/resources.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
+  // A fight opens with the Stamina the framework's entry rule gives
+  // (mechanics.stamina.combatStartRefill, plan A2); Mana carries as it is.
+  // A refill also settles the Stamina deficit an equipment swap carried, so
+  // the next swap cannot take the refilled points back.
+  const stamina = staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina });
+  const equipmentPoolDeficits = stamina === run.stamina || !run.equipmentPoolDeficits
+    ? run.equipmentPoolDeficits
+    : { ...run.equipmentPoolDeficits, stamina: Math.max(0, run.maxStamina - stamina) };
   return {
     classId: run.class,
     attributes: run.attributes,
@@ -33,16 +41,14 @@ export function runCombatPlayer(run) {
     maxMana: run.maxMana,
     mana: run.mana,
     maxStamina: run.maxStamina,
-    // A fight opens with the Stamina the framework's entry rule gives
-    // (mechanics.stamina.combatStartRefill, plan A2); Mana carries as it is.
-    stamina: staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina }),
+    stamina,
     energyMax: run.energyMax,
     drawPerTurn: run.drawPerTurn,
     damageBySchoolAdd: run.damageBySchoolAdd,
     equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: run.equipmentAttackSlotCount,
     removedAttackSlotIds: run.removedAttackSlotIds,
-    equipmentPoolDeficits: run.equipmentPoolDeficits,
+    equipmentPoolDeficits,
     itemUpgradeLevels: run.itemUpgradeLevels,
     itemMounts: run.itemMounts,
     armamentLevels: run.armamentLevels,

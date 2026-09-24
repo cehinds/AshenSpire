@@ -47,3 +47,14 @@ test('the co-op host seats a member through the same entry rule', () => {
   const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
   assert.match(session, /stamina: staminaAtCombatStart\(\{ currentStamina: m\.run\.stamina/);
 });
+
+test('the refill settles a Stamina deficit an equipment swap carried, and keeps the others', () => {
+  const run = createRunState({ seed: 9, classId: 'reaver', registries });
+  run.stamina = 0;
+  run.equipmentPoolDeficits = { hp: 3, mana: 1, stamina: run.maxStamina };
+  const combat = createRunCombat({ registries, rng: createRng(9), run, enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.player.stamina, run.maxStamina);
+  assert.equal(combat.equipmentPoolDeficits.stamina, 0, 'no stale Stamina deficit');
+  assert.equal(combat.equipmentPoolDeficits.hp, 3);
+  assert.equal(combat.equipmentPoolDeficits.mana, 1);
+});
