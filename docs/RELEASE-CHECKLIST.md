@@ -13,7 +13,8 @@ CONTRIBUTING.md, *Coordination and release boundary*).
 ## How to run
 
 Start from a clean checkout of the RC SHA with LFS content pulled
-(`git lfs pull`). Run each command from the repository root exactly as the
+(`git lfs pull`) and the promotion target fetched
+(`git fetch --no-tags origin test:refs/remotes/origin/test`). Run each command from the repository root exactly as the
 table gives it. A gate wrapped in `node tools/verdict.mjs -- …` runs as CI runs
 it: a silent exit 0 or a zero-count green is then refused (DEVELOPER.md, *The CI
 door*). A gate listed bare prints a result line the door does not accept, so
@@ -30,7 +31,7 @@ or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
 |------|---------|-----------------|------------------|
 | G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` (as two halves), `ci.yml` |
 | G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0. The build version is derived and matches the tree, and nobody typed it by hand. | `ci.yml` |
-| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. Exit 2 means CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
+| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
 | G4 | `node tools/release-series.mjs` | Exit 0. The version series in the tree is the one the owner approved (docs/versioning.md). | `ci.yml` |
 | G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
@@ -38,12 +39,12 @@ or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
 | G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` self-test job, `ci.yml` |
 | G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only` | Exit 0. The standalone builds are regenerated from the RC source. | `ci.yml` |
 | G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
-| G11 | `node tools/contrast-audit.mjs --gate` | Exit 0. No new or worsened WCAG AA contrast failure at any gated profile. | local only; run it before the RC |
+| G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, #1291). Exit 0 alone only means no new or worsened failure at the profiles it gates today; until both conditions hold, G11 is red. | local only; run it before the RC |
 | G12 | `node tools/verdict.mjs -- node tools/about-changelog.mjs` | Exit 0. The in-game changelog is a faithful projection of CHANGELOG.md, in order. | `ci.yml` |
 
 Gate G13 has no local command. A hand-dispatched `ci.yml` run on the RC SHA must
 conclude **success** on every job, including the browser gates and the 3-OS
-matrix (FINISH.md §12, owner decision D7). Record the run URL in the sign-off.
+matrix (FINISH.md §12, owner decision D7). Name the run URL in the sign-off.
 
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the
@@ -59,16 +60,19 @@ gate that failed.
 
 ## Owner sign-off
 
-Filled in by the owner only. An agent never fills in or edits this section.
+Given by the owner only. An agent never gives, fills in or edits a sign-off.
 
-| Field | Value |
-|-------|-------|
-| Version | |
-| RC SHA | |
-| `ci.yml` run (G13) | |
-| Gates G1–G12 green | yes / no |
-| Signed off by | |
-| Date | |
+The sign-off is **not** recorded in this file. Editing a tracked file makes a new
+commit, so a sign-off written here would sit on a commit that never ran the gates,
+and a commit cannot name its own SHA. This file stays a template.
 
-After sign-off the owner cuts `release` from the RC SHA, merges it into `main`,
+The owner signs by commenting on the release pull request (`release` ← `dev`), or
+on a release issue. The comment names:
+
+- the version,
+- the tested RC SHA,
+- the dispatched `ci.yml` run URL (G13),
+- the result of each gate G1–G12, with a link to its output.
+
+After sign-off the owner cuts `release` from that RC SHA, merges it into `main`,
 tags `vX.Y.Z` on `main`, and publishes.
