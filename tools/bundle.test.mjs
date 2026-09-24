@@ -824,10 +824,19 @@ for (const [label, plant] of NO_OK_BEFORE_ERROR) {
 // against nothing, and any complete, parsable script passes whatever it holds.
 // It is also not a second copy of the tool's own gate — that compiles module
 // bodies and the runtime it holds in memory; this compiles what was written.
+//
+// The inlined art is ~95% of that script (≈240 MB of "data:…" literals), and
+// compiling it whole takes more heap than a CI runner's default (it died at
+// 4.3 GB there). Each CLOSED double-quoted data literal with no quote,
+// backslash or newline inside is emptied first: such a literal is a complete
+// string token whatever it holds, so the parser's verdict is unchanged. A
+// literal cut off by truncation has no closing quote, is not matched, and
+// still fails the parse — the fragment case this exists for.
 const wholeGame = (html) => {
   const m = /<script>([\s\S]*?)<\/script>/.exec(html);
   if (!m) return { ok: false, why: 'no complete <script> block in the output' };
-  try { new vm.Script(m[1], { filename: 'built-bundle' }); } catch (err) { return { ok: false, why: err.message }; }
+  const source = m[1].replace(/"data:[^"\\\n\r]*"/g, '"data:"');
+  try { new vm.Script(source, { filename: 'built-bundle' }); } catch (err) { return { ok: false, why: err.message }; }
   return { ok: true, why: '' };
 };
 {
