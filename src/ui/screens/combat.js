@@ -32,7 +32,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
-import { artChargeView, unleashedFormFor } from '../../model/artCharge.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -614,6 +614,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+  // The Art charge map the screen shows: the paced copy while a timeline
+  // plays, the live one otherwise (so skip / instant land on the final value).
+  const shownArtCharge = () => (disp && disp.artCharge) || combat.artCharge || {};
 
   const words = (value) => String(value || '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -803,7 +806,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], artCharge: { ...(combat.artCharge || {}) } };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -827,6 +830,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'arcaneExposureRefused':
           disp.arcaneEvents.push(e);
+          break;
+        // The Art charge pips fill on the hit that earned them (SPEC 12.2.1).
+        case 'artChargeChanged':
+        case 'artUnleashed':
+          advanceArtChargeDisplay(disp.artCharge, [e]);
           break;
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
@@ -1307,7 +1315,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const node = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(inst.instanceId)}"]`);
       if (!node) continue;
       let charge = null;
-      try { charge = previewCard(combat, inst.instanceId).artCharge || null; } catch { charge = null; }
+      const shown = artUnleashFor(combat, inst, shownArtCharge());
+      if (shown) charge = { weaponId: shown.weaponId, value: shown.value, max: shown.max, unleashed: shown.ready };
       const wasFull = node.dataset.artCharge === 'full';
       if (!charge) { delete node.dataset.artCharge; node.classList.remove('art-charge-flash'); continue; }
       node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
@@ -1335,7 +1344,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings(), combat.artCharge]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings(), shownArtCharge()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1363,7 +1372,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     trailing.push(statusRow(p));
     // THE WEAPON ART CHARGE METERS (SPEC §12.2.1): one pip bar per equipped
     // weapon with a meter; a meter that filled since the last paint flashes.
-    const chargeRows = artChargeView(combat);
+    const chargeRows = artChargeView(combat, shownArtCharge());
     const chargeEl = artChargeMeter(chargeRows, { flashIds: newlyFullArtCharges(chargeRows) });
     if (chargeEl) {
       for (const node of chargeEl.querySelectorAll('.art-charge-row')) {
@@ -1551,7 +1560,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings(), combat.artCharge]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings(), shownArtCharge()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1563,6 +1572,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         let pv = null;
         try {
           if (!heldTurnHand) pv = previewCard(combat, inst.instanceId);
+          // During paced playback the Art's face reads the SHOWN charge: no
+          // unleashed line before the hit that fills the meter has played.
+          if (pv && pv.artCharge) {
+            const shown = artUnleashFor(combat, inst, shownArtCharge());
+            if (shown && shown.ready !== pv.artCharge.unleashed) {
+              const { textTemplate, ...rest } = pv.artCharge;
+              pv = { ...pv, artCharge: { ...rest, value: shown.value, unleashed: shown.ready && !!textTemplate, ...(shown.ready && textTemplate ? { textTemplate } : {}) } };
+            }
+          }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }

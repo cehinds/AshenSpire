@@ -46,10 +46,14 @@ export function artChargeMax(registries, weaponId) {
   return Number.isInteger(max) && max > 0 ? max : 0;
 }
 
-/** The stored charge for a weapon, clamped to its current max. */
-export function artChargeValue(combat, weaponId) {
+/**
+ * The stored charge for a weapon, clamped to its current max. `charge` is the
+ * map to read: the live `combat.artCharge` by default, or the combat
+ * screen's paced display copy (advanceArtChargeDisplay) during playback.
+ */
+export function artChargeValue(combat, weaponId, charge = combat.artCharge) {
   const max = artChargeMax(combat.registries, weaponId);
-  const raw = combat.artCharge && Number.isInteger(combat.artCharge[weaponId]) ? combat.artCharge[weaponId] : 0;
+  const raw = charge && Number.isInteger(charge[weaponId]) ? charge[weaponId] : 0;
   return Math.max(0, Math.min(max, raw));
 }
 
@@ -98,14 +102,14 @@ export function lendingWeaponOf(registries, card) {
  * unleash condition: the lender is equipped, the meter is full, and this
  * card id has an unleashed form.
  */
-export function artUnleashFor(combat, inst) {
+export function artUnleashFor(combat, inst, charge = combat.artCharge) {
   if (!inst || inst.equipmentRole !== 'weaponArt') return null;
   const weaponId = lendingWeaponOf(combat.registries, inst);
   if (!weaponId) return null;
   const max = artChargeMax(combat.registries, weaponId);
   if (!max) return null;
   const form = unleashedFormFor(combat.registries, inst.cardId);
-  const value = artChargeValue(combat, weaponId);
+  const value = artChargeValue(combat, weaponId, charge);
   const equipped = isWeaponEquipped(combat, weaponId);
   return { weaponId, value, max, form, ready: !!form && equipped && value >= max };
 }
@@ -114,7 +118,7 @@ export function artUnleashFor(combat, inst) {
  * artChargeView(combat) → one row per equipped weapon that has a meter:
  * { weaponId, name, artCardId, artName, value, max, full }. The HUD's input.
  */
-export function artChargeView(combat) {
+export function artChargeView(combat, charge = combat.artCharge) {
   const registries = combat.registries;
   const rows = [];
   for (const weaponId of equippedWeaponIds(registries, combat.loadout, combat.player && combat.player.classId)) {
@@ -122,7 +126,7 @@ export function artChargeView(combat) {
     if (!max) continue;
     const piece = armamentById(registries, weaponId);
     const artCardId = artCardIdOf(piece);
-    const value = artChargeValue(combat, weaponId);
+    const value = artChargeValue(combat, weaponId, charge);
     const artDef = registries.cards && registries.cards.has && registries.cards.has(artCardId) ? registries.cards.get(artCardId) : null;
     rows.push({ weaponId, name: piece.name || weaponId, artCardId, artName: (artDef && artDef.name) || artCardId, value, max, full: value >= max });
   }
@@ -185,4 +189,21 @@ export function unleashedTemplate(form, statusName = (id) => id, { short = false
     }
   });
   return parts.length ? `★ ${parts.join(', ')}` : '';
+}
+
+/**
+ * advanceArtChargeDisplay(charge, events) -> the same map, moved by one beat's
+ * events the way the engine moved the live one (SPEC 7.4 paced playback):
+ * `artChargeChanged` sets that weapon's value, `artUnleashed` empties it.
+ * The combat screen snapshots the pre-dispatch map and advances it here, so
+ * the pips, the full flash and the Art's unleashed face land ON the hit that
+ * earned them; when playback ends (or is skipped) the live map is read again.
+ */
+export function advanceArtChargeDisplay(charge, events = []) {
+  for (const e of events) {
+    if (!e || typeof e.weaponId !== 'string') continue;
+    if (e.type === 'artChargeChanged' && Number.isInteger(e.value)) charge[e.weaponId] = e.value;
+    else if (e.type === 'artUnleashed') charge[e.weaponId] = 0;
+  }
+  return charge;
 }

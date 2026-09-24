@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -282,4 +282,36 @@ test('the unleashed line is compact enough for a resting card, with a phone form
     assert.ok(long.length <= 34, `${cardId}: '${long}' is too long for the strip`);
     assert.ok(short.length <= long.length, cardId);
   }
+});
+
+test('paced playback: the shown charge advances beat by beat and lands on the live value', () => {
+  const combat = fight();
+  const max = artChargeMax(registries, 'greatsword');
+  for (let i = 0; i < max - 1; i++) play(combat, kitAttack('greatsword'));
+  // The screen's pre-dispatch snapshot (combat.js takeSnapshot).
+  const shown = { ...combat.artCharge };
+  const { events } = play(combat, kitAttack('greatsword'));
+  assert.equal(combat.artCharge.greatsword, max, 'the engine is already full');
+  const art = everyCard(combat).find(artOf('greatsword'));
+  // Before any beat plays, nothing the player sees is full yet.
+  assert.equal(artChargeView(combat, shown)[0].full, false);
+  assert.equal(artUnleashFor(combat, art, shown).ready, false);
+  // Beat by beat: nothing moves until the artChargeChanged beat, which is
+  // after the hit that earned it.
+  const fill = events.findIndex((e) => e.type === 'artChargeChanged');
+  assert.ok(fill > events.findIndex((e) => e.type === 'damageDealt'), 'the charge follows its hit');
+  for (const e of events.slice(0, fill)) advanceArtChargeDisplay(shown, [e]);
+  assert.equal(artChargeView(combat, shown)[0].value, max - 1);
+  for (const e of events.slice(fill)) advanceArtChargeDisplay(shown, [e]);
+  assert.deepEqual(shown, combat.artCharge, 'the last beat lands on the live value');
+  assert.equal(artUnleashFor(combat, art, shown).ready, true);
+
+  // The unleash beat empties the shown meter the same way.
+  const before = { ...combat.artCharge };
+  const unleash = play(combat, artOf('greatsword'));
+  advanceArtChargeDisplay(before, unleash.events);
+  assert.deepEqual(before, combat.artCharge);
+  assert.equal(before.greatsword, 0);
+  // An artUnleashed beat alone (no change event) still empties it.
+  assert.deepEqual(advanceArtChargeDisplay({ greatsword: max }, [{ type: 'artUnleashed', weaponId: 'greatsword' }]), { greatsword: 0 });
 });
