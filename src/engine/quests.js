@@ -112,3 +112,36 @@ export function atlasQuestAction(ctx, questId, atlas) {
   }
   return { plan, completion, events };
 }
+
+// ---------------------------------------------------------------------------
+// THE BOARD'S RESPONSES (plan phase 10b). A quest on the board is accepted or
+// collected in the dialogue screen; the response it commits comes here. The
+// three response ids are the board's closed set: `accept` and `collect` are
+// the two moves questAction already plans, and `leave` answers without one.
+// ---------------------------------------------------------------------------
+
+export const BOARD_RESPONSES = Object.freeze({ accept: 'accepted', collect: 'claimed', leave: null });
+
+/**
+ * boardQuestResponse(ctx, { questId, choiceId }, atlas?) → { choiceId, plan,
+ * completion, events }.
+ *
+ * `leave` changes nothing. `accept` and `collect` commit through
+ * atlasQuestAction (and so the completion door) only when the quest's own
+ * plan is that move: a response the quest's state no longer offers — a
+ * second collect after a reload, an accept after the quest was taken — is
+ * refused by name and changes nothing, so a quest rewards once.
+ */
+export function boardQuestResponse(ctx, { questId, choiceId } = {}, atlas) {
+  if (!Object.hasOwn(BOARD_RESPONSES, choiceId)) {
+    throw new Error(`boardQuestResponse: '${choiceId}' is not a board response (${Object.keys(BOARD_RESPONSES).join(', ')})`);
+  }
+  if (choiceId === 'leave') return { choiceId, plan: null, completion: null, events: [] };
+  const j = ctx && ctx.run && ctx.run.journey;
+  if (!j) throw new Error('boardQuestResponse requires run.journey');
+  const plan = questAction(j, questId, atlas);
+  if (!plan.allowed || plan.next !== BOARD_RESPONSES[choiceId]) {
+    throw new Error(`boardQuestResponse: quest '${questId}' does not offer '${choiceId}' now (${plan.label})`);
+  }
+  return { choiceId, ...atlasQuestAction(ctx, questId, atlas) };
+}

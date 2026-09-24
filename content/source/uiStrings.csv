@@ -336,6 +336,30 @@ dialogue.cannotAfford,,Cannot afford,You cannot pay for this response yet.,Canno
 dialogue.respond.question,,Choose {label}?,,
 dialogue.respond.confirm,,Choose,Give this response.,Choose
 dialogue.respond.hold,,Hold to answer,A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.,Hold to answer
+# ---- the quest board (plan phase 10b) ---------------------------------------
+questBoard.eyebrow,,Quest board,The quests offered in this town and the ones you carry.,Quest board
+questBoard.title,,Notices,The board's notices: quests offered anywhere in this town.,Notices
+questBoard.status,,{ready} to collect · {open} to accept,How many of the board's quests you can answer now.,
+questBoard.empty,,No quests are posted in this town.,,
+questBoard.offer.meta,,Reward: {reward} cinders · Objective: {objective},,
+questBoard.offer.noObjective,,the marked road,,
+questBoard.state.accepted,,Explore the marked road,You carry this quest; complete its objective and return.,
+questBoard.state.done,,Done,You have completed this quest and collected its reward.,
+questBoard.state.closed,,Not open,This quest's road is not open in this journey.,
+questBoard.journal.heading,,Journal,The quests this run has started and completed.,
+questBoard.journal.started,,Started,Quests you carry and have not finished.,
+questBoard.journal.completed,,Completed,Quests this run has completed.,
+questBoard.journal.noneStarted,,No quest under way.,,
+questBoard.journal.noneCompleted,,No quest completed yet.,,
+questBoard.leave,common.continue,,Leave the board.,
+questBoard.open,,Quest board,Read the town's quest board.,Quest board
+questBoard.open.summary,,{ready} to collect · {open} to accept,,
+questBoard.respond.accept,,Accept the quest,,
+questBoard.respond.collect,,Collect {reward} cinders,,
+questBoard.respond.leave,,Not now,,
+questBoard.result.accept,,You take the notice. The road is marked.,,
+questBoard.result.collect,,{speaker} counts out {reward} cinders.,,
+questBoard.result.leave,,You leave the notice on the board.,,
 # ---- the Armoury (W1e / W1n) ----------------------------------------------
 armoury.title,,Armoury,"Your character, equipment, inventory and deck.",Armoury
 armoury.close,,Close Armoury,,

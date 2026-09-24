@@ -2055,6 +2055,18 @@ export const nodes = [
     "blurb": "The place is where waiting attribute points are assigned."
   },
   {
+    "id": "questBoard",
+    "parentId": "property",
+    "label": "Quest board",
+    "color": "C9A227",
+    "glyph": "✉",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "The place keeps a quest board: the quests offered in this town, and a journal of the run's quests."
+  },
+  {
     "id": "warlord",
     "parentId": "property",
     "label": "Warlord",
