@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
-    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first.",
-    "build": "0.7.1.470",
+    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305, which landed without an entry, gets its receipt below.",
+    "build": "0.7.1.474",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1305",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last scene puts your traveller on the road, and you can place it yourself",
+    "detail": "The final journey scene used to stand the traveller on the bridge parapet beside the road; on desktop and phone it now stands on the road itself. Advanced Settings → Opening sequence → Scenes gains a Place traveller action: drag the figure in the painting, or set its position and size exactly, with separate values for desktop and phone. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.474",
+    "pullRequest": 1305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1305"
   },
   {
     "id": "pr-1302",
