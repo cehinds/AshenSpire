@@ -11,6 +11,7 @@ import {
   presentationConfig,
   saveAdvancedConfigFile,
   parseAdvancedConfigFile,
+  normalizeAdvancedSettings,
 } from '../src/model/advancedConfig.js';
 
 test('settings files round trip and leave unrelated settings untouched', () => {
@@ -53,20 +54,23 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
+  // Read before the overlay so a mutation shows whatever the stock number is.
+  const authoredCombatWin = contentBundle.balance.xp.combatWin;
+  assert.notEqual(authoredCombatWin, 60);
   const configured = configuredContentBundle(contentBundle, {
     'gameConfig.attributeRules.presets.lean.reaver.strength': 4,
     'gameConfig.attributeRules.presets.lean.reaver.dexterity': 1,
     'gameConfig.attributeRules.presets.lean.reaver.constitution': 1,
     'gameConfig.balance.xp.combatWin': 30,
     'gameConfig.progression.xpMultiplier': 2,
-    'gameConfig.progression.rewardMultiplier': 0.5,
+    'gameConfig.progression.cinderMultiplier': 0.5,
     'gameConfig.derivedStatRules.defaults.pointsPerTier': 3,
   });
   assert.equal(configured.attributeRules.presets.lean.reaver.strength, 4);
   assert.equal(contentBundle.attributeRules.presets.lean.reaver.strength, 3);
   assert.equal(configured.balance.xp.combatWin, 60);
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
-  assert.equal(contentBundle.balance.xp.combatWin, 50);
+  assert.equal(contentBundle.balance.xp.combatWin, authoredCombatWin);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
   // The retired tier dial's key does not write the table: a ruleset-6 table
   // has no tier, so writing one would fail validation and throw every other
@@ -83,7 +87,9 @@ test('an incomplete class-stat edit is named and keeps the last valid authored p
 });
 
 test('cross-field ranges are refused instead of reaching a new run inverted', () => {
-  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': 100 };
+  // One past the authored high end, so the low end is inverted whatever the
+  // stock band is.
+  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': contentBundle.balance.rewards.cinders.normal[1] + 1 };
   assert.match(advancedConfigStructuralProblems(contentBundle, settings)[0], /rewards\.cinders\.normal/);
   assert.match(advancedConfigProblems(contentBundle, settings)[0], /first value/);
 });
@@ -142,7 +148,9 @@ test('formation appearance validates scales, colors, shapes and offsets', () => 
   assert.equal(config.frontOffsetX, 150);
   assert.equal(config.gridShape, 'wide-rhombus');
   assert.equal(config.playerGridColor, '#00ff88');
-  assert.equal(config.enemyGridColor, '#e1a679');
+  // An invalid color falls back to the stock default, never passes through.
+  assert.equal(config.enemyGridColor, presentationConfig({}).enemyGridColor);
+  assert.match(config.enemyGridColor, /^#[0-9a-f]{6}$/i);
 });
 
 test('legacy row and column names migrate to the six-cell formation grid', () => {
@@ -463,4 +471,94 @@ test('every relic and talent variable has a phrase in balanceWords', async () =>
     .flatMap((row) => Object.keys(row)));
   const missing = [...variables].filter((variable) => !Object.hasOwn(balanceWords.effects, variable));
   assert.deepEqual(missing, [], 'these variables have no phrase in balanceWords.effects');
+});
+
+// THE OWNER'S ×20 IS BAKED INTO THE AUTHORED TABLE (2026-09-24), so every
+// reader of `balance.rewards.cinders` pays the same, and the row is a new key,
+// `progression.cinderMultiplier`, at 1. The old `rewardMultiplier` scaled a
+// table twenty times smaller, so a stored or exported value is carried across
+// ÷ 20 and pays what it paid.
+const CINDER = 'gameConfig.progression.cinderMultiplier';
+const OLD_CINDER = 'gameConfig.progression.rewardMultiplier';
+const v1File = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', build: {}, overrides });
+
+test('the authored cinder table carries the owner\'s ×20 and the new row defaults to 1', () => {
+  assert.deepEqual(contentBundle.balance.rewards.cinders.normal, [900, 1500]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.elite, [2100, 3000]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.boss, [4500, 5400]);
+  const rows = advancedConfigRows(contentBundle);
+  const row = rows.find((candidate) => candidate.key === CINDER);
+  assert.equal(row.def, 1);
+  assert.equal(row.label, 'Cinder gain multiplier');
+  assert.equal(row.min, 0);
+  assert.equal(row.max, 20);
+  assert.equal(row.integer, false);
+  assert.ok(!rows.some((candidate) => candidate.key === OLD_CINDER), 'the old key has no row');
+  assert.deepEqual(configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal, [900, 1500]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { [CINDER]: 0.5 }).balance.rewards.cinders.normal, [450, 750]);
+});
+
+test('a stored rewardMultiplier is carried across as ÷ 20 and pays what it paid', () => {
+  const owner = { [OLD_CINDER]: 20 };
+  const warnings = [];
+  normalizeAdvancedSettings(owner, contentBundle, warnings);
+  assert.deepEqual(owner, { [CINDER]: 1 });
+  assert.equal(warnings.length, 1);
+  assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [900, 1500]);
+
+  const two = { [OLD_CINDER]: 2 };
+  normalizeAdvancedSettings(two, contentBundle);
+  assert.equal(two[CINDER], 0.1);
+  assert.deepEqual(configuredContentBundle(contentBundle, two).balance.rewards.cinders.normal, [90, 150]);
+
+  // Un-normalized readers (an old run snapshot) read it the same way.
+  assert.deepEqual(configuredContentBundle(contentBundle, { [OLD_CINDER]: 2 }).balance.rewards.cinders.normal, [90, 150]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { overrides: { [OLD_CINDER]: 20 }, ratingsVersion: 1 }).balance.rewards.cinders.normal, [900, 1500]);
+
+  // Both present: the new key wins and the old is dropped.
+  const both = { [OLD_CINDER]: 20, [CINDER]: 3 };
+  normalizeAdvancedSettings(both, contentBundle);
+  assert.deepEqual(both, { [CINDER]: 3 });
+
+  // The export never writes the old key.
+  const exported = advancedConfigExport({ [OLD_CINDER]: 2 }, {}, [CINDER]);
+  assert.ok(!exported.includes('rewardMultiplier'));
+  assert.equal(JSON.parse(exported).overrides[CINDER], 0.1);
+});
+
+test('a v1 file carrying rewardMultiplier 20 imports as cinderMultiplier 1, with a warning', () => {
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20 }), contentBundle, {},
+    advancedConfigRows(contentBundle), warnings);
+  assert.deepEqual(changes, { [CINDER]: 1 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /divided by 20/);
+  const newer = [];
+  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [CINDER]: 2 }), contentBundle, {}, [], newer), { [CINDER]: 2 },
+    'the new key wins when both are present');
+  assert.deepEqual(newer, []);
+});
+
+test('a file written on the old, higher defaults still imports', () => {
+  const old = {
+    'gameConfig.balance.level.xp.base': 100,
+    'gameConfig.balance.skill.class.xp.base': 60,
+    'gameConfig.balance.skill.xp.base': 30,
+    'gameConfig.balance.handMax': 10,
+    'gameConfig.balance.flaskCapacity': 4,
+    'gameConfig.balance.xp.combatWin': 50,
+    'gameConfig.balance.xp.kill.normal': 25,
+    'gameConfig.classes.reaver.startingFlaskAllocation.hp': 3,
+    'gameConfig.classes.reaver.startingFlaskAllocation.mana': 1,
+    'gameConfig.classes.starseer.startingFlaskAllocation.hp': 2,
+    'gameConfig.classes.starseer.startingFlaskAllocation.mana': 2,
+    'gameConfig.classes.rogue.startingFlaskAllocation.hp': 3,
+    'gameConfig.classes.rogue.startingFlaskAllocation.mana': 1,
+    'gameConfig.classes.herald.startingFlaskAllocation.hp': 3,
+    'gameConfig.classes.herald.startingFlaskAllocation.mana': 1,
+  };
+  assert.deepEqual(parseAdvancedConfigFile(v1File(old), contentBundle), old);
+  // And a larger tuning of the curves than either build shipped.
+  const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
+  assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
 });
