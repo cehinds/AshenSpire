@@ -6,9 +6,11 @@
 //   node tools/contrast-audit.mjs --json          → machine-readable
 //   node tools/contrast-audit.mjs --gate          → exit 1 on a NEW or WORSENED
 //                                                   AA failure at a gated profile
-//                                                   (default, hi-contrast-off and
-//                                                   cb-safe, every row — the
-//                                                   three SPEC §7.5 palettes)
+//                                                   (default, hi-contrast-off,
+//                                                   cb-safe and hi-contrast-off+
+//                                                   cb-safe, every row — the three
+//                                                   SPEC §7.5 palettes, cb-safe on
+//                                                   both surface sets)
 //   node tools/contrast-audit.mjs --selftest      → plant a real palette token
 //                                                   below AA, require the gate to
 //                                                   name it, revert, re-prove clean
@@ -86,6 +88,10 @@ const PROFILES = {
   'cb-safe': { colorblindSafe: true },
   'hi-contrast+cb-safe': { highContrast: true, colorblindSafe: true },
   'hi-contrast-off': { highContrast: false }, // the pre-flip look, pinned explicitly
+  // cb-safe on the DARK :root set. `cb-safe` alone inherits highContrast's TRUE
+  // default, so it judges the remap on high-contrast surfaces only; a player can
+  // turn high contrast off and keep cb-safe on, and that pairing is its own palette.
+  'hi-contrast-off+cb-safe': { highContrast: false, colorblindSafe: true },
   'text-L': { textSize: 'L' },
   'hi-contrast+text-L': { highContrast: true, textSize: 'L' },
   // The SMALL edge, and it is not cosmetic. Auto zoom resolves to 1.29 at
@@ -213,12 +219,15 @@ const KNOWN_BELOW = [
   { label: 'reward Continue HOLD cue', profile: 'default', ...LEDGER_HOLD },
   { label: 'reward Continue HOLD cue', profile: 'cb-safe', ...LEDGER_HOLD },
   { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off', ...LEDGER_HOLD },
+  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off+cb-safe', ...LEDGER_HOLD },
   { label: 'reward TAKEN chip (gold)', profile: 'default', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
   { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
+  { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off+cb-safe', ...LEDGER_TAKEN },
   { label: 'reward taken title (gold)', profile: 'default', ...LEDGER_TAKEN },
   { label: 'reward taken title (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
   { label: 'reward taken title (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
+  { label: 'reward taken title (gold)', profile: 'hi-contrast-off+cb-safe', ...LEDGER_TAKEN },
 ];
 
 // ---- WCAG --------------------------------------------------------------------
@@ -907,10 +916,10 @@ const dbg = Number(/ws:\/\/[^:/]+:(\d+)\//.exec(wsUrl)[1]);
 // This is NOT the partial run the gate refuses below: that refusal exists because
 // a `--profile` invocation can omit a GATED profile and then exit 0 having judged
 // nothing there. This flag omits only profiles the gate never judged — the
-// verdict is bit-for-bit the one the full matrix produces, at a quarter of the
+// verdict is bit-for-bit the one the full matrix produces, at under half the
 // renders. The table it prints is narrower, and says so.
 const gatedOnly = args.includes('--gated-only');
-const GATED_PROFILES = ['default', 'hi-contrast-off', 'cb-safe'];
+const GATED_PROFILES = ['default', 'hi-contrast-off', 'cb-safe', 'hi-contrast-off+cb-safe'];
 const profiles = onlyProfile
   ? { [onlyProfile]: PROFILES[onlyProfile] }
   : (gatedOnly
@@ -1072,6 +1081,10 @@ if (gate) {
     default: () => true,
     'hi-contrast-off': () => true,
     'cb-safe': () => true,
+    // cb-safe over the dark :root set — `cb-safe` alone rides highContrast's TRUE
+    // default, so without this row a remap that holds on high-contrast surfaces
+    // but sinks on the dark ones would exit 0.
+    'hi-contrast-off+cb-safe': () => true,
   };
   // A partial run cannot gate: a `--profile` invocation that omits a gated
   // profile would judge nothing there and exit 0 — the same silence this block
