@@ -21,7 +21,7 @@ import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './co
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
-import { attachArtCharge, takeArtUnleash } from './artCharge.js';
+import { attachArtCharge, endArtChargeResolution, takeArtUnleash } from './artCharge.js';
 import { artUnleashFor, unleashedTemplate } from '../model/artCharge.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
@@ -1011,6 +1011,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     staminaSpent: staminaCost,
   });
   drainQueue(combat);
+  // The card has resolved: its last weapon hit credits no later stagger or
+  // burst (SPEC §12.2.1 item 4).
+  endArtChargeResolution(combat);
 
   // Placement after resolution (SPEC §4.3): Exhaust → exhaust pile;
   // Powers are removed from play (NOT exhausted); everything else → discard.

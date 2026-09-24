@@ -9,8 +9,10 @@
 //   procBurst / status meterFilled on an enemy, same  → +gainOnBurst to W
 //
 // The "last hit" weapon lives only for the current card's resolution: a
-// `cardPlayed` announcement and `playerTurnEnd` clear it, and an Art's own hit
-// clears it, so an Art never charges its own meter. Headless; no RNG.
+// `cardPlayed` announcement, the end of that card's resolution
+// (endArtChargeResolution), `playerTurnEnd`, `flaskUsed`, `armamentSwapped`
+// and any player hit on an enemy that no equipped weapon lent clear it, and an
+// Art's own hit clears it, so an Art never charges its own meter. Headless; no RNG.
 
 import { artChargeRules, artChargeMax, artChargeValue, artUnleashFor, isWeaponEquipped, lendingWeaponOf } from '../model/artCharge.js';
 
@@ -37,13 +39,17 @@ export function recordArtCharge(combat, event) {
   switch (event.type) {
     case 'cardPlayed':
     case 'playerTurnEnd':
+    case 'flaskUsed':
+    case 'armamentSwapped':
       combat._artChargeLastHit = null;
       return;
     case 'damageDealt': {
       if (event.sourceId !== combat.player.id || !isEnemy(combat, event.targetId) || !(event.amount > 0)) return;
       if (event.equipmentRole === 'weaponArt') { combat._artChargeLastHit = null; return; }
       const weaponId = lendingWeaponOf(combat.registries, event);
-      if (!weaponId || !isWeaponEquipped(combat, weaponId)) return;
+      // A hit no equipped weapon lent (a relic, a flask, a status tick, a
+      // loose card) is not the weapon's: what it staggers credits nobody.
+      if (!weaponId || !isWeaponEquipped(combat, weaponId)) { combat._artChargeLastHit = null; return; }
       combat._artChargeLastHit = weaponId;
       charge(combat, weaponId, rules.gainPerHit, 'hit');
       return;
@@ -60,6 +66,11 @@ export function recordArtCharge(combat, event) {
       return;
     default:
   }
+}
+
+/** The played card's own resolution is over: its hits credit nothing after. */
+export function endArtChargeResolution(combat) {
+  combat._artChargeLastHit = null;
 }
 
 /** Hook the bus: every emitted event is recorded after its triggers fired. */

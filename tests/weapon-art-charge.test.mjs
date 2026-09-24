@@ -122,6 +122,32 @@ test('a build-up burst caused by the weapon\'s hit adds its bonus charge; the Po
   assert.equal(combat.artCharge.greatsword, rules.gainPerHit + rules.gainOnBurst);
 });
 
+test('the last weapon hit is forgotten by an unlent hit, a flask, a swap and the end of its card', () => {
+  const combat = fight();
+  const enemy = combat.enemies[0];
+  const hit = () => combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 3, blocked: 0, cardInstanceId: 'k', grantedBy: 'greatsword', equipmentRole: 'granted', isAttack: true });
+  const staggerCredits = () => {
+    const before = combat.artCharge.greatsword || 0;
+    combat.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId });
+    return (combat.artCharge.greatsword || 0) - before;
+  };
+  // A relic / status tick hit with no lender after the weapon's hit.
+  hit();
+  combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 2, blocked: 0, isAttack: false });
+  assert.equal(staggerCredits(), 0, 'an unlent hit takes the stagger away from the weapon');
+  hit();
+  combat.emit('flaskUsed', { flaskId: 'x', slot: 0, targetId: enemy.id });
+  assert.equal(staggerCredits(), 0, 'a flask forgets the last hit');
+  hit();
+  combat.emit('armamentSwapped', { slotId: 'rightHand', setIndex: 0, cost: 0, rule: 'x' });
+  assert.equal(staggerCredits(), 0, 'a swap forgets the last hit');
+  // A real play: once the card has resolved, a later stagger is nobody's.
+  combat.artCharge = {};
+  play(combat, kitAttack('greatsword'));
+  assert.equal(combat._artChargeLastHit, null, 'the card\'s resolution ended and the last hit with it');
+  assert.equal(staggerCredits(), 0);
+});
+
 test('a full meter unleashes the Art: its extra effects resolve and the meter empties', () => {
   const plain = fight();
   const plainHp = plain.enemies[0].hp;
