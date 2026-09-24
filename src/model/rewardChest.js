@@ -65,6 +65,24 @@ export function chestOptionReferenceProblems(registries, option) {
 }
 
 /**
+ * chestOptionDeckProblems(registries, run, option, path) → problems with an
+ * owned-upgrade option against the deck it names (SPEC §3.8.1). The chooser
+ * shows the option's `cardId` while the grant upgrades its `instanceId`, so
+ * the two must agree: the instance must be in `run.deck`, carry that
+ * `cardId`, and — when `registries` is handed in (the load door) — still be
+ * one the chest may upgrade. Without registries (the registry-free shape
+ * door) only the identity is checked. Other options have nothing to check.
+ */
+export function chestOptionDeckProblems(registries, run, option, path = 'option') {
+  if (!option || option.category !== 'upgrade' || option.mode !== 'owned') return [];
+  const inst = ((run && Array.isArray(run.deck)) ? run.deck : []).find((c) => c && c.instanceId === option.instanceId);
+  if (!inst) return [`${path}.instanceId '${option.instanceId}' names no card in the deck`];
+  if (inst.cardId !== option.cardId) return [`${path}.instanceId '${option.instanceId}' is '${inst.cardId}', not the offered '${option.cardId}'`];
+  if (registries && !chestUpgradeable(registries, run, inst)) return [`${path}.instanceId '${option.instanceId}' is not a card the chest may upgrade`];
+  return [];
+}
+
+/**
  * True for a deck instance an elite chest may upgrade in place: an ordinary
  * run-owned card, not already upgraded, whose def authors an upgrade. An
  * item-owned or equipment-bound card upgrades through the smith, not here
@@ -100,7 +118,8 @@ export function applyChestOption(registries, run, option, { collectArmament = nu
     case 'upgrade':
       if (option.mode === 'owned') {
         const inst = run.deck.find((c) => c.instanceId === option.instanceId);
-        if (!chestUpgradeable(registries, run, inst)) return false;
+        // The chooser showed `cardId`: never upgrade a different card.
+        if (!inst || inst.cardId !== option.cardId || !chestUpgradeable(registries, run, inst)) return false;
         inst.upgraded = true;
         return true;
       }

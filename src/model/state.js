@@ -25,7 +25,7 @@ import {
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
-import { chestOptionShapeProblems } from './rewardChest.js';
+import { chestOptionShapeProblems, chestOptionDeckProblems } from './rewardChest.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
@@ -973,6 +973,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             problems.push('pendingReward.chosenChestIndex must index pendingReward.rewards.chest.options');
           }
           if (pending.states?.chest === 'taken' && !Number.isInteger(idx)) problems.push('pendingReward chest Taken state requires chosenChestIndex');
+          // An owned upgrade names the deck card the chooser shows (SPEC §3.8.1).
+          // Only while the chest is open: a Taken chest's card is upgraded now.
+          if (!pending.states?.chest) {
+            options.forEach((o, i) => problems.push(...chestOptionDeckProblems(null, run, o, `pendingReward.rewards.chest.options[${i}]`)));
+          }
         }
       }
       // The boss relic choice (SPEC §6.1): distinct ids; the pick is one of them,

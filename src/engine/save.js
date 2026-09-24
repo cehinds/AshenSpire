@@ -45,7 +45,7 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
-import { chestOptionReferenceProblems } from '../model/rewardChest.js';
+import { chestOptionReferenceProblems, chestOptionDeckProblems } from '../model/rewardChest.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -112,7 +112,7 @@ function classTreeReferenceProblems(run, registries) {
   return problems;
 }
 
-function pendingRewardReferenceProblems(pending, registries) {
+function pendingRewardReferenceProblems(pending, registries, run) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
@@ -134,6 +134,8 @@ function pendingRewardReferenceProblems(pending, registries) {
   }
   for (const option of (rewards.chest && Array.isArray(rewards.chest.options) && rewards.chest.options) || []) {
     problems.push(...chestOptionReferenceProblems(registries, option));
+    // An open chest's owned upgrade must still be one the chest may upgrade.
+    if (!(pending.states && pending.states.chest)) problems.push(...chestOptionDeckProblems(registries, run, option, 'chest upgrade'));
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
   for (const relicId of Array.isArray(rewards.relicIds) ? rewards.relicIds : []) {
@@ -579,7 +581,7 @@ export function createSaveManager(storage) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
-        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries, run);
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }

@@ -416,7 +416,12 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   `owned`|`rare`, an `owned` upgrade's `instanceId`, exactly one of `armamentId` /
   `weaponArtId`, `cinders` and `smithingStones` non-negative integers); the load door
   (`engine/save.js`, via `chestOptionReferenceProblems`) refuses an id the content does not
-  hold, by name — so a corrupt or stale save is archived, never mounted. Auto-collect picks one of the
+  hold, by name — so a corrupt or stale save is archived, never mounted. While the chest is
+  still open (no `states.chest`), an `owned` upgrade must name the card the chooser shows
+  (`chestOptionDeckProblems`): the shape door refuses an `instanceId` absent from `run.deck`
+  or carrying a different `cardId`, and the load door also refuses one the chest may no
+  longer upgrade (`chestUpgradeable`). `applyChestOption` refuses the same mismatch and
+  grants nothing. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
   while the bag is full — and while the door's own armament row is still pending it needs
   **two** free slots, since that row claims one first (it is listed and auto-collected before

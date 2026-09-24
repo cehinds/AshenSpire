@@ -190,7 +190,7 @@ test('taking a chest option grants exactly that option', () => {
   const base = newRun(7);
   const cases = [
     { category: 'relic', relicId: r.relics.all().find((x) => x.rarity === 'common' && !base.relics.includes(x.id)).id },
-    { category: 'upgrade', mode: 'owned', instanceId: base.deck.find((c) => chestUpgradeable(r, base, c))?.instanceId },
+    { category: 'upgrade', mode: 'owned', ...(({ instanceId, cardId } = {}) => ({ instanceId, cardId }))(base.deck.find((c) => chestUpgradeable(r, base, c))) },
     { category: 'upgrade', mode: 'rare', cardId: r.classes.get('reaver').cardPool.find((id) => rarity(id) === 'rare') },
     { category: 'cinders', cinders: 100, smithingStones: 1 },
   ].filter((o) => o.category !== 'upgrade' || o.instanceId || o.cardId);
@@ -502,6 +502,49 @@ test('a corrupt or stale chest option is refused at the save doors, by name', as
   assert.match(load([{ category: 'upgrade', mode: 'rare', cardId: 'noSuchCard' }]), /chest upgrade card 'noSuchCard' is unknown/);
   assert.match(load([{ category: 'armament', armamentId: 'noSuchBlade' }]), /chest armament 'noSuchBlade' is unknown/);
   assert.match(load([{ category: 'armament', weaponArtId: 'noSuchArt' }]), /chest weapon art 'noSuchArt' is unknown/);
+});
+
+test('an owned chest upgrade must name the deck card it shows, at both save doors and the grant', async () => {
+  const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
+  const run = newRun(3);
+  const target = run.deck.find((c) => chestUpgradeable(r, run, c));
+  const other = run.deck.find((c) => c.cardId !== target.cardId);
+  assert.ok(target && other, 'the starter deck holds an upgradeable card and a different one');
+  const pending = (options, extra = {}) => ({
+    schemaVersion: 1, source: 'elite', after: 'map', rewards: { cinders: 10, chest: { options } }, states: {}, chosenCardId: null,
+    chosenDraftCardIds: {}, chosenDraftNodeIds: {}, ...extra,
+  });
+  const good = { category: 'upgrade', mode: 'owned', instanceId: target.instanceId, cardId: target.cardId };
+  const mismatched = { ...good, cardId: other.cardId };
+  const missing = { ...good, instanceId: 'no-such-instance' };
+  // The shape door: the instance must exist and carry the offered cardId.
+  const shape = (option, extra) => { run.pendingReward = pending([option], extra); return validateRunShape(run).join(' | '); };
+  assert.equal(shape(good), '');
+  assert.match(shape(mismatched), /options\[0\]\.instanceId '.+' is '.+', not the offered/);
+  assert.match(shape(missing), /options\[0\]\.instanceId 'no-such-instance' names no card in the deck/);
+  // A Taken chest's card is upgraded now; its option is history, not an offer.
+  assert.equal(shape(mismatched, { states: { chest: 'taken' }, chosenChestIndex: 0 }), '');
+  delete run.pendingReward;
+  // The load door: the instance must still be one the chest may upgrade.
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const load = (options, mutate = () => {}) => {
+    saves.saveRun(run, createRng(1));
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    raw.pendingReward = pending(options);
+    mutate(raw);
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    return saves.loadRun(r) ? '' : saves.runStatus().reason;
+  };
+  assert.equal(load([good]), '');
+  assert.match(load([mismatched]), /not the offered/);
+  assert.match(load([good], (raw) => { raw.deck.find((c) => c.instanceId === target.instanceId).upgraded = true; }),
+    /is not a card the chest may upgrade/);
+  // The grant refuses a mismatch rather than upgrading a card the chooser never showed.
+  const copy = structuredClone(run);
+  assert.equal(applyChestOption(r, copy, mismatched), false);
+  assert.deepEqual(copy.deck, run.deck);
+  assert.equal(applyChestOption(r, copy, good), true);
 });
 
 test('autoTakeChest: a bot door takes one takeable option, seeded', () => {
