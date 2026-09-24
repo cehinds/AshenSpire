@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1294",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Fights pay their normal Cinders again",
+    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders.",
+    "build": "0.7.1.468",
+    "pullRequest": 1294,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+  },
+  {
     "id": "pr-1281",
     "date": "2026-09-24",
     "group": "2026-09-24",
