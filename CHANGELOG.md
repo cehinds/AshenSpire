@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-24
 
+- **Guilt costs its HP at the end of your turn, in co-op too** ([#1286](https://github.com/cehinds/AshenSpire/pull/1286), `0.7.1.477`). Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.
 - **Text is easier to read in the colour-blind-safe and dark palettes** ([#1291](https://github.com/cehinds/AshenSpire/pull/1291), `0.7.1.475`). Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.
 - **Reading a card no longer hides behind other panels** ([#1288](https://github.com/cehinds/AshenSpire/pull/1288), `0.7.1.473`). Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.
 - **The map re-centres when your screen changes size** ([#1289](https://github.com/cehinds/AshenSpire/pull/1289), `0.7.1.471`). Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.

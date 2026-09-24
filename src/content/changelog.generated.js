@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1286",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Guilt costs its HP at the end of your turn, in co-op too",
+    "detail": "Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.",
+    "build": "0.7.1.477",
+    "pullRequest": 1286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1286"
+  },
+  {
     "id": "pr-1291",
     "date": "2026-09-24",
     "group": "2026-09-24",
