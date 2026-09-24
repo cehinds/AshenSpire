@@ -8,7 +8,9 @@
   },
   "stamina": {
     "idleRecoveryPerTurn": 1,
-    "refundErasesSpend": false
+    "refundErasesSpend": false,
+    "combatStartRefill": "full",
+    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
   },
   "weight": {
     "capacityBase": 0,

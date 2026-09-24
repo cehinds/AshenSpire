@@ -41,7 +41,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
 import { refreshCombatRatings } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
@@ -57,11 +57,12 @@ export function coopHpMult(headcount, factor = 0.6) {
 }
 
 /**
- * createCoopCombat({ registries, rng, players, enemyIds, extraHpMult?, enemyStatuses? })
+ * createCoopCombat({ registries, rng, players, enemyIds, extraHpMult?, enemyDamageMult?, enemyStatuses? })
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
- * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom).
+ * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
+ * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -117,6 +118,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
       instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
       arcaneExposure: def.arcaneExposure,
       damageResistanceBySchool: def.damageResistanceBySchool,
+      damageMult: enemyDamageMult,
     }));
   });
   if (C.ratingsRules) {
@@ -710,7 +712,7 @@ function executeMove(C, enemy, move, moveId) {
     if (C.result) return;
     setActive(C, P);
     if (move.damage != null) {
-      C.enqueue({ effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
+      C.enqueue({ effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
       drainQueue(C);
       if (C.result) return;
     }
@@ -746,7 +748,7 @@ function rollIntents(C, isFirstTurn = false) {
     else moveId = weightedMovePick(C, enemy, def);
     if (moveId == null) { enemy.intent = { kind: 'unknown', moveId: null }; continue; }
     enemy.movesHistory.push(moveId);
-    enemy.intent = buildIntent(def.moves[moveId], moveId);
+    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
   }
 }
 
@@ -767,10 +769,10 @@ function weightedMovePick(C, enemy, def) {
   return pool[pool.length - 1][0];
 }
 
-function buildIntent(move, moveId) {
+function buildIntent(move, moveId, enemy = null) {
   return {
     kind: move.intent, moveId,
-    damage: move.damage != null ? move.damage : null,
+    damage: enemyMoveDamage(enemy, move),
     hits: move.damage != null ? (move.hits != null ? move.hits : 1) : null,
     block: move.block != null ? move.block : null,
     delayed: !!move.delay, pending: false,
