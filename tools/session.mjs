@@ -639,6 +639,10 @@ export function createSession({ registries, seedString, endless = false, restore
         // the whole of every fight. An empty array is a real answer and a
         // missing field is not; that distinction is the section's whole point.
         performedMoves: Array.isArray(e.performedMoves) ? e.performedMoves.slice() : [],
+        // A boss's tier scale (balance.bossTiers) rides on the entity; the
+        // client's move cards read it through enemyMoveDamage, as solo's do,
+        // so an inactive move shows the damage it will really deal.
+        ...(Number.isFinite(e.damageMult) ? { damageMult: e.damageMult } : {}),
         arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
