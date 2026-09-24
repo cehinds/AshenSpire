@@ -987,7 +987,19 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     throw new Error('check-order: buildordinal.json gave no ordinal and release, so no receipt can be weighed against the builds that exist');
   }
   let checks = 0;
+  // EVERY HEADING MARKDOWN RENDERS, NOT ONLY THE ONES THIS FILE'S PARSER READS.
+  // CommonMark takes up to three spaces of indent, and a tab or nothing after
+  // the `##`, as the same level-2 heading; parseChangelog groups only on a line
+  // that starts `## `, so ` ## 2020-01-01` rendered as a date the ordering never
+  // saw (#1279 review). Such a line is refused, since the file writes `## `.
+  // And EVERY heading's date is ordered, not only a heading with receipts under
+  // it: an empty `## 2020-01-01` on top rendered an old date above the newest
+  // group and passed, because the receipt groups never held it (#1279 review).
+  let newerHeading = null;
   for (const line of markdown.split(/\r?\n/)) {
+    if (/^ {0,3}##(?:[ \t]|$)/.test(line) && !line.startsWith('## ')) {
+      throw new Error(`check-order: heading '${line}' renders as a level-2 heading but is not written '## ' at the start of the line, so the receipts under it would be dated by the heading above`);
+    }
     if (!line.startsWith('## ')) continue;
     const heading = line.slice(3).trim();
     const date = heading.match(RELEASE_HEADING)?.[2] ?? heading.match(DATE_HEADING)?.[1];
@@ -995,10 +1007,29 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
       throw new Error(`check-order: heading '${line}' is neither a date group ('## YYYY-MM-DD') nor a release heading ('## X.Y.Z — YYYY-MM-DD', em-dash)`);
     }
     if (!realCalendarDate(date)) throw new Error(`check-order: heading '${line}' names ${date}, which is not a calendar date`);
+    if (newerHeading && date > newerHeading.date) {
+      throw new Error(`check-order: heading '${line}' sits below '${newerHeading.line}' but is newer — headings run newest first, with or without receipts under them`);
+    }
+    newerHeading = { line, date };
     checks++;
   }
   const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: false });
   checks += entries.length;
+  // NO RECEIPT NEWER THAN THE NEWEST BUILD. parseChangelog bounds only receipts
+  // of the current release, so `0.8.0.3` under a `0.7.1` tree was never weighed
+  // and named a build of a release that does not exist yet (#1279 review). Every
+  // ordered stamp is held under buildordinal.json's own release and ordinal. A
+  // legacy `-rc` stamp sorts below a release-scoped one of its candidate, so the
+  // same comparison is safe for it.
+  const ceilingKey = stampKey(currentRelease, currentOrdinal);
+  if (ceilingKey === null) throw new Error(`check-order: buildordinal.json's ${currentRelease}.${currentOrdinal} is not a build this tool can order`);
+  for (const e of entries) {
+    const m = e.build.match(STAMP);
+    const key = m ? stampKey(m[1], Number(m[2])) : null;
+    if (key !== null && compareStamps(key, ceilingKey) > 0) {
+      throw new Error(`check-order: #${e.pullRequest} cites \`${e.build}\`, past buildordinal.json's ${currentRelease}.${currentOrdinal} — a receipt cannot name a build that has not happened`);
+    }
+  }
   // PROSE STAMPS DO NOT BREAK A CHAIN. A receipt whose stamp is prose has no
   // build to order, so it is stepped over rather than ending the comparison:
   // each stamped receipt is weighed against the nearest STAMPED one above it in
@@ -1085,8 +1116,11 @@ async function orderSelftest() {
 async function orderCorpus(ordinalFile) {
   const real = readFileSync(OWNER, 'utf8');
   const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
-  // A LATER RELEASE, for the rises: the ceiling bounds only the current release,
-  // so `${next}.0` is newer than `${rel}.${n}` without naming a build past it.
+  // ROOM FOR A RISE UNDER THE CEILING. Every plant runs against buildordinal.json
+  // one build further on, so `${rel}.${n + 1}` is newer than `${rel}.${n}` and
+  // still names a build that exists. A later release names none: the check
+  // bounds every stamp by buildordinal.json, not only the current release's.
+  const roomy = JSON.stringify({ ...JSON.parse(ordinalFile), ordinal: n + 1 }, null, 2);
   const next = `${Number(rel.split('.')[0]) + 1}.0.0`;
   const at = real.indexOf('\n## ');
   if (at < 0) throw new Error('check-order selftest: CHANGELOG.md has no ## heading to plant above');
@@ -1112,22 +1146,26 @@ async function orderCorpus(ordinalFile) {
   const pinLine = pin && real.split('\n').find((l) => l.includes(`[#${pin[1]}](`));
   if (!pinLine) throw new Error('check-order selftest: plant site drifted — the first GRANDFATHERED_RISES pin names a receipt CHANGELOG.md does not hold');
   const plants = [
-    ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
-    ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
-    ['build rising within a date', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, 0, next)}\n`), null, 'build rises within 2099-01-01'],
+    ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'newest first'],
+    ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'newest first'],
+    ['build rising within a date', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, n + 1)}\n`), null, 'build rises within 2099-01-01'],
     // Two groups sharing a date are ordered by the cross-group rule, which a
     // release heading must not slip past.
-    ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, 0, next)}\n`), null, 'an older merge cannot ship a newer build'],
+    ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, n + 1)}\n`), null, 'an older merge cannot ship a newer build'],
     // The group's own lowest then highest build, on top of it: one more rise,
     // and the group's range — so every cross-group rule — unchanged.
     ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${rv(990001, oldLow.build)}\n${rv(990002, oldHigh.build)}\n`), null, 'GRANDFATHERED_RISES pins'],
     // A prose-stamped receipt between two stamped ones, and a prose-only group
     // between two stamped groups, must not hide the inversion across them.
     ['rise in a grandfathered date swapped for a new one, count unchanged', real.replace(pinLine, `${rv(990001, pin[2])}\n${pinLine}`), null, 'not pinned: '],
-    ['build rising within a date across a prose-stamped receipt', top(`## 2099-01-01\n\n${r(990001, n)}\n${rv(990002, 'evidence-only')}\n${r(990003, 0, next)}\n`), null, 'build rises within 2099-01-01'],
-    ['build rising across a prose-only group', top(`## 2099-01-03\n\n${r(990001, n)}\n\n## 2099-01-02\n\n${rv(990002, 'evidence-only')}\n\n## 2099-01-01\n\n${r(990003, 0, next)}\n`), null, 'runs backward across groups'],
-    ['receipt past buildordinal.json spelling the release with a leading zero', top(`## 2099-01-01\n\n${r(990001, n + 1, `0${rel}`)}\n`), null, 'a receipt cannot name a build that has not happened'],
-    ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 1)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['build rising within a date across a prose-stamped receipt', top(`## 2099-01-01\n\n${r(990001, n)}\n${rv(990002, 'evidence-only')}\n${r(990003, n + 1)}\n`), null, 'build rises within 2099-01-01'],
+    ['build rising across a prose-only group', top(`## 2099-01-03\n\n${r(990001, n)}\n\n## 2099-01-02\n\n${rv(990002, 'evidence-only')}\n\n## 2099-01-01\n\n${r(990003, n + 1)}\n`), null, 'runs backward across groups'],
+    ['receipt past buildordinal.json spelling the release with a leading zero', top(`## 2099-01-01\n\n${r(990001, n + 2, `0${rel}`)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['receipt citing a later release than buildordinal.json\'s', top(`## 2099-01-01\n\n${r(990001, 0, next)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['heading indented one space (Markdown still renders it)', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m} ## 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'is not written \'## \''],
+    ['heading written with a tab after the hashes', top(`##\t2020-01-01\n\n${r(990001, n)}\n`), null, 'is not written \'## \''],
+    ['empty date heading above the newest group', top(`## 2020-01-01\n`), null, 'headings run newest first'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with no date', top(`## 1.0.0\n\n${r(990001, n)}\n`), null, 'neither a date group'],
@@ -1135,9 +1173,10 @@ async function orderCorpus(ordinalFile) {
     ['no buildordinal.json to weigh receipts against', real, 'absent', 'buildordinal.json gave no ordinal'],
   ];
   // Must PASS: a release heading on top, a receipt AT buildordinal.json's
-  // ordinal, a tie, and a descent (across releases) inside the one date. (A descent ACROSS releases inside
-  // a date is proven by the real file, which has several.)
-  const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, 0, next)}\n${r(990002, 0, next)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
+  // ordinal, a build one past it (the room every plant runs with), a tie, and a
+  // descent inside the one date. (A descent ACROSS releases inside a date is
+  // proven by the real file, which has several.)
+  const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, n + 1)}\n${r(990002, n + 1)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
   // The scope blocks print on every exit, so the tail of the output is never the
   // reason; the one line that names it is.
   const redLine = (out) => out.split('\n').find((l) => /RED —|Error:/.test(l)) ?? '(no red line)';
@@ -1146,7 +1185,7 @@ async function orderCorpus(ordinalFile) {
     const parent = mkdtempSync(join(tmpdir(), 'about-changelog-order-'));
     try {
       writeFileSync(join(parent, 'CHANGELOG.md'), markdown);
-      if (ordinal !== 'absent') writeFileSync(join(parent, 'buildordinal.json'), ordinalFile);
+      if (ordinal !== 'absent') writeFileSync(join(parent, 'buildordinal.json'), roomy);
       const child = spawnSync(process.execPath, [SCRIPT, '--root', parent, '--check-order'], { encoding: 'utf8', timeout: 60000 });
       return { code: child.status, out: `${child.stdout || ''}\n${child.stderr || ''}` };
     } finally { rmSync(parent, { recursive: true, force: true }); }
