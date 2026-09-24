@@ -325,3 +325,25 @@ test('autoTakeChest: a bot door takes one takeable option, seeded', () => {
   };
   assert.deepEqual(take(21), take(21));
 });
+
+test('the boss card offer reads and moves the same pity', () => {
+  const run = newRun();
+  // Rolls of 0 land every boss slot on common; the offset climbs as at any door.
+  rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'boss', run });
+  const n = r.balance.rewards.cardChoices;
+  assert.equal(run.cardRarityOffset, pity.offsetStart + n * pity.offsetStep);
+  assert.equal(run.cardRewardsSinceRare, 1);
+  // A boss door that begins owed a rare shows one in its last slot.
+  run.cardRewardsSinceRare = pity.rareGuaranteeAfter;
+  const ids = rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'boss', run });
+  assert.equal(rarity(ids[ids.length - 1]), 'rare');
+  assert.equal(run.cardRewardsSinceRare, 0);
+});
+
+test('the game hands the run to the boss card offer (src/main.js)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const bossCall = src.match(/rollCardRewardIds\(registries, rng, \{[^}]*pool: 'boss'[^}]*\}/);
+  assert.ok(bossCall, 'the boss door rolls its card offer');
+  assert.match(bossCall[0], /\brun\b(?!\.)/, 'the boss offer is handed the run');
+});

@@ -77,8 +77,9 @@ export function cardRewardRarityWeights(registries, { classId, pool = 'normal', 
  * Handed the `run`, the offer reads and moves the card-rarity pity (SPEC
  * §3.8.1): `run.cardRarityOffset` shifts every slot's rare chance and
  * `run.cardRewardsSinceRare` forces a rare into the last slot once enough
- * offers went without one. Without a run — a boss door, a tool — or under
- * Chaos Rewards, the roll is the plain weighted one and no counter moves.
+ * offers went without one — at a normal, elite or boss door alike. Without a
+ * run (a tool) or under Chaos Rewards, the roll is the plain weighted one and
+ * no counter moves.
  */
 export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, run = null }) {
   const bal = registries.balance.rewards;

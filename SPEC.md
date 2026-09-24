@@ -351,8 +351,9 @@ Every generator is a pure function of `(config, rngStream, runState)` → snapsh
 #### 3.8.1 Card-rarity pity and the elite chest *(game-feel rework, 2026-09-24)*
 
 Two reward rules that make a run's spoils feel earned rather than flat. Both are seeded (the
-same seed replays the same offers), both read every number from `balance.rewards`, and both
-leave the boss reward path alone.
+same seed replays the same offers) and both read every number from `balance.rewards`. Pity
+covers the boss card offer too; the chest is the elite's alone (a boss keeps its relic
+choice, §6.1).
 
 **Card-rarity pity (the StS rare offset).** A run carries two counters:
 
@@ -362,9 +363,10 @@ leave the boss reward path alone.
 | `run.cardRewardsSinceRare` | consecutive card offers that showed no rare | reads as `0` |
 
 They are written lazily on the first card offer that reads them (the `flaskChancePct`
-precedent), so no migration invents them. Pity applies to the **card offer of a normal or
-elite fight** (`rollCardRewardIds` handed the `run`). It does not apply to boss offers, to
-Chaos Rewards (equal odds), or to skill/class drafts, and none of those move the counters.
+precedent), so no migration invents them. Pity applies to the **card offer of a normal,
+elite or boss fight** (`rollCardRewardIds` handed the `run`); a boss offer reads the boss
+pool's authored weights and moves the same counters. It does not apply to Chaos Rewards
+(equal odds) or to skill/class drafts, and neither moves the counters.
 
 For each card slot, with `w` the pool's authored weights (the class's own row when it has one):
 

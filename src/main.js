@@ -2435,7 +2435,7 @@ async function onCombatEnd(result, combat, enc) {
         + (bossRelicIds.length ? 0 : registries.balance.rewards.bossRelicConsolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn(), run }),
       relicIds: bossRelicIds,
       armamentId: bossArmament,
       smithingStoneReceipt,
