@@ -273,7 +273,7 @@ function derivedOptions(registries, extra = {}) {
  * outputs so a later content edit cannot rewrite a climb in progress.
  */
 /** The character level a run's pools are derived at (plan phase 6): 1 for a run whose ledger is absent. */
-function characterLevelOf(run) {
+export function characterLevelOf(run) {
   const row = run && run.level;
   return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }

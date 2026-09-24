@@ -256,9 +256,9 @@ export const balance = {
   // signature (roleCopies.ability below; the composed plan grants it first).
   startingDeckSize: 11,
   [NOTE]: {
-    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Progression › Stat conversions is the row that moves them. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
-    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Progression › Stat conversions is the row that moves it.', inert: true },
-    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Hand & Draw → Hand capacity → Base hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
+    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
+    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Stats → Draw & hand is where it is set.', inert: true },
+    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Stats → Draw & hand → Hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
     flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.',
     flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
     startingCinders: 'Cinders a new run opens with.',

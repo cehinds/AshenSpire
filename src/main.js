@@ -24,7 +24,7 @@ import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredCon
 import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
-import { createRunState, createDeck, createIdGen } from './model/state.js';
+import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
@@ -1440,6 +1440,7 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
+    previewLevel: run ? characterLevelOf(run) : null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });

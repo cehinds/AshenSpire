@@ -298,6 +298,7 @@ custom art does not require a second card implementation.
 | `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
+| `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
@@ -665,13 +666,22 @@ with one-hand grip. The visual miniature includes Rogue single dagger; the
 [full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
 class/outfit filters, pose order, timing, portrait and conversation references.
 
-### Hand & Draw Rules
+### Stats, conversions, and hand rules
 
-Advanced Settings groups the controls into Starting hand, Turn draws, Hand
-capacity, and Retention & discards. `src/model/handRules.js` owns row metadata,
-stat calculations and the live preview; `settings.js` uses the shared setting
-rows and desktop/compact navigation. In-run previews use the character's current
-attributes; title-screen previews show baseline values.
+Advanced → Stats is the one editing area for everything an attribute turns
+into. Each trait is a topic — Actions, Draw & hand, HP, Stamina, Mana, Poise,
+Ward, AR, DR, PR — holding its ruleset-6 formula (base, a decimal weight per
+attribute, growth per level), its rating formula and related constants under
+subsection headings (`models/AdvancedSettingsGroups.js` `statsSection`). Draw &
+hand keeps Starting hand, Turn draws, Hand capacity and Retention & discards
+together, with the Draw conversion and fallback capacity under "Co-op & legacy
+fallback"; Poise ends with the rows used only while ratings are off.
+`src/ui/models/StatsPreviewModel.js` computes the worked example above each
+topic from the same configured bundle, derived-stat engine, hand rules and
+rating receipt the game uses (a new character through `createRunState`, so
+starting relics are included); `settings.js` renders it and redraws it after
+every edit. In-run previews use the character's current attributes and level;
+outside a run the example is a chosen class's starting attributes.
 
 `src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
 read-only card faces and footer buttons into the turn-end discard selector.
@@ -680,4 +690,4 @@ cancel without changing combat state. `src/engine/handRules.js` validates the
 selection independently before the turn can advance.
 
 ### Ratings, Poise and Ward
-The Advanced Settings workspace adds Stats & Defence subgroups for each formula, curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+Advanced → Stats holds a topic for each rating formula, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

@@ -769,11 +769,11 @@ test('a rating is spelled the same on its rows as on its tab', async () => {
   const rows = combatRatingRows(contentBundle);
 
   for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
-    // Since ruleset 6 the five formulas sit beside the pools they now read
-    // like (Advanced → Progression → Stats & resources), one block per rating.
-    const formula = rows.filter(row => row.statTopic === 'Stats & resources' && row.key.includes(`.ratings.${id}.`));
+    // Each formula is its own block under Advanced → Stats, filed under the
+    // trait it rates (models/AdvancedSettingsGroups.js).
+    const formula = rows.filter(row => row.key.includes(`.ratings.${id}.`));
     assert.ok(formula.length >= 3, `${expected} has a formula block of its own`);
-    assert.ok(formula.every(row => row.advancedGroup === 'Progression'), `${expected} sits with the pools`);
+    assert.ok(formula.every(row => row.advancedGroup === 'Stats' && row.statTopic === `${expected} formula`), `${expected} sits under Stats`);
     assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
     // The per-item rows are the item's own ratings now (#1242), so they read
     // "Straight Sword — AR" rather than "— additional AR"; the spelling rule
