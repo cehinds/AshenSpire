@@ -19,9 +19,10 @@ import { rangeSubjects, unreceipted } from '../tools/receipts.mjs';
 function scratch() {
   const dir = mkdtempSync(join(tmpdir(), 'receipts-window-'));
   let t = 1_700_000_000;
+  const clock = { backdate: null };
   const git = (...args) => {
     t += 60;
-    const date = `${t} +0000`;
+    const date = `${clock.backdate ?? t} +0000`;
     return execFileSync('git', args, {
       cwd: dir,
       encoding: 'utf8',
@@ -36,7 +37,7 @@ function scratch() {
   const commit = (subject) => { const f = `f${n++}`; writeFileSync(join(dir, f), f); git('add', f); git('commit', '-q', '-m', subject); };
   const merge = (branch, subject) => git('merge', '-q', '--no-ff', '-m', subject, branch);
   git('init', '-q', '-b', 'main');
-  return { dir, git, commit, merge };
+  return { dir, git, commit, merge, clock, now: () => t };
 }
 
 function landPulls(prs, { git, commit, merge }) {
@@ -106,6 +107,39 @@ test('the oldest merge in the window is itself judged when it sits on the first-
     landPulls([97, 98, 99], repo);
     const { missing } = unreceipted(rangeSubjects(null, { cwd: dir, limit: 4 }), receipts([97, 98, 99]));
     assert.deepEqual(missing, ['96'], 'the boundary merge is walked as a first-parent commit');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the window reaches the deepest landing of every selected merge, not the last one listed', () => {
+  const repo = scratch();
+  const { dir, git, commit, merge, clock, now } = repo;
+  try {
+    commit('root');
+    landPulls([97], repo);
+    const before97Landed = now() - 30;
+    // Newer than #97's landing, deeper than the 4-commit floor: in the window.
+    commit('Unreceipted squash between the landings (#95)');
+    // A branch that lands later but carries a merge backdated before #97: the
+    // date-ordered merge walk lists it last.
+    git('checkout', '-q', '-b', 'late');
+    git('checkout', '-q', '-b', 'late-sub');
+    commit('late sub work');
+    git('checkout', '-q', 'late');
+    commit('late work');
+    clock.backdate = before97Landed;
+    merge('late-sub', "Merge branch 'late-sub' into late");
+    clock.backdate = null;
+    commit('late follow-up');
+    git('checkout', '-q', 'main');
+    for (let i = 0; i < 5; i += 1) commit(`chore ${i}`);
+    merge('late', 'Merge pull request #98 from o/late');
+    landPulls([99], repo);
+    const listed = git('log', '--merges', '--max-count=4', '--format=%s').split('\n');
+    assert.equal(listed[3], "Merge branch 'late-sub' into late", 'the scenario: the backdated merge is listed last');
+    const { missing } = unreceipted(rangeSubjects(null, { cwd: dir, limit: 4 }), receipts([97, 98, 99]));
+    assert.deepEqual(missing, ['95']);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

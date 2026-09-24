@@ -122,8 +122,8 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   // itself. The merge walk follows all ancestry, so its 40th merge can sit on a
   // side branch; `HEAD ^<that merge>` then excludes only what that side branch
   // descends from, and the first-parent walk runs back to the side branch's old
-  // fork — into history the window never meant to judge. So the boundary is
-  // found in two steps: every descendant of the oldest merge (the full graph —
+  // fork — into history the window never meant to judge. So a boundary is
+  // found in two steps: every descendant of a merge (the full graph —
   // `--first-parent --ancestry-path` together never reaches a side-branch
   // merge and returns nothing), then the first-parent commits from HEAD down
   // to the last one in that set, which is the commit that landed it (or the
@@ -136,18 +136,26 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
   if (merges.length < limit) firstParent = fp(['HEAD']);
   else {
-    const oldest = merges[merges.length - 1].hash;
-    // The oldest merge itself belongs to the window too: `A..B` excludes A, and a
-    // merge on the first-parent line titled `… (#N)` is a landing only when it
-    // is walked as a first-parent commit.
-    const descendants = new Set(git(['rev-list', '--ancestry-path', `${oldest}..HEAD`], cwd).split('\n').filter(Boolean));
-    descendants.add(oldest);
-    const toBoundary = [];
-    for (const l of lines(['--first-parent', '--format=%H %s', 'HEAD'])) {
+    // EVERY selected merge sets a landing, not only the last one git lists:
+    // the merge walk is date-ordered, so a backdated merge inside a branch that
+    // landed late can come last while an earlier landing sits deeper on this
+    // line. The window reaches the deepest landing of any of them. Each merge's
+    // containing first-parent commits are a prefix of the line; the merge
+    // itself belongs to it too (`A..B` excludes A, and a first-parent merge
+    // titled `… (#N)` is a landing only when walked as a first-parent commit).
+    const line = lines(['--first-parent', '--format=%H %s', 'HEAD']).map((l) => {
       const i = l.indexOf(' ');
-      if (!descendants.has(l.slice(0, i))) break;
-      toBoundary.push(l.slice(i + 1));
+      return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+    });
+    let reach = 0;
+    for (const { hash } of merges) {
+      const descendants = new Set(git(['rev-list', '--ancestry-path', `${hash}..HEAD`], cwd).split('\n').filter(Boolean));
+      descendants.add(hash);
+      let k = 0;
+      while (k < line.length && descendants.has(line[k].hash)) k += 1;
+      reach = Math.max(reach, k);
     }
+    const toBoundary = line.slice(0, reach).map(({ subject }) => subject);
     if (toBoundary.length > firstParent.length) firstParent = toBoundary;
   }
   return [
