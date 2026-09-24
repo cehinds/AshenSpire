@@ -314,9 +314,11 @@ amended before code moves.
   (giants), Gold Figurine.
 - [ ] **Atlas text (M).** 200 of 291 descriptions are one template; 30 more
   "Inspect the road toward…".
-- [ ] **Card flavour variety (S).** 160 of 195 open "A/An/The …"; heavy
-  reuse of three sources; Plague of Butterflies says moths; two class lines
-  both end "…owes an answer."
+- [ ] **Card name vs flavour (S).** #1264 rewrote every card's lore after
+  this review, so the flavour-variety findings are closed. One naming issue
+  remains: Plague of Butterflies' flavour describes red moths (`herald.js`
+  ~364). Rename the card (for example Ossuary Moths); leave the approved
+  lore as it is.
 - [ ] **Terms (S).** Arcane Exposure, Frost-Exposed boosting starstone,
   Insanity and Madness both exist, Poise has no fiction; `roadWarden` has no
   portrait.
