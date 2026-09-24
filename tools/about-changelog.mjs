@@ -910,9 +910,10 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
 // writes out of order should be refused on the pull request that writes it, in
 // tests.yml's core job. So this mode runs parseChangelog's #310 rules (dates
 // newest first across groups; no older group citing a newer build; no receipt
-// past buildordinal.json, one build ahead allowed — the receipt for the rebuild
-// the merging PR produces) and adds the rules below that parseChangelog does not
-// hold.
+// past buildordinal.json) and adds the rules below that parseChangelog does not
+// hold. It is the PLAIN ceiling, not the projecting one: the one-build-ahead
+// allowance belongs to `--write` alone (docs/versioning.md), and a committed
+// tree whose receipt outruns buildordinal.json skipped the rebuild (#1279 review).
 //
 // WITHIN A DATE, BUILDS NEVER RISE. Receipts run newest first inside a date as
 // well as across dates, so reading down, each stamp is no newer than the one
@@ -954,7 +955,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     if (!realCalendarDate(date)) throw new Error(`check-order: heading '${line}' names ${date}, which is not a calendar date`);
     checks++;
   }
-  const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: true });
+  const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: false });
   checks += entries.length;
   let rises = 0;
   for (let i = 1; i < entries.length; i++) {
@@ -1002,6 +1003,9 @@ async function orderSelftest() {
 async function orderCorpus(ordinalFile) {
   const real = readFileSync(OWNER, 'utf8');
   const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
+  // A LATER RELEASE, for the rises: the ceiling bounds only the current release,
+  // so `${next}.0` is newer than `${rel}.${n}` without naming a build past it.
+  const next = `${Number(rel.split('.')[0]) + 1}.0.0`;
   const at = real.indexOf('\n## ');
   if (at < 0) throw new Error('check-order selftest: CHANGELOG.md has no ## heading to plant above');
   const r = (pr, ord, rl = rel) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${rl}.${ord}\`).`;
@@ -1022,24 +1026,24 @@ async function orderCorpus(ordinalFile) {
   const plants = [
     ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
     ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
-    ['build rising within a date', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, n + 1)}\n`), null, 'build rises within 2099-01-01'],
+    ['build rising within a date', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, 0, next)}\n`), null, 'build rises within 2099-01-01'],
     // Two groups sharing a date are ordered by the cross-group rule, which a
     // release heading must not slip past.
-    ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, n + 1)}\n`), null, 'an older merge cannot ship a newer build'],
+    ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, 0, next)}\n`), null, 'an older merge cannot ship a newer build'],
     // The group's own lowest then highest build, on top of it: one more rise,
     // and the group's range — so every cross-group rule — unchanged.
     ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${rv(990001, oldLow.build)}\n${rv(990002, oldHigh.build)}\n`), null, 'GRANDFATHERED_RISES pins'],
-    ['receipt two builds past buildordinal.json', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 1)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with no date', top(`## 1.0.0\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['date that is not on the calendar', top(`## 2099-02-30\n\n${r(990001, n)}\n`), null, 'not a calendar date'],
     ['no buildordinal.json to weigh receipts against', real, 'absent', 'buildordinal.json gave no ordinal'],
   ];
-  // Must PASS: a release heading on top, one build ahead (the in-PR receipt),
-  // a tie, and a descent inside the one date. (A descent ACROSS releases inside
+  // Must PASS: a release heading on top, a receipt AT buildordinal.json's
+  // ordinal, a tie, and a descent (across releases) inside the one date. (A descent ACROSS releases inside
   // a date is proven by the real file, which has several.)
-  const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, n + 1)}\n${r(990002, n + 1)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
+  const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, 0, next)}\n${r(990002, 0, next)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
   // The scope blocks print on every exit, so the tail of the output is never the
   // reason; the one line that names it is.
   const redLine = (out) => out.split('\n').find((l) => /RED —|Error:/.test(l)) ?? '(no red line)';
@@ -1059,7 +1063,7 @@ async function orderCorpus(ordinalFile) {
     else { console.error(`MISS ${name}: exit=${code}; expected ${expect}; said: ${redLine(out)}`); process.exitCode = 1; }
   }
   const pass = runAt(good, null);
-  if (pass.code === 0) { caught++; console.log('CAUGHT (inverted) a planted 1.0.0 release heading, a one-ahead receipt, a tie and a descent pass'); }
+  if (pass.code === 0) { caught++; console.log('CAUGHT (inverted) a planted 1.0.0 release heading, a receipt at the ordinal, a tie and a descent pass'); }
   else { console.error(`MISS legitimate release heading refused: exit=${pass.code}; said: ${redLine(pass.out)}`); process.exitCode = 1; }
   return { caught, total: plants.length + 1 };
 }
