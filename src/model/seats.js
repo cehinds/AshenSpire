@@ -65,6 +65,33 @@ export function seatTierHpMult(registries, seatId, tier) {
 }
 
 /**
+ * bossTierScale(registries, { encounter, tier }) → { hp, damage } for a
+ * 'boss'-pool encounter met at `tier` (looping for Endless), or null for any
+ * other pool, whose fight keeps seatTierHpMult alone (SPEC §13.3,
+ * balance.bossTiers):
+ *   ratio  = seatTiers[T] / seatTiers[the boss's own baseline]
+ *   hp     = ratio × bossTiers[T].hp
+ *   damage = ratio × bossTiers[T].damage
+ * The baseline is the ENCOUNTER's seat's baseTier — the causeway's null-seat
+ * boss (the Valkyrie) is authored at the final tier whichever seat holds it.
+ * A boss's damage follows the tier ratio as its HP does, so the Marches boss
+ * met first hits like a first boss, not like the second one it was authored
+ * as; then the tier's own boss multiplier. The ONE reader of the row:
+ * main.js, session.mjs and the sims all ask here.
+ */
+export function bossTierScale(registries, { encounter, tier }) {
+  if (!encounter || encounter.pool !== 'boss') return null;
+  const last = finalTier(registries);
+  const at = tierOf(tier, last);
+  const baseTier = encounter.seat ? registries.seats.get(encounter.seat).baseTier : last;
+  const table = registries.balance.seatTiers;
+  const ratio = table[at] === table[baseTier] ? 1 : table[at] / table[baseTier];
+  const row = registries.balance.bossTiers && registries.balance.bossTiers[at];
+  if (!(ratio > 0) || !row || !(row.hp > 0) || !(row.damage > 0)) throw new Error(`bossTiers/seatTiers have no row for a boss at tier ${tier} (baseline ${baseTier})`);
+  return { hp: ratio * row.hp, damage: ratio * row.damage };
+}
+
+/**
  * bossEncounterFitsSeat(encounter, { seat, tier, finalTier }) → whether a boss
  * row may be a destination for this seat at this tier: the seat's own rows, or
  * the one null-seat row (the Valkyrie) at the final tier (SPEC §13.5).

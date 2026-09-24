@@ -27,6 +27,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { createRunState } from '../src/model/state.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
+import { bossTierScale } from '../src/model/seats.js';
 
 // A no-op punching bag for measuring unopposed player DPS.
 const DUMMY = { id: 'balanceDummy', name: 'Dummy', hp: [100000, 100000], poiseMax: 999999, moves: { wait: { intent: 'unknown', weight: 1 } } };
@@ -78,9 +79,9 @@ function measureDps(classId, T = 10) {
 }
 
 // Bot fights one encounter from full HP; returns { win, hpLost }.
-function simFight(classId, enemyIds, seed) {
+function simFight(classId, enemyIds, seed, scale = null) {
   const run = newRun(classId);
-  const c = createRunCombat({ registries: REG, rng: createRng(seed), run, enemyIds });
+  const c = createRunCombat({ registries: REG, rng: createRng(seed), run, enemyIds, hpMult: scale ? scale.hp : 1, enemyDamageMult: scale ? scale.damage : 1 });
   let guard = 0;
   // A fight still open after 150 turns is conceded, as in runsim.mjs.
   while (!c.result && guard++ < 8000 && c.turn <= 150) botStep(c);
@@ -175,7 +176,8 @@ P('');
 P('Reference DPS by tier: tier 1 = measured start, tier 2 = ×1.6, tier 3 = ×2.4 (avg');
 P('across classes). "Turns to kill" = HP / (refDPS − heal). "Turns to die" =');
 P('lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction');
-P('(heal ≥ refDPS → cannot kill) and races (kill ≥ die).');
+P('(heal ≥ refDPS → cannot kill) and races (kill ≥ die). Boss rows are met at');
+P('their own tier: HP and incoming DPS × balance.bossTiers for that tier.');
 P('');
 P('| Tier | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |');
 P('|----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|');
@@ -191,9 +193,11 @@ for (const enc of REG.encounters.all()) {
   if (enc.pool === 'normal') continue;
   const tier = tierOf(enc);
   const stats = enc.enemies.map((id) => enemyStats(REG.enemies.get(id)));
-  const hp = stats.reduce((a, s) => a + s.hp, 0);
+  // A boss row is priced as met at its own tier: × balance.bossTiers there.
+  const boss = bossTierScale(REG, { encounter: enc, tier }) || { hp: 1, damage: 1 };
+  const hp = Math.round(stats.reduce((a, s) => a + s.hp, 0) * boss.hp);
   const heal = stats.reduce((a, s) => a + s.heal, 0);
-  const inDps = stats.reduce((a, s) => a + s.dps, 0);
+  const inDps = stats.reduce((a, s) => a + s.dps, 0) * boss.damage;
   const refDps = avgStartDps * bandMult[tier];
   const net = refDps - heal;
   const ttk = net > 0 ? hp / net : Infinity;
@@ -213,6 +217,7 @@ P('');
 P('## 5. Tier-1 empirical win rate (naive bot, starting deck)');
 P('');
 P('Greedy bot, starting deck only (no card acquisition), from full HP, 300 seeds.');
+P('Bosses are met at tier 1: × balance.bossTiers[1].');
 P('Tier 1 is the only tier where a starting deck is the correct reference; later tiers');
 P('assume deck growth (§4 bands). These are a **floor** — real play does better.');
 P('');
@@ -224,7 +229,7 @@ for (const cls of REG.classes.all()) {
   for (const enc of act1) {
     let wins = 0, hpLost = 0;
     for (let s = 1; s <= N; s++) {
-      const r = simFight(cls.id, enc.enemies, s * 7 + cls.id.length);
+      const r = simFight(cls.id, enc.enemies, s * 7 + cls.id.length, bossTierScale(REG, { encounter: enc, tier: 1 }));
       if (r.win) wins++;
       hpLost += r.hpLost;
     }
