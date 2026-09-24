@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The map re-centres when your screen changes size",
     "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
-    "build": "0.7.1.471",
+    "build": "0.7.1.474",
     "pullRequest": 1289,
     "url": "https://github.com/cehinds/AshenSpire/pull/1289"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the combat card hotkeys are tested",
     "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
-    "build": "0.7.1.469",
+    "build": "0.7.1.472",
     "pullRequest": 1278,
     "url": "https://github.com/cehinds/AshenSpire/pull/1278"
   },
@@ -28,9 +28,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
     "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
-    "build": "0.7.1.467",
+    "build": "0.7.1.470",
     "pullRequest": 1279,
     "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1302",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map's music follows where you stand, and the bright map tracks are gone",
+    "detail": "The two recorded map tracks were too upbeat for a land after the Burning and have been withdrawn; the map plays its generated score again. The map now asks for music by region — the Hollow Weald, the Pale Marches, the Cinder Reach, the Drowned Coast and the Ashen Crown each have their own slot, with slow, dark prompts in music/PROMPTS.md — and a region without a recorded track plays the plain map music. The victory hymn is cut from three minutes to its first full phrase, about a minute.",
+    "build": "0.7.1.469",
+    "pullRequest": 1302,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1302"
   },
   {
     "id": "pr-1281",

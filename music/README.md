@@ -28,7 +28,10 @@ playback error falls back to the generated score for that context.
 music/
   manifest.json
   title/     one or more menu themes
-  map/       overworld / act-map ambience
+  map/       overworld ambience (fallback for every region)
+             region keys map-hollow-weald, map-pale-marches, map-cinder-reach,
+             map-drowned-coast, map-ashen-crown: the map's music where you stand;
+             a region left empty plays the plain `map` list
   combat/    normal battle tracks
   elite/     elite battle tracks
   boss/      boss battle tracks
