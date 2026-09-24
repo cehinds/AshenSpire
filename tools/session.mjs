@@ -848,15 +848,25 @@ export function createSession({ registries, seedString, endless = false, restore
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
-    if (cardId && offer.cardIds.includes(cardId)) {
+    // ONE OF EACH PER SEAT: the screen stays up (and re-sends its whole pick)
+    // after a seat's first tap while the others choose, so a second message
+    // may name the card again or ANOTHER relic of a boss choice (SPEC §6.1).
+    // What the seat already landed at this door is kept on the scene and
+    // never granted twice.
+    if (!session.scene.claimed) session.scene.claimed = {};
+    const claimed = session.scene.claimed[memberId] || (session.scene.claimed[memberId] = {});
+    if (!claimed.card && cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+      claimed.card = true;
     }
-    const relic = pickedRelic(offer, { relicId, takeRelic });
+    const relic = claimed.relic ? null : pickedRelic(offer, { relicId, takeRelic });
     if (relic && !m.run.relics.includes(relic)) {
       m.run.relics.push(relic);
+      claimed.relic = true;
     }
-    if (flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
+    if (!claimed.flask && flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
       m.run.flasks.push({ flaskId: offer.flaskId });
+      claimed.flask = true;
     }
     session.scene.chosen[memberId] = true;
     // When every present member has chosen, close the reward scene.
