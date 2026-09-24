@@ -11,7 +11,7 @@
     "entrance": {
       "lightUpMs": 560,
       "fadeMs": 880,
-      "holdDefault": "0.5s",
+      "holdDefault": "2s",
       "holdDurations": {
         "0s": 0,
         "0.3s": 300,

@@ -5386,9 +5386,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // this only proves the one polarity it was written for.
     eq(settingOn({}, 'colorblindSafe'), false, 'a def:false row still defaults off');
     eq(settingOn({ colorblindSafe: true }, 'colorblindSafe'), true, 'and can be turned on');
-    eq(settingOn({}, 'useRestorativeFlasksOutsideCombat'), false, 'map flask use defaults off');
-    eq(settingOn({ useRestorativeFlasksOutsideCombat: true }, 'useRestorativeFlasksOutsideCombat'), true,
-      'the player can enable restorative flask use on the map');
+    // On by default since the owner's uploaded defaults (#1254).
+    eq(settingOn({}, 'useRestorativeFlasksOutsideCombat'), true, 'map flask use defaults on');
+    eq(settingOn({ useRestorativeFlasksOutsideCombat: false }, 'useRestorativeFlasksOutsideCombat'), false,
+      'the player can turn restorative flask use on the map off');
 
     // An unknown key must throw, not answer false: a silent false is how a
     // renamed setting becomes a quietly-disabled feature.
