@@ -69,7 +69,7 @@ if (typeof globalThis.navigator === 'undefined' || !('getGamepads' in globalThis
   try { Object.defineProperty(globalThis, 'navigator', { value: { ...(globalThis.navigator || {}), getGamepads: () => [] }, configurable: true }); } catch { /* read-only navigator: input.js guards the call */ }
 }
 
-const { initInput } = await import('../src/ui/input.js');
+const { initInput, setInputGate } = await import('../src/ui/input.js');
 const { trackGesture } = await import('../src/ui/gesture.js');
 
 // ---- snapshot: deep copy, cycles kept, functions by identity, no timestamps ---
@@ -131,8 +131,15 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
     },
   });
 
-  backgroundAndResume();
+  // A first-input owner holds the input gate when the phone goes away: blur
+  // must hand it a cancel, never a commit.
+  const gateSeen = [];
+  const releaseGate = setInputGate((input) => { gateSeen.push(input.phase); return true; });
 
+  backgroundAndResume();
+  releaseGate();
+
+  assert.deepEqual(gateSeen, ['cancel'], 'the armed input gate was told cancel, and nothing else, on blur');
   assert.deepEqual(ends, [true], 'the in-flight drag ended once, cancelled — backgrounding never commits a card');
   assert.deepStrictEqual(snapshot(run), before.run, 'the run is unchanged');
   assert.deepStrictEqual(snapshot(combat), before.combat, 'the fight is unchanged: hand, piles, enemies, intents, resources');
@@ -141,7 +148,7 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
 // ---- inventory of page-lifecycle listeners -----------------------------------
 // file → event → why it cannot move run or combat state on background.
 const KNOWN = {
-  'src/ui/input.js': { blur: 'cancels the input gate and any held press (cancelled, nothing commits); exercised above' },
+  'src/ui/input.js': { blur: 'cancels the input gate and any held press (cancelled, nothing commits); the gate half is exercised above, the held-press half (pressEnd(true)) is not armed in this stand-in page' },
   'src/ui/gesture.js': { blur: 'aborts the in-flight gesture as CANCELLED; exercised above' },
   'src/ui/screens/prologue.js': { visibilitychange: 'pauses/resumes the opening slideshow timer only; the prologue runs before any fight' },
 };
