@@ -25,11 +25,17 @@ export const MOBILE_ASSET_DIR = 'assets-mobile';
  *
  * Measured 2026-09-20 on the 0.7.1 tree: 179 MB of runtime art → ~29 MB, the
  * 3,071 512×512 animation frames (122 MB) going to 256×256 at ~5 KB each.
+ *
+ * quality 50 → 47 on 2026-09-24, for every file alike: the eight prologue path
+ * paintings (#1285) took the q50 tree to 40,295,512 inlined bytes, over the
+ * re-derived art budget below (39,538,400). q49 measured 40,087,288 and q48
+ * (sampled, 1 file in 10) ~39.73 MB — both over — so 47 is the highest that
+ * fits: the full q47 tree inlines to 39,352,412. Scale and alpha are unchanged.
  */
 export const POLICY = Object.freeze({
   scaleFrom: 384,
   scale: 0.5,
-  quality: 50,
+  quality: 47,
   alphaQuality: 60,
 });
 
@@ -42,11 +48,32 @@ export const POLICY = Object.freeze({
 export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
 
 /**
- * Where the mobile art itself has to land for the bundle to fit: the budget
- * less the code (~8.3 MB at 0.7.1) and base64 growth (4/3). A twin tree over
- * this is caught by --check before anyone builds with it.
+ * The safety margin the built mobile file keeps under its ceiling, in bytes.
+ * Code and data grow build to build without touching art; this is the room
+ * they have before a phone's download crosses the owner's number.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_000_000;
+export const MOBILE_BUNDLE_MARGIN_BYTES = 1_000_000;
+
+/**
+ * The measured size of everything in the mobile single file that is NOT the
+ * inlined twin tree: code, styles, content data, the data: URI prefixes and
+ * the few art payloads the CSS carries a second copy of. Measured 2026-09-24
+ * at 0.7.1.455: a `bundle.mjs --mobile` build of 49,757,112 bytes whose twin
+ * tree inlines to 40,295,512 — 9,461,600 bytes. (The earlier "~8.3 MB code"
+ * estimate predates 0.7.1.4xx and was ~1.2 MB low.) Re-measure when the code
+ * share moves: bundle bytes minus the sum of inlinedBytes() over assets-mobile/.
+ */
+export const MOBILE_MEASURED_NON_ART_BYTES = 9_461_600;
+
+/**
+ * Where the mobile art itself has to land for the bundle to fit: the ceiling,
+ * less the margin, less the measured non-art share — 50,000,000 − 1,000,000 −
+ * 9,461,600. A twin tree over this is caught by --check before anyone builds
+ * with it; the bundle's own bytes are still bundle.mjs's and
+ * verify-shipped.mjs's to hold under the ceiling.
+ */
+export const MOBILE_ART_INLINED_BUDGET_BYTES =
+  MOBILE_BUNDLE_BUDGET_BYTES - MOBILE_BUNDLE_MARGIN_BYTES - MOBILE_MEASURED_NON_ART_BYTES;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
