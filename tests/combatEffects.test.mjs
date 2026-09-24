@@ -110,3 +110,11 @@ test('expanded effects retain paid card motifs and action-only profile fallbacks
   const card=resolveCard(reg,{cardId:'strike',profileId:profile});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);
  }
 });
+
+test('an authored magic attack that spends nothing keeps its spell look (plan A2)',()=>{
+ const reg=createRegistries(contentBundle);
+ for(const id of ['starstonePebble','cometFragment','starSpark']){
+  const card=resolveCard(reg,{cardId:id});const tagged={...card,cardTags:combatEffectTags(reg,card)};
+  assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,/^mundane/,id);
+ }
+});

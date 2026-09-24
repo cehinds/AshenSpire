@@ -691,6 +691,14 @@ the default encounter weights; Chaos Rewards and skill rarity unlocks retain
 precedence. See [the balance receipt](docs/card-resource-balance.md) for counts,
 scope and verification.
 
+**Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
+at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
+the old rule); a restored fight keeps the Stamina it was saved with. HP and
+Mana carry from one fight to the next, and only rests, flasks and effects
+restore them. The refill also clears the Stamina deficit an equipment swap
+carried, so the next swap cannot take the refilled points back. Rules text:
+[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
+
 ### 4.1 Turn loop
 
 **Configurable hand rules (2026-09-19):** Solo gameplay snapshots Advanced →
