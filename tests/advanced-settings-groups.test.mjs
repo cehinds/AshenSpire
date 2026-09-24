@@ -26,20 +26,25 @@ test('Progression is the one driver: pool first, then each class, and the tier d
   // two read in a row, before the floors and the class tables they bound. What
   // the points turn into is a topic per trait under Stats (below).
   assert.deepEqual(groups.map(group => group.id).slice(0, 7),
-    ['Assign points', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
+    ['Starting stats', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
   assert.ok(!groups.some(group => group.id === 'Stats & resources'), 'the formulas are edited under Stats, one topic per trait');
 
-  const assign = groups.find(group => group.id === 'Assign points');
+  const assign = groups.find(group => group.id === 'Starting stats');
   // His sentence, in his order: the baseline he names first is the row he sees
   // first, then the points he places, then what they add up to, then the limits
-  // that bound both.
-  assert.deepEqual(assign.rows.map(row => row.label), [
+  // that bound both. Two modes are offered (owner, 2026-09-24), so each run of
+  // six names its mode: Standard's first, then Assign points'.
+  const dials = [
     'Starting value for every attribute',
     'Points available to assign',
     'Total points on a character',
     'Lowest a stat may be set to',
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
+  ];
+  assert.deepEqual(assign.rows.map(row => row.label), [
+    ...dials.map(label => `Standard — ${label}`),
+    ...dials.map(label => `Assign points — ${label}`),
   ]);
   assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'),
     'the tier dial retired with ruleset 6 — every stat states its own weights');
@@ -67,10 +72,16 @@ test('Progression is the one driver: pool first, then each class, and the tier d
 // effect is invalidating an old save; three of them read as three pools for
 // one idea. They keep their keys (see the `retired` filter in settings.js) and
 // leave the screen.
-test('only the creation mode a player can pick is offered a pool', () => {
+test('only the creation modes a player can pick — Standard and Assign points — are offered a pool', () => {
   const keys = categoryHandler('Advanced').rows.map(row => row.key);
   const pools = keys.filter(key => /^gameConfig\.startingStats\..+\.(total|bonusPool|baseline|minimum|maximum|belowBaseline)$/.test(key));
   assert.deepEqual(pools.sort(), [
+    'gameConfig.startingStats.assign.baseline',
+    'gameConfig.startingStats.assign.belowBaseline',
+    'gameConfig.startingStats.assign.bonusPool',
+    'gameConfig.startingStats.assign.maximum',
+    'gameConfig.startingStats.assign.minimum',
+    'gameConfig.startingStats.assign.total',
     'gameConfig.startingStats.lean.baseline',
     'gameConfig.startingStats.lean.belowBaseline',
     'gameConfig.startingStats.lean.bonusPool',
@@ -578,7 +589,8 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   const topicOf = (key) => stats.find(group => group.rows.some(row => row.key === key))?.id;
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.energy.dexterity'), 'Actions');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw conversion sits beside the hand rules');
-  assert.equal(topicOf('gameConfig.handRules.starting.base'), 'Draw & hand');
+  assert.equal(topicOf('gameConfig.handRules.startingByClass.reaver.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
+  assert.equal(topicOf('gameConfig.handRules.starting.base'), undefined, 'the shared base is retired: every class sets its own');
   assert.equal(topicOf('gameConfig.balance.handMax'), 'Draw & hand', 'the co-op hand capacity too');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.hp.perLevel'), 'HP', 'level growth is part of the trait');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.mana.wisdom'), 'Mana');
@@ -722,7 +734,7 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.handRules.starting.base': 20, 'gameConfig.handRules.starting.maximum': 30, 'gameConfig.handRules.capacity.base': 20 };
+  const deepSettings = { 'gameConfig.handRules.startingByClass.reaver.base': 20, 'gameConfig.handRules.starting.maximum': 30, 'gameConfig.handRules.capacity.base': 20 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -774,7 +786,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // says that too (Codex, #1252).
   const badHand = statsTopicPreview({ 'gameConfig.handRules.starting.minimum': 9, 'gameConfig.handRules.starting.maximum': 2 }, 'Draw & hand');
   assert.match(badHand.refused, /refused uses its defaults/);
-  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
+  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.starting.maximum': 10, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
   assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);

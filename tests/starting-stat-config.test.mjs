@@ -654,3 +654,65 @@ test('the Mana floor prices only characters creation can make', async () => {
   assert.match(problem.message, /Mana would be 0/);
   assert.match(problem.message, /wisdom 1/);
 });
+
+// ---- STANDARD AND ASSIGN POINTS (owner, 2026-09-24) -------------------------
+// "creation should have the option of standard (pre assigned class presets)
+// and assign points (x points to assign but configurable in advanced
+// settings)". Standard IS the lean mode — its id, presets and total unchanged,
+// so every save made under it keeps its verdict — and Assign points is a new
+// mode on the same scale whose pool is its own dial.
+test('creation offers Standard (lean, on the class preset) and Assign points (all 1s, pool unspent)', async () => {
+  const { visibleCreationModes } = await import('../src/model/startingStatConfig.js');
+  const { classAttributePreset, baselineAttributeAllocation, allocationTotal, creationMode } = await import('../src/model/attributes.js');
+  const registries = createRegistries(contentBundle);
+  assert.deepEqual(visibleCreationModes(contentBundle).map(mode => [mode.id, mode.label]), [['lean', 'Standard'], ['assign', 'Assign points']]);
+  assert.equal(contentBundle.attributeRules.defaultMode, 'lean', 'Standard is the default');
+  assert.equal(creationMode(registries, 'lean').opensOn, 'preset');
+  assert.equal(creationMode(registries, 'assign').opensOn, 'baseline');
+  assert.deepEqual(classAttributePreset(registries, 'starseer', 'lean'), { strength: 1, dexterity: 1, constitution: 1, wisdom: 2, intelligence: 3 });
+  assert.deepEqual(Object.values(baselineAttributeAllocation(registries, 'assign')), [1, 1, 1, 1, 1]);
+  assert.equal(allocationTotal(registries, 'assign') - 5, 3, 'three points to assign');
+  // Every other stat is 1: each preset puts the whole pool on two attributes.
+  for (const preset of Object.values(contentBundle.attributeRules.presets.lean)) {
+    assert.equal(Object.values(preset).filter(value => value === 1).length, 3);
+  }
+  // A character made under either passes the load door as its own mode.
+  const assigned = createRunState({ registries, classId: 'starseer', seed: 1, attributeMode: 'assign',
+    attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 4 } });
+  assert.equal(assigned.attributeMode, 'assign');
+  assert.equal(assigned.attributeModeSnapshot.bonusPool, 3);
+  assert.throws(() => createRunState({ registries, classId: 'starseer', seed: 1, attributeMode: 'assign',
+    attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 } }), /total 5 must equal 8/,
+  'an unspent pool is not a character');
+});
+
+test('the Assign points pool is its own dial, and typing it alone moves it', () => {
+  for (const pool of [0, 3, 5, 10]) {
+    const configured = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.assign.bonusPool': pool });
+    const mode = configured.creationModes.find(row => row.id === 'assign');
+    assert.equal(mode.baseline, 1, 'every attribute still opens at 1');
+    assert.equal(mode.bonusPool, pool);
+    for (const preset of Object.values(configured.attributeRules.presets.assign)) {
+      assert.equal(Object.values(preset).reduce((a, b) => a + b, 0), 5 + pool);
+    }
+    assert.deepEqual(configured.creationModes.find(row => row.id === 'lean'), contentBundle.creationModes.find(row => row.id === 'lean'),
+      'Standard is untouched by the Assign points pool');
+  }
+  // Standard's pool reads the same way, bounded by the kit floor: the Starseer
+  // needs INT 3, so fewer than two points to place cannot dress it.
+  const lean = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.bonusPool': 4 });
+  assert.equal(lean.creationModes.find(row => row.id === 'lean').bonusPool, 4);
+  const refused = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.bonusPool': 1 });
+  assert.equal(refused.creationModes.find(row => row.id === 'lean').bonusPool, 3, 'a pool below the kit floor is refused');
+});
+
+test('with two modes offered, every pool row names its mode', async () => {
+  const { startingStatRows } = await import('../src/model/startingStatConfig.js');
+  const rows = startingStatRows(contentBundle).filter(row => /^gameConfig\.startingStats\./.test(row.key) && !row.retired);
+  assert.equal(rows.length, 12);
+  for (const row of rows) {
+    assert.match(row.label, row.key.includes('.lean.') ? /^Standard — / : /^Assign points — /);
+    assert.equal(row.statTopic, 'Starting stats');
+  }
+  assert.ok(rows.some(row => row.label === 'Assign points — Points available to assign' && row.def === 3));
+});

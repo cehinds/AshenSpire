@@ -1453,6 +1453,7 @@ function showSettings() {
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
+    previewClassId: run?.class || null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });

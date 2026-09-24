@@ -394,6 +394,9 @@ export function mountCustomize(app, {
    * (review, #1217). The real question is whether the mode has a pool.
    */
   const hasPoints = (modeId) => !!modeId && creationModeHasPoints(creationMode(registries, modeId));
+  /** Does choosing this mode seat the class preset (Standard) rather than
+   *  open the editor on the baseline (Assign points)? Data: `opensOn`. */
+  const opensOnPreset = (modeId) => !!modeId && creationMode(registries, modeId).opensOn === 'preset';
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.
@@ -656,7 +659,14 @@ export function mountCustomize(app, {
         const mode = visibleModes.find(mode => mode.id === modes.value);
         if (!mode) return;
         state.attributeMode = mode.id;
-        if (hasPoints(mode.id)) {
+        if (opensOnPreset(mode.id)) {
+          // STANDARD SEATS THE CLASS PRESET (owner, 2026-09-24: "standard (pre
+          // assigned class presets)"). Nothing is left to spend, so no editor
+          // opens and the step's Continue is green at once; "Edit points"
+          // still reshapes the same fixed total as a revision.
+          closePointBuy();
+          state.attributes = { ...classAttributePreset(registries, state.classId, mode.id) };
+        } else if (hasPoints(mode.id)) {
           // Entering Assign Points from the SELECT is an explicit fresh
           // allocation: the whole authored pool comes back rather than the
           // class-biased preset (or a previous edit) with points already

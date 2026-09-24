@@ -98,8 +98,11 @@ export function statsSection(row) {
 // point of every attribute is worth is a topic per trait under Stats, each
 // with its own growth per level. The floors and the per-class tables follow,
 // because they are bounded by the two above rather than read alongside them.
+// 'Starting stats' was 'Assign points' until creation offered two modes
+// (owner, 2026-09-24): with Standard's dials and Assign points' dials both on
+// it, a topic named after one of them read as that mode's alone.
 const PROGRESSION_TOPIC_ORDER = Object.freeze([
-  'Assign points',
+  'Starting stats',
   'Level-up',
   'Equipment requirements',
 ]);
@@ -279,7 +282,7 @@ export function advancedSubgroups(rows, section) {
       'Deck', 'Exposure']);
   }
   if (section === 'Progression') {
-    // Assign points first: it is the driver, and every class table under it is
+    // Starting stats first: it is the driver, and every class table under it is
     // rescaled by it. Level-up next, because a level spends the same points on
     // the same rows (what those points turn into is under Stats); then the
     // equipment floor under all of it — the least a character can carry is

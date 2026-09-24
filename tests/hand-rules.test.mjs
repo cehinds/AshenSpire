@@ -6,7 +6,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { handRulesDefaults } from '../src/content/handRules.js';
-import { handRulesRows, resolveHandRules, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
+import { handRulesRows, resolveHandRules, handRulesForClass, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
@@ -38,7 +38,7 @@ test('the default opening follows the shipped starting rule; unplayed cards surv
   const intelligence = { intelligence: 10 };
   const shipped = fight({}, intelligence, {});
   assert.equal(shipped.piles.hand.length, scaledCards(handRulesDefaults.starting, intelligence));
-  assert.equal(shipped.piles.hand.length, 8); // 4 + floor((10 − 1) ÷ 2), inside 3–15
+  assert.equal(shipped.piles.hand.length, 6); // 4 + floor((10 − 1) ÷ 2) = 8, kept within 3–6 (owner, 2026-09-24)
   const c = fight();
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
@@ -169,4 +169,68 @@ test('the hand receipt is the arithmetic scaledCards does', () => {
     assert.equal(receipt.value, scaledCards(rule, { intelligence }));
     assert.equal(receipt.bonus, Math.floor(Math.max(0, intelligence - 4) / 3));
   }
+});
+
+// ---- PER-CLASS OPENING HAND (owner, 2026-09-24) -----------------------------
+// "Class base 3–5, +1 from stats": base + floor(max(0, primary − 1) ÷ 2),
+// kept within [base, 6], each class reading its own primary attribute.
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { attributeRules } from '../src/content/attributes.js';
+
+const OPENING = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
+const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
+
+test('each class opens on its own base and primary attribute, capped at six', () => {
+  const rules = resolveHandRules({}, contentBundle.attributes);
+  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+    const fightRules = handRulesForClass(rules, classId);
+    assert.equal(fightRules.startingByClass, undefined, 'the per-class table does not ride into the fight');
+    assert.equal(fightRules.starting.base, base);
+    assert.equal(fightRules.starting.stat, stat);
+    assert.equal(scaledCards(fightRules.starting, allOnes), base, `${classId} on all 1s opens on its base`);
+    assert.equal(scaledCards(fightRules.starting, attributeRules.presets.lean[classId]), base + 1, `${classId}'s Standard preset (primary 3) opens base + 1`);
+    assert.equal(scaledCards(fightRules.starting, { ...allOnes, [stat]: 40 }), 6, `${classId} never opens above six`);
+    assert.equal(scaledCards(fightRules.starting, { ...allOnes, [stat]: 4 }), Math.min(6, base + 1), 'one point short of the next card adds nothing');
+  }
+  // A class with no row, or no class at all, keeps the shared rule.
+  assert.deepEqual(handRulesForClass(rules, 'nobody').starting, rules.starting);
+  assert.deepEqual(handRulesForClass(rules).starting, rules.starting);
+});
+
+test('a run fight deals the class opening hand and snapshots it', () => {
+  const expected = { reaver: 4, rogue: 5, herald: 5, starseer: 6 };
+  for (const [classId, count] of Object.entries(expected)) {
+    const run = createRunState({ seed: 7, classId, registries });
+    const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.handRules.starting.base, OPENING[classId][0]);
+    assert.equal(combat.piles.hand.length, Math.min(count, run.deck.length), `${classId} Standard preset opens on ${count}`);
+    const saved = serializeCombatSnapshot(combat);
+    assert.deepEqual(saved.handRules.starting, combat.handRules.starting, 'the snapshot carries the class hand it was born with');
+    const restored = restoreCombatSnapshot({ registries, rng: createRng(8), snapshot: saved });
+    assert.deepEqual(restored.handRules.starting, combat.handRules.starting);
+  }
+  // All 1s (an unspent Assign points shape is illegal; a legal eight with
+  // nothing on the primary is the lowest a class can open on).
+  const run = createRunState({ seed: 7, classId: 'reaver', registries, attributeMode: 'assign',
+    attributes: { strength: 1, dexterity: 1, constitution: 4, wisdom: 1, intelligence: 1 } });
+  const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.piles.hand.length, 3, 'a Reaver with Strength 1 opens on its base of 3');
+});
+
+test('each class\'s opening hand is its own pair of settings rows, and the shared base is retired', () => {
+  const rows = handRulesRows(contentBundle.attributes, contentBundle.classes);
+  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+    const baseRow = rows.find(row => row.key === `${prefix}startingByClass.${classId}.base`);
+    const statRow = rows.find(row => row.key === `${prefix}startingByClass.${classId}.stat`);
+    assert.equal(baseRow.def, base);
+    assert.equal(statRow.def, stat);
+    assert.equal(baseRow.settingSection, 'Starting hand');
+    assert.match(baseRow.label, /Opening hand base cards$/);
+  }
+  assert.ok(rows.find(row => row.key === `${prefix}starting.base`).retired, 'the shared base moves nothing a class can reach');
+  assert.ok(rows.find(row => row.key === `${prefix}starting.stat`).retired);
+  const tuned = handRulesForClass(resolveHandRules({ [`${prefix}startingByClass.reaver.base`]: 5, [`${prefix}startingByClass.reaver.stat`]: 'constitution' }, contentBundle.attributes), 'reaver');
+  assert.equal(tuned.starting.base, 5);
+  assert.equal(tuned.starting.stat, 'constitution');
 });

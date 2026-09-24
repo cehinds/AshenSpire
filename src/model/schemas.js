@@ -699,6 +699,11 @@ export const SCHEMAS = Object.freeze({
     // semantics since the field existed; this set was closed to what shipped.
     belowBaseline: en('forbid', 'allow'),
     redistribution: en('fixedTotal'),
+    // Where the creation editor opens (owner, 2026-09-24): 'preset' seats the
+    // class preset with nothing left to spend (Standard); 'baseline' — and
+    // an absent field, which is every older mode — opens every attribute at
+    // the baseline with the whole pool unspent (Assign points).
+    opensOn: opt(en('preset', 'baseline')),
     equipmentProfiles: opt(mapOf(obj({
       baseValue: opt(num),
       ratingId: opt(en('ar', 'dr', 'pr', 'poise', 'ward')),

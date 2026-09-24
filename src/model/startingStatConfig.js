@@ -440,9 +440,22 @@ function dialLabel(key) {
  * spend exactly the mode's total is a small knapsack over the points.
  */
 export function derivedStatFloorProblems(bundle) {
+  // EVERY MODE A PLAYER CAN PICK, not only the default (owner, 2026-09-24):
+  // Assign points has a pool dial of its own, and a pool of 0 there is a
+  // character creation allows. The first mode that cannot hold one Mana is
+  // named; the default is asked first, so its sentence is unchanged.
+  const modes = visibleCreationModes(bundle || {})
+    .sort((a, b) => Number(b.id === bundle?.attributeRules?.defaultMode) - Number(a.id === bundle?.attributeRules?.defaultMode));
+  for (const mode of modes) {
+    const problems = manaFloorProblems(bundle, mode);
+    if (problems.length) return problems;
+  }
+  return [];
+}
+
+function manaFloorProblems(bundle, mode) {
   const table = bundle?.derivedStatRules;
   const rule = table?.rules?.mana;
-  const mode = (bundle?.creationModes || []).find((row) => row.id === bundle?.attributeRules?.defaultMode);
   if (!rule || !mode || !Array.isArray(bundle.attributes)) return [];
   const ids = bundle.attributes.map((row) => row.id);
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
@@ -487,10 +500,11 @@ export function derivedStatFloorProblems(bundle) {
   if (value >= 1) return [];
   const keys = ['base', ...ids].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
   const shown = ids.map((id) => `${id} ${weakest[id]}`).join(', ');
+  const under = mode.id === bundle?.attributeRules?.defaultMode ? '' : ` under ${mode.label || mode.id}`;
   return [{
     path: 'derivedStatRules.rules.mana',
     keys,
-    message: `Mana would be ${value} for the weakest character creation allows (${shown}), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
+    message: `Mana would be ${value} for the weakest character creation allows${under} (${shown}), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
   }];
 }
 
@@ -534,17 +548,17 @@ export function startingStatRows(bundle) {
     // total decides it, which is what every configuration exported before this
     // row existed relies on.
     add(PREFIX + mode.id + '.baseline', mode.baseline,
-      `${prefix}${DIAL_LABELS.baseline}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.baseline}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: `What every attribute opens at before a single point is assigned. Setting this decides the total: baseline × ${ids.length} attributes, plus the points available to assign. Leave it alone and it is derived from the total instead. Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.bonusPool', mode.bonusPool,
-      `${prefix}${DIAL_LABELS.bonusPool}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.bonusPool}`, 'Starting stats', {
         integer: true, step: 1, min: 0, max: TOTAL_MAX - ids.length, ...retired,
         note: `How many of the character's points are yours to place at creation, on top of the starting value above. Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.total', total,
-      `${prefix}${DIAL_LABELS.total}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.total}`, 'Starting stats', {
         integer: true, step: 1, min: bounds.min, max: bounds.max, ...retired,
         // The floor moved from the attribute count to the kit floor after
         // schema version 1 shipped. An older export carrying a smaller total
@@ -558,17 +572,17 @@ export function startingStatRows(bundle) {
         note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Ignored while a starting value is set above, which decides it instead. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.minimum', mode.minimum,
-      `${prefix}${DIAL_LABELS.minimum}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.minimum}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: 'The floor a stat can be dragged down to at creation, and the limit on how many points can be reclaimed from it. It can never exceed the starting value above. Applies to a new run.',
       });
     add(PREFIX + mode.id + '.maximum', mode.maximum,
-      `${prefix}${DIAL_LABELS.maximum}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.maximum}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: 'The most a single stat may be raised to AT CREATION. It caps the character screen, not the character: levelling raises it by the points levelled. It can never fall below the starting value, nor below what a starting kit asks for. Applies to a new run.',
       });
     add(PREFIX + mode.id + '.belowBaseline', mode.belowBaseline !== 'forbid',
-      `${prefix}${DIAL_LABELS.belowBaseline}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.belowBaseline}`, 'Starting stats', {
         ...retired,
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
@@ -735,6 +749,20 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
         pool = Math.min(mode.bonusPool, Math.max(0, total - ids.length));
       }
     }
+  } else if (rawTotal === undefined && rawPool !== undefined) {
+    // THE POOL ALONE DECIDES THE TOTAL (owner, 2026-09-24: Assign points is
+    // "x points to assign but configurable in advanced settings"). Typed with
+    // neither a starting value nor a total beside it, the points to assign sit
+    // on the authored starting value — baseline × attributes + pool — which is
+    // what the row says it is. Before this the row was bounded by the total
+    // it could not move, so raising it was refused and lowering it did nothing.
+    const poolCeiling = TOTAL_MAX - mode.baseline * ids.length;
+    const poolFloor = Math.max(0, bounds.min - mode.baseline * ids.length);
+    if (Number.isInteger(rawPool) && rawPool >= poolFloor && rawPool <= poolCeiling) {
+      pool = rawPool;
+      baseline = mode.baseline;
+      total = baseline * ids.length + pool;
+    } else refuse('bonusPool', rawPool, { min: poolFloor, max: poolCeiling }, pool);
   } else {
     if (rawTotal !== undefined) {
       if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;

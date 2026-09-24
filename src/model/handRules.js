@@ -32,7 +32,7 @@ export function handRulesProblems(rules) {
  * hand, turn draws, capacity, then what happens to unplayed cards — so each
  * subsection is one unbroken run of rows (tests/hand-rules.test.mjs).
  */
-export function handRulesRows(attributes = []) {
+export function handRulesRows(attributes = [], classes = []) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
     cat: 'Advanced', advancedGroup: 'Stats', handTopic: topic, settingSection: topic,
@@ -62,6 +62,12 @@ export function handRulesRows(attributes = []) {
       if (group === 'capacity' && ['base', 'minimum', 'maximum'].includes(field)) extra.min = 1;
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
       if (group === 'turn') extra.fixedOnly = true;
+      // EVERY SHIPPED CLASS OPENS ON ITS OWN BASE AND ATTRIBUTE (owner,
+      // 2026-09-24), set by the per-class rows below, so the shared pair moved
+      // nothing a player can reach. The keys stay so an exported configuration
+      // still imports; the rows leave the screen (`retired`), the way a
+      // retired creation mode's dials do.
+      if (group === 'starting' && ['base', 'stat'].includes(field)) Object.assign(extra, { retired: true, inert: true });
       if (field === 'base') extra.note = `The ${subject} before any attribute bonus.`;
       if (field === 'statEnabled') extra.note = `On: the attribute below adds cards to the ${subject}. Off: only the base and the limits apply.`;
       if (field === 'stat') extra.note = `The attribute that adds cards to the ${subject}.`;
@@ -73,6 +79,20 @@ export function handRulesRows(attributes = []) {
     }
   };
   addGroupRows('starting');
+  // ONE ROW PAIR PER CLASS, beside the shared opening-hand rows they refine.
+  const classNames = Object.fromEntries((classes || []).map((row) => [row.id, row.name || row.id]));
+  for (const [classId, def] of Object.entries(handRulesDefaults.startingByClass || {})) {
+    const name = classNames[classId] || classId[0].toUpperCase() + classId.slice(1);
+    add(`startingByClass.${classId}.base`, def.base, `${name} — Opening hand base cards`, groups.starting, {
+      note: `The ${name}'s opening hand before any attribute bonus. The attribute below adds cards on top, within the opening-hand limits above.`,
+    });
+    add(`startingByClass.${classId}.stat`, def.stat, `${name} — Opening hand attribute`, groups.starting, {
+      type: 'choice', choices: attributes.map(a => a.id),
+      choiceLabels: Object.fromEntries(attributes.map(a => [a.id, `${a.label} (${a.shortLabel})`])),
+      requires: ['starting.statEnabled', true],
+      note: `The attribute that adds cards to the ${name}'s opening hand.`,
+    });
+  }
   add('drawMode', handRulesDefaults.drawMode, 'How cards are drawn each turn', groups.turn, {
     type: 'choice', dropdown: true, choices: ['fill', 'fixed'],
     choiceLabels: { fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
@@ -115,10 +135,26 @@ export function resolveHandRules(settings = {}, attributes = []) {
     else { if (!Number.isFinite(Number(raw))) continue; value = Math.min(row.max, Math.max(row.min, Math.floor(Number(raw)))); }
     const parts = row.key.slice(HAND_RULES_PREFIX.length).split('.');
     const field = parts.pop();
-    (parts.length ? rules[parts[0]] : rules)[field] = value;
+    parts.reduce((node, part) => node[part], rules)[field] = value;
   }
   for (const group of Object.keys(groups)) if (rules[group].minimum > rules[group].maximum) rules[group] = structuredClone(handRulesDefaults[group]);
   return rules;
+}
+
+/**
+ * handRulesForClass(rules, classId) → the rules one fight is handed.
+ *
+ * The class's own opening-hand row replaces `starting.base` and
+ * `starting.stat`; the per-class table itself does not ride into the fight,
+ * so the combat snapshot states exactly the opening hand that fight was born
+ * with and a saved fight keeps it whatever the table later becomes. A class
+ * with no row (or no class at all: a headless fixture) keeps the shared rule.
+ */
+export function handRulesForClass(rules, classId = null) {
+  const { startingByClass, ...fight } = structuredClone(rules);
+  const own = classId && startingByClass ? startingByClass[classId] : null;
+  if (own) fight.starting = { ...fight.starting, base: own.base, stat: own.stat };
+  return fight;
 }
 
 export function handRulesSettingsProblems(settings = {}) {

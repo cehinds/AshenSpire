@@ -110,7 +110,11 @@ function spendAllocation(classId) {
   if (!SPEND) return undefined;
   const ids = REG.attributes.ids();
   if (!ids.includes(SPEND)) throw new Error(`--spend=${SPEND} is not an attribute id (${ids.join(', ')})`);
-  const mode = REG.creationModes.all().find((m) => m.id === 'standard');
+  // The mode a run is born under when no mode is named: Standard (`lean`)
+  // since 2026-09-20. This read 'standard' — the retired 10-scale mode — so
+  // its presets were refused at createRunState's door, which judges an
+  // unnamed mode as the default.
+  const mode = REG.creationModes.all().find((m) => m.id === REG.attributeRules.defaultMode);
   const alloc = { ...REG.attributeRules.presets[mode.id][classId] };
   const kit = resolveStartingKit(REG, classId, undefined, {});
   const floors = Object.fromEntries(ids.map((id) => [id, Math.max(mode.minimum, mode.baseline)]));
