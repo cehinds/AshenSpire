@@ -11,7 +11,7 @@
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 import { balance } from '../content/balance.js';
-import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { MUSIC_MANIFEST, SCALES, BEDS, MUSIC_TRACK_FALLBACK } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 import { assetUrl } from './assetmap.js';
@@ -441,7 +441,9 @@ export function initAudio(settings = {}) {
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
     // human typed on purpose, and the more specific intent wins.
-    const ext = state.tracks[context];
+    // A context the folder left empty may borrow a broader one's tracks
+    // (a region's map music falls back to the plain map list).
+    const ext = state.tracks[context]?.length ? state.tracks[context] : state.tracks[own(MUSIC_TRACK_FALLBACK, context)];
     if (ext && ext.length) {
       playExternal(context, ext, bed);
       return 'external';
