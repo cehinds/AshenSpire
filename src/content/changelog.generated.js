@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1281",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every card, relic and event has a way in",
+    "detail": "Nothing you play changes. A new check walks the game's content and finds a route by which each card, relic and event can actually reach a player, so nothing authored sits unreachable.",
+    "build": "0.7.1.466",
+    "pullRequest": 1281,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1281"
+  },
+  {
     "id": "pr-1280",
     "date": "2026-09-24",
     "group": "2026-09-24",
