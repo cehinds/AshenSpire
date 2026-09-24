@@ -578,9 +578,15 @@ export function initAudio(settings = {}) {
    * manifest / unreachable files → the procedural score is used. Re-applied
    * live restarts the current context so a new folder takes effect at once.
    */
+  // Each call takes a ticket; a manifest that resolves after a newer call (the
+  // boot-time shipped folder landing after the player typed their own) is
+  // dropped rather than overwriting the newer choice.
+  let musicConfigTicket = 0;
   async function configureMusic({ folder } = {}) {
+    const ticket = ++musicConfigTicket;
     state.folder = folder || '';
     state.tracks = {};
+    let tracks = {};
     if (folder) {
       try {
         const base = String(folder).replace(/\/+$/, '');
@@ -590,14 +596,16 @@ export function initAudio(settings = {}) {
           for (const key of MUSIC_CONTEXTS) {
             const list = m[key];
             if (Array.isArray(list) && list.length) {
-              state.tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
             }
           }
         }
       } catch (e) {
-        state.tracks = {}; // fall back entirely to procedural
+        tracks = {}; // fall back entirely to procedural
       }
     }
+    if (ticket !== musicConfigTicket) return; // superseded by a newer folder
+    state.tracks = tracks;
     // Re-trigger the current context so the new source is used immediately.
     if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;
