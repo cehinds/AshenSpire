@@ -14,13 +14,23 @@
 // only thing that ever caught it was attention, and attention does not scale
 // past the third merge in an evening.
 //
-// THE RULE, and it is bounded on purpose: every `Merge pull request #N` commit
-// that is on this branch AND NOT YET on the promotion target must be named by
+// THE RULE, and it is bounded on purpose: every merged pull request that is on
+// this branch AND NOT YET on the promotion target must be named by
 // some receipt in CHANGELOG.md. The bound is what makes this affordable and
 // what makes it meaningful — the question is never "has every merge in history
 // got a receipt" (they have not, and the file's own header says which stretch
 // is deliberately unreconstructed). The question is "is this promotion
 // complete", asked while the answer can still be acted on.
+//
+// THREE SHAPES A MERGE ARRIVES IN, because GitHub writes more than one and a
+// gate that knows only one is blind to the rest — #1262 and #1269 landed as
+// squashes and #1268 as a hand-titled merge, and this tool passed all three:
+//   · `Merge pull request #N from …`  a merge commit, anywhere in the range
+//   · `Merge PR #N: …`                a merge commit whose subject was edited
+//   · `… (#N)`                        a squash or rebase merge — counted ONLY on
+//     the first-parent line of the branch, where GitHub puts it. Inside a pull
+//     request's own history the same suffix is an author's reference, not a
+//     landing, and counting it would demand receipts for merges that never were.
 //
 // WHAT IT DOES NOT CHECK, stated so the silence is a decision:
 //   · whether the receipt is TRUE. Prose is not machine-checkable, and a gate
@@ -41,7 +51,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve as pathResolve } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
@@ -50,6 +60,19 @@ const CHANGELOG = join(ROOT, 'CHANGELOG.md');
 // in the file already uses, and it is the shape the in-game projection reads.
 const RECEIPT_REF = /\/pull\/(\d+)\)/g;
 const MERGE_SUBJECT = /^Merge pull request #(\d+)\s/;
+const MERGE_PR_SUBJECT = /^Merge PR #(\d+):/;
+const SQUASH_SUBJECT = /\(#(\d+)\)\s*$/;
+
+// Which pull request, if any, a commit landed. An entry is a subject string (a
+// merge commit, the original shape) or { subject, firstParent } where
+// firstParent says the commit sits on the branch's own first-parent line.
+export function landedPull(entry) {
+  const { subject, firstParent } = typeof entry === 'string'
+    ? { subject: entry, firstParent: false } : entry;
+  const m = MERGE_SUBJECT.exec(subject) || MERGE_PR_SUBJECT.exec(subject)
+    || (firstParent ? SQUASH_SUBJECT.exec(subject) : null);
+  return m ? m[1] : null;
+}
 
 // THE PURE CORE, kept separate from git so the known-bads below can drive it
 // without a repository. Everything this tool concludes is concluded here.
@@ -57,15 +80,15 @@ export function unreceipted(mergeSubjects, changelogText) {
   const receipted = new Set();
   for (const m of changelogText.matchAll(RECEIPT_REF)) receipted.add(m[1]);
   const merged = [];
-  for (const subject of mergeSubjects) {
-    const m = MERGE_SUBJECT.exec(subject);
-    if (m) merged.push(m[1]);
+  for (const entry of mergeSubjects) {
+    const n = landedPull(entry);
+    if (n && !merged.includes(n)) merged.push(n);
   }
   return { receipted, merged, missing: merged.filter((n) => !receipted.has(n)) };
 }
 
-function git(args) {
-  return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+function git(args, cwd = ROOT) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8' });
 }
 
 function resolve(rev) {
@@ -73,10 +96,72 @@ function resolve(rev) {
   catch { return null; }
 }
 
-function rangeSubjects(since) {
-  const spec = since ? `${since}..HEAD` : 'HEAD';
-  const out = git(['log', '--merges', '--format=%s', spec, ...(since ? [] : ['--max-count=40'])]);
-  return out.split('\n').filter(Boolean);
+// `cwd` and `limit` exist for tests/receipts-window.test.mjs, which drives this
+// against a scratch repository; check() always uses the defaults.
+export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
+  const lines = (args) => git(['log', ...args], cwd).split('\n').filter(Boolean);
+  if (since) {
+    const spec = `${since}..HEAD`;
+    // Every merge commit in the range (the original reach), plus every commit on
+    // the first-parent line, which is where a squash merge lands.
+    return [
+      ...lines(['--merges', '--format=%s', spec]).map((subject) => ({ subject, firstParent: false })),
+      ...lines(['--first-parent', '--format=%s', spec]).map((subject) => ({ subject, firstParent: true })),
+    ];
+  }
+  // THE FALLBACK WINDOW HAS ONE BOUNDARY, not one per walk. Capping each walk at
+  // 40 independently let the merge walk reach far older history than the
+  // first-parent walk, so a squash older than the 40th first-parent commit but
+  // newer than the 40th merge went unexamined and the check read green. The 40
+  // most recent merges set the window; the first-parent walk then covers
+  // everything not already an ancestor of the oldest of them — and never less
+  // than the last 40 first-parent commits it always covered. Both are prefixes
+  // of the same first-parent line, so the longer one contains the shorter.
+  //
+  // THE BOUNDARY IS WHERE THE OLDEST MERGE JOINED THIS LINE, not the merge
+  // itself. The merge walk follows all ancestry, so its 40th merge can sit on a
+  // side branch; `HEAD ^<that merge>` then excludes only what that side branch
+  // descends from, and the first-parent walk runs back to the side branch's old
+  // fork — into history the window never meant to judge. So a boundary is
+  // found in two steps: every descendant of a merge (the full graph —
+  // `--first-parent --ancestry-path` together never reaches a side-branch
+  // merge and returns nothing), then the first-parent commits from HEAD down
+  // to the last one in that set, which is the commit that landed it (or the
+  // merge itself, when it sits on the first-parent line).
+  const merges = lines(['--merges', `--max-count=${limit}`, '--format=%H %s', 'HEAD']).map((l) => {
+    const i = l.indexOf(' ');
+    return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+  });
+  const fp = (extra) => lines(['--first-parent', '--format=%s', ...extra]);
+  let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
+  if (merges.length < limit) firstParent = fp(['HEAD']);
+  else {
+    // EVERY selected merge sets a landing, not only the last one git lists:
+    // the merge walk is date-ordered, so a backdated merge inside a branch that
+    // landed late can come last while an earlier landing sits deeper on this
+    // line. The window reaches the deepest landing of any of them. Each merge's
+    // containing first-parent commits are a prefix of the line; the merge
+    // itself belongs to it too (`A..B` excludes A, and a first-parent merge
+    // titled `… (#N)` is a landing only when walked as a first-parent commit).
+    const line = lines(['--first-parent', '--format=%H %s', 'HEAD']).map((l) => {
+      const i = l.indexOf(' ');
+      return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+    });
+    let reach = 0;
+    for (const { hash } of merges) {
+      const descendants = new Set(git(['rev-list', '--ancestry-path', `${hash}..HEAD`], cwd).split('\n').filter(Boolean));
+      descendants.add(hash);
+      let k = 0;
+      while (k < line.length && descendants.has(line[k].hash)) k += 1;
+      reach = Math.max(reach, k);
+    }
+    const toBoundary = line.slice(0, reach).map(({ subject }) => subject);
+    if (toBoundary.length > firstParent.length) firstParent = toBoundary;
+  }
+  return [
+    ...merges.map(({ subject }) => ({ subject, firstParent: false })),
+    ...firstParent.map((subject) => ({ subject, firstParent: true })),
+  ];
 }
 
 function check(sinceArg) {
@@ -151,6 +236,8 @@ function selftest() {
     ['a merge with no receipt', [...CLEAN_LOG, 'Merge pull request #14 from a/d'], CLEAN_MD, ['14']],
     ['the receipt names a different pull request', CLEAN_LOG, CLEAN_MD.replace('/pull/13)', '/pull/31)'), ['13']],
     ['two merges, one receipt', [...CLEAN_LOG, 'Merge pull request #15 from a/e', 'Merge pull request #16 from a/f'], CLEAN_MD, ['15', '16']],
+    ['a squash merge on the first-parent line with no receipt', [...CLEAN_LOG, { subject: 'Add a thing (#17)', firstParent: true }], CLEAN_MD, ['17']],
+    ['a "Merge PR #N:" merge with no receipt', [...CLEAN_LOG, 'Merge PR #18: ship a thing'], CLEAN_MD, ['18']],
   ];
 
   let passed = 0;
@@ -168,6 +255,14 @@ function selftest() {
   }
   console.log('  PASS  clean copy: 2 merges, 2 receipts, nothing missing');
   passed += 1;
+
+  // The bound on the squash shape: a "(#N)" suffix inside a pull request's own
+  // history (not first-parent) is an author's reference, not a landing.
+  const offLine = unreceipted([...CLEAN_LOG, { subject: 'Fix a thing (#19)', firstParent: false }], CLEAN_MD);
+  if (offLine.missing.length) {
+    console.log(`  RED  a "(#N)" commit off the first-parent line was counted as a landing -> ${offLine.missing.join(', ')}`);
+    red += 1;
+  } else { console.log('  PASS  a "(#N)" commit off the first-parent line is not a landing'); passed += 1; }
 
   for (const [name, log, md, expected] of plants) {
     const got = unreceipted(log, md).missing;
@@ -190,7 +285,9 @@ function selftest() {
 }
 
 const argv = process.argv.slice(2);
-if (argv.includes('--selftest')) process.exit(selftest());
+const invoked = process.argv[1] && fileURLToPath(import.meta.url) === pathResolve(process.argv[1]);
+if (!invoked) { /* imported by a test: export only, run nothing */ }
+else if (argv.includes('--selftest')) process.exit(selftest());
 else if (argv.includes('--check') || argv.length === 0) {
   const i = argv.indexOf('--since');
   process.exit(check(i >= 0 ? argv[i + 1] : null));

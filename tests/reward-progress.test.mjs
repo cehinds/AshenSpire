@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rewardProgress, combatXpGains } from '../src/model/rewardprogress.js';
 import { awardSkillXp } from '../src/model/skills.js';
-import { awardLevelXp } from '../src/model/levelup.js';
+import { awardLevelXp, xpToNext as levelXpToNext } from '../src/model/levelup.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
@@ -32,10 +32,16 @@ const climber = () => ({
 });
 
 test('the character row reads the run ledger and the fight\'s own gain', () => {
-  const run = climber();
-  const { character } = rewardProgress(registries, run, { level: 25, tracks: {} });
+  // The ledger sits partway into the level-3 step of the stock curve, and the
+  // fight paid part of it, so the bar is neither empty nor full whatever the
+  // curve's base is.
+  const step = levelXpToNext(registries, 3);
+  const run = { ...climber(), level: { xp: Math.floor(step / 2), level: 3, unspentPoints: 0 } };
+  const gained = Math.max(1, Math.floor(step / 4));
+  const { character } = rewardProgress(registries, run, { level: gained, tracks: {} });
   assert.equal(character.label, 'Reaver', 'the class names the character row');
-  assert.deepEqual([character.level, character.xp, character.gained], [3, 40, 25]);
+  assert.deepEqual([character.level, character.xp, character.gained], [3, Math.floor(step / 2), gained]);
+  assert.equal(character.xpToNext, step, 'the row quotes the curve\'s own step');
   assert.ok(character.xpToNext > 0 && character.fraction > 0 && character.fraction < 1);
   assert.equal(character.capped, false);
 });

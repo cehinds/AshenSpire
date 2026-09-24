@@ -103,9 +103,9 @@ linked. Update this file after every PR.
 
 ## 12. CI
 
-- [ ] **The receipts gate is green on `dev`**: backfill #1263, and see squash and `Merge PR #N:` subjects. Test: `node tools/receipts.mjs --check` exits 0, and `--selftest` catches both subject shapes.
-- [ ] **The CHANGELOG ordering gate runs on PRs** (about-changelog has a mode that needs no browser). Test: a PR with a date out of order fails `tests.yml`.
-- [ ] **Push runs of `tests.yml` on `dev` are not cancelled**. Test: `cancel-in-progress` applies only to `pull_request`, and every push run concludes success or failure.
+- [x] **The receipts gate is green on `dev`**: backfill #1263, and see squash and `Merge PR #N:` subjects. Test: `node tools/receipts.mjs --check` exits 0, and `--selftest` catches both subject shapes. — [#1275](https://github.com/cehinds/AshenSpire/pull/1275)
+- [x] **The CHANGELOG ordering gate runs on PRs** (about-changelog has a mode that needs no browser). Test: a PR with a date out of order fails `tests.yml`. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
+- [x] **Push runs of `tests.yml` on `dev` are not cancelled**. Test: `cancel-in-progress` applies only to `pull_request`, and every push run concludes success or failure. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
 - [ ] **PR wall time is under 10 minutes**. Test: the measured green run after `bundle.test.mjs` moves to its own parallel job.
 - [ ] **A browser-gate run of `ci.yml` exists on the release candidate**. Test: a dispatched `ci.yml` run on the RC SHA concludes success. *D7.*
 

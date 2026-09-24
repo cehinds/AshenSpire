@@ -3,6 +3,116 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1289",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map re-centres when your screen changes size",
+    "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
+    "build": "0.7.1.471",
+    "pullRequest": 1289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1289"
+  },
+  {
+    "id": "pr-1278",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the combat card hotkeys are tested",
+    "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
+    "build": "0.7.1.469",
+    "pullRequest": 1278,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1278"
+  },
+  {
+    "id": "pr-1279",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
+    "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
+    "build": "0.7.1.467",
+    "pullRequest": 1279,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1281",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every card, relic and event has a way in",
+    "detail": "Nothing you play changes. A new check walks the game's content and finds a route by which each card, relic and event can actually reach a player, so nothing authored sits unreachable.",
+    "build": "0.7.1.466",
+    "pullRequest": 1281,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1281"
+  },
+  {
+    "id": "pr-1280",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: leaving a fight and coming back is now tested",
+    "detail": "Nothing you play changes. A new automated test abandons a run in the middle of a fight, reloads it, and checks that you land back at the fight's start with the same deck, HP and enemies, as the spec promises.",
+    "build": "0.7.1.465",
+    "pullRequest": 1280,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1280"
+  },
+  {
+    "id": "pr-1275",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
+    "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
+    "build": "0.7.1.464",
+    "pullRequest": 1275,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
+    "id": "pr-1274",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
+  },
+  {
+    "id": "pr-1273",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "New characters start on the owner's tuned rules, the stat choice reads Assigned, and the mobile edition is under 30 MB",
+    "detail": "The owner's saved game configuration is now what every new player starts with: fixed turn draws, with Intelligence growing your opening hand, turn draws and hand capacity; three flask charges shared between Crimson and Azure; 20 cinders to start and twenty times the cinders from every fight; quicker levels, weapon and class skills; HP, Mana, Stamina, Actions and draw that read several attributes instead of one; new attack, defence and resistance weights; and a two-row battlefield with larger enemies. The one stat allocation at character creation is now called Assigned. The mobile download shrank from 49 MB to 29 MB — its art is recompressed smaller, with backdrops kept sharper than the rest — and plays the same. Settings you have already chosen keep their values.",
+    "build": "0.7.1.456",
+    "pullRequest": 1273,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1273"
+  },
+  {
+    "id": "pr-1270",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The balance simulator now plays by the game's rules",
+    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
+    "build": "0.7.1.455",
+    "pullRequest": 1270,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
+  },
+  {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last journey scene shows the road you actually set out on",
+    "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
+    "build": "0.7.1.456",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Herald phones get the full-body figure too",
+    "detail": "The Herald's new full-body painting from #1268 reached desktop but not the phone edition, which kept showing the old head-and-shoulders crop. The five Herald sprites in the mobile art set now show the whole figure, boots included, as they do on desktop.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
+  },
+  {
     "id": "pr-1272",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -21,6 +131,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.449",
     "pullRequest": 1267,
     "url": "https://github.com/cehinds/AshenSpire/pull/1267"
+  },
+  {
+    "id": "pr-1268",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The Herald's full-body portrait ships",
+    "detail": "The Herald's sprites are recut from a full-body plate, in one pose-cutout pass that cut all four classes. The Herald's anchor, measured on the old bust, is cleared rather than carried onto art it was never measured against.",
+    "build": "0.7.1.447",
+    "pullRequest": 1268,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1268"
+  },
+  {
+    "id": "pr-1269",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: a written drive to a shippable 1.0",
+    "detail": "Nothing you see in the game changes. The repository gains a /finish skill: a resumable checklist that runs waves of parallel agents, one reviewed pull request per task, within the game's specification and contribution rules.",
+    "build": "0.7.1.446",
+    "pullRequest": 1269,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1269"
   },
   {
     "id": "pr-1266",
@@ -101,6 +231,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1262",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: a written production-polish pass",
+    "detail": "Nothing you see in the game changes. The repository gains a /polish skill: a production-polish prompt and roadmap template, which acts only on request and leaves release decisions and the specification's rules to the owner.",
+    "build": "0.7.1.405",
+    "pullRequest": 1262,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1262"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: the card wireframes describe the card the game draws now",
+    "detail": "Nothing you see in the game changes. A new wireframe document and its generator record the playing card as it is currently drawn, and the card-anatomy mockup is redrawn to match.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",

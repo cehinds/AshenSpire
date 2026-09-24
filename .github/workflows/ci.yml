@@ -144,6 +144,13 @@ on:
   # before anyone commits to a number. Every RATIO here is independent of the
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
+  #
+  # ONE AUTOMATIC TRIGGER, by the owner's ruling D7 (2026-09-24): a push to
+  # `release`. That branch moves only when the owner cuts a release, so it is a
+  # handful of runs, and it is the one ref whose tree ships — the 3-OS claims
+  # above are read there at least. Every other ref stays dispatch-only.
+  push:
+    branches: [release]
   workflow_dispatch:
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
