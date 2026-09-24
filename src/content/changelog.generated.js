@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the design spec matches the shipped game",
     "detail": "Nothing you play changes. The design spec now counts the Rogue's 40 cards, names Goreblood as it ships, and says item by item what from its polish list is shipped and what is still to build.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1282,
     "url": "https://github.com/cehinds/AshenSpire/pull/1282"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Guilt costs its HP at the end of your turn, in co-op too",
     "detail": "Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1286,
     "url": "https://github.com/cehinds/AshenSpire/pull/1286"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Text is easier to read in the colour-blind-safe and dark palettes",
     "detail": "Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1291,
     "url": "https://github.com/cehinds/AshenSpire/pull/1291"
   },
@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Reading a card no longer hides behind other panels",
     "detail": "Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1288,
     "url": "https://github.com/cehinds/AshenSpire/pull/1288"
   },
@@ -48,7 +48,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The map re-centres when your screen changes size",
     "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1289,
     "url": "https://github.com/cehinds/AshenSpire/pull/1289"
   },
@@ -58,7 +58,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the combat card hotkeys are tested",
     "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1278,
     "url": "https://github.com/cehinds/AshenSpire/pull/1278"
   },
@@ -68,9 +68,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
     "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
-    "build": "0.7.1.487",
+    "build": "0.7.1.493",
     "pullRequest": 1279,
     "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1276",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two content checks that had gone stale are fixed and now run with every test",
+    "detail": "Nothing you see in the game changes. The check that the Rogue is complete and the check that every enemy is reachable and grows stronger in order as you climb had both gone red unseen, because they counted cards, outfits, enemies and flask charges from an older roster and grouped fights by a retired act number. They now read those counts from the game's own data, group fights by the seat they belong to, and run in the test suite, so the next time either goes red a pull request fails instead of nobody noticing.",
+    "build": "0.7.1.490",
+    "pullRequest": 1276,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1276"
+  },
+  {
+    "id": "pr-1309",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A landed Dodge Roll now gives real Block, and a Medium dodge costs less Stamina",
+    "detail": "The dodge still measured your Dexterity on the old attribute scale, where 10 was average. Every new character has 1 to 4 Dexterity, so the roll came out at −3 to −5. A dodge landed less than half the time and gave about 1 Block, and little or none if you were Medium or Heavy. It is now measured on the current scale: 3 Dexterity gives no modifier, 1 gives −1, and every 2 points above 3 give +1. A landed dodge now gives at least 2 Block, and 5 or more for a Light character. A Medium dodge costs 1 Stamina and 1 Action instead of 2 Stamina, and a Heavy dodge costs 2 Stamina and 1 Action instead of 3 and 2. Over 240 simulated runs a class, dodges now land about 60% of the time for 4 to 6 Block. The Reaver now wins 112 runs, the Starseer 104, the Rogue 141 and the Herald 136, where before this change they won 105, 103, 135 and 135. A character made on an older attribute scale keeps the dodge it had.",
+    "build": "0.7.1.487",
+    "pullRequest": 1309,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1309"
   },
   {
     "id": "pr-1304",

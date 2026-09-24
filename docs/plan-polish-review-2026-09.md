@@ -116,8 +116,14 @@ amended before code moves.
     non-starter relics do).
 - [ ] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
   scale:
-  - [ ] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
-  - [ ] Dodge Roll's guard is `3 + floor((DEX−10)/2)` plus the weight bonus:
+  (Status 2026-09-24: the Dodge Roll and §13.4m rows landed on
+  `claude/balance-a3-lean`. Load was met by `itemWeightScale` 0.2, and the
+  Actions, draw and HP rows are the owner's game config (#1273), which A3
+  does not change. Baseline before the dodge rows, `node tools/runsim.mjs
+  240 --seeded-seats`: Reaver 105, Starseer 103, Rogue 135, Herald 135 of
+  240, already inside the 35–65% band.)
+  - [x] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
+  - [x] Dodge Roll's guard is `3 + floor((DEX−10)/2)` plus the weight bonus:
     ≤ 0 at DEX 1–4 and negative with no floor when Heavy at DEX 1–3. Heavy also prices it at A2/SP3,
     more than a Starseer's whole Stamina pool (`src/framework/weight.js` ~36,
     ~55); it sits in two starter decks. (In combat the card face already
@@ -131,7 +137,7 @@ amended before code moves.
     Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
     120); measure incoming damage per encounter with the A1 simulator and
     retune pools or enemy damage from that, not from the old figure.
-  - [ ] SPEC §13.4m still describes the conversion scale removed on 09-21.
+  - [x] SPEC §13.4m still describes the conversion scale removed on 09-21.
 - [ ] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
   the derived draw stat (`src/engine/handRules.js` ~6–10) and make 21 draw
