@@ -44,10 +44,10 @@ import {
   rollBossRelicChoices,
   rollEliteChest,
 } from '../src/engine/encounters.js';
-import { applyChestOption, chestOptionShapeProblems, chestOptionReferenceProblems } from '../src/model/rewardChest.js';
+import { applyChestOption, chestShapeProblems, chestOptionReferenceProblems } from '../src/model/rewardChest.js';
 import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { artChargeView, artUnleashFor } from '../src/model/artCharge.js';
-import { offeredRelicIds } from '../src/model/rewardplan.js';
+import { offeredRelicIds, relicChoiceShapeProblems } from '../src/model/rewardplan.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
@@ -114,49 +114,119 @@ function memberRng(seed, index, counters) {
 // refusal that stays whole: a blob where NO member survives — a party of
 // nobody is not a resume, and pretending it resumed would be the silent
 // version of the same loss.
+const isPlainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const isId = (v) => typeof v === 'string' && v.length > 0;
+const isCount = (v) => Number.isInteger(v) && v >= 0;
+
 /**
- * The ids a saved co-op reward offer names that the registries do not hold —
- * the solo load door's reference check (engine/save.js
- * pendingRewardReferenceProblems) over the co-op offer shape: its cards, its
- * relic or boss relic choices, its flask and its stored elite chest.
+ * The SHAPE of a saved co-op reward offer (rollRewardFor), field by field —
+ * the solo save door's pendingReward shape rules (model/state.js) over the
+ * co-op offer, sharing its relic-choice and chest checks. Every field a
+ * restored door reads is checked for its type, not only the ids it names: a
+ * `relicIds` string would otherwise read as no relics on the table, and
+ * Continue would silently forfeit the reward (review of #1287).
  */
-function offerReferenceProblems(registries, offer, path) {
-  if (!offer || typeof offer !== 'object' || Array.isArray(offer)) return [`${path} is not an offer`];
+function offerShapeProblems(registries, offer, path) {
+  if (!isPlainObject(offer)) return [`${path} is not an offer`];
   const problems = [];
-  for (const cardId of Array.isArray(offer.cardIds) ? offer.cardIds : []) {
-    if (!registries.cards.has(cardId)) problems.push(`${path} card '${cardId}' is unknown`);
-  }
-  if (offer.relicId && !registries.relics.has(offer.relicId)) problems.push(`${path} relic '${offer.relicId}' is unknown`);
-  for (const relicId of Array.isArray(offer.relicIds) ? offer.relicIds : []) {
-    if (!registries.relics.has(relicId)) problems.push(`${path} boss relic choice '${relicId}' is unknown`);
-  }
-  if (offer.flaskId && !registries.flasks.has(offer.flaskId)) problems.push(`${path} flask '${offer.flaskId}' is unknown`);
-  if (offer.chest != null) {
-    // A generated offer omits `chest` when nothing can be built, so an
-    // explicitly empty list is corrupt: the door would draw no chest and
-    // Continue/Skip all would silently forfeit it.
-    const options = offer.chest && Array.isArray(offer.chest.options) && offer.chest.options.length ? offer.chest.options : null;
-    if (!options) problems.push(`${path} chest has no options`);
-    for (const [i, option] of (options || []).entries()) {
-      const shape = chestOptionShapeProblems(option, `${path} chest option ${i}`);
-      problems.push(...(shape.length ? shape : chestOptionReferenceProblems(registries, option).map((p) => `${path} ${p}`)));
-    }
+  const pools = Object.keys(registries.balance.rewards.cinders || {});
+  if (!pools.includes(offer.pool)) problems.push(`${path}.pool must be one of ${pools.join(', ')}`);
+  if (!Array.isArray(offer.cardIds) || offer.cardIds.some((id) => !isId(id))) problems.push(`${path}.cardIds must be an array of card ids`);
+  if (!isCount(offer.cinders)) problems.push(`${path}.cinders must be a non-negative integer`);
+  if (offer.flaskId != null && !isId(offer.flaskId)) problems.push(`${path}.flaskId must be null or a flask id`);
+  if (offer.relicId != null && !isId(offer.relicId)) problems.push(`${path}.relicId must be null or a relic id`);
+  if (offer.relicIds != null) problems.push(...relicChoiceShapeProblems(offer.relicIds, `${path}.relicIds`));
+  if (offer.chest != null) problems.push(...chestShapeProblems(offer.chest, `${path}.chest`));
+  const stone = offer.smithingStoneReceipt;
+  if (stone != null && (!isPlainObject(stone) || !isCount(stone.amount) || !isCount(stone.stoneBalanceAfter))) {
+    problems.push(`${path}.smithingStoneReceipt must be { amount, stoneBalanceAfter } of non-negative integers`);
   }
   return problems;
 }
 
-/** A restored member's catch-up queue, by the same door (reward + treasure entries). */
+/**
+ * The ids a (well-shaped) saved co-op reward offer names that the registries
+ * do not hold — the solo load door's reference check (engine/save.js
+ * pendingRewardReferenceProblems): its cards, its relic or boss relic
+ * choices, its flask and its stored elite chest.
+ */
+function offerReferenceProblems(registries, offer, path) {
+  const shape = offerShapeProblems(registries, offer, path);
+  if (shape.length) return shape;
+  const problems = [];
+  for (const cardId of offer.cardIds) {
+    if (!registries.cards.has(cardId)) problems.push(`${path} card '${cardId}' is unknown`);
+  }
+  if (offer.relicId && !registries.relics.has(offer.relicId)) problems.push(`${path} relic '${offer.relicId}' is unknown`);
+  for (const relicId of offer.relicIds || []) {
+    if (!registries.relics.has(relicId)) problems.push(`${path} boss relic choice '${relicId}' is unknown`);
+  }
+  if (offer.flaskId && !registries.flasks.has(offer.flaskId)) problems.push(`${path} flask '${offer.flaskId}' is unknown`);
+  for (const option of offer.chest ? offer.chest.options : []) {
+    problems.push(...chestOptionReferenceProblems(registries, option).map((p) => `${path} ${p}`));
+  }
+  return problems;
+}
+
+const CATCHUP_TYPES = ['reward', 'treasure', 'event'];
+
+/**
+ * A restored member's catch-up queue, by the same door: every entry's shape
+ * (the fields resolveCatchup and the client read) and the content it names.
+ */
 function catchupReferenceProblems(registries, catchup) {
   if (catchup == null) return [];
   if (!Array.isArray(catchup)) return ['catch-up queue is not a list'];
   const problems = [];
   for (const [i, item] of catchup.entries()) {
-    if (!item || typeof item !== 'object') { problems.push(`catch-up entry ${i} is not an entry`); continue; }
-    if (item.type === 'reward') problems.push(...offerReferenceProblems(registries, item.offer, `catch-up entry ${i} offer`));
-    if (item.type === 'treasure' && item.relicId && !registries.relics.has(item.relicId)) {
-      problems.push(`catch-up entry ${i} relic '${item.relicId}' is unknown`);
+    const p = `catch-up entry ${i}`;
+    if (!isPlainObject(item)) { problems.push(`${p} is not an entry`); continue; }
+    if (!CATCHUP_TYPES.includes(item.type)) { problems.push(`${p}.type must be one of ${CATCHUP_TYPES.join(', ')}`); continue; }
+    if (!Number.isInteger(item.act) || item.act < 1) problems.push(`${p}.act must be a positive integer`);
+    if (!isCount(item.floor)) problems.push(`${p}.floor must be a non-negative integer`);
+    if (item.type === 'reward') problems.push(...offerReferenceProblems(registries, item.offer, `${p} offer`));
+    if (item.type === 'treasure') {
+      if (item.relicId != null && !isId(item.relicId)) problems.push(`${p}.relicId must be null or a relic id`);
+      else if (item.relicId && !registries.relics.has(item.relicId)) problems.push(`${p} relic '${item.relicId}' is unknown`);
+    }
+    if (item.type === 'event') {
+      if (!isId(item.eventId)) problems.push(`${p}.eventId must be a non-empty string`);
+      if (item.open != null && (!Array.isArray(item.open) || item.open.some((n) => !isCount(n)))) problems.push(`${p}.open must be null or an array of choice indexes`);
+      if (item.mapNodeId != null && !isId(item.mapNodeId)) problems.push(`${p}.mapNodeId must be null or a node id`);
+      if (item.rng != null && (!isPlainObject(item.rng) || Object.values(item.rng).some((n) => !isCount(n)))) problems.push(`${p}.rng must be a map of stream counters`);
+      if (item.purse != null && !isCount(item.purse)) problems.push(`${p}.purse must be a non-negative integer`);
+      if (item.done != null && (!isPlainObject(item.done) || !isCount(item.done.choiceIndex) || typeof item.done.resultText !== 'string')) {
+        problems.push(`${p}.done must be { choiceIndex, resultText }`);
+      }
     }
   }
+  return problems;
+}
+
+const CLAIM_KINDS = ['card', 'relic', 'flask', 'chest'];
+
+/** A restored reward scene's per-seat state: its offer, and its chosen/claimed rows. */
+function rewardSceneSeatProblems(registries, scene, id) {
+  if (!scene || scene.kind !== 'reward') return [];
+  const problems = [];
+  if (Object.hasOwn(scene.offers, id)) problems.push(...offerReferenceProblems(registries, scene.offers[id], 'pending reward offer'));
+  if (Object.hasOwn(scene.chosen, id) && typeof scene.chosen[id] !== 'boolean') problems.push('pending reward chosen flag must be a boolean');
+  if (scene.claimed != null && Object.hasOwn(scene.claimed, id)) {
+    const row = scene.claimed[id];
+    if (!isPlainObject(row) || Object.entries(row).some(([k, v]) => !CLAIM_KINDS.includes(k) || typeof v !== 'boolean')) {
+      problems.push(`pending reward claimed row must map ${CLAIM_KINDS.join('/')} to booleans`);
+    }
+  }
+  return problems;
+}
+
+/** A restored reward scene's own maps (the party's, not one seat's). */
+function rewardSceneProblems(scene) {
+  if (!scene || scene.kind !== 'reward') return [];
+  const problems = [];
+  if (!isPlainObject(scene.offers)) problems.push('reward scene offers must be an object keyed by member');
+  if (!isPlainObject(scene.chosen)) problems.push('reward scene chosen must be an object keyed by member');
+  if (scene.claimed != null && !isPlainObject(scene.claimed)) problems.push('reward scene claimed must be an object keyed by member');
   return problems;
 }
 
@@ -181,7 +251,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // the one it was already climbing — and a save that names an order must
     // name every seat once.
     const seatOrder = Array.isArray(restore.seatOrder) ? restore.seatOrder : defaultSeatOrder(registries);
-    const seatProblems = seatOrderProblems(seatOrder, registries);
+    const seatProblems = [...seatOrderProblems(seatOrder, registries), ...rewardSceneProblems(restore.scene)];
     if (seatProblems.length) throw new Error(`Malformed session save: ${seatProblems.join('; ')}`);
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
     assertSavedBossReferences(registries, restore.mapGraph, { seat: seatAtTier(seatOrder, mapAct), tier: mapAct });
@@ -245,16 +315,18 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         if (typeof md.id !== 'string' || !md.id) throw new Error('member record has no id');
         // THE SEAT'S OWED CHOICES ARE CHECKED AT THE DOOR (review of #1287):
-        // a pending reward offer or catch-up entry naming content this build
-        // does not hold would be granted and crash a later node. The seat is
+        // a pending reward offer, its chosen/claimed rows, or a catch-up entry
+        // that is malformed (a field of the wrong shape reads as nothing owed
+        // and is silently forfeit) or names content this build does not hold
+        // (granted, it crashes a later node). Every field is checked, not
+        // only the ids (offerShapeProblems, the solo door's rules). The seat is
         // refused with its reason — the save stays evidence, as for any other
         // poisoned member record.
         const owed = [
           ...catchupReferenceProblems(registries, md.catchup),
-          ...(restore.scene && restore.scene.kind === 'reward' && restore.scene.offers && restore.scene.offers[md.id]
-            ? offerReferenceProblems(registries, restore.scene.offers[md.id], 'pending reward offer') : []),
+          ...rewardSceneSeatProblems(registries, restore.scene, md.id),
         ];
-        if (owed.length) throw new Error(`Session member '${md.id}' owes unknown content: ${owed.join('; ')}`);
+        if (owed.length) throw new Error(`Session member '${md.id}' owes malformed or unknown content: ${owed.join('; ')}`);
         if (md.classId !== md.run.class) {
           throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
         }

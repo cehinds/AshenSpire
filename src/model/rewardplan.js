@@ -55,6 +55,20 @@ export const pickIds = (row) => (Array.isArray(row.options) ? row.options : Arra
 export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
   : Array.isArray(offer.relicIds) ? offer.relicIds.filter(Boolean) : []);
 
+/**
+ * relicChoiceShapeProblems(relicIds, path) → problems with a saved boss relic
+ * choice (SPEC §6.1): an array of distinct non-empty relic ids. One rule for
+ * the solo save door (model/state.js) and the co-op restore (tools/session.mjs),
+ * so a string or object can never read as "no relics on the table" there.
+ */
+export function relicChoiceShapeProblems(relicIds, path = 'relicIds') {
+  if (!Array.isArray(relicIds) || relicIds.some((id) => typeof id !== 'string' || !id)) {
+    return [`${path} must be an array of relic ids`];
+  }
+  if (new Set(relicIds).size !== relicIds.length) return [`${path} must be distinct`];
+  return [];
+}
+
 /** The field a choice row's pick lands in, by kind. */
 const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
 

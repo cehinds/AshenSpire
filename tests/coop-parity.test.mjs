@@ -363,12 +363,125 @@ test('a restored offer or catch-up entry whose chest has an empty or non-list op
     openReward(S, { p1: { ...chestOffer([purse]), chest }, p2: chestOffer([purse]) });
     const R = restoreSession(REG, JSON.parse(JSON.stringify(S.serialize())));
     assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], `live offer chest ${JSON.stringify(chest)} is refused`);
-    assert.match(R.refusedMembers()[0].reason, /chest has no options/);
+    assert.match(R.refusedMembers()[0].reason, /chest\.options must be a non-empty array/);
 
     const T = party();
     seat(T, 'p2').catchup.push({ type: 'reward', offer: { ...chestOffer([purse]), chest }, act: 1, floor: 1 });
     const U = restoreSession(REG, JSON.parse(JSON.stringify(T.serialize())));
     assert.deepEqual(U.refusedMembers().map((r) => r.id), ['p2'], `catch-up chest ${JSON.stringify(chest)} is refused`);
+  }
+});
+
+// THE WHOLE SHAPE, NOT ONE FIELD PER ROUND (PR #1287 review): every field of a
+// restored offer and catch-up entry that a door reads is checked for its type,
+// by the solo save door's rules. Each row breaks exactly one field of a
+// well-formed offer / entry; the seat holding it is refused by name.
+test('a restored live or catch-up reward offer with any malformed field is refused at the door (PR #1287 review)', () => {
+  const card = REG.cards.all().find((c) => !c.id.startsWith('coop')).id;
+  const bossRelics = REG.relics.all().filter((r) => r.rarity === 'boss').slice(0, 2).map((r) => r.id);
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  const good = () => ({
+    pool: 'boss', cardIds: [card], cinders: 10, flaskId: null, relicId: null, relicIds: [...bossRelics],
+    chest: { options: [purse] }, smithingStoneReceipt: { pool: 'boss', rewardId: 'r', amount: 1, duplicate: false, stoneBalanceAfter: 1 },
+  });
+  const rows = [
+    ['relicIds as a string', (o) => { o.relicIds = bossRelics[0]; }, /relicIds must be an array of relic ids/],
+    ['relicIds as an object', (o) => { o.relicIds = { 0: bossRelics[0] }; }, /relicIds must be an array of relic ids/],
+    ['relicIds with an empty id', (o) => { o.relicIds = [bossRelics[0], '']; }, /relicIds must be an array of relic ids/],
+    ['relicIds repeated', (o) => { o.relicIds = [bossRelics[0], bossRelics[0]]; }, /relicIds must be distinct/],
+    ['relicId as a number', (o) => { o.relicId = 7; }, /relicId must be null or a relic id/],
+    ['cardIds as a string', (o) => { o.cardIds = card; }, /cardIds must be an array of card ids/],
+    ['cardIds holding a non-string', (o) => { o.cardIds = [card, 3]; }, /cardIds must be an array of card ids/],
+    ['cardIds missing', (o) => { delete o.cardIds; }, /cardIds must be an array of card ids/],
+    ['pool outside the enum', (o) => { o.pool = 'legendary'; }, /pool must be one of/],
+    ['cinders negative', (o) => { o.cinders = -1; }, /cinders must be a non-negative integer/],
+    ['cinders fractional', (o) => { o.cinders = 1.5; }, /cinders must be a non-negative integer/],
+    ['cinders as a string', (o) => { o.cinders = '10'; }, /cinders must be a non-negative integer/],
+    ['flaskId as an object', (o) => { o.flaskId = {}; }, /flaskId must be null or a flask id/],
+    ['chest as an array', (o) => { o.chest = [purse]; }, /chest\.options must be a non-empty array/],
+    ['chest option of an unknown category', (o) => { o.chest = { options: [{ category: 'gems' }] }; }, /chest\.options\[0\]\.category must be one of/],
+    ['chest cinders option without counts', (o) => { o.chest = { options: [{ category: 'cinders' }] }; }, /chest\.options\[0\]\.cinders must be a non-negative integer/],
+    ['chest relic option without its id', (o) => { o.chest = { options: [{ category: 'relic' }] }; }, /chest\.options\[0\]\.relicId must be a non-empty string/],
+    ['smithing receipt as a number', (o) => { o.smithingStoneReceipt = 3; }, /smithingStoneReceipt must be/],
+    ['offer as an array', (o) => [o], /is not an offer/],
+  ];
+  // The well-formed baseline restores both seats, live and catch-up.
+  {
+    const S = party();
+    openReward(S, { p1: good(), p2: good() });
+    seat(S, 'p2').catchup.push({ type: 'reward', offer: good(), act: 1, floor: 1 });
+    assert.deepEqual(restoreSession(REG, JSON.parse(JSON.stringify(S.serialize()))).refusedMembers(), []);
+  }
+  for (const [name, breakIt, reason] of rows) {
+    const live = good(); const liveOffer = breakIt(live) || live;
+    const S = party();
+    openReward(S, { p1: liveOffer, p2: good() });
+    const R = restoreSession(REG, JSON.parse(JSON.stringify(S.serialize())));
+    assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], `live offer: ${name} is refused`);
+    assert.match(R.refusedMembers()[0].reason, reason, `live offer: ${name} names its reason`);
+
+    const queued = good(); const queuedOffer = breakIt(queued) || queued;
+    const T = party();
+    seat(T, 'p2').catchup.push({ type: 'reward', offer: queuedOffer, act: 1, floor: 1 });
+    const U = restoreSession(REG, JSON.parse(JSON.stringify(T.serialize())));
+    assert.deepEqual(U.refusedMembers().map((r) => r.id), ['p2'], `catch-up offer: ${name} is refused`);
+    assert.match(U.refusedMembers()[0].reason, reason, `catch-up offer: ${name} names its reason`);
+  }
+});
+
+test('a restored catch-up entry or reward-scene seat row with any malformed field is refused at the door (PR #1287 review)', () => {
+  const relic = REG.relics.all().find((r) => r.rarity === 'common').id;
+  const eventId = REG.events.all()[0].id;
+  const entries = [
+    ['entry of an unknown type', { type: 'shrine', act: 1, floor: 1 }, /type must be one of/],
+    ['entry act of zero', { type: 'treasure', relicId: relic, act: 0, floor: 1 }, /act must be a positive integer/],
+    ['entry floor as a string', { type: 'treasure', relicId: relic, act: 1, floor: '1' }, /floor must be a non-negative integer/],
+    ['treasure relicId as an array', { type: 'treasure', relicId: [relic], act: 1, floor: 1 }, /relicId must be null or a relic id/],
+    ['reward entry without an offer', { type: 'reward', act: 1, floor: 1 }, /is not an offer/],
+    ['event without an id', { type: 'event', act: 1, floor: 1 }, /eventId must be a non-empty string/],
+    ['event open as a string', { type: 'event', eventId, open: '0', act: 1, floor: 1 }, /open must be null or an array/],
+    ['event rng as a list', { type: 'event', eventId, rng: [1], act: 1, floor: 1 }, /rng must be a map of stream counters/],
+    ['event purse negative', { type: 'event', eventId, purse: -5, act: 1, floor: 1 }, /purse must be a non-negative integer/],
+    ['event done without its text', { type: 'event', eventId, done: { choiceIndex: 0 }, act: 1, floor: 1 }, /done must be \{ choiceIndex, resultText \}/],
+  ];
+  // Well-formed entries of every type restore.
+  {
+    const S = party();
+    seat(S, 'p2').catchup.push(
+      { type: 'treasure', relicId: relic, act: 1, floor: 1 },
+      { type: 'treasure', relicId: null, act: 1, floor: 2 },
+      { type: 'event', eventId, open: [0], mapNodeId: null, rng: { events: 3 }, purse: 10, act: 1, floor: 3 },
+    );
+    assert.deepEqual(restoreSession(REG, JSON.parse(JSON.stringify(S.serialize()))).refusedMembers(), []);
+  }
+  for (const [name, entry, reason] of entries) {
+    const S = party();
+    seat(S, 'p2').catchup.push(entry);
+    const R = restoreSession(REG, JSON.parse(JSON.stringify(S.serialize())));
+    assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p2'], `catch-up: ${name} is refused`);
+    assert.match(R.refusedMembers()[0].reason, reason, `catch-up: ${name} names its reason`);
+  }
+  // The live reward scene's per-seat rows.
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  const seatRows = [
+    ['chosen flag as a string', (sc) => { sc.chosen.p1 = 'yes'; }, /chosen flag must be a boolean/],
+    ['claimed row as a list', (sc) => { sc.claimed = { p1: ['card'] }; }, /claimed row must map/],
+    ['claimed row of an unknown kind', (sc) => { sc.claimed = { p1: { gems: true } }; }, /claimed row must map/],
+  ];
+  for (const [name, breakIt, reason] of seatRows) {
+    const S = party();
+    openReward(S, { p1: chestOffer([purse]), p2: chestOffer([purse]) });
+    breakIt(S.session.scene);
+    const R = restoreSession(REG, JSON.parse(JSON.stringify(S.serialize())));
+    assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], `reward scene: ${name} is refused`);
+    assert.match(R.refusedMembers()[0].reason, reason, `reward scene: ${name} names its reason`);
+  }
+  // The scene's own maps are the party's: a malformed one is no resume.
+  for (const breakIt of [(sc) => { sc.offers = []; }, (sc) => { sc.chosen = null; }, (sc) => { sc.claimed = 'x'; }]) {
+    const S = party();
+    openReward(S, { p1: chestOffer([purse]), p2: chestOffer([purse]) });
+    breakIt(S.session.scene);
+    assert.throws(() => restoreSession(REG, JSON.parse(JSON.stringify(S.serialize()))), /Malformed session save: reward scene/);
   }
 });
 

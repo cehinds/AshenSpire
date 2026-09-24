@@ -48,6 +48,18 @@ export function chestOptionShapeProblems(option, path = 'option') {
 }
 
 /**
+ * chestShapeProblems(chest, path) → problems with a saved elite chest's SHAPE:
+ * `{ options }`, a non-empty array of well-formed options (a roll that builds
+ * nothing stores no chest, so an empty list is corrupt). One rule for the solo
+ * save door (model/state.js) and the co-op restore (tools/session.mjs).
+ */
+export function chestShapeProblems(chest, path = 'chest') {
+  const options = chest && typeof chest === 'object' && !Array.isArray(chest) ? chest.options : null;
+  if (!Array.isArray(options) || !options.length) return [`${path}.options must be a non-empty array of { category, … }`];
+  return options.flatMap((o, i) => chestOptionShapeProblems(o, `${path}.options[${i}]`));
+}
+
+/**
  * chestOptionReferenceProblems(registries, option) → the ids a (well-shaped)
  * chest option names that the registries do not hold (the load door's
  * reference check, engine/save.js).

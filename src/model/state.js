@@ -25,7 +25,8 @@ import {
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
-import { chestOptionShapeProblems, chestOptionDeckProblems } from './rewardChest.js';
+import { chestShapeProblems, chestOptionDeckProblems } from './rewardChest.js';
+import { relicChoiceShapeProblems } from './rewardplan.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
@@ -972,12 +973,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       // The elite chest (SPEC §3.8.1): a Taken chest names the option it took.
       if (pending.rewards?.chest != null) {
         const options = pending.rewards.chest && pending.rewards.chest.options;
-        const optionProblems = Array.isArray(options)
-          ? options.flatMap((o, i) => chestOptionShapeProblems(o, `pendingReward.rewards.chest.options[${i}]`)) : [];
-        if (!Array.isArray(options) || !options.length) {
-          problems.push('pendingReward.rewards.chest.options must be a non-empty array of { category, … }');
-        } else if (optionProblems.length) {
-          problems.push(...optionProblems);
+        const chestProblems = chestShapeProblems(pending.rewards.chest, 'pendingReward.rewards.chest');
+        if (chestProblems.length) {
+          problems.push(...chestProblems);
         } else {
           const idx = pending.chosenChestIndex;
           if (idx !== undefined && idx !== null && (!Number.isInteger(idx) || idx < 0 || idx >= options.length)) {
@@ -998,11 +996,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         const chosen = pending.chosenRelicId;
         let offered = null;
         if (relicIds !== undefined && relicIds !== null) {
-          if (!Array.isArray(relicIds) || relicIds.some((id) => typeof id !== 'string' || !id)) {
-            problems.push('pendingReward.rewards.relicIds must be an array of relic ids');
-          } else if (new Set(relicIds).size !== relicIds.length) {
-            problems.push('pendingReward.rewards.relicIds must be distinct');
-          } else offered = relicIds;
+          const relicProblems = relicChoiceShapeProblems(relicIds, 'pendingReward.rewards.relicIds');
+          if (relicProblems.length) problems.push(...relicProblems);
+          else offered = relicIds;
         }
         if (chosen !== undefined && chosen !== null) {
           if (typeof chosen !== 'string' || !chosen) problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
