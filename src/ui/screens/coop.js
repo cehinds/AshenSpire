@@ -1168,11 +1168,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // the host grants every staged row in one message and marks the seat done.
   // Sending on the first tap closed the door on the rest (a chest tap lost the
   // card, a card tap lost the chest). The staged pick survives re-renders
-  // (other seats' snapshots) for as long as the same door stands.
-  let staged = { key: null, pick: null };
+  // (other seats' snapshots) for as long as the same door stands. Couch co-op:
+  // each locally controlled seat stages its OWN pick (keyed by member id), so
+  // switching seats never loses one seat's choices or hands them to another
+  // whose offer happens to serialize the same.
+  const staged = new Map();
   function stagedPick(key) {
-    if (staged.key !== key) staged = { key, pick: { cardId: null, takeRelic: false, relicId: null, flask: false, chestIndex: null } };
-    return staged.pick;
+    const entry = staged.get(me);
+    if (entry && entry.key === key) return entry.pick;
+    const pick = { cardId: null, takeRelic: false, relicId: null, flask: false, chestIndex: null };
+    staged.set(me, { key, pick });
+    return pick;
   }
   const toggle = (pick, field, value) => { pick[field] = pick[field] === value ? (field === 'flask' ? false : null) : value; };
   // The door's rows, each tap staging into `pick`; `onDone(pick)` sends it.

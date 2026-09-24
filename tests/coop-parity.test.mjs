@@ -354,7 +354,7 @@ test('a restored offer or catch-up entry naming unknown content is refused at th
 
 // ---- the co-op screen's chest door --------------------------------------------
 
-function mountCoopScreen(snapshot) {
+function mountCoopScreen(snapshot, { myIds } = {}) {
   const dom = rewardDom();
   Object.assign(globalThis, dom);
   globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
@@ -369,9 +369,9 @@ function mountCoopScreen(snapshot) {
     const conn = { _h: null, setHandlers(h) { this._h = h; }, send(m) { sent.push(m); }, close() {}, get open() { return false; } };
     const app = dom.document.createElement('main');
     dom.document.body.append(app);
-    mountCoop(app, { registries: REG, conn, myId: 'p1', meta: {}, onSettingsChange() {}, onLeave() {} });
+    mountCoop(app, { registries: REG, conn, myId: 'p1', myIds, meta: {}, onSettingsChange() {}, onLeave() {} });
     conn._h.onMessage({ t: 'state', snapshot });
-    return { app, sent };
+    return { app, sent, dom };
   });
 }
 const partyRows = (catchupQueue = []) => [
@@ -414,6 +414,46 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     cu.app.querySelector('.coop-continue').click();
     assert.equal(cu.sent.at(-1).t, 'catchupChoice');
     assert.equal(cu.sent.at(-1).pick.chestIndex, 0);
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
+});
+
+test('couch co-op: each local seat stages its own reward pick; switching seats neither loses nor transfers it (PR #1287 review)', async () => {
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    // Two seats on one screen whose offers serialize identically.
+    const offer = () => ({ pool: 'elite', cardIds: ['stomp', 'executioner'], cinders: 1, chest: { options: OPTIONS } });
+    const party2 = [...partyRows(), { ...partyRows()[0], id: 'p2', name: 'Fenn' }];
+    const { app, sent, dom } = await mountCoopScreen(
+      { ...baseSnap, party: party2, scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: offer(), p2: offer() } } },
+      { myIds: ['p1', 'p2'] },
+    );
+    const seatTab = (i) => dom.document.querySelectorAll('.seat-tab').find((t) => t.dataset.seatI === String(i));
+    const chestSelected = () => app.querySelectorAll('.coop-chest-option').map((o) => o.className.includes('is-selected'));
+    // p1 stages a card and chest option 2.
+    app.querySelectorAll('.reward-row .card')[1].click();
+    app.querySelectorAll('.coop-chest-option')[2].click();
+    // Switch to p2: nothing of p1's is staged for it.
+    seatTab(1).click();
+    assert.deepEqual(chestSelected(), [false, false, false], 'p2 does not inherit p1\'s chest pick');
+    assert.equal(app.querySelectorAll('.reward-row .card.selected').length, 0, 'nor its card');
+    app.querySelectorAll('.coop-chest-option')[0].click();
+    // Back to p1: its picks survived the switch.
+    seatTab(0).click();
+    assert.deepEqual(chestSelected(), [false, false, true], 'p1 keeps its chest pick');
+    app.querySelector('.coop-continue').click();
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].as, 'p1');
+    assert.equal(sent[0].pick.cardId, 'executioner');
+    assert.equal(sent[0].pick.chestIndex, 2);
+    // p2 submits only its own pick.
+    seatTab(1).click();
+    app.querySelector('.coop-continue').click();
+    assert.equal(sent.at(-1).as, 'p2');
+    assert.equal(sent.at(-1).pick.cardId, null);
+    assert.equal(sent.at(-1).pick.chestIndex, 0);
   } finally {
     globalThis.setInterval = realInterval;
   }
