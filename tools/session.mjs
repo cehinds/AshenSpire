@@ -1639,9 +1639,17 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
-    // The per-seat offer roll, handed out read-only so a test can read the
-    // boss door's shape (SPEC §6.1) without walking a party to a boss.
-    rollRewardFor: (memberId, pool) => rollRewardFor(members.get(memberId), pool),
+    // The per-seat offer roll, handed out READ-ONLY so a test can read the
+    // boss door's shape (SPEC §6.1) without walking a party to a boss. The
+    // roll runs on a shadow seat — a clone of the run (its pity counters) and
+    // a fresh stream at the seat's counters — so the seat's stream and pity
+    // are exactly where they were: a peek never moves the real door's roll.
+    rollRewardFor: (memberId, pool) => {
+      const m = members.get(memberId);
+      if (!m) return null;
+      const shadow = { ...m, run: structuredClone(m.run), rng: memberRng(seed, m.index, structuredClone(m.rng.getCounters())) };
+      return rollRewardFor(shadow, pool);
+    },
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

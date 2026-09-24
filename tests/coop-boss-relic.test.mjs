@@ -208,3 +208,16 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
     globalThis.setInterval = realInterval;
   }
 });
+
+test('rollRewardFor is read-only: the seat\'s stream and pity do not move, and a second peek matches the first', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const counters = JSON.stringify(m.rng.getCounters());
+  const run = structuredClone(m.run);
+  for (const pool of ['normal', 'elite', 'boss']) {
+    const first = S.rollRewardFor('p1', pool);
+    assert.deepEqual(S.rollRewardFor('p1', pool), first, `${pool}: a peek changes nothing the next peek reads`);
+  }
+  assert.equal(JSON.stringify(m.rng.getCounters()), counters, 'no draw spent on the seat\'s stream');
+  assert.deepEqual(m.run, run, 'no pity counter moved');
+});
