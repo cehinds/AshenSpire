@@ -7,8 +7,9 @@
 # four of those had gone red unseen.
 #
 # WHAT IT COSTS, and why the triggers are these. Linux only, no LFS (no test
-# here reads an LFS-tracked artifact; they are the built HTML files), a shallow
-# checkout. `pull_request` into dev plus `push` to dev: a feature branch is
+# here reads an LFS-tracked artifact; they are the built HTML files), and 50
+# commits of history plus origin/dev, which zoomunits needs for its merge-base.
+# `pull_request` into dev plus `push` to dev: a feature branch is
 # covered by its PR, and the push covers the post-merge tree. The two events
 # never share a ref, so no commit runs twice — the defect ci.yml's header
 # measured for `push: ['**']` + `pull_request`. ci.yml's own triggers are left
@@ -44,6 +45,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
+
+      - name: The base branch, for the tools that measure against it
+        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: actions/setup-node@v4
         with:
@@ -58,6 +64,11 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
+
+      - name: The base branch, for the tools that measure against it
+        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: actions/setup-node@v4
         with:
