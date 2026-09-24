@@ -154,14 +154,10 @@ concurrency:
 permissions:
   contents: read
 
-# KNOWN WARNING, deliberately not chased: the runner reports that
-# actions/checkout@v4 and actions/setup-node@v4 execute on Node 20, which is
-# deprecated and is being forced onto Node 24. Nothing is broken today. I am not
-# bumping the tags in the same commit that fixes a CI failure, because I cannot
-# test the bump from here and a wrong tag turns a now-green workflow red for a
-# reason unrelated to this repo. Act on it when a run FAILS or prints a
-# hard-deprecation date, not when it warns — and bump both actions in one commit
-# that does nothing else, so the diff is legible if it breaks.
+# NODE 24 ACTIONS. Runs used to warn that actions/checkout@v4 and
+# actions/setup-node@v4 execute on Node 20, which is deprecated and was being
+# forced onto Node 24. Both were bumped to @v5 (Node 24) in one commit that did
+# nothing else, so if a run breaks on the bump the diff says why.
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -187,7 +183,7 @@ jobs:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
@@ -342,7 +338,7 @@ jobs:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
           fetch-depth: 0
@@ -387,7 +383,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
       - uses: ./.github/actions/setup-node
@@ -406,7 +402,7 @@ jobs:
     name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
       - uses: ./.github/actions/setup-node
