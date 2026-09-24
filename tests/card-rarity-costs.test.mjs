@@ -10,13 +10,21 @@ const rewardIds = new Set(contentBundle.classes.flatMap(c => c.cardPool));
 const profile = c => [c.staminaCost || 0, c.manaCost || 0];
 
 test('combat reward costs meet inclusive rounded rarity shares, including upgrades', () => {
+  // A2 (Starseer starvation) takes the four Starseer common attacks — Comet
+  // Fragment, Starblade Phalanx, Starlance, Frost Nova — off both lines, so
+  // the Common row sits four cards under its rounded 30% / 15% shares
+  // (docs/card-resource-balance.md records the exception). A2 (Herald
+  // starvation) also takes Blight Touch off the Mana line only, so the Common
+  // dual share sits one further card under.
+  const a2ActionOnly = { common: 4, uncommon: 0, rare: 0 };
+  const a2StaminaOnly = { common: 1, uncommon: 0, rare: 0 };
   for (const [rarity, count, staminaShare, dualShare] of [
     ['common', 52, 0.3, 0.15], ['uncommon', 51, 0.5, 0.3], ['rare', 41, 0.7, 0.5],
   ]) {
     const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count, `${rarity}: distinct combat-reward denominator`);
-    assert.equal(cards.filter(c => c.staminaCost > 0).length, Math.round(count * staminaShare));
-    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare));
+    assert.equal(cards.filter(c => c.staminaCost > 0).length, Math.round(count * staminaShare) - a2ActionOnly[rarity]);
+    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare) - a2ActionOnly[rarity] - a2StaminaOnly[rarity]);
     for (const c of cards) {
       assert.ok(!c.manaCost || c.staminaCost, `${c.id}: dual costs include stamina`);
       assert.ok(profile(c).every(n => n === 0 || n === 1), `${c.id}: authored small resource costs`);
@@ -38,7 +46,8 @@ test('weapon basics, merchant-only cards and starter exceptions retain their cos
   }
   assert.deepEqual(profile(reg.cards.get('katanaDrawCut')), [1, 0]);
   assert.deepEqual(profile(reg.cards.get('greatswordSunderingHew')), [1, 0]);
-  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [1, 1], 'a signature art costs stamina beside its Mana: Mana is never the first cost line. The 2/2 step needs run-stamped costs, not a bigger number (plan phase 9 as built)');
+  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [0, 0], 'A2: the Starseer signature art costs actions only, so a Starseer whose Mana carries between fights can always cast it');
+  assert.deepEqual(profile(reg.cards.get('starstoneArc')), [1, 1], 'a Mana spell costs stamina beside its Mana: Mana is never the first cost line');
   assert.deepEqual(profile(reg.cards.get('dodgeRoll')), [1, 0]);
 });
 
@@ -55,7 +64,7 @@ function fight(cardId, upgraded = false) {
 const play = c => dispatch(c, { type: 'playCard', cardInstanceId: 'cost-probe', targetId: c.enemies[0].id });
 
 test('real plays pay all authored pools at base and upgraded levels', () => {
-  for (const cardId of ['serratedBlade', 'shieldBash', 'cometFragment']) {
+  for (const cardId of ['serratedBlade', 'shieldBash', 'starstoneArc']) {
     for (const upgraded of [false, true]) {
       const c = fight(cardId, upgraded);
       const def = resolveCard(reg, { cardId, upgraded });
@@ -70,7 +79,7 @@ test('real plays pay all authored pools at base and upgraded levels', () => {
 test('either missing dual resource refuses atomically before payment or card movement', () => {
   for (const upgraded of [false, true]) {
     for (const missing of ['mana', 'stamina']) {
-      const c = fight('cometFragment', upgraded);
+      const c = fight('starstoneArc', upgraded);
       c.player[missing] = 0;
       const before = { energy: c.player.energy, stamina: c.player.stamina, mana: c.player.mana,
         hand: structuredClone(c.piles.hand), hp: c.enemies[0].hp };

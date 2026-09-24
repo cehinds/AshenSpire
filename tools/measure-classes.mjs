@@ -70,7 +70,7 @@ import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
-import { seatAtTier } from '../src/model/seats.js';
+import { seatAtTier, bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -542,7 +542,9 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   // The live door (engine/runCombat.js), as runsim.mjs builds its fights:
   // the hand rules, rating rules, swap price and equipment start statuses a
   // player's fight carries, which this copy's own option list never had.
-  const combat = createRunCombat({ registries: REG, rng, run, enemyIds: enc.enemies });
+  // A boss scales by the tier it is met at (balance.bossTiers), as runsim does.
+  const boss = bossTierScale(REG, { encounter: enc, tier: run.actNumber });
+  const combat = createRunCombat({ registries: REG, rng, run, enemyIds: enc.enemies, hpMult: boss ? boss.hp : 1, enemyDamageMult: boss ? boss.damage : 1 });
   const opportunityTurns = new Set();
   const energyAtEndTurn = [];
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
