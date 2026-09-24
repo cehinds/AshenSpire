@@ -44,12 +44,20 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   const diff = profileDiff(settings, parsed, promoted);
   if (!diff.length) return 0;
   const changed = {};
+  const had = {};
   for (const { key, to } of diff) {
     changed[key] = to;
+    had[key] = Object.hasOwn(settings, key) ? { value: settings[key] } : null;
     if (to === undefined) delete settings[key]; else settings[key] = to;
   }
   const result = onChange(changed);
-  if (result?.ok === false) throw new Error('Settings could not be saved on this device.');
+  if (result?.ok === false) {
+    // Not saved, so not applied: put every value back as it was.
+    for (const [key, before] of Object.entries(had)) {
+      if (before) settings[key] = before.value; else delete settings[key];
+    }
+    throw new Error('Settings could not be saved on this device.');
+  }
   return diff.length;
 }
 

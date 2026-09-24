@@ -441,3 +441,11 @@ test('pad directions, profile switches and cleared volumes reach the live state'
   assert.match(main, /musicVolume: settings\.musicVolume \?\? AUDIO_DEFAULTS\.musicVolume/);
   assert.match(main, /sfxVolume: settings\.sfxVolume \?\? AUDIO_DEFAULTS\.sfxVolume/);
 });
+
+test('a profile that cannot be saved is not left applied', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const parsed = { changes: { screenShake: true, musicVolume: 20 }, cleared: ['reducedMotion'] };
+  assert.throws(() => applyProfile(settings, () => ({ ok: false }), parsed, {}), /could not be saved/);
+  assert.deepEqual(settings, { screenShake: false, reducedMotion: true });
+});
