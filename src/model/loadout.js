@@ -2198,6 +2198,19 @@ function desiredGrantInstances(registries, run) {
     });
   }
 
+  // Exactly one: two emptied art mounts (both hands' Weapon Arts extracted)
+  // each fall back to the Dodge Roll. The first — right hand before left, the
+  // order the arts were composed in — owns it; the others lend nothing.
+  if (profile && profile.baseCardId) {
+    let seen = false;
+    desired = desired.filter((d) => {
+      if (d.equipmentRole !== 'weaponArt' || d.cardId !== profile.baseCardId) return true;
+      if (seen) return false;
+      seen = true;
+      return true;
+    });
+  }
+
   // EXTRA MOUNTS a smith has filled on worn pieces (the rune seam).
   for (const piece of equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: run.itemUpgradeLevels || {} })) {
     desired.push(...extraMountInstances(registries, run, pieceItemRef(piece), {

@@ -900,6 +900,16 @@ test('a mid-combat swap keeps what the smith did: an emptied art mount stays a D
   reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout, itemMounts: run.itemMounts }, moving);
   eq(moving.hand.map((c) => `${c.instanceId}=${c.cardId}`).join(','), `${artKey}=${dodge}`, 'the Dodge Roll stays in hand under the mount that now owns it');
   eq(moving.discard.filter((c) => c.cardId === dodge).length, 0, 'and no second Dodge Roll lands in the discard');
+  // Both hands' arts extracted: two mounts fall back to the Dodge Roll, and
+  // the deck still carries exactly one — the right hand's.
+  const both = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  both.itemMounts = {
+    'armament/straightSword': { 'weaponArt:straightSword:guardCounter': { card: null, extractions: 1 } },
+    'armament/roundShield': { 'weaponArt:roundShield:shieldBash': { card: null, extractions: 1 } },
+  };
+  compositionDoor.stampDeck(LEGACY_REG, both);
+  const bothDodges = both.deck.filter((c) => c.cardId === dodge);
+  eq(bothDodges.map((c) => c.instanceId).join(','), 'weaponArt:straightSword:guardCounter', 'two emptied art mounts still give exactly one Dodge Roll, on the right hand');
 });
 
 test('a granted instance is never a per-copy upgrade candidate', () => {
