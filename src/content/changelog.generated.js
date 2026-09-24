@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The first recorded music: the map, boss and victory screens",
     "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
-    "build": "0.7.1.457",
+    "build": "0.7.1.453",
     "pullRequest": 1274,
     "url": "https://github.com/cehinds/AshenSpire/pull/1274"
+  },
+  {
+    "id": "pr-1272",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A checklist for finishing the game",
+    "detail": "Nothing you see changes yet. docs/FINISH.md now lists everything that stands between this build and a 1.0: every rule the design still asks for, the content, a full run from new game to victory or death, balance between the four classes, how a fight feels and sounds, the first minutes for a new player, speed on phones, accessibility, art and audio, and the release itself. Each line says how to prove it is done, and the choices that are the owner's to make are listed as proposals.",
+    "build": "0.7.1.450",
+    "pullRequest": 1272,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1272"
   },
   {
     "id": "pr-1267",
