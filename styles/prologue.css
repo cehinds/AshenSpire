@@ -59,6 +59,9 @@
 .pse-position-slider{width:100%;min-height:32px;accent-color:#d5ae67;cursor:pointer}
 .pse-positioning .prologue-actor{pointer-events:auto;cursor:grab;touch-action:none}
 .pse-dragging .prologue-actor{cursor:grabbing}
+.pse-resize-handle{position:absolute;z-index:5;width:36px;height:36px;display:grid;place-items:center;border:2px solid #f2d28c;border-radius:50%;background:#24170de8;color:#ffdf9b;font-size:1.45rem;line-height:1;box-shadow:0 2px 12px #000c;cursor:nesw-resize;touch-action:none;transform:translate(-50%,-50%)}
+.pse-resize-handle:hover,.pse-resize-handle:focus-visible{background:#4a3019;outline:2px solid #fff0c8;outline-offset:2px}
+.pse-resize-handle[hidden]{display:none}
 .set-scene-edit{border-color:#c49d62!important;color:#ffdfad!important}
 .pse-phone .prologue-screen{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
 .pse-phone .prologue-layout-panelLeft .prologue-stage,.pse-phone .prologue-layout-panelRight .prologue-stage,.pse-phone .prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
