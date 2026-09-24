@@ -965,9 +965,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(loaded), JSON.stringify(run), 'round-trip identical');
     eq(loaded.streamCounters.shuffle, 1, 'rng counters persisted');
 
-    // Unknown schemaVersion → refused, archived, save slot cleared.
-    const tampered = { ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 };
-    storage.setItem(RUN_KEY, JSON.stringify(tampered));
+    // Newer schemaVersion → refused and PRESERVED: the slot keeps the bytes,
+    // nothing is archived (tests/save-migration.test.mjs covers it in full).
+    const tampered = JSON.stringify({ ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 });
+    storage.setItem(RUN_KEY, tampered);
+    eq(saves.loadRun(REG), null, 'newer schemaVersion refused');
+    eq(saves.runStatus().state, 'newer', 'refusal named as newer');
+    eq(storage.getItem(RUN_KEY), tampered, 'newer save left in the slot untouched');
+    eq(storage.getItem(RUN_ARCHIVE_KEY), null, 'newer save not archived');
+
+    // Unknown (non-newer) schemaVersion → refused, archived, save slot cleared.
+    storage.setItem(RUN_KEY, JSON.stringify({ ...run, schemaVersion: 0 }));
     eq(saves.loadRun(REG), null, 'unknown schemaVersion refused');
     assert(storage.getItem(RUN_ARCHIVE_KEY) != null, 'refused save was archived');
     eq(storage.getItem(RUN_KEY), null, 'save slot cleared after archive');
