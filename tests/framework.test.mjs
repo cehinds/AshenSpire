@@ -1036,6 +1036,12 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   legacy.deck.push({ instanceId: 'legacy-technique', cardId: 'dodgeRoll', upgraded: false, equipmentRole: 'technique' });
   stampDeck(LEGACY_REG, legacy);
   eq(legacy.deck.filter((c) => c.cardId === 'dodgeRoll').map((c) => c.instanceId).join(','), 'legacy-technique', 'a saved technique-slot Dodge Roll is the one; no second is minted');
+  // Arming that legacy run rebinds its technique slot to the armed hand, so
+  // the one Dodge Roll must come from the loadout instead.
+  legacy.loadout.sets.rightHand[legacy.loadout.active.rightHand || 0] = 'straightSword';
+  stampDeck(LEGACY_REG, legacy);
+  const armedDodges = legacy.deck.filter((c) => c.cardId === 'dodgeRoll');
+  eq(armedDodges.length, 1, `arming a legacy unarmed save still leaves exactly one Dodge Roll (${legacy.deck.filter((c) => c.equipmentRole === 'technique' || c.cardId === 'dodgeRoll').map((c) => `${c.instanceId}:${c.cardId}`).join(',')})`);
 });
 
 test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and filling the hand keeps it on the body', () => {

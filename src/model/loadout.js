@@ -2179,10 +2179,14 @@ function desiredGrantInstances(registries, run) {
   const owner = twoHanded || !empty.length ? 'body' : empty[0];
   const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
   // A run saved while the unarmed technique slot still dealt the Dodge Roll
-  // keeps that run-owned copy; it counts as the one.
+  // keeps that run-owned copy; it counts as the one only while both hands are
+  // empty — the restamp that follows rebinds a technique slot to an armed
+  // hand's technique, and then that copy is no longer a Dodge Roll.
+  const legacyTechniqueDodge = empty.length === 2 && !twoHanded
+    && (run.deck || []).some((c) => c && c.equipmentRole === 'technique' && c.cardId === profile?.baseCardId);
   const alreadyInstalled = profile && (
     desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId)
-    || (run.deck || []).some((c) => c && c.equipmentRole === 'technique' && c.cardId === profile.baseCardId));
+    || legacyTechniqueDodge);
   if (profile && profile.baseCardId && !alreadyInstalled) {
     // One id whoever owns it, so a swap that moves it between a hand and the
     // body re-attributes the card in whatever pile it sits in instead of
