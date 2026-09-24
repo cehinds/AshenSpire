@@ -3,8 +3,8 @@
 // hit belongs to, how big its meter is and what its unleashed form does are
 // all read through model/artCharge.js from balance and content data.
 //
-//   damageDealt by the player on an enemy, amount > 0, card lent by an
-//   equipped armament W that is not W's Art          → +gainPerHit to W
+//   damageDealt by the player on an enemy, amount > 0, by the card being
+//   resolved, lent by an equipped armament W, not W's Art → +gainPerHit to W
 //   enemyStaggered while W's hit is the last one      → +gainOnStagger to W
 //   procBurst / status meterFilled on an enemy, same  → +gainOnBurst to W
 //
@@ -38,13 +38,21 @@ export function recordArtCharge(combat, event) {
   if (!rules || !combat.player || combat.players) return;
   switch (event.type) {
     case 'cardPlayed':
+      combat._artChargeLastHit = null;
+      combat._artChargeCard = event.cardInstanceId ?? null;
+      return;
     case 'playerTurnEnd':
     case 'flaskUsed':
     case 'armamentSwapped':
       combat._artChargeLastHit = null;
+      combat._artChargeCard = null;
       return;
     case 'damageDealt': {
       if (event.sourceId !== combat.player.id || !isEnemy(combat, event.targetId) || !(event.amount > 0)) return;
+      // Only the card being resolved lands the weapon's hits. A status or
+      // trigger that remembers a card (a Combat Ratings `ratingCard`) and
+      // fires later — on the enemy's turn, say — is not that card's hit.
+      if (!event.cardInstanceId || event.cardInstanceId !== combat._artChargeCard) { combat._artChargeLastHit = null; return; }
       if (event.equipmentRole === 'weaponArt') { combat._artChargeLastHit = null; return; }
       const weaponId = lendingWeaponOf(combat.registries, event);
       // A hit no equipped weapon lent (a relic, a flask, a status tick, a
@@ -71,6 +79,7 @@ export function recordArtCharge(combat, event) {
 /** The played card's own resolution is over: its hits credit nothing after. */
 export function endArtChargeResolution(combat) {
   combat._artChargeLastHit = null;
+  combat._artChargeCard = null;
 }
 
 /** Hook the bus: every emitted event is recorded after its triggers fired. */
@@ -78,6 +87,7 @@ export function attachArtCharge(combat) {
   const inner = combat.emit;
   combat.artCharge = combat.artCharge || {};
   combat._artChargeLastHit = null;
+  combat._artChargeCard = null;
   combat.emit = (type, payload) => {
     const event = inner(type, payload);
     recordArtCharge(combat, event);

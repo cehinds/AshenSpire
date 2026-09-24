@@ -207,3 +207,15 @@ export function advanceArtChargeDisplay(charge, events = []) {
   }
   return charge;
 }
+
+/**
+ * newlyFullIds(previous, fullIds) -> { fresh, next }: which ids are full now
+ * that were not at the last paint (`fresh`), and the set to remember for the
+ * next paint (`next`). A meter or an Art card flashes once when it FILLS,
+ * never again on a repaint that rebuilds its node while it stays full.
+ */
+export function newlyFullIds(previous, fullIds = []) {
+  const next = new Set(fullIds);
+  const fresh = new Set([...next].filter((id) => !(previous && previous.has(id))));
+  return { fresh, next };
+}

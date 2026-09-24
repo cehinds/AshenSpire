@@ -2181,6 +2181,9 @@ function isPlainObject(v) {
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat'];
 
 const WEAPON_ART_CHARGE_KEYS = Object.freeze(['defaultMax', 'maxByWeapon', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']);
+// Unleashed ops that land on whoever resolveTargets picks, so an omitted
+// target is a real (and, on an untargeted Art, self-inflicted) choice.
+const UNLEASHED_AIMED_OPS = Object.freeze(['damage', 'poiseDamage', 'stagger', 'applyStatus', 'arcaneBuildup']);
 function validateWeaponArtCharge(b, vctx) {
   const { err } = vctx;
   const rules = b.balance && b.balance.weaponArtCharge;
@@ -2225,6 +2228,10 @@ function validateWeaponArtCharge(b, vctx) {
     const cardTargetsEnemy = (card.effects || []).some((eff) => eff && eff.target === 'enemy');
     form.effects.forEach((eff, i) => {
       if (eff && eff.target === 'enemy' && !cardTargetsEnemy) err(`${path}.effects[${i}].target`, `'${cardId}' never asks for an enemy target, so its unleashed form may not target 'enemy'`);
+      // An omitted target resolves to the play's target, else its SOURCE: on
+      // an Art with no target that is the player, so a hostile op would land
+      // on the one who played it. It must name who it hits.
+      if (eff && eff.target == null && !cardTargetsEnemy && UNLEASHED_AIMED_OPS.includes(eff.op)) err(`${path}.effects[${i}].target`, `'${cardId}' never asks for an enemy target, so its unleashed '${eff.op}' must name its target (omitted, it lands on the player)`);
     });
   }
   for (const piece of armaments) {
