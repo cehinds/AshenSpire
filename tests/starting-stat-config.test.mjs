@@ -460,11 +460,11 @@ test('an attribute card never promises more than the rule pays', async () => {
     }).find(row => row.id === 'constitution');
     return { card, run, registries };
   };
-  // The authored row, read against the attribute the sheet shows: four HP a
+  // The authored row, read against the attribute the sheet shows (ruleset 7): two HP a
   // point. It used to read +20, because the lean mode divided the tier by five
   // before anything saw it (#1238); with that divisor gone the card states the
   // row.
-  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +4 every 1 point'));
+  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +2 every 1 point'));
 
   // A THRESHOLD THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. A tier of 0.6
   // buys ONE tier for some points and two for others: `floor((con + 1) / 0.6)
@@ -497,13 +497,13 @@ test('an attribute card states the floored cadence, not an average rate', async 
     derivedStatOptions: { explicitOverride: { defaults: { pointsPerIncrease: 3 } } } });
   const card = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
     .find((row) => row.id === 'constitution');
-  assert.ok(card.reveal.lines.includes('HP +4 every 3 points'), card.reveal.lines.join(' | '));
+  assert.ok(card.reveal.lines.includes('HP +2 every 3 points'), card.reveal.lines.join(' | '));
   assert.ok(!card.reveal.lines.some((line) => /\d\.\d/.test(line) && line.startsWith('HP')), 'no fractional HP promise');
   // And the shipped rule, with no divisor, reads point for point.
   const stock = createRunState({ registries, classId: 'reaver', seed: 11 });
   const stockCard = attributeCardModels(registries, stock.attributes, { projection: statProjection(registries, stock) })
     .find((row) => row.id === 'constitution');
-  assert.ok(stockCard.reveal.lines.includes('HP +4 every 1 point'), stockCard.reveal.lines.join(' | '));
+  assert.ok(stockCard.reveal.lines.includes('HP +2 every 1 point'), stockCard.reveal.lines.join(' | '));
 });
 
 // The Poise pool's per-level growth reaches the meter, not only the sheet.
@@ -583,7 +583,7 @@ test('a run lists a stat on the card its own snapshot scales it with', async () 
   }));
   const cards = attributeCardModels(moved, run.attributes, { projection: statProjection(moved, run) });
   const lines = (id) => cards.find((card) => card.id === id).reveal.lines;
-  assert.ok(lines('constitution').includes('HP +4 every 1 point'), lines('constitution').join(' | '));
+  assert.ok(lines('constitution').includes('HP +2 every 1 point'), lines('constitution').join(' | '));
   assert.ok(!lines('strength').some((line) => line.startsWith('HP ')), lines('strength').join(' | '));
   // With no run, the live table is what a card can describe.
   const preview = attributeCardModels(moved, run.attributes).find((card) => card.id === 'strength').reveal.lines;

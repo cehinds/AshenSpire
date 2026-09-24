@@ -314,12 +314,23 @@ test('weight class thresholds sit at 49/79 load percent', () => {
 test('dodge roll: check math, temporary guard, and weight-class costs', () => {
   const { weightClass } = computeWeightClass({ constitution: 10, strength: 10, weights: {} });
   eq(weightClass.id, 'light', 'unburdened is light');
-  const win = dodgeRollCheck({ roll: 12, dexterity: 14, weightClass });
-  // 12 + 2 (DEX) + 3 (light) = 17 > 10
+  // The lean-scale Dexterity term (plan A3): floor((DEX - 3) / 2).
+  const win = dodgeRollCheck({ roll: 12, dexterity: 7, weightClass });
+  // 12 + 2 (DEX 7) + 3 (light) = 17 > 10
   assert(win.success && win.check === 17, `check ${win.check}`);
   eq(win.temporaryGuard, 3 + 2 + 3, 'guard = base + DEX mod + class guard');
   eq(win.cost, { stamina: 1, actions: 0 }, 'light dodge costs');
-  const lose = dodgeRollCheck({ roll: 5, dexterity: 10, weightClass, incomingAttackModifier: 3 });
+  const baseline = dodgeRollCheck({ roll: 12, dexterity: 1, weightClass });
+  eq([baseline.check, baseline.temporaryGuard], [12 - 1 + 3, 3 - 1 + 3], 'DEX 1 reads -1, and a landed Light dodge still guards 5');
+  const heavy = mechanicsData.weight.classes.find((row) => row.id === 'heavy');
+  const floored = dodgeRollCheck({ roll: 20, dexterity: 1, weightClass: heavy });
+  assert(floored.success, 'a natural 20 lands even Heavy at DEX 1');
+  eq(floored.temporaryGuard, Math.max(mechanicsData.dodgeRoll.temporaryGuardMinimum, 3 - 1 + 0), 'Heavy at DEX 1 guards 2');
+  // A sheet the data can drive below zero guard (DEX -5 reads -4), landed by an outside evasion bonus.
+  const weak = dodgeRollCheck({ roll: 20, dexterity: -5, weightClass: heavy, otherEvasionModifiers: 10 });
+  assert(weak.success, 'the outside bonus lands it');
+  eq(weak.temporaryGuard, mechanicsData.dodgeRoll.temporaryGuardMinimum, 'a landed dodge never guards less than the floor');
+  const lose = dodgeRollCheck({ roll: 5, dexterity: 3, weightClass, incomingAttackModifier: 3 });
   assert(!lose.success && lose.temporaryGuard === 0, 'failed roll grants nothing');
   assertThrows(() => dodgeRollCheck({ roll: 21, dexterity: 10, weightClass }), /not a d20/);
 });
@@ -1011,10 +1022,10 @@ test('the pure dodge is priced by the Weight Class; a guard that dodges keeps it
   eq(bridge.costProfile(dodge).stamina, 1, 'outside a fight the authored cost shows (Light\'s)');
   eq(bridge.costProfile(dodge, { weightClass: rows.light }).stamina, 1, 'Light: 1 stamina');
   eq(bridge.costProfile(dodge, { weightClass: rows.light }).action, 0, 'Light: no action');
-  eq(bridge.costProfile(dodge, { weightClass: rows.medium }).stamina, 2, 'Medium: 2 stamina');
+  eq(bridge.costProfile(dodge, { weightClass: rows.medium }).stamina, 1, 'Medium: 1 stamina (plan A3)');
   eq(bridge.costProfile(dodge, { weightClass: rows.medium }).action, 1, 'Medium: 1 action');
-  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).stamina, 3, 'Heavy: 3 stamina');
-  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).action, 2, 'Heavy: 2 actions');
+  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).stamina, 2, 'Heavy: 2 stamina (plan A3: within a Constitution-1 pool)');
+  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).action, 1, 'Heavy: 1 action (plan A3)');
   eq(bridge.costProfile(guard, { weightClass: rows.heavy }).action, 1, 'Evasive Guard keeps its authored action cost');
   eq(bridge.viewFor(dodge).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'a dodge effect compiles to utility.evasion');
   eq(bridge.viewFor(guard).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'the guard that dodges carries utility.evasion too');
@@ -1185,13 +1196,13 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
   // at capacities 30, 7 and 5 exercises the real load calculation without
   // replacing the Weight Class or cost implementations.
   combat.loadout = { sets: { rightHand: ['warhammer'], leftHand: ['towerShield'], armor: [null] }, active: {}, storage: [] };
-  combat.attributes = { dexterity: 10, constitution: weight === 'light' ? 10 : weight === 'medium' ? 3 : 2, strength: weight === 'light' ? 10 : 1 };
+  combat.attributes = { dexterity: 3, constitution: weight === 'light' ? 10 : weight === 'medium' ? 3 : 2, strength: weight === 'light' ? 10 : 1 };
   eq(playerWeightClass(combat).weightClass.id, weight, 'fixture reaches requested Weight Class');
   return { combat, draws: () => draws };
 }
 
 for (const [weight, energyCost, staminaCost, guard] of [
-  ['light', 0, 1, 6], ['medium', 1, 2, 4], ['heavy', 2, 3, 3],
+  ['light', 0, 1, 6], ['medium', 1, 1, 4], ['heavy', 1, 2, 3],
 ]) {
   test(`Dodge ${weight}: repeated success/failure spends the live costs once and preserves ordinary Block`, () => {
     const { combat, draws } = dodgeCombatFixture(weight);

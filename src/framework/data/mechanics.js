@@ -40,7 +40,7 @@ export const mechanics = {
         "temporaryGuardModifier": 1,
         "extraEligibleDexterityCards": 0,
         "extraPhysicalAttacks": 0,
-        "dodgeStaminaCost": 2,
+        "dodgeStaminaCost": 1,
         "dodgeActionCost": 1
       },
       {
@@ -51,8 +51,9 @@ export const mechanics = {
         "temporaryGuardModifier": 0,
         "extraEligibleDexterityCards": 0,
         "extraPhysicalAttacks": 1,
-        "dodgeStaminaCost": 3,
-        "dodgeActionCost": 2
+        "dodgeStaminaCost": 2,
+        "dodgeActionCost": 1,
+        "dodgeCostNote": "Plan A3, 2026-09-24: Medium 2 stamina / 1 Action -> 1 / 1, Heavy 3 / 2 -> 2 / 1. Heavy's 3 Stamina was more than a Constitution-1 character's whole pool (2, the Starseer's) and its 2 Actions two thirds of a turn, for a check that needed a natural 18. Now every class can pay each price from its opening pool, and the three still rank: Light 1/0, Medium 1/1, Heavy 2/1, with Heavy's -3 evasion and 0 guard as the rest of its cost."
       }
     ],
     "itemWeightScaleNote": "Owner's call, 2026-09-24: rescale item weights, not capacity, after the lean attribute rebase (2026-09-20) cut capacity (2*CON + STR) to 3-12 while authored weights stayed on the old scale, so every creatable start was Heavy. Every piece weight (an armament's authored weight, an armour's poise threshold) is multiplied by this and kept to a tenth. Chosen with tools/weightclass-census.mjs over 0.15-0.25: at 0.2 the class-preset starts are 84 Light and 28 Medium with none Heavy, and every class still reaches Heavy with its heaviest kit (Reaver 94%, Rogue and Herald 116%, Starseer 193%). 0.18 is the lowest scale at which the Reaver reaches Heavy; above 0.22 preset starts turn Heavy. The min-capacity allocation (Constitution and Strength at their minimum) has 14 Heavy starts of 76 at 0.2; no scale both keeps those off Heavy and lets the Reaver reach Heavy.",
@@ -61,7 +62,11 @@ export const mechanics = {
   "dodgeRoll": {
     "die": 20,
     "baseDifficulty": 10,
-    "temporaryGuardBase": 3
+    "dexterityCentre": 3,
+    "dexterityPerModifier": 2,
+    "temporaryGuardBase": 3,
+    "temporaryGuardMinimum": 1,
+    "retuneNote": "Plan A3, 2026-09-24 (owner's pre-approved ruling). The Dexterity term was floor((DEX - 10) / 2), a d20-scale habit: on the lean scale (1 at baseline, 4 at the creation ceiling) it read -4 or -5 for every creatable character, so the guard 3 + term + class guard was 2 at best when Light, 0 when Medium and negative with no floor when Heavy, and a landed dodge usually granted nothing. The term is now floor((DEX - dexterityCentre) / dexterityPerModifier) = floor((DEX - 3) / 2): 0 at a class's primary 3, -1 at the baseline 1, +1 at 5, +2 at 7 — the old scale's -1..+2 creation span restated. temporaryGuardMinimum floors a landed dodge's guard at 1. Measured with tools/runsim.mjs --deep (60 runs a class, shipped presets): before, dodges landed 35-45% of plays for 0.7 (Reaver) to 2.0 (Rogue) guard each; after, 58-66% for 4.6-6 guard. A DEX-centre-2, one-per-point term pushed the Rogue from 33 to 41 wins of 60 (out of the 35-65% band) and made its Dexterity pick run away as levels came in; centre 3 at two points a step keeps it at 35-36."
   },
   "unarmedPackage": {
     "strikeCardId": "framework.unarmedStrike",

@@ -71,14 +71,14 @@ check('shipping content and registries expose one derived-rules object', () => {
 
 check('a standard Reaver run owns the versioned snapshot and all approved derived outputs', () => {
   const run = fresh();
-  // Ruleset 6 (#1253), worked by hand from src/content/derivedStats.js for the
+  // Ruleset 7 (plan A3), worked by hand from src/content/derivedStats.js for the
   // lean Reaver (STR 3, DEX 1, CON 2, WIS 1, INT 1):
-  //   HP      30 + floor(2 x 4) = 38, plus the Forsaken Medallion's flat 10
+  //   HP      36 + floor(2 x 2) = 40, plus the Forsaken Medallion's flat 10
   //   Mana     1 + floor(1 x 1) = 2      Stamina  1 + floor(2 x 1) = 3
-  //   Actions  3 + floor(1 x 0.2) = 3    draw     3 + floor(1 x 0.2) = 3
-  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 6, 'ruleset version');
-  equal(run.maxHp, 48, 'CON-derived max HP plus the starter relic');
-  equal(run.hp, 48, 'new run HP starts full');
+  //   Actions  3 + floor(1 x 0.25) = 3   draw     3 + floor(1 x 0.2) = 3
+  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 7, 'ruleset version (7: plan A3)');
+  equal(run.maxHp, 50, 'CON-derived max HP plus the starter relic');
+  equal(run.hp, 50, 'new run HP starts full');
   equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
   equal(run.mana, 2, 'new run Mana starts full');
   equal(run.maxStamina, 3, 'CON-derived max Stamina');
@@ -119,19 +119,19 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
-  equal(run.maxHp, 48, 'migrated max HP under the Constitution weight');
-  equal(run.hp, 38, 'HP deficit of 10 preserved across the migration');
+  equal(run.maxHp, 50, 'migrated max HP under the Constitution weight');
+  equal(run.hp, 40, 'HP deficit of 10 preserved across the migration');
   equal(run.maxMana, 2, 'migrated max Mana');
   equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 3, 'Stamina created from real attributes');
   equal(run.stamina, 3, 'new Stamina pool starts full');
-  equal(run.derivedStatRuleSnapshot.rulesetVersion, 6, 'migration stamps ruleset');
+  equal(run.derivedStatRuleSnapshot.rulesetVersion, 7, 'migration stamps ruleset');
 });
 
 check('solo combat consumes run Energy/Draw and transports real Stamina without inventing spend', () => {
   const run = fresh({ derivedStatOptions: { explicitOverride: { rules: { energy: { base: 4 }, draw: { base: 7 } } } } });
   const combat = createCombat({ registries: REG, rng: createRng(99), player: playerInput(run), enemyIds: ['blightHound'] });
-  // Override base 4 + floor(DEX 1 x 0.2) = 4 (ruleset 6, lean Reaver).
+  // Override base 4 + floor(DEX 1 x 0.25) = 4 (ruleset 7, lean Reaver).
   equal(combat.player.energyMax, 4, 'combat Energy max');
   equal(combat.drawPerTurn, 7, 'opening/per-turn draw (override base 7 + floor(INT 1 x 0.2))');
   equal(combat.player.maxStamina, 3, 'combat Stamina max');
@@ -144,7 +144,7 @@ check('host session snapshot is authoritative for derived rules and every curren
   S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
   S.start();
   const party = S.snapshot().party[0];
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 6, 'party ruleset');
+  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 7, 'party ruleset');
   equal(party.maxStamina, 3, 'party Stamina max');
   equal(party.stamina, 3, 'party Stamina current');
   equal(party.maxMana, 2, 'party derived Mana max');
