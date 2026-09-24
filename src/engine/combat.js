@@ -742,6 +742,10 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
@@ -854,6 +858,10 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {

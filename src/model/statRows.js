@@ -142,7 +142,12 @@ export function statRow(registries, run, id, { settings = {} } = {}) {
     }
     if (HAND_STAT_IDS.includes(id)) {
       const group = Object.keys(HAND_GROUP_ROWS).find((key) => HAND_GROUP_ROWS[key] === id);
-      return legacyHandRow(legacyHandGroupsFromSettings(settings || {})[group]);
+      // THE RUN'S OWN CONFIGURATION SNAPSHOT holds the hand-rule keys it was
+      // born with; the live profile has had them converted into row keys
+      // (migrateLegacyStatSettings), so reading only it would reset a tuned
+      // hand to the shipped groups.
+      const own = run?.advancedConfigSnapshot?.overrides || {};
+      return legacyHandRow(legacyHandGroupsFromSettings({ ...(settings || {}), ...own })[group]);
     }
     return resolvedRuleRow(table, id);
   }
@@ -194,10 +199,20 @@ export function statRowCount(row, attributes, level) {
 const LEGACY_RATING_KEY = /^gameConfig\.combatRatings\.(?:multiplier|ratings\.(ar|dr|pr|poise|ward)\.(base|strength|dexterity|constitution|wisdom|intelligence))$/;
 const LEGACY_HAND_KEY = /^gameConfig\.handRules\.(starting|turn|capacity)\.(base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)$/;
 const LEGACY_HAND_MAX_KEY = 'gameConfig.balance.handMax';
+// TWO ROW KEYS CHANGED MEANING IN RULESET 7 without changing spelling: `draw`
+// was the draw only co-op and old fights read (solo drew by the hand rules),
+// and `poise` was the pool only a ratings-off fight read. A profile or file
+// written before ruleset 7 is recognised by the absence of this marker (a
+// profile key) or of `statRows: 7` on an exported file, and its values for
+// those two rows are read as what they meant then.
+export const STAT_ROWS_MARKER = 'statRowsVersion';
+export const STAT_ROWS_VERSION = 7;
+const LEGACY_MEANING_KEY = /^gameConfig\.derivedStatRules\.rules\.(draw|poise)\./;
 
 /** Whether a stored profile still holds a key ruleset 7 retired. */
 export function hasLegacyStatSettings(settings = {}) {
-  return Object.keys(settings || {}).some((key) => LEGACY_RATING_KEY.test(key) || LEGACY_HAND_KEY.test(key) || key === LEGACY_HAND_MAX_KEY);
+  return Object.keys(settings || {}).some((key) => LEGACY_RATING_KEY.test(key) || LEGACY_HAND_KEY.test(key) || key === LEGACY_HAND_MAX_KEY)
+    || (settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION && Object.keys(settings || {}).some((key) => LEGACY_MEANING_KEY.test(key)));
 }
 
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -230,11 +245,22 @@ export function fitHandRow(group) {
  * every retired stat key restated as a row key. Unchanged input is returned
  * as is.
  */
-export function migrateLegacyStatSettings(settings = {}, warnings = null) {
+export function migrateLegacyStatSettings(settings = {}, warnings = null, { legacyRows = settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION } = {}) {
   if (!hasLegacyStatSettings(settings)) return settings;
   const next = { ...settings };
+  // Written before ruleset 7: the old `draw` and `poise` rows go first, so the
+  // converted hand and rating values below are what those rows now hold.
+  if (legacyRows) {
+    const ratingsOff = settings['gameConfig.combatRatings.enabled'] === false;
+    const dropped = Object.keys(settings).filter((key) => LEGACY_MEANING_KEY.test(key)
+      && (key.includes('.draw.') || !ratingsOff));
+    for (const key of dropped) delete next[key];
+    if (dropped.length && Array.isArray(warnings)) {
+      warnings.push(`${dropped.some((key) => key.includes('.draw.')) ? 'The old Draw row was read only by co-op and older fights; Draw / turn is now every fight\'s turn draw, so the old values were set aside. ' : ''}${dropped.some((key) => key.includes('.poise.')) ? 'The old Poise pool was read only with combat ratings off; Poise is one row now, so its old values were set aside in favour of the Poise rating. ' : ''}Everything else in the file was imported.`);
+    }
+  }
   const key = (id, field) => `${STAT_ROW_KEY_PREFIX}${id}.${field}`;
-  const setIfAbsent = (id, field, value) => { if (!Object.hasOwn(settings, key(id, field))) next[key(id, field)] = value; };
+  const setIfAbsent = (id, field, value) => { if (!Object.hasOwn(next, key(id, field))) next[key(id, field)] = value; };
   // Ratings: the formula as the file states it, folded into the rows.
   const ratingKeys = Object.keys(settings).filter((k) => LEGACY_RATING_KEY.test(k));
   if (ratingKeys.length) {

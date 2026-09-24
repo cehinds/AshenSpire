@@ -436,6 +436,14 @@ export function derivedStatRuleProblems(source, options = {}) {
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
   }
+  // A HAND HOLDS AT LEAST ONE CARD. The retired capacity group refused a floor
+  // or ceiling under 1; the row that replaced it keeps that refusal, or a
+  // fight could open with nothing to play.
+  const hand = opts.statRows && plainObject(source.rules.handSize) ? source.rules.handSize : null;
+  if (hand) {
+    if (!Number.isInteger(hand.min) || hand.min < 1) problem(out, 'rules.handSize.min', 'must be a whole number >= 1: a hand holds at least one card');
+    if (hand.max !== undefined && hand.max !== null && (!Number.isInteger(hand.max) || hand.max < 1)) problem(out, 'rules.handSize.max', 'must be a whole number >= 1: a hand holds at least one card');
+  }
   return out;
 }
 

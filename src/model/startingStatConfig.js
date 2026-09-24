@@ -618,7 +618,8 @@ export function startingStatRows(bundle) {
       const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? 999) : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
-        min, step,
+        // A hand holds at least one card (model/derivedStats.js).
+        min: id === 'handSize' && (field === 'min' || field === 'max') ? 1 : min, step,
         // Filed under this row's own topic of Advanced → Stats
         // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
         advancedGroup: 'Stats', derivedStatId: id, statField: field,

@@ -213,6 +213,9 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
     removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
+    // The run's own stat rows price the ratings the stamp writes.
+    derivedStatRuleSnapshot: snapshot.derivedStatRuleSnapshot || run.derivedStatRuleSnapshot,
+    level: run.level,
     itemMounts,
     deck: cards,
   }, cards, {

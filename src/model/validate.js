@@ -11,6 +11,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { handRulesDefaults } from '../content/handRules.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -621,7 +622,10 @@ function collectContentProblems(bundle, errors = []) {
     if (b.balance.combatRatings !== undefined && b.balance.combatRatings !== null && typeof b.balance.combatRatings === 'object') {
       if (b.balance.combatRatings.multiplier !== undefined) err('balance.combatRatings.multiplier', 'was retired in derived-stat ruleset 7: each rating is a derivedStatRules row whose weights are the whole formula');
     }
+    // The hand's shipped behaviour options (content/handRules.js) are the
+    // other place a count could creep back; a bundle may carry its own too.
     for (const group of ['starting', 'turn', 'capacity']) {
+      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}`);
       if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}, and a copy here is a second home for one number`);
     }
     const exposure = b.balance.exposure;

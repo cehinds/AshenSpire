@@ -251,6 +251,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
       A.drawCards(C, P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
+      P.opened = true;
     }
     rescaleEnemies(C);
   }
@@ -380,7 +381,10 @@ function startPlayerPhase(C) {
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
-    A.drawCards(C, P.handRules ? turnDrawCount(C, C.turn === 1) : e.drawPerTurn);
+    // A seat's FIRST hand is its opening hand, whichever turn it arrives on (a
+    // seat that joins during the enemy phase opens on the next player turn).
+    A.drawCards(C, P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn);
+    P.opened = true;
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);

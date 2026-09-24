@@ -13,7 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { hasLegacyStatSettings, migrateLegacyStatSettings } from './statRows.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, hasLegacyStatSettings, migrateLegacyStatSettings } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -128,7 +128,10 @@ const LEGACY_CINDER_WARNING = 'The Cinder gain multiplier now scales a table tha
 
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasLegacyStatSettings(settings);
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasLegacyStatSettings(settings)
+    // A profile this build has not yet marked is read once, so its `draw` and
+    // `poise` rows are known to be pre- or post-ruleset-7 (model/statRows.js).
+    || (settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION);
 }
 
 /**
@@ -160,9 +163,11 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
   // fallback hand size are stat rows now; their old keys become row keys.
   const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
-  if (migrated === settings) return settings;
-  for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
-  Object.assign(settings, migrated);
+  if (migrated !== settings) {
+    for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
+    Object.assign(settings, migrated);
+  }
+  settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   return settings;
 }
 
@@ -1079,6 +1084,10 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
   // A STAT ROW'S MIN MAY NOT EXCEED ITS MAX. The row door refuses it when the
   // registries are built, so it is refused here first — at import and on the
   // row — rather than as a boot that falls back to authored content.
+  const hand = configured.derivedStatRules?.rules?.handSize;
+  if (hand && !(Number.isInteger(hand.min) && hand.min >= 1 && (!Number.isFinite(hand.max) || hand.max >= 1))) {
+    problems.push(`derivedStatRules.rules.handSize.min (${hand.min}) and max (${hand.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
+  }
   for (const [id, row] of Object.entries(configured.derivedStatRules?.rules || {})) {
     if (Number.isFinite(row.min) && Number.isFinite(row.max) && row.min > row.max) {
       problems.push(`derivedStatRules.rules.${id}.min (${row.min}) must stay at or below derivedStatRules.rules.${id}.max (${row.max}).`);
@@ -1112,6 +1121,9 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     game: 'Ashen Spire',
     build,
+    // Written by a ruleset-7 build: its `draw` and `poise` rows mean what they
+    // mean now (model/statRows.js).
+    statRows: STAT_ROWS_VERSION,
     overrides: advancedConfigSettings(settings, additionalKeys),
   }, null, 2) + '\n';
 }
@@ -1173,7 +1185,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
-  const overrides = migrateLegacyStatSettings(migrateCombatRatingSettings(file.overrides, bundle, warnings), warnings);
+  // A file exported before ruleset 7 carries no `statRows` stamp.
+  const overrides = migrateLegacyStatSettings(migrateCombatRatingSettings(file.overrides, bundle, warnings), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
   // The old Cinder multiplier is carried across as ÷ 20 by withoutSupersededLegacy
   // below, before an unknown key could refuse the file; said here, once.
   if (Object.keys(overrides).some((key) => key in LEGACY_CINDER_KEYS && !Object.hasOwn(overrides, LEGACY_CINDER_KEYS[key]))) warnings.push(LEGACY_CINDER_WARNING);

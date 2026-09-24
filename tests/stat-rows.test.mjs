@@ -227,3 +227,51 @@ test('co-op reads the same rows: each seat counts cards and ratings by its own r
     assert.deepEqual(P.ratingRows.ar, statRow(registries, seat, 'ar'));
   }
 });
+
+test('a pre-ruleset-7 draw or poise row is read as what it meant then; a marked one as what it means now', () => {
+  const old = {
+    'gameConfig.derivedStatRules.rules.draw.base': 3,
+    'gameConfig.derivedStatRules.rules.draw.intelligence': 0.5,
+    'gameConfig.derivedStatRules.rules.poise.constitution': 1,
+    'gameConfig.combatRatings.ratings.poise.constitution': 1.5,
+    'gameConfig.handRules.turn.base': 3,
+  };
+  const warnings = [];
+  const converted = migrateLegacyStatSettings(old, warnings);
+  // The co-op-only draw is set aside; the tuned turn draw becomes the row.
+  assert.notEqual(converted['gameConfig.derivedStatRules.rules.draw.intelligence'], 0.5);
+  assert.equal(converted['gameConfig.derivedStatRules.rules.draw.base'] !== undefined, true);
+  // The rating Poise wins over the ratings-off pool.
+  assert.equal(converted['gameConfig.derivedStatRules.rules.poise.constitution'], 1.5);
+  assert(warnings.some((line) => /old Draw row/.test(line)));
+  // A profile this build marked keeps its rows as they are.
+  const marked = { statRowsVersion: 7, 'gameConfig.derivedStatRules.rules.draw.base': 3 };
+  assert.equal(hasLegacyAdvancedSettings(marked), false);
+  assert.equal(migrateLegacyStatSettings(marked), marked);
+  // Normalising marks the profile.
+  const profile = {};
+  normalizeAdvancedSettings(profile, contentBundle, []);
+  assert.equal(profile.statRowsVersion, 7);
+  // An exported file carries the stamp, and a stamped file's draw row imports as written.
+  const stamped = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { 'gameConfig.derivedStatRules.rules.draw.base': 3 } });
+  assert.equal(parseAdvancedConfigFile(stamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], 3);
+  const unstamped = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { 'gameConfig.derivedStatRules.rules.draw.base': 3 } });
+  assert.equal(parseAdvancedConfigFile(unstamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], undefined);
+});
+
+test('a hand holds at least one card: a hand size under 1 is refused before a fight can open empty', () => {
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { 'gameConfig.derivedStatRules.rules.handSize.max': 0 } });
+  assert.throws(() => parseAdvancedConfigFile(file, contentBundle, {}, [], []));
+  const bundle = { ...contentBundle, derivedStatRules: structuredClone(contentBundle.derivedStatRules) };
+  bundle.derivedStatRules.rules.handSize.min = 0;
+  assert(!validateContent(bundle).ok);
+});
+
+test('an old run keeps the hand it was born with, from its own configuration snapshot', () => {
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const run = createRunState({ seed: 3, classId: 'reaver', registries });
+  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
+  run.advancedConfigSnapshot = { schemaVersion: 1, overrides: { 'gameConfig.handRules.capacity.base': 9 } };
+  // The live profile has been converted and holds no hand-rule keys.
+  assert.equal(statRow(registries, run, 'handSize', { settings: {} }).base, 9);
+});
