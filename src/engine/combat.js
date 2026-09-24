@@ -22,7 +22,7 @@ import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { attachArtCharge, takeArtUnleash } from './artCharge.js';
-import { artUnleashFor } from '../model/artCharge.js';
+import { artUnleashFor, unleashedTemplate } from '../model/artCharge.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
@@ -1222,8 +1222,24 @@ export function previewCard(combat, cardInstanceId, targetId) {
   // The Art charge the play door will read (SPEC §12.2.1), for weapon Arts
   // whose lender has a meter.
   const unleash = artUnleashFor(combat, inst);
+  let unleashedText = null;
+  if (unleash && unleash.ready) {
+    // The unleashed line joins the card text (SPEC §3.13): its tokens are
+    // resolved here by the same math the play will run.
+    const statusName = (id) => (combat.registries.statuses.has(id) ? combat.registries.statuses.get(id).name : id);
+    unleashedText = unleashedTemplate(unleash.form, statusName);
+    unleash.form.effects.forEach((eff, i) => {
+      const primary = firstResolvedTarget(combat, action, eff);
+      let value;
+      if (eff.op === 'damage') value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, evalPreview(combat, action, eff.amount, primary), A.attackTagsFor(action, eff, combat.registries), action.card);
+      else if (eff.op === 'block') value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
+      else if (eff.op === 'applyStatus') value = evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary);
+      else value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
+      tokens[`unleashed.${i}`] = value;
+    });
+  }
   return {
-    ...(unleash ? { artCharge: { weaponId: unleash.weaponId, value: unleash.value, max: unleash.max, unleashed: unleash.ready } } : {}),
+    ...(unleash ? { artCharge: { weaponId: unleash.weaponId, value: unleash.value, max: unleash.max, unleashed: unleash.ready, ...(unleashedText ? { textTemplate: unleashedText } : {}) } } : {}),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

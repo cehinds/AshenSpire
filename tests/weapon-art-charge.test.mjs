@@ -132,7 +132,13 @@ test('a full meter unleashes the Art: its extra effects resolve and the meter em
   const max = artChargeMax(registries, 'greatsword');
   for (let i = 0; i < max; i++) play(combat, kitAttack('greatsword'));
   const art = everyCard(combat).find(artOf('greatsword'));
-  assert.deepEqual(previewCard(combat, art.instanceId).artCharge, { weaponId: 'greatsword', value: max, max, unleashed: true });
+  const pv = previewCard(combat, art.instanceId);
+  assert.equal(pv.artCharge.unleashed, true);
+  assert.deepEqual([pv.artCharge.value, pv.artCharge.max], [max, max]);
+  // The printed card text gains the unleashed line, its numbers bound as
+  // ordinary template tokens (SPEC §3.13).
+  assert.equal(pv.artCharge.textTemplate, 'Unleashed: +{unleashed.0} Poise, apply {unleashed.1} Vulnerable.');
+  assert.deepEqual([pv.tokens['unleashed.0'], pv.tokens['unleashed.1']], [4, 1]);
   const enemy = combat.enemies[0];
   const poiseBefore = enemy.poiseMeter.value;
   const hpBefore = enemy.hp;

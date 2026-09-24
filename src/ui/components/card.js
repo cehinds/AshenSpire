@@ -122,6 +122,11 @@ export function renderCard(registries, ref, opts = {}) {
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
   const model = playingCardModel(registries, ref, { preview: opts.preview || null });
+  // A weapon Art whose charge meter is full prints its unleashed line after
+  // its own text (SPEC §12.2.1): the template comes from the preview, and its
+  // tokens are in the preview's tokens, so it fills like any card text.
+  const unleashedLine = opts.preview && opts.preview.artCharge && opts.preview.artCharge.unleashed && opts.preview.artCharge.textTemplate;
+  const printedDef = unleashedLine ? { ...def, textTemplate: `${def.textTemplate} ${unleashedLine}` } : def;
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
   // type band), and one shared row budget below the band that tags and text
@@ -219,7 +224,7 @@ export function renderCard(registries, ref, opts = {}) {
     // same card with holes rather than a larger-typed one — and a screen
     // reader would announce a field the player cannot see.
     const body = region('type', `<div class="ctype">${esc(model.type.label)}</div>`)
-      + region('effects', `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div>`);
+      + region('effects', `<div class="ctext cd-text">${fillTemplate(printedDef, model.tokens, model.baseTokens)}</div>`);
     // The information button and the chevron are children of the card that
     // `bindCardInspection` appended with their own listeners; a repaint must
     // hand them back rather than take them away.

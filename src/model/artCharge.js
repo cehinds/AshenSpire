@@ -142,3 +142,28 @@ export function artChargeSnapshotProblems(value) {
   }
   return problems;
 }
+
+/**
+ * unleashedTemplate(form, statusName) → the card-text line (SPEC §3.13) for an
+ * unleashed form: "Unleashed: +{unleashed.0} damage, …". Each value token is
+ * `unleashed.<effect index>`, filled by previewCard with the same evaluator
+ * the play uses, so the printed number is the number that lands.
+ */
+export function unleashedTemplate(form, statusName = (id) => id) {
+  const parts = [];
+  (form && form.effects || []).forEach((eff, i) => {
+    const tok = `{unleashed.${i}}`;
+    const hits = typeof eff.hits === 'number' && eff.hits > 1 ? `×${eff.hits}` : '';
+    const all = eff.target === 'allEnemies' ? ' to all' : '';
+    switch (eff.op) {
+      case 'damage': parts.push(`+${tok}${hits} damage${all}`); break;
+      case 'poiseDamage': parts.push(`+${tok} Poise${all}`); break;
+      case 'block': parts.push(`+${tok} Block`); break;
+      case 'draw': parts.push(`draw ${tok}`); break;
+      case 'heal': parts.push(`heal ${tok}`); break;
+      case 'applyStatus': parts.push(`${eff.target === 'self' ? 'gain' : 'apply'} ${tok} ${statusName(eff.status)}${all}`); break;
+      default: parts.push(eff.op);
+    }
+  });
+  return parts.length ? `Unleashed: ${parts.join(', ')}.` : '';
+}

@@ -1562,4 +1562,7 @@
 @media (max-width: 600px) {
   .combat .art-charge-row .art-charge-name, .combat .art-charge-row .art-charge-ready, .hand .card .art-charge-card > span:not(.art-charge-pips) { display: none; }
   .combat .art-charge-row { padding: calc(2px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); }
+  /* Overlapping cards cover each other's right side, so the pips sit on the
+     card's top-left edge, above the cost — the part every card keeps visible. */
+  .hand .card .art-charge-card { left: calc(2px / var(--ui-zoom, 1)); right: auto; top: calc(-8px / var(--ui-zoom, 1)); z-index: 5; }
 }
