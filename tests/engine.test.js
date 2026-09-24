@@ -1464,7 +1464,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const a = REG.classes.get(id).startingFlaskAllocation;
         return `${a.hp}/${a.mana}`;
       }).join('|'),
-      '2/1|2/1|2/1|2/1',
+      '2/1|1/2|2/1|2/1',
       'all four class allocations consume all three charges exactly as approved',
     );
     const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
