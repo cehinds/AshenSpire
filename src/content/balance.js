@@ -405,8 +405,13 @@ export const balance = {
     // reading against the OLD faucet for a week; both are re-tuned against
     // this one now (2026-09-11) — the shop by this same ×3, the level ladder
     // by measurement, each explained where it lives.
+    // ×20 again (owner, 2026-09-24: his Cinder gain multiplier of 20 made the
+    // shipped default). Baked into the table, not applied by the settings
+    // layer, so every reader of this table — the encounter builder, the
+    // balance tools, a co-op session built from authored content — pays the
+    // same. The multiplier row (progression.cinderMultiplier) is 1 by default.
     cinders: {
-      normal: [45, 75], elite: [105, 150], boss: [225, 270],
+      normal: [900, 1500], elite: [2100, 3000], boss: [4500, 5400],
       [NOTE]: {
         '{kind}.{end}': 'The {band} of the cinders that {pool} pays.',
       },

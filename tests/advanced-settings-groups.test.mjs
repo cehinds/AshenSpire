@@ -513,8 +513,8 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
   }
   assert.equal(where('swapCostRule'), 'Equipment → Equipment swapping', 'the swap rule sits with its numbers');
   assert.equal(where('gameConfig.balance.equipment.swapCost'), 'Equipment → Equipment swapping');
-  assert.equal(where('gameConfig.progression.rewardMultiplier'), 'Rewards → Combat rewards', 'the Cinder multiplier sits with the Cinders');
-  assert.equal(rows.find(row => row.key === 'gameConfig.progression.rewardMultiplier').label, 'Cinder gain multiplier',
+  assert.equal(where('gameConfig.progression.cinderMultiplier'), 'Rewards → Combat rewards', 'the Cinder multiplier sits with the Cinders');
+  assert.equal(rows.find(row => row.key === 'gameConfig.progression.cinderMultiplier').label, 'Cinder gain multiplier',
     'and no longer claims to multiply experience');
   assert.equal(where('shopSell'), 'Rewards → Shop stock & services');
   assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
