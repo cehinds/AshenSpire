@@ -79,9 +79,9 @@ function measureDps(classId, T = 10) {
 }
 
 // Bot fights one encounter from full HP; returns { win, hpLost }.
-function simFight(classId, enemyIds, seed) {
+function simFight(classId, enemyIds, seed, scale = null) {
   const run = newRun(classId);
-  const c = createRunCombat({ registries: REG, rng: createRng(seed), run, enemyIds });
+  const c = createRunCombat({ registries: REG, rng: createRng(seed), run, enemyIds, hpMult: scale ? scale.hp : 1, enemyDamageMult: scale ? scale.damage : 1 });
   let guard = 0;
   // A fight still open after 150 turns is conceded, as in runsim.mjs.
   while (!c.result && guard++ < 8000 && c.turn <= 150) botStep(c);
@@ -217,6 +217,7 @@ P('');
 P('## 5. Tier-1 empirical win rate (naive bot, starting deck)');
 P('');
 P('Greedy bot, starting deck only (no card acquisition), from full HP, 300 seeds.');
+P('Bosses are met at tier 1: × balance.bossTiers[1].');
 P('Tier 1 is the only tier where a starting deck is the correct reference; later tiers');
 P('assume deck growth (§4 bands). These are a **floor** — real play does better.');
 P('');
@@ -228,7 +229,7 @@ for (const cls of REG.classes.all()) {
   for (const enc of act1) {
     let wins = 0, hpLost = 0;
     for (let s = 1; s <= N; s++) {
-      const r = simFight(cls.id, enc.enemies, s * 7 + cls.id.length);
+      const r = simFight(cls.id, enc.enemies, s * 7 + cls.id.length, bossTierScale(REG, { encounter: enc, tier: 1 }));
       if (r.win) wins++;
       hpLost += r.hpLost;
     }

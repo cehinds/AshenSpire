@@ -25,22 +25,22 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | Court Marionette | 17 | 5.5 | — | 6 | normal |
 | 2 | Living Armor | 38 | 7.8 | — | 22 | normal |
 | 2 | Duelist of the Court | 93 | 10.2 | — | 26 | elite |
-| 2 | The Stitched King | 332 | 15.7 | — | 34 | boss |
+| 2 | The Stitched King | 195 | 8.9 | — | 34 | boss |
 | 2 | Mirror Scribe | 30 | 4.5 | — | 8 | normal |
 | 2 | Stitch Crab | 34 | 6.9 | — | 17 | normal |
-| 2 | The Glass Regent | 306 | 20.7 | — | 26 | boss |
-| 2 | The Marrow Organist | 323 | 28.8 | 1.1 | 30 | boss |
+| 2 | The Glass Regent | 180 | 12.1 | — | 26 | boss |
+| 2 | The Marrow Organist | 190 | 16.6 | 1.1 | 30 | boss |
 | 3 | Ash Revenant | 36 | 6.6 | 2.7 | 10 | normal |
 | 3 | Ember-Starved Pilgrim | 30 | 5.4 | — | 8 | normal |
 | 3 | Valkyrie Shade | 42 | 7.5 | — | 14 | normal |
 | 3 | Charred Colossus | 57.5 | 8 | — | 30 | normal |
 | 3 | Wyrm Lord | 135 | 8.3 | 1.4 | 30 | elite |
-| 3 | The Blighted Valkyrie | 425 | 20.6 | — | 36 | boss |
+| 3 | The Blighted Valkyrie | 250 | 12 | — | 36 | boss |
 | 3 | Cinder Mantis | 38 | 10.9 | — | 11 | normal |
 | 3 | Eclipse Cantor | 32 | 6.7 | — | 7 | normal |
-| 3 | The Furnace Saint | 442 | 32.9 | — | 40 | boss |
-| 3 | The Hollow Astronomer | 383 | 43.1 | — | 25 | boss |
-| 3 | The Ashheart Dragon | 417 | 21.2 | — | 34 | boss |
+| 3 | The Furnace Saint | 260 | 19.5 | — | 40 | boss |
+| 3 | The Hollow Astronomer | 225 | 24.9 | — | 25 | boss |
+| 3 | The Ashheart Dragon | 245 | 12.7 | — | 34 | boss |
 
 ## 2. Encounters (incoming totals)
 
@@ -64,23 +64,23 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | a2_procession | normal | 2 | 61 | 11 | — |
 | 2 | a2_vault | normal | 2 | 70 | 10.6 | 2.4 |
 | 2 | a2_eliteDuelist | elite | 1 | 93 | 10.2 | — |
-| 2 | a2_bossStitchedKing | boss | 1 | 332 | 15.7 | — |
+| 2 | a2_bossStitchedKing | boss | 1 | 195 | 8.9 | — |
 | 2 | a2_mirrorArchive | normal | 1 | 30 | 4.5 | — |
 | 2 | a2_stitchDrain | normal | 1 | 34 | 6.9 | — |
-| 2 | a2_bossGlassRegent | boss | 1 | 306 | 20.7 | — |
-| 2 | a2_bossMarrowOrganist | boss | 1 | 323 | 28.8 | 1.1 |
+| 2 | a2_bossGlassRegent | boss | 1 | 180 | 12.1 | — |
+| 2 | a2_bossMarrowOrganist | boss | 1 | 190 | 16.6 | 1.1 |
 | 3 | a3_revenant | normal | 1 | 36 | 6.6 | 2.7 |
 | 3 | a3_pilgrims | normal | 2 | 60 | 10.8 | — |
 | 3 | a3_shades | normal | 2 | 72 | 12.9 | — |
 | 3 | a3_colossus | normal | 1 | 57.5 | 8 | — |
 | 3 | a3_ashChoir | normal | 2 | 78 | 14.1 | 2.7 |
 | 3 | a3_eliteWyrmLord | elite | 1 | 135 | 8.3 | 1.4 |
-| 3 | a3_bossRotValkyrie | boss | 1 | 425 | 20.6 | — |
+| 3 | a3_bossRotValkyrie | boss | 1 | 250 | 12 | — |
 | 3 | a3_cinderNest | normal | 1 | 38 | 10.9 | — |
 | 3 | a3_eclipseChapel | normal | 1 | 32 | 6.7 | — |
-| 3 | a3_bossFurnaceSaint | boss | 1 | 442 | 32.9 | — |
-| 3 | a3_bossHollowAstronomer | boss | 1 | 383 | 43.1 | — |
-| 3 | a3_bossAshheartDragon | boss | 1 | 417 | 21.2 | — |
+| 3 | a3_bossFurnaceSaint | boss | 1 | 260 | 19.5 | — |
+| 3 | a3_bossHollowAstronomer | boss | 1 | 225 | 24.9 | — |
+| 3 | a3_bossAshheartDragon | boss | 1 | 245 | 12.7 | — |
 
 ## 3. Player baselines (measured naive starting-deck DPS)
 
@@ -100,23 +100,24 @@ conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.
 Reference DPS by tier: tier 1 = measured start, tier 2 = ×1.6, tier 3 = ×2.4 (avg
 across classes). "Turns to kill" = HP / (refDPS − heal). "Turns to die" =
 lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
-(heal ≥ refDPS → cannot kill) and races (kill ≥ die).
+(heal ≥ refDPS → cannot kill) and races (kill ≥ die). Boss rows are met at
+their own tier: HP and incoming DPS × balance.bossTiers for that tier.
 
 | Tier | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
 |----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|
 | 1 | eliteWyrm | 70 | 0.7 | 8.1 | 9.5 | 6.9 | 5.5 | **race — check** |
-| 1 | bossOmen | 120 | — | 8.1 | 14.9 | 10.4 | 3.7 | **race — check** |
-| 1 | bossBellKeeper | 116 | — | 8.1 | 14.4 | 10.7 | 3.6 | **race — check** |
-| 1 | bossThornMatriarch | 110 | — | 8.1 | 13.6 | 9.9 | 3.8 | **race — check** |
+| 1 | bossOmen | 96 | — | 8.1 | 11.9 | 8.3 | 4.6 | **race — check** |
+| 1 | bossBellKeeper | 93 | — | 8.1 | 11.5 | 8.6 | 4.4 | **race — check** |
+| 1 | bossThornMatriarch | 88 | — | 8.1 | 10.9 | 7.9 | 4.8 | **race — check** |
 | 2 | a2_eliteDuelist | 93 | — | 12.9 | 7.2 | 10.2 | 3.7 | **race — check** |
-| 2 | a2_bossStitchedKing | 332 | — | 12.9 | 25.7 | 15.7 | 2.4 | **race — check** |
-| 2 | a2_bossGlassRegent | 306 | — | 12.9 | 23.7 | 20.7 | 1.8 | **race — check** |
-| 2 | a2_bossMarrowOrganist | 323 | 1.1 | 12.9 | 27.2 | 28.8 | 1.3 | **race — check** |
+| 2 | a2_bossStitchedKing | 429 | — | 12.9 | 33.2 | 13.4 | 2.8 | **race — check** |
+| 2 | a2_bossGlassRegent | 396 | — | 12.9 | 30.7 | 18.2 | 2.1 | **race — check** |
+| 2 | a2_bossMarrowOrganist | 418 | 1.1 | 12.9 | 35.2 | 24.9 | 1.5 | **race — check** |
 | 3 | a3_eliteWyrmLord | 135 | 1.4 | 19.4 | 7.5 | 8.3 | 4.6 | **race — check** |
-| 3 | a3_bossRotValkyrie | 425 | — | 19.4 | 21.9 | 20.6 | 1.8 | **race — check** |
-| 3 | a3_bossFurnaceSaint | 442 | — | 19.4 | 22.8 | 32.9 | 1.2 | **race — check** |
-| 3 | a3_bossHollowAstronomer | 383 | — | 19.4 | 19.8 | 43.1 | 0.9 | **race — check** |
-| 3 | a3_bossAshheartDragon | 417 | — | 19.4 | 21.5 | 21.2 | 1.8 | **race — check** |
+| 3 | a3_bossRotValkyrie | 550 | — | 19.4 | 28.4 | 18 | 2.1 | **race — check** |
+| 3 | a3_bossFurnaceSaint | 572 | — | 19.4 | 29.5 | 29.3 | 1.3 | **race — check** |
+| 3 | a3_bossHollowAstronomer | 495 | — | 19.4 | 25.5 | 37.3 | 1 | **race — check** |
+| 3 | a3_bossAshheartDragon | 539 | — | 19.4 | 27.8 | 19.1 | 2 | **race — check** |
 
 > Note: the Blighted Valkyrie (final boss) also heals **3 per hit she lands** via a
 > phase trigger (not a move effect), up to ~15/turn on her 5-hit moves — the
@@ -125,6 +126,7 @@ lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
 ## 5. Tier-1 empirical win rate (naive bot, starting deck)
 
 Greedy bot, starting deck only (no card acquisition), from full HP, 300 seeds.
+Bosses are met at tier 1: × balance.bossTiers[1].
 Tier 1 is the only tier where a starting deck is the correct reference; later tiers
 assume deck growth (§4 bands). These are a **floor** — real play does better.
 
@@ -136,48 +138,48 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | twinPatrol (normal) | 100 | 17.1 / 49 |
 | Reaver | bruiser (normal) | 99.7 | 20.9 / 49 |
 | Reaver | eliteWyrm (elite) | 25.3 | 47 / 49 |
-| Reaver | bossOmen (boss) | 0.3 | 49 / 49 |
+| Reaver | bossOmen (boss) | 42 | 45.7 / 49 |
 | Reaver | lanternFlight (normal) | 100 | 7.3 / 49 |
 | Reaver | briarRefuge (normal) | 100 | 3.1 / 49 |
 | Reaver | chainAmbush (normal) | 100 | 2 / 49 |
-| Reaver | bossBellKeeper (boss) | 0.7 | 49 / 49 |
-| Reaver | bossThornMatriarch (boss) | 0.3 | 49 / 49 |
+| Reaver | bossBellKeeper (boss) | 55.3 | 43.6 / 49 |
+| Reaver | bossThornMatriarch (boss) | 32 | 46 / 49 |
 | Starseer | loneSoldier (normal) | 100 | 0.5 / 48 |
 | Starseer | patrol (normal) | 100 | 6.3 / 48 |
 | Starseer | packHunt (normal) | 100 | 6.3 / 48 |
 | Starseer | twinPatrol (normal) | 100 | 7.4 / 48 |
 | Starseer | bruiser (normal) | 100 | 9.8 / 48 |
 | Starseer | eliteWyrm (elite) | 59.3 | 40.8 / 48 |
-| Starseer | bossOmen (boss) | 0 | 48 / 48 |
+| Starseer | bossOmen (boss) | 15.7 | 46.6 / 48 |
 | Starseer | lanternFlight (normal) | 100 | 3.2 / 48 |
 | Starseer | briarRefuge (normal) | 100 | 0.6 / 48 |
 | Starseer | chainAmbush (normal) | 100 | 0.4 / 48 |
-| Starseer | bossBellKeeper (boss) | 0.7 | 48 / 48 |
-| Starseer | bossThornMatriarch (boss) | 0 | 48 / 48 |
+| Starseer | bossBellKeeper (boss) | 50.7 | 42.5 / 48 |
+| Starseer | bossThornMatriarch (boss) | 14 | 46.9 / 48 |
 | Rogue | loneSoldier (normal) | 100 | 0.8 / 38 |
 | Rogue | patrol (normal) | 99.7 | 9.6 / 38 |
 | Rogue | packHunt (normal) | 95.7 | 11 / 38 |
 | Rogue | twinPatrol (normal) | 99 | 10.6 / 38 |
 | Rogue | bruiser (normal) | 98.3 | 12.3 / 38 |
 | Rogue | eliteWyrm (elite) | 7.7 | 37.3 / 38 |
-| Rogue | bossOmen (boss) | 0 | 38 / 38 |
+| Rogue | bossOmen (boss) | 1.3 | 37.9 / 38 |
 | Rogue | lanternFlight (normal) | 100 | 5.1 / 38 |
 | Rogue | briarRefuge (normal) | 100 | 1.2 / 38 |
 | Rogue | chainAmbush (normal) | 100 | 0.8 / 38 |
-| Rogue | bossBellKeeper (boss) | 0 | 38 / 38 |
-| Rogue | bossThornMatriarch (boss) | 0 | 38 / 38 |
+| Rogue | bossBellKeeper (boss) | 9 | 37.4 / 38 |
+| Rogue | bossThornMatriarch (boss) | 0.7 | 37.9 / 38 |
 | Herald | loneSoldier (normal) | 100 | 0.7 / 38 |
 | Herald | patrol (normal) | 100 | 5 / 38 |
 | Herald | packHunt (normal) | 100 | 5.6 / 38 |
 | Herald | twinPatrol (normal) | 100 | 5.1 / 38 |
 | Herald | bruiser (normal) | 100 | 4.9 / 38 |
 | Herald | eliteWyrm (elite) | 98 | 16.8 / 38 |
-| Herald | bossOmen (boss) | 33.3 | 34.7 / 38 |
+| Herald | bossOmen (boss) | 83.7 | 22.7 / 38 |
 | Herald | lanternFlight (normal) | 100 | 1.7 / 38 |
 | Herald | briarRefuge (normal) | 100 | 0.4 / 38 |
 | Herald | chainAmbush (normal) | 100 | 0.5 / 38 |
-| Herald | bossBellKeeper (boss) | 56 | 31.6 / 38 |
-| Herald | bossThornMatriarch (boss) | 37.7 | 33.4 / 38 |
+| Herald | bossBellKeeper (boss) | 97.7 | 17.1 / 38 |
+| Herald | bossThornMatriarch (boss) | 88 | 22.1 / 38 |
 
 ## 6. Findings
 
