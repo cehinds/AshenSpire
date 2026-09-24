@@ -78,8 +78,9 @@ import { applyChestOption, landChestPick } from '../../model/rewardChest.js';
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', chest: '▣', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
-// caller (main.js collectArmament): run storage + meta.found + the discovery
-// receipt. Handed in rather than done here because the persistence needs the
+// caller (main.js collectArmament): run storage now, and — through the commit
+// it returns, run only after the reward save lands — meta.found + the
+// discovery receipt. Handed in rather than done here because the persistence needs the
 // caller's run/shot context, and because a screen that decides nothing should
 // also STORE nothing itself. A caller that hands none gets reveal-only rows —
 // no such caller exists today; the boundary is named, not covered.
@@ -93,6 +94,21 @@ export function mountRewards(app, {
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // THE PROFILE WRITE WAITS FOR THE RUN SAVE. The collector stores the piece
+  // in the run bag now (the rollback snapshot covers it) and may hand back a
+  // commit for the durable profile (main.js: meta.found + the discovery
+  // receipt). Those commits run only once persistProgress lands, so a refused
+  // save rolls the bag back without leaving the piece permanently found.
+  const pendingProfileCommits = [];
+  if (onCollectArmament) {
+    const collector = onCollectArmament;
+    onCollectArmament = (id) => {
+      const result = collector(id);
+      if (result === false) return false;
+      if (typeof result === 'function') pendingProfileCommits.push(result);
+      return true;
+    };
+  }
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
@@ -145,7 +161,14 @@ export function mountRewards(app, {
       if (chosenChestIndex !== null) checkpoint.chosenChestIndex = chosenChestIndex;
       checkpoint.chosenRelicId = chosenRelicId;
     }
+    // A refused (or throwing) save drops the queued profile commits with it.
+    const commits = pendingProfileCommits.splice(0);
     if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
+    for (const commit of commits) {
+      // Best-effort after the run landed: the piece is in the bag either way,
+      // and a quarantined profile refusing the write must not strand the take.
+      try { commit(); } catch { /* the profile record is a convenience here */ }
+    }
   }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------

@@ -410,6 +410,9 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   checkpoint (`chosenChestIndex`) so a reload resumes it. The grant and its Taken state cross
   one save door: if that save is refused, the grant is rolled back (deck, relics, cinders,
   Smithing Stones, the armament bag, `chosenChestIndex`) and Confirm can be pressed again.
+  A collected armament's durable profile record (`found` and its discovery receipt) is
+  written only after that save lands — the collector hands the write back as a commit — so
+  a refused save never leaves a piece found that the run no longer carries.
   A saved chest is validated at both save doors: the shape door (`validateRunShape`, via
   `chestOptionShapeProblems`) refuses an option whose `category` is outside the closed set
   or whose payload is not the one its table row names (ids non-empty strings, `mode`

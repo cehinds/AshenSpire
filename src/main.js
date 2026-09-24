@@ -1629,7 +1629,7 @@ function rollDrop(source) {
 }
 
 /**
- * collectArmament(id, source) — the one home of the armament bargain, fired
+ * collectArmament(id, source) → false | commit — the one home of the armament bargain, fired
  * when the player TAKES the row (or auto-collect takes it for them): the piece
  * goes into this run's storage so you can use it now, and into the profile's
  * found set so it stays available in every run after — a climb that ends badly
@@ -1646,8 +1646,11 @@ function collectArmament(id, source) {
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
-  recordCollectedArmament(id, source);
-  return true;
+  // THE PROFILE WAITS FOR THE RUN SAVE. meta.found is durable and outlives a
+  // rollback: written here, a refused reward save rolled the bag back but
+  // left the piece permanently found (and excluded from every later drop).
+  // The reward screen calls this commit only after its save lands.
+  return () => recordCollectedArmament(id, source);
 }
 
 // Called only after collection or a committed trader purchase stored the item.

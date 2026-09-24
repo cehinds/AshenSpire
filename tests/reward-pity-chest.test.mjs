@@ -547,6 +547,63 @@ test('an owned chest upgrade must name the deck card it shows, at both save door
   assert.equal(applyChestOption(r, copy, good), true);
 });
 
+test('a refused reward save never leaves an armament in the durable profile (meta.found)', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const dom = rewardDom();
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const { mountRewards } = await import('../src/ui/screens/reward.js');
+    for (const [label, rewards, open, mode] of [
+      // Continue's auto-collect takes the armament row (its detail view draws
+      // equipment custom elements this fixture has no registry for).
+      ['the armament row', { armamentId: 'greatsword' }, (app) => () => app.querySelector('#reward-continue').click(), 'auto'],
+      ['the chest\'s armament option', { chest: { options: [{ category: 'armament', armamentId: 'greatsword' }] } }, (app) => {
+        app.querySelector('[data-kind="chest"]').click();
+        app.querySelectorAll('.reward-row .reward-chest-option')[0].click();
+        return () => app.querySelector('#reward-card-confirm').click();
+      }, 'manual'],
+    ]) {
+      const app = document.createElement('main'); document.body.append(app);
+      const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
+      const checkpoint = { states: {}, chosenCardId: null };
+      const saves = { loadMeta: () => ({ settings: { rewardCollect: mode || 'manual' } }), saveMeta() {} };
+      // The profile, and main.js's collector contract: the bag now, the
+      // durable found set through the commit it hands back.
+      const profile = { found: [] };
+      const collect = (id) => {
+        if (run.loadout.storage.includes(id)) return false;
+        run.loadout.storage.push(id);
+        return () => { profile.found = [...profile.found, id]; };
+      };
+      let refuse = true;
+      mountRewards(app, { registries: r, run, checkpoint, rewards, saves, onDone() {}, onPersist: () => !refuse, onCollectArmament: collect });
+      const press = open(app);
+      try { press(); } catch { /* Continue rethrows the refusal; the chooser shows it */ }
+      assert.deepEqual(run.loadout.storage, [], `${label}: the refused grant leaves the bag`);
+      assert.deepEqual(profile.found, [], `${label}: and the profile never learns the piece`);
+      refuse = false;
+      press();
+      assert.deepEqual(run.loadout.storage, ['greatsword'], `${label}: the retry lands`);
+      assert.deepEqual(profile.found, ['greatsword'], `${label}: and only then is the piece found`);
+      app.remove();
+    }
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+  // The game's collector hands the profile write back instead of making it.
+  const { readFileSync } = await import('node:fs');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const body = main.slice(main.indexOf('function collectArmament(id, source) {'), main.indexOf('function recordCollectedArmament('));
+  assert.match(body, /return \(\) => recordCollectedArmament\(id, source\);/);
+  assert.doesNotMatch(body.replace(/return \(\) => recordCollectedArmament\(id, source\);/, ''), /recordCollectedArmament\(/);
+});
+
 test('autoTakeChest: a bot door takes one takeable option, seeded', () => {
   const chest = { options: [
     { category: 'armament', armamentId: 'longsword' },
