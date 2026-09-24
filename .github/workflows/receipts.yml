@@ -39,14 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Full history: the check walks `origin/test..HEAD` for merge subjects.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          lfs: true
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - uses: ./.github/actions/setup-node
 
       # The promotion target is the bound. Without it the tool falls back to a
       # fixed window and SAYS SO rather than quietly widening to all of history,
