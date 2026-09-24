@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-24
 
+- **Behind the scenes: the design spec matches the shipped game** ([#1282](https://github.com/cehinds/AshenSpire/pull/1282), `0.7.1.478`). Nothing you play changes. The design spec now counts the Rogue's 40 cards, names Goreblood as it ships, and says item by item what from its polish list is shipped and what is still to build.
 - **Guilt costs its HP at the end of your turn, in co-op too** ([#1286](https://github.com/cehinds/AshenSpire/pull/1286), `0.7.1.477`). Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.
 - **Text is easier to read in the colour-blind-safe and dark palettes** ([#1291](https://github.com/cehinds/AshenSpire/pull/1291), `0.7.1.475`). Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.
 - **Reading a card no longer hides behind other panels** ([#1288](https://github.com/cehinds/AshenSpire/pull/1288), `0.7.1.473`). Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.

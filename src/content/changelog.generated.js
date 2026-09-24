@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1282",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the design spec matches the shipped game",
+    "detail": "Nothing you play changes. The design spec now counts the Rogue's 40 cards, names Goreblood as it ships, and says item by item what from its polish list is shipped and what is still to build.",
+    "build": "0.7.1.478",
+    "pullRequest": 1282,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1282"
+  },
+  {
     "id": "pr-1286",
     "date": "2026-09-24",
     "group": "2026-09-24",
