@@ -27,15 +27,16 @@ P3  D payload & release model (owner sign-off) · K code structure · L engine p
 
 - **A** runs as sequential PRs in one session: A1 makes the simulator measure
   the live game, and every later balance PR is judged with it.
-- **E1** runs beside A. **F, G, H, C** stay off A's files. They overlap each
-  other in two places, each with a set order:
-  - `styles/combat.css` and `src/ui/fx.js` (F and H): F lands first, H
-    rebases.
+- **E1** runs beside A. **F, G, H, C** stay off A's files. They share
+  combat-screen files (`src/ui/screens/combat.js`, `styles/combat.css`,
+  `src/ui/fx.js`), so they land in a fixed order, **F → H → G → C**, and each
+  rebases on the one before. Two overlaps also move ownership:
+  - F owns the combat feedback (sounds, shake, recoil) in `combat.js`; G's
+    HUD work there rebases on F.
   - Player-facing copy in `src/content/relics.js` and
     `content/source/uiStrings.csv` (G and C): every copy change in those files
     belongs to C, including G's "(no current consumer)" relic note and the
-    flask/potion wording. G leaves those files alone and rebases if C lands
-    first.
+    flask/potion wording. G leaves those files alone.
 - **P2** items are design calls for the owner before any session builds them.
 - **D** changes how builds ship and needs the owner's sign-off, above all for
   any history rewrite.
