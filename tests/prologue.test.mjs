@@ -98,6 +98,9 @@ test('tint follows the selected motif and destination follows the run',()=>{
   assert.deepEqual(prologueDestination({seatOrder:['marches','weald','reach']}),{name:'The Pale Marches',art:'marches'});
   assert.equal(prologueDestination({seatOrder:['weald']}).art,'weald');
   assert.equal(prologueDestination({seatOrder:['reach']}).art,'reach');
+  const finalScene = PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'step');
+  assert.equal(finalScene.ownStaging, true, 'the destination scene keeps the distant Spire in frame');
+  assert.equal(prologueStaging(prologueConfig(), finalScene).imageFocusY, 0);
   for (const art of ['weald','marches','reach','crownfall']) {
     for (const layout of ['desktop','mobile']) {
       const path = prologueArtwork('step',layout,{destinationArt:art});

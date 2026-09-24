@@ -8,6 +8,7 @@ import {
 const STAGE_BY_KEY = new Map(PROLOGUE_STAGE_FIELDS.map(field => [field.key, field]));
 const SCENE_GROUPS = [
   ['Words & artwork', ['name', 'art', 'banner', 'speaker', 'text', 'location']],
+  ['Traveller', []],
   ['Playback & sound', ['seconds', 'effect', 'waitForInput', 'music', 'stinger']],
 ];
 const STAGE_GROUPS = [
@@ -212,7 +213,8 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
         : `${scene.name} · frame and text follow the opening style.`;
     modeButton.textContent = scope === 'defaults' ? 'Return to this scene' : 'Edit opening style';
     tabs.replaceChildren(); fields.replaceChildren();
-    const groups = scope === 'defaults' ? STAGE_GROUPS : [...SCENE_GROUPS, ...STAGE_GROUPS];
+    const groups = scope === 'defaults' ? STAGE_GROUPS
+      : [...SCENE_GROUPS.filter(([name]) => name !== 'Traveller' || scene.actor), ...STAGE_GROUPS];
     if (!groups.some(([name]) => name === group)) group = groups[0][0];
     for (const [name] of groups) {
       const tab = element('button', `pse-tab${name === group ? ' on' : ''}`, name);
@@ -233,14 +235,20 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
       fields.append(toggle);
     }
     if (scope === 'scene' && SCENE_GROUPS.some(([name]) => name === group)) {
-      const names = SCENE_GROUPS.find(([name]) => name === group)[1];
-      for (const name of names) {
-        const key = prologueSettingKey(['scenes', selected, name]);
-        const row = rows.get(key);
-        if (row) fields.append(field(row, scene[name], key));
-      }
-      if (group === 'Words & artwork' && scene.character) {
-        fields.append(element('p', 'pse-group-help', 'Traveller placement can be adjusted in the detailed Opening settings.'));
+      if (group === 'Traveller') {
+        fields.append(element('p', 'pse-group-help', `Adjust the ${layout} traveller while watching the live preview. Use Preview size above to switch to the other layout.`));
+        for (const axis of ['x', 'y', 'height']) {
+          const key = prologueSettingKey(['scenes', selected, 'actor', layout, axis]);
+          const row = rows.get(key);
+          if (row) fields.append(field(row, scene.actor?.[layout]?.[axis], key));
+        }
+      } else {
+        const names = SCENE_GROUPS.find(([name]) => name === group)[1];
+        for (const name of names) {
+          const key = prologueSettingKey(['scenes', selected, name]);
+          const row = rows.get(key);
+          if (row) fields.append(field(row, scene[name], key));
+        }
       }
     } else {
       const names = STAGE_GROUPS.find(([name]) => name === group)?.[1] || [];
@@ -251,7 +259,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null } =
   sceneInput.addEventListener('change', () => { selected = sceneInput.value; scope = 'scene'; group = 'Words & artwork'; drawFields(); preview(); });
   pathInput.addEventListener('change', () => { path = pathInput.value; preview(); });
   classInput.addEventListener('change', preview);
-  layoutInput.addEventListener('change', () => { layout = layoutInput.value; preview(); });
+  layoutInput.addEventListener('change', () => { layout = layoutInput.value; drawFields(); preview(); });
   drawFields(); preview();
   return door;
 }

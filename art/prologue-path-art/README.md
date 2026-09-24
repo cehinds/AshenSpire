@@ -14,7 +14,8 @@ Each of the four starting views now has a desktop and mobile composition. The Pa
 PNG masters are in `masters/`, initial generation prompts and exact final refinement prompts in `prompts/`, WebPs in `../../assets/prologue/`, and checksums and sizes in `manifest.json`. WebPs were encoded at quality 84, method 6, at generated dimensions without cropping or resizing. `export_webp.py` reproduces the export. Existing `road-*` and `step-*` plates were preserved for provenance.
 
 The final scene continues to use the run's real destination name as its caption. Existing custom scene art choices still work; regional selection applies when the final scene uses its standard `step` artwork. Settings preview without a run shows Crownfall.
+The final scene starts with its artwork focused toward the top, keeping the distant Spire visible when the game crops a desktop plate. The scene editor can preview each starting path on desktop and mobile and lets the owner adjust this focus.
 
 Both formats were visually inspected after compression. The regional road, climate, distant unlit Ashen Spire and actor placement area remain readable. Verification runs focused prologue tests and validates every entry in `art/prologue-2026-09-19/assets.json` against shipped WebP dimensions, bytes and alpha.
 
-This worktree is `D:/repos/AshenSpire-prologue-path-art` on `codex/prologue-path-art`. It has no PR or merge.
+The source masters and shipping assets are staged in the isolated `codex/prologue-path-art` worktree for integration into `dev`.
