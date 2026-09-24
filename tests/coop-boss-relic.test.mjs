@@ -108,16 +108,20 @@ test('a seat that sends its pick twice keeps one relic and one card, never two',
   assert.equal(m.run.deck.length, deck + 1, 'the card lands once');
 });
 
-test('a seat that took its card first may still take its relic, once', () => {
+test('a seat that has chosen is done at the door: a later relic pick is refused', () => {
+  // The screen sends the whole door once on Continue; a seat that took only
+  // its card has chosen, and a second message landing a relic on top would be
+  // a second pick at one door (review of #1287).
   const S = party();
   const offer = () => ({ pool: 'boss', cardIds: ['stomp'], cinders: 0, relicId: null, relicIds: BOSS.slice(0, 3) });
   openReward(S, { p1: offer(), p2: offer() });
   const m = seat(S, 'p1');
   const relics = m.run.relics.length;
   const deck = m.run.deck.length;
-  S.chooseReward('p1', { cardId: 'stomp' });
-  S.chooseReward('p1', { cardId: 'stomp', takeRelic: true, relicId: BOSS[2] });
-  assert.deepEqual(m.run.relics.slice(relics), [BOSS[2]]);
+  assert.equal(S.chooseReward('p1', { cardId: 'stomp' }).ok, true);
+  const again = S.chooseReward('p1', { cardId: 'stomp', takeRelic: true, relicId: BOSS[2] });
+  assert.equal(again.ok, false);
+  assert.deepEqual(m.run.relics.slice(relics), [], 'no relic lands after the seat has chosen');
   assert.equal(m.run.deck.length, deck + 1);
 });
 
@@ -203,4 +207,17 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
   } finally {
     globalThis.setInterval = realInterval;
   }
+});
+
+test('rollRewardFor is read-only: the seat\'s stream and pity do not move, and a second peek matches the first', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const counters = JSON.stringify(m.rng.getCounters());
+  const run = structuredClone(m.run);
+  for (const pool of ['normal', 'elite', 'boss']) {
+    const first = S.rollRewardFor('p1', pool);
+    assert.deepEqual(S.rollRewardFor('p1', pool), first, `${pool}: a peek changes nothing the next peek reads`);
+  }
+  assert.equal(JSON.stringify(m.rng.getCounters()), counters, 'no draw spent on the seat\'s stream');
+  assert.deepEqual(m.run, run, 'no pity counter moved');
 });

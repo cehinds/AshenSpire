@@ -2913,5 +2913,12 @@ export const uiStrings = [
     "short": "Kill cam",
     "full": "A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.",
     "tip": ""
+  },
+  {
+    "id": "coop.intentRefused",
+    "extends": "",
+    "short": "The host refused that choice: {reason}",
+    "full": "The host did not take the choice you sent; your door stays open to choose again.",
+    "tip": ""
   }
 ];

@@ -44,7 +44,7 @@ import {
   rollBossRelicChoices,
   rollEliteChest,
 } from '../src/engine/encounters.js';
-import { applyChestOption } from '../src/model/rewardChest.js';
+import { applyChestOption, chestOptionShapeProblems, chestOptionReferenceProblems } from '../src/model/rewardChest.js';
 import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { artChargeView, artUnleashFor } from '../src/model/artCharge.js';
 import { offeredRelicIds } from '../src/model/rewardplan.js';
@@ -114,6 +114,49 @@ function memberRng(seed, index, counters) {
 // refusal that stays whole: a blob where NO member survives — a party of
 // nobody is not a resume, and pretending it resumed would be the silent
 // version of the same loss.
+/**
+ * The ids a saved co-op reward offer names that the registries do not hold —
+ * the solo load door's reference check (engine/save.js
+ * pendingRewardReferenceProblems) over the co-op offer shape: its cards, its
+ * relic or boss relic choices, its flask and its stored elite chest.
+ */
+function offerReferenceProblems(registries, offer, path) {
+  if (!offer || typeof offer !== 'object' || Array.isArray(offer)) return [`${path} is not an offer`];
+  const problems = [];
+  for (const cardId of Array.isArray(offer.cardIds) ? offer.cardIds : []) {
+    if (!registries.cards.has(cardId)) problems.push(`${path} card '${cardId}' is unknown`);
+  }
+  if (offer.relicId && !registries.relics.has(offer.relicId)) problems.push(`${path} relic '${offer.relicId}' is unknown`);
+  for (const relicId of Array.isArray(offer.relicIds) ? offer.relicIds : []) {
+    if (!registries.relics.has(relicId)) problems.push(`${path} boss relic choice '${relicId}' is unknown`);
+  }
+  if (offer.flaskId && !registries.flasks.has(offer.flaskId)) problems.push(`${path} flask '${offer.flaskId}' is unknown`);
+  if (offer.chest != null) {
+    const options = offer.chest && Array.isArray(offer.chest.options) ? offer.chest.options : null;
+    if (!options) problems.push(`${path} chest has no options`);
+    for (const [i, option] of (options || []).entries()) {
+      const shape = chestOptionShapeProblems(option, `${path} chest option ${i}`);
+      problems.push(...(shape.length ? shape : chestOptionReferenceProblems(registries, option).map((p) => `${path} ${p}`)));
+    }
+  }
+  return problems;
+}
+
+/** A restored member's catch-up queue, by the same door (reward + treasure entries). */
+function catchupReferenceProblems(registries, catchup) {
+  if (catchup == null) return [];
+  if (!Array.isArray(catchup)) return ['catch-up queue is not a list'];
+  const problems = [];
+  for (const [i, item] of catchup.entries()) {
+    if (!item || typeof item !== 'object') { problems.push(`catch-up entry ${i} is not an entry`); continue; }
+    if (item.type === 'reward') problems.push(...offerReferenceProblems(registries, item.offer, `catch-up entry ${i} offer`));
+    if (item.type === 'treasure' && item.relicId && !registries.relics.has(item.relicId)) {
+      problems.push(`catch-up entry ${i} relic '${item.relicId}' is unknown`);
+    }
+  }
+  return problems;
+}
+
 export function restoreSession(registries, data) {
   const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data });
   return s;
@@ -198,6 +241,17 @@ export function createSession({ registries, seedString, endless = false, restore
           throw new Error('member record does not carry a run');
         }
         if (typeof md.id !== 'string' || !md.id) throw new Error('member record has no id');
+        // THE SEAT'S OWED CHOICES ARE CHECKED AT THE DOOR (review of #1287):
+        // a pending reward offer or catch-up entry naming content this build
+        // does not hold would be granted and crash a later node. The seat is
+        // refused with its reason — the save stays evidence, as for any other
+        // poisoned member record.
+        const owed = [
+          ...catchupReferenceProblems(registries, md.catchup),
+          ...(restore.scene && restore.scene.kind === 'reward' && restore.scene.offers && restore.scene.offers[md.id]
+            ? offerReferenceProblems(registries, restore.scene.offers[md.id], 'pending reward offer') : []),
+        ];
+        if (owed.length) throw new Error(`Session member '${md.id}' owes unknown content: ${owed.join('; ')}`);
         if (md.classId !== md.run.class) {
           throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
         }
@@ -904,6 +958,11 @@ export function createSession({ registries, seedString, endless = false, restore
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // ONE PICK PER SEAT: the screen stages every row and sends the whole door
+    // once on Continue (coop-parity), so a seat that has chosen is done at
+    // this door. A later message — a stale re-send, or a chest pick while the
+    // others choose — is refused whole, never granted on top.
+    if (session.scene.chosen && session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
     // ONE OF EACH PER SEAT: the screen stays up (and re-sends its whole pick)
     // after a seat's first tap while the others choose, so a second message
     // may name the card again, ANOTHER relic of a boss choice (SPEC §6.1) or
@@ -1580,9 +1639,17 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
-    // The per-seat offer roll, handed out read-only so a test can read the
-    // boss door's shape (SPEC §6.1) without walking a party to a boss.
-    rollRewardFor: (memberId, pool) => rollRewardFor(members.get(memberId), pool),
+    // The per-seat offer roll, handed out READ-ONLY so a test can read the
+    // boss door's shape (SPEC §6.1) without walking a party to a boss. The
+    // roll runs on a shadow seat — a clone of the run (its pity counters) and
+    // a fresh stream at the seat's counters — so the seat's stream and pity
+    // are exactly where they were: a peek never moves the real door's roll.
+    rollRewardFor: (memberId, pool) => {
+      const m = members.get(memberId);
+      if (!m) return null;
+      const shadow = { ...m, run: structuredClone(m.run), rng: memberRng(seed, m.index, structuredClone(m.rng.getCounters())) };
+      return rollRewardFor(shadow, pool);
+    },
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

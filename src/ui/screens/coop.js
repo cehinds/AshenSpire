@@ -208,6 +208,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
+      // The host refused a reward or catch-up choice (tools/lan.mjs): say so,
+      // as the turn banners do; the door stays up to choose again.
+      if (msg.t === 'intentRefused') banner(t('coop.intentRefused', { reason: String(msg.error || '') }), true);
     },
     onClose: () => {
       teardown();
@@ -1482,8 +1485,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }
         : latest;
       pacing = false;
-      render();
-      if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
+      if (latest.finale && latest.scene?.kind !== 'combat') {
+        // The fight ended while the enemy turn played: the finale frame gets
+        // its floats, hit-stop and kill cam before the next scene (SPEC §7.4),
+        // never skipped straight to the door it settled into.
+        playFinale(latest);
+      } else {
+        render();
+        if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
+      }
     }
   }
 

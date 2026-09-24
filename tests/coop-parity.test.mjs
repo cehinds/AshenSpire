@@ -17,7 +17,8 @@ import assert from 'node:assert/strict';
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createSession } from '../tools/session.mjs';
+import { createSession, restoreSession } from '../tools/session.mjs';
+import { applyChestOption } from '../src/model/rewardChest.js';
 import { rollEliteChest } from '../src/engine/encounters.js';
 import { createRng } from '../src/engine/rng.js';
 import { receiptJuicePlan, coopFinaleHoldMs, hitStopForEvent, COMBAT_JUICE } from '../src/ui/models/CombatJuiceModel.js';
@@ -243,6 +244,19 @@ test('a chest pick grants exactly the named option and nothing else', () => {
   assert.deepEqual(m2.run.relics.slice(relicsBefore), [relic]);
 });
 
+test('a seat that has chosen cannot take a chest option while the others choose', () => {
+  const S = party();
+  const m1 = seat(S, 'p1');
+  const purse = { category: 'cinders', cinders: 55, smithingStones: 0 };
+  openReward(S, { p1: { ...chestOffer([purse]), cardIds: ['stomp'] }, p2: chestOffer([purse]) });
+  assert.equal(S.chooseReward('p1', { cardId: 'stomp' }).ok, true);
+  const before = structuredClone(m1.run);
+  const res = S.chooseReward('p1', { chestIndex: 0 });
+  assert.equal(res.ok, false, 'the second pick at one door is refused');
+  assert.deepEqual(m1.run, before, 'nothing granted on top');
+  assert.equal(S.session.scene.kind, 'reward', 'p2 is still choosing');
+});
+
 test('a bad index or a stale upgrade is refused with nothing mutated, and the door stays open', () => {
   const S = party();
   const m = seat(S, 'p1');
@@ -309,6 +323,33 @@ test('a stale chest option on catch-up is marked and refused, and the entry wait
   assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 1 }).ok, true);
   assert.equal(m.run.cinders, before.cinders + 5);
   assert.equal(m.catchup.length, 0);
+});
+
+test('a restored offer or catch-up entry naming unknown content is refused at the door, never granted', () => {
+  const bad = { category: 'relic', relicId: 'noSuchRelic' };
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  // The pending reward scene: p1's stored chest names a relic this build lacks.
+  const S = party();
+  openReward(S, { p1: chestOffer([bad, purse]), p2: chestOffer([purse]) });
+  const saved = JSON.parse(JSON.stringify(S.serialize()));
+  const R = restoreSession(REG, saved);
+  assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], 'the poisoned seat is refused with its reason');
+  assert.match(R.refusedMembers()[0].reason, /noSuchRelic/);
+  R.setConnected('p1', true);
+  assert.equal(R.chooseReward('p1', { chestIndex: 0 }).ok, false, 'nothing is granted from the bad offer');
+
+  // A catch-up entry, by the same door.
+  const T = party();
+  seat(T, 'p2').catchup.push({ type: 'reward', offer: chestOffer([bad, purse]), act: 1, floor: 1 });
+  const U = restoreSession(REG, JSON.parse(JSON.stringify(T.serialize())));
+  assert.deepEqual(U.refusedMembers().map((r) => r.id), ['p2']);
+  assert.equal(U.livingMembers().some((m) => m.id === 'p2'), false);
+
+  // And the grant itself refuses an id the registries do not hold.
+  const run = structuredClone(seat(T, 'p1').run);
+  const relics = run.relics.slice();
+  assert.equal(applyChestOption(REG, run, bad), false);
+  assert.deepEqual(run.relics, relics);
 });
 
 // ---- the co-op screen's chest door --------------------------------------------
@@ -477,4 +518,115 @@ test('a flask-growth relic from a co-op chest grows the seat\'s flask belt at on
   assert.equal(S.chooseReward('p1', { chestIndex: 0 }).ok, true);
   assert.ok(m1.run.relics.includes('goldenSprout'));
   assert.equal(m1.run.flaskCharges.capacity, capacity + 1, 'Golden Sprout\'s growth binds when the relic lands');
+});
+
+// ---- the finale behind an enemy-turn replay (SPEC §7.4, co-op) -----------------
+
+// The combat board on the fake DOM: the reward helper plus the few element
+// methods the board's sprites and flask row reach for.
+function mountCoopBoard() {
+  const dom = rewardDom();
+  Object.assign(globalThis, dom);
+  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  globalThis.location = { search: '', href: 'http://localhost/', hash: '' };
+  globalThis.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+  globalThis.MutationObserver = class { observe() {} disconnect() {} };
+  globalThis.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  globalThis.CSS = { escape: (s) => s };
+  globalThis.getComputedStyle = () => ({ getPropertyValue: () => '', opacity: '0' });
+  dom.window.matchMedia = globalThis.matchMedia;
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  dom.document.documentElement = dom.document.createElement('html');
+  const EP = Object.getPrototypeOf(dom.document.createElement('div'));
+  Object.assign(EP, {
+    getAnimations: () => [],
+    animate: () => ({ cancel() {}, finished: Promise.resolve(), addEventListener() {} }),
+    focus() {}, scrollIntoView() {},
+    prepend(n) { n.remove(); n.parentNode = this; this.children.unshift(n); },
+    replaceChildren(...c) { this.children.forEach((x) => { x.parentNode = null; }); this.children = []; this.append(...c); },
+    insertBefore(n) { this.appendChild(n); return n; },
+    contains(n) { return n === this || this.children.some((c) => c.contains(n)); },
+    replaceWith(n) { const p = this.parentNode; if (!p) return; n.remove(); n.parentNode = p; p.children[p.children.indexOf(this)] = n; this.parentNode = null; },
+  });
+  return import('../src/ui/screens/coop.js').then(({ mountCoop }) => {
+    const conn = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
+    const app = dom.document.createElement('main');
+    dom.document.body.append(app);
+    mountCoop(app, { registries: REG, conn, myId: 'p1', meta: {}, onSettingsChange() {}, onLeave() {} });
+    return { app, deliver: (snapshot) => conn._h.onMessage({ t: 'state', snapshot }), message: (m) => conn._h.onMessage(m) };
+  });
+}
+
+test('a finale that arrives while the enemy turn plays is still played before the next scene', async () => {
+  // Timers are held and released by hand, so the test can look at the board
+  // between the replay's end and the next scene.
+  const realTimeout = globalThis.setTimeout;
+  const realInterval = globalThis.setInterval;
+  const queued = [];
+  globalThis.setTimeout = (fn, _ms, ...a) => { queued.push(() => fn(...a)); return queued.length; };
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  const tick = () => new Promise((r) => setImmediate(r));
+  try {
+    const S = party('FINALEPACE');
+    fight(S);
+    const fightSnap = JSON.parse(JSON.stringify(S.snapshot()));
+    const { app, deliver } = await mountCoopBoard();
+    deliver(fightSnap);
+    assert.ok(app.querySelector('.combat.coop'), 'the board is up');
+
+    const enemy = fightSnap.scene.enemies[0];
+    const enemyTurn = structuredClone(fightSnap);
+    enemyTurn.scene.turn += 1;
+    enemyTurn.scene.receiptSeq = (Number(fightSnap.scene.receiptSeq) || 0) + 1;
+    enemyTurn.scene.events = [{ type: 'enemyMoveStarted', sourceId: enemy.id, enemyId: enemy.enemyId, moveId: 'x', kind: 'attack' }];
+    deliver(enemyTurn); // the replay starts and holds the render
+    const finale = { ...structuredClone(fightSnap.scene), result: 'victory', events: [] };
+    deliver({
+      ...structuredClone(fightSnap), finale,
+      scene: { kind: 'reward', pool: 'normal', chosen: {}, afterReward: null, offers: { p1: { pool: 'normal', cardIds: ['stomp'], cinders: 1 } } },
+    });
+
+    let sawFinale = false;
+    for (let i = 0; i < 60 && !app.querySelector('.coop-continue'); i++) {
+      for (const fn of queued.splice(0)) fn();
+      await tick();
+      if (app.querySelector('.turn-ribbon')?.textContent === 'Victory') sawFinale = true;
+    }
+    assert.ok(sawFinale, 'the fight-ending frame played on the board');
+    assert.ok(app.querySelector('.coop-continue'), 'then the reward door drew');
+  } finally {
+    globalThis.setTimeout = realTimeout;
+    globalThis.setInterval = realInterval;
+  }
+});
+
+// ---- a refused choice is told to the sender (tools/lan.mjs → coop.js) ----------
+
+test('the LAN host sends a refused reward or catch-up choice back, and the screen says so', async () => {
+  const { applyGameIntent } = await import('../tools/lan.mjs');
+  const S = party();
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  openReward(S, { p1: chestOffer([purse]), p2: chestOffer([purse]) });
+  assert.deepEqual(applyGameIntent(S, 'p1', { t: 'chooseReward', pick: {} }), { handled: true, refusal: null });
+  const again = applyGameIntent(S, 'p1', { t: 'chooseReward', pick: { chestIndex: 0 } });
+  assert.equal(again.handled, true);
+  assert.deepEqual(again.refusal, { t: 'intentRefused', intent: 'chooseReward', error: 'already chosen' });
+  const cu = applyGameIntent(S, 'p2', { t: 'catchupChoice', index: 0, pick: {} });
+  assert.equal(cu.refusal.intent, 'catchupChoice');
+  assert.equal(cu.refusal.error, 'nothing to catch up');
+  assert.equal(applyGameIntent(S, 'p1', { t: 'noSuchIntent' }).handled, false);
+
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const { deliver, message } = await mountCoopBoard();
+    deliver({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: chestOffer([purse]) } } });
+    message(again.refusal);
+    const shown = globalThis.document.querySelector('.coop-turn-banner');
+    assert.ok(shown, 'the refusal is announced');
+    assert.match(shown.textContent, /already chosen/);
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
 });
