@@ -186,7 +186,7 @@ function commitUrl(b) { return `${REPO_URL}/commit/${b.sha}`; }
 //
 // TWO DOWNLOADS PER BUILD SINCE 2026-09-20 (owner's ask): the FULL single file,
 // and the MOBILE one — the same build with its art shrunk under
-// tools/mobileart-policy.mjs and held under 50 MB. The full file had reached
+// tools/mobileart-policy.mjs and held under 30 MB. The full file had reached
 // 253 MB, which on a phone is the whole cost of starting. The mobile file is
 // served at `/<branch>/<ordinal>/mobile/` and is offered wherever the full one
 // is; a build that predates the mobile edition simply has no second link,
@@ -340,7 +340,7 @@ function rootIndex(branchData, generatedAt, otherPages) {
 <h1>AshenSpire — every build, by branch</h1>
 <p class="lead">Each build is the exact <code>AshenSpire.html</code> that commit shipped, served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>, and its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
 <div class="grid">${cards}</div>
-<div class="note"><strong>Two downloads, one game.</strong> <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to half size and recompressed, held under 50 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
+<div class="note"><strong>Two downloads, one game.</strong> <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '')}
 <h2>Other pages on this site</h2>
@@ -360,7 +360,7 @@ function branchIndex(branch, builds, head, generatedAt) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
 ${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 50 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
+<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -387,6 +387,11 @@ function assemble(outDir, keep) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
+  // The build/ and dist/ aliases fetch the shipped score from beside themselves
+  // (content/music.js SHIPPED_MUSIC_FOLDER); git carries it only at the root.
+  if (existsSync(join(outDir, 'music'))) {
+    for (const alias of ['build', 'dist']) if (existsSync(join(outDir, alias))) cpSync(join(outDir, 'music'), join(outDir, alias, 'music'), { recursive: true });
+  }
   writeFileSync(join(outDir, '.nojekyll'), '');
 
   let checks = 0;
@@ -434,6 +439,19 @@ function assemble(outDir, keep) {
           writeFileSync(destination, tile);
         }
       }
+      // The shipped score belongs to this exact build too, read the same way:
+      // a served page with the music-folder setting blank fetches music/ from
+      // beside itself (content/music.js SHIPPED_MUSIC_FOLDER), so the mobile
+      // page needs its own copy for the same reason as the detail tiles.
+      const musicFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'music']).toString('utf8').trim().split('\n').filter(Boolean);
+      for (const file of musicFiles) {
+        const blob = gitBuf(['show', `${b.sha}:${file}`]);
+        for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
+          const destination = join(base, file);
+          mkdirSync(dirname(destination), {recursive:true});
+          writeFileSync(destination, blob);
+        }
+      }
       writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
       // The proof: what was written is the blob, byte for byte.
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
@@ -446,6 +464,8 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
+      const score = join(outDir, branch, String(builds[0].ordinal), 'music');
+      if (existsSync(score)) cpSync(score, join(latest, 'music'), {recursive:true});
       const mobile = join(outDir, branch, String(builds[0].ordinal), 'mobile');
       if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }

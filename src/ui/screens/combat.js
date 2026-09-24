@@ -106,6 +106,22 @@ function pileButton(kind, label) {
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
 
+// THE POSITIONAL CARD KEYS (SPEC §7.3, §9 M4), as a pure mapping so it can be
+// tested without a DOM. `1`–`9` name hand slots 1–9 and `q`/`Q` names slot 10
+// (the hand caps at 10). While a card or flask is armed (`targeting`), a DIGIT
+// names the Nth LIVING enemy instead; Q never targets, so it falls through to
+// slot 10. Returns null for a key that is not a card key (the caller leaves the
+// event alone); otherwise one of
+//   { kind: 'select', index }  arm/play hand slot `index` (0-based)
+//   { kind: 'target', index }  commit the armed card/flask on living enemy `index`
+//   { kind: 'none' }           a card key with nothing under it: swallowed, no-op
+export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingEnemies = 0 } = {}) {
+  const index = /^[1-9]$/.test(key) ? Number(key) - 1 : key === 'q' || key === 'Q' ? 9 : -1;
+  if (index < 0) return null;
+  if (targeting && index < 9) return index < livingEnemies ? { kind: 'target', index } : { kind: 'none' };
+  return index < handSize ? { kind: 'select', index } : { kind: 'none' };
+}
+
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -2052,20 +2068,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     // Positional card keys: 1–9 then Q for the 10th (hand caps at 10). The key
-    // is tied to the SLOT, not the card — leftmost is always 1.
-    const cardIdx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (cardIdx >= 0) {
+    // is tied to the SLOT, not the card — leftmost is always 1. The key→action
+    // mapping lives in cardHotkeyAction (pure, unit-tested in
+    // tests/card-hotkeys.test.mjs); this handler only carries it out.
+    // Not a card key (null whatever the context): leave the event alone before
+    // touching the DOM — this is the last check in the handler.
+    if (cardHotkeyAction(ev.key) === null) return;
+    const handCards = app.querySelectorAll('.hand .card');
+    const livingEnemies = combat.enemies.filter((e) => e.alive);
+    const hotkey = cardHotkeyAction(ev.key, {
+      targeting: Boolean(selected || selectedFlask != null),
+      handSize: handCards.length,
+      livingEnemies: livingEnemies.length,
+    });
+    if (hotkey) {
       ev.preventDefault();
+      if (hotkey.kind === 'none') return;
       // Targeting mode: a NUMBER picks the Nth living enemy (Q never targets).
-      if ((selected || selectedFlask != null) && cardIdx < 9) {
-        const enemy = combat.enemies.filter((e) => e.alive)[cardIdx];
-        if (!enemy) return;
+      if (hotkey.kind === 'target') {
+        const enemy = livingEnemies[hotkey.index];
         if (selected) playCard(selected, enemy.id);
         else useFlask(selectedFlask, enemy.id);
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const visibleId = app.querySelectorAll('.hand .card')[cardIdx]?.dataset.instanceId;
+      const visibleId = handCards[hotkey.index]?.dataset.instanceId;
       const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);

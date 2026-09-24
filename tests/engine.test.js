@@ -271,14 +271,27 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [] } = {}) {
+/**
+ * attributeTerms(row, attributes) → what a ruleset-6 derived-stat row's
+ * attribute weights add at this allocation: each term floored on its own, as
+ * model/derivedStats.js reads it. For the tests that restate a pool from the
+ * LIVE row rather than typing its number — since 2026-09-24 a pool reads a
+ * spread of attributes, not one, so "30 + 4 × CON" is no longer the whole row.
+ */
+function attributeTerms(row, attributes) {
+  return REG.attributes.ids().reduce((sum, id) => sum + Math.floor((attributes[id] || 0) * (row[id] || 0) + 1e-9), 0);
+}
+
+// `handMax` pins the hand cap for a fixture whose mechanic needs room past the
+// shipped cap (balance.handMax, 5 since 2026-09-24); omitted, the shipped cap.
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
     return { instanceId: `c${i + 1}`, cardId: isObj ? d.id : d, upgraded: isObj ? !!d.up : false };
   });
   return createCombat({
-    registries: REG,
+    registries: handMax == null ? REG : { ...REG, balance: { ...REG.balance, handMax } },
     rng,
     player: { classId: 'reaver', maxHp, hp, mana, maxMana, stamina, maxStamina, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
@@ -417,10 +430,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 5. Hand limit overflow → discard ---------------------------------------
-  test('5. draws past 10-card hand go to discard (handFull)', () => {
+  test('5. draws past the hand cap go to discard (handFull)', () => {
+    // The cap is the authored one (balance.handMax: 10 until 2026-09-24, 5
+    // since), read rather than restated; the deck still holds more than any
+    // cap tBigDraw can fill, so the overflow is real at either value.
     const c = makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] });
     playFromHand(c, 'tBigDraw');
-    eq(c.piles.hand.length, 10, 'hand capped at 10');
+    eq(c.piles.hand.length, REG.balance.handMax, `hand capped at the authored ${REG.balance.handMax}`);
     assert(logOf(c, 'cardDiscarded').some((e) => e.reason === 'handFull'), 'handFull discard emitted');
   });
 
@@ -1422,8 +1438,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // ---- 17. Status-model generality (zero engine changes) ----------------------------------
   test('17. throwaway status (meter + hook + modifier) works with zero engine changes', () => {
     // 7-card deck (tCharge is Innate → both in the opening hand) so the
-    // ownerTurnStart bonus draw has cards left to actually draw.
-    const c = makeCombat({ deck: ['tCharge', 'tCharge', 'strike', 'strike', 'strike', 'strike', 'strike'] });
+    // ownerTurnStart bonus draw has cards left to actually draw. The hand cap
+    // is pinned past the five-card turn draw: at the shipped cap of 5
+    // (2026-09-24) the sixth card is a handFull discard, and the hook would be
+    // measured by the cap rather than by the draw it asked for.
+    const c = makeCombat({ deck: ['tCharge', 'tCharge', 'strike', 'strike', 'strike', 'strike', 'strike'], handMax: 10 });
     playFromHand(c, 'tCharge'); // 3
     playFromHand(c, 'tCharge'); // 6 ≥ 5 → fill: +7 block, max ×2 → 10, value 1
     eq(c.player.block, 7, 'meter onFill granted block');
@@ -1438,34 +1457,36 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 18. M2 run systems ---------------------------------------------------------------
   test('18. run systems: deterministic rewards, flask pity, relic passives, event opcodes, Physick', () => {
-    eq(REG.balance.flaskCapacity, 4, 'Crimson/Azure share the approved global capacity of four');
+    // THREE since 2026-09-24 (the owner's exported defaults; four before, and
+    // three before that). The save edge below keeps the four it replaced.
+    eq(REG.balance.flaskCapacity, 3, 'Crimson/Azure share the approved global capacity of three');
     eq(REG.balance.flaskSlots, 3, 'utility flask inventory remains an independent three-slot system');
     eq(
       ['reaver', 'starseer', 'rogue', 'herald'].map((id) => {
         const a = REG.classes.get(id).startingFlaskAllocation;
         return `${a.hp}/${a.mana}`;
       }).join('|'),
-      '3/1|2/2|3/1|3/1',
-      'all four class allocations consume all four charges exactly as approved',
+      '2/1|1/2|2/1|2/1',
+      'all four class allocations consume all three charges exactly as approved',
     );
     const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
-    reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 4 });
-    eq(`${freeAllocation.flaskCharges.hp}/${freeAllocation.flaskCharges.mana}/${freeAllocation.flaskCharges.capacity}`, '0/4/4', 'all four charges may be freely reallocated');
+    reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 3 });
+    eq(`${freeAllocation.flaskCharges.hp}/${freeAllocation.flaskCharges.mana}/${freeAllocation.flaskCharges.capacity}`, '0/3/3', 'all three charges may be freely reallocated');
     const flaskStore = createMemoryStorage();
-    freeAllocation.seedString = 'FLASK4';
+    freeAllocation.seedString = 'FLASK3';
     createSaveManager(flaskStore).saveRun(freeAllocation);
     const flaskBack = createSaveManager(flaskStore).loadRun(REG);
-    assert(flaskBack !== null, 'a freely allocated four-charge run survives the real save door');
-    eq(`${flaskBack.flaskCharges.hp}/${flaskBack.flaskCharges.mana}/${flaskBack.flaskCharges.base}`, '0/4/4', 'save keeps allocation and the capacity ledger');
+    assert(flaskBack !== null, 'a freely allocated three-charge run survives the real save door');
+    eq(`${flaskBack.flaskCharges.hp}/${flaskBack.flaskCharges.mana}/${flaskBack.flaskCharges.base}`, '0/3/3', 'save keeps allocation and the capacity ledger');
     const oldCapacityRun = structuredClone(freeAllocation);
     oldCapacityRun.flaskCharges = {
-      capacity: 3, base: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1,
+      capacity: 4, base: 4, hp: 3, mana: 1, hpCurrent: 3, manaCurrent: 1,
       grown: { hp: 0, mana: 0 }, granted: 0,
     };
     createSaveManager(flaskStore).saveRun(oldCapacityRun);
     const oldCapacityBack = createSaveManager(flaskStore).loadRun(REG);
-    assert(oldCapacityBack !== null, 'an existing three-charge save remains valid after the live default becomes four');
-    eq(`${oldCapacityBack.flaskCharges.capacity}/${oldCapacityBack.flaskCharges.base}`, '3/3', 'old capacity ledger remains authoritative');
+    assert(oldCapacityBack !== null, 'an existing four-charge save remains valid after the live default becomes three');
+    eq(`${oldCapacityBack.flaskCharges.capacity}/${oldCapacityBack.flaskCharges.base}`, '4/4', 'old capacity ledger remains authoritative');
     // Same seed → identical roll bundle (SPEC §3.11 stream promise).
     const rollAll = () => {
       const r = createRng(0xaa11);
@@ -1545,12 +1566,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const v = validateContent(probe);
     assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
+    // Measured from the run's own opening purse and flask ledger: a run no
+    // longer opens at zero cinders or four charges (startingCinders 20,
+    // flaskCapacity 3 since 2026-09-24), and the keepsake is what ADDS.
     const rn = createRunState({ seed: 11, classId: 'reaver', registries: REG });
+    const openingCinders = rn.cinders;
+    const openingFlask = { ...rn.flaskCharges };
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
-    eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
+    eq(rn.cinders - openingCinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
-    eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
-    eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
+    eq(rn.flaskCharges.capacity, openingFlask.capacity + 1, "Traveler's Flask raises fixed charge capacity");
+    eq(rn.flaskCharges.hp, openingFlask.hp + 1, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
     assert(rn.deck.filter((c) => c.cardId === 'strike' && c.sourceArmamentId === 'straightSword').every((c) => c.smithingLevel === 1 && !c.upgraded),
@@ -1690,12 +1716,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-    // ONE, BECAUSE A POINT IS A POINT. The Reaver leaves Wisdom at the lean
-    // baseline of 1 and the pool IS Wisdom, read at the value the sheet shows:
-    // the creation scale that made one lean point five tuned tiers is gone
-    // (2026-09-21), and this row is the authored one, unconverted.
-    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum');
-    eq(fresh.maxMana, 2, 'Reaver maximum follows the lean WIS preset — a base of 1 and the pool IS Wisdom (plan phase 9)');
+    // THE BASE ALONE, BECAUSE EVERY TERM FLOORS ON ITS OWN. Since 2026-09-24
+    // the Mana row reads a spread (STR .1, CON .25, WIS .5, INT .3 — the
+    // owner's exported defaults), and the Reaver's lean preset (STR 3, CON 2,
+    // WIS 1, INT 1) floors every one of those terms to zero: the pool is its
+    // base of 1. Before, the pool IS Wisdom and the same Reaver opened at 2.
+    // The creation scale that made one lean point five tuned tiers is still
+    // gone (2026-09-21); this row is the authored one, unconverted.
+    eq(fresh.mana, 1, 'run starts at its WIS-derived mana maximum');
+    eq(fresh.maxMana, 1, 'Reaver maximum follows the lean preset — a base of 1 and every attribute term floored to zero (ruleset 6, 2026-09-24 weights)');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
     assert(validateRunShape({ ...fresh, mana: fresh.maxMana + 1 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
@@ -1745,8 +1774,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     delete old.derivedStatRuleSnapshot;
     storage.setItem(RUN_KEY, JSON.stringify(old));
     const migrated = saves.loadRun(REG);
-    eq(migrated.mana, 2, 'pre-mana save migrates to full derived mana');
-    eq(migrated.maxMana, 2, 'pre-mana save derives from its lean WIS allocation');
+    // The same allocation as `fresh`, so the same derived pool (1 since the
+    // 2026-09-24 Mana weights; 2 before), read off the fresh run rather than typed.
+    eq(migrated.mana, fresh.maxMana, 'pre-mana save migrates to full derived mana');
+    eq(migrated.maxMana, fresh.maxMana, 'pre-mana save derives from its lean WIS allocation');
 
     const domains = resourceDomains(REG);
     const zero = { ...empty.player, mana: 0 };
@@ -6322,21 +6353,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,120,130,150,170,200,230,270,310,350', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
+    // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
+    // 100,120,…,350 before). The rounding holds the first eight steps at its
+    // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '10,10,10,10,10,10,10,10,20,20', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 2030, '2,030 XP reaches level 11 — a curve receipt, not a second hard-coded total');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
-    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/1/4', 'Rogue dagger Strike is stamped from source AR');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/6/9', 'Rogue buckler Defend is stamped from source DR');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/7/10', 'Rogue buckler Defend is stamped from source DR (DEX 3 × 0.75 where 0.5 stood, 2026-09-24)');
     const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
@@ -6417,7 +6451,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
     const ma = createRunState({ seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
     eq(JSON.stringify(ma.attributes), JSON.stringify(Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]))), 'creation input follows mutated vocabulary/order/rules');
-    const mutantLegacy = { ...ma }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes; delete mutantLegacy.attributeModeSnapshot;
+    // The legacy save is cut from the PRESET run, not from `ma`: the door
+    // refills a missing allocation from the class preset, and since the
+    // 2026-09-24 weights (Mana reads STR, CON, WIS and INT; HP, Stamina and
+    // draw read STR/DEX too) `ma`'s moved STR/DEX point changes a persisted
+    // pool, so the refilled preset contradicts it and the door archives —
+    // correctly. Deleting the allocation leaves the door nothing but the
+    // preset either way, so this is still the migration under test.
+    const mutantLegacy = { ...mr }; delete mutantLegacy.attributeMode; delete mutantLegacy.attributes; delete mutantLegacy.attributeModeSnapshot;
     const mutantStorage = createMemoryStorage();
     mutantStorage.setItem(RUN_KEY, JSON.stringify(mutantLegacy));
     const mutantMigrated = createSaveManager(mutantStorage).loadRun(MR);
@@ -6530,7 +6571,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // in (model/derivedStats.js normalizes at the door), so the healed seat is
     // a WEIGHT on constitution rather than a `sourceStat` naming it.
     eq(rules.hp.constitution, REG.derivedStatRules.rules.hp.constitution, "the snapshot's hp rule now answers to constitution");
-    eq(rules.stamina.constitution, 1, "the snapshot's stamina rule now answers to constitution");
+    eq(rules.stamina.constitution, REG.derivedStatRules.rules.stamina.constitution, "the snapshot's stamina rule now answers to constitution");
     assert(!Object.hasOwn(rules.hp, 'vigour') && !Object.hasOwn(rules.stamina, 'vigour'),
       'and the retired seat does not survive the restore');
     // Healing must not move a number: same points, same seat, same outputs.
@@ -6542,10 +6583,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // to 84 class + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
     // CURRENT snapshot is NOT touched — test 50e is that edge, and the pair is
     // the whole save story of the formula change.
-    eq(run.maxHp, 88, 'legacy maxHp is re-derived through the current CON/flat-bonus authority (ruleset 5: 30 + 4 × CON + 10 flat)');
-    eq(run.hp, 88, 'a legacy full-HP save remains full after current-rule migration');
-    eq(run.energyMax, 5, 'energyMax follows the rebased DEX tier over its base of 3 (ruleset 5), not the rename');
-    eq(run.drawPerTurn, 5, 'drawPerTurn follows the rebased INT tier over its base of 3 (ruleset 5), not the rename');
+    // RESTATED FROM THE LIVE ROWS (2026-09-24): every pool now reads a spread
+    // of attributes, so the numbers are the rows' own terms at this allocation
+    // (STR 13, DEX 10, CON 12, WIS 10, INT 10) rather than one attribute's
+    // tier — 93 HP where 88 stood, 6 actions and 12 cards where 5 and 5 stood.
+    const live = REG.derivedStatRules.rules;
+    eq(run.maxHp, live.hp.base + attributeTerms(live.hp, run.attributes) + 10, 'legacy maxHp is re-derived through the current attribute/flat-bonus authority (ruleset 6 row + 10 flat)');
+    eq(run.hp, run.maxHp, 'a legacy full-HP save remains full after current-rule migration');
+    eq(run.energyMax, live.energy.base + attributeTerms(live.energy, run.attributes), 'energyMax follows the live row over its base of 3, not the rename');
+    eq(run.drawPerTurn, live.draw.base + attributeTerms(live.draw, run.attributes), 'drawPerTurn follows the live row over its base of 3, not the rename');
     // Forward hygiene: the next save writes zero dead bytes.
     assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
@@ -6563,13 +6609,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // five tiers and a point bought 20 HP. Nothing divides the attribute now:
     // the authored row is 20 + 4 per Constitution TIER and a tier is a point,
     // so the arithmetic below is 20 + 4 × CON + flat.
+    // AND AGAIN, 2026-09-24: the owner's HP row reads STR 0.35 and WIS 0.1
+    // beside CON 4, so the other terms are read off the live row. At the lean
+    // span they are small — the Reaver's STR 3 is one HP, a WIS of 1–3 none —
+    // and CON is still the four-a-point term the edges below walk.
     const perPoint = 4;
+    const liveHp = REG.derivedStatRules.rules.hp;
+    const otherTerms = (attributes) => attributeTerms(liveHp, { ...attributes, constitution: 0 });
     for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 0], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
       eq(`${hp.base}/${hp.weights.constitution}`, `${30 + flat}/4`, `${classId} receipt exposes the configured formula and flat bonus`);
-      eq(run.maxHp, 30 + perPoint * con + flat, `${classId} max HP is 30 + 4 × CON + flat bonuses`);
+      eq(run.maxHp, 30 + perPoint * con + otherTerms(run.attributes) + flat, `${classId} max HP is 30 + 4 × CON + the row's other terms + flat bonuses`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
     }
     // Each row spends the mode's whole total (8) so the allocation is legal;
@@ -6586,8 +6638,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       seed: 0xf2, classId: 'reaver', registries: REG,
       attributes: { ...REST[con], constitution: con },
     });
-    eq(at(1).maxHp, 44, 'CON floor 1 gives 30 + 4 + 10 flat');
-    eq(at(4).maxHp, 56, 'CON ceiling 4 gives 30 + 16 + 10 flat');
+    eq(at(1).maxHp, 45, 'CON floor 1 gives 30 + 4 + 1 (STR 4 × 0.35) + 10 flat');
+    eq(at(4).maxHp, 56, 'CON ceiling 4 gives 30 + 16 + 10 flat (STR 1 × 0.35 floors to nothing)');
     eq(at(4).maxHp - at(3).maxHp, perPoint, 'one adjacent CON point is exactly four HP — one tier, one point');
     for (const outside of [0, 5]) {
       let refused = false;
@@ -6627,8 +6679,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       attributeMode: before.attributeMode, attributes: before.attributes,
     });
     eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
+    // The whole live row, not its CON term alone: since 2026-09-24 HP also
+    // reads STR and WIS, and the fixture's allocation carries both.
     const liveHp = REG.derivedStatRules.rules.hp;
-    eq(fresh.maxHp, liveHp.base + liveHp.constitution * before.attributes.constitution + 10,
+    eq(fresh.maxHp, liveHp.base + attributeTerms(liveHp, before.attributes) + 10,
       'a NEW run with the same class and CON gets the LIVE rule plus its 10 flat, so preservation is not a coincidence');
     assert(fresh.maxHp !== before.maxHp, 'and that number is not the saved one');
   });
@@ -6782,7 +6836,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const startCon = run.attributes.constitution;
     const startHp = run.maxHp;
     let plan = levelUpPlan(REG, run);
-    eq(plan.level, 1, 'a fresh run is level 1'); eq(plan.xp, 0); eq(plan.xpToNext, REG.balance.level.xp.base, 'the first step costs the curve base');
+    // THE BASE, ROUNDED TO THE CURVE'S OWN UNIT: the owner's base of 5 on a
+    // roundTo of 10 (2026-09-24) is a first step of 10, not 5 — the base was
+    // 100 before, a multiple of its unit, and the two could not be told apart.
+    const curve = REG.balance.level.xp;
+    const firstStep = Math.max(curve.roundTo, Math.round(curve.base / curve.roundTo) * curve.roundTo);
+    eq(plan.level, 1, 'a fresh run is level 1'); eq(plan.xp, 0); eq(plan.xpToNext, firstStep, 'the first step costs the curve base, rounded to the curve unit');
     eq(plan.attributes.length, REG.attributes.all().length,
       'every authored attribute is offered — the shrine names no stat itself (the Law 0 falsifier)');
 
@@ -6796,7 +6855,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
 
     // THE CLIMB: XP buys the level, the level grants the point, the point waits.
-    const got = awardLevelXp(REG, run, REG.balance.level.xp.base);
+    const got = awardLevelXp(REG, run, firstStep);
     eq(got.levelUps, 1); eq(got.points, 1); eq(run.level.level, 2); eq(run.level.xp, 0); eq(run.level.unspentPoints, 1, 'the point waits on the ledger');
     eq(run.attributes.constitution, startCon, 'no stat moved yet — the shrine assigns, the fight does not');
     eq(run.cinders, createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG }).cinders, 'no cinder was touched');
@@ -6804,21 +6863,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(awardLevelXp(REG, run, 0).levelUps, 0, 'nothing is nothing'); eq(awardLevelXp(REG, run, -5).levelUps, 0);
 
     // THE ASSIGNMENT.
-    const manaBefore = run.maxMana;
+    // Actions, not Mana, since 2026-09-24: the owner's Mana row reads CON at
+    // 0.25, while the action row reads STR, DEX, WIS and INT and no CON.
+    const energyBefore = run.energyMax;
     const spent = applyLevelUp(REG, run, 'constitution');
     eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat it was assigned to');
     eq(run.level.unspentPoints, 0, 'and leaves the ledger'); eq(spent.points, 0);
     eq(run.levelUps, 1, 'the assignment is recorded — this is the number the load door reads'); eq(run.levelPoints, 1);
-    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
+    eq(run.energyMax, energyBefore, 'the pool CON does not feed did not move');
     // RULESET 6 SPLITS THIS IN TWO, and the sum is what the pool reads: the
     // POINT is still four HP (`constitution: 4`), and the LEVEL itself now adds
-    // its own decimal (`perLevel: 1`) every level rather than five HP every
-    // fifth level.
-    eq(run.maxHp, startHp + 4 + 1, 'one CON point adds four HP, and the level one more (ruleset 6)');
+    // its own decimal (`perLevel: 2` since 2026-09-24, 1 before) every level
+    // rather than five HP every fifth level.
+    eq(run.maxHp, startHp + 4 + 2, 'one CON point adds four HP, and the level two more (ruleset 6)');
     awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
     eq(run.level.level, 4, 'enough XP for two steps climbs two'); eq(run.level.unspentPoints, 2);
     applyLevelUp(REG, run, 'constitution'); applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 12 + 3, 'three CON points, three four-HP steps, and three levels of the decimal term (ruleset 6)');
+    eq(run.maxHp, startHp + 12 + 6, 'three CON points, three four-HP steps, and three levels of the decimal term at two each (ruleset 6)');
     eq(run.levelUps, 3, 'three points assigned');
 
     // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
@@ -6939,7 +7000,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(three.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 3); eq(three.levelPoints, 3, 'and records three');
     // Both values are visible under the per-CON HP formula.
     assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
-    eq(one.maxHp, hpBefore + 4 + 1, 'at 1, the same one level adds the authored four HP a point, and the level its own one (ruleset 6)');
+    eq(one.maxHp, hpBefore + 4 + 2, 'at 1, the same one level adds the authored four HP a point, and the level its own two (ruleset 6; one before 2026-09-24)');
 
     // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
     // moment he turns the dial mid-climb.
@@ -6985,9 +7046,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const byHand = resolveDerivedStatRules(edited, {
       attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
-    eq(byHand.rules.hp.perLevel, 1, 'HP keeps its authored growth when only the fallback default changes');
+    // Actions state their own 0.1 since 2026-09-24, so Poise is the row left
+    // that states none — the inheriting edge rests on it alone now.
+    eq(byHand.rules.hp.perLevel, 2, 'HP keeps its authored growth when only the fallback default changes');
     eq(byHand.rules.draw.perLevel, 0.1, 'Hand keeps its authored growth');
-    eq(byHand.rules.energy.perLevel, 0.5, 'Actions inherit the edited fallback default');
+    eq(byHand.rules.energy.perLevel, 0.1, 'Actions keep their authored growth');
     eq(byHand.rules.poise.perLevel, 0.5, 'Poise inherits the edited fallback default');
     assert(!validateContent({ ...contentBundle, derivedStatRules: { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } } }).ok,
       'and a ruleset-6 table that spells a tier is refused — there is none to set');
@@ -7074,28 +7137,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // buy no level now (plan phase 6); the fold greys the card when no earned
     // point waits. THE PREDICATE is this, asserted so the fold consumes it
     // without inventing a rule of its own.
+    //
+    // A CURVE THAT CLIMBS, pinned here rather than read: the shipped curve
+    // (base 5, roundTo 10 since 2026-09-24) holds its first eight steps at 10,
+    // so "the next step costs more" could not tell a plan that re-reads the
+    // ledger from one that cached level 1's step. This is the curve the
+    // assertion was written against (100, 120, …), stated as a fixture.
+    const CURVED = { ...REG, balance: { ...REG.balance, level: { ...REG.balance.level, xp: { ...REG.balance.level.xp, base: 100, growth: 1.15, roundTo: 10 } } } };
     const run = createRunState({ seed: 0xa77, classId: 'reaver', registries: REG });
-    let p = levelUpPlan(REG, run);
+    let p = levelUpPlan(CURVED, run);
     eq(p.points, 0, 'a fresh run has no point waiting');
     eq(p.blockedBy, 'points', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
     eq(p.offerable, false, 'so it is not offerable');
-    eq(`${p.level}/${p.xp}/${p.xpToNext}`, `1/0/${xpToNextLevel(REG, 1)}`, 'and the card can say where the climb stands');
+    eq(`${p.level}/${p.xp}/${p.xpToNext}`, `1/0/${xpToNextLevel(CURVED, 1)}`, 'and the card can say where the climb stands');
 
     // THE THRESHOLD'S OWN NEIGHBOURHOOD: one XP either side of the step.
-    awardLevelXp(REG, run, xpToNextLevel(REG, 1) - 1);
-    p = levelUpPlan(REG, run);
-    eq(p.level, 1, 'one XP short is still level 1'); eq(p.xp, xpToNextLevel(REG, 1) - 1); eq(p.offerable, false);
-    awardLevelXp(REG, run, 1);
-    p = levelUpPlan(REG, run);
+    awardLevelXp(CURVED, run, xpToNextLevel(CURVED, 1) - 1);
+    p = levelUpPlan(CURVED, run);
+    eq(p.level, 1, 'one XP short is still level 1'); eq(p.xp, xpToNextLevel(CURVED, 1) - 1); eq(p.offerable, false);
+    awardLevelXp(CURVED, run, 1);
+    p = levelUpPlan(CURVED, run);
     eq(p.level, 2, 'the exact step climbs — the boundary is inclusive'); eq(p.xp, 0);
     eq(p.points, 1); eq(p.blockedBy, null, 'and there is no reason, because there is no block'); eq(p.offerable, true);
 
     // IT MOVES WITH THE LEDGER, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT
     // CACHE IT: the point assigned, the offer closes.
-    applyLevelUp(REG, run, 'constitution');
-    const after = levelUpPlan(REG, run);
+    applyLevelUp(CURVED, run, 'constitution');
+    const after = levelUpPlan(CURVED, run);
     eq(after.offerable, false); eq(after.blockedBy, 'points');
-    assert(after.xpToNext > xpToNextLevel(REG, 1), 'the next step costs more than the first');
+    assert(after.xpToNext > xpToNextLevel(CURVED, 1), 'the next step costs more than the first');
 
     // A CAP IS A DIFFERENT SENTENCE TO A PLAYER, so it is a different token —
     // once the points are spent; a point waiting is still assignable at the cap.
@@ -7764,15 +7834,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // convert at a fifth, making a point of Constitution five tiers and the
     // card read +20 HP; nothing converts an attribute any more, so a tier is a
     // point and the card states the authored four.
-    eq(constitution.face.summary, '+4 HP per pt · +1 Stamina per pt · +1 Poise per pt',
+    // Since 2026-09-24 Mana reads CON at 0.25 and Stamina at 0.5 (the owner's
+    // exported weights), so the face gains a Mana fact and Stamina's cadence
+    // halves — derived, so the card followed the row with no prose edit.
+    eq(constitution.face.summary, '+4 HP per pt · +1 Mana per 4 pts · +1 Stamina per 2 pts · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
     eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+4 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 1 point$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Mana \+1 every 4 points$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 2 points$/.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.5 × STR), then × 1 global'),
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.75 × STR), then × 1 global'),
       'the active rating formula projects Strength AR weight without copied UI prose');
 
     const changed = {
@@ -8608,8 +8682,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
     eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
-    assert(xpToNext(REG, 'class', 0) > xpToNext(REG, 'weapon', 0), 'the class curve is the slower one');
-    assert(xpToNext(REG, 'armour', 1) > xpToNext(REG, 'armour', 0), 'the curve climbs');
+    // SLOWER OVER THE CLIMB, NOT AT THE FIRST STEP: the owner's config
+    // (2026-09-24) gives both tracks a base of 5, so the class track is slower
+    // by its growth — never cheaper at any step, and dearer over ten.
+    const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
+    assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
+    assert(steps('class').reduce((a, b) => a + b) > steps('weapon').reduce((a, b) => a + b), 'the class curve is the slower one');
+    // THE CLIMB, READ OVER TEN STEPS: the owner's base of 5 on a roundTo of 5
+    // (2026-09-24; 30 before) rounds the first three steps to the same 5, so
+    // growth shows further up the curve rather than between steps 0 and 1.
+    const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
+    assert(armourSteps.every((cost, n) => n === 0 || cost >= armourSteps[n - 1]) && armourSteps[9] > armourSteps[0],
+      `the curve climbs — ${armourSteps.join(',')}`);
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
@@ -9047,8 +9131,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
     const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(awardClassXp(REG, paid, { victory: false, pool: 'boss' }), null, 'a lost fight pays nothing');
-    awardClassXp(REG, paid, { victory: true, pool: 'normal' }); eq(paid.skills['class:reaver'].xp, c.xp.perWin, 'a won fight pays perWin');
-    awardClassXp(REG, paid, { victory: true, pool: 'boss' }); eq(paid.skills['class:reaver'].xp, 2 * c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
+    // Read off the award's own receipt, not the ledger's remainder: since the
+    // class curve's base became 5 (2026-09-24) a single win of 10 climbs two
+    // levels and leaves 0 on the ledger, so the remainder no longer shows the pay.
+    eq(awardClassXp(REG, paid, { victory: true, pool: 'normal' }).gained, c.xp.perWin, 'a won fight pays perWin');
+    eq(awardClassXp(REG, paid, { victory: true, pool: 'boss' }).gained, c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
+    const classRow = paid.skills['class:reaver'];
+    const banked = Array.from({ length: classRow.level }, (_, l) => xpToNext(REG, 'class', l)).reduce((a, b) => a + b, classRow.xp);
+    eq(banked, 2 * c.xp.perWin + c.xp.bossKill, 'and the ledger holds every point of both, in levels climbed plus the remainder');
     // THE PICK MOUNTS with the class card, in solo, co-op and a restored fight; the rule fires.
     run.coreTags = ['ironFooting'];
     const cb = createCombat({ registries: REG, rng: createRng(0x5b5b), player: { classId: 'reaver', attributes: run.attributes, skills: run.skills, coreTags: run.coreTags, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
@@ -9220,14 +9310,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('90. the character level is earned: the ledger, the thresholds, the migration and the doors (plan phase 6)', () => {
     // THE LEVEL TERM IS A DECIMAL NOW (ruleset 6, owner 2026-09-21: "I'll just
     // use decimal values to set the growth per level"). `perLevel` is what a row
-    // gains PER LEVEL, so HP at 1 climbs every level and Mana, Stamina and draw
-    // at 0.2/0.2/0.1 land on exactly the levels they always did — the same rate
-    // the retired `{ every, gain }` cadence stated, arriving smoothly. Beside
-    // whatever the points bought; the deficit is carried, the current pools
-    // ride up.
+    // gains PER LEVEL, so HP at 2 (1 before the owner's 2026-09-24 defaults)
+    // climbs every level and Mana, Stamina and draw at 0.2/0.2/0.1 land on
+    // exactly the levels they always did — the same rate the retired
+    // `{ every, gain }` cadence stated, arriving smoothly. Beside whatever the
+    // points bought; the deficit is carried, the current pools ride up.
     const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
     const rules = run.derivedStatRuleSnapshot.rules.rules;
-    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.draw.perLevel}`, '1/0.2/0.2/0.1',
+    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.draw.perLevel}`, '2/0.2/0.2/0.1',
       'every row carries its level term in the snapshot, as one decimal');
     const levelTerm = (id, level) => Math.floor((level - 1) * rules[id].perLevel + 1e-9);
     const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, drawPerTurn: run.drawPerTurn };
@@ -9247,7 +9337,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
     // formula's addends equal its result once the level term is non-zero.
     const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
-    eq(shown.levelBonus, levelTerm('hp', 11)); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
+    eq(shown.levelBonus, levelTerm('hp', 11)); assert(shown.formula.includes(`+ ${levelTerm('hp', 11)} level`), `the HP formula names the level term — ${shown.formula}`);
     eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
     const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
     assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);
@@ -9278,12 +9368,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const old = JSON.parse(st2.getItem(RUN_KEY));
     // Three CON points bought with cinders, as that build wrote them: the
     // count, the points, the stat, and the pools those points had already moved.
-    // Ruleset 5: a Constitution point is four HP and one Stamina, read against
-    // the attribute the sheet shows — nothing converts a point any more — so
-    // three purchases had already moved the pools by twelve HP and three
-    // Stamina.
+    // Read against the attribute the sheet shows — nothing converts a point
+    // any more. What three purchases had already moved is read off the rows
+    // the save carries, not typed: under the 2026-09-24 weights CON 2 → 5 is
+    // twelve HP, one Stamina (0.5 a point, floored) AND one Mana (0.25 a
+    // point), where the old rows moved twelve HP and three Stamina and no Mana
+    // — and a pool left unmoved is a contradiction the door archives.
+    const snapRules = old.derivedStatRuleSnapshot.rules.rules;
+    const bornAttributes = { ...old.attributes };
     delete old.level; old.schemaVersion = 9; old.levelUps = 3; old.levelPoints = 3; old.attributes.constitution += 3;
-    old.maxHp += 12; old.hp = old.maxHp; old.maxStamina += 3; old.stamina = old.maxStamina;
+    const moved = (id) => attributeTerms(snapRules[id], old.attributes) - attributeTerms(snapRules[id], bornAttributes);
+    eq(`${moved('hp')}/${moved('stamina')}/${moved('mana')}`, '12/1/1', 'three CON purchases move twelve HP, one Stamina and one Mana under the live rows');
+    old.maxHp += moved('hp'); old.hp = old.maxHp; old.maxStamina += moved('stamina'); old.stamina = old.maxStamina;
+    old.maxMana += moved('mana'); old.mana = old.maxMana;
     for (const row of Object.values(old.derivedStatRuleSnapshot.rules.rules)) delete row.perLevel;
     const migrated = deserializeRun(JSON.stringify(old));
     eq(migrated.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(migrated.level), JSON.stringify({ xp: 0, level: 4, unspentPoints: 0 }), 'three purchases are level 4');
@@ -9633,12 +9730,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(allocationTotal(REG, 'lean'), 8, 'five stats at a baseline of 1 plus three to place');
     eq(allocationTotal(REG, 'tuned2'), 35, 'and the rebased mode still totals its own 35 for the saves that carry it');
 
-    // THE RULESET. Mana IS Wisdom and Stamina IS Constitution: a point spent
-    // is a point felt, which is what let the signature arts ask two of each.
+    // THE RULESET. Until 2026-09-24 Mana IS Wisdom and Stamina IS
+    // Constitution, point for point. The owner's exported defaults replace that
+    // with a spread — every pool reads several attributes at decimal weights,
+    // each term floored on its own — with Wisdom still leading Mana and
+    // Constitution still leading Stamina, at half a point a point.
     const rules = REG.derivedStatRules;
     eq(rules.rulesetVersion, 6, 'the authored table is ruleset 6 — the one format');
-    eq(rules.rules.mana.wisdom, 1, 'Mana is Wisdom, point for point');
-    eq(rules.rules.stamina.constitution, 1, 'Stamina is Constitution, point for point');
+    eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
+    eq(rules.rules.stamina.constitution, 0.5, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '30/4', 'HP is 30 + 4 × CON');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
     // A pool carries its own flat base beside the attribute — a class or relic
@@ -9646,14 +9746,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // rather than assumed to be the whole pool.
     const rowOf = (id) => statProjection(REG, star).derived.find((row) => row.id === id);
     const manaRow = rowOf('mana'); const staminaRow = rowOf('stamina');
-    // POINT FOR POINT, AND NOW LITERALLY SO. The lean mode used to reach the
-    // tuned span through a conversion scale — one lean point bought five Mana
-    // — and no row said it. Nothing converts an attribute now: the pool above
-    // its base IS the attribute, which is what "Mana IS Wisdom" said all along.
+    // NOTHING CONVERTS AN ATTRIBUTE. The lean mode used to reach the tuned
+    // span through a conversion scale — one lean point bought five Mana — and
+    // no row said it. The pool above its base is exactly the row's own floored
+    // terms at the sheet's values: for this Starseer (STR 1, DEX 1, CON 1,
+    // WIS 2, INT 3) one Mana from Wisdom and none from the rest, and no
+    // Stamina at all from a CON of 1 at half a point a point.
     eq(REG.creationModes.all().find((m) => m.id === 'lean').statConversionScale, undefined, 'and no scale stands between them');
-    eq(manaRow.value - manaRow.base, star.attributes.wisdom, 'a new Starseer opens with Wisdom in Mana');
-    eq(staminaRow.value - staminaRow.base, star.attributes.constitution, 'and Constitution in Stamina');
-    // The pools could now fund a 2/2 signature art, but the cost stays 1/1:
+    eq(manaRow.value - manaRow.base, attributeTerms(rules.rules.mana, star.attributes), 'a new Starseer opens with the Mana row\'s own terms, unconverted');
+    eq(staminaRow.value - staminaRow.base, attributeTerms(rules.rules.stamina, star.attributes), 'and the Stamina row\'s');
+    // Under the point-for-point rows the pools could fund a 2/2 signature art
+    // (a new Starseer opens at 1 Stamina since 2026-09-24), but the cost stays 1/1:
     // a card resolves its cost LIVE while a run's pools are snapshotted, so
     // raising it strands the starter card of every run already under way
     // (a legacy Reaver at Wisdom 8 holds one Mana). That step needs

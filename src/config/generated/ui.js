@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json c0e2adf1f013018e
+// source content/config/ui/screens/prologue.json 09f59da157a8c00c
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -917,11 +917,13 @@ export const uiConfig = deepFreeze({
               "enabled": true,
               "order": 5,
               "banner": false,
-              "ownStaging": false,
+              "ownStaging": true,
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {
+                "imageFocusY": 0
+              }
             },
             {
               "id": "extraA",

@@ -144,6 +144,61 @@ function indexNodes(nodes) {
 }
 
 /**
+ * watchViewport(el, { read, onChange, delayMs, RO, setTimer, clearTimer })
+ * — the camera's STANDING re-fit (#1142). The first-settle observer in
+ * `recenter` is one-shot by design: it waits for the first non-zero size and
+ * disconnects. Everything after that — root scaling settling a frame late, a
+ * tray or banner changing the scrollport's box, a font swap — reached the
+ * camera only if it happened to arrive with a window `resize` (map.js). A box
+ * change with no window event left `data-camera-viewport` naming a shape the
+ * screen no longer had: measured 390x405 against a 433x643 scrollport.
+ *
+ * THE BASELINE IS THE SIZE WHEN THE WATCH STARTS, not the size the camera was
+ * solved for. A manual or saved camera is restored exactly whatever viewport
+ * it was saved under (the restore door, above), and comparing against its
+ * saved shape would re-centre a player's deliberate view on the very first
+ * observation. So only a later CHANGE re-fits. Within 1 px is not a change —
+ * the restore door's own tolerance.
+ *
+ * Debounced (a settling layout fires several times in a row; the camera moves
+ * once, on the last). The re-fit is a jump, never a glide, so reduced motion
+ * needs no branch here. Returns `stop()`; no ResizeObserver means no watch,
+ * and says so by returning a no-op rather than throwing.
+ */
+export function watchViewport(el, {
+  read, onChange, delayMs = 100,
+  RO = typeof ResizeObserver !== 'undefined' ? ResizeObserver : null,
+  setTimer = setTimeout, clearTimer = clearTimeout,
+} = {}) {
+  if (!RO || !el) return () => {};
+  const usable = (v) => !!v && v.width > 0 && v.height > 0;
+  const same = (a, b) => Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1;
+  let last = read();
+  let timer = null;
+  let stopped = false;
+  const fire = () => {
+    timer = null;
+    if (stopped) return;
+    const now = read();
+    if (!usable(now)) return; // hidden or detached: not a viewport, keep the baseline
+    if (usable(last) && same(now, last)) return;
+    last = now;
+    onChange(now);
+  };
+  const ro = new RO(() => {
+    if (stopped) return;
+    if (timer !== null) clearTimer(timer);
+    timer = setTimer(fire, delayMs);
+  });
+  ro.observe(el);
+  return () => {
+    stopped = true;
+    if (timer !== null) { clearTimer(timer); timer = null; }
+    ro.disconnect();
+  };
+}
+
+/**
  * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
@@ -1250,6 +1305,21 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
+  // THE STANDING WATCH, started by the first settle and kept until teardown
+  // (#1142). One per mount: map.js calls `recenter` again on every window
+  // resize, and each of those must not stack another observer.
+  let stopRefitWatch = null;
+  function startRefitWatch() {
+    if (stopRefitWatch) return;
+    stopRefitWatch = watchViewport(scroll, {
+      read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
+      onChange: () => {
+        if (!scroll.isConnected) return;
+        centerOnCurrent();
+        emitViewState(false);
+      },
+    });
+  }
   function recenter(onSettled) {
     let settled = false;
     const settle = () => {
@@ -1274,6 +1344,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         centerOnCurrent();
       }
       emitViewState(false);
+      startRefitWatch();
       if (onSettled) onSettled();
       return true;
     };
@@ -1292,6 +1363,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   function teardown() {
     stopGlide();
     if (ro) { ro.disconnect(); ro = null; }
+    if (stopRefitWatch) { stopRefitWatch(); stopRefitWatch = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
     pendingViewCommit = null;
