@@ -315,21 +315,27 @@ test('dodge roll: check math, temporary guard, and weight-class costs', () => {
   const { weightClass } = computeWeightClass({ constitution: 10, strength: 10, weights: {} });
   eq(weightClass.id, 'light', 'unburdened is light');
   // The lean-scale Dexterity term (plan A3): floor((DEX - 3) / 2).
-  const win = dodgeRollCheck({ roll: 12, dexterity: 7, weightClass });
+  const win = dodgeRollCheck({ roll: 12, dexterity: 7, attributeMode: 'lean', weightClass });
   // 12 + 2 (DEX 7) + 3 (light) = 17 > 10
   assert(win.success && win.check === 17, `check ${win.check}`);
   eq(win.temporaryGuard, 3 + 2 + 3, 'guard = base + DEX mod + class guard');
   eq(win.cost, { stamina: 1, actions: 0 }, 'light dodge costs');
-  const baseline = dodgeRollCheck({ roll: 12, dexterity: 1, weightClass });
+  const baseline = dodgeRollCheck({ roll: 12, dexterity: 1, attributeMode: 'lean', weightClass });
   eq([baseline.check, baseline.temporaryGuard], [12 - 1 + 3, 3 - 1 + 3], 'DEX 1 reads -1, and a landed Light dodge still guards 5');
   const heavy = mechanicsData.weight.classes.find((row) => row.id === 'heavy');
-  const worst = dodgeRollCheck({ roll: 20, dexterity: 1, weightClass: heavy });
+  const worst = dodgeRollCheck({ roll: 20, dexterity: 1, attributeMode: 'lean', weightClass: heavy });
   assert(worst.success, 'a natural 20 lands even Heavy at DEX 1');
   eq(worst.temporaryGuard, 3 - 1 + 0, 'Heavy at DEX 1 (the worst creatable case) still guards 2');
   const noSheet = dodgeRollCheck({ roll: 12, dexterity: undefined, weightClass });
   eq(noSheet.temporaryGuard, 3 + 0 + 3, 'no sheet reads as no Dexterity term, not as the retired d20 10');
-  const lose = dodgeRollCheck({ roll: 5, dexterity: 3, weightClass, incomingAttackModifier: 3 });
+  const lose = dodgeRollCheck({ roll: 5, dexterity: 3, attributeMode: 'lean', weightClass, incomingAttackModifier: 3 });
   assert(!lose.success && lose.temporaryGuard === 0, 'failed roll grants nothing');
+  // A run made on an older scale keeps the d20-scale centre, so an update
+  // never moves its dodge (mechanics.dodgeRoll.dexterityCentre).
+  for (const mode of ['standard', 'tuned', 'tuned2', 'pointbuy', undefined]) {
+    const legacy = dodgeRollCheck({ roll: 12, dexterity: 15, attributeMode: mode, weightClass });
+    eq([legacy.check, legacy.temporaryGuard], [12 + 2 + 3, 3 + 2 + 3], `${mode} DEX 15 reads +2, as before the lean centre`);
+  }
   assertThrows(() => dodgeRollCheck({ roll: 21, dexterity: 10, weightClass }), /not a d20/);
 });
 
@@ -1199,6 +1205,7 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
   // at capacities 30, 7 and 5 exercises the real load calculation without
   // replacing the Weight Class or cost implementations.
   combat.loadout = { sets: { rightHand: ['warhammer'], leftHand: ['towerShield'], armor: [null] }, active: {}, storage: [] };
+  combat.attributeMode = 'lean';
   combat.attributes = { dexterity: 3, constitution: weight === 'light' ? 10 : weight === 'medium' ? 3 : 2, strength: weight === 'light' ? 10 : 1 };
   eq(playerWeightClass(combat).weightClass.id, weight, 'fixture reaches requested Weight Class');
   return { combat, draws: () => draws };
