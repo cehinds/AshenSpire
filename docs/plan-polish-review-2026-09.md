@@ -248,9 +248,10 @@ amended before code moves.
     (`customize.js` ~110–128).
   - [ ] "Quick start (recommended)" with defaults.
 - [ ] **Transitions (M).** Boot long task 756 ms; Start→customize 344 ms;
-  entering combat has 124/87/72 ms long tasks; title reveal ~2.4 s. Warm the
-  combat and customize modules during the gate or prologue; let a key skip
-  the reveal.
+  entering combat has 124/87/72 ms long tasks; title reveal ~2.4 s. Both
+  modules are already imported statically at boot (`src/main.js` ~74, ~79),
+  so profile route-time rendering and data setup instead; module warming only
+  applies after D/L add code-splitting. Let a key skip the reveal.
 - [ ] **Touch info (M).** A tap on an intent shows nothing; the double-tap /
   hold scheme (`tooltip.js` ~24) is never taught; desktop hover waits more
   than 900 ms. Single tap opens tips on icons with no primary action; ~400 ms
@@ -266,9 +267,10 @@ amended before code moves.
   Available" with 0 Smithing Stones; dimmed-but-Available Rest; ⚒ used for
   two actions; progression rows wrap on phone; scroll fade.
 - [ ] **Character creation (M).** Large class portrait panel instead of a
-  40 px avatar; left-align the steps; gold selection, not green.
-- [ ] **Palette (S).** One gold/ember primary-button token; green only for
-  heal and positive states; themed End Turn.
+  40 px avatar; left-align the steps.
+- [ ] **Palette (S).** One gold/ember primary-button token; themed End Turn.
+  Keep the green-means-chosen, gold-means-hover/focus contract
+  (`styles/kit.css` ~824, receipt #997); changing it is an **(owner ruling)**.
 - [ ] **Settings (S to hide, L to curate).** Advanced exposes ~3,086 rows in
   112 sub-sections; put it behind a Developer / Modding switch; move text
   size, motion, contrast and tap size into Accessibility.
@@ -279,8 +281,9 @@ amended before code moves.
   ~35); Quit says "YOUR CLIMB IS SAVED" with no climb; death screen repeats
   the class name and does not group duplicate cards. (Flask vs potion
   wording is C's.)
-- [ ] **Dev text in play (S).** "UNSTAMPED" build line and "Replay entrance"
-  on the title. (The "(no current consumer)" relic note, `relics.js` ~154,
+- [ ] **Dev text in play (S).** "Replay entrance" on the title. (`UNSTAMPED`
+  is intended: it shows only on a raw, unbuilt `index.html`,
+  `src/buildversion.js` ~153.) (The "(no current consumer)" relic note, `relics.js` ~154,
   is C's.)
 
 ### H. Sprite scale and asset hygiene
