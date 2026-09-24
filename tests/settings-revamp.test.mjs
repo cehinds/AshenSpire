@@ -383,3 +383,24 @@ test('a resolved row set to its promoted default is not changed', async () => {
   assert.equal(rowModified({ musicEnabled: true }, row, promoted), true, 'moving off the promoted value is a change');
   assert.equal(rowModified({ musicEnabled: false }, row, {}), true, 'with no promoted default, off is a change');
 });
+
+test('a key a profile leaves out goes back to its promoted default, not the code default', async () => {
+  const { profileDiff } = await import('../src/model/settingsSync.js');
+  const parsed = { changes: {}, cleared: ['screenShake', 'reducedMotion'] };
+  const here = { screenShake: false, reducedMotion: true };
+  assert.deepEqual(profileDiff(here, parsed, { screenShake: false }), [{ key: 'reducedMotion', from: true, to: undefined }],
+    'already at the promoted value: nothing moves');
+  assert.deepEqual(profileDiff({ screenShake: true }, { changes: {}, cleared: ['screenShake'] }, { screenShake: false }),
+    [{ key: 'screenShake', from: true, to: false }]);
+  assert.deepEqual(profileDiff(here, parsed).map((d) => d.to), [undefined, undefined], 'no promoted default: cleared');
+});
+
+test('changing the device-key scope forgets the loaded version, and Changed counts only what it can show', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*write\(SYNC_STORAGE\.lastSha, null\);/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
+  const hidden = settingsSearchHits('', false, { 'gameConfig.combatRatings.multiplier': 1.5 }, { changedOnly: true });
+  assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
+});

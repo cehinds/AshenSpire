@@ -2490,7 +2490,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   function syncHeaderState() {
     const toggle = headerTools.querySelector('[data-changed-toggle]');
     if (toggle) {
-      const count = ROWS.reduce((n, row) => n + (rowModified(settings, row) ? 1 : 0), 0);
+      // The rows Changed can show: on a release build, hidden tuning is
+      // counted by Clear hidden tuning instead.
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true }).length;
       toggle.textContent = count ? `Changed · ${count}` : 'Changed';
       toggle.setAttribute('aria-pressed', String(changedOnly()));
       toggle.classList.toggle('on', changedOnly());

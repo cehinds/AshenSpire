@@ -7,6 +7,7 @@
 // Advanced, which a release build does not show (src/ui/buildChannel.js).
 
 import { contentBundle } from '../../content/index.js';
+import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { saveJsonFile } from '../../model/advancedConfig.js';
 import {
   SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
@@ -32,12 +33,15 @@ function show(value) {
   return text.length > 28 ? `${text.slice(0, 27)}…` : text;
 }
 
+// The owner's promoted defaults: where a key a profile leaves out goes back to.
+const PROMOTED = SETTINGS_DEFAULTS.values || {};
+
 /**
  * applyProfile(settings, onChange, parsed) — write a parsed profile through the
  * one save path. Returns the number of settings that moved.
  */
-export function applyProfile(settings, onChange, parsed) {
-  const diff = profileDiff(settings, parsed);
+export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
+  const diff = profileDiff(settings, parsed, promoted);
   if (!diff.length) return 0;
   const changed = {};
   for (const { key, to } of diff) {
@@ -223,7 +227,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       if (mine !== generation || !btn.isConnected) return;
       if (!remote) { status('There is no profile there yet. Save one from a device first.'); return; }
       const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeysNow());
-      const diff = profileDiff(settings, parsed);
+      const diff = profileDiff(settings, parsed, PROMOTED);
       pending = { parsed, sha: remote.sha };
       // Already matching IS loaded: record this version, or the next start
       // would treat it as new and overwrite edits made here since.
@@ -243,7 +247,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
         try {
           // What every key held before, so Settings can offer Undo.
-          const before = Object.fromEntries(profileDiff(settings, pending.parsed).map(({ key, from }) => [key, from]));
+          const before = Object.fromEntries(profileDiff(settings, pending.parsed, PROMOTED).map(({ key, from }) => [key, from]));
           const moved = applyProfile(settings, onChange, pending.parsed);
           write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
@@ -290,7 +294,9 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('device', (btn) => {
       const next = !includeDeviceEnabled();
       write(SYNC_STORAGE.includeDevice, next ? '1' : null);
-      // What a load would do has changed: an open preview is no longer true.
+      // What a load would do has changed: an open preview is no longer true,
+      // and the loaded version must be read again under the new scope.
+      write(SYNC_STORAGE.lastSha, null);
       generation += 1;
       pending = null;
       const box = mount.querySelector('[data-sync-preview]');

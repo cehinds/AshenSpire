@@ -145,13 +145,21 @@ export function profileChanges(text, bundle, settings, rows, keys) {
   return { changes, cleared, warnings };
 }
 
-/** profileDiff(settings, { changes, cleared }) → [{ key, from, to }] that would actually move. */
-export function profileDiff(settings, { changes, cleared }) {
+/**
+ * profileDiff(settings, { changes, cleared }, promoted) → [{ key, from, to }]
+ * that would actually move. A key the profile leaves out goes back to the
+ * owner's promoted default when there is one (what Reset and boot use), and is
+ * cleared otherwise.
+ */
+export function profileDiff(settings, { changes, cleared }, promoted = {}) {
   const out = [];
   for (const [key, to] of Object.entries(changes)) {
     if (settings?.[key] !== to) out.push({ key, from: settings?.[key], to });
   }
-  for (const key of cleared) out.push({ key, from: settings[key], to: undefined });
+  for (const key of cleared) {
+    const to = Object.hasOwn(promoted, key) ? promoted[key] : undefined;
+    if (settings?.[key] !== to) out.push({ key, from: settings?.[key], to });
+  }
   return out;
 }
 
