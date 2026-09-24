@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1309",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A landed Dodge Roll now gives real Block, and a Medium dodge costs less Stamina",
+    "detail": "The dodge still measured your Dexterity on the old attribute scale, where 10 was average. Every new character has 1 to 4 Dexterity, so the roll came out at −4 or −5. A dodge landed less than half the time and gave about 1 Block, or none at all if you were Medium or Heavy. It is now measured on the current scale: 3 Dexterity gives no modifier, 1 gives −1, and every 2 points above 3 give +1. A landed dodge now gives at least 2 Block, and 5 or more for a Light character. A Medium dodge costs 1 Stamina and 1 Action instead of 2 Stamina, and a Heavy dodge costs 2 Stamina and 1 Action instead of 3 and 2. Over 240 simulated runs a class, dodges now land about 60% of the time for 4 to 6 Block. The Reaver now wins 112 runs, the Starseer 104, the Rogue 141 and the Herald 136, where before this change they won 105, 103, 135 and 135.",
+    "build": "0.7.1.477",
+    "pullRequest": 1309,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1309"
+  },
+  {
     "id": "pr-1284",
     "date": "2026-09-24",
     "group": "2026-09-24",
