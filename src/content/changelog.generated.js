@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1283",
+    "id": "pr-1274",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Developer notes that had gone out of date now point at where the fact lives",
-    "detail": "Nothing you play changes. The developer guide no longer quotes a hand-counted test total but gives the command that lists the tests; its list of known gaps drops Frostbite, which was cut rather than postponed, and marks the Goreblood gap resolved, since Goreblood freezes only Poise and its card already says so. The versioning notes stop quoting an old release number and name the file that holds the current one, the licence names AshenSpire instead of the project's old name, and the finishing checklist names the Guilt and Warrior's Vow gaps instead of numbering them. A new test fails if any of the old wording comes back.",
-    "build": "0.7.1.457",
-    "pullRequest": 1283,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1283"
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
   },
   {
     "id": "pr-1273",
