@@ -103,11 +103,12 @@ export function weaponScalingFacts(registries, run, attributes = run.attributes)
   for (const inst of run.deck || []) {
     if (!inst || inst.equipmentRole !== 'attack' || inst.kitRole) continue;
     const piece = armaments.find((row) => row.id === inst.weaponId);
-    if (!piece || !piece.scaling || seen.has(piece.id)) continue;
+    if (!piece || seen.has(piece.id)) continue;
     seen.add(piece.id);
     const base = deckCardReceipt(registries, run, inst, attributes);
-    if (!base || !base.rating.scaling) continue; // a run born before the grades reads flat
-    for (const [attributeId, grade] of Object.entries(piece.scaling)) {
+    if (!base || !base.rating.scaling) continue; // ungraded, or a run born before the grades: flat
+    // The letters the run prices by (its snapshot's), never the live piece's.
+    for (const [attributeId, grade] of Object.entries(base.rating.scaling.grades)) {
       const next = deckCardReceipt(registries, run, inst, { ...attributes, [attributeId]: (attributes[attributeId] || 0) + 1 });
       const perPoint = next.value - base.value;
       const short = registries.attributes.get(attributeId)?.shortLabel || attributeId;

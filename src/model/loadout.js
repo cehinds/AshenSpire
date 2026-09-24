@@ -1052,8 +1052,13 @@ export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
   // THE GRADE TABLE RIDES THE RUN (SPEC §13.4o), so a retune of
   // balance.weaponScaling never re-prices a climb in progress, and a run born
   // before the table existed (no field) keeps reading every weapon flat.
+  // Each graded armament's own letters ride it too (`pieces`), so a content
+  // update that regrades a weapon (Straight Sword STR B → S) does not either.
   const liveScaling = (registries.balance || {}).weaponScaling;
-  const weaponScaling = liveScaling ? { anchor: liveScaling.anchor, grades: Object.fromEntries(Object.entries(liveScaling.grades || {})) } : undefined;
+  const pieces = Object.fromEntries((registries.equipment.armaments || [])
+    .filter((piece) => piece.scaling && Object.keys(piece.scaling).length)
+    .map((piece) => [piece.id, { ...piece.scaling }]));
+  const weaponScaling = liveScaling ? { anchor: liveScaling.anchor, grades: Object.fromEntries(Object.entries(liveScaling.grades || {})), pieces } : undefined;
   return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses, ...(weaponScaling ? { weaponScaling } : {}) }, registries);
 }
 
@@ -1095,7 +1100,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
   }
   if (snapshot.weaponScaling !== undefined) {
-    const problems = weaponScalingProblems(snapshot.weaponScaling, 'equipment profile snapshot weaponScaling');
+    const problems = weaponScalingProblems(snapshot.weaponScaling, 'equipment profile snapshot weaponScaling', { snapshot: true });
     if (problems.length) throw new Error(problems.join('; '));
   }
   if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');

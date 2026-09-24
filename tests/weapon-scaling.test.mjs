@@ -121,7 +121,8 @@ test('no-grade weapons, the dr rating and a missing grade table keep the flat fo
 
 test('the run snapshots the grade table; a snapshot without it prices a graded weapon flat', () => {
   const run = createRunState({ seed: 5, classId: 'reaver', registries });
-  assert.deepEqual(run.equipmentProfileRuleSnapshot.weaponScaling, { anchor: 3, grades: { S: 2, A: 1.5, B: 1, C: 0.75, D: 0.5 } });
+  const { pieces: _pieces, ...table } = run.equipmentProfileRuleSnapshot.weaponScaling;
+  assert.deepEqual(table, { anchor: 3, grades: { S: 2, A: 1.5, B: 1, C: 0.75, D: 0.5 } });
   const strike = run.deck.find((card) => card.equipmentRole === 'attack');
   const high = { ...run.attributes, strength: 6 };
   const graded = deckCardReceipt(registries, run, strike, high);
@@ -134,6 +135,61 @@ test('the run snapshots the grade table; a snapshot without it prices a graded w
   assert.equal(flat.rating.scaling, undefined);
   // At the preset's own STR 3 the two agree: creation damage did not move.
   assert.equal(deckCardReceipt(registries, run, strike).value, deckCardReceipt(registries, legacy, strike).value);
+});
+
+// PR review: the run snapshotted the anchor and the coefficients but read the
+// weapon's grade letters off the live registry piece, so a content update that
+// regrades a weapon (Straight Sword STR B -> S) re-priced a climb in progress.
+test('the run snapshots each weapon\'s grades: a regrade in a content update does not re-price a saved run', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries });
+  const pieces = run.equipmentProfileRuleSnapshot.weaponScaling.pieces;
+  assert.deepEqual(pieces.straightSword, { ...armament('straightSword').scaling });
+  for (const piece of registries.equipment.armaments) {
+    assert.deepEqual(pieces[piece.id], piece.scaling ? { ...piece.scaling } : undefined, `${piece.id}: every graded piece and no other`);
+  }
+  // The update: Straight Sword STR B -> S.
+  assert.equal(armament('straightSword').scaling.strength, 'B');
+  const regradedRows = contentBundle.equipment.weaponScaling.map((r) => (r.itemId === 'straightSword' && r.attributeId === 'strength' ? { ...r, grade: 'S' } : r));
+  const regradedArmaments = contentBundle.equipment.armaments.map((piece) => (piece.id === 'straightSword' ? { ...piece, scaling: { ...piece.scaling, strength: 'S' } } : piece));
+  const regradedBundle = { ...contentBundle, equipment: { ...contentBundle.equipment, weaponScaling: regradedRows, armaments: regradedArmaments } };
+  const updated = createRegistries(regradedBundle);
+  assert.equal(updated.equipment.armaments.find((piece) => piece.id === 'straightSword').scaling.strength, 'S');
+
+  const saved = restoreEquipmentProfileRuleSnapshot(JSON.parse(JSON.stringify(run.equipmentProfileRuleSnapshot)), updated);
+  const reloaded = { ...structuredClone(run), equipmentProfileRuleSnapshot: saved };
+  const strike = run.deck.find((card) => card.equipmentRole === 'attack' && card.weaponId === 'straightSword');
+  assert.ok(strike, 'the reaver swings the Straight Sword');
+  const high = { ...run.attributes, strength: 6 };
+  const before = deckCardReceipt(registries, run, strike, high);
+  const after = deckCardReceipt(updated, reloaded, strike, high);
+  assert.equal(after.rating.attributeValue, before.rating.attributeValue, 'priced at the grade the run was born under (B), not the update\'s S');
+  assert.equal(after.value, before.value);
+  assert.equal(after.rating.scaling.grades.strength, 'B');
+  // A new run on the updated content prices the new grade.
+  const fresh = createRunState({ seed: 5, classId: 'reaver', registries: updated });
+  assert.ok(deckCardReceipt(updated, fresh, strike, high).value > before.value, 'a new run reads the S');
+
+  // A save from before the per-weapon grades (table, no pieces) keeps its
+  // current behaviour: the live piece's letters under its own table.
+  const older = structuredClone(reloaded);
+  delete older.equipmentProfileRuleSnapshot.weaponScaling.pieces;
+  assert.equal(deckCardReceipt(updated, older, strike, high).rating.scaling.grades.strength, 'S');
+  // A save without any table still prices flat.
+  const oldest = structuredClone(reloaded);
+  delete oldest.equipmentProfileRuleSnapshot.weaponScaling;
+  assert.equal(deckCardReceipt(updated, oldest, strike, high).rating.scaling, undefined);
+  // The shrine's grade fact reads the run's letter too.
+  const facts = weaponScalingFacts(updated, { ...reloaded, attributes: high });
+  assert.equal(facts.strength.find((f) => f.pieceId === 'straightSword').grade, 'B');
+
+  // The save door refuses a malformed per-weapon map by name.
+  const bad = (piecesValue) => ({ ...saved, weaponScaling: { ...saved.weaponScaling, pieces: piecesValue } });
+  assert.throws(() => restoreEquipmentProfileRuleSnapshot(bad([]), updated), /weaponScaling\.pieces: must be an object/);
+  assert.throws(() => restoreEquipmentProfileRuleSnapshot(bad({ straightSword: 'B' }), updated), /weaponScaling\.pieces\.straightSword: must be an object/);
+  assert.throws(() => restoreEquipmentProfileRuleSnapshot(bad({ straightSword: { strength: 'Z' } }), updated), /pieces\.straightSword\.strength: grade 'Z' is not in the table/);
+  assert.throws(() => restoreEquipmentProfileRuleSnapshot(bad({ straightSword: { luck: 'B' } }), updated), /pieces\.straightSword\.luck: unknown attribute/);
+  // Balance never carries the per-weapon map: that lives in weaponScaling.csv.
+  assert.match(weaponScalingProblems({ ...scaling, pieces: {} }).join('\n'), /balance\.weaponScaling\.pieces: unknown field/);
 });
 
 test('under the combat-ratings module the stamp and the preview read flat, as the fight does', () => {
