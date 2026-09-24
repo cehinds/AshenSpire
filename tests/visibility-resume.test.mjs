@@ -19,7 +19,7 @@
 //      the reason it is safe. A new one fails this file until it is added
 //      here — so a handler that would mutate state on background cannot land
 //      unseen.
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -48,6 +48,18 @@ Object.assign(doc, {
   getElementById: () => null,
   querySelector: () => null,
   querySelectorAll: () => [],
+});
+// Remember what was there so the stand-ins never leak past this file, even if
+// the runner is ever switched to run several files in one process.
+const STUBBED = ['window', 'document', 'addEventListener', 'removeEventListener', 'navigator'];
+const ORIGINAL = Object.fromEntries(STUBBED.map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+after(() => {
+  for (const k of STUBBED) {
+    try {
+      if (ORIGINAL[k]) Object.defineProperty(globalThis, k, ORIGINAL[k]);
+      else delete globalThis[k];
+    } catch { /* non-configurable global: nothing was replaced */ }
+  }
 });
 globalThis.window = win;
 globalThis.document = doc;
@@ -133,9 +145,16 @@ const KNOWN = {
   'src/ui/gesture.js': { blur: 'aborts the in-flight gesture as CANCELLED; exercised above' },
   'src/ui/screens/prologue.js': { visibilitychange: 'pauses/resumes the opening slideshow timer only; the prologue runs before any fight' },
 };
-// Page-level only: `window.`/`document.` or a bare global `addEventListener`.
-// An element's own blur/focus (an input, a menu item) is not page lifecycle.
-const LIFECYCLE = /(?:\b(?:window|document)\.|(?<![.\w]))addEventListener\(\s*'(visibilitychange|pagehide|pageshow|freeze|resume|blur|focus|beforeunload|unload)'/g;
+// Page-level only: `window.`/`document.`/`globalThis.`/`self.` or a bare
+// global — as an `addEventListener('<event>'` call (any quote style) or an
+// `on<event> =` property handler. An element's own blur/focus (an input, a
+// menu item) is not page lifecycle.
+const EVENTS = 'visibilitychange|pagehide|pageshow|freeze|resume|blur|focus|beforeunload|unload';
+const PAGE = String.raw`(?:\b(?:window|document|globalThis|self)\.|(?<![.\w]))`;
+const LIFECYCLE = [
+  new RegExp(String.raw`${PAGE}addEventListener\(\s*['"\x60](${EVENTS})['"\x60]`, 'g'),
+  new RegExp(String.raw`${PAGE}on(${EVENTS})\s*=(?!=)`, 'g'),
+];
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -150,8 +169,8 @@ test('every page-lifecycle listener in src/ is known to leave state alone', () =
   for (const path of walk(join(ROOT, 'src'))) {
     const file = relative(ROOT, path).split('\\').join('/');
     const text = readFileSync(path, 'utf8');
-    for (const [, event] of text.matchAll(LIFECYCLE)) {
-      (found[file] ||= new Set()).add(event);
+    for (const pattern of LIFECYCLE) {
+      for (const [, event] of text.matchAll(pattern)) (found[file] ||= new Set()).add(event);
     }
   }
   for (const [file, events] of Object.entries(found)) {
