@@ -258,3 +258,22 @@ export function pacedArtPreview(pv, shown, before = null) {
     artCharge: { ...rest, value: shown.value, unleashed: true, textTemplate: source.artCharge.textTemplate, ...(source.artCharge.shortTemplate ? { shortTemplate: source.artCharge.shortTemplate } : {}) },
   };
 }
+
+/**
+ * labelArtChargeCard(node, chargeLabel) -> the card's accessible name with
+ * its charge sentence. `node` is element-like (getAttribute / setAttribute /
+ * dataset). The card's own label is kept once in `dataset.artChargeBaseLabel`
+ * and the charge sentence is rebuilt from it on every decoration, so a card
+ * node reused across paced beats announces the meter it shows ("2 of 4"),
+ * never the one it was first decorated with. A null `chargeLabel` restores
+ * the base label.
+ */
+export function labelArtChargeCard(node, chargeLabel) {
+  if (!node) return null;
+  const base = node.dataset.artChargeBaseLabel != null ? node.dataset.artChargeBaseLabel : node.getAttribute('aria-label');
+  if (base == null) return null;
+  node.dataset.artChargeBaseLabel = base;
+  const label = chargeLabel ? `${base}. ${chargeLabel}` : base;
+  node.setAttribute('aria-label', label);
+  return label;
+}

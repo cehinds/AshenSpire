@@ -32,7 +32,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
-import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview } from '../../model/artCharge.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview, labelArtChargeCard } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -1329,7 +1329,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       let charge = null;
       const shown = artUnleashFor(combat, inst, shownArtCharge());
       if (shown) charge = { weaponId: shown.weaponId, value: shown.value, max: shown.max, unleashed: shown.ready };
-      if (!charge) { delete node.dataset.artCharge; node.classList.remove('art-charge-flash'); continue; }
+      if (!charge) { delete node.dataset.artCharge; delete node.dataset.artChargeLabel; labelArtChargeCard(node, null); node.classList.remove('art-charge-flash'); continue; }
       node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
       node.classList.toggle('art-charge-flash', charge.unleashed && freshlyFull.has(inst.instanceId));
       const badge = el('span', { class: 'art-charge-card' });
@@ -1346,10 +1346,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (strip && strip.textContent) badge.appendChild(el('span', { class: 'art-charge-bonus', text: strip.textContent, aria: { hidden: 'true' } }));
       }
       node.appendChild(badge);
-      const label = node.getAttribute('aria-label');
       const row = { name: registries.equipment.armaments.find((a) => a.id === charge.weaponId)?.name || charge.weaponId, artName: inst.cardId, value: charge.value, max: charge.max, full: charge.unleashed };
       node.dataset.artChargeLabel = artChargeLabel(row);
-      if (label && !label.includes('Art charge') && !label.includes('Art charged')) node.setAttribute('aria-label', `${label}. ${node.dataset.artChargeLabel}`);
+      labelArtChargeCard(node, node.dataset.artChargeLabel);
     }
   }
 

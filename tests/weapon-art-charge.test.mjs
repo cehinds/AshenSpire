@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview, labelArtChargeCard } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -471,4 +471,24 @@ test('paced playback: a full Art being played stays drawn unleashed until its pl
   const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(screen, /artPreviews\[inst\.instanceId\] = previewCard\(combat, inst\.instanceId\)/);
   assert.match(screen, /pv = pacedArtPreview\(pv, artUnleashFor\(combat, inst, shownArtCharge\(\)\), disp && disp\.artPreviews/);
+});
+
+test('paced playback: a reused Art card node announces the charge it shows, not the first one', async () => {
+  const attrs = new Map([['aria-label', 'Sundering Hew, 2 energy']]);
+  const node = { dataset: {}, getAttribute: (k) => (attrs.has(k) ? attrs.get(k) : null), setAttribute: (k, v) => attrs.set(k, String(v)) };
+  labelArtChargeCard(node, 'Greatsword Art charge 1 of 4');
+  assert.equal(attrs.get('aria-label'), 'Sundering Hew, 2 energy. Greatsword Art charge 1 of 4');
+  // The next beat decorates the same node: the sentence is replaced, not kept.
+  labelArtChargeCard(node, 'Greatsword Art charge 2 of 4');
+  assert.equal(attrs.get('aria-label'), 'Sundering Hew, 2 energy. Greatsword Art charge 2 of 4');
+  labelArtChargeCard(node, 'Greatsword Art charged: Sundering Hew unleashes');
+  assert.equal(attrs.get('aria-label'), 'Sundering Hew, 2 energy. Greatsword Art charged: Sundering Hew unleashes');
+  // No meter any more: the card's own label comes back.
+  labelArtChargeCard(node, null);
+  assert.equal(attrs.get('aria-label'), 'Sundering Hew, 2 energy');
+  // The screen rebuilds the label on every decoration through the helper.
+  const { readFile } = await import('node:fs/promises');
+  const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(screen, /labelArtChargeCard\(node, node\.dataset\.artChargeLabel\)/);
+  assert.doesNotMatch(screen, /!label\.includes\('Art charge'\)/);
 });
