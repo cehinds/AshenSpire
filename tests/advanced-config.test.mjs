@@ -68,7 +68,11 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
   assert.equal(contentBundle.balance.xp.combatWin, 50);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
-  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
+  // The retired tier dial's key does not write the table: a ruleset-6 table
+  // has no tier, so writing one would fail validation and throw every other
+  // configured value away.
+  assert.equal(configured.derivedStatRules.defaults.pointsPerTier, undefined);
+  assert.deepEqual(configured.derivedStatRules.defaults, contentBundle.derivedStatRules.defaults);
 });
 
 test('an incomplete class-stat edit is named and keeps the last valid authored preset active', () => {
@@ -207,4 +211,256 @@ test('mobile and unsupported desktop export fall back to a local browser downloa
   assert.equal(anchor.download, 'ashen-spire-game-config.json');
   assert(clicked);
   assert(revoked);
+});
+
+// Ruleset 6 retired every per-stat tier and the "Stat points per tier" dial
+// with its bounds. An exported file naming any of them still imports: those
+// entries are skipped with one named warning, everything else lands.
+test('an export naming a retired stat tier imports, skipping only that entry', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  Object.assign(file.overrides, {
+    'gameConfig.derivedStatRules.rules.hp.gainPerTier': 7,
+    'gameConfig.derivedStatRules.defaults.pointsPerTier': 2,
+    'gameConfig.balance.levelUp.tierSizeMax': 30,
+  });
+  const text = JSON.stringify(file);
+  const warnings = [];
+  const imported = parseAdvancedConfigFile(text, contentBundle, {}, [], warnings);
+  assert.deepEqual(imported, { 'gameConfig.derivedStatRules.rules.hp.constitution': 5 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /direct attribute weights/);
+});
+
+// Codex (#1253): only the six real stat ids are retired. A misspelt id is a
+// typo, and a typo must still refuse the whole file rather than be skipped.
+test('a misspelt stat id under a retired tier key is refused, not skipped', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  file.overrides['gameConfig.derivedStatRules.rules.hhp.pointsPerTier'] = 2;
+  assert.throws(() => parseAdvancedConfigFile(JSON.stringify(file), contentBundle, {}, [], []), /hhp/);
+});
+
+// EVERY GENERATED BALANCE ROW DESCRIBES ITSELF, and describes itself only
+// once. All 325 of them used to carry the same sentence — "Authored balance
+// value: <path>. Applies to a new run." — so the description under a row said
+// nothing the key above it had not (owner, 2026-09-21). These three assertions
+// are what keep that from coming back: a number with no sentence beside it in
+// content/balance.js falls through to the old fallback and fails the first; a sentence
+// copied onto a second row fails the second; a family written as a list rather
+// than a rule fails one or the other the next time content adds a member.
+test('every generated balance row carries its own description', () => {
+  const generated = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
+  assert.ok(generated.length > 300, `expected the balance leaves to be generated, got ${generated.length}`);
+
+  const undescribed = generated.filter((row) => row.note.startsWith('Authored balance value:'));
+  assert.deepEqual(undescribed.map((row) => row.searchPath), [],
+    'these balance numbers have no sentence beside them in src/content/balance.js');
+
+  const byNote = new Map();
+  for (const row of generated) {
+    if (!byNote.has(row.note)) byNote.set(row.note, []);
+    byNote.get(row.note).push(row.searchPath);
+  }
+  const shared = [...byNote.values()].filter((paths) => paths.length > 1);
+  assert.deepEqual(shared, [], 'these balance rows describe themselves with the same words');
+
+  for (const row of generated) {
+    // A LIVE ROW SAYS WHEN IT TAKES EFFECT; an inert one must not, because
+    // "Applies to a new run" under "nothing reads it" is the sentence
+    // contradicting itself in its own last clause.
+    const live = row.note.endsWith('Applies to a new run.');
+    const declaredInert = /not yet read|nothing reads it|retired flag/.test(row.note);
+    assert.ok(live !== declaredInert,
+      `${row.searchPath} must either say when it takes effect or say nothing reads it, and not both: ${row.note}`);
+    assert.ok(row.note.length > 'Applies to a new run.'.length + 20, `${row.searchPath} says too little`);
+  }
+});
+
+// A NAME IN A NOTE IS THE CONTENT'S NAME, never a copy of it. Renaming a relic
+// renames its rows; a relic added to balance.powers gets a real sentence with
+// no new note — the family's one sentence covers it. The same rule covers talents, classes, and the
+// rows of an authored list, which name themselves by their own id or tag.
+test('generated balance descriptions derive their names from the bundle', () => {
+  const rows = new Map(advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance).map((row) => [row.searchPath, row.note]));
+  const note = (path) => {
+    const found = rows.get(path);
+    assert.ok(found, `no generated row for ${path}`);
+    return found;
+  };
+
+  const relic = (contentBundle.relics || []).find((entry) => entry.id === 'ivoryComb');
+  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name} —`),
+    `the relic's own name should open its row: ${note('powers.ivoryComb.n')}`);
+
+  // THE TIER AND THE CLASS COME FROM THE TREE, not from this file. Hard-coding
+  // "tier-1 Reaver" would fail a content retune that moved the talent — which
+  // is the opposite of what a test about derivation should do.
+  const talent = (contentBundle.nodes || []).find((node) => node.id === 'ironFooting');
+  const row = (contentBundle.classTree || []).find((entry) => entry.nodeId === 'ironFooting');
+  const owner = (contentBundle.classes || []).find((entry) => entry.id === row.classId);
+  assert.ok(note('classTree.ironFooting.block').startsWith(`${talent.label}, a tier-${row.tier} ${owner.name} talent`),
+    `the tree's own tier and class should open its row: ${note('classTree.ironFooting.block')}`);
+
+  // AN AUTHORED LIST IS FOUND BY ITS OWN KEY, never by an index. Both of these
+  // lists invite reordering — swapCostByCategory is documented as ordered,
+  // first match wins — and a reorder must not fail a test about naming.
+  const viewIndex = contentBundle.balance.equipment.views.findIndex((view) => view.id === 'grid');
+  assert.match(note(`equipment.views.${viewIndex}.figure`), /the grid Armoury view/);
+  const heavyIndex = contentBundle.balance.equipment.swapCostByCategory.findIndex((entry) => entry.tag === 'heavy');
+  assert.match(note(`equipment.swapCostByCategory.${heavyIndex}.cost`), /tagged heavy/);
+  const growthIndex = contentBundle.balance.flaskGrowth.findIndex((entry) => entry.id === 'goldenSprout');
+  const sprout = (contentBundle.relics || []).find((entry) => entry.id === 'goldenSprout');
+  assert.match(note(`flaskGrowth.${growthIndex}.amount`), new RegExp(sprout.name));
+  const fillIndex = contentBundle.balance.poise.onFill.findIndex((entry) => entry.status === 'staggered');
+  assert.match(note(`poise.onFill.${fillIndex}.stacks`), /Staggered/);
+});
+
+// A SENTENCE MAY NOT PROMISE A DIAL IS LIVE WHEN IT IS NOT. The rows under
+// `balance.levels` are authored for #238 and read by nothing but their own
+// validator (`model/levels.js` is imported by `model/validate.js` alone);
+// `energy`, `draw` and `graceRefillAtRunStart` have no reader at all; the
+// level-up bounds are read from the authored table by the controls they bound,
+// never from an override; and the swap allowance waits on a mode no setting
+// chooses. A note that described any of them as working machinery would be
+// worse than the boilerplate it replaced, because a player would move it and
+// watch nothing happen.
+test('a balance row nothing reads says so in its description', () => {
+  const rows = new Map(advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance).map((row) => [row.searchPath, row.note]));
+  // DERIVED FROM WHAT IS HIDDEN, not listed here. #1256 retires a generated
+  // row from the screen exactly when nothing reads it, so every retired row is
+  // one whose note must say so. `graceRefillAtRunStart` is the one inert row
+  // still on screen, named because nothing marks it.
+  const hidden = advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance && row.retired).map((row) => row.searchPath);
+  const inert = [...hidden, 'graceRefillAtRunStart'];
+  // 18, not 20: ruleset 6 (#1253) deleted `levelUp.tierSizeMin/Max` outright
+  // with the tier dial, so those two are no longer rows to hide.
+  assert.ok(inert.length >= 18, `expected the inert rows to be generated, got ${inert.length}`);
+  for (const path of inert) {
+    assert.match(rows.get(path), /not yet read|nothing reads it|retired flag/,
+      `${path} is not read by the game and its description must say so`);
+    assert.ok(!rows.get(path).endsWith('Applies to a new run.'),
+      `${path} is read by nothing, so it applies to no run either`);
+  }
+});
+
+// THE PANEL MUST KEEP THE SENTENCE, and that is a separate claim from the row
+// carrying one. The Advanced panel rewrites a generated row before drawing it
+// (the label becomes the path, because a leaf named "0" or "min" names
+// nothing), and that rewrite used to throw the note away and write 'Applies to
+// a new run.' in its place. Every other test here would pass if it started
+// doing that again, so this one holds the branch itself (Copilot, #1243).
+test('the Advanced panel keeps a generated row\'s own description', async () => {
+  const { compactAdvancedRow } = await import('../src/ui/screens/settings.js');
+  const rows = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
+  for (const row of rows.slice(0, 40)) {
+    const drawn = compactAdvancedRow(row, 'Rewards', 'Combat rewards');
+    assert.equal(drawn.note, row.note, `${row.searchPath} lost its description on the way to the panel`);
+    assert.match(drawn.label, / · |^[a-z]/i, `${row.searchPath} should be labelled by its path`);
+    assert.ok(!drawn.label.includes('gameConfig.balance.'), 'the key prefix is not part of the label');
+  }
+
+  // The class-table branch beside it still compacts, so this test cannot pass
+  // by the rewrite having been removed altogether.
+  const classRow = advancedConfigRows(contentBundle)
+    .find((row) => row.classTopic && row.floorNote);
+  const compacted = compactAdvancedRow(classRow, 'Progression', classRow.classTopic);
+  assert.equal(compacted.note, classRow.floorNote);
+  assert.ok(!compacted.label.includes(' — '), 'the class topic already names the class');
+});
+
+// A SENTENCE STAYS WITH ITS NUMBER. The notes moved into content/balance.js so
+// that an author editing a number sees the sentence describing it (owner,
+// 2026-09-23). Sitting in the same object keeps them in view; this test is
+// what keeps them TOGETHER. A note that claims no number — its number renamed
+// or removed and the sentence left behind — fails here by name. So does a
+// number two family sentences in one block both claim, because which of them
+// wins would be an order nobody reading balance.js could see.
+test('every note in balance.js sits beside a number it describes', async () => {
+  const { balance, NOTE } = await import('../src/content/balance.js');
+  const { noteMatches } = await import('../src/model/balanceNotes.js');
+
+  // THE NUMBERS SETTINGS SHOWS, not only the ones typed in balance.js. The
+  // card-value tables (`damage.*.cardBonuses`) are empty in the authored table
+  // and filled per card when the rows are built (materializeCardValueBonuses),
+  // so a note for them describes numbers that exist only once materialised.
+  const leaves = [...new Set([
+    ...advancedConfigRows(contentBundle).filter((row) => row.generatedBalance).map((row) => row.searchPath),
+  ])];
+  (function walk(value, path) {
+    if (typeof value === 'number' || typeof value === 'boolean') { leaves.push(path.join('.')); return; }
+    if (!value || typeof value !== 'object') return;
+    for (const [key, child] of Object.entries(value)) walk(child, [...path, key]);
+  })(balance, []);
+
+  const claimed = new Set();
+  for (const leaf of leaves) {
+    const matches = noteMatches(leaf, balance);
+    for (const match of matches) claimed.add(`${leaf.split('.').slice(0, match.depth).join('.')}|${match.key}`);
+    const patternsByBlock = new Map();
+    for (const match of matches.filter((entry) => !entry.literal)) {
+      patternsByBlock.set(match.depth, [...(patternsByBlock.get(match.depth) || []), match.key]);
+    }
+    for (const keys of patternsByBlock.values()) {
+      assert.equal(keys.length, 1, `${leaf} is claimed by ${keys.join(' and ')} in one [NOTE] block`);
+    }
+  }
+
+  const orphans = [];
+  (function walkBlocks(value, path) {
+    if (!value || typeof value !== 'object') return;
+    const block = value[NOTE];
+    if (block) {
+      for (const key of Object.keys(block)) {
+        if (!claimed.has(`${path.join('.')}|${key}`)) orphans.push(`${path.join('.') || '(balance)'} → ${key}`);
+      }
+    }
+    for (const [key, child] of Object.entries(value)) walkBlocks(child, [...path, key]);
+  })(balance, []);
+  assert.deepEqual(orphans, [], 'these notes describe a number that is not beside them');
+
+  // Every blank in every sentence is filled. A blank nothing fills is left as
+  // `{name}` on purpose, so this is the line that reads it.
+  const unfilled = advancedConfigRows(contentBundle)
+    .filter((row) => row.generatedBalance && /\{\w+\}/.test(row.note))
+    .map((row) => `${row.searchPath}: ${row.note}`);
+  assert.deepEqual(unfilled, [], 'these notes left a blank unfilled');
+});
+
+// A NOTE IS INVISIBLE TO EVERYTHING THAT READS BALANCE AS NUMBERS. That is the
+// whole reason the key is a Symbol: validate.js refuses an unknown key in 27
+// places, leafRows would turn a string sibling into a row, and a run snapshot
+// is JSON. None of them may meet a sentence. The clone half is stated rather
+// than hidden — a configured bundle (structuredClone) carries no notes, which
+// is fine because the rows are built from the authored bundle, and would not
+// be if that ever changed.
+test('a note is invisible to everything that reads balance as numbers', async () => {
+  const { balance, NOTE } = await import('../src/content/balance.js');
+  const texts = [];
+  (function collect(value) {
+    if (!value || typeof value !== 'object') return;
+    for (const note of Object.values(value[NOTE] || {})) texts.push(typeof note === 'string' ? note : note.text);
+    for (const child of Object.values(value)) collect(child);
+  })(balance);
+  assert.ok(texts.length > 100, `expected the notes to be found, got ${texts.length}`);
+
+  const json = JSON.stringify(balance);
+  const leaked = texts.filter((text) => json.includes(text.slice(0, 40)));
+  assert.deepEqual(leaked, [], 'a note reached the JSON form of balance');
+  assert.ok(!Object.keys(balance.shop).some((key) => typeof balance.shop[key] === 'string'),
+    'no balance object gains a string key from its notes');
+  assert.equal(structuredClone(balance.shop)[NOTE], undefined, 'a clone carries no notes');
+});
+
+// EVERY VARIABLE A RELIC OR TALENT CARRIES HAS A PHRASE. The family sentence
+// for both reads `balanceWords.effects`, and a variable missing from it falls
+// back to "the <variable> it uses" — a sentence that is not wrong, and says
+// nothing. A relic added with a new variable fails here and names it.
+test('every relic and talent variable has a phrase in balanceWords', async () => {
+  const { balance, balanceWords } = await import('../src/content/balance.js');
+  const variables = new Set([...Object.values(balance.powers), ...Object.values(balance.classTree)]
+    .flatMap((row) => Object.keys(row)));
+  const missing = [...variables].filter((variable) => !Object.hasOwn(balanceWords.effects, variable));
+  assert.deepEqual(missing, [], 'these variables have no phrase in balanceWords.effects');
 });

@@ -20,6 +20,7 @@ import {
   restoreDerivedStatRuleSnapshot,
   resolveDerivedStatRules,
   deriveStat,
+  ruleTierSize,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
@@ -272,7 +273,7 @@ function derivedOptions(registries, extra = {}) {
  * outputs so a later content edit cannot rewrite a climb in progress.
  */
 /** The character level a run's pools are derived at (plan phase 6): 1 for a run whose ledger is absent. */
-function characterLevelOf(run) {
+export function characterLevelOf(run) {
   const row = run && run.level;
   return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }
@@ -456,7 +457,10 @@ export function initializeRunDerivedStats(run, registries, {
     derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
-    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+    // The granularity a relic term has to match is the row's points-per-
+    // increase divided by the weight it puts on its one attribute, which is the
+    // same number `pointsPerTier` used to be for a single-stat row.
+    Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
     attributes: run.attributes,

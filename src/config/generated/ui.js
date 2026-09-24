@@ -34,7 +34,7 @@
 // source content/config/ui/presentation/poseAnimator.json d24e65c7e8f3721d
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
-// source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
+// source content/config/ui/presentation/startupGate.json 235c1e44daaeeb6b
 // source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
@@ -34989,7 +34989,7 @@ export const uiConfig = deepFreeze({
         "entrance": {
           "lightUpMs": 560,
           "fadeMs": 880,
-          "holdDefault": "0.5s",
+          "holdDefault": "2s",
           "holdDurations": {
             "0s": 0,
             "0.3s": 300,

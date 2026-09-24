@@ -21,6 +21,7 @@ import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { t } from '../strings.js';
+import { loreLine } from './loreLine.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -195,8 +196,8 @@ export function renderCard(registries, ref, opts = {}) {
   // colorless and co-op sets. Believing the comment meant the text was written
   // and shown to nobody.
   // The face has four fixed bands and no room to grow one, so the flavour is
-  // carried by the reading door's pane — the same place, and the same
-  // `inspection-lore` disclosure, the equipment card uses for its own.
+  // carried by the reading door's pane — the same place, and the same lore
+  // line (components/loreLine.js), the equipment card uses for its own.
   //
   // `cname` is not a region, for the same reason `.epc-name` is not: the title
   // is what tells one card from another and shows at every level.
@@ -345,21 +346,12 @@ export function renderCard(registries, ref, opts = {}) {
       // `profile.flavor || def.flavor` (model/registries.js), the generated
       // basic profiles author it, and so do the colorless and co-op sets. It
       // was written, stored, and shown to nobody.
-      // It goes in the reading door's pane rather than on the face, which is
-      // exactly where the equipment card puts its own (`inspection-lore` in
-      // equipmentCard.js) — same disclosure, same summary, so the two card
-      // types read the same way at the same level.
-      if (def.flavor) {
-        const lore = document.createElement('details');
-        lore.className = 'inspection-lore';
-        const summary = document.createElement('summary');
-        summary.textContent = 'Flavor';
-        summary.tabIndex = 0;
-        const text = document.createElement('p');
-        text.textContent = def.flavor;
-        lore.append(summary, text);
-        details.append(lore);
-      }
+      // It goes in the reading door's pane rather than on the face, and it is
+      // one line there: the identity line. The card's full description opens
+      // in the lore modal from that line (components/loreLine.js), the same
+      // element the equipment card uses, so the two card kinds read alike.
+      const lore = loreLine({ text: def.flavor, title: def.name });
+      if (lore) details.append(lore);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read

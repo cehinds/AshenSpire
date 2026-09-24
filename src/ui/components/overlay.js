@@ -13,6 +13,7 @@ import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
+import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { topVeil } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
@@ -42,6 +43,7 @@ const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
     previewAttributes: ctx.run?.attributes,
+    previewLevel: ctx.run ? characterLevelOf(ctx.run) : null,
     onChange: ctx.onSettingsChange || (() => {}),
     onOffline: ctx.onOffline,
   }),

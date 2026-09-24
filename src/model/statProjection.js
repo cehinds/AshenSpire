@@ -1,7 +1,7 @@
 // One read model for character stats on every non-combat comparison surface.
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
-import { deriveStat } from './derivedStats.js';
+import { deriveStat, deriveStatIncrease, levelBonus, resolvedRuleRow, ruleWeights } from './derivedStats.js';
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
@@ -30,6 +30,11 @@ function presentationRows(registries) {
  * alone. `active` stays false until a combat rule consumes it — the day the
  * player-poise mechanics land, that flip is theirs to make, with the note.
  */
+// Phase 8's player Poise: Constitution × balance.poise.playerPerConstitution,
+// shipped as 1. The rule a run born before derived-stat ruleset 5 keeps,
+// written in ruleset 6's words: one Poise per point of Constitution.
+const LEGACY_PLAYER_POISE_RULE = Object.freeze({ base: 0, constitution: 1, perLevel: 0 });
+
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
@@ -49,23 +54,41 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // THE COEFFICIENT HAS ONE HOME, AND SINCE RULESET 5 IT IS THE DERIVED-STAT
   // TABLE (plan phase 9). Phase 8 kept it in balance because the rebase had
   // not been written yet; reading it from two places would be the copy Law 1
-  // forbids. A run whose own snapshot predates the row falls through to the
-  // live table, which is what a headless fixture and a creation preview need;
-  // a run that HAS the row is priced by its own, below.
+  // forbids.
   // THE RUN'S OWN SNAPSHOT IS THE AUTHORITY, and the live table only the
-  // fallback for a caller that carries no run (a headless fixture, a
-  // creation preview). A run born under an Advanced tier-size override
-  // records that override in its snapshot, and reading the authored row
-  // instead would price its meter by numbers that run never agreed to
+  // fallback for a caller that carries no snapshot at all (a headless
+  // fixture, a creation preview). A run born under an Advanced tier-size
+  // override records that override in its snapshot, and reading the authored
+  // row instead would price its meter by numbers that run never agreed to
   // (Codex, #1217).
-  const poiseRule = run.derivedStatRuleSnapshot?.rules?.rules?.poise
-    || registries.derivedStatRules?.rules?.poise;
-  const perTier = Number.isFinite(poiseRule?.pointsPerTier) ? poiseRule.pointsPerTier
-    : (Number.isFinite(registries.derivedStatRules?.defaults?.pointsPerTier) ? registries.derivedStatRules.defaults.pointsPerTier : 1);
-  const gain = Number.isFinite(poiseRule?.gainPerTier) ? poiseRule.gainPerTier : 0;
-  const poiseBase = Number.isFinite(poiseRule?.base) ? poiseRule.base : 0;
-  const con = run.attributes && Number.isFinite(run.attributes.constitution) ? run.attributes.constitution : 0;
-  const attribute = poiseRule ? poiseBase + Math.floor(con / (perTier || 1)) * gain : 0;
+  // ONE EVALUATOR, NOT A SECOND COPY OF THE FORMULA. The snapshot's row is
+  // ruleset-6 shaped whatever table the run was born under (model/
+  // derivedStats.js normalizes at the door), so the Poise vessel is priced by
+  // the same arithmetic every other row is — weights included, which is what
+  // lets the row answer to more than Constitution the day it is authored to.
+  // A SNAPSHOT WITHOUT THE ROW IS AN ANSWER, NOT A GAP. Poise joined the
+  // derived table in ruleset 5; a run born under 1–4 was priced by phase 8's
+  // `balance.poise.playerPerConstitution`, which shipped as 1 — Constitution
+  // one-for-one. That coefficient is frozen here as the rule such a run was
+  // born under, so its meter neither loses the Constitution term nor follows
+  // the live row when that row is retuned (review, #1217 and #1255).
+  const ownSnapshot = run.derivedStatRuleSnapshot?.rules;
+  const poiseRule = ownSnapshot?.rules
+    ? resolvedRuleRow(ownSnapshot, 'poise') || LEGACY_PLAYER_POISE_RULE
+    : resolvedRuleRow(registries.derivedStatRules, 'poise');
+  // A run handed without attributes (a headless fixture) has no attribute term,
+  // so every attribute the row names reads 0 rather than refusing the fixture.
+  const poiseAttributes = Object.fromEntries(ruleWeights(poiseRule || {})
+    .map(([id]) => [id, Number.isFinite(run.attributes?.[id]) ? run.attributes[id] : 0]));
+  // THE LEVEL TERM TOO, or "Poise pool — Per level" would move the number on
+  // the sheet (statProjection below prices every row at the run's level) while
+  // the meter this receipt stamps stayed at level 1 (Codex, #1253).
+  const level = Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1;
+  const attribute = poiseRule
+    ? (Number.isFinite(poiseRule.base) ? poiseRule.base : 0)
+      + deriveStatIncrease(poiseRule, { attributes: poiseAttributes, statId: 'poise' }).value
+      + levelBonus(poiseRule, level)
+    : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
     kind: 'equipment',
@@ -84,7 +107,11 @@ export function playerPoiseThresholdReceipt(registries, run) {
     id: 'poiseThreshold',
     label: 'Poise threshold',
     sources: [
-      ...(attribute > 0 ? [{ kind: 'attribute', id: 'constitution', value: attribute }] : []),
+      // THE ATTRIBUTES THE ROW ACTUALLY ANSWERS TO. This named Constitution
+      // outright while a row could only have one source stat; since ruleset 6
+      // it may be weighted across several, and a receipt that names the wrong
+      // one is worse than a receipt that names none.
+      ...(attribute > 0 ? [{ kind: 'attribute', id: ruleWeights(poiseRule || {}).map(([id]) => id).join('+') || 'attributes', value: attribute }] : []),
       ...pieceSources, ...relicSources,
     ],
     attribute,
@@ -206,11 +233,17 @@ export function statProjection(registries, run) {
       adjustment,
       // Every term the value has, so the arithmetic shown equals the result
       // shown: the level's own term (plan phase 6) joins once it is non-zero.
-      formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+      // THE ONE FORMAT, READ BACK: base, then each attribute's own floored
+      // term by its short label ("30 + 12 CON"), exactly as a rating receipt
+      // reads. A run born under ruleset 5 or earlier still carries a tier and
+      // its gain (model/derivedStats.js), and is shown the way it is priced.
+      formula: `${receipt.base} + ${receipt.pointsPerIncrease === 1 && receipt.gain === 1
+        ? (Object.entries(receipt.terms).map(([attrId, term]) => `${term} ${registries.attributes.get(attrId)?.shortLabel || attrId}`).join(' + ') || '0')
+        : `${receipt.tier} × ${receipt.gain}`}`
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Hand & Draw Rules.' : '',
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Stats → Draw & hand.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

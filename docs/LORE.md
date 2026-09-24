@@ -461,40 +461,67 @@ plan and is stated there, not here.
 
 ## 7. Card flavor: how the world is told
 
-Narrative is ambient (GDD §4). The main channel is **one line of flavor text
-on a card**, shown in card inspection, never on the playable face and never in
-place of rule text. The card schema already accepts an optional `flavor`
-string on every card (`src/model/schemas.js`). Card inspection renders it in
-the optional **Flavor** disclosure; the playable face keeps only rules.
+Narrative is ambient (GDD §4). The main channel is **card lore**: a short
+item description on every card, in the manner of the Souls games' item text,
+shown only in card inspection — never on the playable face and never in place
+of rule text. The card schema accepts an optional `flavor` string on every card
+(`src/model/schemas.js`), and the basic weapon profiles carry their own in
+`content/source/basicCardProfiles.csv`. Card inspection shows its first line;
+pressing that line opens the **lore modal** with the whole text, so a
+description has room to tell a story; the playable face keeps only rules.
 
-The first integration pass adds 37 attributed fragments to the four class
-pools, including each class's signature starter. Reaver lines come from the
-Warden's field-book, Rogue lines from frozen-dock cant, Starseer lines from
-the Astronomer's chart margins, and Herald lines from Chapel liturgy. Each
-fragment is at most twelve words, followed by its source attribution. These
-are authored directly beside their cards in `src/content/cards/`.
+The first passes shipped twelve-word fragments, then signed single-witness
+accounts. The current pass writes each card's lore the way the Souls games
+write an item description, in three parts separated by blank lines:
 
-The seed lines below are writing prompts, not verbatim shipping copy: shorten
-them to the rules and preserve §2's reveal boundary. In particular, Astral
-Insight hints at the fourth hearth rather than quoting the hearth-room page.
-Events, boss parleys, companions, and the ending remain later integration
-passes; card flavor does not imply those systems have shipped.
+1. **The identity line** — one short line naming what the thing is and whose:
+   *Art of the sellswords of the Bastion.* This is all card inspection shows.
+2. **The history** — two or three plain sentences: who used it, where, what
+   happened. This is where the world is told.
+3. **The closing line** — set apart, the one quiet turn: an implication, a
+   consequence, a line of liturgy. Never a joke.
+
+Pressing the identity line opens the lore modal with all three. They are
+authored directly beside their cards.
+
+The seed lines below are writing prompts, not verbatim shipping copy: fit them
+to the rules and preserve §2's reveal boundary. In particular, Astral Insight
+hints at the fourth hearth rather than quoting the hearth-room page. Events,
+boss parleys, companions, and the ending remain later integration passes; card
+lore does not imply those systems have shipped.
 
 ### Rules
 
-- **One sentence, twelve words or fewer.** Two short sentences at most.
-- **Name a thing you could pick up.** A bell, a brand, a ledger, a frozen
-  bridge. No abstractions.
-- **Never explain the rule.** Flavor may echo what the card does; it may not
-  teach it. A player who skips every line loses nothing.
-- **Fragments, not narration.** Each line is a shard of the old world. The
-  player assembles §2 from them; no single card states it.
-- **Voice belongs to the class pool.** Four voices, below. Colorless cards use
-  the Forsaken voice.
-- **Somebody said it.** Every line is someone's claim — a field-book, a
-  liturgy, a chart margin, a song. None of them is the authors. A line may be
-  wrong; the world does not correct it. Lines about the Ember, the fall or the
-  old world follow [LORE-EMBER.md](LORE-EMBER.md) §12.
+- **Three parts, forty to eighty words.** Identity line of twelve words or
+  fewer; history of two or three sentences; closing line set apart.
+  Afflictions and basic profiles may run shorter.
+- **The voice is the record's.** A plain, formal archive voice that never
+  cites itself and never speaks as a character: no "— source" signature, no
+  "the log does not say". A liturgy line or a scratched cairn mark may be
+  quoted as the closing line.
+- **Perspective lives in the wording.** Each pool's faction frames what it
+  describes in its own terms — the Chapel's "Writing" and "promise", the
+  Wardens' gate and bell, the Starwatch's charts and measures, the docks'
+  plain cynicism. Roughly seventy percent is true, ten percent is that
+  faction's bias, and twenty percent is left open; the world never marks
+  which is which.
+- **Pin it to a time.** Each card touches one age from
+  [LORE-WORLD.md](LORE-WORLD.md) §1, so the set reads as a history.
+- **Restraint.** No conversational idiom, no wry punchline, no run of short
+  fragments. At most one hedge ("It is said…") per card. Name things you could
+  pick up; avoid "ancient," "eldritch," "eternal."
+- **Never explain the rule.** Lore may show what happens in the fiction; it may
+  not teach the card. No numbers and no game terms used as mechanics.
+- **The reveal boundary holds.** No card states plainly that names feed the
+  fire, that the Spire burns the unwritten, or what the Ember is or whether a
+  star fell ([LORE-EMBER.md](LORE-EMBER.md) §12–13).
+- **Invented people and places** are allowed when they contradict nothing here
+  or in [LORE-CAST.md](LORE-CAST.md) and [LORE-WORLD.md](LORE-WORLD.md), and
+  should recur across cards.
+- **No borrowed names.** The Souls games set the craft, not the vocabulary: no
+  proper noun or coined term from them ([IP-SCRUB.md](IP-SCRUB.md)).
+- **How it is read** is the player's: typeface, size, spacing and slant are set
+  under Advanced → Text & lore.
 
 ### Four voices
 

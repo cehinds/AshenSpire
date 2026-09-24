@@ -14,7 +14,7 @@ export const coopCards = [
     effects: [{ op: 'block', target: 'ally', amount: 10 }],
     textTemplate: 'An ally gains {block} Block.',
     upgrade: { effects: [{ op: 'block', target: 'ally', amount: 14 }] },
-    flavor: 'Raised where the ember-given rally.',
+    flavor: "Blank rag upon a pole.\n\nPlanted where climbers who meet upon the road may find one another. The Forsaken never had banners, for a banner bears a name. The corrupted come to them too.\n\nA rag on a pole. Find it. Stand by it.",
   },
   {
     id: 'sharedFlame', name: 'Shared Flame', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
@@ -22,7 +22,7 @@ export const coopCards = [
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
     textTemplate: 'An ally heals {heal} HP. Exhaust.',
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
-    flavor: 'Warmth passed hand to hand outlives the fire.',
+    flavor: "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire.",
   },
   {
     id: 'ashOath', name: "Oath of Ash", class: 'colorless', rarity: 'special', cost: 2, type: 'skill',
@@ -38,7 +38,7 @@ export const coopCards = [
         { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
       ],
     },
-    flavor: 'Sworn once, kept twice.',
+    flavor: "Oath sworn in ash.\n\nA smear upon each other's wrist, where the mark would have been; no witness, no name. It binds twice, once for each. The Court held that an unwitnessed oath binds no one.\n\nThe Court is sewn to its oaths now.",
   },
 ];
 

@@ -89,7 +89,8 @@ function fail(msg) {
   process.exit(1);
 }
 
-/** Split one CSV line, honouring "quoted, fields" and "" escapes. */
+/** Split one CSV line, honouring "quoted, fields", "" escapes, and \n inside
+ *  a quoted field as a line break (multi-paragraph card lore; rows stay one line). */
 function splitCsvLine(line) {
   const out = [];
   let cur = '';
@@ -99,7 +100,8 @@ function splitCsvLine(line) {
     if (quoted) {
       if (ch === '"') {
         if (line[i + 1] === '"') { cur += '"'; i++; } else quoted = false;
-      } else cur += ch;
+      } else if (ch === '\\' && line[i + 1] === 'n') { cur += '\n'; i++; }
+      else cur += ch;
     } else if (ch === '"') quoted = true;
     else if (ch === ',') { out.push(cur); cur = ''; }
     else cur += ch;

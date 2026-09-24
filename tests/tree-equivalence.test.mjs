@@ -102,9 +102,11 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   // `arrived`, and the two services a place may offer.
   const PHASE_7_PROPERTIES = ['restHpSmall', 'restHpPartial', 'restHpFull', 'restMana', 'restManaFlat', 'restManaFloor', 'restManaFull', 'restFlasks', 'smith', 'levelUp'];
   const PHASE_8_PROPERTIES = ['staggerBreak', 'resonance'];
-  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES];
+  // Plan phase 10b's quest board: a service the inn offers.
+  const PHASE_10B_PROPERTIES = ['questBoard'];
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES];
   assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id))),
-    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b/7\'s named property nodes');
+    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b/7/8/10b\'s named property nodes');
   assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED].sort(), 'and the property additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });

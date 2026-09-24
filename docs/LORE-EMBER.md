@@ -355,9 +355,9 @@ not coyness; it is what a wrecked record actually does.
 
 ## 12. What an author does with this
 
-- **One fragment at a time.** LORE §7's rules hold: one sentence, twelve words
-  or fewer, a thing you could pick up, never an explanation. A foreign fragment
-  is a card line, a wayfarer beat, an inscription on a `?` node, a page in a
+- **One fragment at a time.** Card lore follows LORE §7; any other fragment is
+  one sentence, twelve words or fewer, a thing you could pick up, never an
+  explanation. A foreign fragment is a card line, a wayfarer beat, an inscription on a `?` node, a page in a
   city's library, a line the Sealstone Key uncovers.
 - **Name the source, not the truth.** *A Hold song says.* *The Ashland tablet
   reads.* *The second copy has a different number.* The player is told who is

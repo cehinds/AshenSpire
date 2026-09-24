@@ -649,6 +649,12 @@ input[type="range"] { min-height: var(--tap-floor); }
 .as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
 .as-row.setting .set-applied-slot:empty { display: none; }
 .as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+/* A row that does nothing while a switch is off (settings.js refreshGates):
+   the label dims, the control is disabled, and the gate line says which switch
+   opens it. The line keeps full ink — it is the answer to "why is this grey". */
+.as-row.setting.set-row-gated .ls-label { color: var(--ink-dim); }
+.as-row.setting.set-row-gated .r-trail { opacity: 0.55; }
+.as-row.setting .set-gate-note { color: var(--ink); font-style: italic; }
 .as-row.setting .ls-hint code { color: var(--ink-dim); }
 .set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
 .set-section-head + .as-hairline { margin: 1.4rem 0; }
@@ -3930,9 +3936,172 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:var(--card-ratio); min-width:0; margin:0; transform:none; }
 .equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
 .cc-starting-card .card-info-button { top:-44px; }
-.inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
-.inspection-lore summary { cursor:pointer; }
-.inspection-lore p { font-style:italic; margin:8px 0 0; }
+/* CARD LORE — the identity line in inspection and the lore modal behind it
+   (components/loreLine.js). The player picks the face, size, spacing and slant
+   under Advanced → Text & lore; models/LoreTypeModel.js writes the choice on
+   <html> as data-lore-* words and the rules below turn words into type. The
+   faces are bundled (assets/fonts/, CREDITS.md) under their own "AS Lore"
+   names, so none of them changes the game's headings or body text. The lore
+   window sizes in rem against the 62.5% root (1rem = 10px at Text M); the
+   inspection line is 1.6rem (16px at Text M, so Text size grows it) with the
+   card-inspection pane's zoom floor, the same in playing-card and equipment
+   inspection. */
+/* FONT LICENCES — carried here so the notices travel inside every build,
+   single-file and mobile alike (the same text is assets/fonts/OFL.txt).
+
+Card lore faces bundled in assets/fonts/ (Latin subset WOFF2, from the Fontsource
+packages of the Google Fonts releases). Each is licensed under the SIL Open Font
+License, Version 1.1, reproduced below; also available with a FAQ at https://openfontlicense.org
+
+IM Fell English: Copyright (c) 2010, Igino Marini (mail@iginomarini.com)
+EB Garamond: Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)
+Cormorant Garamond: Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)
+Crimson Pro: Copyright 2018 The Crimson Pro Project Authors (https://github.com/Fonthausen/CrimsonPro)
+Spectral: Copyright 2017 The Spectral Project Authors (https://github.com/productiontype/Spectral)
+Libre Baskerville: Copyright 2012 The Libre Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville)
+Cinzel: Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel)
+Inter: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+*/
+@font-face { font-family:'AS Lore Fell'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Fell'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cinzel'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cinzel-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-italic.woff2') format('woff2'); }
+:root { --lore-font:'AS Lore Fell', Georgia, serif; --lore-size:1.7rem; --lore-scale:1; --lore-leading:1.6; --lore-tracking:0em; --lore-slant:italic; --lore-identity-slant:italic; }
+:root[data-lore-face="fell"] { --lore-font:'AS Lore Fell', Georgia, serif; }
+:root[data-lore-face="garamond"] { --lore-font:'AS Lore Garamond', Georgia, serif; }
+:root[data-lore-face="cormorant"] { --lore-font:'AS Lore Cormorant', Georgia, serif; }
+:root[data-lore-face="crimson"] { --lore-font:'AS Lore Crimson', Georgia, serif; }
+:root[data-lore-face="spectral"] { --lore-font:'AS Lore Spectral', Georgia, serif; }
+:root[data-lore-face="baskerville"] { --lore-font:'AS Lore Baskerville', Georgia, serif; }
+:root[data-lore-face="cinzel"] { --lore-font:'AS Lore Cinzel', Georgia, serif; }
+:root[data-lore-face="inter"] { --lore-font:'AS Lore Inter', 'Segoe UI', system-ui, sans-serif; }
+:root[data-lore-face="georgia"] { --lore-font:Georgia, 'Times New Roman', serif; }
+:root[data-lore-size="S"] { --lore-size:1.5rem; --lore-scale:0.9; }
+:root[data-lore-size="M"] { --lore-size:1.7rem; --lore-scale:1; }
+:root[data-lore-size="L"] { --lore-size:1.9rem; --lore-scale:1.1; }
+:root[data-lore-size="XL"] { --lore-size:2.2rem; --lore-scale:1.25; }
+:root[data-lore-leading="tight"] { --lore-leading:1.4; }
+:root[data-lore-leading="normal"] { --lore-leading:1.6; }
+:root[data-lore-leading="loose"] { --lore-leading:1.85; }
+:root[data-lore-tracking="tight"] { --lore-tracking:-0.01em; }
+:root[data-lore-tracking="normal"] { --lore-tracking:0em; }
+:root[data-lore-tracking="wide"] { --lore-tracking:0.04em; }
+:root[data-lore-slant="upright"] { --lore-slant:normal; }
+:root[data-lore-identity-slant="upright"] { --lore-identity-slant:normal; }
+/* Cinzel ships no italic; an upright face beats a browser-faked slant. */
+:root[data-lore-face="cinzel"] { --lore-slant:normal; --lore-identity-slant:normal; }
+.inspection-lore-line { display:flex; align-items:baseline; gap:12px; width:100%; box-sizing:border-box; margin:12px 0 0; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--parchment); text-align:left; font:inherit; }
+button.inspection-lore-line { cursor:pointer; }
+button.inspection-lore-line:hover { border-color:var(--gold); }
+button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ONE LINE, like creation flavor (SPEC): a long identity ends in an ellipsis;
+   the whole of it opens in the lore modal from this same line. */
+/* A line with nothing behind it (an equipment blurb) has no modal to open,
+   so it wraps in full rather than hide words a touch player cannot reach. */
+p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; text-overflow:clip; }
+.inspection-lore-line .lore-read { flex:none; font-size:calc(0.75 * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+.lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
+.lore-modal-text p { margin:0; }
+.lore-modal-text .lore-identity { font-size:calc(var(--lore-size) + 0.2rem); font-style:var(--lore-identity-slant); }
+.lore-modal-text .lore-closing { margin-top:4px; padding-top:12px; border-top:1px solid var(--line); color:var(--parchment); opacity:0.82; }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
 /* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
    is worn and held in the order the sections ask for it — with the receipts
@@ -5130,8 +5299,7 @@ button[data-button-size] {
 .customize .cc-item-heading .inspection-facts { display:flex; gap:6px; margin:0; }
 .customize .cc-compact-details { display:flex; flex-direction:column; gap:8px; }
 .customize .cc-compact-details .inspection-effect,.customize .cc-compact-details .inspection-requirement { margin:0; font-size:14px; }
-.customize .cc-compact-details .inspection-lore { margin:0; border:0; padding:0; }
-.customize .cc-compact-details .inspection-lore summary { padding:4px 0; font-size:12px; }
+.customize .cc-compact-details .inspection-lore-line { margin:0; padding:6px 8px; }
 .customize .cc-single-tags { display:flex; flex-wrap:nowrap; gap:5px; min-width:0; width:100%; }
 .customize .cc-single-tags > .inspection-tag { flex:none; white-space:nowrap; font-size:12px; padding:5px 7px; }
 .cc-single-tags > [hidden] { display:none!important; }
@@ -5224,8 +5392,13 @@ button[data-button-size] {
 
 /* Creation header: stable menu and a single, plain close control. */
 .customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
-.customize .cz-head-tools.cz-header-menu { display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
-.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; }
+/* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
+   placeGap() reads this declaration, customize.js writes nothing, and
+   tools/placement.mjs reads the same line the code used. */
+.customize .cz-head-tools.cz-header-menu { --place-gap: 8px; display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
+/* A window too short for four categories scrolls the menu instead of pinning
+   Review off the bottom edge (customize.js writes the max-height it was bound to). */
+.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; overflow: hidden auto; }
 .customize .cz-menu-navigation { display: grid; gap: 6px; }
 .customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
 .customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; font: 28px/1 Arial, sans-serif; }

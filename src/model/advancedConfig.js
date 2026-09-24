@@ -1,15 +1,19 @@
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
+import { presetGearProblems } from './attributes.js';
+import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // Advanced game configuration is a sparse overlay on authored content.
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
-  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum,
+  startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems } from './combatRatings.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
+import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
+import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -55,6 +59,12 @@ function numberDomain(value) {
 // that validation caps at 100, a cap that must be positive. The row says so,
 // so a value the editor accepts is a value a run can start on.
 const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
+// A card-value bonus is SIGNED (SPEC §3.4: "The signed card-specific bonus is
+// added after flooring"), and validation accepts any finite number. Read off
+// the shipped value alone, a bonus that ships at 0 or above would floor at 0,
+// and a card could never be made weaker than its cost says.
+const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
+const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
@@ -74,6 +84,34 @@ export function currentAdvancedKey(key) {
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
 
+/**
+ * normalizeAdvancedSettings(settings, bundle) → the same object, holding only
+ * keys this build knows.
+ *
+ * ONE NUMBER, ONE ROW, WHEREVER IT IS READ (Copilot, on #1242). The per-item
+ * rating migration is value-bearing — it reads the item's authored rating to
+ * turn an old plus into the value it used to make — so it cannot live in the
+ * static key map above, and a reader that skipped it saw a different number
+ * from a reader that did: the item card took the migrated 8 while the settings
+ * row still opened on the authored 5, and typing in that row overwrote the 8.
+ * Rewriting the profile ITSELF, once, at boot, leaves every reader — the row,
+ * the export, the configured bundle, the fight — looking at one key.
+ *
+ * In place, because the profile object is shared (`main.js` holds
+ * `activeMeta.settings` by reference and saves it); the return value is the
+ * same object, for callers that would rather read than mutate.
+ */
+export { hasLegacyItemRatingSettings };
+
+export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
+  if (!settings || typeof settings !== 'object' || !bundle) return settings;
+  const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
+  if (migrated === settings) return settings;
+  for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
+  Object.assign(settings, migrated);
+  return settings;
+}
+
 // A DIAL THIS BUILD RETIRED, so an older export still imports. `parseAdvanced-
 // ConfigFile` refuses an unknown key OUTRIGHT — "Nothing was imported" — which
 // is right for a typo and wrong for a key this build itself removed: the
@@ -88,12 +126,25 @@ export function currentAdvancedKey(key) {
 //                                           reaches any formula, so the dial
 //                                           that switched it off has nothing
 //                                           left to switch.
-const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier))$/;
+//   derivedStatRules.rules.<id>.pointsPerTier / .gainPerTier — <id> is one
+//                                           of the six stat ids, never a
+//                                           wildcard, so a typo such as `hhp`
+//                                           is still refused as unknown,
+//   derivedStatRules.defaults.pointsPerTier,
+//   balance.levelUp.tierSizeMin / .tierSizeMax
+//                                           ruleset 6 (owner, 2026-09-21): HP,
+//                                           Mana and every pool read as the
+//                                           ratings do — a decimal weight per
+//                                           attribute — so a tier and its gain
+//                                           have no row left to land on, and
+//                                           the "Stat points per tier" dial
+//                                           and its bounds retired with them.
+const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
-    warnings.push('Per-rating tiers and multipliers were replaced by direct attribute weights and one global multiplier. Retired entries were skipped; everything else in the file was imported.');
+    warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
   }
   return kept;
 }
@@ -109,12 +160,27 @@ function withoutSupersededLegacy(entries) {
     .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
 
+// ONE TAB PER SUBJECT (owner, 2026-09-23: "settings duplicated in multiple
+// sections making it hard to tell which does what"). The catch-all "Rules" tab
+// held skills, talents, relics, XP, rest and co-op side by side, each of which
+// has a real home elsewhere; it is gone, and anything not named here falls to
+// Combat, the tab for rules of play.
+//   - everything that decides a trait is one topic of the Stats tab (owner,
+//     2026-09-21): the legacy poise meter sits under Stats → Poise beside the
+//     rating that replaces it while ratings are on, the fallback hand size
+//     under Stats → Draw & hand beside the capacity in force, and the Mana
+//     card rules under Stats → Mana;
+//   - character XP, skills and talents are Progression;
+//   - equipment and relic values are one Equipment tab;
+//   - how a run is built — rest, the atlas, seats, run modifiers, gauntlet,
+//     co-op, endless — is World.
 function balanceGroup(path) {
-  if (/^(level|starting|energy$|draw$|handMax$)/.test(path)) return 'Progression';
-  if (/^(rewards|shop|smith|equipment|customMods|graceRefill|flask)/.test(path)) return 'Rewards';
-  if (/^(map|floors|act|seat|event|treasure|journey|node)/.test(path)) return 'World';
-  if (/^(combat|poise|enemy|boss|status|exposure|arcane|damage|block|guard|proc)/.test(path)) return 'Combat';
-  return 'Rules';
+  if (/^(poise|stagger|mana)\./.test(path) || path === 'handMax') return 'Stats';
+  if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
+  if (/^(equipment|powers)\./.test(path)) return 'Equipment';
+  if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
+  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
+  return 'Combat';
 }
 
 // ---- THE ROWS THAT SHOWED A SECOND, DEAD ANSWER (owner, 2026-09-21) -------
@@ -124,7 +190,8 @@ function balanceGroup(path) {
 // does nothing at all.
 //
 // Progression → Starting values offered `energy` and `draw`; Progression →
-// Stat conversions offers "Actions — base amount" and "Draw — base amount".
+// Stat conversions offered "Actions — base amount" and "Draw — base amount"
+// (now Stats → Actions and Stats → Draw & hand).
 // The second pair is what a run is actually born with — `state.js` reads
 // `energy.value` and `draw.value` off the derived-stat rules and nothing in
 // src, tools or tests reads `balance.energy` or `balance.draw` at all. Setting
@@ -141,19 +208,35 @@ function balanceGroup(path) {
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',
+  // THE SAME TEST, APPLIED TO THE REST OF THE MENU (owner, 2026-09-23: "multiple
+  // settings changing the same setting"). Each of these moved nothing:
+  //   - the level-up and tier-size bounds are read once, from the AUTHORED
+  //     content, as the min/max of Progression's "Level-up value" and "Stat
+  //     points per tier" rows (settings.js `LEVEL_DEFAULTS`); an override here
+  //     never reached those rows, so the menu showed three dials for one number
+  //     and two of them were decoration;
+  //   - enemy level scaling is inert #238 content — `levelScalingReceipt` has
+  //     no caller in src (balance.js says so above the table);
+  //   - the per-turn swap allowance is consulted only when `swapCostKind` is
+  //     'allowance', which is authored text and has no row.
+  'levelUp.pointsPerLevelMin',
+  'levelUp.pointsPerLevelMax',
+  // (`levelUp.tierSizeMin/Max` left with the tier dial itself — ruleset 6,
+  // #1253 — and are skipped on import as RETIRED_KEYS, not kept as rows.)
+  ...['hp', 'damage', 'block', 'poise'].flatMap((stat) => ['perLevel', 'min', 'max']
+    .map((leaf) => `levels.enemyScaling.${stat}.${leaf}`)),
+  'equipment.swapAllowancePerTurn',
 ]);
 
-// A note a player can act on, for the rows whose own name is not enough. The
-// rest get "Applies to a new run.", which is what the screen used to paste
-// over the engine's spelling anyway.
-const BALANCE_NOTES = Object.freeze({
-  // `combat.js` uses this ONLY when no hand rules are handed in, and the
-  // shipped game always hands them in (`main.js` resolves them for every
-  // fight), so the live capacity is Advanced → Hand & Draw → Hand capacity.
-  // Saying so is the difference between a fallback and a second answer.
-  handMax: 'Fallback hand capacity, used only when hand rules are unavailable.'
-    + ' The capacity a fight actually uses is Hand & Draw → Hand capacity → Base hand capacity.',
-});
+// THE NOTES LIVE BESIDE THEIR NUMBERS, in content/balance.js (owner,
+// 2026-09-23: "move the descriptions into balance.js"). A `BALANCE_NOTES`
+// table sat here and gave every generated row it did not name "Applies to a
+// new run." — the same five words under most of 325 rows. Every sentence it
+// held now sits beside its own number, with the facts it established kept:
+// the legacy poise and stagger rows are live only while combat ratings are
+// off; `handMax` is a fallback a solo fight never reads; each class's flasks
+// must add up to `flaskCapacity`; and the swap-cost numbers belong to the
+// rule the "Weapon swap cost" picker chooses, not to the `gear` flags.
 
 // ---- ONE LABEL HOME, AND THE ROW IS IT (owner, 2026-09-21) ----------------
 //
@@ -225,6 +308,22 @@ function labelSegment(part, sentence = false) {
     .join(' ');
 }
 
+// The generated rows filed under Advanced → Stats sit beside hand-written rows
+// ("Hand capacity — Base cards", "Keep unplayed cards after your turn"), so
+// they say what they do rather than spell their key; "Poise · On Fill · 0 —
+// Stacks" named an array index. Everything else keeps its key-derived label.
+const BALANCE_LABELS = Object.freeze({
+  handMax: 'Fallback hand capacity',
+  'poise.growthMult': 'Poise meter growth after each fill',
+  'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
+  'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
+  'stagger.player.actionLoss': 'Actions you lose when your meter fills',
+  'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
+  'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
+  'mana.minActionCost': 'Least action cost of a mana card',
+  'mana.minStaminaCost': 'Least stamina cost of a mana card',
+});
+
 /**
  * balanceLabel(path) → the row's one label.
  *
@@ -235,15 +334,30 @@ function labelSegment(part, sentence = false) {
  * only reason its two siblings are now telling apart.
  */
 function balanceLabel(path) {
+  const named = BALANCE_LABELS[path.join('.')];
+  if (named) return named;
   const leaf = labelSegment(path[path.length - 1], true);
   const context = path.slice(0, -1).map((part) => labelSegment(part));
   return context.length ? `${context.join(' · ')} — ${leaf}` : leaf;
 }
 
-function leafRows(value, path = [], rows = []) {
+// EVERY GENERATED ROW SAYS WHAT IT DOES. This used to read `Authored balance
+// value: <path>. Applies to a new run.` for all 325 of them — one sentence,
+// repeated, saying only what the key beside it already said (owner,
+// 2026-09-21: "the description for most of the settings say the same thing and
+// aren't very helpful descriptions"). The sentences sit beside their numbers
+// in content/balance.js, and model/balanceNotes.js reads them and fills in
+// every name from the bundle; the old line survives only as the fallback for a
+// number with no sentence, and a test holds that fallback at zero.
+//
+// `parent` is the object or array the leaf sits in, handed down so a row
+// inside an authored list (a swap-cost category, an armoury view, a flask
+// growth row) can name itself by its own tag or id instead of by its index.
+function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
+    const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -252,15 +366,25 @@ function leafRows(value, path = [], rows = []) {
       def: value,
       ...domain,
       label: balanceLabel(path),
-      note: (Object.hasOwn(BALANCE_NOTES, joined) && BALANCE_NOTES[joined]) || 'Applies to a new run.',
+      // The flag, not the sentence, is what marks a generated row: the Advanced
+      // panel used to recognise one by the boilerplate it carried, which meant
+      // giving a row a real description would have quietly changed how it drew.
+      generatedBalance: true,
+      // The whole note, closing clause included: a row the game does not read
+      // must not end by promising it applies to a new run, so the note beside
+      // the number decides that rather than this line appending it to
+      // everything.
+      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
-      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true } : {}),
+      // `inert` as well as `retired`: nothing reads it, so a stored value is
+      // never applied — see `configuredContentBundle`.
+      ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true, inert: true } : {}),
     });
     return rows;
   }
   if (!value || typeof value !== 'object') return rows;
-  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows);
+  for (const [key, child] of Object.entries(value)) leafRows(child, [...path, key], rows, bundle, value);
   return rows;
 }
 
@@ -331,6 +455,11 @@ function explicitRows(bundle) {
       min: 1, max: 999, def: classDef.maxHp,
       key: `${ADVANCED_CONFIG_PREFIX}classes.${classDef.id}.maxHp`,
       label: `${classLabel} — Base HP`, note: `Base HP for ${classLabel}. Applies to a new run.`,
+      // RETIRED (owner, 2026-09-23). `createRunState` writes this into maxHp and
+      // `initializeRunDerivedStats` overwrites it a few lines later with the
+      // derived HP rule (Stats → HP), so the row moved nothing. The
+      // key stays so an exported configuration carrying it still imports.
+      retired: true, inert: true,
       configPath: ['classesById', classDef.id, 'maxHp'], searchPath: `class ${classDef.id} max hp`,
     });
     for (const kind of ['hp', 'mana']) {
@@ -457,10 +586,12 @@ function progressionRows(bundle) {
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
-      cat: 'Advanced', advancedGroup: 'Progression', type: 'number', integer: false, step: 0.05,
+      // Cinders only — it never touched XP, whatever its old label said — so it
+      // is filed with the Cinders it multiplies (Rewards → Combat rewards).
+      cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.05,
       min: 0, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`,
-      label: 'Cinder / experience gain multiplier',
+      label: 'Cinder gain multiplier',
       note: 'Multiply Cinders earned from combat rewards. 1 keeps authored rewards. Applies to a new run.',
       specialKey: 'rewardMultiplier', searchPath: 'progression experience exp cinder reward gain multiplier',
     },
@@ -471,16 +602,127 @@ const LEGACY_BALANCE_PATHS = new Set([
   'levelUp.pointsPerLevel',
 ]);
 
+// ---- PER-CLASS VALUES THAT WIN OVER A GLOBAL, BY A SWITCH (2026-09-23) -----
+//
+// A class's reward-rarity table replaces the global one outright, and a class's
+// strike bias replaces the default — but nothing on screen said which was in
+// force, or let a class go back to following the global. Each now has a
+// "uses its own …" switch (model/settingOverrides.js). It starts ON because
+// these classes ship their own values; turning it off drops the class entry
+// from the configured bundle, so the engine's own fallback — the global —
+// applies.
+function balanceOwnRows(bundle) {
+  const rows = [];
+  const className = (id) => bundle.classes?.find((row) => row.id === id)?.name || word(id);
+  for (const classId of Object.keys(bundle.balance?.rewards?.rarityWeightsByClass || {})) {
+    const member = `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeightsByClass.${classId}`;
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Rewards', key: ownKey(member), def: true,
+      own: { member, defaultOn: true, dropPath: ['balance', 'rewards', 'rarityWeightsByClass', classId] },
+      label: `${className(classId)} uses its own reward rarity`, searchPath: `rewards rarity ${classId} own override`,
+      note: `On: ${className(classId)}'s combat rewards use the table below. Off: they use Reward rarity, like every other class. Applies to a new run.`,
+    });
+  }
+  for (const [classId, entry] of Object.entries(bundle.balance?.equipment?.startingDeck?.classes || {})) {
+    if (!Number.isFinite(entry?.strikeBias)) continue;
+    const member = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.classes.${classId}.strikeBias`;
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Equipment', key: ownKey(member), def: true,
+      // The whole class entry goes: validation requires an entry to carry a
+      // strike bias, and the bias is all an entry holds.
+      own: { member, defaultOn: true, dropPath: ['balance', 'equipment', 'startingDeck', 'classes', classId] },
+      label: `${className(classId)} uses its own strike bias`, searchPath: `starting deck strike bias ${classId} own override`,
+      note: `On: ${className(classId)}'s starting deck uses its own strike bias. Off: it uses the default strike bias. Applies to a new run.`,
+    });
+  }
+  return rows;
+}
+
+// ---- A ROW THAT DOES NOTHING RIGHT NOW IS DISABLED, AND SAYS WHY ---------
+//
+// Each rule names the switch whose value decides whether a row takes effect
+// (`gate`, read by model/settingOverrides.js `gateOpen`). The engine already
+// ignores these rows in that state; the screen now shows it instead of
+// accepting a number that does nothing.
+const RATINGS_SWITCH = `${ADVANCED_CONFIG_PREFIX}combatRatings.enabled`;
+const DECK_SWITCH = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.enabled`;
+// Drops that stay live with drops off: `consolationCinders` (paid for every
+// boss once nothing drops), `requireFound` (ownership) and `permanentOnFind`
+// (trader purchases) are read whether or not drops are on (review, #1260), so
+// only the roll itself is gated.
+const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights|preferUnfound)(\.|$)/;
+function enableGates(key, swapRuleIds = []) {
+  const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
+  if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
+  // The older poise meter, and the derived Poise rule, run only with ratings off.
+  if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  // Formation movement's own rules do nothing while movement is off: a move is
+  // refused before cost, selection or activation is read (formationMovement.js).
+  // The shared selection colour stays live — it also marks cards and menus.
+  if (/^gameConfig\.presentation\.(movementNeedsSelection|movementCostsAction|tileActivation|moveActivation)$/.test(key)) {
+    return [{ key: `${ADVANCED_CONFIG_PREFIX}presentation.movementEnabled` }];
+  }
+  if (DROP_ROLL.test(key)) return [{ key: `${balance}equipment.drops.enabled` }];
+  const mounts = `${balance}equipment.cardMounts.extraMounts`;
+  if (key.startsWith(`${mounts}.`) && key !== `${mounts}.enabled`) return [{ key: `${mounts}.enabled` }];
+  if (key.startsWith(`${balance}equipment.startingDeck.`) && key !== DECK_SWITCH) return [{ key: DECK_SWITCH }];
+  if (key.startsWith(`${balance}equipment.roleCopies.`)) return [{ key: DECK_SWITCH, when: false }];
+  if (key.startsWith(`${balance}equipment.swapCostByCategory.`)) return [{ key: 'swapCostRule', when: 'category' }];
+  // The rule a `swapCostRules.<n>` row belongs to is read from the content by
+  // index, so reordering the rules cannot gate the wrong row (review, #1260).
+  const rule = key.match(/^gameConfig\.balance\.equipment\.swapCostRules\.(\d+)\./);
+  if (rule && swapRuleIds[Number(rule[1])]) return [{ key: 'swapCostRule', when: swapRuleIds[Number(rule[1])] }];
+  return [];
+}
+
+function withGates(rows, bundle) {
+  const swapRuleIds = (bundle.balance?.equipment?.swapCostRules || []).map((rule) => rule.id);
+  const owns = rows.filter((row) => row.own);
+  const inheritedKey = (key) => {
+    const rarity = key.match(/^gameConfig\.balance\.rewards\.rarityWeightsByClass\.[^.]+\.(.+)$/);
+    if (rarity) return `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeights.${rarity[1]}`;
+    if (/startingDeck\.classes\.[^.]+\.strikeBias$/.test(key)) return `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.defaultStrikeBias`;
+    return null;
+  };
+  return rows.map((row) => {
+    // An override switch keeps its `own`, and also takes the gates of the row
+    // it governs: a class's strike-bias switch does nothing while the starting
+    // deck rules are off (Codex, on #1260).
+    if (row.own) {
+      const gates = [...enableGates(row.own.member, swapRuleIds), ...(row.gates || [])];
+      return gates.length ? { ...row, gates } : row;
+    }
+    // THE SUBSYSTEM FIRST. When both are closed the screen names the first,
+    // and "turn on its own switch" is the wrong advice while the whole feature
+    // is off — that switch is itself disabled (Codex, on #1260).
+    const gates = [...enableGates(row.key, swapRuleIds), ...(row.gate ? [row.gate] : [])];
+    const owner = owns.find((toggle) => toggle.own.dropPath && (row.key === toggle.own.member || row.key.startsWith(`${toggle.own.member}.`)));
+    if (owner) gates.push({ key: owner.key, own: owner.own, inheritedKey: inheritedKey(row.key) });
+    return gates.length ? { ...row, gates } : row;
+  });
+}
+
 export function advancedConfigRows(bundle) {
-  const generated = leafRows(bundle.balance || {}).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return [...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...generated];
+  const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
+}
+
+/**
+ * Every override switch's `own`, for the readers that must honour them.
+ * Cached per bundle: `configuredContentBundle` asks on every call, and
+ * rebuilding every row for it doubled that call's cost (review, #1260).
+ */
+const OWNS_BY_BUNDLE = new WeakMap();
+export function advancedConfigOwns(bundle) {
+  if (!OWNS_BY_BUNDLE.has(bundle)) OWNS_BY_BUNDLE.set(bundle, advancedConfigRows(bundle).filter((row) => row.own).map((row) => row.own));
+  return OWNS_BY_BUNDLE.get(bundle);
 }
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
   if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
-  if (settings.statTierSize !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`, settings.statTierSize]);
   for (const key of additionalKeys) {
+    // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
     if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
@@ -496,6 +738,7 @@ export function advancedConfigSnapshot(settings = {}) {
 }
 
 function cloneConfigurableBundle(bundle) {
+  bundle = materializeCardValueBonuses(bundle);
   return {
     ...bundle,
     balance: structuredClone(bundle.balance),
@@ -513,7 +756,11 @@ function setPath(target, path, value) {
 }
 
 export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
-  const settings = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
+  const raw = settingsOrSnapshot?.overrides || settingsOrSnapshot || {};
+  // A specific value whose "uses its own" switch is off is not applied: the
+  // global it would otherwise override decides (model/settingOverrides.js).
+  const owns = advancedConfigOwns(bundle);
+  const settings = withoutUnowned(raw, owns);
   const configured = cloneConfigurableBundle(bundle);
   // EQUIPMENT REQUIREMENTS RESOLVE FIRST, because every floor the starting-stat
   // dials are measured against is read off that table (kitAttributeMinimums).
@@ -524,10 +771,32 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const defaultPresets = structuredClone(configured.attributeRules.presets);
   const rows = advancedConfigRows(bundle);
   const byKey = new Map(rows.filter((row) => row.configPath).map((row) => [row.key, row]));
+  const rowFor = (key) => rows.find((candidate) => candidate.key === key) || null;
+  // A ROW WHOSE FEATURE IS SWITCHED OFF IS NOT APPLIED (Codex, on #1260). The
+  // engine ignores it in that state and the screen disables it, so a stored
+  // value there — even an invalid one — can neither be corrected nor be allowed
+  // to refuse the whole configuration (which would fall back to authored
+  // content and drop every unrelated setting). It is applied, and validated,
+  // again the moment its switch is back on and the row is editable. Only gates
+  // on configuration switches are read here: a profile-only switch (the swap
+  // rule picker) is not in a run's snapshot to be read.
+  // A snapshot from before combat ratings existed is played with ratings OFF
+  // (see `ratingsVersion` below), whatever its settings say, so its gates are
+  // read that way too — otherwise its poise and stagger tuning, which is in
+  // force exactly then, would be set aside (review, #1260).
+  const legacyRatings = Boolean(settingsOrSnapshot?.overrides) && settingsOrSnapshot.ratingsVersion !== 1;
+  const gateSettings = legacyRatings ? { ...settings, [RATINGS_SWITCH]: false } : settings;
+  const dormant = (row) => (row.gates || []).some((gate) => !gate.own
+    && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(gateSettings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
     const row = byKey.get(key);
-    if (!row?.configPath) continue;
+    // AN INERT ROW IS NEVER APPLIED (review, #1256). It moved nothing, but a
+    // stored value still landed in the bundle, where the structural walk could
+    // refuse the WHOLE configuration over it (tierSizeMin 15 over tierSizeMax
+    // 3) — naming a row no longer on screen. Retired preset cells are not
+    // inert: a non-default mode's cells are still validated and applied.
+    if (!row?.configPath || row.inert || dormant(row)) continue;
     const value = typeof row.def === 'boolean' ? raw === true : Number(raw);
     if (typeof row.def !== 'boolean' && !Number.isFinite(value)) continue;
     const root = row.configPath[0] === 'classesById'
@@ -550,8 +819,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
-  const pointsPerTier = Number(settings[`${ADVANCED_CONFIG_PREFIX}derivedStatRules.defaults.pointsPerTier`] ?? settings.statTierSize);
-  if (Number.isInteger(pointsPerTier) && pointsPerTier > 0) configured.derivedStatRules.defaults.pointsPerTier = pointsPerTier;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
     // ONE BAD CLASS COSTS THAT CLASS, NOT THE BUNDLE. `defaultPresets` was
@@ -568,12 +835,41 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       const valid = values.every((value, index) => Number.isInteger(value)
         && value >= Math.max(floor, kitMinimum(needs, classDef.id, configured.attributes[index].id))
         && value <= mode.maximum)
-        && values.reduce((sum, value) => sum + value, 0) === expected;
+        && values.reduce((sum, value) => sum + value, 0) === expected
+        // ...and the ARMOUR creation offers the class, which validateContent
+        // refuses on the same terms (presetGearProblems) and which the kit
+        // floor above does not read. Without it Settings promised this class
+        // its authored attributes while the boot threw every setting away
+        // (review, #1255).
+        && !presetGearProblems({
+          presets: { [mode.id]: { [classDef.id]: preset } },
+          defaultMode: mode.id,
+          startingKits: [],
+          equipmentRequirements: configured.equipment?.equipmentRequirements || [],
+          creationClasses: configured.characterCreation?.classes || {},
+        }).length;
       if (!valid) configured.attributeRules.presets[mode.id][classDef.id] = structuredClone(defaultPresets[mode.id][classDef.id]);
     }
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
-  if (settingsOrSnapshot.overrides && settingsOrSnapshot.ratingsVersion !== 1) configured.balance.combatRatings.enabled = false;
+  if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
+  // switched on. Written HERE, after that decision, for two reasons: the
+  // requirement pass above restates both equipment arrays, so columns written
+  // before it would be handed to a map that replaces the rows; and a set's
+  // Poise threshold is also its WEIGHT, so a run with ratings off — a fresh
+  // one, or an older snapshot the line above disables — would otherwise have
+  // its equip load moved by a dial that changes nothing else (review, #1242).
+  if (configured.balance.combatRatings.enabled) {
+    applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
+  }
+  // A per-class value switched off leaves the class following the global:
+  // drop its entry and the engine's own fallback applies.
+  for (const own of owns) {
+    if (!own.dropPath || ownOn(raw, own)) continue;
+    const parent = own.dropPath.slice(0, -1).reduce((node, key) => node?.[key], configured);
+    if (parent && typeof parent === 'object') delete parent[own.dropPath.at(-1)];
+  }
   return configured;
 }
 
@@ -599,7 +895,8 @@ function structuralKeys(message) {
  * old string list for callers that only want the first sentence.
  */
 export function advancedConfigProblemRows(bundle, settings = {}) {
-  const problems = [...startingStatPoolProblems(bundle, settings)];
+  const problems = [...startingStatPoolProblems(bundle, settings),
+    ...derivedStatFloorProblems(configuredContentBundle(bundle, settings)).map(({ keys, message }) => ({ keys, message }))];
   const poolDefaults = configuredContentBundle(bundle, Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith('gameConfig.attributeRules.presets.'))));
   const modeId = poolDefaults.attributeRules.defaultMode;
   const mode = poolDefaults.creationModes.find((row) => row.id === modeId);
@@ -607,14 +904,17 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
   // The floor a class cell is judged against is the CONFIGURED one: he can now
   // lower what a starting kit asks for, and a cell refused against the authored
   // table would be refused for a requirement no run would ever enforce.
-  const needs = kitAttributeMinimums(bundleWithConfiguredEquipment(bundle, settings));
+  const withEquipment = bundleWithConfiguredEquipment(bundle, settings);
+  const needs = kitAttributeMinimums(withEquipment);
   const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
   const expected = mode.baseline * bundle.attributes.length + mode.bonusPool;
   const cellKey = (classId, attributeId) => `${ADVANCED_CONFIG_PREFIX}attributeRules.presets.${modeId}.${classId}.${attributeId}`;
+  const edited = {};
   for (const classDef of bundle.classes) {
     const values = bundle.attributes.map((attribute) => {
       return Number(settings[cellKey(classDef.id, attribute.id)] ?? poolDefaults.attributeRules.presets[modeId][classDef.id][attribute.id]);
     });
+    edited[classDef.id] = Object.fromEntries(bundle.attributes.map((attribute, index) => [attribute.id, values[index]]));
     const outside = bundle.attributes.filter((attribute, index) => !Number.isInteger(values[index])
       || values[index] < floor || values[index] > mode.maximum);
     const total = values.reduce((sum, value) => sum + value, 0);
@@ -639,6 +939,33 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
       });
     });
   }
+  // THE SAME QUESTION THE BOOT ASKS, for the half the kit floor above does
+  // not reach. kitAttributeMinimums reads the baseline kit's two hands;
+  // validateContent also refuses a preset that cannot hold the ARMOUR
+  // creation offers that class, and main.js answers that refusal by throwing
+  // away the WHOLE game configuration — every unrelated Advanced setting with
+  // it — behind a generic "unchanged" notice, while this row read as applied.
+  // Asking it here means the edit is refused where it is made, in words. The
+  // kits are passed empty so the hands are said once, by the cell check above,
+  // and the minima are the CONFIGURED ones for the same reason the kit floor
+  // reads them: the boot validates the configured bundle, so judging armour
+  // against the authored table would refuse a preset a lowered minimum admits
+  // and pass one a raised minimum then fails (review, #1217 and #1255).
+  const byName = new Map(bundle.classes.map((row) => [row.id, row.name || row.id]));
+  for (const problem of presetGearProblems({
+    presets: { [modeId]: edited },
+    defaultMode: modeId,
+    startingKits: [],
+    equipmentRequirements: (withEquipment.equipment || {}).equipmentRequirements || [],
+    creationClasses: (withEquipment.characterCreation || {}).classes || {},
+  })) {
+    const [, , , classId, attributeId] = problem.path.split('.');
+    const attributeLabel = bundle.attributes.find((row) => row.id === attributeId)?.label || attributeId;
+    problems.push({
+      keys: [cellKey(classId, attributeId)],
+      message: `${byName.get(classId) || classId}: ${attributeLabel} ${problem.msg}. Authored defaults stay active until the set is valid.`,
+    });
+  }
   return [...problems, ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];
 }
 
@@ -651,7 +978,13 @@ export function advancedConfigProblems(bundle, settings = {}) {
 
 export function advancedConfigStructuralProblems(bundle, settings = {}) {
   const configured = configuredContentBundle(bundle, settings);
-  const problems = [...handRulesSettingsProblems(settings), ...combatRatingProblems(resolveCombatRatings(settings, bundle))];
+  // DORMANT RATINGS ARE NOT JUDGED (Codex, on #1260). With ratings off their
+  // rows are disabled — so an invalid pair there could neither be fixed nor
+  // stop refusing the whole configuration, which then fell back to authored
+  // content with ratings ON. They are judged again the moment ratings are
+  // switched back on, when the rows are editable.
+  const ratings = resolveCombatRatings(settings, bundle);
+  const problems = [...handRulesSettingsProblems(settings), ...(ratings.enabled ? combatRatingProblems(ratings) : [])];
   const walk = (value, path = []) => {
     if (!value || typeof value !== 'object') return;
     if (Array.isArray(value)) {
@@ -662,6 +995,7 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
       return;
     }
     for (const [key, child] of Object.entries(value)) {
+      if (!ratings.enabled && path.length === 1 && key === 'combatRatings') continue;
       if (key.endsWith('Min')) {
         const maxKey = `${key.slice(0, -3)}Max`;
         if (Number.isFinite(child) && Number.isFinite(value[maxKey]) && child > value[maxKey]) {
@@ -755,10 +1089,14 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
-    if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
   }
   const changes = {};
-  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(file.overrides)), warnings), rows, warnings)) {
+  // A file exported before the per-item rows became the item's own ratings
+  // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
+  // reads each as the value it used to make. Done HERE, at the door, because
+  // the next line refuses an unknown key by aborting the whole file.
+  const overrides = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
