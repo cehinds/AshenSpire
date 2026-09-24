@@ -15,6 +15,7 @@ import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
+import { headMetaTags } from './head-meta.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -846,6 +847,9 @@ ${entries}
 const runtime = assembleRuntime(moduleEntries, entryId);
 
 const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire'])[1].trim();
+// Web/share metadata (description, og:*, icon, theme-color) — copied from index.html.
+let headMeta;
+try { headMeta = headMetaTags(indexHtml); } catch (e) { fail(e.message); }
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -855,6 +859,7 @@ const html = `<!DOCTYPE html>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>${title}</title>
+${headMeta.map((tag) => '  ' + tag).join('\n')}
 ${styleBlocks.join('\n')}
 </head>
 <body>
