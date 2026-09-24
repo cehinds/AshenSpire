@@ -44,9 +44,7 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - uses: ./.github/actions/setup-node
 
       # The promotion target is the bound. Without it the tool falls back to a
       # fixed window and SAYS SO rather than quietly widening to all of history,

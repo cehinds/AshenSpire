@@ -28,9 +28,7 @@ jobs:
         with:
           lfs: true
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22.14.0'
+      - uses: ./.github/actions/setup-node
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
@@ -303,16 +301,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
-      - name: Which browser will be used
-        run: |
-          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
-            [ -x "$p" ] && echo "found: $p" && "$p" --version
-          done
-          echo "(the probes exit 2 if none exists — unknown, which blocks)"
+      - uses: ./.github/actions/which-browser
 
       # THE DE-INLINED BUILD, LOADED RATHER THAN INSPECTED. It builds its own
       # copy because this job does not share a filesystem with `preview`, and

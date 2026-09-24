@@ -177,9 +177,7 @@ jobs:
           if [ -n "$missing" ]; then
             echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
           fi
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - uses: ./.github/actions/setup-node
       # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
       # runs on pushes to dev, test, release AND main, and it assembles a site
       # out of all four branches' histories — series deliberately mixed, which

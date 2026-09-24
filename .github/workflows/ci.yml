@@ -192,9 +192,7 @@ jobs:
           lfs: true
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       # #12 — THE CI DOOR PROVES ITSELF BEFORE IT JUDGES ANYTHING ELSE.
       # Every checker step below is wrapped in tools/verdict.mjs, which refuses a
@@ -349,9 +347,7 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       - name: Rebuild the standalone and refresh root + dist/
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
@@ -394,9 +390,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
@@ -412,19 +406,12 @@ jobs:
     name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@v4
         with:
           lfs: true
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
-      - name: Which browser will be used
-        run: |
-          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
-            [ -x "$p" ] && echo "found: $p" && "$p" --version
-          done
-          echo "(probe exits 2 if none of these exist — unknown, which blocks)"
+      - uses: ./.github/actions/which-browser
 
       - name: Hand-side placement reaches the correct rendered side
         # #16's remaining live half after #306: exercise every legal left/right
