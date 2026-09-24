@@ -2071,6 +2071,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // is tied to the SLOT, not the card — leftmost is always 1. The key→action
     // mapping lives in cardHotkeyAction (pure, unit-tested in
     // tests/card-hotkeys.test.mjs); this handler only carries it out.
+    // Not a card key (null whatever the context): leave the event alone before
+    // touching the DOM — this is the last check in the handler.
+    if (cardHotkeyAction(ev.key) === null) return;
     const handCards = app.querySelectorAll('.hand .card');
     const livingEnemies = combat.enemies.filter((e) => e.alive);
     const hotkey = cardHotkeyAction(ev.key, {

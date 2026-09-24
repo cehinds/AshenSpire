@@ -2,7 +2,8 @@
 // `q`/`Q` names slot 10, and while a card or flask is armed a digit names the
 // Nth LIVING enemy instead. The mapping is cardHotkeyAction in
 // src/ui/screens/combat.js — pure, so it is tested here without a DOM — and the
-// last block proves the keydown handler still goes through it.
+// last block proves (by source match) the keydown handler still goes through it
+// with a flask counted as armed and enemies counted living.
 //
 // NOT CHECKED HERE: what the handler does with a 'select' (affordability,
 // hostile-vs-self arming, focus) or a 'target' (playCard/useFlask) — those run
@@ -50,5 +51,12 @@ checks++; assert.ok(start >= 0 && end > start, 'combat.js has a keyHandler regis
 const handler = source.slice(start, end);
 checks++; assert.match(handler, /cardHotkeyAction\(ev\.key,/, 'the keydown handler maps card keys through cardHotkeyAction');
 checks++; assert.doesNotMatch(handler, /\/\^\[1-9\]\$\//, 'the handler carries no second copy of the digit mapping');
+// The handler's inputs to the mapping (source-level, not run): a flask armed
+// counts as targeting, and enemies are counted LIVING — the same list the
+// 'target' index is read from, so livingEnemies[hotkey.index] is never undefined.
+checks++; assert.match(handler, /targeting:\s*Boolean\(selected \|\| selectedFlask != null\)/, 'targeting covers an armed card OR an armed flask');
+checks++; assert.match(handler, /const livingEnemies = combat\.enemies\.filter\(\(e\) => e\.alive\);/, 'enemies are counted living');
+checks++; assert.match(handler, /livingEnemies:\s*livingEnemies\.length/, 'the mapping is given the living-enemy count');
+checks++; assert.match(handler, /livingEnemies\[hotkey\.index\]/, "a 'target' reads the same living list");
 
 console.log(`card-hotkeys: ${checks} checks passed`);
