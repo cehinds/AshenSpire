@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Settings open faster, search everything, and every value has − / + and a slider",
     "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once.",
-    "build": "0.7.1.489",
+    "build": "0.7.1.490",
     "pullRequest": 1277,
     "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1280",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: leaving a fight and coming back is now tested",
+    "detail": "Nothing you play changes. A new automated test abandons a run in the middle of a fight, reloads it, and checks that you land back at the fight's start with the same deck, HP and enemies, as the spec promises.",
+    "build": "0.7.1.465",
+    "pullRequest": 1280,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1280"
+  },
+  {
+    "id": "pr-1275",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
+    "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
+    "build": "0.7.1.464",
+    "pullRequest": 1275,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1275"
   },
   {
     "id": "pr-1274",
@@ -43,6 +63,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last journey scene shows the road you actually set out on",
+    "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
+    "build": "0.7.1.456",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Herald phones get the full-body figure too",
+    "detail": "The Herald's new full-body painting from #1268 reached desktop but not the phone edition, which kept showing the old head-and-shoulders crop. The five Herald sprites in the mobile art set now show the whole figure, boots included, as they do on desktop.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
+  },
+  {
     "id": "pr-1272",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -61,6 +101,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.449",
     "pullRequest": 1267,
     "url": "https://github.com/cehinds/AshenSpire/pull/1267"
+  },
+  {
+    "id": "pr-1268",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The Herald's full-body portrait ships",
+    "detail": "The Herald's sprites are recut from a full-body plate, in one pose-cutout pass that cut all four classes. The Herald's anchor, measured on the old bust, is cleared rather than carried onto art it was never measured against.",
+    "build": "0.7.1.447",
+    "pullRequest": 1268,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1268"
+  },
+  {
+    "id": "pr-1269",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: a written drive to a shippable 1.0",
+    "detail": "Nothing you see in the game changes. The repository gains a /finish skill: a resumable checklist that runs waves of parallel agents, one reviewed pull request per task, within the game's specification and contribution rules.",
+    "build": "0.7.1.446",
+    "pullRequest": 1269,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1269"
   },
   {
     "id": "pr-1266",
@@ -141,6 +201,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1262",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: a written production-polish pass",
+    "detail": "Nothing you see in the game changes. The repository gains a /polish skill: a production-polish prompt and roadmap template, which acts only on request and leaves release decisions and the specification's rules to the owner.",
+    "build": "0.7.1.405",
+    "pullRequest": 1262,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1262"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: the card wireframes describe the card the game draws now",
+    "detail": "Nothing you see in the game changes. A new wireframe document and its generator record the playing card as it is currently drawn, and the card-anatomy mockup is redrawn to match.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",
