@@ -126,5 +126,8 @@ test('the snapshot door and the content door refuse a bad grade table or row by 
 test('the equipment card names a graded weapon\'s grades and nothing for an ungraded one', () => {
   const model = equipmentCardModel(registries, armament('straightSword'));
   assert.equal(model.scaling, 'Scales STR B · DEX C');
-  assert.equal(equipmentCardModel(registries, armament('roundShield')).scaling, null);
+  assert.deepEqual(model.facts.filter((fact) => fact.grade).map((fact) => `${fact.label} ${fact.value}`), ['STR B', 'DEX C']);
+  const shield = equipmentCardModel(registries, armament('roundShield'));
+  assert.equal(shield.scaling, null);
+  assert.equal(shield.facts.some((fact) => fact.grade), false);
 });

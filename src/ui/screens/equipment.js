@@ -1,6 +1,7 @@
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { equipmentCardModel } from '../../model/equipmentCard.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
@@ -2016,6 +2017,8 @@ export function mountEquipment(host, {
       fact('Smithing tier', String(smithingLevel)),
       ...(intrinsic ? [
         fact('Attack rating (AR)', String(intrinsic.attackRating)),
+        // SPEC §13.4o: the grades that price this weapon's attack above the anchor.
+        ...(equipmentCardModel(registries, item).scaling ? [fact('Scaling', equipmentCardModel(registries, item).scaling.replace(/^Scales /, ''))] : []),
         fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
         fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),

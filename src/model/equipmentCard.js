@@ -32,7 +32,10 @@ export function equipmentCardModel(registries, piece) {
     ? `Each point of a graded attribute above ${gradeTable?.anchor ?? 3} adds to this weapon's attack at its grade (${Object.entries(gradeTable?.grades || {}).map(([grade, c]) => `${grade} ×${c}`).join(', ')}); at or below it every weapon reads the flat rating.`
     : null;
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
-  return { id: piece.id, name: piece.name, armor, type, facts, bonuses, scaling, scalingExplanation,
+  // Each grade is a face fact of its own, after Weight: "B / STR".
+  const gradeFacts = orderedAttributes(registries).filter((attr) => piece.scaling?.[attr.id])
+    .map((attr) => ({ ...field(attr.shortLabel, piece.scaling[attr.id], `${attr.label} scaling grade ${piece.scaling[attr.id]}. ${scalingExplanation}`), grade: true }));
+  return { id: piece.id, name: piece.name, armor, type, facts: [...facts, ...gradeFacts], bonuses, scaling, scalingExplanation,
     tags: tags.map(id => field(tag(id)?.label || id, id, tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
     flavor: piece.blurb || 'No flavor text authored.',

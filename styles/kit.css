@@ -1507,6 +1507,29 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    second line; narrow hosts drop the meter to its own line rather than
    squeezing four columns into a phone. */
 .reward-door .reward-side { display: grid; gap: 1.2rem; min-width: 0; align-content: start; }
+/* SPEC §13.4o: the level moment. One line across the top of the spoils door;
+   it rises and glows once when the door first opens, and stands still under
+   reduced motion (the screen sets data-motion="still"; the media query and
+   the in-game setting are belt and braces for a redraw). */
+.reward-door .reward-level-banner {
+  display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0.35rem 0.8rem;
+  margin: 0 0 0.75rem; padding: 0.6rem 1rem; border: 1px solid var(--gold); border-radius: 6px;
+  background: linear-gradient(90deg, rgba(201, 162, 39, 0.05), rgba(201, 162, 39, 0.2), rgba(201, 162, 39, 0.05));
+  text-align: center;
+}
+.reward-level-banner .rlb-glyph { color: var(--gold); font-size: 1.3em; }
+.reward-level-banner .rlb-title { color: var(--gold); font-family: var(--display-font, inherit); font-size: 1.45em; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.reward-level-banner .rlb-points { color: var(--parchment); }
+.reward-level-banner[data-motion='rise'] { animation: reward-level-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.reward-level-banner[data-motion='rise'] .rlb-glyph { animation: reward-level-glow 1400ms ease-out 1 both; }
+@keyframes reward-level-rise {
+  0% { opacity: 0; transform: translateY(8px) scale(0.96); box-shadow: 0 0 0 rgba(201, 162, 39, 0); }
+  55% { opacity: 1; transform: translateY(0) scale(1.02); box-shadow: 0 0 22px rgba(201, 162, 39, 0.55); }
+  100% { opacity: 1; transform: none; box-shadow: 0 0 8px rgba(201, 162, 39, 0.2); }
+}
+@keyframes reward-level-glow { 0% { text-shadow: 0 0 0 transparent; } 40% { text-shadow: 0 0 14px var(--gold); } 100% { text-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .reward-level-banner, .reward-level-banner * { animation: none !important; } }
+body.reduced-motion .reward-level-banner, body.reduced-motion .reward-level-banner * { animation: none !important; }
 .reward-door .reward-progress { display: grid; gap: .5rem; min-width: 0; grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto; }
 .reward-door .reward-progress > * { grid-column: 1 / -1; }
 .reward-door .reward-progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
@@ -2036,6 +2059,21 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .level-xp-preview { margin: 0; }
 .level-xp-preview > .level-points-waiting { color: var(--ember); font-weight: 600; }
 .level-points-result[hidden] { display: none; }
+/* SPEC §13.4o: the Level-up modal's before → after panel. Two columns of
+   compact rows on a wide door, one on a phone; the delta is the kit's, sized
+   down from the stat row's headline scale so eight rows fit above the fold. */
+.level-up-preview {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.15rem 1.2rem;
+  padding: 0.55rem 0.75rem; border: 1px solid var(--line, rgba(201, 162, 39, 0.28)); border-radius: 6px;
+  background: rgba(201, 162, 39, 0.06); margin-bottom: 0.5rem;
+}
+.level-up-preview > .as-eyebrow, .level-up-preview > .level-up-preview-empty { grid-column: 1 / -1; margin: 0; }
+.level-up-preview > .level-up-preview-empty { color: var(--muted); font-style: italic; }
+.level-up-preview-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; min-width: 0; padding: 0.1rem 0; }
+.level-up-preview-row > .lp-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); }
+.level-up-preview-row > .as-delta { flex: 0 0 auto; font-size: 1em; }
+.level-up-preview-row > .as-delta > span { font-size: inherit; }
+:root[data-layout='narrow'] .level-up-preview { grid-template-columns: minmax(0, 1fr); }
 /* A flask button carries a name AND a charge count. The COUNT holds — it is
    the number a player spends — and the NAME yields to an ellipsis inside the
    ladder's step. Measured on the co-op board at 1200x730, where "Crimson
@@ -3381,6 +3419,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-type > span { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .epc-type > span:first-child { flex:0 1 auto; }
 .epc-type > .epc-requirement { flex:0 1 auto; }
+/* SPEC §13.4o: a scaling grade is a fact beside Attack/Defense/Weight — the
+   letter large, the attribute under it, in the grade's own gold. */
+.epc-fact[data-grade] strong { color:#e8c766; }
 .equipment-poker-card [tabindex]:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .equipment-poker-inspection { min-width:0; width:100%; }
 .equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }

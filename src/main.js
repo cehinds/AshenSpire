@@ -3332,6 +3332,10 @@ if (shotState === 'combat-test') {
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
+    // `?shotReward=levelup` — THE LEVEL MOMENT (SPEC §13.4o): the fight just
+    // climbed the character to level 5 and the point waits for a shrine, so
+    // the door opens on the level banner. Authored, like the rest of the pose.
+    if (pose === 'levelup') run.level = { xp: 20, level: 5, unspentPoints: 1 };
     const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
@@ -3345,7 +3349,7 @@ if (shotState === 'combat-test') {
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 }, ...(pose === 'levelup' ? { levelUps: 1 } : {}) },
     };
     if (pose === 'pending') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
