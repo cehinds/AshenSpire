@@ -116,11 +116,9 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     const visible = scope === 'scene' && group === 'Traveller' && actor;
     resizeHandle.hidden = !visible;
     if (!visible) return;
-    // getBoundingClientRect is visual (post --ui-zoom) px; the handle's left/top
-    // are in the viewport's local space, so convert through fx.js.
-    const actorBox = anchorLocalBox(viewport, actor);
-    resizeHandle.style.left = `${actorBox.left + actorBox.width * .72}px`;
-    resizeHandle.style.top = `${actorBox.top + actorBox.height * .08}px`;
+    const box = anchorLocalBox(viewport, actor);
+    resizeHandle.style.left = `${box.left + box.width * .72}px`;
+    resizeHandle.style.top = `${box.top + box.height * .08}px`;
   };
   const preview = () => {
     cleanup?.();
