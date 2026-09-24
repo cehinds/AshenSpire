@@ -1089,8 +1089,9 @@ export function compactRowLabel(label, topic) {
 function wireStepper(wrap, { read, commit, min, max, step }) {
   const slider = wrap.querySelector('input[type="range"]');
   const field = wrap.querySelector('input[type="number"]');
-  const places = (String(step).split('.')[1] || '').length;
-  const round = (v) => Number((Math.round(v / step) * step).toFixed(places));
+  // Only floating-point noise is removed (0.1 + 0.2 → 0.3). A value off the
+  // step grid (0.01 on a 0.05 step) steps from where it is, not to the grid.
+  const round = (v) => Number(v.toFixed(10));
   const buttons = [...wrap.querySelectorAll('.set-step')];
   // A compact slider (sliderSpan) widens to hold any value committed outside
   // it — typed, stepped or loaded — so thumb and field never disagree.

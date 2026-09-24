@@ -270,3 +270,10 @@ test('a fractional slider can stand on an off-step authored value', () => {
   const whole = settingsRowHtml({}, { key: 'x.int', label: 'Int', type: 'number', def: 3, min: 0, max: 10, step: 1 });
   assert.match(whole, /class="set-num-slider"[^>]*step="1"/);
 });
+
+test('−/+ step from an off-grid value instead of snapping to the grid', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const round = \(v\) => Number\(v\.toFixed\(10\)\);/);
+  assert.doesNotMatch(screen, /Math\.round\(v \/ step\) \* step/);
+});
