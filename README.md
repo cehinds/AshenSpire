@@ -147,4 +147,6 @@ Acceptance criteria per milestone: [SPEC.md §9](SPEC.md).
 
 ## Legal
 
-Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco.
+
+AshenSpire was built with AI under human direction. AI assistants (Anthropic's Claude) wrote the code, design and writing. The painted art was generated with OpenAI's image-generation tools, including ChatGPT Codex. Four recorded music tracks were generated with ElevenLabs Music. The full acknowledgement is in Settings → About and is printed by `node tools/ai-disclosure.mjs --full`. Shipped art and music are either procedural or AI-generated for this project, and the bundled lore fonts are SIL OFL. [CREDITS.md](CREDITS.md) lists every asset directory with its source and rights.
