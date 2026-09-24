@@ -61,5 +61,5 @@ test('contentreach --selftest: every planted orphan goes red, and the planted gr
   const r = run('--selftest');
   assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
   assert.match(r.stdout, /^contentreach --selftest: OK — \d+ checks passed\.$/m);
-  for (const plant of ['G1', 'P1', 'P4', 'P6', 'P8']) assert.match(r.stdout, new RegExp(`^  ok    ${plant} `, 'm'));
+  for (const plant of ['G1', 'P1', 'P4', 'P6', 'P8', 'P11', 'P12', 'P13']) assert.match(r.stdout, new RegExp(`^  ok    ${plant} `, 'm'));
 });

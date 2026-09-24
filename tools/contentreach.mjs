@@ -25,7 +25,8 @@
 //
 //   CLASSES   a class is played when characterCreation.classes offers it
 //             (model/characterCreation.js), or when a reached event carries
-//             op 'swapClass' (engine/actions.js — random swaps pick any class).
+//             op 'swapClass' (engine/actions.js — a random swap picks any class, a
+//             fixed one only its classId).
 //
 //   ENCOUNTERS
 //     E-roll   pool normal|elite, seat is a real seat, weight > 0, and the map
@@ -125,6 +126,7 @@ import { WeaponCardPackageModel, boundGrantCardIds } from '../src/model/loadout.
 import { encounterFitsSeat, finalTier } from '../src/model/seats.js';
 import { eventChoiceHistoryRequirements as SHIPPED_CHOICE_REQUIREMENTS } from '../src/content/events.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
+import { eventChoiceRequirementProblems } from '../src/model/quests.js';
 
 // Declared-intentional orphans: { kind: 'cards'|'relics'|'events'|'encounters'|'enemies', id, why }.
 export const ALLOWED_UNREACHABLE = [];
@@ -238,7 +240,12 @@ export function contentReach(bundle, opts = {}) {
 
   // ---- fixpoint over events / encounters / enemies / cards / relics ------------
   const achievable = new Set(); // `${eventId}|${choiceId}`
+  // The group logic runs over the ACHIEVABLE set (a fixpoint, not one run's
+  // history), so it cannot hand eventChoiceRequirementMet a history. What it
+  // does take from model/quests.js is the shape check: a requirement the engine
+  // refuses as malformed is never met there, so it is never met here.
   const reqMet = (req) => {
+    if (eventChoiceRequirementProblems(req).length) return false;
     if (!req) return true;
     const has = (ref) => ref && achievable.has(`${ref.eventId}|${ref.choiceId}`);
     if ((req.all || []).some((ref) => !has(ref))) return false;
@@ -272,8 +279,9 @@ export function contentReach(bundle, opts = {}) {
   // Obtainable armaments (C-equip's first half).
   const armaments = (bundle.equipment || {}).armaments || [];
   const drops = (bal.equipment || {}).drops || {};
+  const bossFight = pop.encounters.some((e) => e.pool === 'boss' && witness.encounters.has(e.id));
   const dropSources = Object.entries(drops.chance || {}).filter(([src, ch]) => pos(ch)
-    && ((src === 'treasure' && (cap.treasure || cap.unknownTreasure)) || (src === 'elite' && cap.elite) || src === 'boss'));
+    && ((src === 'treasure' && (cap.treasure || cap.unknownTreasure)) || (src === 'elite' && cap.elite) || (src === 'boss' && bossFight)));
   const armWhy = new Map();
   const markArm = (id, why) => { if (id && !armWhy.has(id)) armWhy.set(id, why); };
   for (const kit of (bundle.equipment || {}).startingKits || []) {
@@ -344,7 +352,6 @@ export function contentReach(bundle, opts = {}) {
     (cap.treasure || cap.unknownTreasure) && 'treasure',
     merchant && pos(shop.relicStock) && 'shop relic shelf',
   ].filter(Boolean);
-  const bossFight = pop.encounters.some((e) => e.pool === 'boss' && witness.encounters.has(e.id));
   for (const r of pop.relics) {
     if (relicInRewardPool(r) && DROP_RARITIES.includes(r.rarity) && relicDoors.length) note('relics', r.id, `R-drop ${relicDoors.join(' / ')}`);
     if (relicInRewardPool(r) && r.rarity === 'boss' && bossFight) note('relics', r.id, 'R-boss boss reward');
@@ -359,8 +366,11 @@ export function contentReach(bundle, opts = {}) {
     }
     if (op.op === 'startCombat') return note('encounters', op.encounterId, `E-event startCombat in ${where}`);
     if (op.op === 'swapClass') {
+      // engine/actions.js swapClass: a random swap picks among every class; a
+      // fixed one moves to eff.classId and nowhere else.
+      const targets = op.random ? R.classes.ids() : [op.classId].filter((id) => R.classes.has(id));
       let grew = false;
-      for (const id of R.classes.ids()) if (!played.has(id)) { played.add(id); grew = true; }
+      for (const id of targets) if (!played.has(id)) { played.add(id); grew = true; }
       return grew;
     }
     return false;
@@ -623,6 +633,44 @@ function selftest(real) {
   for (const cfg of Object.values(b.mapConfigs)) cfg.unknownWeights = { ...cfg.unknownWeights, event: 0 };
   r = contentReach(b);
   expect('P10 unknownWeights.event zeroed on every tier: events go dark', r.kinds.events.orphans.length === r.kinds.events.total, true);
+
+  // P11 — a MALFORMED gate is refused, as model/quests.js refuses it: the
+  // engine's eventChoiceRequirementMet returns false on any requirement
+  // problem, so the gated event never rolls. namelessKeeper's real gate plus
+  // an unknown group must read RED, not reached.
+  b = clone(real);
+  b.eventHistoryRequirements = { ...b.eventHistoryRequirements, namelessKeeper: { ...b.eventHistoryRequirements.namelessKeeper, bogus: [] } };
+  expect('P11 a malformed gate (unknown group) is unmet', orphaned(contentReach(b), 'events', 'namelessKeeper'), true);
+
+  // P12 — a FIXED-target swapClass credits only its classId (engine/actions.js
+  // swapClass moves to eff.classId unless eff.random). Take herald out of
+  // creation and point every swap at reaver: herald's ability card goes dark.
+  b = clone(real);
+  {
+    const cc = { ...b.characterCreation.classes }; delete cc.herald;
+    b.characterCreation = { ...b.characterCreation, classes: cc };
+    for (const op of opsIn(b.events, new Set(['swapClass']))) { op.random = false; op.classId = 'reaver'; }
+    const sig = b.classes.find((c) => c.id === 'herald').abilityCard;
+    expect('P12 a fixed swapClass to reaver does not play herald', orphaned(contentReach(b), 'cards', sig), true);
+  }
+
+  // P13 — the armament drop's 'boss' source needs a reached boss fight, as
+  // treasure and elite need their map node. Only the boss drop left, the shop
+  // shelves shut, and a planted armament whose weapon art nothing else grants:
+  // green while a boss is fought, red once every boss is unseated.
+  b = clone(real);
+  b.balance = { ...b.balance, shop: { ...b.balance.shop, armamentStock: 0, weaponArtStock: 0 },
+    equipment: { ...b.balance.equipment, drops: { ...b.balance.equipment.drops, chance: { boss: 100 } } } };
+  {
+    const base = b.equipment.armaments.find((a) => a.id === 'straightSword');
+    const pkg = { ...clone(base.weaponCardPackage), weaponArtDefaults: [...base.weaponCardPackage.weaponArtDefaults, 'plantedBossArt'] };
+    b.equipment.armaments.push({ ...clone(base), id: 'plantedBossArm', rarity: 'rare', weaponCardPackage: pkg });
+    b.cards.push({ ...clone(b.cards.find((c) => c.id === 'guardCounter')), id: 'plantedBossArt' });
+    b.tagging = [...b.tagging, ...b.tagging.filter((t) => t.family === 'card' && t.objectId === 'guardCounter').map((t) => ({ ...t, objectId: 'plantedBossArt' }))];
+    expect('P13 a boss-only drop is reached while a boss is fought (green twin)', orphaned(contentReach(b), 'cards', 'plantedBossArt'), false);
+    b.encounters = b.encounters.map((e) => (e.pool === 'boss' ? { ...e, seat: 'noSuchSeat', tier: -1 } : e));
+    expect('P13 ...and dark once no boss fight is reached', orphaned(contentReach(b), 'cards', 'plantedBossArt'), true);
+  }
 
   // F1 / F2 / F3 — never a pass.
   b = clone(real); b.cards = [];
