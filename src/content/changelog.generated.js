@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1284",
+    "id": "pr-1274",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Every fight opens with full Stamina, and the Starseer can fight with no Mana left",
-    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer was hit hardest by that, so its kit is rebuilt around it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and as plain spells they build 1 Arcane Exposure per hit instead of 5. Arcane Ward blocks 7 instead of 4. Starstone Shard adds 14 Max HP and 3 Mana, so a new Starseer starts on 48 HP. Lodestar Shard restores 3 Mana as each fight begins. Over 60 simulated runs a class on the current rules, the Reaver now wins 58, the Starseer 46, the Rogue 56 and the Herald 41.",
-    "build": "0.7.1.457",
-    "pullRequest": 1284,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1284"
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
   },
   {
     "id": "pr-1273",
