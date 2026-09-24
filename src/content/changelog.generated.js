@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1290",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The phone build builds again",
+    "detail": "Nothing you play changes. The new prologue path scenes for the Crownfall, the Marches, the Reach and the Weald arrived without their smaller phone copies, so the phone edition refused to build at all. The eight copies are now made the same way as every other piece of phone art, at the smaller settings that keep the phone edition under the owner's 30 MB cap, and the phone art's share of that cap is unchanged.",
+    "build": "0.7.1.457",
+    "pullRequest": 1290,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1290"
+  },
+  {
     "id": "pr-1273",
     "date": "2026-09-24",
     "group": "2026-09-24",
