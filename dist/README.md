@@ -12,15 +12,17 @@ mobile single file with `--mobile`, and the de-inlined one with `--external-art`
 | | size | needs | good for |
 |---|---|---|---|
 | consolidated, full (`AshenSpire.html` here, in `build/`, and the root alias) | **~253 MB** | nothing — `file://` | double-click, offline, the art as painted |
-| consolidated, mobile (`AshenSpire-mobile.html` here, in `build/`, and the root alias) | **under 50 MB** (gated) | nothing — `file://` | phones, slow connections, the second download on the site |
+| consolidated, mobile (`AshenSpire-mobile.html` here, in `build/`, and the root alias) | **under 30 MB** (gated) | nothing — `file://` | phones, slow connections, the second download on the site |
 | de-inlined (`build/web/`, CI's `preview/`) | **~8 MB** + art beside it | a server | the hosted site's own page |
 
 Over 95% of the full single file is base64 art. The mobile file carries the
 SAME files under the SAME `assets/…` keys, read from `assets-mobile/` — a
 committed twin tree that `tools/mobile-art.mjs` shrinks from `assets/` (every
-image with a side of 384 px or more halved, all re-encoded lossy; the rule is
-`tools/mobileart-policy.mjs`). It plays identically and looks softer. The
-budget is the owner's number — under 50 MB — and it is a refusal, not a
+image with a side of 384 px or more cut to 5/16 scale, all re-encoded lossy at
+quality 35 / alpha 40 — except the full-screen backdrops under `environments/`, `bg/`
+and `map/`, which keep 0.4 scale at quality 50 so they do not block on a phone; the
+rule is `tools/mobileart-policy.mjs`). It plays identically and looks softer. The
+budget is the owner's number — under 30 MB — and it is a refusal, not a
 warning: `bundle.mjs --mobile` will not write a file over it, and
 `tools/verify-shipped.mjs` fails a committed one. The de-inlined build fetches
 art per screen and the browser caches it; the single files are re-read whole
