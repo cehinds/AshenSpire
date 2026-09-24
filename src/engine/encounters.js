@@ -379,9 +379,11 @@ export { chestUpgradeable, CHEST_CATEGORIES };
  * the payload rolls included, is on 'relicRewards' only. Pure apart from
  * the rng: the run is read, never written. `found` is the profile's found
  * armaments (the armament roll's prefer-unfound input); `exclude` names
- * armament ids the chest's piece may not be (the door's own armament drop).
+ * armament ids the chest's piece may not be (the door's own armament drop);
+ * `omit` names categories this door leaves out entirely (the co-op host's
+ * `['armament']`).
  */
-export function rollEliteChest(registries, outerRng, run, { found = [], exclude = [] } = {}) {
+export function rollEliteChest(registries, outerRng, run, { found = [], exclude = [], omit = [] } = {}) {
   const cfg = registries.balance.rewards.eliteChest;
   if (!cfg || !(cfg.choices > 0)) return null;
   // EVERY chest draw is on 'relicRewards' — the stream the elite's one relic
@@ -422,7 +424,9 @@ export function rollEliteChest(registries, outerRng, run, { found = [], exclude 
       return { category: 'cinders', cinders: rng.int('misc', lo, hi), smithingStones: cfg.smithingStones };
     },
   };
-  let remaining = CHEST_CATEGORIES.filter((c) => (cfg.categoryWeights[c] || 0) > 0);
+  // `omit` names categories a door cannot grant (co-op has no armament bag,
+  // SPEC §3.8.1): they leave the draw before it starts, so nothing is spent on them.
+  let remaining = CHEST_CATEGORIES.filter((c) => (cfg.categoryWeights[c] || 0) > 0 && !omit.includes(c));
   const options = [];
   while (options.length < cfg.choices && remaining.length) {
     const total = remaining.reduce((a, c) => a + cfg.categoryWeights[c], 0);

@@ -42,7 +42,10 @@ import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
   rollBossRelicChoices,
+  rollEliteChest,
 } from '../src/engine/encounters.js';
+import { applyChestOption } from '../src/model/rewardChest.js';
+import { artChargeView, artUnleashFor } from '../src/model/artCharge.js';
 import { offeredRelicIds } from '../src/model/rewardplan.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
@@ -475,6 +478,7 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- combat (live shared fight via coopCombat) ---------------------------
   let live = null; // { combat, pool } — the running shared fight
+  let finale = null; // the last frame of a fight that just ended (snapshot only)
   let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
 
   function memberAsPlayer(m) {
@@ -591,9 +595,16 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
     }
+    finale = null;
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
+  }
+
+  // The seat as model/artCharge.js reads a fight: its loadout, its entity and
+  // its own meter map — what coopCombat's setActive exposes for the actor.
+  function seatArtContext(P) {
+    return { registries, loadout: P.loadout, player: P.entity, artCharge: P.artCharge };
   }
 
   function combatScene() {
@@ -602,7 +613,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak', 'artChargeChanged', 'artUnleashed'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
@@ -610,6 +621,7 @@ export function createSession({ registries, seedString, endless = false, restore
         energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
         upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
+        weaponId: e.weaponId, max: e.max, unleashed: e.unleashed,
         stance: e.stance, kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blockRemaining: e.blockRemaining, success: e.success, blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
@@ -653,7 +665,18 @@ export function createSession({ registries, seedString, endless = false, restore
         // so a live meter the host fills was invisible to every co-op player
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
+        // Each Art card's charge, read the way the play door will read it
+        // (SPEC §12.2.1 item 10); a card with no meter carries nothing.
+        hand: P.piles.hand.map((c2) => {
+          const charge = artUnleashFor(seatArtContext(P), c2);
+          return {
+            instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded,
+            ...(charge ? { artCharge: { weaponId: charge.weaponId, value: charge.value, max: charge.max, unleashed: charge.ready } } : {}),
+          };
+        }),
+        // THE SEAT'S WEAPON ART METERS (SPEC §12.2.1 item 10): the HUD rows,
+        // one per equipped weapon with a meter.
+        artCharge: artChargeView(seatArtContext(P)),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -704,6 +727,11 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!live) return { ok: true };
     const c = live.combat;
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
+    // THE FIGHT-ENDING FRAME (SPEC §7.4, co-op): the scene below becomes the
+    // reward door (or the run's end) in this same snapshot, so the killing
+    // receipts ride beside it as a transient `finale` — never persisted,
+    // dropped when the door closes or the next fight starts.
+    finale = combatScene();
     const pool = live.pool;
     const outcome = coopOutcome(c);
     for (const m of livingMembers()) {
@@ -801,11 +829,15 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!relicIds.length) cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
       return { pool, cardIds, cinders, flaskId, relicId: null, relicIds };
     }
-    // Co-op elites keep the single random relic rather than the solo elite
-    // chest (SPEC §3.8.1): a chest's upgrade and armament options need a deck
-    // and an armament bag the seat's catch-up replay cannot hold stable.
-    const relicId = pool === 'elite' ? rollRelicReward(registries, m.rng, m.run.relics) : null;
-    return { pool, cardIds, cinders, flaskId, relicId };
+    if (pool === 'elite') {
+      // THE ELITE CHEST (SPEC §3.8.1, co-op): rolled on this seat's own
+      // stream against its own run and STORED in the offer, so a catch-up
+      // replays these options and never re-rolls. No armament category: the
+      // co-op door grants no armament piece and a seat has no bag for one.
+      const chest = rollEliteChest(registries, m.rng, m.run, { omit: ['armament'] });
+      return { pool, cardIds, cinders, flaskId, ...(chest ? { chest } : {}) };
+    }
+    return { pool, cardIds, cinders, flaskId, relicId: null };
   }
 
   function grantRewards(pool) {
@@ -830,6 +862,24 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   /**
+   * Can this seat take chest option `index` of `offer` NOW (SPEC §3.8.1,
+   * co-op)? A dry run of the solo grant on a copy of the seat's run. A relic
+   * already in hand on catch-up is still takeable: that door substitutes.
+   */
+  function chestTakeable(m, option, { catchup = false } = {}) {
+    if (!option) return false;
+    if (catchup && option.category === 'relic' && m.run.relics.includes(option.relicId)) return true;
+    const copy = { ...m.run, deck: structuredClone(m.run.deck), relics: [...m.run.relics] };
+    return applyChestOption(registries, copy, option);
+  }
+  /** Why a chest pick is refused, or null when it lands. */
+  function chestRefusal(m, offer, index, opts = {}) {
+    const option = offer && offer.chest && Number.isInteger(index) ? offer.chest.options[index] : null;
+    if (!option) return 'no such chest option';
+    return chestTakeable(m, option, opts) ? null : 'that chest option can no longer be taken';
+  }
+
+  /**
    * The one relic a reward pick lands (SPEC §6.1), or null. `relicId` names
    * one of the offered ids — the boss choice's door; a bare `takeRelic` takes
    * the single relic, or on a choice the first offered (a legacy client or a
@@ -843,11 +893,17 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // A present member takes their card/relic pick (or skips with null).
-  function chooseReward(memberId, { cardId = null, takeRelic = false, relicId = null, flask = false } = {}) {
+  function chooseReward(memberId, { cardId = null, takeRelic = false, relicId = null, flask = false, chestIndex = null } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // A chest pick that cannot land is refused before anything moves.
+    if (chestIndex != null) {
+      const refusal = chestRefusal(m, offer, chestIndex);
+      if (refusal) return { ok: false, error: refusal };
+      applyChestOption(registries, m.run, offer.chest.options[chestIndex]);
+    }
     if (cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
@@ -869,6 +925,7 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   function closeReward() {
+    finale = null;
     const after = session.scene.afterReward;
     if (after === 'advanceAct') advanceAct();
     else advanceFromNode();
@@ -1219,6 +1276,19 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
       const offer = item.offer;
+      // THE STORED CHEST (SPEC §3.8.1): the options rolled when the party met
+      // the elite, never re-rolled. A stale pick is refused, the entry stays.
+      if (pick && pick.chestIndex != null) {
+        const refusal = chestRefusal(m, offer, pick.chestIndex, { catchup: true });
+        if (refusal) return { ok: false, error: refusal };
+        const option = offer.chest.options[pick.chestIndex];
+        if (option.category === 'relic' && m.run.relics.includes(option.relicId)) {
+          const id = rollRelicReward(registries, m.rng, m.run.relics);
+          if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+        } else {
+          applyChestOption(registries, m.run, option);
+        }
+      }
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
@@ -1378,7 +1448,11 @@ export function createSession({ registries, seedString, endless = false, restore
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       flaskCharges: structuredClone(m.run.flaskCharges),
       catchup: m.catchup.length,
-      catchupQueue: m.catchup, // rolled options for the reconnect series
+      // Rolled options for the reconnect series; a stored elite chest also
+      // says which of its options can still land (SPEC §3.8.1, co-op).
+      catchupQueue: m.catchup.map((item) => (item.type === 'reward' && item.offer && item.offer.chest
+        ? { ...item, chestTakeable: item.offer.chest.options.map((o) => chestTakeable(m, o, { catchup: true })) }
+        : item)),
     };
   }
 
@@ -1470,6 +1544,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // and why. Identity + reason only — the evidence bytes stay host-side,
       // in serialize().
       refusedMembers: refused.map((r) => ({ id: r.id, name: r.name, reason: r.reason })),
+      ...(finale ? { finale } : {}),
     };
   }
 
