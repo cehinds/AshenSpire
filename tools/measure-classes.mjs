@@ -600,9 +600,13 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
       } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
-      // Refused: set it aside for the turn and choose again (runsim.mjs).
+      // Refused: set it aside for the turn and choose again (runsim.mjs). The
+      // refusal is not a decision, so it is not recorded; the re-pick is.
       if (!card) throw e;
       refused.add(card.instanceId);
+      if (policy === 'starseerkit' && chargedAtDecision && affordable[0]
+          && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges--;
+      continue;
     }
     const decisionEvents = combat.eventLog.slice(eventStart);
     recordStarDecision(stats, opportunityTurns, {

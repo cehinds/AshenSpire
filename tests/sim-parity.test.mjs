@@ -62,7 +62,8 @@ test('the bot offers only cards affordable in every pool', () => {
     const cost = cardPlayCosts(combat, id);
     assert.ok(cost.energy <= combat.player.energy && cost.mana <= combat.player.mana && cost.stamina <= combat.player.stamina, id);
   }
-  const refused = new Set([offered[0]].filter(Boolean));
+  assert.ok(offered.length > 0, 'something else in the opening hand is affordable');
+  const refused = new Set([offered[0]]);
   assert.ok(!affordableCards(registries, combat, refused).some((h) => refused.has(h.instanceId)), 'a refused card is set aside');
 });
 

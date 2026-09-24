@@ -22,7 +22,7 @@
 //   same climbs it always measured (§13.6); on, it measures every order.
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
@@ -342,8 +342,8 @@ function simulateRun(classId, seed, ds = null) {
     return result;
   };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
-  // node with. On a lost fight botFight does NOT write hp back, so run.hp
-  // still holds the entering value at the moment of the record.
+  // node with. botFight writes the pools back on a loss too (runCombatEnd),
+  // so each caller captures hpIn before the fight.
   const recordDeath = (ds2, act, hpIn) => {
     if (!ds2) return;
     ds2.deaths++; ds2.deathActs[Math.min(act, 3) - 1]++;
@@ -400,8 +400,9 @@ function simulateRun(classId, seed, ds = null) {
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            const fought = botFight(run, rng, encId, cm, ds);
-            if (fought !== 'victory') { result.deaths = `ambush${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
+            const hpIn = run.hp;
+        const fought = botFight(run, rng, encId, cm, ds);
+            if (fought !== 'victory') { result.deaths = `ambush${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -412,8 +413,9 @@ function simulateRun(classId, seed, ds = null) {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
           : rollEncounter(REG, rng, { pool, seat });
+        const hpIn = run.hp;
         const fought = botFight(run, rng, encId, cm, ds);
-        if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
+        if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });

@@ -20,7 +20,7 @@
 //      node tools/balance.mjs --check   exit 1 when docs/BALANCE.md is stale
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
