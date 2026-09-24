@@ -44,6 +44,10 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
   if (saved) return saved[1].toLowerCase();
   if (/^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host)) return 'dev';
+  // A private-network host is a workstation serving the dev preview to a
+  // phone on the same Wi-Fi (tools/serve-preview.mjs): released builds are
+  // only ever served from the Pages site or opened as files.
+  if (/^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[a-z0-9-]+\.local)$/i.test(host)) return 'dev';
   if (protocol === 'file:') return 'unknown';
   return 'main';
 }
@@ -57,6 +61,9 @@ export function debugEnabled(channel = buildChannel(), { search = globalThis.loc
   if (DEBUG_CHANNELS.has(channel)) return true;
   if (LOCKED_CHANNELS.has(channel)) return false;
   const flag = new URLSearchParams(search).get('debug');
+  // No storage (a sandboxed or private file view): the flag still counts for
+  // this page, it just cannot be remembered.
+  if (!storage) return flag === '1' || flag === 'true';
   try {
     if (flag === '1' || flag === 'true') storage?.setItem(DEBUG_STORAGE_KEY, '1');
     if (flag === '0' || flag === 'false') storage?.removeItem(DEBUG_STORAGE_KEY);

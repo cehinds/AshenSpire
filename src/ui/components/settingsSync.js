@@ -79,6 +79,9 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
   const labelOf = new Map(rows.map((row) => [row.key, String(row.label || row.key).replace(/<[^>]*>/g, '')]));
   let cfg = deviceSyncConfig();
   let pending = null;
+  // Each load and each location change takes a new generation; a load that
+  // finishes under an older one is dropped, never shown under the new place.
+  let generation = 0;
 
   const draw = () => {
     const token = read(SYNC_STORAGE.token);
@@ -142,11 +145,14 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     // A new request retires the old answer: no Apply may install a profile
     // fetched before this one, whatever this request turns out to be.
     pending = null;
+    const mine = ++generation;
+    const from = cfg;
     const stale = mount.querySelector('[data-sync-preview]');
     if (stale) { stale.hidden = true; stale.innerHTML = ''; }
     busy(btn, true, 'Loading…');
     try {
-      const remote = await fetchProfile(cfg, { token: read(SYNC_STORAGE.token) || '' });
+      const remote = await fetchProfile(from, { token: read(SYNC_STORAGE.token) || '' });
+      if (mine !== generation || !btn.isConnected) return;
       if (!remote) { status('There is no profile there yet. Save one from a device first.'); return; }
       const parsed = profileChanges(remote.text, contentBundle, settings, rows, keys);
       const diff = profileDiff(settings, parsed);
@@ -223,6 +229,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       const raw = {};
       mount.querySelectorAll('[data-sync-field]').forEach((input) => { raw[input.dataset.syncField] = input.value.trim(); });
       cfg = syncConfig(raw);
+      generation += 1;
+      pending = null;
       write(SYNC_STORAGE.config, JSON.stringify(cfg));
       write(SYNC_STORAGE.lastSha, null);
       draw();

@@ -63,7 +63,7 @@ stamped with its branch.
 
 | Where the page is | Channel | Tuning shown |
 |---|---|---|
-| `…/dev/<n>/`, `…/dev/latest/`, a saved `AshenSpire-dev-….html`, the dev server / localhost | dev | yes |
+| `…/dev/<n>/`, `…/dev/latest/`, a saved `AshenSpire-dev-….html`, the dev server / localhost / a private LAN address (a phone testing a workstation's preview) | dev | yes |
 | `…/test/…`, `AshenSpire-test-….html` | test | yes |
 | `…/main/…`, `…/release/…`, the site root, `AshenSpire-main-….html` | main / release | **never** |
 | any other file | unknown | only with `?debug=1` (remembered; `?debug=0` forgets) |

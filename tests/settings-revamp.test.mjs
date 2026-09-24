@@ -297,3 +297,23 @@ test('a new profile load retires the previous preview first', async () => {
   const start = panel.indexOf('const previewLoad = async');
   assert.ok(panel.indexOf('pending = null;', start) < panel.indexOf('fetchProfile(', start));
 });
+
+test('a dev preview served to a phone over the LAN opens as dev', () => {
+  for (const host of ['192.168.1.20', '10.0.0.5', '172.20.3.4', 'workstation.local']) {
+    assert.equal(buildChannel({ pathname: '/index.html', hostname: host, protocol: 'http:' }, 'standalone file'), 'dev', host);
+  }
+  assert.equal(buildChannel({ pathname: '/index.html', hostname: '172.40.3.4', protocol: 'http:' }, 'standalone file'), 'main', 'a public 172.x is not private');
+});
+
+test('?debug=1 still opens an unknown file when storage is unavailable', () => {
+  assert.equal(debugEnabled('unknown', { search: '?debug=1', storage: null }), true);
+  assert.equal(debugEnabled('unknown', { search: '', storage: null }), false);
+  assert.equal(debugEnabled('main', { search: '?debug=1', storage: null }), false);
+});
+
+test('a profile load that finishes after the location changed is dropped', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(mine !== generation \|\| !btn\.isConnected\) return;/);
+  assert.match(panel, /cfg = syncConfig\(raw\);\s*generation \+= 1;/);
+});
