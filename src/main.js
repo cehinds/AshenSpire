@@ -3412,7 +3412,11 @@ if (shotState === 'combat-test') {
     // `?shotReward=levelup` — THE LEVEL MOMENT (SPEC §13.4o): the fight just
     // climbed the character to level 5 and the point waits for a shrine, so
     // the door opens on the level banner. Authored, like the rest of the pose.
-    if (pose === 'levelup') run.level = { xp: 20, level: 5, unspentPoints: 1 };
+    // `?shotReward=eliteLevelup` — BOTH AT ONCE: the elite chest and the level
+    // banner on one door, the integration pose for the game-feel rework.
+    const chestPose = pose === 'chest' || pose === 'eliteLevelup';
+    const levelPose = pose === 'levelup' || pose === 'eliteLevelup';
+    if (levelPose) run.level = { xp: 20, level: 5, unspentPoints: 1 };
     const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
@@ -3425,7 +3429,7 @@ if (shotState === 'combat-test') {
       // `?shotReward=chest` poses the ELITE door (SPEC §3.8.1): the chest in
       // the relic's old seat, three authored options, no roll — a relic, a
       // rare card pre-upgraded and a purse, so every capture is identical.
-      ...(pose === 'chest' ? {
+      ...(chestPose ? {
         title: 'ELITE FELLED',
         chest: { options: [
           { category: 'relic', relicId: 'forsakenMedallion' },
@@ -3436,7 +3440,7 @@ if (shotState === 'combat-test') {
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 }, ...(pose === 'levelup' ? { levelUps: 1 } : {}) },
+      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 }, ...(levelPose ? { levelUps: 1 } : {}) },
     };
     // `?shotReward=bossRelic` poses a BOSS door (SPEC §6.1): the relic row is
     // a choice of three distinct boss relics, the pool's first three the run

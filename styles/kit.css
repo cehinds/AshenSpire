@@ -1516,6 +1516,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   margin: 0 0 0.75rem; padding: 0.6rem 1rem; border: 1px solid var(--gold); border-radius: 6px;
   background: linear-gradient(90deg, rgba(201, 162, 39, 0.05), rgba(201, 162, 39, 0.2), rgba(201, 162, 39, 0.05));
   text-align: center;
+  /* Sticky, over an opaque ground: the elite chest (SPEC §3.8.1) adds a row,
+     and a door long enough to scroll must not scroll the level moment away
+     from the choices it sits above. */
+  position: sticky; top: calc(-1 * var(--modal-inset)); z-index: 2; align-self: stretch;
+  background-color: var(--bg-raise);
+  box-shadow: 0 calc(-1 * var(--modal-inset)) 0 0 var(--bg-raise);
 }
 .reward-level-banner .rlb-glyph { color: var(--gold); font-size: 1.3em; }
 .reward-level-banner .rlb-title { color: var(--gold); font-family: var(--display-font, inherit); font-size: 1.45em; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
