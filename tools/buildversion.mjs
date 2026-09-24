@@ -915,8 +915,11 @@ export function check(root = REPO_ROOT) {
   //     without moving the string.
   const outside = [];
   const index = src('index.html');
-  const hrefs = [...index.matchAll(/<link\b[^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
+  // The quote that opens an href closes it (an inline data: icon carries the
+  // other quote inside it), and a non-local href is never a bundler read.
+  const hrefs = [...index.matchAll(/<link\b[^>]*\bhref=(["'])(.+?)\1/gi)].map((m) => m[2]);
   for (const h of hrefs) {
+    if (/^(data:|https?:|\/\/)/i.test(h)) continue;
     const r = relative(root, resolve(root, h)).split('\\').join('/');
     if (!insideRoots(r)) outside.push(`index.html → ${h}`);
     else {
