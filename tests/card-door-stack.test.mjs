@@ -16,8 +16,10 @@
 // kit.css — and this file is what holds that literal to the config.
 //
 // WHAT THIS DOES NOT CHECK: it reads the stylesheet as text; it lays nothing
-// out and sees no pixel. Rendered geometry at 601/650/703 was measured in
-// Chromium for the PR that added this file. It does not check the modal host
+// out and sees no pixel. The rendered geometry (bare and Armoury hosts at
+// 601/650/703/1280: stacked below the art, readable width, art centred; two
+// columns when wide) is asserted in real Chromium by
+// tools/weapon-card-preview.mjs. This file does not check the modal host
 // (the `data-card-door` decision in src/ui/components/cardInspection.js and
 // tests/card-size-tuning.test.mjs cover that), nor any selector in another
 // stylesheet.

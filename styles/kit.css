@@ -3617,6 +3617,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-layout { display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
 .card-inspection-layout > .card-inspection-art { flex:0 1 var(--card-w-inspect,320px); }
 .card-inspection-layout > .card-inspection-details { flex:1 1 384px; }
+/* A wrapped art line is centred, not left on a 320px box at the line start;
+   the details' end margin takes any slack on a two-column line, so a wide host
+   still reads card-then-text from the start edge. Not the modal: its grid has
+   its own tracks and a stacked door centres its art itself (rules below). */
+.card-inspection-layout:not(.card-inspection-modal .card-inspection-layout) { justify-content:center; }
+.card-inspection-layout:not(.card-inspection-modal .card-inspection-layout) > .card-inspection-details { margin-inline-end:auto; }
 .card-inspection-art { min-width:0; width:100%; }
 .card-inspection-art > .equipment-poker-card { width:100%; }
 .card-inspection-details { min-width:0; max-width:65ch; font:16px/1.55 Arial,sans-serif; overflow-wrap:anywhere; }
