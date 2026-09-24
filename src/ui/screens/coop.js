@@ -1126,15 +1126,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
    */
   // Each option carries its own listener (`onPick(relicId)`), so the id it
   // keeps is bound where the option is made, never re-read from the DOM.
-  function relicTakes(offer, dataKey, onPick, chosenId = null) {
+  // `takeable` false (the host's catch-up reading of a stored single relic
+  // already in hand with no substitute left) draws the take disabled with its
+  // reason; the host refuses it either way.
+  function relicTakes(offer, dataKey, onPick, chosenId = null, takeable = true) {
     const ids = offeredRelicIds(offer);
     if (!ids.length) return [];
     const single = offer.relicId || ids.length === 1;
+    const open = takeable !== false;
     return (single ? ids.slice(0, 1) : ids).map((id) => {
       const def = registries.relics.get(id);
       const card = single
-        ? choice({ glyph: '◆', name: 'Take the relic', description: def.name, selected: chosenId === id, className: 'coop-take coop-relic-take', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } })
+        ? choice({
+          glyph: '◆', name: 'Take the relic', description: def.name, disabled: !open, selected: open && chosenId === id,
+          reason: open ? '' : 'You already hold this relic and none is left to take in its place.',
+          className: 'coop-take coop-relic-take', attrs: { dataset: { [dataKey]: 'relic', relicId: id } },
+        })
         : choice({ glyph: def.icon || '◆', name: def.name, description: relicText(def, registries), selected: chosenId === id, className: 'coop-take coop-relic-take coop-boss-relic', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } });
+      if (!open) return card;
       card.addEventListener('click', () => onPick(id));
       return card;
     });
@@ -1182,7 +1191,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   const toggle = (pick, field, value) => { pick[field] = pick[field] === value ? (field === 'flask' ? false : null) : value; };
   // The door's rows, each tap staging into `pick`; `onDone(pick)` sends it.
-  function spoilsRows(offer, { takeable = null, dataKey, pick, onDone, relicOnly = false }) {
+  function spoilsRows(offer, { takeable = null, relicTakeable = true, dataKey, pick, onDone, relicOnly = false }) {
     const grid = relicOnly ? null : el('div', { class: 'reward-row' });
     for (const cid of relicOnly ? [] : offer.cardIds || []) {
       const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
@@ -1190,7 +1199,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       card.addEventListener('click', () => { toggle(pick, 'cardId', cid); render(); });
       grid.appendChild(card);
     }
-    const relics = relicTakes(offer, dataKey, (relicId) => { toggle(pick, 'relicId', relicId); pick.takeRelic = pick.relicId != null; render(); }, pick.relicId);
+    const relics = relicTakes(offer, dataKey, (relicId) => { toggle(pick, 'relicId', relicId); pick.takeRelic = pick.relicId != null; render(); }, pick.relicId, relicTakeable);
     const chest = relicOnly ? [] : chestTakes(offer, takeable, dataKey, (i) => { toggle(pick, 'chestIndex', i); render(); }, pick.chestIndex);
     const flask = !relicOnly && offer.flaskId
       ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, selected: pick.flask, className: 'coop-take', attrs: { dataset: { [dataKey]: 'flask' } } })
@@ -1379,7 +1388,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const offer = item.type === 'reward' ? item.offer : { cardIds: [], relicId: item.relicId || null };
     const pick = stagedPick(`cu:${remaining}:${JSON.stringify(item)}`);
     const { grid, relics, chest, takes } = spoilsRows(offer, {
-      takeable: item.chestTakeable, dataKey: 'cu', pick, relicOnly: item.type !== 'reward',
+      takeable: item.chestTakeable, relicTakeable: item.relicTakeable, dataKey: 'cu', pick, relicOnly: item.type !== 'reward',
       onDone: (p) => send({ t: 'catchupChoice', index: 0, pick: p }),
     });
     sceneDoor({

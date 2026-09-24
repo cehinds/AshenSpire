@@ -680,6 +680,111 @@ test('catch-up: a held chest relic with a substitute left is still takeable and 
   assert.equal(m.run.relics.length, n + 1);
 });
 
+// ---- catch-up: a stored relic already in hand with NO substitute left --------
+// Each row follows its live door (SPEC §6.1): a boss relic pays the boss
+// consolation once, as the boss door pays it on an empty pool; a normal/elite
+// single relic or a treasure relic — whose live door pays nothing on an empty
+// pool — is refused with nothing moved and the entry kept (as a stale chest
+// option is), marked unavailable in the view, and an empty pick then drains it.
+const BOSS_IDS = REG.relics.all().filter((r) => r.rarity === 'boss').map((r) => r.id);
+const COMMON_ID = REG.relics.all().find((r) => r.rarity === 'common').id;
+const CONSOLATION = REG.balance.rewards.bossRelicConsolationCinders;
+const NO_SUBSTITUTE_ROWS = [
+  {
+    name: 'boss relic choice', paid: CONSOLATION, view: { relicTakeable: undefined },
+    entry: { type: 'reward', act: 1, floor: 15, offer: { pool: 'boss', cardIds: [], cinders: 0, flaskId: null, relicId: null, relicIds: BOSS_IDS.slice(0, 3) } },
+    pick: { relicId: BOSS_IDS[1] },
+  },
+  {
+    name: 'normal single relic row', refused: true, view: { relicTakeable: false },
+    entry: { type: 'reward', act: 1, floor: 3, offer: { pool: 'normal', cardIds: [], cinders: 0, flaskId: null, relicId: COMMON_ID } },
+    pick: { takeRelic: true },
+  },
+  {
+    name: 'elite single relic row', refused: true, view: { relicTakeable: false },
+    entry: { type: 'reward', act: 1, floor: 5, offer: { pool: 'elite', cardIds: [], cinders: 0, flaskId: null, relicId: COMMON_ID } },
+    pick: { relicId: COMMON_ID },
+  },
+  {
+    name: 'treasure relic', refused: true, view: { relicTakeable: false },
+    entry: { type: 'treasure', act: 1, floor: 7, relicId: COMMON_ID },
+    pick: { takeRelic: true },
+  },
+];
+for (const row of NO_SUBSTITUTE_ROWS) {
+  test(`catch-up: a held ${row.name} with no substitute left is ${row.refused ? 'refused, the entry waits' : 'paid the boss consolation once'}`, () => {
+    const S = party();
+    const m = seat(S, 'p1');
+    m.catchup.push(structuredClone(row.entry));
+    // Earlier replayed entries granted every relic, the stored one included.
+    for (const id of REG.relics.all().map((r) => r.id)) if (!m.run.relics.includes(id)) m.run.relics.push(id);
+    const view = S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0];
+    assert.equal(view.relicTakeable, row.view.relicTakeable, 'the view marks what can land');
+    const before = structuredClone(m.run);
+    const res = S.resolveCatchup('p1', 0, row.pick);
+    assert.deepEqual(m.run.relics, before.relics, 'no relic lands');
+    if (row.refused) {
+      assert.equal(res.ok, false);
+      assert.deepEqual(m.run, before, 'nothing moved');
+      assert.equal(m.catchup.length, 1, 'the entry is not consumed');
+      assert.equal(S.resolveCatchup('p1', 0, {}).ok, true, 'an empty pick leaves it');
+      assert.deepEqual([m.run.relics, m.run.cinders], [before.relics, before.cinders], 'and takes nothing');
+    } else {
+      assert.equal(res.ok, true, res.error);
+      assert.equal(m.run.cinders, before.cinders + row.paid, 'the consolation is paid');
+      assert.equal(S.resolveCatchup('p1', 0, row.pick).ok, false, 'the entry is spent');
+      assert.equal(m.run.cinders, before.cinders + row.paid, 'exactly once');
+    }
+    assert.equal(m.catchup.length, 0);
+  });
+  test(`catch-up: a held ${row.name} with a substitute left still lands one relic`, () => {
+    const S = party();
+    const m = seat(S, 'p1');
+    m.catchup.push(structuredClone(row.entry));
+    const pool = row.entry.offer?.pool === 'boss' ? BOSS_IDS : REG.relics.all().filter((r) => r.rarity === 'common').map((r) => r.id);
+    const spare = pool.find((id) => id !== (row.pick.relicId || COMMON_ID) && !m.run.relics.includes(id));
+    for (const id of REG.relics.all().map((r) => r.id)) if (id !== spare && !m.run.relics.includes(id)) m.run.relics.push(id);
+    const view = S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0];
+    assert.notEqual(view.relicTakeable, false);
+    const cinders = m.run.cinders;
+    assert.equal(S.resolveCatchup('p1', 0, row.pick).ok, true);
+    assert.equal(m.run.relics.at(-1), spare, 'the substitute lands');
+    assert.equal(m.run.cinders, cinders, 'no consolation beside a relic');
+    assert.equal(m.catchup.length, 0);
+  });
+}
+
+test('the catch-up screen keeps a boss choice selectable and draws a spent treasure relic disabled', async () => {
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const ids = BOSS_IDS.slice(0, 3);
+    const boss = await mountCoopScreen({
+      ...baseSnap, scene: { kind: 'map' }, reachableIds: [], map: null,
+      party: partyRows([{ type: 'reward', act: 1, floor: 15, offer: { pool: 'boss', cardIds: [], relicId: null, relicIds: ids } }]),
+    });
+    const takes = boss.app.querySelectorAll('.coop-boss-relic');
+    assert.equal(takes.length, 3);
+    assert.equal(takes.some((b) => b.disabled), false);
+    takes[1].click();
+    boss.app.querySelector('.coop-continue').click();
+    assert.equal(boss.sent.at(-1).t, 'catchupChoice');
+    assert.equal(boss.sent.at(-1).pick.relicId, ids[1]);
+
+    const tr = await mountCoopScreen({
+      ...baseSnap, scene: { kind: 'map' }, reachableIds: [], map: null,
+      party: partyRows([{ type: 'treasure', act: 1, floor: 7, relicId: COMMON_ID, relicTakeable: false }]),
+    });
+    const take = tr.app.querySelector('.coop-relic-take');
+    assert.equal(take.disabled, true, 'a spent relic is drawn disabled');
+    take.click();
+    tr.app.querySelector('.coop-continue').click();
+    assert.equal(tr.sent.at(-1).pick.takeRelic, false, 'the disabled take is not staged');
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
+});
+
 test('a flask-growth relic from a co-op chest grows the seat\'s flask belt at once', () => {
   const S = party();
   const m1 = seat(S, 'p1');

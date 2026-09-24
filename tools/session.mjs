@@ -998,15 +998,26 @@ export function createSession({ registries, seedString, endless = false, restore
    */
   function chestTakeable(m, option, { catchup = false } = {}) {
     if (!option) return false;
-    // A relic an earlier replayed entry already granted is paid by a
-    // substitute — takeable only while one is left to roll. The check reads
-    // the pool without drawing (a stub pick), so marking the view spends no RNG.
-    if (catchup && option.category === 'relic' && m.run.relics.includes(option.relicId)) {
-      return rollRelicReward(registries, { pick: (_stream, pool) => pool[0] }, m.run.relics) !== null;
-    }
+    if (catchup && option.category === 'relic') return relicLandable(m, option.relicId);
     const copy = { ...m.run, deck: structuredClone(m.run.deck), relics: [...m.run.relics] };
     return applyChestOption(registries, copy, option);
   }
+  /**
+   * Can a catch-up relic `relicId` still land (SPEC §6.1, co-op catch-up)? One
+   * the seat does not hold lands as itself; one an earlier replayed entry
+   * already granted is paid by a substitute — landable only while one is left
+   * to roll (`rarities` as the substitute roll reads them). The check reads the
+   * pool without drawing (a stub pick), so marking the view spends no RNG.
+   */
+  function relicLandable(m, relicId, rarities = {}) {
+    if (!m.run.relics.includes(relicId)) return true;
+    return rollRelicReward(registries, { pick: (_stream, pool) => pool[0] }, m.run.relics, rarities) !== null;
+  }
+  /**
+   * The substitute rarities for a reward offer's relic: a boss door's relic is
+   * replaced by a boss relic, every other by the normal pool.
+   */
+  const substituteRarities = (offer) => (offer && offer.pool === 'boss' ? { rarities: ['boss'] } : {});
   /** Why a chest pick is refused, or null when it lands. */
   function chestRefusal(m, offer, index, opts = {}) {
     const option = offer && offer.chest && Number.isInteger(index) ? offer.chest.options[index] : null;
@@ -1431,6 +1442,18 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
       const offer = item.offer;
+      const boss = offer.pool === 'boss';
+      // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
+      // entry can have granted the very relic the offer rolled (rolled against
+      // the relics the seat held then). The seat is owed a relic, not this
+      // one: a substitute is rolled against the relics in hand now (Codex on
+      // #548). With NO SUBSTITUTE LEFT the pick follows its live door (SPEC
+      // §6.1): a boss relic pays the boss consolation, as the boss door pays
+      // it on an empty pool; any other relic — whose live door pays nothing
+      // on an empty pool — is refused before anything moves and the entry
+      // stays, as a stale chest option is (the view marks it unavailable).
+      const chosen = pick ? pickedRelic(offer, pick) : null;
+      if (chosen && !boss && !relicLandable(m, chosen)) return { ok: false, error: 'that relic can no longer be taken' };
       // THE STORED CHEST (SPEC §3.8.1): the options rolled when the party met
       // the elite, never re-rolled. A stale pick is refused, the entry stays.
       if (pick && pick.chestIndex != null) {
@@ -1448,22 +1471,21 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
-      // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
-      // entry can have granted the very relic the offer rolled (rolled against
-      // the relics the seat held then). The seat is owed a relic, not this
-      // one: a substitute is rolled against the relics in hand now (Codex on
-      // #548).
-      const chosen = pick ? pickedRelic(offer, pick) : null;
       if (chosen) {
-        const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : chosen;
-        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+        const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, substituteRarities(offer)) : chosen;
+        if (id) m.run.relics.push(id);
+        else if (boss) m.run.cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
       }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
       syncFlaskGrowth(registries, m.run); // a caught-up relic may grow the flask belt
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId) {
+        // A treasure room pays nothing on an empty pool, live or solo: a held
+        // relic with no substitute left is refused and the entry stays (the
+        // seat may leave it with an empty pick).
+        if (!relicLandable(m, item.relicId)) return { ok: false, error: 'that relic can no longer be taken' };
         const id = m.run.relics.includes(item.relicId) ? rollRelicReward(registries, m.rng, m.run.relics) : item.relicId;
-        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+        if (id) m.run.relics.push(id);
       }
       syncFlaskGrowth(registries, m.run);
     } else if (item.type === 'event') {
@@ -1608,10 +1630,21 @@ export function createSession({ registries, seedString, endless = false, restore
       catchup: m.catchup.length,
       // Rolled options for the reconnect series; a stored elite chest also
       // says which of its options can still land (SPEC §3.8.1, co-op).
-      catchupQueue: m.catchup.map((item) => (item.type === 'reward' && item.offer && item.offer.chest
-        ? { ...item, chestTakeable: item.offer.chest.options.map((o) => chestTakeable(m, o, { catchup: true })) }
-        : item)),
+      // A stored non-boss relic (a treasure's, or a legacy single-relic row)
+      // says whether it can still land; a boss relic always can (a substitute
+      // or the consolation, SPEC §6.1).
+      catchupQueue: m.catchup.map((item) => catchupView(m, item)),
     };
+  }
+
+  /** A catch-up entry as the member view draws it: the entry plus its takeable marks. */
+  function catchupView(m, item) {
+    if (item.type === 'treasure') return item.relicId ? { ...item, relicTakeable: relicLandable(m, item.relicId) } : item;
+    if (item.type !== 'reward' || !item.offer) return item;
+    const marks = {};
+    if (item.offer.chest) marks.chestTakeable = item.offer.chest.options.map((o) => chestTakeable(m, o, { catchup: true }));
+    if (item.offer.relicId && item.offer.pool !== 'boss') marks.relicTakeable = relicLandable(m, item.offer.relicId);
+    return Object.keys(marks).length ? { ...item, ...marks } : item;
   }
 
   // Serialize the run to plain JSON for host disk-resume. Returns null during a
