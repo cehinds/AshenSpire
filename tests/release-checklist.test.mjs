@@ -1,6 +1,7 @@
 // docs/RELEASE-CHECKLIST.md is the written release gate (docs/FINISH.md §13).
 // This keeps it honest: it must list at least five runnable gate commands,
-// every script a gate names must exist in this repository, and the owner
+// every script a gate names must exist in this repository, every --flag a
+// gate passes must appear in that script's source, and the owner
 // sign-off (agents never tag or publish) must stay in the file.
 
 import test from 'node:test';
@@ -28,6 +29,18 @@ function scripts(cmd) {
   return [...cmd.matchAll(/(?:^|\s)((?:tools|tests)\/[\w./-]+\.(?:mjs|js|cjs))/g)].map((m) => m[1]);
 }
 
+// Each `--flag` a command passes, paired with the script it follows, so a
+// typo such as `--gat` is caught. The bare `--` separator is not a flag.
+function flags(cmd) {
+  const out = [];
+  let script = null;
+  for (const tok of cmd.split(/\s+/)) {
+    if (/^(?:tools|tests)\/[\w./-]+\.(?:mjs|js|cjs)$/.test(tok)) script = tok;
+    else if (script && /^--[\w-]+$/.test(tok)) out.push({ script, flag: tok.split('=')[0] });
+  }
+  return out;
+}
+
 test('docs/RELEASE-CHECKLIST.md exists', () => {
   assert.ok(existsSync(docPath), 'docs/RELEASE-CHECKLIST.md is missing');
 });
@@ -43,6 +56,10 @@ test('the release checklist lists at least 5 runnable gates whose scripts exist'
     const ss = scripts(g.cmd);
     assert.ok(ss.length > 0, `${g.id} names no tools/ or tests/ script: ${g.cmd}`);
     for (const s of ss) assert.ok(existsSync(join(root, s)), `${g.id} runs ${s}, which does not exist`);
+    for (const { script, flag } of flags(g.cmd)) {
+      const src = readFileSync(join(root, script), 'utf8');
+      assert.ok(src.includes(flag), `${g.id} passes ${flag} to ${script}, which never mentions it`);
+    }
     const cells = g.line.split('|').map((c) => c.trim()).filter(Boolean);
     assert.ok(cells.length >= 3 && cells[2].length > 0, `${g.id} has no expected result`);
   }

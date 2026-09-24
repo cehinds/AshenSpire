@@ -13,9 +13,11 @@ CONTRIBUTING.md, *Coordination and release boundary*).
 ## How to run
 
 Start from a clean checkout of the RC SHA with LFS content pulled
-(`git lfs pull`). Run each command from the repository root. Wrap a gate in
-`node tools/verdict.mjs -- …` as CI does: a silent exit 0 or a zero-count green
-is then refused (DEVELOPER.md, *The CI door*). Exit codes from the door:
+(`git lfs pull`). Run each command from the repository root exactly as the
+table gives it. A gate wrapped in `node tools/verdict.mjs -- …` runs as CI runs
+it: a silent exit 0 or a zero-count green is then refused (DEVELOPER.md, *The CI
+door*). A gate listed bare prints a result line the door does not accept, so
+wrapping it would read as silence; judge it by its exit code. Exit codes from the door:
 `0` green, `1` a real failure, `2` the harness could not run, `3` silence,
 `4` killed by a signal. A `2` is not a pass. Fix the harness and run again.
 
@@ -30,7 +32,7 @@ or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
 | G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0. The build version is derived and matches the tree, and nobody typed it by hand. | `ci.yml` |
 | G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. Exit 2 means CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
 | G4 | `node tools/release-series.mjs` | Exit 0. The version series in the tree is the one the owner approved (docs/versioning.md). | `ci.yml` |
-| G5 | `node tools/verdict.mjs -- node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. | `tests/run-node.mjs` |
+| G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
 | G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` self-test job, `ci.yml` |
