@@ -90,13 +90,13 @@
       "master": "art/prologue-path-art/masters/step-crownfall-desktop.png",
       "deliverable": "assets/prologue/step-crownfall-desktop.webp",
       "dimensions": [
-        1585,
+        1586,
         992
       ],
-      "masterBytes": 2767026,
-      "webpBytes": 307062,
-      "masterSha256": "7331749ddbd9ffb9d455067ee24722b1a94a654786fc53e505aca185c5bb59c1",
-      "webpSha256": "fe773807442ba4aa182499a841f1a12e9f447078033c8c6a382882a3da936f17"
+      "masterBytes": 2595574,
+      "webpBytes": 274084,
+      "masterSha256": "3b06c6c567c671f29c1c7e878e78b07cbfae4c2616a5008b706ccf2568ae55ab",
+      "webpSha256": "0243151034300f804b3a8bc57d71073164e9d99bc9d0141de63c4930e17a05d3"
     },
     {
       "name": "step-crownfall-mobile",
@@ -106,10 +106,10 @@
         941,
         1672
       ],
-      "masterBytes": 2808107,
-      "webpBytes": 328610,
-      "masterSha256": "088b62281a9490d0879b9cb9404a5ddc937d8cad24b61034211b7b147b8b0759",
-      "webpSha256": "eb62ed68f115079c475a15e577dcd496817c2a89e1765fe2ef839d128fc822cb"
+      "masterBytes": 2572214,
+      "webpBytes": 276078,
+      "masterSha256": "8a858e14904b58f2596e80237e9c29117f256f91224df191606e11b1ec81679d",
+      "webpSha256": "e3250e516c28c7a424197f110270db8f65adf40d97e4e3967648958c66524a99"
     }
   ]
 }
