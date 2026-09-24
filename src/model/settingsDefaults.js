@@ -16,18 +16,23 @@ export function seedSettingsDefaults(settings = {}, defaults = { version: 'none'
   const values = defaults?.values || {};
   const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
   const changes = {};
+  // Only a value this promotion actually gives (or an earlier one gave and the
+  // player left alone) is recorded: a player's own value that happens to match
+  // is theirs, and a later promotion must not move it.
+  const nextRecord = {};
   const same = (a, b) => (typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-9 : a === b);
   for (const [key, value] of Object.entries(values)) {
     const stored = settings[key];
     const untouched = stored === undefined || (Object.hasOwn(record, key) && same(stored, record[key]));
-    if (untouched && !same(stored, value)) changes[key] = value;
+    if (!untouched) continue;
+    nextRecord[key] = value;
+    if (!same(stored, value)) changes[key] = value;
   }
   // A key a previous promotion set and this one dropped goes back to its code
   // default — but only if the player never moved it.
   for (const [key, given] of Object.entries(record)) {
     if (!Object.hasOwn(values, key) && same(settings[key], given)) changes[key] = undefined;
   }
-  const nextRecord = { ...values };
   const recordChanged = JSON.stringify(Object.entries(record).sort()) !== JSON.stringify(Object.entries(nextRecord).sort());
   if (recordChanged) changes[SEED_KEY] = Object.keys(nextRecord).length ? nextRecord : undefined;
   return changes;

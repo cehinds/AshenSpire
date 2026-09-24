@@ -404,3 +404,12 @@ test('changing the device-key scope forgets the loaded version, and Changed coun
   const hidden = settingsSearchHits('', false, { 'gameConfig.combatRatings.multiplier': 1.5 }, { changedOnly: true });
   assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
 });
+
+test('a player value that happens to equal a promotion is not recorded as seeded', async () => {
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const chose = { musicVolume: 40 };
+  Object.assign(chose, seedSettingsDefaults(chose, { version: 'a', values: { musicVolume: 40, screenShake: false } }));
+  assert.deepEqual(chose[SEED_KEY], { screenShake: false }, 'only the absent key was seeded');
+  const moved = seedSettingsDefaults(chose, { version: 'b', values: { musicVolume: 50, screenShake: false } });
+  assert.equal(Object.hasOwn(moved, 'musicVolume'), false, 'the player\'s 40 survives the next promotion');
+});
