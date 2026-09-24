@@ -3,6 +3,8 @@
 // index.html is the one source for these tags: the dev page serves them as
 // written, and tools/bundle.mjs copies them into the single-file build's
 // <head> through headMetaTags() below, so the copy cannot drift from the source.
+// REQUIRED_HEAD_META lists only the tags that must exist; headMetaTags() also
+// copies optional ones of the same kinds (og:type, other og:*, apple-touch-icon).
 // Zero dependencies (Node core only); pure string work, safe to import in tests.
 
 // Each required tag, as a name the error message can use and a pattern that

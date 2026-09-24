@@ -42,8 +42,12 @@ test('the bundler copies the tags from index.html into the build head', () => {
     assert.ok(tags.some((t) => re.test(t)), `headMetaTags() drops the ${name}`);
   }
   const bundle = read('tools/bundle.mjs');
-  assert.match(bundle, /headMetaTags\(indexHtml\)/, 'tools/bundle.mjs no longer reads the tags from index.html');
-  assert.match(bundle, /<title>\$\{title\}<\/title>\n\$\{headMeta\./, 'tools/bundle.mjs no longer writes the tags into its <head>');
+  // Loose on purpose: it checks that bundle.mjs calls headMetaTags() and uses the
+  // result inside the <head> it writes, not how the template is formatted.
+  const call = /(\w+)\s*=\s*headMetaTags\(/.exec(bundle);
+  assert.ok(call, 'tools/bundle.mjs no longer reads the tags through headMetaTags()');
+  const head = /<head>([\s\S]*?)<\/head>/.exec(bundle.slice(call.index))?.[1] || '';
+  assert.ok(head.includes('${' + call[1]), 'tools/bundle.mjs no longer writes the tags into its <head>');
   assert.throws(() => headMetaTags('<head><title>x</title></head>'), /missing meta description, og:title/);
 });
 
