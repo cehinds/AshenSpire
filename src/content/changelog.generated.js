@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1279",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
+    "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
+    "build": "0.7.1.459",
+    "pullRequest": 1279,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
     "id": "pr-1273",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -21,6 +31,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.455",
     "pullRequest": 1270,
     "url": "https://github.com/cehinds/AshenSpire/pull/1270"
+  },
+  {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last scene shows the land your path starts in, and a live scene editor joins Advanced Settings",
+    "detail": "The final journey scene of the prologue now picks its art from your starting path — Crownfall, Hollow Weald, Pale Marches or Cinder Reach — with separate art for desktop and phone, and the distant tower stays in view. Advanced Settings gains a scene editor that uses the real prologue renderer, so you can change a scene's text, art, staging, typography, motion and actor placement beside a live desktop or mobile preview.",
+    "build": "0.7.1.451",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The Herald shows its whole body on phones too",
+    "detail": "The mobile edition was still showing the Herald's old cropped bust after the desktop game moved to the full-body figure; its five phone sprites now show the whole figure, boots included.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
   },
   {
     "id": "pr-1272",
@@ -121,6 +151,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The card design reference now shows the card the game actually draws",
+    "detail": "Nothing you see in the game changes. The design notes for playing cards still showed an older proposed card shape; they now draw the current card's real proportions and its glance, focus and inspect layouts, and the older drawings are labelled as a proposal.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",
