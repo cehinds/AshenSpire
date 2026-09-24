@@ -62,6 +62,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollBossRelicChoices,
   buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
@@ -2403,13 +2404,17 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = rollSkillDrafts('boss');
     const bossClassDrafts = rollClassDrafts();
+    // SPEC §6.1: a choice of distinct boss relics, keep one. An empty pool
+    // (every boss relic held) pays cinders where the relic stood.
+    const bossRelicIds = rollBossRelicChoices(registries, rng, run.relics);
     const bossRewards = {
       title: victoryTitle(enc),
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0)
+        + (bossRelicIds.length ? 0 : registries.balance.rewards.bossRelicConsolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
       cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      relicIds: bossRelicIds,
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2486,6 +2491,7 @@ function beginPendingReward(rewards, { source, after }) {
     chosenCardId: null,
     chosenDraftCardIds: {},
     chosenDraftNodeIds: {},
+    chosenRelicId: null,
   };
   persist();
   return mountPendingReward();
@@ -3347,7 +3353,17 @@ if (shotState === 'combat-test') {
       // What the fight paid, authored like the rest of the pose.
       xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
     };
-    if (pose === 'pending') {
+    // `?shotReward=bossRelic` poses a BOSS door (SPEC §6.1): the relic row is
+    // a choice of three distinct boss relics, the pool's first three the run
+    // does not hold — authored order, no roll — mounted through the real
+    // checkpoint door so the pick persists like a live one.
+    if (pose === 'bossRelic') {
+      delete shotOffer.relicId;
+      delete shotOffer.flaskId;
+      shotOffer.title = 'BOSS DEFEATED';
+      shotOffer.relicIds = rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, run.relics);
+      beginPendingReward(shotOffer, { source: 'boss', after: 'map' });
+    } else if (pose === 'pending') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved

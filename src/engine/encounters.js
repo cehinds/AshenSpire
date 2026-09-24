@@ -205,6 +205,27 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
 }
 
 /**
+ * rollBossRelicChoices(registries, rng, ownedIds, count) → [relic id] (SPEC §6.1).
+ * Up to `count` DISTINCT boss-rarity relics, drawn without replacement on the
+ * 'relicRewards' stream from the same pool rollRelicReward reads (owned and
+ * quest-pool relics excluded). A short pool yields fewer; an empty one [].
+ * `count` defaults to balance.rewards.bossRelicChoices.
+ */
+export function rollBossRelicChoices(registries, rng, ownedIds, count = registries.balance.rewards.bossRelicChoices) {
+  const pool = registries.relics
+    .all()
+    .filter((r) => relicInRewardPool(r) && r.rarity === 'boss' && !ownedIds.includes(r.id))
+    .map((r) => r.id);
+  const out = [];
+  while (out.length < count && pool.length) {
+    const id = rng.pick('relicRewards', pool);
+    pool.splice(pool.indexOf(id), 1);
+    out.push(id);
+  }
+  return out;
+}
+
+/**
  * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
  *
  * Deterministic on stream 'armaments', like every other reward roll, so a seed

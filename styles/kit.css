@@ -1549,6 +1549,11 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+/* SPEC §6.1: the boss relic choice — three class-pick tiles side by side,
+   stacked on phones. The ring is the shared `is-chosen`. */
+.reward-door .reward-relic-row { gap: 1rem; align-items: stretch; width: 100%; }
+.reward-door .reward-relic-row .reward-relic { flex: 1 1 13rem; max-width: 19rem; text-align: left; }
+:root[data-layout='narrow'] .reward-door .reward-relic-row .reward-relic { flex-basis: 100%; max-width: none; }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);

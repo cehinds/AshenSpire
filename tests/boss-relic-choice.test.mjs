@@ -1,0 +1,150 @@
+// tests/boss-relic-choice.test.mjs — SPEC §6.1: a boss offers a choice of
+// distinct boss relics and the player keeps exactly one (or none).
+//
+// Two halves. The ENGINE roll (encounters.js rollBossRelicChoices): distinct,
+// deterministic by seed, never an owned or non-boss relic, fewer on a short
+// pool, empty on an exhausted one. The REWARD FLOW (rewardplan.js + the real
+// reward screen on the fake DOM helper): the row is a choice, a pick grants
+// one, Skip grants none, auto-collect grants one, and a checkpoint saved with
+// the choice pending or taken re-mounts without granting twice.
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRng } from '../src/engine/rng.js';
+import { rollBossRelicChoices } from '../src/engine/encounters.js';
+import { rewardPlan, resolveContinue, unseenIds } from '../src/model/rewardplan.js';
+import { mountRewards } from '../src/ui/screens/reward.js';
+import { rewardDom } from './helpers/reward-dom.mjs';
+
+const REG = createRegistries(contentBundle);
+const BOSS = REG.relics.all().filter((r) => r.rarity === 'boss').map((r) => r.id);
+const COUNT = REG.balance.rewards.bossRelicChoices;
+
+test('the choice count and consolation are authored balance numbers', () => {
+  assert.equal(COUNT, 3);
+  assert.ok(REG.balance.rewards.bossRelicConsolationCinders > 0);
+  assert.ok(BOSS.length > COUNT, 'enough boss relics ship for a full choice');
+});
+
+test('a boss roll offers 3 distinct boss relics', () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    const ids = rollBossRelicChoices(REG, createRng(seed), []);
+    assert.equal(ids.length, COUNT, `seed ${seed} offers ${COUNT}`);
+    assert.equal(new Set(ids).size, ids.length, `seed ${seed} ids are distinct`);
+    for (const id of ids) assert.equal(REG.relics.get(id).rarity, 'boss', `${id} is a boss relic`);
+  }
+});
+
+test('the roll is deterministic by seed and varies across seeds', () => {
+  assert.deepEqual(rollBossRelicChoices(REG, createRng(7), [BOSS[0]]), rollBossRelicChoices(REG, createRng(7), [BOSS[0]]));
+  const seen = new Set();
+  for (let seed = 1; seed <= 40; seed++) seen.add(rollBossRelicChoices(REG, createRng(seed), []).join(','));
+  assert.ok(seen.size > 1, 'different seeds lay out different choices');
+});
+
+test('owned boss relics are never offered', () => {
+  const owned = BOSS.slice(0, 2);
+  for (let seed = 1; seed <= 40; seed++) {
+    const ids = rollBossRelicChoices(REG, createRng(seed), owned);
+    assert.equal(ids.length, Math.min(COUNT, BOSS.length - owned.length));
+    for (const id of owned) assert.ok(!ids.includes(id), `seed ${seed} never offers owned ${id}`);
+  }
+});
+
+test('a short pool offers fewer, an exhausted pool none', () => {
+  const leaveTwo = BOSS.slice(0, BOSS.length - 2);
+  const two = rollBossRelicChoices(REG, createRng(3), leaveTwo);
+  assert.deepEqual([...two].sort(), BOSS.slice(-2).sort());
+  const one = rollBossRelicChoices(REG, createRng(3), BOSS.slice(0, -1));
+  assert.deepEqual(one, BOSS.slice(-1));
+  assert.deepEqual(rollBossRelicChoices(REG, createRng(3), BOSS), []);
+});
+
+test('the plan derives one relic row: a choice for 2+, a take for 1, the single path unchanged', () => {
+  const choice = rewardPlan({ relicIds: ['a', 'b', 'c'] }).rows;
+  assert.equal(choice.length, 1);
+  assert.equal(choice[0].kind, 'relic');
+  assert.equal(choice[0].choice, true);
+  assert.deepEqual(choice[0].relicIds, ['a', 'b', 'c']);
+  assert.deepEqual(rewardPlan({ relicIds: ['a'] }).rows[0].relicId, 'a');
+  assert.equal(rewardPlan({ relicIds: ['a'] }).rows[0].choice, undefined);
+  assert.deepEqual(rewardPlan({ relicIds: [] }).rows, []);
+  // The elite/treasure single relic (and a pre-choice boss save) reads as before.
+  const single = rewardPlan({ relicId: 'forsakenMedallion' }).rows[0];
+  assert.equal(single.relicId, 'forsakenMedallion');
+  assert.equal(single.choice, undefined);
+  // Auto-collect resolves the choice to exactly one id through the seeded pick.
+  const { take } = resolveContinue({ rows: choice }, {}, 'auto', () => 2);
+  assert.deepEqual(take.map((row) => row.relicId), ['c']);
+  assert.equal(resolveContinue({ rows: choice }, { relic: 'skipped' }, 'auto').take.length, 0, 'an explicit skip is respected');
+  assert.equal(resolveContinue({ rows: choice }, {}, 'manual').take.length, 0, 'manual Continue leaves it');
+  assert.deepEqual(unseenIds({ relicIds: ['a', 'b'] }, { relics: new Set(['a']) }).relics, ['b']);
+});
+
+function withDom(fn) {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try { return fn(dom); } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
+    }
+  }
+}
+
+const offer = () => ({ title: 'BOSS', relicIds: BOSS.slice(0, 3) });
+const freshRun = () => ({ cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } });
+
+test('the reward screen grants exactly the one relic picked', () => withDom(() => {
+  const app = document.createElement('main'); document.body.append(app);
+  const run = freshRun();
+  const checkpoint = { states: {}, chosenCardId: null, chosenRelicId: null };
+  mountRewards(app, { registries: REG, run, checkpoint, rewards: offer(), onDone() {}, onPersist() {} });
+  assert.ok(app.querySelector('.reward-claim-required'), 'the relic choice is a required choice');
+  app.querySelector('[data-kind="relic"]').click();
+  const tiles = app.querySelectorAll('.reward-row .reward-relic');
+  assert.deepEqual(tiles.map((tile) => tile.dataset.relicId), BOSS.slice(0, 3), 'three tiles, in offer order');
+  const confirm = app.querySelector('#reward-card-confirm');
+  assert.equal(confirm.disabled, true, 'no selection cannot confirm');
+  tiles[0].click(); tiles[1].click();
+  assert.deepEqual(run.relics, [], 'selection never grants');
+  confirm.click(); confirm.click();
+  assert.deepEqual(run.relics, [BOSS[1]], 'exactly the chosen relic, once');
+  assert.equal(checkpoint.states.relic, 'taken');
+  assert.equal(checkpoint.chosenRelicId, BOSS[1]);
+  assert.equal(app.querySelector('[data-kind="relic"]').dataset.state, 'taken');
+  // A reload of the taken checkpoint re-mounts Taken and grants nothing more.
+  const again = document.createElement('main'); document.body.append(again);
+  mountRewards(again, { registries: REG, run, checkpoint, rewards: offer(), onDone() {}, onPersist() {} });
+  assert.equal(again.querySelector('[data-kind="relic"]').dataset.state, 'taken');
+  assert.deepEqual(run.relics, [BOSS[1]]);
+}));
+
+test('Skip leaves every boss relic behind', () => withDom(() => {
+  const app = document.createElement('main'); document.body.append(app);
+  const run = freshRun();
+  const checkpoint = { states: {}, chosenCardId: null };
+  let done = false;
+  mountRewards(app, { registries: REG, run, checkpoint, rewards: offer(), onDone() { done = true; }, onPersist() {} });
+  app.querySelector('[data-kind="relic"]').click();
+  app.querySelector('#reward-relic-skip').click();
+  assert.equal(checkpoint.states.relic, 'skipped');
+  assert.equal(app.querySelector('[data-kind="relic"]').dataset.state, 'skipped');
+  assert.deepEqual(run.relics, []);
+  assert.equal(done, false);
+}));
+
+test('a checkpoint saved with the chooser pending re-mounts the same choice, nothing granted', () => withDom(() => {
+  const run = freshRun();
+  // An older checkpoint has no chosenRelicId field at all.
+  const checkpoint = structuredClone({ states: {}, chosenCardId: null });
+  const app = document.createElement('main'); document.body.append(app);
+  mountRewards(app, { registries: REG, run, checkpoint, rewards: offer(), onDone() {}, onPersist() {} });
+  assert.equal(app.querySelector('[data-kind="relic"]').dataset.state, 'pending');
+  app.querySelector('[data-kind="relic"]').click();
+  assert.equal(app.querySelectorAll('.reward-row .reward-relic').length, 3);
+  assert.deepEqual(run.relics, []);
+}));
