@@ -1,0 +1,115 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "webp": {
+    "quality": 84,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  },
+  "assets": [
+    {
+      "name": "step-weald-desktop",
+      "master": "art/prologue-path-art/masters/step-weald-desktop.png",
+      "deliverable": "assets/prologue/step-weald-desktop.webp",
+      "dimensions": [
+        1585,
+        992
+      ],
+      "masterBytes": 3123414,
+      "webpBytes": 385108,
+      "masterSha256": "fd04e226db0e2bea6fc9d28287566b08d42d3ac2c5f34207b4ded6d8ccba8d8a",
+      "webpSha256": "15ac7f059c600abc14e87f6875cf866cbc7e35bb018cf42905e99dfe2f3b44f5"
+    },
+    {
+      "name": "step-weald-mobile",
+      "master": "art/prologue-path-art/masters/step-weald-mobile.png",
+      "deliverable": "assets/prologue/step-weald-mobile.webp",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "masterBytes": 3088205,
+      "webpBytes": 371666,
+      "masterSha256": "ca817ed3938c7b18c28ee7093045ef0752fc5f2b2a72a8ea71292eb67e6f9ce7",
+      "webpSha256": "f855a0efe0d98128090969393c20f2f2fa6de91e1901057cb8eff2c22a80f398"
+    },
+    {
+      "name": "step-marches-desktop",
+      "master": "art/prologue-path-art/masters/step-marches-desktop.png",
+      "deliverable": "assets/prologue/step-marches-desktop.webp",
+      "dimensions": [
+        1586,
+        992
+      ],
+      "masterBytes": 3059539,
+      "webpBytes": 347206,
+      "masterSha256": "2556ca03e4f149430a7a391372651e9ed5004c8a40aa923ad41963d5794c8828",
+      "webpSha256": "023f08605ce3ea5aa81d7a163793ea6efd362809ab24317904e114c1760a5b20"
+    },
+    {
+      "name": "step-marches-mobile",
+      "master": "art/prologue-path-art/masters/step-marches-mobile.png",
+      "deliverable": "assets/prologue/step-marches-mobile.webp",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "masterBytes": 2881776,
+      "webpBytes": 305436,
+      "masterSha256": "203c1ff95e83b207d3f8859deefb0b293374c0c6eea0fc456da2202c09976633",
+      "webpSha256": "39d3ab4c4d5d5b9c01b35f2ddf61a437f5df2f05b26c1313f4630724b545c770"
+    },
+    {
+      "name": "step-reach-desktop",
+      "master": "art/prologue-path-art/masters/step-reach-desktop.png",
+      "deliverable": "assets/prologue/step-reach-desktop.webp",
+      "dimensions": [
+        1586,
+        992
+      ],
+      "masterBytes": 2721370,
+      "webpBytes": 270130,
+      "masterSha256": "5a18c91024cc61b1939e29085332e65ef1c80d179a704b8e11d732f31a096407",
+      "webpSha256": "7fef2d3a6f21e4ee9fbccdd74d91f6ef9b3fb8897c20db022e46a8152d08e436"
+    },
+    {
+      "name": "step-reach-mobile",
+      "master": "art/prologue-path-art/masters/step-reach-mobile.png",
+      "deliverable": "assets/prologue/step-reach-mobile.webp",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "masterBytes": 2917749,
+      "webpBytes": 341000,
+      "masterSha256": "87deb8bc308fa565e0819dbcf4108c68a4bb45bfe7c5a88242af4d0383ba4708",
+      "webpSha256": "c3ac9c98b37bfca0030595dcaa892d3e1ccd7010dce6084e7f4afb29798b044d"
+    },
+    {
+      "name": "step-crownfall-desktop",
+      "master": "art/prologue-path-art/masters/step-crownfall-desktop.png",
+      "deliverable": "assets/prologue/step-crownfall-desktop.webp",
+      "dimensions": [
+        1585,
+        992
+      ],
+      "masterBytes": 2767026,
+      "webpBytes": 307062,
+      "masterSha256": "7331749ddbd9ffb9d455067ee24722b1a94a654786fc53e505aca185c5bb59c1",
+      "webpSha256": "fe773807442ba4aa182499a841f1a12e9f447078033c8c6a382882a3da936f17"
+    },
+    {
+      "name": "step-crownfall-mobile",
+      "master": "art/prologue-path-art/masters/step-crownfall-mobile.png",
+      "deliverable": "assets/prologue/step-crownfall-mobile.webp",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "masterBytes": 2808107,
+      "webpBytes": 328610,
+      "masterSha256": "088b62281a9490d0879b9cb9404a5ddc937d8cad24b61034211b7b147b8b0759",
+      "webpSha256": "eb62ed68f115079c475a15e577dcd496817c2a89e1765fe2ef839d128fc822cb"
+    }
+  ]
+}

@@ -140,8 +140,10 @@ for (const [id, classId, slot, pool] of [
     assert.equal(receipt.thresholds, level === 6 ? 3 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
   }
   const beforeAssignment = run[maxKey];
+  const assigned = pool === 'mana' ? 'wisdom' : 'constitution';
+  const attributeBefore = run.attributes[assigned];
   for (let point = 0; point < 5; point++) {
-    applyLevelUp(r, run, pool === 'mana' ? 'wisdom' : 'constitution');
+    applyLevelUp(r, run, assigned);
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
   }
   // Ruleset 5 (plan phase 9): Mana IS Wisdom and Stamina IS Constitution, so
@@ -149,9 +151,14 @@ for (const [id, classId, slot, pool] of [
   // lean creation mode converts at its own scale, so a point is that many
   // tiers of it. Read off the run's own snapshot rather than restated here.
   const poolRow = run.derivedStatRuleSnapshot.rules.rules[pool];
-  const weight = pool === 'mana' ? poolRow.wisdom : poolRow.constitution;
-  // Ruleset 6: the row's weight on the attribute IS what a point buys.
-  const perPoint = Math.floor(weight + 1e-9);
-  assert.equal(run[maxKey], beforeAssignment + 5 * perPoint, `${id}: each assigned point raises the equipped pool`);
+  const weight = poolRow[assigned];
+  // Ruleset 6: the attribute term is floored on its own, so five points buy
+  // the difference of the floored term — with a fractional weight (the stock
+  // 0.5) that is not five times a per-point amount.
+  const term = (value) => Math.floor(value * weight + 1e-9);
+  assert.equal(run.attributes[assigned], attributeBefore + 5);
+  const gained = term(attributeBefore + 5) - term(attributeBefore);
+  assert.ok(gained > 0, `${id}: five assigned points move the pool at the stock weight`);
+  assert.equal(run[maxKey], beforeAssignment + gained, `${id}: each assigned point raises the equipped pool`);
 }
 console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');
