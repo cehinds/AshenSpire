@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1292",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Phones see the new prologue path art",
+    "detail": "The opening's last journey scene, painted for each starting path in #1285, reached desktop but not the phone edition, which could not be built until those eight pictures had phone-sized copies. They have them now. To keep the phone download under 50 MB with room to spare, every picture in the phone edition is compressed a little harder than before (quality 47, down from 50), so on a phone the art may look very slightly softer. The desktop edition is unchanged.",
+    "build": "0.7.1.457",
+    "pullRequest": 1292,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1292"
+  },
+  {
     "id": "pr-1270",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -11,6 +21,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.455",
     "pullRequest": 1270,
     "url": "https://github.com/cehinds/AshenSpire/pull/1270"
+  },
+  {
+    "id": "pr-1285",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last journey scene shows the road you actually set out on",
+    "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
+    "build": "0.7.1.451",
+    "pullRequest": 1285,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Herald phones get the full-body figure too",
+    "detail": "The Herald's new full-body painting from #1268 reached desktop but not the phone edition, which kept showing the old head-and-shoulders crop. The five Herald sprites in the mobile art set now show the whole figure, boots included, as they do on desktop.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
   },
   {
     "id": "pr-1272",
@@ -111,6 +141,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Behind the scenes: the card wireframes describe the card the game draws now",
+    "detail": "Nothing you see in the game changes. A new wireframe document and its generator record the playing card as it is currently drawn, and the card-anatomy mockup is redrawn to match.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",
