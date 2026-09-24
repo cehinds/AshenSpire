@@ -472,7 +472,7 @@ export const balance = {
       rareGuaranteeAfter: 4,
       [NOTE]: {
         offsetStart: 'Percentage points added to a card\'s rare chance at the start of a run, and again each time a rare is offered.',
-        offsetStep: 'How many points the rare chance climbs for each common card offered at a normal or elite fight.',
+        offsetStep: 'How many points the rare chance climbs for each common card offered at a normal, elite or boss fight.',
         offsetMax: 'The most points the climbing rare chance may add.',
         rareGuaranteeAfter: 'How many card offers in a row may show no rare before the next one is certain to hold one.',
       },

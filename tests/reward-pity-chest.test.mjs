@@ -289,17 +289,35 @@ test('the reward door: open the chest, pick one, Confirm grants exactly it', asy
   }
 });
 
-test('the chest never offers the door\'s own armament drop', () => {
-  let excluded = 0;
+test('the chest never offers the door\'s own armament drop', async () => {
+  // Only a seed whose re-rolled chest still offers an armament PIECE proves
+  // the exclusion: a weapon art or no armament option at all says nothing.
+  let proven = 0;
   for (let seed = 1; seed <= 60; seed++) {
     const piece = rollEliteChest(r, createRng(seed), newRun(seed), { found: [] }).options.find((o) => o.armamentId);
     if (!piece) continue;
     const again = rollEliteChest(r, createRng(seed), newRun(seed), { found: [], exclude: [piece.armamentId] });
-    const other = again.options.find((o) => o.category === 'armament');
-    if (other) assert.notEqual(other.armamentId, piece.armamentId, `seed ${seed}: the door's piece is not the chest's too`);
-    excluded++;
+    const other = again && again.options.find((o) => o.category === 'armament' && o.armamentId);
+    if (!other) continue;
+    assert.notEqual(other.armamentId, piece.armamentId, `seed ${seed}: the door's piece is not the chest's too`);
+    proven++;
   }
-  assert.ok(excluded > 0, 'some seed rolled an armament piece to exclude');
+  assert.ok(proven >= 10, `${proven} seeds re-rolled a different armament piece (want at least 10)`);
+
+  // Behaviour at the lowest exported level that takes the list: excluding
+  // every droppable piece leaves the chest no piece to offer at all.
+  const everyPiece = (r.equipment.armaments || []).map((a) => a.id);
+  for (let seed = 1; seed <= 40; seed++) {
+    const chest = rollEliteChest(r, createRng(seed), newRun(seed), { found: [], exclude: everyPiece });
+    assert.ok(!(chest && chest.options.some((o) => o.armamentId)), `seed ${seed}: an excluded piece was offered`);
+  }
+
+  // The reward door hands the chest its own drop (only reachable through main.js).
+  const { readFileSync } = await import('node:fs');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /const doorArmamentId = rollDrop\(enc\.pool\);/, 'the door rolls its armament before the chest');
+  assert.match(main, /rollEliteChest\(registries, rng, run, \{[^}]*exclude: \[doorArmamentId\][^}]*\}\)/, 'the chest roll excludes the door\'s drop');
+  assert.match(main, /armamentId: doorArmamentId,/, 'the door grants the same piece it excluded');
 });
 
 test('the door\'s armament row claims its bag slot before the chest\'s piece', () => {
