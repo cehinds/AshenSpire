@@ -3328,6 +3328,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @container armoury-detail (max-width: 480px) {
   .armoury .card-inspection-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
   .armoury .card-inspection-art { width: 100%; max-width: 100%; margin-inline: auto; }
+  .armoury .card-inspection-layout > .card-inspection-art { flex-basis: 100%; }
   .armoury .card-inspection-art > .card { width: 160px; height: auto; aspect-ratio: var(--card-ratio); margin-inline: auto; }
   .armoury .card-inspection-art > .equipment-poker-card { width: 100%; height: auto; margin-inline: auto; }
   .armoury .card-inspection-art > .inspection-tags { justify-content: center; }
@@ -3598,7 +3599,24 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* The art column is sized by the inspect level, not by a number kept here —
    an art track narrower than the card makes the card smaller than the one you
    tapped to open it, which is the defect this whole change closes. */
-.card-inspection-layout { display:grid; grid-template-columns:minmax(0,var(--card-w-inspect,320px)) minmax(0,1fr); align-items:start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
+/* OUTSIDE THE MODAL THE LAYOUT WRAPS ON ITS OWN BOX (#1164). The two-column
+   grid used to hold here for every host, and only two things stacked it: the
+   `max-width:600px` collapse below and the `[data-card-door='stacked']` rules,
+   which are scoped to `.card-inspection-modal` because that is the only host
+   `cardInspectionLayout()` measures. So a bare host (reward, inventory,
+   service modal) or an Armoury pane kept two columns from 601px up —
+   measured on weapon-cards-preview at 601/650/703: details 162/211/264px.
+   A flex row that wraps needs no breakpoint and no viewport reading: the art
+   asks for the inspect width, the details ask for the readable minimum, and
+   when both do not fit in THIS layout's content box the details drop to a line
+   of their own. The details are therefore at least the readable minimum beside
+   the card, or the full line under it — never the seam between.
+   384px IS card.json's `sizing.doorReadableMinPx`; CSS cannot read it, so
+   tests/card-door-stack.test.mjs holds this literal to the config. The modal
+   keeps its grid and its measured `data-card-door` decision (rules below). */
+.card-inspection-layout { display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
+.card-inspection-layout > .card-inspection-art { flex:0 1 var(--card-w-inspect,320px); }
+.card-inspection-layout > .card-inspection-details { flex:1 1 384px; }
 .card-inspection-art { min-width:0; width:100%; }
 .card-inspection-art > .equipment-poker-card { width:100%; }
 .card-inspection-details { min-width:0; max-width:65ch; font:16px/1.55 Arial,sans-serif; overflow-wrap:anywhere; }
@@ -3653,6 +3671,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
   .playing-card-details .ctext { font-size:16px; }
   .card-inspection-art { width:100%; max-width:100%; margin-inline:auto; }
+  .card-inspection-layout > .card-inspection-art { flex-basis:100%; }
   .card-inspection-art > .card { width:160px; height:auto; aspect-ratio:var(--card-ratio); margin-inline:auto; }
   .card-inspection-art > .equipment-poker-card { width:100%; height:auto; margin-inline:auto; }
   .card-inspection-art > .inspection-tags { justify-content:center; }
