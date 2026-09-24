@@ -121,7 +121,7 @@ function idOf(absPath) {
 // same `assets/…` keys, but every art payload is read from assets-mobile/ — the
 // committed twin tree tools/mobile-art.mjs shrinks from assets/ under the
 // policy in tools/mobileart-policy.mjs. It runs from file:// like the default
-// and is held under MOBILE_BUNDLE_BUDGET_BYTES (50 MB): a build over that is
+// and is held under MOBILE_BUNDLE_BUDGET_BYTES (30 MB): a build over that is
 // refused, not written. Owner's ask, 2026-09-20: the full file had grown to
 // 253 MB, which on a phone is the whole cost of starting; two downloads now,
 // the full one and this one, and the site offers both.

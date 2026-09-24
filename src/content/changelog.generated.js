@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Settings open faster, search everything, and every value has − / + and a slider",
-    "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once, which takes about 2.8 MB off the full file and 0.4 MB off the mobile one.",
-    "build": "0.7.1.477",
+    "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once.",
+    "build": "0.7.1.479",
     "pullRequest": 1277,
     "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1273",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "New characters start on the owner's tuned rules, the stat choice reads Assigned, and the mobile edition is under 30 MB",
+    "detail": "The owner's saved game configuration is now what every new player starts with: fixed turn draws, with Intelligence growing your opening hand, turn draws and hand capacity; three flask charges shared between Crimson and Azure; 20 cinders to start and twenty times the cinders from every fight; quicker levels, weapon and class skills; HP, Mana, Stamina, Actions and draw that read several attributes instead of one; new attack, defence and resistance weights; and a two-row battlefield with larger enemies. The one stat allocation at character creation is now called Assigned. The mobile download shrank from 49 MB to 29 MB — its art is recompressed smaller, with backdrops kept sharper than the rest — and plays the same. Settings you have already chosen keep their values.",
+    "build": "0.7.1.456",
+    "pullRequest": 1273,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
     "id": "pr-1270",

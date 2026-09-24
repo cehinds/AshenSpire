@@ -153,18 +153,19 @@ Highest value first.
 - Not covered: saving to GitHub with a real token and loading on a second
   device. Both paths are tested only against the fake GitHub.
 
-## 6. Mobile art budget (owner's call, 2026-09-24)
+## 6. Mobile art: one copy per image
 
-#1285's prologue steps took the mobile art 0.3 MB over its 40 MB budget.
-Per the owner: **raise, then optimize.**
+#1285's prologue steps took the mobile art 0.3 MB over its budget of the
+time. The owner's call was to raise the budget and then optimize. #1273 then
+landed on `dev` with a tighter mobile policy: a 30 MB file and 20 MB of art,
+with every twin re-encoded. That supersedes the raise. This PR keeps #1273's
+policy and twins unchanged and adds the lossless part:
 
-- `MOBILE_ART_INLINED_BUDGET_BYTES` raised 40 → 40.4 MB. It stops there
-  because about 9.5 MB of the mobile file is not art, and the file must stay
-  under its 50 MB ceiling, which the bundler and `verify-shipped` enforce.
-- The bundler now inlines each **distinct** image once. 50 images were
-  byte-identical to another path, such as an outfit's menu and detail plate or
-  a portrait shared by two sets. A repeated path now becomes an alias of the
-  first key, and the budget check counts distinct content the same way.
-- Result: the mobile art inlines to 39.89 MB, under the old 40 MB, with no
-  pixel changed. The full file dropped 257.8 → 255.1 MB and the mobile file
-  49.8 → 49.4 MB.
+- The bundler inlines each **distinct** image once, identified by its bytes
+  plus its file type. About 50 images were byte-identical to another path,
+  such as an outfit's menu and detail plate or a portrait shared by two sets.
+  Each repeated path becomes an alias of the first key.
+- `mobile-art --check` counts distinct content the same way. Fonts still count
+  in full, because CSS inlines every face.
+- The `ASSET_MAP` replacement uses a replacer function, so a `$` in an asset
+  path can no longer corrupt the bundle.

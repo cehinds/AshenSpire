@@ -27,39 +27,53 @@ export const MOBILE_ASSET_DIR = 'assets-mobile';
  *
  * Measured 2026-09-20 on the 0.7.1 tree: 179 MB of runtime art → ~29 MB, the
  * 3,071 512×512 animation frames (122 MB) going to 256×256 at ~5 KB each.
+ *
+ * Tightened 2026-09-24 for the owner's 30 MB budget: 5/16 scale (512 → 160)
+ * at quality 35 / alpha 40 — about 48% of the half-size twin tree, measured on
+ * a 106-file sample spanning animations, poses, outfits, environments and
+ * combat effects.
  */
 export const POLICY = Object.freeze({
   scaleFrom: 384,
-  scale: 0.5,
-  quality: 50,
-  alphaQuality: 60,
+  scale: 0.3125,
+  quality: 35,
+  alphaQuality: 40,
+  // FULL-SCREEN BACKDROPS KEEP MORE. A 1536-wide backdrop at 5/16 is 480 px
+  // stretched across a ~1170 px phone and blocks visibly; 0.4 at quality 50
+  // costs ~0.6 MB raw over the whole set and reads clean. First match wins.
+  overrides: Object.freeze([
+    Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/']), scale: 0.4, quality: 50 }),
+  ]),
 });
 
 /**
+ * The policy one twin is held to: POLICY with the first override whose prefix
+ * starts `rel` (a path relative to assets/) laid over it.
+ */
+export function policyFor(rel, policy = POLICY) {
+  const hit = (policy.overrides || []).find((row) => row.prefixes.some((prefix) => rel.startsWith(prefix)));
+  if (!hit) return policy;
+  const { prefixes, ...rule } = hit;
+  return { ...policy, ...rule };
+}
+
+/**
  * The ceiling the mobile single file is held to, in bytes. Decimal, because
- * "50 MB" is what a phone's download sheet prints. The owner's number
- * (2026-09-20): under 50 MB. verify-shipped.mjs fails a mobile artifact above
+ * "30 MB" is what a phone's download sheet prints. The owner's number
+ * (2026-09-24, down from 50 MB set 2026-09-20): under 30 MB. verify-shipped.mjs fails a mobile artifact above
  * it, and bundle.mjs refuses to write one.
  */
-export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
+export const MOBILE_BUNDLE_BUDGET_BYTES = 30_000_000;
 
 /**
  * Where the mobile art itself has to land for the bundle to fit: the budget
- * less everything else in the file (~9.5 MB of code, CSS and fonts at
- * 0.7.1.475) and base64 growth (4/3). A twin tree over this is caught by
- * --check before anyone builds with it.
+ * less the code (~9.4 MB at 0.7.1.451) and base64 growth (4/3). A twin tree over
+ * this is caught by --check before anyone builds with it.
  *
- * Counted as the bundle inlines it: each DISTINCT image once
- * (see `distinctInlinedBytes`), because the bundler maps byte-identical files
- * to one data URI.
- *
- * Raised 40 → 40.4 MB on the owner's call (2026-09-24), when #1285's
- * prologue steps took the tree 0.3 MB over. Not higher: with ~9.5 MB of
- * non-art in the file, art past ~40.49 MB would pass --check and still be
- * refused at 50 MB by the bundler. The mobile file keeps its own 50 MB ceiling
- * above (MOBILE_BUNDLE_BUDGET_BYTES), which verify-shipped still enforces.
+ * Counted as the bundle inlines it: each distinct image once
+ * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_400_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 20_000_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
@@ -67,17 +81,17 @@ export function inlinedBytes(n) {
 }
 
 /**
- * distinctAssetId(buf, ext) → the identity the bundler aliases on: the bytes
- * AND the file type, so two files can never share a data URI of the wrong MIME.
+ * distinctAssetId(buf, ext) → the identity tools/bundle.mjs aliases on: the
+ * bytes AND the file type, so two files never share a data URI of the wrong MIME.
  */
 export function distinctAssetId(buf, ext = '') {
   return `${String(ext).toLowerCase()}:${createHash('sha1').update(buf).digest('hex')}`;
 }
 
 /**
- * distinctInlinedBytes(files) → what a set of files costs the bundle when
- * each distinct content is inlined once (tools/bundle.mjs aliases duplicates).
- * Content is compared byte for byte, keyed by a SHA-1 of the bytes.
+ * distinctInlinedBytes(files) → what a set of files costs the bundle when each
+ * distinct content is inlined once (the bundler aliases byte-identical files of
+ * the same type). `files` are buffers or { buf, ext }.
  */
 export function distinctInlinedBytes(files, hash = distinctAssetId) {
   const seen = new Set();

@@ -235,11 +235,11 @@ export const balance = {
   },
   energy: 3,
   draw: 5,
-  handMax: 10,
+  handMax: 5,
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
-  flaskCapacity: 4,
-  // The approved base is four; future unlocks may still grow the total. The
+  flaskCapacity: 3,
+  // The approved base is three (owner, 2026-09-24; four before); future unlocks may still grow the total. The
   // first live growth rung is data: Golden Sprout
   // is the Golden Seed homage, and carrying it grows the pool by one Crimson
   // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
@@ -251,7 +251,7 @@ export const balance = {
     { source: 'relic', id: 'goldenSprout', kind: 'hp', amount: 1 },
   ],
   flaskSlots: 3,
-  startingCinders: 0,
+  startingCinders: 20,
   // 11 since plan phase 5a: the class ability card joins the kit beside the
   // signature (roleCopies.ability below; the composed plan grants it first).
   startingDeckSize: 11,
@@ -340,7 +340,7 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      base: 5, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
         growth: 'Those tracks: how much dearer each level step is than the one before it.',
@@ -358,7 +358,7 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 60, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      xp: { base: 5, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
       [NOTE]: {
         'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
         'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
@@ -405,8 +405,13 @@ export const balance = {
     // reading against the OLD faucet for a week; both are re-tuned against
     // this one now (2026-09-11) — the shop by this same ×3, the level ladder
     // by measurement, each explained where it lives.
+    // ×20 again (owner, 2026-09-24: his Cinder gain multiplier of 20 made the
+    // shipped default). Baked into the table, not applied by the settings
+    // layer, so every reader of this table — the encounter builder, the
+    // balance tools, a co-op session built from authored content — pays the
+    // same. The multiplier row (progression.cinderMultiplier) is 1 by default.
     cinders: {
-      normal: [45, 75], elite: [105, 150], boss: [225, 270],
+      normal: [900, 1500], elite: [2100, 3000], boss: [4500, 5400],
       [NOTE]: {
         '{kind}.{end}': 'The {band} of the cinders that {pool} pays.',
       },
@@ -639,7 +644,7 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, growth: 1.15, roundTo: 10,
+      base: 5, growth: 1.15, roundTo: 10,
       [NOTE]: {
         base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
         growth: 'The character level curve: how much dearer each step is than the one before it.',
@@ -650,9 +655,9 @@ export const balance = {
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
-    combatWin: 50,
+    combatWin: 15,
     kill: {
-      normal: 25, elite: 75, boss: 200,
+      normal: 5, elite: 75, boss: 200,
       [NOTE]: {
         '{kind}': 'Character XP for killing an enemy out of the roster {pool} draws from.',
       },
@@ -697,7 +702,7 @@ export const balance = {
   // the run. The allocation may be redistributed but always sums to capacity.
   // This legacy table remains empty so old debug readers fail harmlessly.
   graceRefill: [],
-  graceRefillAtRunStart: false,
+  graceRefillAtRunStart: true,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,

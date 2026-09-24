@@ -35,7 +35,7 @@ together, under a live worked example.
 
 `node tools/launch.mjs --build-only` produces the standalone aliases — the full
 single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
-its art from the committed `assets-mobile/` twin tree, held under 50 MB) — and an
+its art from the committed `assets-mobile/` twin tree, held under 30 MB) — and an
 external-art web edition in `build/web/`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
