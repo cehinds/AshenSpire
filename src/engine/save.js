@@ -873,6 +873,10 @@ export function createSaveManager(storage) {
           maxHp: r.maxHp,
           customization: r.customization,
           savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
+          // Written by a NEWER build: loadRun refuses it and keeps the bytes
+          // (state 'newer'), so the picker must say so rather than offer it
+          // as a climb that Continue can open.
+          newer: Number.isInteger(r.schemaVersion) && r.schemaVersion > RUN_SCHEMA_VERSION,
         };
       } catch (e) {
         return null;

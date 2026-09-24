@@ -592,7 +592,7 @@ id only (§3.3).
   record restores it without replaying combat start, draws, or enemy rolls. A live action queue
   or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
-- An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
+- An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
