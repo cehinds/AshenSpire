@@ -221,3 +221,13 @@ test('auto-load applies only while the game is still waiting for it', async () =
     assert.equal((await autoLoadProfile({ settings, onChange: () => {}, rows, fetch })).reason, 'unchanged');
   } finally { globalThis.localStorage = saved; }
 });
+
+test('a resolved row shows its dot and Reset when clearing its key would change it', () => {
+  const row = settingsRow('musicEnabled');
+  assert.equal(typeof row.resolve, 'function');
+  assert.equal(rowModified({}, row), false);
+  assert.equal(rowModified({ musicEnabled: false }, row), true);
+  const html = settingsRowHtml({ musicEnabled: false }, row);
+  assert.ok(html.includes('data-reset-key="musicEnabled"') && html.includes('data-modified="true"'));
+  assert.doesNotMatch(html, /data-reset-key="musicEnabled"[^>]*hidden/);
+});

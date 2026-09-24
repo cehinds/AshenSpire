@@ -1146,7 +1146,7 @@ function markModified(container, settings, changes) {
   for (const [key, value] of Object.entries(changes || {})) {
     const row = rowByKey(key);
     if (!row) continue;
-    const probe = { [key]: value === undefined ? undefined : value ?? settings[key] };
+    const probe = { ...settings, [key]: value === undefined ? undefined : value ?? settings[key] };
     const on = rowModified(probe, row);
     container.querySelectorAll(`[data-row-key="${CSS.escape(key)}"]`).forEach((el) => {
       if (on) el.dataset.modified = 'true'; else delete el.dataset.modified;
@@ -1165,15 +1165,18 @@ const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwa
 
 /** rowModified(settings, row) → true when the stored value differs from the default. */
 export function rowModified(settings, row) {
-  if (!row || !VALUE_ROW_TYPES.has(row.type) || row.resolve) return false;
+  if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
   const stored = settings?.[row.key];
   if (stored === undefined) return false;
+  // A resolved row (Music, the "uses its own" switches) is changed when
+  // clearing its own key would change what it resolves to.
+  if (row.resolve) return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: undefined });
   if (row.type === 'number' && typeof stored === 'number' && typeof row.def === 'number') return Math.abs(stored - row.def) > 1e-9;
   return stored !== rowDefault(row);
 }
 
 function resetButtonHtml(settings, r) {
-  if (!VALUE_ROW_TYPES.has(r.type) || r.resolve || r.type === 'action') return '';
+  if (!VALUE_ROW_TYPES.has(r.type) || r.type === 'action') return '';
   const on = rowModified(settings, r);
   return `<button type="button" class="as-btn set-row-reset${r.type === 'number' ? ' set-num-reset' : ''}" data-reset-key="${esc(r.key)}"`
     + ` aria-label="Reset ${esc(stripTags(r.label))} to default" title="Reset to default"${on ? '' : ' hidden'}>Reset</button>`;
