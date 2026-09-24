@@ -889,12 +889,20 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
         + ' so weighing a receipt against it requires currentRelease. Pass both, or neither.');
     }
     const ceiling = currentOrdinal + (projecting ? 1 : 0);
+    // THE SCOPE IS COMPARED AS A VERSION, NOT AS A STRING. The release grammar
+    // admits `00.7.1`, and the ordering ranks it equal to `0.7.1`, so a raw
+    // `!==` let `00.7.1.999` step out of the ceiling and name a build that has
+    // not happened (#1279 review). Same release means stampKey ranks them equal.
+    const currentKey = stampKey(currentRelease, 0);
+    const sameRelease = (release) => (currentKey === null
+      ? release === currentRelease
+      : compareStamps(stampKey(release, 0), currentKey) === 0);
     for (const r of receipts) {
       if (r.ordinal === null) continue;
       // A legacy `-rc.N` stamp is numbered in the retired global space and the
       // current counter cannot speak for it at all.
       if (isLegacyStamp(r.key)) continue;
-      if (currentRelease !== null && r.release !== currentRelease) continue;
+      if (!sameRelease(r.release)) continue;
       if (r.ordinal > ceiling) {
         throw new Error(`${r.where}: cites build ${r.ordinal} of release ${r.release ?? '(unknown)'}, but buildordinal.json says only ${currentOrdinal + 1} build(s) of that release exist${projecting ? ' (projecting allows the one build the following rebuild produces)' : ''} — a receipt cannot name a build that has not happened`);
       }
@@ -918,18 +926,52 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
 // WITHIN A DATE, BUILDS NEVER RISE. Receipts run newest first inside a date as
 // well as across dates, so reading down, each stamp is no newer than the one
 // above it (ties allowed: docs-only merges share a build). Measured on this tree
-// on 2026-09-24, the rule was not held before 2026-09-21: GRANDFATHERED_RISES
+// on 2026-09-24, the rule was not held before 2026-09-21: the GRANDFATHERED_RISES
 // within-date rises sit in dates up to 2026-09-20, written before receipts came
 // from a merge train. Those are GRANDFATHERED, and PINNED rather than skipped —
-// the count must equal the pin exactly, so a new rise written into an old date
+// the pairs found must equal the pinned pairs exactly, so a new rise written into an old date
 // reds, and so does one repaired without updating the pin (the freed slack would
 // hide the next one). CHANGELOG.md is not rewritten here.
 export const WITHIN_DATE_FROM = '2026-09-21';
-export const GRANDFATHERED_RISES = 28;
+// Each pin reads `<date> #<above PR> <above build> < #<below PR> <below build>`:
+// the receipt below cites a newer build than the one above it.
+export function riseName(above, below) {
+  return `${below.date} #${above.pullRequest} ${above.build} < #${below.pullRequest} ${below.build}`;
+}
+export const GRANDFATHERED_RISES = Object.freeze([
+  '2026-09-20 #1233 0.7.1.337 < #1228 0.7.1.342',
+  '2026-09-20 #1226 0.7.1.332 < #1227 0.7.1.340',
+  '2026-09-19 #1189 0.7.1.192 < #1187 0.7.1.226',
+  '2026-09-18 #1143 0.7.1.85 < #1140 0.7.1.92',
+  '2026-09-18 #1119 0.7.1.77 < #1124 0.7.1.78',
+  '2026-09-18 #1111 0.7.1.75 < #1120 0.7.1.77',
+  '2026-09-15 #994 0.7.1.58 < #1003 0.7.1.59',
+  '2026-09-10 #952 0.6.0.122 < #954 0.6.0.133',
+  '2026-09-10 #921 0.6.0.108 < #956 0.6.0.132',
+  '2026-09-10 #938 0.6.0.116 < #945 0.6.0.119',
+  '2026-09-10 #945 0.6.0.119 < #940 0.6.0.125',
+  '2026-09-10 #943 0.6.0.121 < #939 0.6.0.128',
+  '2026-09-10 #924 0.6.0.112 < #929 0.6.0.119',
+  '2026-09-09 #897 0.6.0.78 < #903 0.6.0.81',
+  '2026-09-09 #832 0.6.0.47 < #820 0.6.0.52',
+  '2026-09-07 #791 0.5.5.118 < #792 0.5.5.124',
+  '2026-09-07 #778 0.5.5.116 < #779 0.5.5.120',
+  '2026-09-07 #779 0.5.5.120 < #787 0.5.5.125',
+  '2026-09-07 #764 0.5.5.109 < #758 0.5.5.110',
+  '2026-09-07 #735 0.5.5.78 < #741 0.5.5.100',
+  '2026-09-07 #717 0.5.5.66 < #718 0.5.5.67',
+  '2026-09-07 #686 0.5.5.56 < #711 0.5.5.60',
+  '2026-09-07 #700 0.5.5.48 < #701 0.5.5.49',
+  '2026-09-07 #672 0.5.5.44 < #676 0.5.5.45',
+  '2026-09-07 #676 0.5.5.45 < #679 0.5.5.46',
+  '2026-09-05 #627 0.5.5.12 < #634 0.5.5.21',
+  '2026-08-25 #347 0.4.0.1352 < #348 0.4.0.1354',
+  '2026-08-20 #288 0.4.0.0911 < #291 0.4.0.0912',
+]);
 export const ORDER_SCOPE = [
   'about-changelog --check-order DID NOT CHECK:',
   '  the in-game projection or the About route (the plain run does, with a browser) ·',
-  `  within-date order in dates before ${WITHIN_DATE_FROM} (counted against the pin, not refused one by one) ·`,
+  `  within-date order in dates before ${WITHIN_DATE_FROM} (matched pair by pair against the pin, not refused one by one) ·`,
   '  that a receipt\'s build actually contains its change, or that its PR merged ·',
   '  that a release heading\'s version matches buildordinal.json\'s release ·',
   '  receipts whose stamp is prose rather than <release>.<ordinal> (they have no build to order).',
@@ -964,7 +1006,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   // (parseChangelog compares only adjacent groups, so a prose-only group
   // between two stamped ones hid an inversion across it — #1279 review).
   const keyOf = (build) => { const m = build.match(STAMP); return m ? stampKey(m[1], Number(m[2])) : null; };
-  let rises = 0;
+  const rises = [];
   let above = null;
   for (const below of entries) {
     if (above && above.date !== below.date) above = null;
@@ -973,7 +1015,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     if (above) {
       const newer = keyOf(above.build);
       if (compareStamps(older, newer) > 0) {
-        if (below.date < WITHIN_DATE_FROM) rises++;
+        if (below.date < WITHIN_DATE_FROM) rises.push(riseName(above, below));
         else throw new Error(`check-order: build rises within ${below.date}: #${below.pullRequest} cites \`${below.build}\` below #${above.pullRequest}'s \`${above.build}\` — receipts run newest first inside a date too`);
       }
     }
@@ -997,9 +1039,20 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     }
     newerGroup = g;
   }
-  if (rises !== GRANDFATHERED_RISES) {
-    throw new Error(`check-order: ${rises} within-date rise(s) before ${WITHIN_DATE_FROM}, but GRANDFATHERED_RISES pins ${GRANDFATHERED_RISES}`
-      + ' — a rise written into an old date is refused like any other; if one was repaired, lower the pin in the same change');
+  // THE PIN IS THE PAIRS, NOT THEIR COUNT. A count alone let a receipt
+  // backfilled into an old date AT an existing rise swap that rise for a new
+  // one (337 → 342 became 337 → 343) and leave the total unchanged (#1279
+  // review). Each grandfathered rise is named by its date and both receipts, and
+  // the set found must equal the pin exactly.
+  const pinned = new Set(GRANDFATHERED_RISES);
+  const found = new Set(rises);
+  const unpinned = rises.filter((x) => !pinned.has(x));
+  const gone = GRANDFATHERED_RISES.filter((x) => !found.has(x));
+  if (unpinned.length || gone.length || rises.length !== GRANDFATHERED_RISES.length) {
+    throw new Error(`check-order: the within-date rises before ${WITHIN_DATE_FROM} do not match GRANDFATHERED_RISES pins`
+      + (unpinned.length ? ` — not pinned: ${unpinned.join('; ')}` : '')
+      + (gone.length ? ` — pinned but no longer present: ${gone.join('; ')}` : '')
+      + ' — a rise written into an old date is refused like any other; if one was repaired, remove its pin in the same change');
   }
   return { entries, checks: checks + 1 };
 }
@@ -1052,6 +1105,12 @@ async function orderCorpus(ordinalFile) {
   const oldHigh = oldStamps.reduce((a, b) => (a && compareStamps(a.key, b.key) >= 0 ? a : b), null);
   if (!oldDate.test(real) || !oldLow || !(compareStamps(oldLow.key, oldHigh.key) < 0)) throw new Error('check-order selftest: plant site drifted — no 2026-09-1x group with two distinct builds to plant a grandfathered-date rise into');
   const rv = (pr, build) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${build}\`).`;
+  // A grandfathered rise SWAPPED for a new one: the pinned pair's lower build,
+  // then a receipt tying the higher one written between them. The count of
+  // rises is unchanged; the pair is not.
+  const pin = GRANDFATHERED_RISES[0]?.match(/^\S+ #\d+ \S+ < #(\d+) (\S+)$/);
+  const pinLine = pin && real.split('\n').find((l) => l.includes(`[#${pin[1]}](`));
+  if (!pinLine) throw new Error('check-order selftest: plant site drifted — the first GRANDFATHERED_RISES pin names a receipt CHANGELOG.md does not hold');
   const plants = [
     ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
     ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
@@ -1064,8 +1123,10 @@ async function orderCorpus(ordinalFile) {
     ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${rv(990001, oldLow.build)}\n${rv(990002, oldHigh.build)}\n`), null, 'GRANDFATHERED_RISES pins'],
     // A prose-stamped receipt between two stamped ones, and a prose-only group
     // between two stamped groups, must not hide the inversion across them.
+    ['rise in a grandfathered date swapped for a new one, count unchanged', real.replace(pinLine, `${rv(990001, pin[2])}\n${pinLine}`), null, 'not pinned: '],
     ['build rising within a date across a prose-stamped receipt', top(`## 2099-01-01\n\n${r(990001, n)}\n${rv(990002, 'evidence-only')}\n${r(990003, 0, next)}\n`), null, 'build rises within 2099-01-01'],
     ['build rising across a prose-only group', top(`## 2099-01-03\n\n${r(990001, n)}\n\n## 2099-01-02\n\n${rv(990002, 'evidence-only')}\n\n## 2099-01-01\n\n${r(990003, 0, next)}\n`), null, 'runs backward across groups'],
+    ['receipt past buildordinal.json spelling the release with a leading zero', top(`## 2099-01-01\n\n${r(990001, n + 1, `0${rel}`)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 1)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
@@ -1949,7 +2010,7 @@ try {
       // (verdict.mjs) reads an unhandled throw as "could not run" (exit 2).
       try {
         const { entries, checks } = checkOrder(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() ?? undefined });
-        console.log(`about-changelog check-order: ${entries.length} receipts ordered newest first; ${GRANDFATHERED_RISES} pre-${WITHIN_DATE_FROM} within-date rises match the pin`);
+        console.log(`about-changelog check-order: ${entries.length} receipts ordered newest first; ${GRANDFATHERED_RISES.length} pre-${WITHIN_DATE_FROM} within-date rises match the pin`);
         console.log(`about-changelog check-order: OK — ${checks} checks passed`);
       } catch (error) {
         console.error(`about-changelog check-order: RED — ${error.message}`);
