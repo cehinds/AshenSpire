@@ -139,6 +139,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
   const busy = (btn, on, label) => { btn.disabled = on; if (label) btn.textContent = label; };
 
   const previewLoad = async (btn) => {
+    // A new request retires the old answer: no Apply may install a profile
+    // fetched before this one, whatever this request turns out to be.
+    pending = null;
+    const stale = mount.querySelector('[data-sync-preview]');
+    if (stale) { stale.hidden = true; stale.innerHTML = ''; }
     busy(btn, true, 'Loading…');
     try {
       const remote = await fetchProfile(cfg, { token: read(SYNC_STORAGE.token) || '' });

@@ -235,7 +235,7 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
 test('while searching, the scoped reset resets the shown results and says so', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /query \? settingsSearchHits\(query\)\.slice\(0, SEARCH_LIMIT\)\.map\(\(hit\) => hit\.row\)/);
+  assert.match(screen, /query \? settingsSearchHits\(query, pageDebug\(\), settings\)\.slice\(0, SEARCH_LIMIT\)\.map\(\(hit\) => hit\.row\)/);
   assert.ok(screen.includes("'Reset these results'"));
 });
 
@@ -282,4 +282,18 @@ test('a compact slider over a signed range is centred on its value', () => {
   assert.deepEqual(sliderSpan({ min: -999, max: 999, step: 1, def: 5 }, 5), [-50, 50]);
   assert.deepEqual(sliderSpan({ min: -500, max: 500, step: 1, def: 0 }, 0), [-50, 50]);
   assert.deepEqual(sliderSpan({ min: -3, max: 999, step: 1, def: 5 }, 5), [-3, 50], 'a shallow negative floor is kept');
+});
+
+test('search leaves out rows the hand rules hide, so the count and the reset match the screen', () => {
+  const fill = { 'gameConfig.handRules.drawMode': 'fill' };
+  const shown = settingsSearchHits('turn draw base', true, fill).map((hit) => hit.row.key);
+  assert.ok(!shown.includes('gameConfig.handRules.turn.base'), 'a fixed-draw row is hidden while drawing to a hand size');
+  assert.ok(settingsSearchHits('turn draw base', true, {}).some((hit) => hit.row.key === 'gameConfig.handRules.turn.base'), 'and found in fixed mode');
+});
+
+test('a new profile load retires the previous preview first', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const start = panel.indexOf('const previewLoad = async');
+  assert.ok(panel.indexOf('pending = null;', start) < panel.indexOf('fetchProfile(', start));
 });

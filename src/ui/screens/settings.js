@@ -2082,12 +2082,22 @@ function cachedSubgroups(rows, groupId) {
   return subgroupCache.get(groupId);
 }
 
-/** settingsSearchHits(query, debug) → [{ row, where }] across every shown section. */
-export function settingsSearchHits(query, debug = pageDebug()) {
+/**
+ * settingsSearchHits(query, debug, settings) → [{ row, where }] across every
+ * shown section. With `settings`, a row the hand rules currently hide (the
+ * fixed-draw rows while drawing to a hand size) is not a hit: it would be
+ * counted, and reset, without being on screen.
+ */
+export function settingsSearchHits(query, debug = pageDebug(), settings = null) {
   const q = String(query || '').trim().toLocaleLowerCase();
   if (!q) return [];
   const words = q.split(/\s+/);
+  const hiddenByRules = new Set();
+  if (settings && resolveHandRules(settings, contentBundle.attributes).drawMode !== 'fixed') {
+    for (const row of handRulesRows(contentBundle.attributes)) if (row.fixedOnly) hiddenByRules.add(row.key);
+  }
   const hit = (row) => {
+    if (hiddenByRules.has(row.key)) return false;
     const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
     return words.every((word) => hay.includes(word));
   };
@@ -2107,7 +2117,7 @@ export function settingsSearchHits(query, debug = pageDebug()) {
 }
 
 function searchResultsHtml(settings, query) {
-  const hits = settingsSearchHits(query);
+  const hits = settingsSearchHits(query, pageDebug(), settings);
   if (!hits.length) return `<p class="set-note set-search-empty" data-search-results="0">No setting matches “${esc(query)}”.</p>`;
   let where = null;
   const shown = hits.slice(0, SEARCH_LIMIT);
@@ -2591,7 +2601,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // the matches — never the section that was open behind the search.
       const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : query ? settingsSearchHits(query).slice(0, SEARCH_LIMIT).map((hit) => hit.row)
+        : query ? settingsSearchHits(query, pageDebug(), settings).slice(0, SEARCH_LIMIT).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
