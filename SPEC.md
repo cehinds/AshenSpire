@@ -409,7 +409,14 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   an option grants exactly that option and nothing else; its index is kept on the reward
   checkpoint (`chosenChestIndex`) so a reload resumes it. The grant and its Taken state cross
   one save door: if that save is refused, the grant is rolled back (deck, relics, cinders,
-  Smithing Stones, the armament bag, `chosenChestIndex`) and Confirm can be pressed again. Auto-collect picks one of the
+  Smithing Stones, the armament bag, `chosenChestIndex`) and Confirm can be pressed again.
+  A saved chest is validated at both save doors: the shape door (`validateRunShape`, via
+  `chestOptionShapeProblems`) refuses an option whose `category` is outside the closed set
+  or whose payload is not the one its table row names (ids non-empty strings, `mode`
+  `owned`|`rare`, an `owned` upgrade's `instanceId`, exactly one of `armamentId` /
+  `weaponArtId`, `cinders` and `smithingStones` non-negative integers); the load door
+  (`engine/save.js`, via `chestOptionReferenceProblems`) refuses an id the content does not
+  hold, by name — so a corrupt or stale save is archived, never mounted. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
   while the bag is full — and while the door's own armament row is still pending it needs
   **two** free slots, since that row claims one first (it is listed and auto-collected before

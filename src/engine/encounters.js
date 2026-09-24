@@ -18,7 +18,7 @@ import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/q
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
-import { chestUpgradeable } from '../model/rewardChest.js';
+import { chestUpgradeable, CHEST_CATEGORIES } from '../model/rewardChest.js';
 import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
 import { classDraftPool } from '../model/classTree.js';
 
@@ -367,10 +367,8 @@ function relicStreamOnly(rng) {
   };
 }
 
-/** The chest's closed category set, in the order the chest lays them out. */
-export { chestUpgradeable };
-
-export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
+// The chest's closed category set and grant rules live in model/rewardChest.js.
+export { chestUpgradeable, CHEST_CATEGORIES };
 
 /**
  * rollEliteChest(registries, rng, run, { found, exclude }) → { options } | null.

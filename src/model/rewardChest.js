@@ -9,6 +9,61 @@ import { isItemOwned } from './loadout.js';
 import { sourceArmamentId } from './smithing.js';
 import { rewardPlan, resolveContinue } from './rewardplan.js';
 
+/** The chest's closed category set, in the order the chest lays them out (SPEC §3.8.1). */
+export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
+
+const isId = (value) => typeof value === 'string' && value.length > 0;
+const isCount = (value) => Number.isInteger(value) && value >= 0;
+
+/**
+ * chestOptionShapeProblems(option, path) → problems with one saved chest
+ * option's SHAPE, by field (the save's shape door; no registry needed). Each
+ * category carries exactly the payload its row in SPEC §3.8.1 names.
+ */
+export function chestOptionShapeProblems(option, path = 'option') {
+  if (!option || typeof option !== 'object' || Array.isArray(option)) return [`${path} must be an object`];
+  if (!CHEST_CATEGORIES.includes(option.category)) return [`${path}.category must be one of ${CHEST_CATEGORIES.join(', ')}`];
+  const problems = [];
+  switch (option.category) {
+    case 'relic':
+      if (!isId(option.relicId)) problems.push(`${path}.relicId must be a non-empty string`);
+      break;
+    case 'upgrade':
+      if (!['owned', 'rare'].includes(option.mode)) problems.push(`${path}.mode must be owned or rare`);
+      if (!isId(option.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
+      if (option.mode === 'owned' && !isId(option.instanceId)) problems.push(`${path}.instanceId must be a non-empty string`);
+      break;
+    case 'armament':
+      if (isId(option.armamentId) === isId(option.weaponArtId)) problems.push(`${path} must carry exactly one of armamentId or weaponArtId`);
+      break;
+    case 'cinders':
+      if (!isCount(option.cinders)) problems.push(`${path}.cinders must be a non-negative integer`);
+      if (!isCount(option.smithingStones)) problems.push(`${path}.smithingStones must be a non-negative integer`);
+      break;
+    default:
+  }
+  return problems;
+}
+
+/**
+ * chestOptionReferenceProblems(registries, option) → the ids a (well-shaped)
+ * chest option names that the registries do not hold (the load door's
+ * reference check, engine/save.js).
+ */
+export function chestOptionReferenceProblems(registries, option) {
+  if (!option || typeof option !== 'object') return [];
+  const problems = [];
+  if (option.category === 'relic' && option.relicId && !registries.relics.has(option.relicId)) problems.push(`chest relic '${option.relicId}' is unknown`);
+  if (option.category === 'upgrade' && option.cardId && !registries.cards.has(option.cardId)) problems.push(`chest upgrade card '${option.cardId}' is unknown`);
+  if (option.category === 'armament') {
+    if (option.weaponArtId && !registries.cards.has(option.weaponArtId)) problems.push(`chest weapon art '${option.weaponArtId}' is unknown`);
+    if (option.armamentId && !(registries.equipment.armaments || []).some((piece) => piece.id === option.armamentId)) {
+      problems.push(`chest armament '${option.armamentId}' is unknown`);
+    }
+  }
+  return problems;
+}
+
 /**
  * True for a deck instance an elite chest may upgrade in place: an ordinary
  * run-owned card, not already upgraded, whose def authors an upgrade. An

@@ -25,6 +25,7 @@ import {
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
+import { chestOptionShapeProblems } from './rewardChest.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
@@ -960,8 +961,12 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       // The elite chest (SPEC §3.8.1): a Taken chest names the option it took.
       if (pending.rewards?.chest != null) {
         const options = pending.rewards.chest && pending.rewards.chest.options;
-        if (!Array.isArray(options) || !options.length || options.some((o) => !o || typeof o.category !== 'string')) {
+        const optionProblems = Array.isArray(options)
+          ? options.flatMap((o, i) => chestOptionShapeProblems(o, `pendingReward.rewards.chest.options[${i}]`)) : [];
+        if (!Array.isArray(options) || !options.length) {
           problems.push('pendingReward.rewards.chest.options must be a non-empty array of { category, … }');
+        } else if (optionProblems.length) {
+          problems.push(...optionProblems);
         } else {
           const idx = pending.chosenChestIndex;
           if (idx !== undefined && idx !== null && (!Number.isInteger(idx) || idx < 0 || idx >= options.length)) {

@@ -45,6 +45,7 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
+import { chestOptionReferenceProblems } from '../model/rewardChest.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -130,6 +131,9 @@ function pendingRewardReferenceProblems(pending, registries) {
     for (const cardId of (draft && draft.cardIds) || []) {
       if (!registries.cards.has(cardId)) problems.push(`skill draft card '${cardId}' is unknown`);
     }
+  }
+  for (const option of (rewards.chest && Array.isArray(rewards.chest.options) && rewards.chest.options) || []) {
+    problems.push(...chestOptionReferenceProblems(registries, option));
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);

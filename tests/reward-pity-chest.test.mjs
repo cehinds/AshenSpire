@@ -429,6 +429,40 @@ test('save shape: a taken chest names its option; an old relic offer still valid
   assert.deepEqual(validateRunShape(back), []);
 });
 
+test('a corrupt or stale chest option is refused at the save doors, by name', async () => {
+  const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
+  const run = newRun(3);
+  const pending = (options) => ({
+    schemaVersion: 1, source: 'elite', after: 'map', rewards: { cinders: 10, chest: { options } }, states: {}, chosenCardId: null,
+    chosenDraftCardIds: {}, chosenDraftNodeIds: {},
+  });
+  const shape = (option) => { run.pendingReward = pending([option]); return validateRunShape(run).join(' | '); };
+  assert.match(shape({ category: 'jewel' }), /options\[0\]\.category must be one of relic, upgrade, armament, cinders/);
+  assert.match(shape({ category: 'relic' }), /options\[0\]\.relicId must be a non-empty string/);
+  assert.match(shape({ category: 'upgrade', mode: 'owned', cardId: 'x' }), /options\[0\]\.instanceId/);
+  assert.match(shape({ category: 'upgrade', mode: 'gold', cardId: 'x' }), /options\[0\]\.mode must be owned or rare/);
+  assert.match(shape({ category: 'armament' }), /exactly one of armamentId or weaponArtId/);
+  assert.match(shape({ category: 'cinders', cinders: '90', smithingStones: 1 }), /options\[0\]\.cinders must be a non-negative integer/);
+  assert.match(shape({ category: 'cinders', cinders: 90 }), /options\[0\]\.smithingStones/);
+  assert.equal(shape({ category: 'cinders', cinders: 90, smithingStones: 1 }), '');
+  // Well-shaped but naming ids the content does not hold: the load door refuses.
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const load = (options) => {
+    delete run.pendingReward;
+    saves.saveRun(run, createRng(1));
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    raw.pendingReward = pending(options);
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    return saves.loadRun(r) ? '' : saves.runStatus().reason;
+  };
+  assert.equal(load([{ category: 'cinders', cinders: 90, smithingStones: 1 }, { category: 'armament', armamentId: 'greatsword' }]), '');
+  assert.match(load([{ category: 'relic', relicId: 'noSuchRelic' }]), /chest relic 'noSuchRelic' is unknown/);
+  assert.match(load([{ category: 'upgrade', mode: 'rare', cardId: 'noSuchCard' }]), /chest upgrade card 'noSuchCard' is unknown/);
+  assert.match(load([{ category: 'armament', armamentId: 'noSuchBlade' }]), /chest armament 'noSuchBlade' is unknown/);
+  assert.match(load([{ category: 'armament', weaponArtId: 'noSuchArt' }]), /chest weapon art 'noSuchArt' is unknown/);
+});
+
 test('autoTakeChest: a bot door takes one takeable option, seeded', () => {
   const chest = { options: [
     { category: 'armament', armamentId: 'longsword' },
