@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Settings open faster, search everything, and every value has − / + and a slider",
     "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once. A Changed button lists every setting you have changed, and any Reset can be undone. A one-time tip explains search and Reset, and a gamepad presses − and + directly. Development builds can keep named profiles (desk, phone and so on); screen-size settings stay with each device unless you choose to share them. The owner can also promote a profile to be every new player's defaults.",
-    "build": "0.7.1.529",
+    "build": "0.7.1.531",
     "pullRequest": 1277,
     "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1304",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A save from a newer build is kept, not thrown away",
+    "detail": "Opening a run saved by a newer version of the game used to archive it and empty its slot, so going back to the newer build found the run gone. Now the slot keeps it untouched and says \"Saved by a newer build. Update to continue.\"; Continue on it opens a notice with one button, \"Keep it and close\", and nothing is written. Custom Climb, when every slot is full, now asks before replacing slot 1, the same way Customize does. Behind the scenes, one real save from every run format the game has ever written is now tested to load.",
+    "build": "0.7.1.484",
+    "pullRequest": 1304,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1304"
   },
   {
     "id": "pr-1306",
