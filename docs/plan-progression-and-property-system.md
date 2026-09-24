@@ -652,6 +652,33 @@ portrait shows the name plate.
 Acceptance: a town lists its quests; accepting and collecting are spoken; a
 collected quest shows as done and rewards once.
 
+**10b AS BUILT (2026-09-23):** the board is a SERVICE MARKER, not a rule:
+`questBoard` is a property node with no trigger, like `smith` and `levelUp`,
+reported by `locationServices`, and the shipped inn carries it (every inn
+point shares the type's set, so no node row was needed). Where the board
+renders: the Rest screen gains a *Quest board* card — phase 7 called the
+location screen `enterLocation`, but the visit door is still `showRest`
+over `mountRest`, so the card is there — offered only where the run stands
+in an atlas town that posts a quest (a dungeon's rescue inn is an inn too
+and posts none). The board itself is its own screen (`ui/screens/questBoard.js`
+over the DOM-free `ui/models/QuestBoardModel.js`), because the atlas's quest
+list opens it from the map too, and routing that through the inn's rest
+service would have spent the single-use rest. The journal reads completions
+and started event chains off `run.history`, and ALSO the journey's accepted
+atlas quests — accepting writes no history row (10a added none for it), so
+a board reading only history could not list the quest the player just took.
+Accept and Collect open `mountDialogue` with a board-built definition and
+the quest row's speaker (the dungeon's `definition` / `speaker` /
+`commitChoice` seam), and the response commits through the new
+`boardQuestResponse`: a closed set `accept | collect | leave`, refusing by
+name a move the quest's `questAction` plan no longer offers, then
+`atlasQuestAction` and the 10a door. The collect exchange speaks the survey
+lore's `report`; the accept exchange its description. `restLocationAt` in
+`main.js` moved into `model/locations.js restLocationAtPoint` so the atlas
+screen and the rest door resolve a point one way. Not done: quest XP is
+still unpaid (nothing listens to `questCompleted`), and the co-op host has
+no board. SPEC §13.4n; `tests/quest-board.test.mjs`, engine test 91.
+
 ## Sequencing and parallelism
 
 ```

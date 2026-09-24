@@ -394,6 +394,14 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, buf);
       copiedAssets += 1;
+    } else if (key.startsWith('assets/fonts/')) {
+      // FONTS REACH THE PAGE THROUGH CSS ONLY. styles/kit.css names each face
+      // in an @font-face url(), which inlineCssUrls already turns into a data:
+      // URI; nothing asks the asset map for a font. Mapping them too shipped
+      // every face twice (~535 KB), most of the mobile build's headroom. The
+      // external-art branch above still copies them, because the rewritten
+      // CSS url points at that copy.
+      continue;
     } else {
       pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
     }

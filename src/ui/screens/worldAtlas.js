@@ -2,6 +2,7 @@ import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
 import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
 import { localServiceModel } from '../models/LocalServiceModel.js';
+import { questBoardPointAt } from '../../model/locations.js';
 import { mountMapDetail } from '../components/mapDetail.js';
 import { mapFogDefs } from '../components/mapFog.js';
 import { MAP_PRESENTATION, MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
@@ -295,12 +296,16 @@ export function mountWorldAtlas(
           `data-local-service="${esc(s.serviceId)}" ${!here || used ? "disabled" : ""}`,
         );
       }
+      // Where the town keeps a quest board (plan phase 10b) the quests are
+      // answered there, spoken; this list reads them and opens the board.
+      const board = quests.length ? questBoardPointAt(registries, id) : null;
       for (const q of quests) {
         const def = a.quests[q.questId],
           action = questAction(j, q.questId);
         const writing = surveyQuestPresentation(def, j);
-        html += `<h4>${esc(writing.title)}</h4><p>${esc(writing.text)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
+        html += `<h4>${esc(writing.title)}</h4><p>${esc(writing.text)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${board ? `<p class="atlas-action-note">${esc(action.label)}</p>` : button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
       }
+      if (board) html += button(t('questBoard.open'), `data-local-board ${!here ? "disabled" : ""}`);
       if (gate) {
         const available = reachable.has(gate.destinationNodeId);
         html += `<p>${available ? `Road to ${esc(a.nodes[gate.destinationNodeId].displayName)}` : "This gate does not connect to an open road in this journey."}</p>${button("Take this road", `data-local-gate ${!here || !available ? "disabled" : ""}`)}`;
@@ -324,7 +329,7 @@ export function mountWorldAtlas(
       pane.innerHTML = `<div class="atlas-detail-scroll">${html}</div>`;
       const actions = dialog.querySelector('.atlas-detail-actions');
       actions.replaceChildren();
-      pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
+      pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-board], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
       actions.querySelectorAll("[data-local-service]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -350,6 +355,12 @@ export function mountWorldAtlas(
             detail(pointId);
           }),
       );
+      const boardButton = actions.querySelector("[data-local-board]");
+      if (boardButton)
+        boardButton.onclick = () => {
+          close();
+          onAction({ kind: "board", ownerId: id, pointId });
+        };
       const g = actions.querySelector("[data-local-gate]");
       if (g)
         g.onclick = () => {

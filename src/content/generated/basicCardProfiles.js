@@ -13,7 +13,7 @@ export const basicCardProfiles = [
     "baseValue": 3,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "A blow thrown with nothing in the fist, the last thing a Forsaken owns once the blade has broken and the cairn has kept it. No hamlet teaches it. It is learned the first winter a sword is traded for salt, and old climbers carry knuckles scarred flat from it without saying which winter did the damage.\n\nA last resort, still yours.\n— cairn-scratch",
+    "flavor": "Blow of the empty fist.\n\nThe last thing a Forsaken owns once the blade is broken and the cairn has kept it. No hamlet teaches it; it is learned the first winter a sword is traded for salt.\n\nA last resort, still yours.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -28,7 +28,7 @@ export const basicCardProfiles = [
     "baseValue": 2,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "A rim-blow from the Bastion's shield line, used when the sword arm is caught or gone. Climbers learn it from salvaged Warden shields, which bore the gilded branch until the Forsaken scraped it off. Some leave the gold on. The corrupted Wardens at the Fell Courtyard hesitate at the sight of it, which the elders say is worth the risk of carrying it.\n\nA short iron answer.\n— Marl's Hollow elders",
+    "flavor": "Rim-blow of the Bastion's shield line.\n\nClimbers learn it from salvaged Warden shields, once gilded with the branch. Most scrape the gold away. The corrupted Wardens of the Fell Courtyard hesitate at the sight of it.\n\nSome leave the gold.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -43,7 +43,7 @@ export const basicCardProfiles = [
     "baseValue": 5,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "The plain cut of Bastion steel, drilled into field levies and the sellswords hired beside them. Weald smiths left their blades unsigned, a custom the Chapel's scribes found insolent and never managed to end. Unsigned blades lie all over the ring now, and a Forsaken can carry one without anyone asking whose it was.\n\nSteel gives the motion its name.\n— weald smiths' talk",
+    "flavor": "Plain cut of Bastion steel.\n\nDrilled into the field levies and the sellswords hired beside them. Weald smiths never signed their blades, a custom the Chapel's scribes thought insolent and never ended.\n\nUnsigned steel can be carried without anyone asking whose it was.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -58,7 +58,7 @@ export const basicCardProfiles = [
     "baseValue": 2,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "A turning flurry from the Citadel's midwinter masque, where court dancers spun double-ended blades before the throne. The dancers were stitched to their posts when the Court Flame died, and some of them turn on the frozen river to this day, slower each winter. Climbers learn the step by watching. The docks say the dancers do not mind being copied.\n\nThree cuts, one turning.\n— east bank dock talk",
+    "flavor": "Turning flurry of the Citadel's midwinter masque.\n\nCourt dancers spun double-ended blades before the throne. Stitched to their posts when the Court Flame died, some turn yet upon the frozen river, slower each winter.\n\nClimbers learn the step by watching. The dancers do not mind.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -73,7 +73,7 @@ export const basicCardProfiles = [
     "baseValue": 3,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "Two quick openings, the way the Court's surgeons let a vein. The surgeons' apprentices taught it on the docks once the Court stopped paying them, and one of them teaches it yet, for cinders, under the ice below the Citadel. He says he learned it to open people and taught himself to close them, and that he does not sell the second part.\n\nTwo, and quick.\n— east bank dock talk",
+    "flavor": "Two quick openings, as the Court's surgeons let a vein.\n\nTheir apprentices taught it on the docks once the Court stopped paying them. One teaches it yet, for cinders, beneath the ice below the Citadel.\n\nHe learned to open people. He taught himself to close them, and does not sell that part.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -88,7 +88,7 @@ export const basicCardProfiles = [
     "baseValue": 4,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "A shot loosed from low cover, the way weald poachers took the deer the Bastion kept for its own tables. The Bastion hanged poachers, so the hamlets learned to loose on the peal of the dawn bell, which covered the sound of the string. The Bell Keeper rings the dawn peal yet, though no dawn follows it, and the poachers loose on the stroke regardless.\n\nThe point lands on the stroke.\n— weald hamlet saying",
+    "flavor": "Shot loosed from low cover.\n\nThe way weald poachers took the deer the Bastion kept for its tables. The Bastion hanged poachers, so the hamlets loosed upon the dawn peal, which hid the sound of the string.\n\nThe Bell Keeper rings the peal yet, though no dawn follows.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -103,7 +103,7 @@ export const basicCardProfiles = [
     "baseValue": 2,
     "ratingId": "pr",
     "cap": "",
-    "flavor": "A cold light struck from a staff, the working of the Observatory's apprentices. They cut their staffs green from the lanternwood of the weald and tipped them with starstone chips bought from the reach miners. The Starwatch taught that the light came from the stone. The apprentices noticed it came more easily when the staff was pointed at the sky, and were told to stop noticing.\n\nAsh carries a small cold light.\n— apprentice's letter",
+    "flavor": "Cold light struck from an apprentice's staff.\n\nCut green from weald lanternwood and tipped with starstone bought from the reach miners. The Starwatch taught that the light came from the stone.\n\nIt came more easily with the staff turned skyward. The apprentices were told not to notice.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -118,7 +118,7 @@ export const basicCardProfiles = [
     "baseValue": 3,
     "ratingId": "pr",
     "cap": "",
-    "flavor": "The sceptre's working, which answers in a darker tongue than the staff's. Chapel sceptres were carved with script copied from sealstone doors older than the Chapel, and the cantors who carried them were taught the sounds but not the sense. The Chapel called the script sacred. Among themselves, the cantors called it borrowed.\n\nThe sceptre answers in a darker tongue.\n— cantors' talk",
+    "flavor": "Working of a cantor's sceptre.\n\nChapel sceptres bore script copied from sealstone doors older than the Chapel. The cantors were taught its sounds, never its sense. The Chapel called the script sacred.\n\nAmong themselves, the cantors called it borrowed.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -133,7 +133,7 @@ export const basicCardProfiles = [
     "baseValue": 1,
     "ratingId": "dr",
     "cap": "",
-    "flavor": "A guard with empty hands, the ice-fishers' way of standing on lakes that crack all winter and hold one person at a time. They keep their weight low and their feet wide and let the ice decide. The fishers of Sallow Lake say the ice has a temper and can be reasoned with. The ones who said otherwise are under it.\n\nNothing in your hands but the ground under your feet.\n— ice-fishers' talk",
+    "flavor": "Empty-handed guard of the ice-fishers.\n\nWeight low, feet wide, upon lakes that crack all winter and hold but one at a time. The fishers of Sallow Lake say the ice has a temper, and may be reasoned with.\n\nThose who said otherwise are beneath it.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -148,7 +148,7 @@ export const basicCardProfiles = [
     "baseValue": 2,
     "ratingId": "dr",
     "cap": "",
-    "flavor": "A turn of the haft to take the blow on the wood, the levy drill of the Bastion's field-born. Sergeant Ilse drilled it into the weald's levies on the Muster Stair, and on quiet nights her voice carries from the Bastion walls, calling the count. The levies she drilled are mostly corrupted now. When they hear her, they take their places.\n\nTurn the haft and weather the blow.\n— weald hamlet saying",
+    "flavor": "Haft-turn of the Bastion's field levies.\n\nSergeant Ilse drilled it upon the Muster Stair. On quiet nights her voice carries from the Bastion walls, calling the count.\n\nThe levies she drilled are corrupted now. When they hear her, they take their places.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -163,7 +163,7 @@ export const basicCardProfiles = [
     "baseValue": 3,
     "ratingId": "dr",
     "cap": "",
-    "flavor": "A shield set against a blow, as the Wardens taught it and as the Forsaken learned it from the shields themselves. The Bastion's shields carried strips of bell-bronze on the rim, cast from the metal left over when the great bell was founded. The Wardens said the bronze rang the hour when struck. Climbers who carry them say it rings at other times as well.\n\nMeet the blow on carried iron.\n— cairn-scratch",
+    "flavor": "Shield set against the blow, as the Wardens taught.\n\nBastion shields bore strips of bell-bronze upon the rim, cast from metal left when the great bell was founded. The Wardens said the bronze rang the hour when struck.\n\nIt rings at other hours too.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -178,7 +178,7 @@ export const basicCardProfiles = [
     "baseValue": 1,
     "ratingId": "pr",
     "cap": "",
-    "flavor": "A ward drawn through a staff, first taught to the Observatory's apprentices on Starwatch Terrace, where they measured the new tower's draw across the water. The Astronomer said the ward was against the salt wind. The apprentices said it was against the tower, because the ward leaned toward the Spire whenever they drew it.\n\nA thin ward drawn through the focus.\n— apprentice's letter",
+    "flavor": "Ward drawn through a staff, taught upon Starwatch Terrace.\n\nWhere the apprentices measured the new tower's draw across the water. The Astronomer said the ward was against the salt wind.\n\nIt leaned toward the Spire whenever it was drawn.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -193,7 +193,7 @@ export const basicCardProfiles = [
     "baseValue": 1,
     "ratingId": "pr",
     "cap": "",
-    "flavor": "A ward held together by rite, from the Chapel's night watch over a bier before a name was written. The cantors held a sceptre crosswise over the body until dawn. The Chapel taught that the ward kept the name from wandering. The cantors did not ask where a name might wander to, and the rubric does not say.\n\nA ward held together by rite.\n— Chapel rubric",
+    "flavor": "Ward of the bier-watch.\n\nCantors held a sceptre crosswise over the dead through the night, before a name was written. The Chapel taught that it kept the name from wandering.\n\nWhere a name might wander, the rubric does not say.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -208,7 +208,7 @@ export const basicCardProfiles = [
     "baseValue": 0,
     "ratingId": "dr",
     "cap": "",
-    "flavor": "The empty hand's art, which is mostly the art of not being where the blow lands. The ship-breakers of the Grave of Ships teach it on hulls that shift with the tide. Gull-Bet says it was the first thing the Forsaken ever had that the marked envied, and she says it the way one says a thing that has been true for a very short while.\n\nThe empty hand's art is not being there.\n— ship-breakers' talk",
+    "flavor": "Art of the empty hand.\n\nMostly the art of not being where the blow lands, taught by the ship-breakers upon hulls that shift with the tide. Gull-Bet calls it the first thing the Forsaken ever had that the marked envied.\n\nThat has been true for a very short while.",
     "mods": "",
     "compatibility": "technique-v1"
   },
@@ -223,7 +223,7 @@ export const basicCardProfiles = [
     "baseValue": 0,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "A weapon learned the way it was last used, by picking up what the corrupted drop and letting its habits show. Hamlet folk say a blade taken from a Warden cuts like a Warden. Orla, from a hamlet below the Bastion, carries a sword that dips toward the Fell Courtyard whenever she passes, and she has stopped fighting the pull.\n\nLet the weapon teach the hand.\n— weald hamlet saying",
+    "flavor": "A weapon learned as it was last used.\n\nTake up what the corrupted drop, and let its habits show. A blade taken from a Warden cuts like a Warden. Orla of the hamlets below the Bastion bears a sword that dips toward the Fell Courtyard as she passes.\n\nShe no longer fights the pull.",
     "mods": "",
     "compatibility": "technique-v1"
   },
@@ -238,7 +238,7 @@ export const basicCardProfiles = [
     "baseValue": 0,
     "ratingId": "ar",
     "cap": "",
-    "flavor": "The poacher's pause before loosing: breath out, hand set, wait for the bell. Weald poachers learned patience from the Bastion's gamekeepers, who hanged the impatient. The gamekeepers are among the corrupted now and walk the lanternwood yet. Poachers say they can be heard counting under their breath, and that the count never reaches its end.\n\nSet the hand before loosing.\n— weald hamlet saying",
+    "flavor": "The poacher's pause before loosing.\n\nBreath out, hand set, wait for the bell. Weald poachers learned patience from the Bastion's gamekeepers, who hanged the impatient. The gamekeepers walk the lanternwood yet, among the corrupted.\n\nThey count beneath their breath. The count never ends.",
     "mods": "",
     "compatibility": "technique-v1"
   },
@@ -253,7 +253,7 @@ export const basicCardProfiles = [
     "baseValue": 0,
     "ratingId": "pr",
     "cap": "",
-    "flavor": "The breath set behind the focus, counted to the rhythm of the star tables, which the apprentices recited until the rhythm lived in the breath. The Starwatch taught that the tables were only numbers. The apprentices say the rhythm is older than the numbers, and that the Astronomer read the last table aloud himself on the night of the eclipse and did not stop at the end.\n\nSet the breath behind the focus.\n— apprentice's letter",
+    "flavor": "Breath set behind the focus.\n\nCounted to the rhythm of the star tables, recited until the rhythm lived in the breath. The Starwatch taught the tables were only numbers; the apprentices held the rhythm older.\n\nOn the night of the eclipse, the Astronomer read the last table aloud, and did not stop at its end.",
     "mods": "",
     "compatibility": "technique-v1"
   }

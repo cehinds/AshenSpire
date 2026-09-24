@@ -28,7 +28,9 @@ import { createRunState, createDeck, createIdGen, characterLevelOf } from './mod
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
-import { atlasQuestAction } from './engine/quests.js';
+import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
+import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
+import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { mountSmithUpgradeModal } from './ui/components/smithUpgradeModal.js';
 import { smithSelectionModel } from './ui/models/SmithSelectionModel.js';
@@ -64,7 +66,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
-import { resolveLocationId, CAMP_LOCATION } from './model/locations.js';
+import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -121,6 +123,7 @@ import { surfaceReport } from './ui/surfaces.js';
 import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
+import { applyLoreType } from './ui/models/LoreTypeModel.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -804,6 +807,8 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
+  applyLoreType(settings);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
@@ -1841,6 +1846,15 @@ function worldLocationAction(action) {
     persist();
     return;
   }
+  if (action.kind === 'board') {
+    // The atlas's quest list opens the board where the town keeps one (plan
+    // phase 10b); leaving it returns to the town's map.
+    if (!questBoardPointAt(registries, action.ownerId)) throw Error('No quest board here');
+    // Stay in the town across a reload while the board or an exchange is open.
+    j.inspectNodeId = j.currentNodeId;
+    persist();
+    return showQuestBoard(action.ownerId, () => { j.inspectNodeId = j.currentNodeId; persist(); showMap(); });
+  }
   if (action.kind === 'local') {
     if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
     persist(); return;
@@ -1891,10 +1905,42 @@ function worldLocationAction(action) {
 
 /** The location an atlas rest point is: its own row, else its service type's, else the Shrine. */
 function restLocationAt(pointId) {
-  const offered = (ATLAS.nodeServices[pointId] || [])
-    .map((s) => ATLAS.services[s.serviceId])
-    .find((service) => service && ATLAS.serviceTypes[service.serviceTypeId]?.handlerId === 'rest');
-  return resolveLocationId(registries, { nodeId: pointId, serviceTypeId: offered ? offered.serviceTypeId : null }) || 'shrine';
+  return restLocationAtPoint(registries, pointId) || 'shrine';
+}
+
+// ---- the quest board (plan phase 10b) -------------------------------------------
+// The board lists the town's quests and the run's journal; a quest that can be
+// accepted or collected is spoken in the dialogue screen with the quest row's
+// speaker, and the response commits through boardQuestResponse — questAction
+// and the 10a completion door. Neither screen is saved: a reload reopens the
+// place the board was read from, as the run stands.
+function showQuestBoard(ownerId, back) {
+  mountQuestBoard(app, {
+    registries, run, meta: activeMeta, ownerNodeId: ownerId,
+    hud: roomHud(() => showQuestBoard(ownerId, back)),
+    onOpen: (questId) => showQuestExchange(ownerId, questId, back),
+    onDone: back,
+  });
+}
+
+function showQuestExchange(ownerId, questId, back) {
+  const offer = questBoardModel({ registries, run, ownerNodeId: ownerId }).offers.find((row) => row.questId === questId);
+  if (!offer) throw Error(`Quest '${questId}' is not on this board`);
+  // Answered already (a HUD door returning after the response): the board.
+  if (!offer.actionable) return showQuestBoard(ownerId, back);
+  const exchange = questExchange(offer, QUEST_EXCHANGE_COPY);
+  mountDialogue(app, {
+    registries, run, meta: activeMeta, rng, eventId: exchange.definition.id,
+    definition: exchange.definition, speaker: exchange.speaker,
+    hud: roomHud(() => showQuestExchange(ownerId, questId, back)),
+    commitChoice: (command) => {
+      boardQuestResponse({ run, registries, rng }, { questId, choiceId: command.choiceId });
+      persist();
+      const choice = exchange.definition.choices.find((row) => row.id === command.choiceId);
+      return { choice: { id: choice.id, resultText: choice.resultText } };
+    },
+    onDone: () => showQuestBoard(ownerId, back),
+  });
 }
 
 function finishWorldService() {
@@ -2559,6 +2605,13 @@ function showRest(openPanel = null, locationId = null) {
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
     services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
+    // The board is the atlas town's (plan phase 10b): offered where the place
+    // carries `questBoard` and the run stands in a town, returning here.
+    questBoard: visit.services.questBoard && worldRest ? (() => {
+      const { counts } = questBoardModel({ registries, run, ownerNodeId: worldRest.ownerId });
+      // A place whose town posts no quest (a dungeon's rescue inn) offers no board.
+      return counts.offered ? { ready: counts.ready, open: counts.open, onOpen: () => showQuestBoard(worldRest.ownerId, () => showRest()) } : null;
+    })() : null,
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
