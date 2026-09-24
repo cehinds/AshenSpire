@@ -2345,7 +2345,7 @@ async function onCombatEnd(result, combat, enc) {
   // sentence. Ledger state is read live from the run; only the GAIN is kept,
   // and it is the amount each award SAYS it paid, never a second reading of
   // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelUps: levelAward.levelUps });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });

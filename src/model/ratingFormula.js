@@ -33,6 +33,70 @@ export function attributeRatingReceipt(config, attributes, id) {
   return { id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute, value: rule.base + attribute };
 }
 
+// ---- WEAPON SCALING GRADES (SPEC §13.4o) ------------------------------------
+//
+// A grade is the rate one attribute point ABOVE the anchor pays into a graded
+// weapon's attack rating. At or below the anchor every weapon reads the flat
+// rule weight, so a stock lean character's creation damage does not move;
+// above it, the grade. An ungraded attribute keeps the rule's own weight.
+// Only the attack ratings are graded: a weapon's Defense, the wearer's Poise
+// and Ward keep the flat formula.
+export const WEAPON_SCALING_RATING_IDS = Object.freeze(['ar', 'pr']);
+
+/** Problems with a weapon-scaling table (balance or a run's snapshot), by name. */
+export function weaponScalingProblems(scaling, where = 'balance.weaponScaling') {
+  const problems = [];
+  if (!scaling || typeof scaling !== 'object' || Array.isArray(scaling)) return [`${where}: must be an object { anchor, grades }`];
+  for (const key of Object.keys(scaling)) if (!['anchor', 'grades'].includes(key)) problems.push(`${where}.${key}: unknown field`);
+  if (!Number.isInteger(scaling.anchor) || scaling.anchor < 0) problems.push(`${where}.anchor: must be a non-negative integer, got ${JSON.stringify(scaling.anchor)}`);
+  if (!scaling.grades || typeof scaling.grades !== 'object' || Array.isArray(scaling.grades)) problems.push(`${where}.grades: must be an object of grade → coefficient`);
+  else for (const [grade, coefficient] of Object.entries(scaling.grades)) {
+    if (!/^[A-Z]$/.test(grade)) problems.push(`${where}.grades.${grade}: a grade is one capital letter`);
+    if (!Number.isFinite(coefficient) || coefficient < 0) problems.push(`${where}.grades.${grade}: must be a finite non-negative number, got ${JSON.stringify(coefficient)}`);
+  }
+  return problems;
+}
+
+/** True when this piece's `id` rating is priced by its grades under `scaling`. */
+export function pieceIsGraded(piece, id, scaling) {
+  return !!(scaling && scaling.grades && piece && piece.scaling
+    && WEAPON_SCALING_RATING_IDS.includes(id)
+    && Object.keys(piece.scaling).length);
+}
+
+/**
+ * gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) → the
+ * attributeRatingReceipt shape, each term priced
+ *   floor(w × min(v, anchor)) + floor(c × max(0, v − anchor))
+ * with `w` the rule's weight and `c` the grade's coefficient (`w` when the
+ * attribute is ungraded). Carries `grades`, `anchor` and `coefficients`.
+ */
+export function gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) {
+  const rule = config?.ratings?.[id];
+  if (!rule) throw new Error(`Missing ${id} rating formula`);
+  const anchor = scaling.anchor;
+  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, attributes?.[attributeId] || 0]));
+  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, rule[attributeId]]));
+  const coefficients = Object.fromEntries(ratingAttributeIds.map((attributeId) => {
+    const grade = grades?.[attributeId];
+    if (grade == null) return [attributeId, weights[attributeId]];
+    if (!Number.isFinite(scaling.grades[grade])) throw new Error(`weapon scaling grade '${grade}' is not in the run's grade table`);
+    return [attributeId, scaling.grades[grade]];
+  }));
+  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => {
+    const v = values[attributeId];
+    const flat = Math.floor(Math.min(v, anchor) * weights[attributeId] + 1e-9);
+    const above = Math.floor(Math.max(0, v - anchor) * coefficients[attributeId] + 1e-9);
+    return [attributeId, flat + above];
+  }));
+  const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
+  const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
+  return {
+    id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute,
+    value: rule.base + attribute, grades: { ...grades }, anchor, coefficients,
+  };
+}
+
 export function equipmentRatingBase(piece, id, profile = null) {
   if (!piece) return 0;
   if (id === 'ar' || id === 'pr') return piece.attackRating || 0;
@@ -42,9 +106,15 @@ export function equipmentRatingBase(piece, id, profile = null) {
   return 0;
 }
 
-export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId) {
+export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId, scaling = null) {
   if (!ratingIds.includes(id)) throw new Error(`Unknown equipment rating '${id}'`);
-  const attribute = attributeRatingReceipt(config, attributes, id);
+  // A graded piece's attack rating reads its grades (SPEC §13.4o) — but only
+  // under a scaling table the caller hands in (the run's own snapshot). No
+  // table, or no grades on the piece, is the flat receipt, byte for byte.
+  const graded = pieceIsGraded(piece, id, scaling);
+  const attribute = graded
+    ? gradedAttributeRatingReceipt(config, attributes, id, piece.scaling, scaling)
+    : attributeRatingReceipt(config, attributes, id);
   // THE ITEM'S RATING IS ITS OWN NUMBER, NOT A PLUS ON TOP OF IT (#1242). A
   // rating the item has a column for was written onto the piece by
   // `applyItemRatingConfig`, so `equipmentRatingBase` already reads it; one it
@@ -61,5 +131,6 @@ export function effectiveEquipmentRating(config, attributes, piece, profile, id 
     attributeValue: attribute.value,
     equipmentBase,
     value: attribute.value + equipmentBase,
+    ...(graded ? { scaling: { grades: attribute.grades, anchor: attribute.anchor, coefficients: attribute.coefficients, terms: attribute.terms } } : {}),
   };
 }
