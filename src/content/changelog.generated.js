@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
-    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305 and #1307, which landed without entries, get their receipts below.",
-    "build": "0.7.1.485",
+    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305, #1307 and #1310, which landed without entries, get their receipts below.",
+    "build": "0.7.1.487",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1310",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The opening scene editor lays out more clearly, and the first journey scene is framed better",
+    "detail": "In Advanced Settings → Opening sequence → Scenes, the editor's layout controls are reworked, and the first step of the journey ships with new default framing. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.485",
+    "pullRequest": 1310,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1310"
   },
   {
     "id": "pr-1304",
