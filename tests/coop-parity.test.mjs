@@ -355,6 +355,7 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     assert.deepEqual(opts.map((o) => o.dataset.chestIndex), ['0', '1', '2']);
     assert.equal(app.querySelectorAll('.coop-relic-take').length, 0, 'no single relic beside the chest');
     opts[2].click();
+    app.querySelector('.coop-continue').click();
     assert.equal(sent.length, 1);
     assert.equal(sent[0].t, 'chooseReward');
     assert.equal(sent[0].pick.chestIndex, 2);
@@ -369,7 +370,9 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     cuOpts[1].click();
     assert.equal(cu.sent.filter((m) => m.t === 'catchupChoice').length, 0, 'a disabled option sends nothing');
     cuOpts[0].click();
-    assert.deepEqual(cu.sent.at(-1), { ...cu.sent.at(-1), t: 'catchupChoice', index: 0, pick: { chestIndex: 0 } });
+    cu.app.querySelector('.coop-continue').click();
+    assert.equal(cu.sent.at(-1).t, 'catchupChoice');
+    assert.equal(cu.sent.at(-1).pick.chestIndex, 0);
   } finally {
     globalThis.setInterval = realInterval;
   }
@@ -388,4 +391,77 @@ test('a seat that re-sends its chest pick is granted the chest once', () => {
   S.chooseReward('p1', { chestIndex: 0 });
   S.chooseReward('p1', { chestIndex: 1 });
   assert.equal(m1.run.cinders, before + 77, 'one chest option, once');
+});
+
+test('one elite door: the card AND a chest option are staged and land together (Codex P1)', async () => {
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const offer = { pool: 'elite', cardIds: ['stomp', 'executioner'], cinders: 1, chest: { options: OPTIONS } };
+    const { app, sent } = await mountCoopScreen({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: offer } } });
+    app.querySelectorAll('.coop-chest-option')[2].click();
+    assert.equal(sent.length, 0, 'a chest tap does not close the door');
+    app.querySelectorAll('.reward-row .card')[1].click();
+    assert.equal(sent.length, 0, 'nor does a card tap');
+    assert.equal(app.querySelectorAll('.coop-chest-option')[2].className.includes('is-selected'), true, 'the staged chest option stays marked');
+    app.querySelector('.coop-continue').click();
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].pick.cardId, 'executioner');
+    assert.equal(sent[0].pick.chestIndex, 2);
+
+    // The host lands both from that one message, in a one-seat session.
+    const S = createSession({ registries: REG, seedString: 'SOLOSEAT' });
+    S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
+    S.start();
+    S.session.cursorId = Object.keys(S.session.mapGraph.nodes)[0];
+    const m = seat(S, 'p1');
+    S.session.scene = { kind: 'reward', pool: 'elite', offers: { p1: offer }, chosen: {}, afterReward: null };
+    const deck = m.run.deck.length;
+    const cinders = m.run.cinders;
+    assert.equal(S.chooseReward('p1', sent[0].pick).ok, true);
+    assert.equal(m.run.deck.length, deck + 1);
+    assert.equal(m.run.deck.at(-1).cardId, 'executioner');
+    assert.equal(m.run.cinders, cinders + 90);
+    // Once per seat still holds: a repeat grants nothing more.
+    S.session.scene = { kind: 'reward', pool: 'elite', offers: { p1: offer }, chosen: {}, afterReward: null, claimed: { p1: { card: true, chest: true } } };
+    S.chooseReward('p1', sent[0].pick);
+    assert.equal(m.run.deck.length, deck + 1);
+    assert.equal(m.run.cinders, cinders + 90);
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
+});
+
+test('catch-up: a held chest relic with no substitute left is unavailable and refused, the entry waits (Codex P2)', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const stored = REG.relics.all().find((r) => r.rarity === 'common').id;
+  const offer = chestOffer([{ category: 'relic', relicId: stored }, { category: 'cinders', cinders: 5, smithingStones: 0 }]);
+  m.catchup.push({ type: 'reward', offer, act: 1, floor: 1 });
+  // An earlier replayed entry granted the stored relic, and the seat owns every substitute.
+  for (const id of REG.relics.all().map((r) => r.id)) if (!m.run.relics.includes(id)) m.run.relics.push(id);
+  const view = S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0];
+  assert.deepEqual(view.chestTakeable, [false, true], 'the duplicate relic is not advertised');
+  const before = structuredClone(m.run);
+  const rng = JSON.stringify(m.rng.getCounters());
+  const res = S.resolveCatchup('p1', 0, { chestIndex: 0 });
+  assert.equal(res.ok, false);
+  assert.deepEqual(m.run, before, 'nothing granted');
+  assert.equal(m.catchup.length, 1, 'the entry is not consumed');
+  assert.equal(JSON.stringify(m.rng.getCounters()), rng, 'no draw spent');
+  assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 1 }).ok, true, 'another option still lands');
+  assert.equal(m.run.cinders, before.cinders + 5);
+  assert.equal(m.catchup.length, 0);
+});
+
+test('catch-up: a held chest relic with a substitute left is still takeable and pays the substitute', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const held = REG.relics.all().find((r) => r.rarity === 'common' && !m.run.relics.includes(r.id)).id;
+  m.run.relics.push(held);
+  m.catchup.push({ type: 'reward', offer: chestOffer([{ category: 'relic', relicId: held }]), act: 1, floor: 1 });
+  assert.deepEqual(S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0].chestTakeable, [true]);
+  const n = m.run.relics.length;
+  assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 0 }).ok, true);
+  assert.equal(m.run.relics.length, n + 1);
 });
