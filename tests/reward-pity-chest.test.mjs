@@ -548,3 +548,40 @@ test('the game hands the run to the boss card offer (src/main.js)', async () => 
   assert.ok(bossCall, 'the boss door rolls its card offer');
   assert.match(bossCall[0], /\brun\b(?!\.)/, 'the boss offer is handed the run');
 });
+
+test('a refused save rolls back the flask growth a relic grant applied', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const dom = rewardDom();
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const { mountRewards } = await import('../src/ui/screens/reward.js');
+    const app = document.createElement('main'); document.body.append(app);
+    const run = {
+      class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] },
+      flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1, grown: { hp: 0, mana: 0 } },
+    };
+    const checkpoint = { states: {}, chosenCardId: null };
+    const rewards = { chest: { options: [{ category: 'relic', relicId: 'goldenSprout' }] } };
+    let refuse = true;
+    mountRewards(app, { registries: r, run, checkpoint, rewards, onDone() {}, onPersist: () => !refuse });
+    app.querySelector('[data-kind="chest"]').click();
+    const before = structuredClone(run);
+    app.querySelectorAll('.reward-row .reward-chest-option')[0].click();
+    const confirm = app.querySelector('#reward-card-confirm');
+    confirm.click();
+    assert.deepEqual(run, before, 'the Golden Sprout capacity is rolled back with the relic');
+    refuse = false;
+    confirm.click();
+    assert.deepEqual(run.relics, ['goldenSprout']);
+    assert.equal(run.flaskCharges.capacity, 4);
+    app.remove();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+});

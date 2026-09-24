@@ -235,7 +235,7 @@ export function mountRewards(app, {
 
   // THE ROLLBACK SNAPSHOT: everything a row's grant may write — the deck
   // (deep: a chest upgrade flips `upgraded` in place), relics, the purse and
-  // stones, the flask belt, the armament bag, the drafts' ledger and picks,
+  // stones, the flask belt and its charges, the armament bag, the drafts' ledger and picks,
   // and the checkpoint — so a grant whose save is refused leaves no mutation,
   // whether it came from a tap (take) or from Continue's auto-collect (finish).
   function snapshotForRollback() {
@@ -245,6 +245,8 @@ export function mountRewards(app, {
       chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       cinders: run.cinders, smithingStones: run.smithingStones,
       flasks: Array.isArray(run.flasks) ? structuredClone(run.flasks) : null,
+      // A flask-growth relic (syncFlaskGrowth) raises the belt's capacity and charge.
+      flaskCharges: run.flaskCharges === undefined ? undefined : structuredClone(run.flaskCharges),
       storage: Array.isArray(run.loadout?.storage) ? [...run.loadout.storage] : null,
       skills: run.skills === undefined ? undefined : structuredClone(run.skills),
       coreTags: run.coreTags === undefined ? undefined : [...run.coreTags],
@@ -265,6 +267,7 @@ export function mountRewards(app, {
     run.cinders = before.cinders;
     run.smithingStones = before.smithingStones;
     if (before.flasks) run.flasks.splice(0, run.flasks.length, ...before.flasks);
+    if (before.flaskCharges === undefined) delete run.flaskCharges; else run.flaskCharges = before.flaskCharges;
     if (before.storage) run.loadout.storage.splice(0, run.loadout.storage.length, ...before.storage);
     if (before.skills !== undefined) run.skills = before.skills;
     if (before.coreTags !== undefined) run.coreTags = before.coreTags;
