@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1266",
+    "id": "pr-1265",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Every character can dodge, and a fresh character is no longer Heavy",
-    "detail": "Holding equipment used to cost you the Dodge Roll: a Reaver or Rogue who started with both hands armed had none, and a character who emptied both hands lost it too. Every deck now carries exactly one Dodge Roll whatever you hold — your bare hand owns it, or your body when both hands are full — and like every card your equipment brings it is dealt first, with Strikes and Defends filling what the starting deck has left. Item weights were also still on the old attribute scale, so every new character started Heavy (dodges cost 3 Stamina and 2 Actions); they are now a fifth of what they were, so class starts read Light or Medium again and the heaviest kits still reach Heavy. Behind the scenes, every test file in the project now runs on every pull request, in a fast suite and a separate self-test job, and eight suites that had quietly gone out of date were brought back to the rules as they stand.",
-    "build": "0.7.1.451",
-    "pullRequest": 1266,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1266"
+    "summary": "A written plan for polish, feel and structure",
+    "detail": "Nothing you see changes yet. Seven reviews of the game — its rules and balance, its world and writing, how it looks and feels in a fight, how its sprites and art are sized and lit, how it fits phones, tablets and large screens, how its code is laid out, and how fast it loads and runs — are now one checklist in the repository, docs/plan-polish-review-2026-09.md, ordered by what to fix first: a Starseer that won none of its simulated runs (a result to confirm once the simulator plays by the live rules) and the Stamina and Mana pools that may be starving it, the test suites that never run, a card play that takes more than a second to land, text that shrinks to six pixels on a tablet, names borrowed from other games, and a 253 MB page that is almost all inlined art. Each item carries its evidence and its size, and the design choices that are the owner's to make are marked as such.",
+    "build": "0.7.1.444",
+    "pullRequest": 1265,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1265"
   },
   {
     "id": "pr-1254",
