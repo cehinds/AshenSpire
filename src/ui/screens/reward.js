@@ -732,7 +732,7 @@ export function mountRewards(app, {
     const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle' });
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
-    if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
+    if (armament) detailBody.append(renderEquipmentInspection(registries, armament, { run }));
     else if (row.kind === 'relic') detailBody.append(renderCollectibleInspection(registries, registries.relics.get(row.relicId), t('reward.kind.relic'), { interactive: false }));
     else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), t('reward.kind.potion')));
     else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">

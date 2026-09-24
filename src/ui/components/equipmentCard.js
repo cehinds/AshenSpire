@@ -75,9 +75,11 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null, run = null } = {}) {
   configureTooltipGlossary(registries);
-  const model = presentation || equipmentCardModel(registries, piece);
+  // `run`, when there is one, is whose snapshot the scaling grades read
+  // (model/equipmentCard.js); creation and previews pass none and read live content.
+  const model = presentation || equipmentCardModel(registries, piece, { run });
   // `inspection: false` MEANS "no door on this face", NOT "this face says
   // everything". The two got conflated, and the second reading won: a caller
   // that made an inert face and bound the door to its WRAPPER — the shop's
@@ -219,7 +221,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
         // or flavour explanation at all; the modal's face is at `inspect` and
         // has every one of them. Reading the outer array here is how the door
         // would come to show fewer tags the less the card beside it said.
-        const full = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false, surface });
+        const full = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false, surface, run });
         return openCardInspection({ title: model.name, card: full.card, details: equipmentDetails(full.explanations), opener });
       } });
     // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED, and they tell themselves. A

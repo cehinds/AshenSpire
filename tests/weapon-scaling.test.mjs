@@ -242,3 +242,22 @@ test('the equipment card names a graded weapon\'s grades and nothing for an ungr
   assert.equal(shield.scaling, null);
   assert.equal(shield.facts.some((fact) => fact.grade), false);
 });
+
+test('a run\'s equipment card reads the grades the run is priced by, not live content (#1287)', () => {
+  const sword = armament('straightSword');
+  const snapshot = createEquipmentProfileRuleSnapshot(registries);
+  // A save born before the grade table: priced flat, so the card shows no grade.
+  const { weaponScaling: _dropped, ...flatSnapshot } = snapshot;
+  const preTable = { equipmentProfileRuleSnapshot: flatSnapshot };
+  assert.equal(equipmentCardModel(registries, sword, { run: preTable }).scaling, null);
+  assert.equal(equipmentCardModel(registries, sword, { run: preTable }).facts.some((fact) => fact.grade), false);
+  // A content regrade after the run was born: the card keeps the run's letters.
+  const regraded = { ...sword, scaling: { strength: 'S' } };
+  const run = { equipmentProfileRuleSnapshot: snapshot };
+  assert.equal(equipmentCardModel(registries, regraded, { run }).scaling, 'Scales STR B · DEX C');
+  // The snapshot's anchor/table feed the explanation.
+  const tuned = { equipmentProfileRuleSnapshot: { ...snapshot, weaponScaling: { ...snapshot.weaponScaling, anchor: 7 } } };
+  assert.match(equipmentCardModel(registries, sword, { run: tuned }).scalingExplanation, /above 7/);
+  // No run (creation, previews): live content.
+  assert.equal(equipmentCardModel(registries, regraded).scaling, 'Scales STR S');
+});

@@ -715,7 +715,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   }
 
   function armamentOffer(def, inspect, summary) {
-    const face = renderEquipmentCard(registries, def, { interactive: false, inspection: false, level: 'glance', surface: 'shop' }).card;
+    const face = renderEquipmentCard(registries, def, { interactive: false, inspection: false, level: 'glance', surface: 'shop', run }).card;
     const card = el('div', { class: 'as-option noarrow hosts-face shop-inspect-card' }, face);
     card.setAttribute('aria-label', `${def.name}. ${summary}. Inspect.`);
     bindCardInspection(card, { title: def.name, readOnly: true, open: () => { card.focus({ preventScroll: true }); inspect(); } });
@@ -730,7 +730,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const confirm = button({ label, weight: 'primary', disabled: !quote.ok });
     const message = statusText(quote.reason || (mode === 'sell' ? 'Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.' : 'Adds this armament to inventory. Equip it in the Armoury.'));
     message.setAttribute('role', 'status');
-    const detail = renderEquipmentInspection(registries, def);
+    const detail = renderEquipmentInspection(registries, def, { run });
     const upgrades = statusText(`Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`);
     const cancel = button({ label: t('shop.back') });
     const shell = openModal({ title: def.name, eyebrow: mode === 'sell' ? 'Sell armament' : 'Buy armament', bodyClassName: 'as-pane', body: (host) => host.append(detail, upgrades, message), secondary: [cancel], primary: confirm });
