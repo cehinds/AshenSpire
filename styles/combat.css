@@ -1515,3 +1515,51 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* WEAPON ART CHARGE (SPEC §12.2.1): one pip bar per equipped weapon under the
+   player's frame, and the same pips on that weapon's Art card in hand. A
+   meter that has just filled flashes once; reduced motion (the OS preference
+   or the in-game setting) keeps the static full highlight and no flash. */
+.combat .art-charge { display: flex; flex-direction: column; gap: calc(2px / var(--ui-zoom, 1)); align-items: center; pointer-events: auto; }
+.combat .art-charge-row {
+  display: inline-flex; align-items: center; gap: calc(5px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(6px / var(--ui-zoom, 1));
+  border: 1px solid #c9a22755; border-radius: 999px; background: #120d09d9;
+  font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1.2; color: #e8dcc0; white-space: nowrap;
+}
+.combat .art-charge-name { max-width: calc(90px / var(--ui-zoom, 1)); overflow: hidden; text-overflow: ellipsis; }
+.art-charge-pips { display: inline-flex; gap: calc(3px / var(--ui-zoom, 1)); }
+.art-charge-pip {
+  width: calc(8px / var(--ui-zoom, 1)); height: calc(8px / var(--ui-zoom, 1)); border-radius: 50%;
+  border: 1px solid #c9a227aa; background: #2a2118; box-sizing: border-box;
+}
+.art-charge-pip.lit { background: var(--gold, #c9a227); border-color: #f3d57a; }
+.combat .art-charge-row.full { border-color: #f3d57a; box-shadow: 0 0 8px #f3d57a88; }
+.combat .art-charge-row.full .art-charge-pip.lit { background: #f7e08c; box-shadow: 0 0 4px #f7e08c; }
+.combat .art-charge-ready { color: #f7e08c; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .9em; }
+.combat .art-charge-row.flash { animation: art-charge-flash 700ms ease-out 2; }
+@keyframes art-charge-flash { 0% { box-shadow: 0 0 0 #f3d57a00; filter: brightness(1); } 35% { box-shadow: 0 0 18px #f3d57a; filter: brightness(1.6); } 100% { box-shadow: 0 0 8px #f3d57a88; filter: brightness(1); } }
+/* The Art card in hand: the pips ride the card's top edge; full adds the
+   Unleashed marker and a gold edge. */
+.hand .card .art-charge-card {
+  position: absolute; right: calc(5px / var(--ui-zoom, 1)); top: 46%; z-index: 3;
+  display: inline-flex; align-items: center; gap: calc(4px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(5px / var(--ui-zoom, 1)); border-radius: 999px;
+  background: #120d09; border: 1px solid #c9a22788; pointer-events: none;
+  font-size: calc(10px / var(--ui-zoom, 1)); color: #f7e08c; white-space: nowrap; font-weight: 700; text-transform: uppercase;
+}
+.hand .card[data-art-charge='full'] { box-shadow: 0 0 0 2px #f3d57a, 0 0 16px #f3d57a99; }
+.hand .card[data-art-charge='full'] .art-charge-card { border-color: #f3d57a; }
+.hand .card[data-art-charge='full'].art-charge-flash { animation: art-charge-flash 700ms ease-out 2; }
+.reduced-motion .combat .art-charge-row.flash,
+.reduced-motion .hand .card.art-charge-flash { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .combat .art-charge-row.flash, .hand .card.art-charge-flash { animation: none; }
+}
+/* Phone: the player's column is too narrow for names beside the enemy
+   intents, so each meter is its pips alone (the name stays in its label and
+   tooltip), and the card marker keeps its pips. */
+@media (max-width: 600px) {
+  .combat .art-charge-row .art-charge-name, .combat .art-charge-row .art-charge-ready, .hand .card .art-charge-card > span:not(.art-charge-pips) { display: none; }
+  .combat .art-charge-row { padding: calc(2px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); }
+}

@@ -18,6 +18,7 @@ import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 
 import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
+import { artChargeView } from './model/artCharge.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
@@ -2227,6 +2228,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  // `?shotArtCharge=partial|full` — STAND AT A WEAPON ART CHARGE (SPEC
+  // §12.2.1). A reach state like ?shotHand: it writes the fight's own
+  // `artCharge` map, the field a real hit fills, for every equipped weapon
+  // with a meter — half full (at least one pip) or full.
+  if (shotState === 'combat' && shotParams.has('shotArtCharge')) {
+    const mode = shotParams.get('shotArtCharge');
+    if (mode !== 'partial' && mode !== 'full') throw new Error(`?shotArtCharge=${mode}: use 'partial' or 'full'.`);
+    for (const row of artChargeView(combat)) combat.artCharge[row.weaponId] = mode === 'full' ? row.max : Math.max(1, Math.floor(row.max / 2));
+  }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
