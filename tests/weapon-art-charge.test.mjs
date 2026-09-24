@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck } from '../src/model/loadout.js';
-import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay } from '../src/model/artCharge.js';
+import { artChargeMax, artChargeView, artUnleashFor, shortStatusName, unleashedTemplate, advanceArtChargeDisplay, newlyFullIds } from '../src/model/artCharge.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -314,4 +314,20 @@ test('paced playback: the shown charge advances beat by beat and lands on the li
   assert.equal(before.greatsword, 0);
   // An artUnleashed beat alone (no change event) still empties it.
   assert.deepEqual(advanceArtChargeDisplay({ greatsword: max }, [{ type: 'artUnleashed', weaponId: 'greatsword' }]), { greatsword: 0 });
+});
+
+test('a full meter or Art card flashes once: a repaint that rebuilds it while full does not flash again', async () => {
+  // The hand rebuilds every card node when the hand's size changes, so the
+  // "already flashed" memory lives in the screen, keyed by id (item 9).
+  let before = new Set();
+  const paint = (ids) => { const { fresh, next } = newlyFullIds(before, ids); before = next; return [...fresh]; };
+  assert.deepEqual(paint(['art:1']), ['art:1'], 'the fill flashes');
+  assert.deepEqual(paint(['art:1']), [], 'a repaint while still full does not');
+  assert.deepEqual(paint(['art:1', 'art:2']), ['art:2'], 'only the newcomer flashes');
+  assert.deepEqual(paint(['art:2']), [], 'the unleash empties one; the other stays quiet');
+  assert.deepEqual(paint(['art:1', 'art:2']), ['art:1'], 'refilled, it flashes again');
+  const { readFile } = await import('node:fs/promises');
+  const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.ok(!/wasFull\s*=\s*node\.dataset/.test(screen), 'the hand card no longer reads its own (rebuilt) node for the flash');
+  assert.ok(/newlyFullIds\(artCardsFullBefore/.test(screen), 'the hand card flash reads the screen-held memory');
 });

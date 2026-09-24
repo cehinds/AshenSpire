@@ -32,7 +32,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
-import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay } from '../../model/artCharge.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -1299,11 +1299,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // once when it FILLS rather than on every repaint while full.
   let artChargeFullBefore = new Set();
   function newlyFullArtCharges(rows) {
-    const full = new Set(rows.filter((row) => row.full).map((row) => row.weaponId));
-    const fresh = new Set([...full].filter((id) => !artChargeFullBefore.has(id)));
-    artChargeFullBefore = full;
+    const { fresh, next } = newlyFullIds(artChargeFullBefore, rows.filter((row) => row.full).map((row) => row.weaponId));
+    artChargeFullBefore = next;
     return fresh;
   }
+  // The same once-only rule for the Art cards in hand, keyed by instance: the
+  // hand rebuilds a card's node whenever the hand's size changes, so the node
+  // itself cannot remember that it already flashed.
+  let artCardsFullBefore = new Set();
   function statusDisplayName(id) {
     try { return registries.statuses.get(id).name || id; } catch { return id; }
   }
@@ -1311,16 +1314,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // when the meter is full (the preview's answer is the play's answer).
   function decorateArtChargeCards(handList) {
     for (const node of app.querySelectorAll('.hand .card .art-charge-card')) node.remove();
+    const fullNow = handList.filter((inst) => artUnleashFor(combat, inst, shownArtCharge())?.ready).map((inst) => inst.instanceId);
+    const { fresh: freshlyFull, next } = newlyFullIds(artCardsFullBefore, fullNow);
+    artCardsFullBefore = next;
     for (const inst of handList) {
       const node = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(inst.instanceId)}"]`);
       if (!node) continue;
       let charge = null;
       const shown = artUnleashFor(combat, inst, shownArtCharge());
       if (shown) charge = { weaponId: shown.weaponId, value: shown.value, max: shown.max, unleashed: shown.ready };
-      const wasFull = node.dataset.artCharge === 'full';
       if (!charge) { delete node.dataset.artCharge; node.classList.remove('art-charge-flash'); continue; }
       node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
-      node.classList.toggle('art-charge-flash', charge.unleashed && !wasFull);
+      node.classList.toggle('art-charge-flash', charge.unleashed && freshlyFull.has(inst.instanceId));
       const badge = el('span', { class: 'art-charge-card' });
       badge.appendChild(artChargePips(charge.value, charge.max));
       if (charge.unleashed) {
