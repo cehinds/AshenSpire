@@ -995,10 +995,26 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   // And EVERY heading's date is ordered, not only a heading with receipts under
   // it: an empty `## 2020-01-01` on top rendered an old date above the newest
   // group and passed, because the receipt groups never held it (#1279 review).
+  // The same holds for a SETEXT heading (a line underlined with `-` or `=`)
+  // and for an ATX heading of any other level: each renders as a heading this
+  // parser does not group on, so the file admits none of them (#1279 review).
+  // The one exception is the title, `# ` on the first line. A `-`/`=` line is
+  // refused after any non-blank line, even where CommonMark would read it as a
+  // thematic break, since the file has no use for either.
   let newerHeading = null;
-  for (const line of markdown.split(/\r?\n/)) {
+  let previous = '';
+  const lines = markdown.split(/\r?\n/);
+  for (const [index, line] of lines.entries()) {
+    const prior = previous;
+    previous = line;
     if (/^ {0,3}##(?:[ \t]|$)/.test(line) && !line.startsWith('## ')) {
       throw new Error(`check-order: heading '${line}' renders as a level-2 heading but is not written '## ' at the start of the line, so the receipts under it would be dated by the heading above`);
+    }
+    if (/^ {0,3}#{1,6}(?:[ \t]|$)/.test(line) && !line.startsWith('## ') && !(index === 0 && line.startsWith('# '))) {
+      throw new Error(`check-order: heading '${line}' is not a '## ' group heading — only the title may use another level, and receipts under it would be dated by the heading above`);
+    }
+    if (/^ {0,3}(?:=+|-+)[ \t]*$/.test(line) && prior.trim() !== '') {
+      throw new Error(`check-order: line '${line}' underlines '${prior}' as a setext heading, which this file does not use — a date is a '## ' heading, and the receipts under this one would be dated by the heading above`);
     }
     if (!line.startsWith('## ')) continue;
     const heading = line.slice(3).trim();
@@ -1165,6 +1181,9 @@ async function orderCorpus(ordinalFile) {
     ['receipt citing a later release than buildordinal.json\'s', top(`## 2099-01-01\n\n${r(990001, 0, next)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['heading indented one space (Markdown still renders it)', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m} ## 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'is not written \'## \''],
     ['heading written with a tab after the hashes', top(`##\t2020-01-01\n\n${r(990001, n)}\n`), null, 'is not written \'## \''],
+    ['setext date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}2020-01-01\n----------\n\n${r(990001, n)}\n\n`), null, 'as a setext heading'],
+    ['setext level-1 date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}2020-01-01\n===\n\n${r(990001, n)}\n\n`), null, 'as a setext heading'],
+    ['level-3 date heading under a real group', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}### 2020-01-01\n\n${r(990001, n)}\n\n`), null, 'is not a \'## \' group heading'],
     ['empty date heading above the newest group', top(`## 2020-01-01\n`), null, 'headings run newest first'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
