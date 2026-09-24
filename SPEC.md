@@ -596,6 +596,11 @@ id only (§3.3).
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
+- A `schemaVersion` **newer** than this build is refused and **preserved**, as the profile is
+  (property 1 below): runStatus `newer`, nothing archived, the bytes left in their slot, so
+  opening an old build cannot eat a run a newer one wrote. Every older schema, v1 to the
+  current one, loads and migrates forward; `tests/save-migration.test.mjs` proves it over one
+  real save per version (`tests/fixtures/run-save-schema-versions.json`).
 - **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
   stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
   adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
