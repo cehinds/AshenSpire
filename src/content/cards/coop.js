@@ -14,7 +14,7 @@ export const coopCards = [
     effects: [{ op: 'block', target: 'ally', amount: 10 }],
     textTemplate: 'An ally gains {block} Block.',
     upgrade: { effects: [{ op: 'block', target: 'ally', amount: 14 }] },
-    flavor: "A rag on a pole, planted where climbers who meet on the road can find each other. The Forsaken never had banners, a banner being a thing with a name on it, so the rags are left blank on purpose. The corrupted come toward them too. The climbers have decided that is a risk worth taking.\n\nA rag on a pole. Find it. Stand by it.\n— cairn-scratch",
+    flavor: "Blank rag upon a pole.\n\nPlanted where climbers who meet upon the road may find one another. The Forsaken never had banners, for a banner bears a name. The corrupted come to them too.\n\nA rag on a pole. Find it. Stand by it.",
   },
   {
     id: 'sharedFlame', name: 'Shared Flame', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
@@ -22,7 +22,7 @@ export const coopCards = [
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
     textTemplate: 'An ally heals {heal} HP. Exhaust.',
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
-    flavor: "Warmth passed between two climbers without a hearth or a ledger: hands over the same coal, breath under the same coat. The Chapel would have called it theft. The hamlets say it is the only warmth on the ring owed to no one, and that it keeps longer than it should.\n\nWarmth passed between two outlives the fire.\n— hamlet saying",
+    flavor: "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire.",
   },
   {
     id: 'ashOath', name: "Oath of Ash", class: 'colorless', rarity: 'special', cost: 2, type: 'skill',
@@ -38,7 +38,7 @@ export const coopCards = [
         { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
       ],
     },
-    flavor: "An oath sworn between climbers in ash rather than blood, with no witness and no name: a smear on each other's wrist, where the mark would have been. The hamlets say it binds twice, once for each. The Court held that an oath without a witness binds no one. The Court is sewn to its oaths now, and the hamlets consider the argument settled.\n\n— hamlet saying",
+    flavor: "Oath sworn in ash.\n\nA smear upon each other's wrist, where the mark would have been; no witness, no name. It binds twice, once for each. The Court held that an unwitnessed oath binds no one.\n\nThe Court is sewn to its oaths now.",
   },
 ];
 

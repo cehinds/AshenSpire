@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1265",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "A written plan for polish, feel and structure",
-    "detail": "Nothing you see changes yet. Seven reviews of the game — its rules and balance, its world and writing, how it looks and feels in a fight, how its sprites and art are sized and lit, how it fits phones, tablets and large screens, how its code is laid out, and how fast it loads and runs — are now one checklist in the repository, docs/plan-polish-review-2026-09.md, ordered by what to fix first: the Starseer that cannot win and the Stamina and Mana pools that starve it, the test suites that never run, a card play that takes more than a second to land, text that shrinks to six pixels on a tablet, names borrowed from other games, and a 253 MB page that is almost all inlined art. Each item carries its evidence and its size, and the design choices that are the owner's to make are marked as such.",
-    "build": "0.7.1.440",
-    "pullRequest": 1265,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1265"
+    "id": "pr-1264",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Card lore is one line in inspection, and the whole of it opens in its own window — set in the type you choose",
+    "detail": "Inspect any card and its lore is a single line: what the thing is and whose (Art of the sellswords of the Bastion.). Press it and the lore window opens over the card with the full description — a little history, told from one side, and a closing line set apart. Every card's lore has been rewritten this way. A new Advanced tab, Text & lore, sets how it reads: the typeface (eight faces now ship with the game, plus Georgia), size, letter and line spacing, and italic or upright, with the identity line and the lore window each adjustable. Interface text size and readable headings stay where they were, under Accessibility. No card's rules or numbers changed.",
+    "build": "0.7.1.441",
+    "pullRequest": 1264,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1264"
   },
   {
     "id": "pr-1261",
