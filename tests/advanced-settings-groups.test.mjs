@@ -689,8 +689,14 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.match(inPlay.subject.label, /under these settings/);
   assert.match(inPlay.examples[0].hint, /run in progress keeps the rules it started with/);
 
-  // Hand rules: every term of the opening hand is on the line.
+  // The default hand (plan A4) is the Draw stat, opening hand included.
+  const dealtByStat = statsTopicPreview({}, 'Draw & hand', { intelligence: 9 });
+  assert.equal(dealtByStat.examples[0].lines[0].total, 5 + Math.floor(9 * 0.2), 'the opening hand is the Draw row');
+  assert.match(dealtByStat.examples[0].lines[1].expression, /your Draw stat, 6/);
+  assert.match(dealtByStat.examples[0].hint, /discarded at turn end/);
+  // Hand rules: every term of the fill-mode opening hand is on the line.
   const hand = statsTopicPreview({
+    'gameConfig.handRules.drawMode': 'fill',
     'gameConfig.handRules.starting.base': 4,
     'gameConfig.handRules.starting.baseline': 5,
     'gameConfig.handRules.starting.pointsPerCard': 2,
@@ -709,10 +715,10 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.equal(fixed.examples[0].lines[1].total, 5, 'a fixed draw never shows more than capacity allows');
   assert.match(fixed.examples[0].lines[1].expression, /limited to capacity 5/);
   const replacing = statsTopicPreview({
-    'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
+    'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.retain': true, 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.handRules.starting.base': 20, 'gameConfig.handRules.starting.maximum': 30, 'gameConfig.handRules.capacity.base': 20 };
+  const deepSettings = { 'gameConfig.handRules.drawMode': 'fill', 'gameConfig.handRules.starting.base': 20, 'gameConfig.handRules.starting.maximum': 30, 'gameConfig.handRules.capacity.base': 20 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -754,7 +760,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // says that too (Codex, #1252).
   const badHand = statsTopicPreview({ 'gameConfig.handRules.starting.minimum': 9, 'gameConfig.handRules.starting.maximum': 2 }, 'Draw & hand');
   assert.match(badHand.refused, /refused uses its defaults/);
-  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
+  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.drawMode': 'fill', 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
   assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);

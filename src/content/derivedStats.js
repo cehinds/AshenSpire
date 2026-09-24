@@ -28,7 +28,14 @@ export const derivedStatRules = {
   // (the same rate, arriving each level rather than in lumps); Mana, Stamina
   // and draw land on exactly the levels they always did. Ruleset 5 and earlier
   // are restored exactly as they were saved; only new runs read this.
-  rulesetVersion: 6,
+  //
+  // RULESET 7 — A NEW CHARACTER DRAWS FIVE (plan A4, owner ruling 2026-09-24).
+  // Solo combat now draws this row every turn and discards what is unplayed
+  // (content/handRules.js), so the row is the hand. At creation INT is 1–4 and
+  // the old base of 3 dealt a three-card hand; the base is 5, the weight and the
+  // level term are unchanged. The format is ruleset 6's; the version moved so a
+  // run born under 6 keeps its snapshot, and its retain-and-fill hand with it.
+  rulesetVersion: 7,
   defaults: {
     perLevel: 0,
     cap: null,
@@ -36,9 +43,9 @@ export const derivedStatRules = {
   rules: {
     // One more action every five points of Dexterity.
     energy: { base: 3, dexterity: 0.2 },
-    // One more card every five points of Intelligence, and one at level 11
-    // and every ten after.
-    draw: { base: 3, intelligence: 0.2, perLevel: 0.1 },
+    // Five cards, one more every five points of Intelligence, and one at
+    // level 11 and every ten after.
+    draw: { base: 5, intelligence: 0.2, perLevel: 0.1 },
     // 30 + 4 x CON, and a point per level.
     hp: { base: 30, constitution: 4, perLevel: 1 },
     // The body's own reserve: the pool IS Constitution.

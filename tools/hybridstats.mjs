@@ -75,8 +75,8 @@ check('a standard Reaver run owns the versioned snapshot and all approved derive
   // lean Reaver (STR 3, DEX 1, CON 2, WIS 1, INT 1):
   //   HP      30 + floor(2 x 4) = 38, plus the Forsaken Medallion's flat 10
   //   Mana     1 + floor(1 x 1) = 2      Stamina  1 + floor(2 x 1) = 3
-  //   Actions  3 + floor(1 x 0.2) = 3    draw     3 + floor(1 x 0.2) = 3
-  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 6, 'ruleset version');
+  //   Actions  3 + floor(1 x 0.2) = 3    draw     5 + floor(1 x 0.2) = 5 (ruleset 7)
+  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 7, 'ruleset version');
   equal(run.maxHp, 48, 'CON-derived max HP plus the starter relic');
   equal(run.hp, 48, 'new run HP starts full');
   equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
@@ -84,7 +84,7 @@ check('a standard Reaver run owns the versioned snapshot and all approved derive
   equal(run.maxStamina, 3, 'CON-derived max Stamina');
   equal(run.stamina, 3, 'new run Stamina starts full');
   equal(run.energyMax, 3, 'DEX-derived Energy');
-  equal(run.drawPerTurn, 3, 'INT-derived draw');
+  equal(run.drawPerTurn, 5, 'INT-derived draw');
   assert(validateRunShape(run).length === 0, `run shape: ${validateRunShape(run).join('; ')}`);
 });
 
@@ -125,7 +125,7 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 3, 'Stamina created from real attributes');
   equal(run.stamina, 3, 'new Stamina pool starts full');
-  equal(run.derivedStatRuleSnapshot.rulesetVersion, 6, 'migration stamps ruleset');
+  equal(run.derivedStatRuleSnapshot.rulesetVersion, 7, 'migration stamps ruleset');
 });
 
 check('solo combat consumes run Energy/Draw and transports real Stamina without inventing spend', () => {
@@ -144,12 +144,12 @@ check('host session snapshot is authoritative for derived rules and every curren
   S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
   S.start();
   const party = S.snapshot().party[0];
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 6, 'party ruleset');
+  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 7, 'party ruleset');
   equal(party.maxStamina, 3, 'party Stamina max');
   equal(party.stamina, 3, 'party Stamina current');
   equal(party.maxMana, 2, 'party derived Mana max');
   equal(party.energyMax, 3, 'party derived Energy');
-  equal(party.drawPerTurn, 3, 'party derived draw');
+  equal(party.drawPerTurn, 5, 'party derived draw');
 });
 
 check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trough', () => {

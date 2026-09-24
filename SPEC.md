@@ -693,14 +693,31 @@ scope and verification.
 
 ### 4.1 Turn loop
 
-**Configurable hand rules (2026-09-19):** Solo gameplay snapshots Advanced →
-Stats → Draw & hand at the start of each new combat. The default opening draw is
-3 + floor(max(0, INT − 10) / 10), bounded by starting-draw limits and hand
-capacity. Unplayed cards are retained by default; later turns fill to current
-capacity. Fixed-draw mode defaults to 2 instead. Opening draw, fixed turn draw,
-and capacity independently configure base, stat enablement/source/baseline,
-points per additional card, and minimum/maximum. Opening stats are evaluated
-at combat start; subsequent draw and capacity values at turn start.
+**Configurable hand rules (2026-09-19; default amended 2026-09-24, plan A4):**
+Solo gameplay snapshots Advanced → Stats → Draw & hand at the start of each new
+combat. **The default draw mode is the Draw stat:** the opening hand and every
+later turn draw the character's derived Draw / turn value (`run.drawPerTurn`,
+the `draw` row of derived-stat ruleset 7: `5 + floor(INT × 0.2)` plus its level
+term, so a new character draws 5), bounded by hand capacity (default 10), and
+unplayed cards are **discarded** at turn end unless they carry Retain (or a
+lifecycle rule keeps them) — the Slay-the-Spire sequence below, the same one
+LAN co-op plays. Extra draws from cards and relics therefore add to that hand
+until the turn ends. Two other modes stay selectable: **fill** (the default
+before A4) — opening draw 3 + floor(max(0, INT − 10) / 10) bounded by
+starting-draw limits and capacity, later turns fill to current capacity, and is
+normally paired with retaining unplayed cards — and **fixed**, which draws a
+turn amount that defaults to 2. Retention is its own toggle (default off) in
+every mode. Opening draw (fill/fixed), fixed turn draw, and capacity
+independently configure base, stat enablement/source/baseline, points per
+additional card, and minimum/maximum. Opening stats are evaluated at combat
+start; subsequent draw and capacity values at turn start.
+
+*Saves and profiles under the A4 default.* A profile keeps every hand rule it
+has explicitly set; only rules it never set move to the new defaults. A run
+whose derived-stat snapshot predates ruleset 7 (a base-3 Draw row) keeps the
+retain-and-fill defaults for rules its profile never set, so an in-flight
+climb is not cut to a three-card hand; a new run gets the Draw-stat default.
+A saved fight restores the rules it was snapshotted with.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to
@@ -709,11 +726,13 @@ Optional replacement draws add to the next fixed draw, capped by capacity.
 Overflow either preserves existing cards or requires selection of excess cards
 at turn end. Draw effects stop at capacity without consuming the draw pile;
 reshuffling can be disabled. Rules and pending replacement draws survive saves.
-Settings changes apply next combat. Existing saved fights and LAN combat retain
-their previous rules; the numbered legacy sequence below describes those rules.
+Settings changes apply next combat. Existing saved fights keep their snapshotted
+rules; LAN combat and fights saved before hand rules existed play the numbered
+sequence below, drawing the Draw stat each turn, which is also what the default
+Draw-stat mode plays.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
-2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
+2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw the Draw stat (5 for a new character since ruleset 7), `playerTurnStart` triggers.
 3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size **10** — excess drawn cards go to discard with a "hand full" toast (StS behavior).
 4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
@@ -1913,6 +1932,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Creation offers one scale.** `tuned2` is the mode a new run is born under: baseline 5 across the five attributes, ten points to place, floor 3 and ceiling 12, points reclaimed by dropping a stat toward the floor (`belowBaseline: 'allow'`, `redistribution: 'fixedTotal'`), for a fixed total of 35. `tuned`, `standard` and `pointbuy` remain in the table and out of creation (`characterCreation.visibleModeIds`): every in-flight save was admitted against its own mode's total at the load door, and a mode that vanished would archive those runs. The ceiling caps CREATION, not the character — levelled points raise it, as they always did.
 - **Derived-stat ruleset 5.** `hp = 30 + 4 × CON`, `mana = 1 + WIS`, `stamina = 1 + CON`, `poise = 1 + CON`, `energy = 3 + floor(DEX / 5)`, `draw = 3 + floor(INT / 5)`, plus the phase-6 level thresholds each row already carried. Every row is the one calculation — `base + multiplier × Σ floor(weight × attribute)` — read against the attribute the character sheet shows; no creation mode converts an attribute on its way in. Mana and Stamina drop their five-point tier: a point of Wisdom IS a point of Mana and a point of Constitution IS a point of Stamina. That makes a signature art costing two of each affordable for a NEW run, but the arts stay at 1/1: a card resolves its cost from the live table while a run's pools are snapshotted, so raising it would strand the starter card of every run already under way. That half of §13.4k's deferral waits on run-stamped card costs. Rulesets 1 through 4 remain readable: a run restores the snapshot it was written with, and the required row set is a function of the version, so a version-4 save is never asked for a row it never had.
+- **Derived-stat ruleset 7 (plan A4, owner ruling 2026-09-24).** Ruleset 6's one format (`base + Σ floor(weight × attribute) + floor((level − 1) × perLevel)`) with one row moved: `draw = 5 + floor(INT × 0.2)` plus its 0.1 per level, where ruleset 6 said 3. Solo combat now deals this row as the hand every turn (§4.1), and at creation (INT 1–4) the old base dealt three cards. Rulesets 1–6 stay readable and a run keeps the snapshot it was born with — a ruleset-6 run keeps drawing 3, and keeps the retain-and-fill hand defaults its Draw row was priced for (§4.1).
 - **Poise is a derived row, and each run is priced by its own.** `derivedStatRules.rules.poise` owns the Constitution term §13.4k parked in balance; `playerPoiseThresholdReceipt` reads it there, and `balance.poise.playerPerConstitution` is refused by name if it returns, because one number may not have two homes. THE RUN'S OWN SNAPSHOT DECIDES: the rules travel into the fight through `createCombat` AND through the combat snapshot, so a quit-and-load cannot re-price the vessel from the live table; a run whose snapshot predates the row keeps the term phase 8 priced it by — Constitution one-for-one, `balance.poise.playerPerConstitution` as shipped — not the live row, and the live table answers only a caller carrying no snapshot at all — a headless fixture or a creation preview.
 - **Equipment minima are rebased, and the question can be asked before the act.** `equipmentRequirements.csv` moves onto the 3–12 scale. `equipPiece` has refused an item the attributes cannot hold for as long as the minima have existed and remains the gate of record; `canEquip` now answers the same question in words when a caller names both the candidate and the attributes, so a surface can say why before it tries. Asked without an item or without attributes, it keeps its old answer, and it reads the same inputs the mutation reads — the smithing tiers whose `requirement` deltas lower a minimum among them — so the seal and the act can never disagree. A preset that cannot hold its own class's starting gear — either hand of the baseline kit, or any outfit in that class's creation list (`characterCreation.classes.<id>.armourIds`) — is refused by name at BOTH doors that admit a preset: the content door (`validateContent`, through `presetGearProblems` in `model/attributes.js`) and the Advanced settings door (`advancedConfigProblems`: the per-cell kit floor for the two hands, `presetGearProblems` for the outfits, both against the CONFIGURED minima). A class whose Advanced preset fails either keeps its authored attributes on its own, so the boot never meets a preset Settings refused — before this, such a preset threw away the whole game configuration behind a generic notice.
 - **The band was re-measured.** `docs/BALANCE.md` §5 is regenerated on the rebased content; the tier-1 boss band moved up for the Reaver and the Rogue and remains the M3 balance pass's to settle.

@@ -1,4 +1,6 @@
-import { handRulesDefaults } from '../content/handRules.js';
+import { handRulesDefaults, legacyHandRulesDefaults, derivedHandSinceRuleset } from '../content/handRules.js';
+
+export const DRAW_MODES = Object.freeze(['derived', 'fill', 'fixed']);
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
@@ -7,7 +9,7 @@ export function handRulesProblems(rules) {
   if (!rules || typeof rules !== 'object') return ['Hand rules must be an object'];
   const problems = [];
   for (const key of ['retain', 'promptDiscard', 'replaceDiscards', 'reshuffle']) if (typeof rules[key] !== 'boolean') problems.push(`Hand rules: ${key} must be boolean`);
-  if (!['fill', 'fixed'].includes(rules.drawMode) || !['keep', 'discard'].includes(rules.overflow)) problems.push('Hand rules: invalid draw or overflow mode');
+  if (!DRAW_MODES.includes(rules.drawMode) || !['keep', 'discard'].includes(rules.overflow)) problems.push('Hand rules: invalid draw or overflow mode');
   if (!Number.isInteger(rules.discardLimit) || rules.discardLimit < 0 || rules.discardLimit > 99) problems.push('Hand rules: invalid discard limit');
   for (const group of Object.keys(groups)) {
     const rule = rules[group];
@@ -61,7 +63,9 @@ export function handRulesRows(attributes = []) {
       if (field === 'pointsPerCard') extra.min = 1;
       if (group === 'capacity' && ['base', 'minimum', 'maximum'].includes(field)) extra.min = 1;
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
-      if (group === 'turn') extra.fixedOnly = true;
+      // Which draw modes read the group: the Draw stat replaces both counts.
+      if (group === 'turn') extra.drawModes = ['fixed'];
+      if (group === 'starting') extra.drawModes = ['fill', 'fixed'];
       if (field === 'base') extra.note = `The ${subject} before any attribute bonus.`;
       if (field === 'statEnabled') extra.note = `On: the attribute below adds cards to the ${subject}. Off: only the base and the limits apply.`;
       if (field === 'stat') extra.note = `The attribute that adds cards to the ${subject}.`;
@@ -73,10 +77,10 @@ export function handRulesRows(attributes = []) {
     }
   };
   addGroupRows('starting');
-  add('drawMode', 'fill', 'How cards are drawn each turn', groups.turn, {
-    type: 'choice', dropdown: true, choices: ['fill', 'fixed'],
-    choiceLabels: { fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
-    note: 'Fill draws until your hand reaches capacity. Fixed draws the turn amount below, never past capacity.',
+  add('drawMode', handRulesDefaults.drawMode, 'How cards are drawn each turn', groups.turn, {
+    type: 'choice', dropdown: true, choices: [...DRAW_MODES],
+    choiceLabels: { derived: 'Draw your Draw stat', fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
+    note: 'Draw stat deals your Draw / turn stat as the opening hand and every turn after. Fill draws until your hand reaches capacity. Fixed draws the turn amount below. None draws past capacity.',
   });
   add('reshuffle', true, 'Reshuffle when empty', groups.turn, { note: 'Shuffle the discard pile back into the draw pile when it runs out.' });
   addGroupRows('turn');
@@ -104,8 +108,23 @@ export function handRulesRows(attributes = []) {
   return rows;
 }
 
-export function resolveHandRules(settings = {}, attributes = []) {
-  const rules = structuredClone(handRulesDefaults);
+/**
+ * handRulesDefaultsFor(rulesetVersion) → the defaults a fight starts from.
+ *
+ * A run born under a derived-stat ruleset before `derivedHandSinceRuleset`
+ * carries a Draw row priced for a kept, refilled hand, so where the profile
+ * states nothing it keeps that hand (plan A4). An unknown version — a fixture
+ * with no run behind it — reads the current defaults.
+ */
+export function handRulesDefaultsFor(rulesetVersion) {
+  const version = Number(rulesetVersion);
+  return Number.isFinite(version) && version < derivedHandSinceRuleset
+    ? { ...structuredClone(handRulesDefaults), ...legacyHandRulesDefaults }
+    : structuredClone(handRulesDefaults);
+}
+
+export function resolveHandRules(settings = {}, attributes = [], defaults = handRulesDefaults) {
+  const rules = structuredClone(defaults);
   for (const row of handRulesRows(attributes)) {
     const raw = settings[row.key];
     if (raw === undefined) continue;

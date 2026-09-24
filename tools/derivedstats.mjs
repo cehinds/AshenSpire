@@ -44,7 +44,10 @@ const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order)
 // a decimal weight per attribute floored on its own, and a decimal growth per
 // level — the rating shape. Every number below was worked out from that sentence
 // and the table's authored weights, not read back from the resolver.
-const CONTRACT_RULESET_VERSION = 6;
+// RULESET 7 (plan A4, owner ruling 2026-09-24): ruleset 6 with the Draw base at
+// 5, so a new character (INT 1-4) draws five. Every Draw number below was
+// re-derived by hand from that one change; no other row moved.
+const CONTRACT_RULESET_VERSION = 7;
 
 // `maxHp: 84` is deliberately NOT the HP base any row uses. The HP row is a flat
 // 30 and ignores class data, so a fixture carrying a different number is what
@@ -107,14 +110,14 @@ check('DEX 10 gives Energy base 3 + floor(10 x 0.2) = 5', () => {
   equal(out.terms.dexterity, 2, 'dexterity term'); equal(out.raw, 5, 'raw'); equal(out.value, 5, 'value');
 });
 
-check('INT 10 gives Draw base 3 + floor(10 x 0.2) = 5', () => {
+check('INT 10 gives Draw base 5 + floor(10 x 0.2) = 7', () => {
   const out = deriveStat(resolved(), 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
-  equal(out.terms.intelligence, 2, 'intelligence term'); equal(out.raw, 5, 'raw');
+  equal(out.terms.intelligence, 2, 'intelligence term'); equal(out.raw, 7, 'raw');
 });
 
 check('a fifth of a point is nothing until five arrive: INT 4 stays at the base, INT 9 buys one', () => {
-  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 4 }, classDef: CLASS }).value, 3, 'INT 4');
-  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 9 }, classDef: CLASS }).value, 4, 'INT 9');
+  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 4 }, classDef: CLASS }).value, 5, 'INT 4');
+  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 9 }, classDef: CLASS }).value, 6, 'INT 9');
 });
 
 check('CON 10 gives Stamina base 1 + 10 = 11', () => {
@@ -185,7 +188,7 @@ check('shipped Energy and Draw resolve cap null and grow unbounded at high stats
   const energy = deriveStat(rules, 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
   const draw = deriveStat(rules, 'draw', { attributes: { intelligence: 5000 }, classDef: CLASS });
   equal(energy.value, 1003, 'uncapped high-stat Energy: base 3 + floor(5000 x 0.2)');
-  equal(draw.value, 1003, 'uncapped high-stat Draw: base 3 + floor(5000 x 0.2)');
+  equal(draw.value, 1005, 'uncapped high-stat Draw: base 5 + floor(5000 x 0.2)');
 });
 
 // The fixture carries a maxHp and a maxMana that are BOTH wrong answers, so a

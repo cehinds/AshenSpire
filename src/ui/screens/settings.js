@@ -2143,13 +2143,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
-          || (row.fixedOnly && rules.drawMode !== 'fixed')
+          || (row.drawModes && !row.drawModes.includes(rules.drawMode))
           || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
         controls.forEach(control => { control.disabled = !!disabled; control.setAttribute('aria-disabled', String(!!disabled)); });
         controls.forEach(control => {
           const wrapper = control.closest('.set-row');
-          wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
-          if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
+          const hidden = !!row.drawModes && !row.drawModes.includes(rules.drawMode);
+          wrapper.dataset.handHidden = String(hidden);
+          if (row.drawModes) wrapper.hidden = hidden;
         });
       }
     }

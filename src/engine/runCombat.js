@@ -14,7 +14,7 @@
 // onCombatEnd does, so the next fight opens where this one ended.
 
 import { createCombat } from './combat.js';
-import { resolveHandRules } from '../model/handRules.js';
+import { resolveHandRules, handRulesDefaultsFor } from '../model/handRules.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart } from '../framework/resources.js';
 
@@ -70,7 +70,10 @@ export function createRunCombat({
 }) {
   return createCombat({
     ratingsRules: registries.balance.combatRatings || null,
-    handRules: resolveHandRules(settings || {}, registries.attributes.all()),
+    // The profile's choices over the defaults the run's own ruleset was dealt
+    // (plan A4: a run born before ruleset 7 keeps its retained, refilled hand).
+    handRules: resolveHandRules(settings || {}, registries.attributes.all(),
+      handRulesDefaultsFor(run.derivedStatRuleSnapshot?.rulesetVersion)),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

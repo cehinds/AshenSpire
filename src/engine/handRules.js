@@ -6,7 +6,11 @@ export function turnDrawCount(ctx, opening = ctx.turn === 1) {
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
   ctx.handMax = scaledCards(rules.capacity, ctx.attributes);
   const room = Math.max(0, ctx.handMax - ctx.piles.hand.length);
-  const wanted = opening ? scaledCards(rules.starting, ctx.attributes)
+  // 'derived' (the default since plan A4) deals the character's Draw / turn
+  // stat — the stamped row, the same number LAN co-op draws — opening included.
+  const derived = ctx.drawPerTurn ?? ctx.player.drawPerTurn;
+  const wanted = rules.drawMode === 'derived' ? derived + (opening ? 0 : ctx.pendingDiscardDraw || 0)
+    : opening ? scaledCards(rules.starting, ctx.attributes)
     : rules.drawMode === 'fill' ? room : scaledCards(rules.turn, ctx.attributes) + (ctx.pendingDiscardDraw || 0);
   ctx.pendingDiscardDraw = 0;
   return Math.min(room, wanted);

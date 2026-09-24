@@ -56,7 +56,9 @@ export function derivedStatIdsFor(rulesetVersion) {
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6]);
+// Ruleset 7 (plan A4) is ruleset 6's format with the Draw row's base at 5; it
+// is a version of its own so a run born under 6 keeps drawing what it drew.
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 /** The first ruleset written in the one format above. */
 export const UNIFIED_RULESET_VERSION = 6;
 export const DERIVED_STAT_SNAPSHOT_VERSION = 3;

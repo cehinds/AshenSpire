@@ -227,7 +227,12 @@ function handExample(ctx) {
     return { label, expression, total: receipt.value };
   };
   const capacity = line('Hand capacity', rules.capacity);
-  const opening = line('Opening hand', rules.starting);
+  // THE DRAW STAT MODE (the default since plan A4) deals the Draw / turn row
+  // as the opening hand and every turn after (engine/handRules.js).
+  const drawStat = rules.drawMode === 'derived' ? derivedExample(ctx, 'draw').lines[0] : null;
+  const opening = drawStat
+    ? { label: 'Opening hand', expression: `your Draw stat, ${drawStat.total}`, total: drawStat.total }
+    : line('Opening hand', rules.starting);
   if (opening.total > capacity.total) {
     opening.expression += `, then limited to capacity ${capacity.total}`;
     opening.total = capacity.total;
@@ -249,7 +254,13 @@ function handExample(ctx) {
   // `turnDrawCount` draws min(room, wanted)), and retained cards leave less
   // room, so the example states the most a turn can draw.
   let turn;
-  if (rules.drawMode === 'fill') {
+  if (drawStat) {
+    const replacing = rules.retain && rules.promptDiscard && rules.replaceDiscards;
+    turn = { label: 'Cards drawn each turn, at most', expression: `your Draw stat, ${drawStat.total}`, total: Math.min(drawStat.total, capacity.total) };
+    if (drawStat.total > capacity.total) turn.expression += `, then limited to capacity ${capacity.total}`;
+    if (replacing) turn.expression += '; plus one for each card you chose to discard, never past capacity';
+    if (rules.retain) turn.expression += '; fewer when kept cards fill the hand';
+  } else if (rules.drawMode === 'fill') {
     turn = { label: 'Each turn, at most', expression: `draw until the hand holds ${capacity.total}`, total: capacity.total };
   } else {
     // Replacements for optional discards ride on top of the fixed amount
@@ -350,7 +361,11 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
   if (ratingId && (ratingsOn || topic !== 'Poise')) attempt(() => ratingExample(ctx, ratingId));
   if (derivedId) attempt(() => {
     const example = derivedExample(ctx, derivedId);
-    if (derivedId === 'draw') example.legacy = 'Used by LAN co-op and older saved fights. Solo fights use the hand rules above.';
+    if (derivedId === 'draw') {
+      example.legacy = ctx.hand().drawMode === 'derived'
+        ? 'Dealt as the opening hand and every turn, solo and LAN co-op alike.'
+        : 'Used by LAN co-op and older saved fights. Solo fights use the hand rules above.';
+    }
     if (derivedId === 'poise') {
       example.legacy = ratingsOn ? 'Used only when ratings are off.' : 'Ratings are off: combat uses this, plus worn armour and relic Poise.';
       // What combat stamps is the whole threshold (`playerPoiseThresholdReceipt`):

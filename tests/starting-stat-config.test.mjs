@@ -244,9 +244,10 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   assert.equal(run.drawPerTurn, pool('draw', 'intelligence'));
   assert.equal(run.maxMana, pool('mana', 'wisdom'));
   // The numbers those rows now state, on the lean span: Mana is its base of 1
-  // plus Wisdom, and Actions and draw sit at their base of 3 until a point
-  // clears a five-point tier no lean character can reach.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 2]);
+  // plus Wisdom, and Actions and draw sit at their bases (3 Actions; 5 cards
+  // since ruleset 7, plan A4) until a point clears a five-point tier no lean
+  // character can reach.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 5, 2]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {

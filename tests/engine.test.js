@@ -6319,7 +6319,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/5', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows (Draw base 5 since ruleset 7)');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,120,130,150,170,200,230,270,310,350', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
@@ -6329,7 +6329,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 2030, '2,030 XP reaches level 11 — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/5', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -6543,7 +6543,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.maxHp, 88, 'legacy maxHp is re-derived through the current CON/flat-bonus authority (ruleset 5: 30 + 4 × CON + 10 flat)');
     eq(run.hp, 88, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, 5, 'energyMax follows the rebased DEX tier over its base of 3 (ruleset 5), not the rename');
-    eq(run.drawPerTurn, 5, 'drawPerTurn follows the rebased INT tier over its base of 3 (ruleset 5), not the rename');
+    eq(run.drawPerTurn, 7, 'drawPerTurn follows the rebased INT tier over its base of 5 (ruleset 7), not the rename');
     // Forward hygiene: the next save writes zero dead bytes.
     assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
@@ -9634,7 +9634,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE RULESET. Mana IS Wisdom and Stamina IS Constitution: a point spent
     // is a point felt, which is what let the signature arts ask two of each.
     const rules = REG.derivedStatRules;
-    eq(rules.rulesetVersion, 6, 'the authored table is ruleset 6 — the one format');
+    eq(rules.rulesetVersion, 7, 'the authored table is ruleset 7 — ruleset 6\'s one format, Draw base 5 (plan A4)');
     eq(rules.rules.mana.wisdom, 1, 'Mana is Wisdom, point for point');
     eq(rules.rules.stamina.constitution, 1, 'Stamina is Constitution, point for point');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '30/4', 'HP is 30 + 4 × CON');

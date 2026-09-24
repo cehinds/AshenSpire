@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { handRulesRows, resolveHandRules, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
+import { handRulesRows, resolveHandRules, handRulesDefaultsFor, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
@@ -20,8 +20,38 @@ function fight(overrides = {}, attributes = { intelligence: 10 }) {
   });
 }
 
-test('default opening is three; unplayed cards survive and next turn fills capacity', () => {
+// The retain-and-fill rules that were the default before plan A4, spelled out
+// by the tests that exercise them.
+const kept = { retain: true, drawMode: 'fill' };
+
+test('default draws the Draw stat every turn and discards what is unplayed (plan A4)', () => {
   const c = fight();
+  assert.equal(c.handRules.drawMode, 'derived');
+  assert.equal(c.handRules.retain, false);
+  assert.equal(c.piles.hand.length, 5, 'opening hand is drawPerTurn');
+  const ids = c.piles.hand.map(c => c.instanceId);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.hand.length, 5, 'next hand is drawPerTurn again');
+  assert(ids.every(id => c.piles.discard.some(c => c.instanceId === id)), 'unplayed cards were discarded');
+  // A draw card now matters: the extra card stays until the turn ends.
+  drawCards(c, 2);
+  assert.equal(c.piles.hand.length, 7);
+  // Capacity still caps the Draw stat.
+  const small = fight({ 'capacity.base': 3 });
+  assert.equal(small.piles.hand.length, 3);
+});
+
+test('a run born before ruleset 7 keeps retain-and-fill unless the profile chose otherwise', () => {
+  assert.deepEqual([handRulesDefaultsFor(6).drawMode, handRulesDefaultsFor(6).retain], ['fill', true]);
+  assert.deepEqual([handRulesDefaultsFor(7).drawMode, handRulesDefaultsFor(7).retain], ['derived', false]);
+  assert.equal(handRulesDefaultsFor(undefined).drawMode, 'derived');
+  const chosen = resolveHandRules({ [prefix + 'drawMode']: 'fixed' }, contentBundle.attributes, handRulesDefaultsFor(6));
+  assert.equal(chosen.drawMode, 'fixed');
+  assert.equal(chosen.retain, true);
+});
+
+test('fill mode: opening is three; unplayed cards survive and next turn fills capacity', () => {
+  const c = fight(kept);
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
   dispatch(c, { type: 'endTurn' });
@@ -38,15 +68,15 @@ test('stat selection, baseline, whole intervals, bounds and scaling off', () => 
   assert.equal(scaledCards(rules.starting, { strength: 1 }), 3);
   rules.starting.statEnabled = false;
   assert.equal(scaledCards(rules.starting, { strength: 99 }), 3);
-  assert.equal(fight({ 'capacity.base': 2 }).piles.hand.length, 2);
-  assert.equal(fight({}, { intelligence: 30 }).piles.hand.length, 5);
+  assert.equal(fight({ ...kept, 'capacity.base': 2 }).piles.hand.length, 2);
+  assert.equal(fight(kept, { intelligence: 30 }).piles.hand.length, 5);
 });
 
 test('fixed draws default to two and can be changed or scaled', () => {
-  const c = fight({ drawMode: 'fixed' });
+  const c = fight({ ...kept, drawMode: 'fixed' });
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.piles.hand.length, 5);
-  const d = fight({ drawMode: 'fixed', 'turn.base': 1, 'turn.statEnabled': true, 'turn.pointsPerCard': 5 }, { intelligence: 20 });
+  const d = fight({ ...kept, drawMode: 'fixed', 'turn.base': 1, 'turn.statEnabled': true, 'turn.pointsPerCard': 5 }, { intelligence: 20 });
   dispatch(d, { type: 'endTurn' });
   assert.equal(d.piles.hand.length, 7);
 });
@@ -56,7 +86,7 @@ test('retention off discards ordinary cards; optional choice validates atomicall
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.piles.hand.length, 2);
   assert.equal(c.piles.discard.length, 3);
-  const d = fight({ promptDiscard: true, discardLimit: 1, drawMode: 'fixed', replaceDiscards: true });
+  const d = fight({ ...kept, promptDiscard: true, discardLimit: 1, drawMode: 'fixed', replaceDiscards: true });
   const ids = d.piles.hand.map(c => c.instanceId);
   const before = serializeCombatSnapshot(d);
   for (const discardIds of [[ids[0], ids[1]], [ids[0], ids[0]], ['missing']]) {
@@ -69,7 +99,7 @@ test('retention off discards ordinary cards; optional choice validates atomicall
 });
 
 test('overflow requires the selected excess; full hands never churn the draw pile', () => {
-  const c = fight({ overflow: 'discard' });
+  const c = fight({ ...kept, overflow: 'discard' });
   c.handRules.capacity.base = 1;
   const plan = discardChoicePlan(c);
   assert.equal(plan.minimum, 2);
@@ -82,7 +112,7 @@ test('overflow requires the selected excess; full hands never churn the draw pil
 });
 
 test('empty draw pile respects reshuffle toggle', () => {
-  const c = fight({ reshuffle: false });
+  const c = fight({ ...kept, reshuffle: false });
   c.piles.discard.push(...c.piles.draw.splice(0));
   drawCards(c, 2);
   assert.equal(c.piles.hand.length, 3);
@@ -110,7 +140,7 @@ test('configuration export preserves stat and draw-mode choices', () => {
 });
 
 test('ethereal exhausts despite auto-retention and cannot be chosen to avoid it', () => {
-  const c = fight({ promptDiscard: true });
+  const c = fight({ ...kept, promptDiscard: true });
   c.piles.hand.push({ instanceId: 'ethereal', cardId: 'lastStand', upgraded: false });
   assert(!discardChoicePlan(c).cards.some(card => card.instanceId === 'ethereal'));
   assert.throws(() => dispatch(c, { type: 'endTurn', discardIds: ['ethereal'] }));
@@ -119,7 +149,7 @@ test('ethereal exhausts despite auto-retention and cannot be chosen to avoid it'
 });
 
 test('saved rules reject malformed formulas, and old snapshots retain legacy behavior', () => {
-  const c = fight();
+  const c = fight(kept);
   const saved = serializeCombatSnapshot(c);
   saved.handRules.starting.pointsPerCard = 0;
   assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(8), snapshot: saved }));
