@@ -14,6 +14,64 @@
 .prologue-controls button{min-height:48px}
 .prologue-preview-body{padding:0!important;overflow:auto!important}
 .prologue-preview-body .prologue-screen{height:70dvh;min-height:24rem}
+.prologue-editor-still .prologue-bar,.prologue-editor-still .prologue-controls,.prologue-editor-still .prologue-progress{display:none!important}
+.prologue-editor-still{grid-template-rows:minmax(0,1fr) auto}
+.prologue-editor-still.prologue-layout-overlay{grid-template-rows:1fr}
+.prologue-editor-still.prologue-layout-overlay .prologue-caption{grid-row:1}
+.prologue-scene-editor{width:min(96vw,1480px)!important;max-width:1480px!important;height:min(94dvh,1050px)}
+.pse-body{padding:0!important;min-height:0;display:flex;flex-direction:column;overflow:hidden!important}
+.pse-toolbar{display:flex;flex-wrap:wrap;gap:.6rem;padding:.75rem 1rem;background:#18130f;border-bottom:1px solid rgba(220,187,127,.2)}
+.pse-select{display:grid;gap:.22rem;min-width:9rem;flex:1 1 10rem;color:#bfb3a0;font-size:.82rem;letter-spacing:.02em}
+.pse-select select{width:100%;min-height:42px;padding:.4rem .55rem;color:var(--text,#eee6d5);background:#272019;border:1px solid #705a3e;border-radius:5px;font:inherit;font-size:.95rem}
+.pse-workspace{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(19rem,.75fr)}
+.pse-visual{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;background:radial-gradient(circle at 50% 30%,#282018,#100e0c 75%);overflow:auto}
+.pse-visual-note{align-self:stretch;margin:0;color:#d5c6aa;font-size:.85rem;text-align:center}
+.pse-viewport{position:relative;width:100%;aspect-ratio:16/9;min-height:0;max-height:100%;overflow:hidden;box-shadow:0 12px 34px #0009;border:1px solid #796244;background:#100e0c}
+.pse-viewport.pse-phone{width:min(100%,390px);height:min(100%,640px);aspect-ratio:9/16;flex:none}
+.pse-viewport .prologue-screen{height:100%;min-height:0;font-size:clamp(.7rem,.9vw,1rem);overflow:hidden}
+.pse-viewport .prologue-title{font-size:calc(1.6em*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
+.pse-viewport .prologue-speaker{font-size:calc(1.2em*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
+.pse-viewport .prologue-dialogue{font-size:calc(1.8em*var(--prologue-text-scale,1))}
+.pse-viewport .prologue-location{font-size:calc(2em*var(--prologue-text-scale,1))}
+.pse-viewport .prologue-caption{padding:clamp(.35rem,1.2vw,1rem)}
+.pse-inspector{min-height:0;display:flex;flex-direction:column;border-left:1px solid #554330;background:#211a14}
+.pse-mode{padding:.8rem 1rem;border-bottom:1px solid #554330;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.pse-mode-summary{margin:0;color:#e5d8c1;font-size:.92rem;line-height:1.35}
+.pse-mode-button{flex:none;min-height:38px!important}
+.pse-tabs{display:flex;flex-wrap:wrap;gap:.35rem;padding:.6rem;border-bottom:1px solid #554330}
+.pse-tab{min-height:38px;padding:.45rem .7rem;border:1px solid #6b5339;border-radius:4px;color:#e7dac2;background:#35291e;cursor:pointer}
+.pse-tab.on{color:#1a120b;background:#d2af74;border-color:#e4c78f}
+.pse-fields{min-height:0;overflow:auto;padding:.7rem 1rem 1.5rem;display:grid;align-content:start;gap:.75rem}
+.pse-field{display:grid;gap:.3rem;padding:.8rem;border:1px solid #594632;border-radius:7px;background:#2c2119;color:#eee6d5}
+.pse-field-head{display:flex;align-items:start;justify-content:space-between;gap:.5rem}
+.pse-field-head label{font-weight:600;font-size:.96rem}
+.pse-field small{color:#c5b69e;line-height:1.35;font-size:.82rem}
+.pse-field input:not([type=checkbox]),.pse-field textarea,.pse-field select{width:100%;min-width:0;min-height:40px;padding:.45rem .55rem;border:1px solid #8b704c;border-radius:4px;background:#17120e;color:#fff5e7;font:inherit}
+.pse-field textarea{min-height:5.5rem;resize:vertical;line-height:1.5}
+.pse-field input[type=checkbox]{width:1.4rem;height:1.4rem;accent-color:#d5ae67}
+.pse-field input:disabled,.pse-field select:disabled{opacity:.55}
+.pse-follow{border:0;background:none;padding:0;color:#d6b77e;text-decoration:underline;cursor:pointer;font-size:.78rem;text-align:right}
+.pse-follow:disabled{color:#b9ad9c;text-decoration:none;cursor:default}
+.pse-inherited{color:#e8c58d!important}
+.pse-custom{display:flex;align-items:center;gap:.55rem;padding:.7rem .8rem;border:1px solid #9f7742;border-radius:6px;background:#403020;color:#fff1dc;font-weight:600}
+.pse-custom input{width:1.3rem;height:1.3rem;accent-color:#d5ae67}
+.pse-group-help{color:#c5b69e;line-height:1.45}
+.set-scene-edit{border-color:#c49d62!important;color:#ffdfad!important}
+.pse-phone .prologue-screen{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+.pse-phone .prologue-layout-panelLeft .prologue-stage,.pse-phone .prologue-layout-panelRight .prologue-stage,.pse-phone .prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
+.pse-phone .prologue-layout-panelLeft .prologue-caption,.pse-phone .prologue-layout-panelRight .prologue-caption,.pse-phone .prologue-layout-overlay .prologue-caption{grid-row:2;grid-column:1;max-width:none;justify-self:stretch;margin:0}
+@media(max-width:900px){
+  .prologue-scene-editor{height:96dvh}
+  .pse-workspace{grid-template-columns:1fr;grid-template-rows:minmax(22rem,60%) minmax(0,1fr)}
+  .pse-inspector{border-left:0;border-top:1px solid #554330}
+  .pse-viewport{height:100%;width:auto;max-width:100%}
+  .pse-viewport.pse-phone{height:100%;width:auto;aspect-ratio:9/16}
+  .pse-toolbar{gap:.4rem;padding:.5rem}
+  .pse-select{min-width:calc(50% - .4rem);flex:1 1 calc(50% - .4rem)}
+  .pse-mode{padding:.5rem .7rem}
+  .pse-fields{padding:.6rem}
+}
+@media(max-width:500px){.pse-workspace{grid-template-rows:minmax(20rem,60%) minmax(0,1fr)}}
 .set-prologue-text{width:100%;min-height:5rem;resize:vertical;font:inherit;line-height:1.4;padding:.65rem;background:var(--bg);color:var(--text);border:1px solid var(--line-soft);border-radius:4px}
 @media(max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:75dvh}.set-row-prologue .r-trail{width:100%;min-width:0}}
 @media(max-height:500px) and (orientation:landscape){.prologue-screen{grid-template-columns:1fr minmax(18rem,45%);grid-template-rows:1fr}.prologue-caption{overflow:auto}.prologue-preview-body .prologue-screen{min-height:15rem;height:65dvh}}
