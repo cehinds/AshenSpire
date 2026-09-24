@@ -12,6 +12,9 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { dodgeReceipt } from './components/dodgeReceipt.js';
+import {
+  damageTier, damageNumberScale, hitStopForEvent, pickKillCam, rankForStature, maxKillCamMs, COMBAT_JUICE,
+} from './models/CombatJuiceModel.js';
 
 const STEP_MS = 80;
 
@@ -334,6 +337,8 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
+  // SPEC §7.4 combat juice: bigger hits read bigger INSIDE their size tier.
+  if (Number.isFinite(placement.scale) && placement.scale !== 1) el.style.setProperty('--dmg-scale', String(placement.scale));
   // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
   // `.float-num { translate: -50% 0 }` takes off its own half-width — so the
   // width is the browser's to know and nobody's to maintain. It used to be
@@ -382,16 +387,15 @@ export function guardHitFloatParts(event) {
     blocked,
     residual,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual), scale: damageNumberScale(residual) } : null,
   };
 }
 
-// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
+// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal,
+// chip. The thresholds are CombatJuiceModel's (combatJuiceModel.json).
+const TIER_CLASS = { crit: 'dmg crit', heavy: 'dmg heavy', chip: 'dmg small', normal: 'dmg' };
 function dmgClass(amount) {
-  if (amount >= 25) return 'dmg crit';
-  if (amount >= 15) return 'dmg heavy';
-  if (amount < 6) return 'dmg small';
-  return 'dmg';
+  return TIER_CLASS[damageTier(amount)];
 }
 
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
@@ -428,7 +432,7 @@ function shake(combatEl) {
 
 // Add a short-lived CSS class (restarting its animation if already present).
 const flashTimers = new WeakMap();
-function flash(el, cls, ms = 300) {
+function flash(el, cls, ms = 300, holdMs = 0) {
   if (!el) return;
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
@@ -444,7 +448,8 @@ function flash(el, cls, ms = 300) {
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
-  timers.set(cls, setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms));
+  // holdMs: a hit-stop paused this animation, so its class outlives it by that much.
+  timers.set(cls, setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms + holdMs));
 }
 
 // Radial flare over an anchor (stance entries, big procs).
@@ -458,6 +463,147 @@ function flare(layer, anchor, color) {
   el.style.background = `radial-gradient(circle, ${color} 0%, transparent 65%)`;
   layer.appendChild(el);
   setTimeout(() => el.remove(), 320);
+}
+
+// ---------------------------------------------------------------------------
+// Combat juice (SPEC §7.4): hit-stop and kill cam. CombatJuiceModel decides
+// WHETHER and HOW LONG; these only play it. Every effect registers a release,
+// so a click-skip or a finished timeline undoes all of them at once and
+// nothing is left paused, slowed or zoomed.
+// ---------------------------------------------------------------------------
+const juiceReleases = new Set();
+
+/** Undo every active hit-stop and kill cam now (skip / finish / teardown). */
+export function releaseCombatJuice() {
+  for (const release of [...juiceReleases]) release(true);
+}
+
+const figureOf = (el) => (el && el.closest ? el.closest('[data-eid]') || el : el);
+const animationsOf = (el) => (el && typeof el.getAnimations === 'function' ? el.getAnimations({ subtree: true }) : []);
+
+/**
+ * freezeFigures({ targets, sources }, ms) — hit-stop. Every running animation
+ * on the named figures pauses for `ms`; a hurt animation that JUST started on
+ * a target is first moved to its impact frame (knocked back, flashing), so
+ * the freeze holds the moment of the hit rather than the frame before it.
+ * `.hit-stop` also holds any CSS animation that starts during the freeze.
+ * Returns the release (also run by releaseCombatJuice).
+ */
+export function freezeFigures({ targets = [], sources = [] }, ms) {
+  const H = COMBAT_JUICE.motion.hitStop;
+  const targetFigures = new Set(targets.map(figureOf).filter(Boolean));
+  const figures = [...new Set([...targetFigures, ...sources.map(figureOf).filter(Boolean)])];
+  if (!figures.length || !(ms > 0)) return () => {};
+  const paused = [];
+  for (const fig of figures) {
+    // Read what is running BEFORE .hit-stop lands: the class pauses CSS
+    // animations itself, and a paused one would be skipped here and never
+    // reach its impact frame.
+    const running = animationsOf(fig).filter((a) => a.playState === 'running');
+    fig.classList.add('hit-stop');
+    for (const a of running) {
+      try {
+        const timing = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
+        const dur = timing && Number(timing.duration);
+        if (targetFigures.has(fig) && Number.isFinite(dur) && dur > 0 && Number(a.currentTime) < H.freshAnimationMs) {
+          a.currentTime = dur * H.impactFraction;
+        }
+        a.pause();
+        paused.push(a);
+      } catch (e) { /* a foreign animation must not break the hit */ }
+    }
+  }
+  let timer = null;
+  const release = () => {
+    if (!juiceReleases.delete(release)) return;
+    clearTimeout(timer);
+    for (const fig of figures) fig.classList.remove('hit-stop');
+    for (const a of paused) {
+      try { if (a.playState === 'paused') a.play(); } catch (e) { /* cancelled meanwhile */ }
+    }
+  };
+  juiceReleases.add(release);
+  if (Number.isFinite(ms)) timer = setTimeout(release, ms);
+  return release;
+}
+
+/**
+ * playKillCam(ctx, anchor, plan) — slow motion + zoom toward the target + a
+ * vignette centred on it, for plan.ms (Infinity holds it: the ?shot=fx pose).
+ * Returns the release; release(true) snaps back (skip), release() eases out.
+ */
+export function playKillCam(ctx, anchor, plan) {
+  const figure = figureOf(anchor);
+  const field = ctx && ctx.combatEl && ctx.combatEl.querySelector('.field');
+  if (!figure || !plan || !field) return () => {};
+  // The camera is the battlefield AND its painting, each zoomed about the
+  // target in its own local space so the two stay registered. HUD, hand and
+  // action row do not move: the camera is not the interface.
+  const zoomed = [field, ctx.combatEl.querySelector('.environment-backdrop')].filter(Boolean);
+  for (const el of zoomed) {
+    const b = anchorLocalBox(el, figure);
+    el.style.setProperty('--kc-origin', `${b.left + b.width / 2}px ${b.top + b.height * 0.45}px`);
+    el.style.setProperty('--kc-zoom', String(plan.zoom));
+    el.style.setProperty('--kc-in', `${plan.zoomInMs}ms`);
+    el.classList.remove('kill-cam-out');
+    el.classList.add('kill-cam');
+  }
+  let vignette = null;
+  if (ctx.layer) {
+    const lb = anchorLocalBox(ctx.layer, figure);
+    vignette = document.createElement('div');
+    vignette.className = 'kill-cam-vignette';
+    vignette.setAttribute('aria-hidden', 'true');
+    vignette.style.setProperty('--kc-x', `${lb.left + lb.width / 2}px`);
+    vignette.style.setProperty('--kc-y', `${lb.top + lb.height * 0.45}px`);
+    vignette.style.setProperty('--kc-opacity', String(plan.vignetteOpacity));
+    vignette.style.setProperty('--kc-in', `${plan.zoomInMs}ms`);
+    ctx.layer.appendChild(vignette);
+  }
+  // Slow motion: everything already moving on the board (death pose, the ✝
+  // float, a finishing effect) plays at slowRate until the cam lets go.
+  const slowed = [];
+  for (const a of [...animationsOf(ctx.combatEl)]) {
+    if (a.playState !== 'running') continue;
+    try { slowed.push([a, a.playbackRate]); a.playbackRate = a.playbackRate * plan.slowRate; } catch (e) { /* ignore */ }
+  }
+  ctx.combatEl.classList.add('kill-cam-active');
+  let timer = null;
+  const release = (instant = false) => {
+    if (!juiceReleases.delete(release)) return;
+    clearTimeout(timer);
+    for (const [a, rate] of slowed) {
+      try { a.playbackRate = rate; } catch (e) { /* finished meanwhile */ }
+    }
+    ctx.combatEl.classList.remove('kill-cam-active');
+    if (vignette) vignette.remove();
+    for (const el of zoomed) el.classList.remove('kill-cam');
+    const clear = () => {
+      for (const el of zoomed) {
+        el.classList.remove('kill-cam-out');
+        if (el.classList.contains('kill-cam')) continue; // a newer cam owns the vars now
+        for (const k of ['--kc-origin', '--kc-zoom', '--kc-in', '--kc-out']) el.style.removeProperty(k);
+      }
+    };
+    if (instant) { clear(); return; }
+    for (const el of zoomed) {
+      el.style.setProperty('--kc-out', `${plan.zoomOutMs}ms`);
+      el.classList.add('kill-cam-out');
+    }
+    setTimeout(clear, plan.zoomOutMs);
+  };
+  juiceReleases.add(release);
+  if (Number.isFinite(plan.ms)) timer = setTimeout(release, plan.ms);
+  return release;
+}
+
+/** rankOf(ctx) → (targetId) → 'boss' | 'elite' | null, read off the rendered stature. */
+function rankReader(ctx) {
+  return (targetId) => {
+    const anchor = ctx.anchorFor && ctx.anchorFor(targetId);
+    const box = anchor && anchor.closest ? anchor.closest('[data-stature]') : null;
+    return box ? rankForStature(box.dataset.stature) : null;
+  };
 }
 
 /**
@@ -571,6 +717,16 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
 
   const beats = groupBeats(events);
+  // Combat juice (SPEC §7.4): the one kill cam this dispatch earns, decided
+  // up front from the whole log, and the flag that lets visuals hit-stop.
+  // Only this paced path sets them — animateEvents' instant/reduced playback
+  // never sees either, which is the gate.
+  const body = document.body.classList;
+  const killCam = pickKillCam(events, { rankOf: rankReader(ctx), won: !!(ctx.fightWon && ctx.fightWon()) }, {
+    paced: true, reducedMotion: reduced, screenShake: !body.contains('no-shake'), killCam: !body.contains('no-killcam'),
+  });
+  const vctx = { ...ctx, hitStop: true, killCam };
+  let heldMs = 0; // this beat's accumulated hit-stop/kill-cam hold
   let flushed = false;
   let finished = false;
   let pendingTimer = null;
@@ -600,6 +756,7 @@ export function playTimeline(events, ctx, done) {
     if (finished) return;
     flushed = true;
     clearCombatEffects(ctx.layer);
+    releaseCombatJuice();
     cancelActorAnimation();
     clearTimeout(pendingTimer);
     // Finish after this pointer is released. Re-rendering under pointerdown
@@ -618,6 +775,7 @@ export function playTimeline(events, ctx, done) {
     if (finished) return;
     finished = true;
     clearCombatEffects(ctx.layer);
+    releaseCombatJuice();
     clearTimeout(pendingTimer);
     clearSkipRelease();
     cancelActorAnimation();
@@ -633,7 +791,11 @@ export function playTimeline(events, ctx, done) {
     ? Number(ctx.maxActorAnimationMs(speed)) || 0
     : Number(ctx.maxActorAnimationMs) || 0;
   const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
-  const budget = 2000 + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // Juice holds extend the timeline, so they extend its budget: one maxMs per
+  // event that can hit-stop, plus the longest kill cam.
+  const stoppable = events.filter((e) => e && (e.type === 'damageDealt' || e.type === 'enemyStaggered')).length;
+  const juiceBudgetMs = stoppable * COMBAT_JUICE.motion.hitStop.maxMs + (killCam ? maxKillCamMs() : 0);
+  const budget = 2000 + juiceBudgetMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -705,6 +867,7 @@ export function playTimeline(events, ctx, done) {
       }
     }
     const actorStartedAt = Date.now();
+    heldMs = 0;
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
@@ -726,8 +889,13 @@ export function playTimeline(events, ctx, done) {
         }
         if (vi < visuals.length) {
           const v = visuals[vi++];
-          safe(() => v(ctx));
-          schedule(stepV, speed.stepMs);
+          // A visual may return a HOLD (hit-stop, kill cam): the timeline's own
+          // clock waits it out, so later visuals, the HUD apply and the next
+          // beat all shift together (SPEC §7.4 combat juice).
+          let hold = 0;
+          safe(() => { hold = Math.max(0, Number(v(vctx)) || 0); });
+          heldMs += hold;
+          schedule(stepV, speed.stepMs + hold);
           return;
         }
         const applyBeat = () => {
@@ -739,7 +907,7 @@ export function playTimeline(events, ctx, done) {
           schedule(nextBeat, speed.beatMs);
         };
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs - (Date.now() - actorStartedAt))
+          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
           : 0;
         if (recovery > 0) schedule(applyBeat, recovery);
         else applyBeat();
@@ -754,9 +922,10 @@ function visualFor(e, beatKind) {
   const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
   if(!effect)return base;
   return ctx=>{
-    base?.(ctx);
+    const hold=base?.(ctx);
     const anchor=ctx.anchorFor(effect.targetId);
     if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),effect.kind,{size:190});
+    return hold;
   };
 }
 
@@ -782,20 +951,25 @@ function baseVisualFor(e, beatKind) {
         }
         if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
         sfx.play('hit');
-        const heavy = parts.residual >= 15;
+        const heavy = damageTier(parts.residual) === 'heavy' || damageTier(parts.residual) === 'crit';
         floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-          { x: paired ? 26 : 0, jitter: !paired });
+          { x: paired ? 26 : 0, jitter: !paired, scale: parts.damage.scale });
+        // Hit-stop (SPEC §7.4): heavy and crit hits freeze attacker + victim on
+        // the impact frame. Paced playback only (ctx.hitStop).
+        const stop = ctx.hitStop ? hitStopForEvent(e, { paced: true }) : 0;
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        flash(anchor, 'hitflash', heavy ? 380 : 220, stop);
         // An animated figure recoils in its own art as well as in CSS, and holds
         // it as long as the flash it belongs to.
-        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
+        playPoseOn(anchor, 'hit', (heavy ? 380 : 220) + stop);
         if (heavy) {
-          flash(anchor, 'hit-heavy', 380);
+          flash(anchor, 'hit-heavy', 380, stop);
           shake(ctx.combatEl);
         }
+        if (stop > 0) freezeFigures({ targets: [anchor], sources: [ctx.anchorFor(e.sourceId)] }, stop);
+        return stop;
       };
     case 'blockGained':
       return e.amount > 0
@@ -873,9 +1047,12 @@ function baseVisualFor(e, beatKind) {
         sfx.play('stagger');
         banner(ctx.layer, 'STAGGERED');
         const anchor = ctx.anchorFor(e.targetId);
-        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+        const stop = ctx.hitStop ? hitStopForEvent(e, { paced: true }) : 0;
+        flash(anchor, 'wobble', 600, stop); // poise broken: the whole figure teeters
         spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
         shake(ctx.combatEl);
+        if (stop > 0) freezeFigures({ targets: [anchor] }, stop);
+        return stop;
       };
     case 'enemyDied':
       return (ctx) => {
@@ -883,6 +1060,12 @@ function baseVisualFor(e, beatKind) {
         const anchor = ctx.anchorFor(e.targetId);
         floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
         if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
+        // Kill cam (SPEC §7.4): only the one death playTimeline picked.
+        if (ctx.killCam && ctx.killCam.event === e && anchor) {
+          playKillCam(ctx, anchor, ctx.killCam.plan);
+          return ctx.killCam.plan.ms;
+        }
+        return 0;
       };
     case 'stanceEntered':
       return (ctx) => {

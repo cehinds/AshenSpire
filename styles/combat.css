@@ -1515,3 +1515,24 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* ---------- combat juice (SPEC §7.4): damage scale, hit-stop, kill cam ----------
+   Decisions and every number: CombatJuiceModel.js + combatJuiceModel.json.
+   These rules only draw what src/ui/fx.js sets. */
+/* In-tier scale: the standalone `scale` composes with num-pop's `transform`
+   and with the centring `translate`, about the same bottom-centre origin. */
+.float-num { scale: var(--dmg-scale, 1); }
+/* Hit-stop: anything that STARTS on a frozen figure during the hold waits too
+   (fx.js pauses what was already running). */
+.hit-stop, .hit-stop * { animation-play-state: paused !important; }
+/* Kill cam: the battlefield and its painting zoom about the target. */
+.kill-cam { scale: var(--kc-zoom, 1); transform-origin: var(--kc-origin, 50% 50%); transition: scale var(--kc-in, 160ms) cubic-bezier(0.2, 0.8, 0.3, 1); }
+/* The turn ribbon is interface, not scene: zoomed, it would slide under the topbar half-cut. */
+.field.kill-cam > .turn-ribbon { visibility: hidden; }
+.kill-cam-out { transform-origin: var(--kc-origin, 50% 50%); transition: scale var(--kc-out, 200ms) ease-in; }
+.kill-cam-vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--kc-x, 50%) var(--kc-y, 50%), transparent 0 12%, rgba(8, 5, 3, var(--kc-opacity, 0.6)) 58%);
+  animation: kill-cam-vignette var(--kc-in, 160ms) ease-out both;
+}
+@keyframes kill-cam-vignette { from { opacity: 0; } to { opacity: 1; } }
