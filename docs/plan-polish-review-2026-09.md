@@ -149,8 +149,9 @@ amended before code moves.
 
 ### E1. Test hygiene (one session, beside A)
 
-- [ ] Discover `tests/**/*.test.mjs` instead of the hand-typed list in
-  `tests/run-node.mjs`: 31 test files are not in its list, and about 17 of
+- [ ] Discover `tests/**/*.test.mjs` (plus out-of-tree suites the list
+  already carries, such as `art/prologue-2026-09-19/model.test.mjs`) instead
+  of the hand-typed list in `tests/run-node.mjs`: 31 test files are not in its list, and about 17 of
   them (including `seats`, `shared-armor`, `framework`) run in no CI job.
 - [ ] Root-cause the red suites — never skip or quarantine. Run every
   discovered file first; this list is what was red on review and may not be
