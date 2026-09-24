@@ -3,6 +3,136 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1254",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "New players start with the owner's chosen defaults",
+    "detail": "Rewards are collected by hand rather than all at once, a Shrine stays open for Rest, Smith and Level until you leave, and flasks can be drunk from the map. The city title holds for 2 seconds, and the short-screen warning is off, so a sideways phone draws the board anyway. Settings you have already chosen keep their values.",
+    "build": "0.7.1.441",
+    "pullRequest": 1254,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1254"
+  },
+  {
+    "id": "pr-1261",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Towns keep a quest board, and taking or turning in a quest is a conversation",
+    "detail": "Every town's inn now has a Quest board beside its rest: it lists the quests posted anywhere in town, whether each can be taken, is under way, is ready to hand in or is done, and a journal of the quests your run has started and finished — the Grave of the Nameless as well as the wardens' surveys. The warden's spot on the town map opens the same board. Taking a quest or turning one in is no longer a button press: the Road Warden speaks, and you answer — Accept the quest or Not now, and on your return, after the report of what you found, Collect 25 cinders. A quest pays its reward once, even across a reload, and shows as done on the board afterwards. Reading the board costs nothing; the inn's rest is still waiting when you close it.",
+    "build": "0.7.1.439",
+    "pullRequest": 1261,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1261"
+  },
+  {
+    "id": "pr-1252",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every stat has one topic in Settings, and each one shows its sum as you change it",
+    "detail": "Actions, Draw, HP, Stamina, Mana, Poise and Ward were spread over Hand & Draw, Stats & Defence, Character & progression's stat formulas and the Poise, stagger and Mana rows under Combat. Advanced now has one Stats tab with a topic for each trait, and each topic holds all of it under short headings: its formula (a starting value, what each attribute point is worth, and what each level adds), its rating formula, its resistance and break rows, and for Poise and Draw the older rows used only when ratings are off or in co-op. Draw & hand keeps the opening hand, turn draws, hand capacity and discards together. Above the controls, a worked example shows the whole calculation and total for your current character, or outside a run for a new character of the class you pick, with starting relics included — for example HP at level 1: 30 base + 10 from Forsaken Medallion + CON 2 × 4 → 8 = 48. It updates as soon as you change a number, says how many more points of an attribute would raise the stat, and Overview shows the full stat block. Labels now name the trait and what the number buys (HP per Constitution point, Opening hand — Base cards).",
+    "build": "0.7.1.437",
+    "pullRequest": 1252,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1252"
+  },
+  {
+    "id": "pr-1260",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "A class or item's own value wins over the shared one, by a switch, and a setting that does nothing right now is greyed out",
+    "detail": "Starseer and Herald's own reward rarity, Reaver and Starseer's own strike bias, and each item's own equipment requirement now each have a uses its own switch, directly above the numbers it governs. Turn one off and that class or item follows the shared value; the greyed-out number shows the value it is following, so the number you see is always the one in use, and the one you typed comes back when you turn the switch on again. Settings that do nothing in the current setup are greyed out too, with a line saying which switch turns them on: every combat rating while ratings are off, the older poise settings and the Poise pool while ratings are on, equipment drop numbers while drops are off, extra card mounts, the swap costs for rules you are not using, and formation movement's own settings while movement is off. A value stored in a greyed-out setting is set aside rather than applied, so it can no longer make the game throw out the rest of your configuration. No setting lost its value, and configuration files you exported before still import.",
+    "build": "0.7.1.427",
+    "pullRequest": 1260,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1260"
+  },
+  {
+    "id": "pr-1253",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "HP, Mana and every resource now read the way AR, DR and PR do — and all of them sit in one place in Settings",
+    "detail": "Each stat is a starting value plus a number for each attribute that says what one point of it is worth: HP is 30 plus 4 per Constitution, Mana 1 plus 1 per Wisdom, Actions 3 plus one for every five Dexterity. Growth per level is a single decimal too, so HP now climbs by 1 every level instead of 5 every fifth level (the same rate, arriving a level at a time); Mana, Stamina and draw still grow on exactly the levels they did. Advanced → Progression now reads top to bottom as Assign points, Level-up, then Stats & resources, which holds every resource's base, per-attribute values and growth per level with the five rating formulas right beside them. The Stat points per tier setting is gone — every stat now says exactly what each point of each attribute is worth, which is what that dial approximated for all of them at once; a character already climbing keeps the numbers it started with, including one started under that dial.",
+    "build": "0.7.1.407",
+    "pullRequest": 1253,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1258",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now carries its own piece of the world's history",
+    "detail": "Open a card and unfold its Flavor panel: all 195 combat cards and the 17 basic weapon cards — the Strikes, Guards and Techniques your weapon gives you — now have a short description told by someone who was there. A Warden's field-book, a Fell Courtyard gate log, a Court surgeon's receipt, the Astronomer's chart margins, a Chapel rubric, a sermon of the Feral Ember, the Tollmouth fence, a hamlet council: each speaks for itself, signs its name, and is mostly right, partly partisan and partly silent. Read together they span the kingdom from the Cinderwrights to the Long Winter, and they disagree. The panel now keeps paragraph breaks. No card's rules or numbers changed.",
+    "build": "0.7.1.405",
+    "pullRequest": 1258,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1258"
+  },
+  {
+    "id": "pr-1255",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "You can go back to your points after Continue, and a saved fight keeps its own rules",
+    "detail": "Once you had placed your points and pressed Continue there was no way back to them short of changing class, even when an item you wanted asked for more than you had given it; an Edit points button now reopens the editor with your numbers still on it, and Cancel puts them back. The equipment screen stops refusing a +1 weapon you can in fact hold. A fight saved before its rules were written into the save reopens under the rules your run was born with rather than today's table, and a run from before the attribute rebase keeps the Poise its Constitution gave it, and an Advanced preset that cannot wear its class's starting armour is refused in Settings, by name, instead of being accepted and then discarded at the next start.",
+    "build": "0.7.1.403",
+    "pullRequest": 1255,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1255"
+  },
+  {
+    "id": "pr-1243",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every setting in Advanced now says what it does, and the sentence sits beside its number",
+    "detail": "The 792 balance rows under Advanced had readable names, but the line under each name was still the same five words, Applies to a new run, on nearly every one. That includes the 486 card-value rows — what each Action, Mana and Stamina a card costs is worth, the weight of each status it applies, and each card's own bonus — which now say which of a card's numbers they set: a physical attack's damage, a physical card's Block, a magic card's damage and Block, or an attack's impact. Now each row has its own sentence saying what the number does and what it means for a climb. Some examples: the merchant's buy-back is a fraction of the cheapest he would sell the same kind for, so below 1 selling always loses on the trade. Iron Footing is a tier-1 Reaver talent, and this row sets the Block it grants. A flask's drop chance falls after a drop and rises after a miss, and this row sets how far. The six legacy Poise and stagger rows say they only work while combat ratings are off, and name the rating row that takes over when they are on. The swap-cost numbers say which rule they price, and that choosing the rule is Weapon swap cost's job, not theirs. Two rows say plainly that nothing reads them, rather than promising to apply to a new run. The sentences are written beside their numbers in the balance table itself, so whoever changes a number reads what it does in the same place, and a test fails if a number is renamed and its sentence left behind. Names come from the game: renaming a relic renames its rows, and a new relic describes itself.",
+    "build": "0.7.1.395",
+    "pullRequest": 1243,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1243"
+  },
+  {
+    "id": "pr-1259",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Two cards that share a name are told apart in settings",
+    "detail": "Under Stats & Defence → Attack overrides, the Reaver's own Enter: Bulwark and the one the Guardian shield makes for any class had rows with the same name, and so did the Rogue's Hamstring attack and the Hamstring skill anyone can take — so there was no telling which card a change went to. Where two cards share a name the row now says whose each is: Enter: Bulwark (Reaver) beside Enter: Bulwark (All classes), Hamstring (Rogue) beside Hamstring (All classes). Every other card keeps its plain name, and no setting changed its value or key. With this, no two rows anywhere in Advanced read the same.",
+    "build": "0.7.1.394",
+    "pullRequest": 1259,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1259"
+  },
+  {
+    "id": "pr-1256",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Advanced settings: every setting has one home, and rows that did nothing are gone",
+    "detail": "Advanced had sixteen tabs, and several settings showed up in two places or quietly overrode each other. It now has thirteen. Rules, Gameplay and Tuning are gone, and each of their settings moved to the subject it changes. Skills, talents and experience are under Character & progression. Relic values join equipment in a new Equipment & relics tab. Rest, co-op, gauntlet and endless are in Run & world. Formation and movement have their own Battlefield tab. Card sizes and the settings window sit with the wireframe choices in Layout. Where two settings still touch the same number, they now sit together and each says which one wins. The older poise settings are next to the Stats & Defence rows that replace them while ratings are on. The fallback hand size is under Hand & Draw. Stat points per tier leads the per-stat tiers it overrides. The weapon swap-cost rule sits with its costs. Settings that changed nothing are off the screen: class Base HP (a new run's HP comes from the HP stat conversion), the level-up and tier-size limits, enemy level scaling, the per-turn swap allowance, and Seed in map header. Cinder / experience gain multiplier is now Cinder gain multiplier, because it never changed experience. No working setting changed its value or key, and a configuration file you exported before today still imports.",
+    "build": "0.7.1.392",
+    "pullRequest": 1256,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1256"
+  },
+  {
+    "id": "pr-1247",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Every card now starts from what it costs, and every part of that calculation is yours to tune",
+    "detail": "Attack damage, Block, Poise pressure and Ward pressure are now derived from a card's Actions, Mana and Stamina instead of being unrelated numbers: each has its own global multiplier, one multiplier for each resource, and a reduction for every distinct status the card applies. Physical attacks use AR, physical Block uses DR, magical damage and Block use PR, and a card's physical or magical impact uses Poise or Ward — except a physical hit a weapon lends, which still lands as heavy as the weapon, so a dagger and a warhammer do not stagger alike. A staff or sceptre makes its Strike, Defend and technique magical, and those follow PR and Ward too. Every shipped status has its own reduction multiplier, and every applicable card has a signed bonus after the shared calculation, all under five new groups in Advanced → Combat. The defaults reproduce every card's existing damage, Block and poise-damage numbers exactly, base and upgraded; moving a shared multiplier recalculates the whole matching card set deterministically. What an untouched game does change is impact: a card hit now lands its Poise or Ward value instead of a flat 1, so a cheap card or one that applies statuses can land none, while a weapon's hit keeps its weight and a card that deals its own poise damage keeps the old default beside it. X-cost cards still repeat once per Action spent, added statuses enter with a safe zero reduction, magic follows the same tags in calculation and combat, and a run or saved fight keeps the settings it started with.",
+    "build": "0.7.1.390",
+    "pullRequest": 1247,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1247"
+  },
+  {
+    "id": "pr-1251",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "Each class's starting armour is told apart from the set piece it shares a name with",
+    "detail": "Under Ratings & Resistance → Armour ratings, every class listed its armour twice under one name: the Reaver starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block, +4 max HP) is a different item any class can earn — but both rows read Wayfarer Plate (reaver), so there was no telling which one a change went to. The starting one now says so: Wayfarer Plate (Reaver, starting armour) beside Wayfarer Plate (Reaver), and the class is spelled the way the rest of the menu spells it. No setting changed its value or key.",
+    "build": "0.7.1.386",
+    "pullRequest": 1251,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1251"
+  },
+  {
+    "id": "pr-1244",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The menu button in character creation opens a menu you can see, and closes it again",
+    "detail": "The ☰ in the creation header looked dead. The menu did open every time, at the right size with every category live, but it was drawn off the edge of the screen — further off the larger your window and your UI size, and on a 1920x1080 display not one pixel of it was visible. It now hangs under the ☰, its right edge on the button's, the way the map's menu does. Pressing ☰ again now puts it away: before, a second press closed the menu and re-opened it in the same moment, so once it was open it stayed open. On a window too short for the four categories the menu still opens under the button and scrolls inside itself, rather than covering the button or putting Review out of reach. The menu is placed when it opens, so resizing the window while it is open leaves it where it was until you open it again.",
+    "build": "0.7.1.384",
+    "pullRequest": 1244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1244"
+  },
+  {
     "id": "pr-1242",
     "date": "2026-09-23",
     "group": "2026-09-23",

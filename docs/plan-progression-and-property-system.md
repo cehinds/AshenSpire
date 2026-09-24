@@ -565,7 +565,43 @@ and then back to Intelligence 8, because review found the first version of
 that preset could not hold the Ash Staff or the Nightweave its own class
 starts in. `validateContent` refuses that by name now — summing to the mode
 total was never enough, and nothing cross-read the presets against the
-equipment minima until this phase broke it. Snapshots of ruleset 1 and 2 are
+equipment minima until this phase broke it. A second review round moved that
+rule into `model/attributes.js` (`presetGearProblems`) and pointed the
+**Advanced settings** door at it too, because a preset edit Settings accepted
+and the boot then refused made `main.js` throw away the whole game
+configuration behind a generic "unchanged" notice; the same round extended it
+from the kit's two hands to the class's starting armour, which is green today
+and was the other half of the defect the check was added for.
+
+That review round also closed three live defects in what phase 9 had already
+shipped. The run's derived-stat rules reached `createCombat` but **not** the
+combat snapshot, so a fight saved under an Advanced tier-size override came
+back priced by the live table — the snapshot carries them now, with the run's
+own as the fallback for a save written before the field, the way
+`fallbackAttackSlotCount` works. The creation screen's point editor had **one**
+door-opener, the mode `<select>`, which with a single visible mode can never
+fire `change` twice: a player who committed an allocation and then met an
+equipment minimum they could not meet had no way back to the points short of
+changing class or leaving creation. An explicit "Edit points" button is that
+way back, and it is a revision — the committed numbers are on the steppers and
+Cancel puts them back, while entering from the select is still a fresh
+allocation. And `resourceStrip` drew two chips labelled Poise whenever a
+caller passed the projection unfiltered; the drop moved into the component,
+which is where the second chip comes from. (By the time #1255 landed, the live
+Character step filtered the row itself; the component catalogue's specimen was
+the caller still drawing two.)
+
+Three quieter ones landed with them: the equipment screen's seal now reads
+`armamentLevels` like the mutation it seals, so it cannot refuse in words an
+item an upgrade made holdable; `equipmentRequirementReceipt` resolves an
+outfit's upgrade level under `armor/<classId>/<id>` rather than the weapon
+namespace, so an outfit no longer reads a same-named weapon's smithing level
+(no armour tier can author a requirement delta yet — `itemUpgradeTagMatchesKind`
+admits only `equipmentPoise` for armour — so this is the right key, not a live
+reduction); and a run whose snapshot predates ruleset 5 keeps the Poise
+attribute term phase 8 priced it by — Constitution one-for-one, the shipped
+`balance.poise.playerPerConstitution` — instead of falling through to the live
+row (#1255 corrected an earlier version of this fix that zeroed the term). Snapshots of ruleset 1 and 2 are
 migration inputs and now migrate onto 5 rather than 4, so such a save's pools
 change; 3 and 4 are preserved verbatim. `docs/BALANCE.md` is regenerated: the tier-1 boss band moved UP across the
 board — Reaver 78/80/72 → 95/98/94, Rogue and Herald at or near 100 with ten to
@@ -615,6 +651,33 @@ portrait shows the name plate.
 
 Acceptance: a town lists its quests; accepting and collecting are spoken; a
 collected quest shows as done and rewards once.
+
+**10b AS BUILT (2026-09-23):** the board is a SERVICE MARKER, not a rule:
+`questBoard` is a property node with no trigger, like `smith` and `levelUp`,
+reported by `locationServices`, and the shipped inn carries it (every inn
+point shares the type's set, so no node row was needed). Where the board
+renders: the Rest screen gains a *Quest board* card — phase 7 called the
+location screen `enterLocation`, but the visit door is still `showRest`
+over `mountRest`, so the card is there — offered only where the run stands
+in an atlas town that posts a quest (a dungeon's rescue inn is an inn too
+and posts none). The board itself is its own screen (`ui/screens/questBoard.js`
+over the DOM-free `ui/models/QuestBoardModel.js`), because the atlas's quest
+list opens it from the map too, and routing that through the inn's rest
+service would have spent the single-use rest. The journal reads completions
+and started event chains off `run.history`, and ALSO the journey's accepted
+atlas quests — accepting writes no history row (10a added none for it), so
+a board reading only history could not list the quest the player just took.
+Accept and Collect open `mountDialogue` with a board-built definition and
+the quest row's speaker (the dungeon's `definition` / `speaker` /
+`commitChoice` seam), and the response commits through the new
+`boardQuestResponse`: a closed set `accept | collect | leave`, refusing by
+name a move the quest's `questAction` plan no longer offers, then
+`atlasQuestAction` and the 10a door. The collect exchange speaks the survey
+lore's `report`; the accept exchange its description. `restLocationAt` in
+`main.js` moved into `model/locations.js restLocationAtPoint` so the atlas
+screen and the rest door resolve a point one way. Not done: quest XP is
+still unpaid (nothing listens to `questCompleted`), and the co-op host has
+no board. SPEC §13.4n; `tests/quest-board.test.mjs`, engine test 91.
 
 ## Sequencing and parallelism
 

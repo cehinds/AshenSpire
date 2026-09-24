@@ -649,6 +649,12 @@ input[type="range"] { min-height: var(--tap-floor); }
 .as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
 .as-row.setting .set-applied-slot:empty { display: none; }
 .as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+/* A row that does nothing while a switch is off (settings.js refreshGates):
+   the label dims, the control is disabled, and the gate line says which switch
+   opens it. The line keeps full ink — it is the answer to "why is this grey". */
+.as-row.setting.set-row-gated .ls-label { color: var(--ink-dim); }
+.as-row.setting.set-row-gated .r-trail { opacity: 0.55; }
+.as-row.setting .set-gate-note { color: var(--ink); font-style: italic; }
 .as-row.setting .ls-hint code { color: var(--ink-dim); }
 .set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
 .set-section-head + .as-hairline { margin: 1.4rem 0; }
@@ -3932,7 +3938,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-card .card-info-button { top:-44px; }
 .inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
 .inspection-lore summary { cursor:pointer; }
-.inspection-lore p { font-style:italic; margin:8px 0 0; }
+.inspection-lore p { font-style:italic; margin:8px 0 0; white-space:pre-line; line-height:1.55; max-width:62ch; }
 .equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
 /* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
    is worn and held in the order the sections ask for it — with the receipts
@@ -5224,8 +5230,13 @@ button[data-button-size] {
 
 /* Creation header: stable menu and a single, plain close control. */
 .customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
-.customize .cz-head-tools.cz-header-menu { display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
-.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; }
+/* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
+   placeGap() reads this declaration, customize.js writes nothing, and
+   tools/placement.mjs reads the same line the code used. */
+.customize .cz-head-tools.cz-header-menu { --place-gap: 8px; display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
+/* A window too short for four categories scrolls the menu instead of pinning
+   Review off the bottom edge (customize.js writes the max-height it was bound to). */
+.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; overflow: hidden auto; }
 .customize .cz-menu-navigation { display: grid; gap: 6px; }
 .customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
 .customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; font: 28px/1 Arial, sans-serif; }

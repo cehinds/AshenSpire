@@ -10691,6 +10691,12 @@ export const tagging = [
   {
     "family": "location",
     "scope": "",
+    "objectId": "inn",
+    "tagId": "questBoard"
+  },
+  {
+    "family": "location",
+    "scope": "",
     "objectId": "chapel",
     "tagId": "restHpPartial"
   },

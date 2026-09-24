@@ -127,12 +127,12 @@ async function main() {
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
       { name: 'desktop-class-defaults', width: 1440, height: 900, group: 'Progression', search: 'Reaver', mobile: false },
       { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
-      { name: 'desktop-placement', width: 1440, height: 900, group: 'Interface', search: 'default', mobile: false },
+      { name: 'desktop-placement', width: 1440, height: 900, group: 'Battlefield', search: 'default', mobile: false },
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
       { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
       { name: 'phone-interface', width: 390, height: 844, group: 'Interface', mobile: true },
       { name: 'phone-export', width: 390, height: 844, group: 'Export', mobile: true },
-      { name: 'phone-placement', width: 390, height: 844, group: 'Interface', search: 'default', mobile: true },
+      { name: 'phone-placement', width: 390, height: 844, group: 'Battlefield', search: 'default', mobile: true },
     ].filter(shape => !process.argv.includes('--combat-only') && (!process.argv.includes('--settings-files-only') || shape.group === 'Export'))) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
@@ -203,7 +203,7 @@ async function main() {
       width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
     const combatSettings = encodeURIComponent(JSON.stringify({
-      quickNav: 'off', settingsCategory: 'Advanced', settingsAdvancedCategory: 'Interface',
+      quickNav: 'off', settingsCategory: 'Advanced', settingsAdvancedCategory: 'Battlefield',
       'gameConfig.presentation.playerSpriteScale': 1.15,
       'gameConfig.presentation.enemySpriteScale': 0.8,
     }));

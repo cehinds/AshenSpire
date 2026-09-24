@@ -1442,7 +1442,12 @@ export function mountEquipment(host, {
         const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
         // With the candidate named, the seal carries the grip's sentence too
         // (model/loadout.js gripRefusal) — the player reads why before the act.
-        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels });
+        // EVERY INPUT THE MUTATION READS, or the seal refuses in words an act
+        // the mutation would accept: `armamentLevels` carries the smithing
+        // tiers whose `requirement` deltas lower a minimum, and leaving it out
+        // made the card say "Straight Sword requires STR 5 (you have 4)" over
+        // a +1 sword the run could legitimately hold (review, #1217).
+        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );

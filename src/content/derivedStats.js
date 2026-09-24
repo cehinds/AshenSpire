@@ -4,83 +4,51 @@
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 export const derivedStatRules = {
-  // RULESET 5 — THE ATTRIBUTE REBASE (plan phase 9). Every formula is restated
-  // against the tuned2 scale (baseline 5, ceiling 12) rather than the old
-  // ten-point one, and the pools stop being tiers of five: Mana IS Wisdom and
-  // Stamina IS Constitution, so a point spent is a point felt. Actions and
-  // draw keep a tier, now five points wide instead of ten. Snapshots of 4 and
-  // earlier are restored exactly as they were saved; only new runs read this.
-  rulesetVersion: 5,
+  // RULESET 6 — ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21).
+  //
+  // "make mp hp and every resource now a similar calculation to AR, PR, DR,
+  // etc. I'll just use decimal values to set the growth per level, in fact I'd
+  // like all the resources and stats to be in the same format so that there was
+  // no confusion to include the base values and everything because they are way
+  // too separated."
+  //
+  // So a row here is now the SAME ROW a combat rating is (model/ratingFormula.js
+  // — AR, DR, PR, Poise, Ward), with the level term on it:
+  //
+  //   base         before a single point is spent
+  //   <attribute>  that attribute's decimal contribution per point, floored on
+  //                its own: 0.2 gives nothing until the attribute reaches 5
+  //   perLevel     DECIMAL growth per character level: 0.2 is a point every
+  //                five levels, 1 is one every level
+  //
+  // WHAT MOVED FROM RULESET 5: nothing in the attribute terms — every weight
+  // below is ruleset 5's `gainPerTier / pointsPerTier` restated, and lands on
+  // the same number at every attribute value. The LEVEL terms are decimals now
+  // and so are SMOOTH: HP climbs 1 per level instead of 5 every fifth level
+  // (the same rate, arriving each level rather than in lumps); Mana, Stamina
+  // and draw land on exactly the levels they always did. Ruleset 5 and earlier
+  // are restored exactly as they were saved; only new runs read this.
+  rulesetVersion: 6,
   defaults: {
-    pointsPerTier: 5,
-    rounding: 'floor',
+    perLevel: 0,
     cap: null,
   },
   rules: {
-    energy: {
-      base: 3,
-      sourceStat: 'dexterity',
-      pointsPerTier: 5,
-      gainPerTier: 1,
-      cap: null,
-    },
-    draw: {
-      base: 3,
-      sourceStat: 'intelligence',
-      pointsPerTier: 5,
-      gainPerTier: 1,
-      cap: null,
-      // One more card in hand at level 11 and every ten after (plan phase 6).
-      perLevel: { every: 10, gain: 1 },
-    },
-    hp: {
-      // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
-      // generic derived-stat engine express the per-point coefficient exactly.
-      // Relic resource.flat rows fold into base; equipment max-HP mods and the
-      // persisted adjustment remain the two external addends at the run door.
-      base: 30,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 4,
-      // THE CHARACTER LEVEL'S OWN TERM (plan phase 6): every five levels past
-      // the first the maximum gains this, beside whatever the points bought.
-      // Snapshotted with the row, so a run born before it never gains it and
-      // a run born under it keeps it whatever the table says later.
-      perLevel: { every: 5, gain: 5 },
-    },
-    stamina: {
-      // Ruleset 5: the pool IS Constitution, on the same one-point tier as
-      // Mana's — the body's own reserve rather than a tier of five.
-      base: 1,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      perLevel: { every: 5, gain: 1 },
-    },
-    mana: {
-      // Small-unit pool: WIS is the only authored Mana authority. Classes do
-      // not carry a second base pool that can drift from this row. Under
-      // ruleset 5 the pool IS Wisdom, which is what lets a signature art ask
-      // for two points of it on the first floor (plan phase 9).
-      base: 1,
-      sourceStat: 'wisdom',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      cap: null,
-      perLevel: { every: 5, gain: 1 },
-    },
-    // THE POISE VESSEL, derived at last (plan phase 9). Phase 8 shipped the
-    // meter with its Constitution term in balance because this ruleset had
-    // not been written yet; the coefficient lives here now, and the receipt
-    // that stamps the meter reads this row. Armour and relics remain the two
-    // external addends, exactly as HP's are.
-    poise: {
-      base: 1,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      cap: null,
-    },
+    // One more action every five points of Dexterity.
+    energy: { base: 3, dexterity: 0.2 },
+    // One more card every five points of Intelligence, and one at level 11
+    // and every ten after.
+    draw: { base: 3, intelligence: 0.2, perLevel: 0.1 },
+    // 30 + 4 x CON, and a point per level.
+    hp: { base: 30, constitution: 4, perLevel: 1 },
+    // The body's own reserve: the pool IS Constitution.
+    stamina: { base: 1, constitution: 1, perLevel: 0.2 },
+    // WIS is the only authored Mana authority — classes carry no second base
+    // pool that can drift from this row.
+    mana: { base: 1, wisdom: 1, perLevel: 0.2 },
+    // The Poise vessel. Armour and relics remain the two external addends,
+    // exactly as HP's equipment bonus is.
+    poise: { base: 1, constitution: 1 },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //

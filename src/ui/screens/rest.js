@@ -109,11 +109,11 @@ function locationTitle(locationId) {
   return t('rest.title');
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, ...extra,
   });
   // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
   // — the location's rules mounted, `arrived` already emitted — and hands it
@@ -145,6 +145,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
   const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
   const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
+  // THE QUEST BOARD (plan phase 10b) is a service the place's tags offer
+  // (`questBoard`); the door hands in its counts and the way to it, since the
+  // board is the atlas town's and this screen knows no atlas. Reading it takes
+  // nothing and ends nothing: the board returns here.
+  const board = stay.services.questBoard && questBoard ? questBoard : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -305,6 +310,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
         </div>` : ''}
+        ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
+          <div class="glyph">✉</div>
+          <div class="cp-body">
+            <h3>${esc(t('questBoard.open'))}</h3>
+            <p>${esc(t('questBoard.open.summary', { ready: board.ready, open: board.open }))}</p>
+          </div>
+        </div>` : ''}
       </div>
     `;
 
@@ -362,6 +374,15 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   ]) {
     const element = app.querySelector(selector);
     if (element) markUiComponent(element, UI.shrineOptionCard, variant);
+  }
+  const boardOption = board ? app.querySelector('#board-opt') : null;
+  if (boardOption) {
+    boardOption.addEventListener('click', () => board.onOpen());
+    boardOption.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      board.onOpen();
+    });
   }
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 

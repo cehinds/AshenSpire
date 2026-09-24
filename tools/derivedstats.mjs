@@ -17,6 +17,7 @@ import {
   createDerivedStatRuleSnapshot,
   restoreDerivedStatRuleSnapshot,
   deriveAttributeTierReceipt,
+  ruleWeights,
 } from '../src/model/derivedStats.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -37,11 +38,17 @@ const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order)
 // tied instead: change the model without bumping `rulesetVersion` and the row
 // corpora below catch it; bump the version without revisiting this file and the
 // single check below fails and says exactly what to do.
-const CONTRACT_RULESET_VERSION = 4;
+//
+// RE-DERIVED FOR RULESET 6 BY HAND (#1253, owner 2026-09-21: "make mp hp and
+// every resource now a similar calculation to AR, PR, DR"). A row is now a base,
+// a decimal weight per attribute floored on its own, and a decimal growth per
+// level — the rating shape. Every number below was worked out from that sentence
+// and the table's authored weights, not read back from the resolver.
+const CONTRACT_RULESET_VERSION = 6;
 
-// `maxHp: 84` is deliberately NOT the HP base any row uses. Under ruleset 4 the
-// HP row is a flat 30 and ignores class data, so a fixture carrying a different
-// number is what makes that provable rather than assumed.
+// `maxHp: 84` is deliberately NOT the HP base any row uses. The HP row is a flat
+// 30 and ignores class data, so a fixture carrying a different number is what
+// makes that provable rather than assumed.
 const CLASS = { id: 'reaver', maxHp: 84 };
 let failures = 0;
 let checks = 0;
@@ -75,14 +82,17 @@ check('this file is written against the shipped ruleset version', () => {
 });
 
 check('one authoritative object carries the global defaults', () => {
-  equal(derivedStatRules.defaults.pointsPerTier, 5, 'pointsPerTier');
-  equal(derivedStatRules.defaults.rounding, 'floor', 'rounding');
+  equal(derivedStatRules.defaults.perLevel, 0, 'perLevel');
   equal(derivedStatRules.defaults.cap, null, 'cap');
+  // Ruleset 6 has no tier, so the table-wide tier and its rounding are gone.
+  assert(!('pointsPerTier' in derivedStatRules.defaults), 'no global tier');
+  assert(!('rounding' in derivedStatRules.defaults), 'no global rounding');
 });
 
-check('the five rows map to the ruled source attributes', () => {
-  const got = Object.entries(derivedStatRules.rules).map(([id, row]) => `${id}:${row.sourceStat}`).join(',');
-  equal(got, 'energy:dexterity,draw:intelligence,hp:constitution,stamina:constitution,mana:wisdom', 'row map');
+check('the six rows answer to the ruled attributes', () => {
+  const got = Object.entries(derivedStatRules.rules)
+    .map(([id, row]) => `${id}:${ruleWeights(row).map(([attr, weight]) => `${attr}x${weight}`).join('+')}`).join(',');
+  equal(got, 'energy:dexterityx0.2,draw:intelligencex0.2,hp:constitutionx4,stamina:constitutionx1,mana:wisdomx1,poise:constitutionx1', 'row map');
 });
 
 check('the shipped table passes the closed schema', () => {
@@ -90,71 +100,74 @@ check('the shipped table passes the closed schema', () => {
   assert(Array.isArray(problems) && problems.length === 0, problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
 });
 
-// Energy and Draw each override the global five-point tier with ten (ruleset 4),
-// so DEX/INT 10 buys ONE tier, not two. The titles said two and the values said
-// three and five, which were the version-3 answers for a different arithmetic.
-check('DEX 10 gives Energy base 2 + one ten-point tier = 3', () => {
+// A WEIGHT OF 0.2 IS ONE EVERY FIVE POINTS, FLOORED ON ITS OWN: DEX 10 buys
+// floor(10 x 0.2) = 2 Actions on the base 3.
+check('DEX 10 gives Energy base 3 + floor(10 x 0.2) = 5', () => {
   const out = deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS });
-  equal(out.tier, 1, 'tier'); equal(out.raw, 3, 'raw'); equal(out.value, 3, 'value');
+  equal(out.terms.dexterity, 2, 'dexterity term'); equal(out.raw, 5, 'raw'); equal(out.value, 5, 'value');
 });
 
-check('INT 10 gives Draw base 4 + one ten-point tier = 5', () => {
+check('INT 10 gives Draw base 3 + floor(10 x 0.2) = 5', () => {
   const out = deriveStat(resolved(), 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
-  equal(out.tier, 1, 'tier'); equal(out.raw, 5, 'raw');
+  equal(out.terms.intelligence, 2, 'intelligence term'); equal(out.raw, 5, 'raw');
 });
 
-check('CON 10 gives at least 2 Stamina', () => {
-  assert(deriveStat(resolved(), 'stamina', { attributes: { constitution: 10 }, classDef: CLASS }).value >= 2, 'Stamina below 2');
+check('a fifth of a point is nothing until five arrive: INT 4 stays at the base, INT 9 buys one', () => {
+  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 4 }, classDef: CLASS }).value, 3, 'INT 4');
+  equal(deriveStat(resolved(), 'draw', { attributes: { intelligence: 9 }, classDef: CLASS }).value, 4, 'INT 9');
 });
 
-check('WIS 10 is the only Mana authority and yields 2', () => {
+check('CON 10 gives Stamina base 1 + 10 = 11', () => {
+  equal(deriveStat(resolved(), 'stamina', { attributes: { constitution: 10 }, classDef: CLASS }).value, 11, 'Stamina');
+});
+
+check('WIS 10 is the only Mana authority and yields base 1 + 10 = 11', () => {
   const out = deriveStat(resolved(), 'mana', { attributes: { wisdom: 10 }, classDef: CLASS });
-  equal(out.base, 0, 'Mana base'); equal(out.value, 2, 'Mana');
+  equal(out.base, 1, 'Mana base'); equal(out.value, 11, 'Mana');
 });
 
-// THE ROW STOPPED READING CLASS DATA AND THIS CHECK STILL SAID IT DID. Under
-// ruleset 4 the HP row is `base: 30, pointsPerTier: 1, gainPerTier: 2` — a flat
-// 30 plus two per CON point, with no `base.field` at all. The class base moved
-// into the "other bonuses" slot (c9b31970) and #484 then removed the per-tier
-// class coefficient outright. The old assertion expected 84 from the fixture
-// class and got 30, which read as a broken product and was a stale contract.
-check('CON HP is a flat base plus two per point, and reads no class field (D22, #484)', () => {
+check('CON HP is a flat base plus four per point, and reads no class field', () => {
   const out = deriveStat(resolved(), 'hp', { attributes: { constitution: 10 }, classDef: CLASS });
-  equal(out.base, 30, 'HP base is the row, not the class'); equal(out.tier, 10, 'one tier per CON point');
-  equal(out.value, 50, 'derived HP: 30 + 10 x 2');
+  equal(out.base, 30, 'HP base is the row, not the class'); equal(out.terms.constitution, 40, 'four per CON point');
+  equal(out.value, 70, 'derived HP: 30 + 10 x 4');
 });
 
-check('a row may override pointsPerTier and rounding', () => {
+check('the level term is one decimal, floored: HP 1, Mana/Stamina 0.2, Draw 0.1', () => {
+  const at = (id, level, attributes) => deriveStat(resolved(), id, { attributes, classDef: CLASS, level }).levelBonus;
+  equal(at('hp', 1, { constitution: 1 }), 0, 'no term at level 1');
+  equal(at('hp', 4, { constitution: 1 }), 3, 'HP: one per level past the first');
+  equal(at('mana', 5, { wisdom: 1 }), 0, 'Mana: four fifths is not yet a point');
+  equal(at('mana', 6, { wisdom: 1 }), 1, 'Mana: five fifths is one');
+  equal(at('draw', 10, { intelligence: 1 }), 0, 'Draw waits for level 11');
+  equal(at('draw', 11, { intelligence: 1 }), 1, 'Draw: one card at 11');
+  equal(at('energy', 50, { dexterity: 1 }), 0, 'Energy has no level term');
+});
+
+check('a row may answer to several attributes, each term floored on its own', () => {
   const source = clone(derivedStatRules);
-  source.rules.energy.pointsPerTier = 4;
-  source.rules.energy.rounding = 'ceil';
+  source.rules.energy = { base: 3, dexterity: 0.25, strength: 0.5 };
   const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
-  const out = deriveStat(rules, 'energy', { attributes: { dexterity: 9 }, classDef: CLASS });
-  equal(out.tier, 3, 'ceil(9/4)'); equal(out.value, 5, 'Energy: base 2 + 3');
+  const out = deriveStat(rules, 'energy', { attributes: { dexterity: 9, strength: 3 }, classDef: CLASS });
+  equal(out.terms.dexterity, 2, 'floor(9 x 0.25)'); equal(out.terms.strength, 1, 'floor(3 x 0.5)');
+  equal(out.value, 6, 'Energy: base 3 + 2 + 1 — not floor(3.75)');
 });
 
-check('an authored row override outranks the authored global defaults', () => {
+check('an authored row outranks the authored global defaults', () => {
   const source = clone(derivedStatRules);
-  source.defaults.pointsPerTier = 5;
-  source.rules.energy.pointsPerTier = 10;
-  const out = deriveStat(resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] }), 'energy', {
-    attributes: { dexterity: 10 }, classDef: CLASS,
-  });
-  equal(out.tier, 1, 'row pointsPerTier');
+  source.defaults.perLevel = 0.5;
+  const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
+  equal(deriveStat(rules, 'energy', { attributes: { dexterity: 1 }, classDef: CLASS, level: 3 }).levelBonus, 1, 'Energy inherits 0.5');
+  equal(deriveStat(rules, 'hp', { attributes: { constitution: 1 }, classDef: CLASS, level: 3 }).levelBonus, 2, 'HP keeps its own 1');
 });
 
-check('weapon-facing tier receipt consumes a resolved row and owns no weapon base', () => {
-  const row = resolved({
-    modeModifiers: { defaults: { pointsPerTier: 4 } },
-    explicitOverride: { rules: { energy: { gainPerTier: 3, rounding: 'ceil' } } },
-  }).rules.energy;
-  const receipt = deriveAttributeTierReceipt(row, { attributes: { dexterity: 9 } });
+// The equipment-profile helper keeps the single-stat tier vocabulary — it is a
+// different table (content/attributes.js equipmentProfiles), not this one.
+check('the equipment-profile tier receipt owns no weapon base', () => {
+  const receipt = deriveAttributeTierReceipt({ sourceStat: 'dexterity', pointsPerTier: 4, gainPerTier: 3, rounding: 'ceil' },
+    { attributes: { dexterity: 9 } });
   equal(receipt.sourceStat, 'dexterity', 'source stat');
   equal(receipt.points, 9, 'points');
-  equal(receipt.pointsPerTier, 4, 'resolved global pointsPerTier');
-  equal(receipt.rounding, 'ceil', 'resolved row rounding');
-  equal(receipt.tier, 3, 'tier');
-  equal(receipt.gainPerTier, 3, 'resolved row gain');
+  equal(receipt.tier, 3, 'ceil(9 / 4)');
   equal(receipt.value, 9, 'tier contribution only');
   assert(!Object.hasOwn(receipt, 'base'), 'generic receipt must not own a weapon base');
 });
@@ -162,78 +175,73 @@ check('weapon-facing tier receipt consumes a resolved row and owns no weapon bas
 check('a finite cap clamps the final value and null means uncapped', () => {
   const capped = resolved({ explicitOverride: { rules: { energy: { cap: 2 } } } });
   equal(deriveStat(capped, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 2, 'cap');
-  equal(deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 3, 'uncapped');
+  equal(deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 5, 'uncapped');
 });
 
-check('shipped Energy and Draw both declare cap null and grow unbounded at high stats', () => {
-  equal(derivedStatRules.rules.energy.cap, null, 'Energy cap');
-  equal(derivedStatRules.rules.draw.cap, null, 'Draw cap');
+check('shipped Energy and Draw resolve cap null and grow unbounded at high stats', () => {
   const rules = resolved();
+  equal(rules.rules.energy.cap, null, 'Energy cap');
+  equal(rules.rules.draw.cap, null, 'Draw cap');
   const energy = deriveStat(rules, 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
   const draw = deriveStat(rules, 'draw', { attributes: { intelligence: 5000 }, classDef: CLASS });
-  // 5000 over a TEN-point tier is 500, not 1000. The point of the check is that
-  // nothing clamps, so the numbers move with the tier width and were not re-read.
-  equal(energy.tier, 500, 'high-stat Energy tier');
-  equal(energy.value, 502, 'uncapped high-stat Energy: base 2 + 500');
-  equal(draw.tier, 500, 'high-stat Draw tier');
-  equal(draw.value, 504, 'uncapped high-stat Draw: base 4 + 500');
+  equal(energy.value, 1003, 'uncapped high-stat Energy: base 3 + floor(5000 x 0.2)');
+  equal(draw.value, 1003, 'uncapped high-stat Draw: base 3 + floor(5000 x 0.2)');
 });
 
-// THE PREMISE INVERTED, SO THE CHECK DID TOO. This asserted HP was live to class
-// data; under ruleset 4 neither HP nor Mana reads it. The fixture deliberately
-// carries a maxHp and a maxMana that are BOTH wrong answers, so a row that
-// started reading class data again would be caught rather than merely un-asserted.
+// The fixture carries a maxHp and a maxMana that are BOTH wrong answers, so a
+// row that started reading class data again would be caught.
 check('neither HP nor Mana reads class data, and deriving mutates no input', () => {
   const attributes = { constitution: 10, wisdom: 10 };
   const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
   const before = JSON.stringify({ attributes, classDef });
   equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 30, 'HP ignores class data');
-  equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 0, 'Mana ignores class data');
+  equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 1, 'Mana ignores class data');
   equal(JSON.stringify({ attributes, classDef }), before, 'inputs unchanged');
 });
 
 check('precedence is authored defaults/rows < mode < run < explicit override', () => {
   const rules = resolved({
-    modeModifiers: { rules: { energy: { base: 2, pointsPerTier: 4 } } },
-    runModifiers: [{ rules: { energy: { base: 4, pointsPerTier: 2, gainPerTier: 3 } } }],
-    explicitOverride: { rules: { energy: { base: 7, pointsPerTier: 10 } } },
+    modeModifiers: { rules: { energy: { base: 2, dexterity: 0.5 } } },
+    runModifiers: [{ rules: { energy: { base: 4, dexterity: 1 } } }],
+    explicitOverride: { rules: { energy: { base: 7 } } },
   });
   const out = deriveStat(rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS });
-  equal(out.tier, 1, 'explicit pointsPerTier'); equal(out.raw, 10, 'explicit base plus retained run gain');
+  equal(out.terms.dexterity, 10, 'retained run weight'); equal(out.raw, 17, 'explicit base plus retained run weight');
 });
 
 check('run modifiers apply in listed order before the explicit/debug override', () => {
   const rules = resolved({
     runModifiers: [
-      { rules: { draw: { base: 4, gainPerTier: 2 } } },
+      { rules: { draw: { base: 4, intelligence: 1 } } },
       { rules: { draw: { base: 6 } } },
     ],
-    explicitOverride: { rules: { draw: { gainPerTier: 4 } } },
+    explicitOverride: { rules: { draw: { intelligence: 0.5 } } },
   });
   const out = deriveStat(rules, 'draw', { attributes: { intelligence: 10 }, classDef: CLASS });
-  equal(out.raw, 10, 'later run base 6 + explicit gain 4 x tier 1');
+  equal(out.raw, 11, 'later run base 6 + explicit floor(10 x 0.5)');
 });
 
 check('a mode-level defaults override reaches every row until a row patch replaces it', () => {
   const rules = resolved({ modeModifiers: {
-    defaults: { pointsPerTier: 10 },
-    rules: { energy: { pointsPerTier: 2 } },
+    defaults: { perLevel: 0.5 },
+    rules: { energy: { perLevel: 2 } },
   } });
-  equal(deriveStat(rules, 'draw', { attributes: { intelligence: 10 }, classDef: CLASS }).tier, 1, 'mode default reached Draw');
-  equal(deriveStat(rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).tier, 5, 'row patch replaced mode default');
+  equal(deriveStat(rules, 'draw', { attributes: { intelligence: 1 }, classDef: CLASS, level: 3 }).levelBonus, 1, 'mode default reached Draw');
+  equal(deriveStat(rules, 'energy', { attributes: { dexterity: 1 }, classDef: CLASS, level: 3 }).levelBonus, 4, 'row patch replaced mode default');
 });
 
 const badCases = [
-  ['zero global pointsPerTier', (x) => { x.defaults.pointsPerTier = 0; }, 'defaults.pointsPerTier'],
-  ['unknown rounding word', (x) => { x.rules.draw.rounding = 'bankers'; }, 'rules.draw.rounding'],
+  ['negative global perLevel', (x) => { x.defaults.perLevel = -1; }, 'defaults.perLevel'],
+  ['a rounding word on a ruleset-6 row', (x) => { x.rules.draw.rounding = 'floor'; }, 'rules.draw.rounding'],
   ['non-numeric cap', (x) => { x.rules.energy.cap = 'three'; }, 'rules.energy.cap'],
   ['missing required base', (x) => { delete x.rules.stamina.base; }, 'rules.stamina.base'],
-  ['unknown source attribute', (x) => { x.rules.mana.sourceStat = 'luck'; }, 'rules.mana.sourceStat'],
-  // ASSIGNS THE OBJECT INSTEAD OF REACHING INTO IT. `hp.base` is a NUMBER under
-  // ruleset 4, so `x.rules.hp.base.field = ...` threw TypeError and the plant
-  // reported a crash rather than a verdict. Replacing the whole base keeps the
-  // class-base schema path covered without depending on the shipped table still
-  // using that shape — and nothing does now, so this is its only coverage.
+  ['unknown source attribute', (x) => { x.rules.mana.luck = 1; }, 'rules.mana.luck'],
+  ['negative attribute weight', (x) => { x.rules.hp.constitution = -1; }, 'rules.hp.constitution'],
+  ['a retired tier on a ruleset-6 row', (x) => { x.rules.energy.pointsPerTier = 5; }, 'rules.energy.pointsPerTier'],
+  ['a gain on a ruleset-6 row', (x) => { x.rules.hp.gain = 4; }, 'rules.hp.gain'],
+  ['the retired { every, gain } cadence', (x) => { x.rules.hp.perLevel = { every: 5, gain: 5 }; }, 'rules.hp.perLevel'],
+  // Replacing the whole base keeps the class-base schema path covered without
+  // depending on the shipped table still using that shape.
   ['unknown class base field', (x) => { x.rules.hp.base = { field: 'hitPoints' }; }, 'rules.hp.base.field'],
   ['unknown rule field', (x) => { x.rules.energy.diminishing = true; }, 'rules.energy.diminishing'],
   ['missing required row', (x) => { delete x.rules.draw; }, 'rules.draw'],
@@ -255,7 +263,7 @@ const rootNumericMutants = [
   // that is the only thing here derived from the live table — deriving a number
   // this file is asserting would be the tautology the header refuses.
   ['unsupported positive rulesetVersion', (x) => { x.rulesetVersion = derivedStatRules.rulesetVersion + 1; }, 'rulesetVersion'],
-  ['default pointsPerTier NaN', (x) => { x.defaults.pointsPerTier = Number.NaN; }, 'defaults.pointsPerTier'],
+  ['default perLevel NaN', (x) => { x.defaults.perLevel = Number.NaN; }, 'defaults.perLevel'],
   ['default cap negative', (x) => { x.defaults.cap = -1; }, 'defaults.cap'],
   ['default cap infinite', (x) => { x.defaults.cap = Infinity; }, 'defaults.cap'],
 ];
@@ -267,10 +275,10 @@ for (const [name, mutate, path] of rootNumericMutants) check(`numeric corpus ref
 
 for (const id of Object.keys(derivedStatRules.rules)) {
   const row = derivedStatRules.rules[id];
+  const [attribute] = ruleWeights(row)[0];
   const mutations = [
-    ['gainPerTier NaN', (x) => { x.rules[id].gainPerTier = Number.NaN; }, `rules.${id}.gainPerTier`],
-    ['pointsPerTier zero', (x) => { x.rules[id].pointsPerTier = 0; }, `rules.${id}.pointsPerTier`],
-    ['rounding unknown', (x) => { x.rules[id].rounding = 'truncate'; }, `rules.${id}.rounding`],
+    ['weight NaN', (x) => { x.rules[id][attribute] = Number.NaN; }, `rules.${id}.${attribute}`],
+    ['perLevel negative', (x) => { x.rules[id].perLevel = -0.5; }, `rules.${id}.perLevel`],
     ['cap negative', (x) => { x.rules[id].cap = -1; }, `rules.${id}.cap`],
   ];
   if (typeof row.base === 'number') mutations.push(['base NaN', (x) => { x.rules[id].base = Number.NaN; }, `rules.${id}.base`]);
@@ -283,13 +291,12 @@ for (const id of Object.keys(derivedStatRules.rules)) {
 }
 
 const completenessMutants = [
-  ['missing global pointsPerTier', (x) => { delete x.defaults.pointsPerTier; }, 'defaults.pointsPerTier'],
-  ['missing global rounding', (x) => { delete x.defaults.rounding; }, 'defaults.rounding'],
+  ['missing global perLevel', (x) => { delete x.defaults.perLevel; }, 'defaults.perLevel'],
   ['missing global cap', (x) => { delete x.defaults.cap; }, 'defaults.cap'],
   ['unknown global field', (x) => { x.defaults.threshold = 4; }, 'defaults.threshold'],
+  ['a retired global tier', (x) => { x.defaults.pointsPerTier = 5; }, 'defaults.pointsPerTier'],
   ['unknown root field', (x) => { x.secondRules = {}; }, 'derivedStatRules.secondRules'],
-  ['missing row sourceStat', (x) => { delete x.rules.energy.sourceStat; }, 'rules.energy.sourceStat'],
-  ['missing row gainPerTier', (x) => { delete x.rules.energy.gainPerTier; }, 'rules.energy.gainPerTier'],
+  ['missing row base', (x) => { delete x.rules.energy.base; }, 'rules.energy.base'],
 ];
 for (const [name, mutate, path] of completenessMutants) check(`completeness corpus refuses ${name}`, () => {
   const source = clone(derivedStatRules); mutate(source);
@@ -297,14 +304,18 @@ for (const [name, mutate, path] of completenessMutants) check(`completeness corp
   assert(problems.some((p) => p.path === path), `no problem at ${path}`);
 });
 
+// A LAYER IS READ IN RULESET-6 WORDS, so a retired spelling is refused under
+// the name it is carried by: a zero `pointsPerTier` divisor is named as the
+// `pointsPerIncrease` it becomes.
 const overrideMutants = [
-  ['default pointsPerTier zero', { defaults: { pointsPerTier: 0 } }, 'explicitOverride.defaults.pointsPerTier'],
+  ['default divisor zero', { defaults: { pointsPerTier: 0 } }, 'explicitOverride.defaults.pointsPerIncrease'],
+  ['default perLevel negative', { defaults: { perLevel: -1 } }, 'explicitOverride.defaults.perLevel'],
   ['default rounding unknown', { defaults: { rounding: 'truncate' } }, 'explicitOverride.defaults.rounding'],
   ['default cap negative', { defaults: { cap: -1 } }, 'explicitOverride.defaults.cap'],
   ['rule base NaN', { rules: { energy: { base: Number.NaN } } }, 'explicitOverride.rules.energy.base'],
-  ['rule source unknown', { rules: { energy: { sourceStat: 'luck' } } }, 'explicitOverride.rules.energy.sourceStat'],
-  ['rule pointsPerTier zero', { rules: { energy: { pointsPerTier: 0 } } }, 'explicitOverride.rules.energy.pointsPerTier'],
-  ['rule gainPerTier NaN', { rules: { energy: { gainPerTier: Number.NaN } } }, 'explicitOverride.rules.energy.gainPerTier'],
+  ['rule attribute unknown', { rules: { energy: { luck: 1 } } }, 'explicitOverride.rules.energy.luck'],
+  ['rule weight negative', { rules: { energy: { dexterity: -1 } } }, 'explicitOverride.rules.energy.dexterity'],
+  ['rule perLevel negative', { rules: { energy: { perLevel: -1 } } }, 'explicitOverride.rules.energy.perLevel'],
   ['rule rounding unknown', { rules: { energy: { rounding: 'truncate' } } }, 'explicitOverride.rules.energy.rounding'],
   ['rule cap negative', { rules: { energy: { cap: -1 } } }, 'explicitOverride.rules.energy.cap'],
   ['unknown override field', { debugMagic: true }, 'explicitOverride.debugMagic'],
@@ -318,8 +329,8 @@ for (const [name, explicitOverride, path] of overrideMutants) check(`override co
 
 check('the same override validator guards mode and every run layer by its own path', () => {
   let modeMessage = '';
-  try { resolved({ modeModifiers: { defaults: { pointsPerTier: 0 } } }); } catch (error) { modeMessage = error.message; }
-  assert(modeMessage.includes('modeModifiers.defaults.pointsPerTier'), `mode path absent: ${modeMessage}`);
+  try { resolved({ modeModifiers: { defaults: { perLevel: -1 } } }); } catch (error) { modeMessage = error.message; }
+  assert(modeMessage.includes('modeModifiers.defaults.perLevel'), `mode path absent: ${modeMessage}`);
   let runMessage = '';
   try { resolved({ runModifiers: [{}, { rules: { draw: { cap: -1 } } }] }); } catch (error) { runMessage = error.message; }
   assert(runMessage.includes('runModifiers[1].rules.draw.cap'), `run path absent: ${runMessage}`);
@@ -345,7 +356,7 @@ check('resume derives from the saved snapshot, never changed live rules', () => 
   const snap = createDerivedStatRuleSnapshot(derivedStatRules, { authority: 'host', attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'], classDef: CLASS });
   const changed = clone(derivedStatRules); changed.rules.energy.base = 99;
   const restored = restoreDerivedStatRuleSnapshot(JSON.parse(JSON.stringify(snap)), { attributeIds: ATTRIBUTE_IDS });
-  equal(deriveStat(restored.rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 3, 'resumed Energy');
+  equal(deriveStat(restored.rules, 'energy', { attributes: { dexterity: 10 }, classDef: CLASS }).value, 5, 'resumed Energy');
   equal(changed.rules.energy.base, 99, 'control mutation');
 });
 

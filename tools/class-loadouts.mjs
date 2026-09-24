@@ -28,8 +28,10 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the authored role copies stop summing to the starting deck size',
         file: 'src/content/balance.js',
-        find: 'roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1, ability: 1 }',
-        replace: 'roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1, ability: 1 }',
+        // The object spans lines since its note moved in beside it (#1243);
+        // the numbers still sit on one line, and this still breaks the sum.
+        find: 'roleCopies: {\n      attack: 4, guard: 4, technique: 1, signature: 1, ability: 1,',
+        replace: 'roleCopies: {\n      attack: 5, guard: 4, technique: 1, signature: 1, ability: 1,',
         expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
       },
       {

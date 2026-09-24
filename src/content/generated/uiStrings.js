@@ -2019,6 +2019,167 @@ export const uiStrings = [
     "tip": "Hold to answer"
   },
   {
+    "id": "questBoard.eyebrow",
+    "extends": "",
+    "short": "Quest board",
+    "full": "The quests offered in this town and the ones you carry.",
+    "tip": "Quest board"
+  },
+  {
+    "id": "questBoard.title",
+    "extends": "",
+    "short": "Notices",
+    "full": "The board's notices: quests offered anywhere in this town.",
+    "tip": "Notices"
+  },
+  {
+    "id": "questBoard.status",
+    "extends": "",
+    "short": "{ready} to collect · {open} to accept",
+    "full": "How many of the board's quests you can answer now.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.empty",
+    "extends": "",
+    "short": "No quests are posted in this town.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.offer.meta",
+    "extends": "",
+    "short": "Reward: {reward} cinders · Objective: {objective}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.offer.noObjective",
+    "extends": "",
+    "short": "the marked road",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.accepted",
+    "extends": "",
+    "short": "Explore the marked road",
+    "full": "You carry this quest; complete its objective and return.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.done",
+    "extends": "",
+    "short": "Done",
+    "full": "You have completed this quest and collected its reward.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.closed",
+    "extends": "",
+    "short": "Not open",
+    "full": "This quest's road is not open in this journey.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.heading",
+    "extends": "",
+    "short": "Journal",
+    "full": "The quests this run has started and completed.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.started",
+    "extends": "",
+    "short": "Started",
+    "full": "Quests you carry and have not finished.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.completed",
+    "extends": "",
+    "short": "Completed",
+    "full": "Quests this run has completed.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.noneStarted",
+    "extends": "",
+    "short": "No quest under way.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.noneCompleted",
+    "extends": "",
+    "short": "No quest completed yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.leave",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Leave the board.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.open",
+    "extends": "",
+    "short": "Quest board",
+    "full": "Read the town's quest board.",
+    "tip": "Quest board"
+  },
+  {
+    "id": "questBoard.open.summary",
+    "extends": "",
+    "short": "{ready} to collect · {open} to accept",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.accept",
+    "extends": "",
+    "short": "Accept the quest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.collect",
+    "extends": "",
+    "short": "Collect {reward} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.leave",
+    "extends": "",
+    "short": "Not now",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.accept",
+    "extends": "",
+    "short": "You take the notice. The road is marked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.collect",
+    "extends": "",
+    "short": "{speaker} counts out {reward} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.leave",
+    "extends": "",
+    "short": "You leave the notice on the board.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "armoury.title",
     "extends": "",
     "short": "Armoury",
