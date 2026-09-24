@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Behind the scenes: the architecture check passes again",
-    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\". The phone edition's copies of the Crownfall prologue pictures are regenerated at the size the phone build expects, after #1307 left one a pixel narrow.",
-    "build": "0.7.1.477",
+    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\". The phone edition's copies of the Crownfall prologue pictures are regenerated at the size the phone build expects, after #1307 left one a pixel narrow, and the traveller's resize handle in the prologue scene editor now sits on the traveller at any interface zoom rather than drifting away from it.",
+    "build": "0.7.1.473",
     "pullRequest": 1306,
     "url": "https://github.com/cehinds/AshenSpire/pull/1306"
+  },
+  {
+    "id": "pr-1295",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A restored profile shows its real Cinder multiplier straight away",
+    "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1295,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1295"
   },
   {
     "id": "pr-1302",
