@@ -171,7 +171,9 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
     const options = app.querySelectorAll('.coop-boss-relic');
     assert.deepEqual(options.map((o) => o.dataset.relicId), BOSS.slice(0, 3));
     options[1].click();
-    assert.equal(sent.length, 1, 'one tap, one message');
+    assert.equal(sent.length, 0, 'a tap stages the relic; Continue sends the door (coop-parity)');
+    app.querySelector('.coop-continue').click();
+    assert.equal(sent.length, 1, 'one completion, one message');
     assert.equal(sent[0].t, 'chooseReward');
     assert.equal(sent[0].pick.relicId, BOSS[1]);
     assert.equal(sent[0].pick.takeRelic, true);
@@ -184,7 +186,8 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
     const cuOptions = cu.app.querySelectorAll('.coop-boss-relic');
     assert.equal(cuOptions.length, 3);
     cuOptions[2].click();
-    assert.deepEqual(cu.sent.at(-1), { ...cu.sent.at(-1), t: 'catchupChoice', index: 0, pick: { takeRelic: true, relicId: BOSS[2] } });
+    cu.app.querySelector('.coop-continue').click();
+    assert.deepEqual(cu.sent.at(-1), { ...cu.sent.at(-1), t: 'catchupChoice', index: 0, pick: { ...cu.sent.at(-1).pick, takeRelic: true, relicId: BOSS[2] } });
 
     // An elite offer still shows the single 'Take the relic'.
     const elite = await mountCoopScreen({
@@ -195,6 +198,7 @@ test('the co-op reward screen lays out one option per boss relic and sends the o
     const single = elite.app.querySelectorAll('.coop-relic-take');
     assert.equal(single.length, 1);
     single[0].click();
+    elite.app.querySelector('.coop-continue').click();
     assert.equal(elite.sent.at(-1).pick.relicId, 'forsakenMedallion');
   } finally {
     globalThis.setInterval = realInterval;

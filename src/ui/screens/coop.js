@@ -1109,8 +1109,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   const waiting = (text) => flavour(text, { class: 'coop-note' });
   /** A way on: the kit's OptionCard, no chevron, with the seat's data hooks. */
-  function choice({ name, description = '', glyph: g = '', disabled = false, reason = '', attrs = {}, className = '' }) {
-    const card = optionCard({ glyph: g, name, description, arrow: false, disabled, attrs, className });
+  function choice({ name, description = '', glyph: g = '', disabled = false, reason = '', attrs = {}, className = '', selected = false }) {
+    const card = optionCard({ glyph: g, name, description, arrow: false, disabled, attrs, className, selected });
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
@@ -1123,15 +1123,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
    */
   // Each option carries its own listener (`onPick(relicId)`), so the id it
   // keeps is bound where the option is made, never re-read from the DOM.
-  function relicTakes(offer, dataKey, onPick) {
+  function relicTakes(offer, dataKey, onPick, chosenId = null) {
     const ids = offeredRelicIds(offer);
     if (!ids.length) return [];
     const single = offer.relicId || ids.length === 1;
     return (single ? ids.slice(0, 1) : ids).map((id) => {
       const def = registries.relics.get(id);
       const card = single
-        ? choice({ glyph: '◆', name: 'Take the relic', description: def.name, className: 'coop-take coop-relic-take', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } })
-        : choice({ glyph: def.icon || '◆', name: def.name, description: relicText(def, registries), className: 'coop-take coop-relic-take coop-boss-relic', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } });
+        ? choice({ glyph: '◆', name: 'Take the relic', description: def.name, selected: chosenId === id, className: 'coop-take coop-relic-take', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } })
+        : choice({ glyph: def.icon || '◆', name: def.name, description: relicText(def, registries), selected: chosenId === id, className: 'coop-take coop-relic-take coop-boss-relic', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } });
       card.addEventListener('click', () => onPick(id));
       return card;
     });
@@ -1142,13 +1142,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
    * it takes. `takeable` (the host's catch-up reading) draws a stale option
    * disabled with its reason; the host refuses it either way.
    */
-  function chestTakes(offer, takeable, dataKey, onPick) {
+  function chestTakes(offer, takeable, dataKey, onPick, chosenIndex = null) {
     const list = offer && offer.chest && Array.isArray(offer.chest.options) ? offer.chest.options : [];
     return list.map((option, i) => {
       const view = chestOptionView(registries, option);
       const open = !Array.isArray(takeable) || takeable[i] !== false;
       const card = choice({
-        glyph: view.glyph, name: `${view.label}: ${view.name}`, disabled: !open,
+        glyph: view.glyph, name: `${view.label}: ${view.name}`, disabled: !open, selected: open && chosenIndex === i,
         reason: open ? '' : 'This no longer fits your deck: it changed since the chest was rolled. Choose another.',
         className: 'coop-take coop-chest-option', attrs: { dataset: { [dataKey]: 'chest', chestIndex: String(i) } },
       });
@@ -1159,25 +1159,45 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return card;
     });
   }
+  // ONE DOOR, ONE COMPLETION (like solo's Continue). A reward door offers a
+  // card, a relic (or a boss choice), a flask and an elite chest; each tap
+  // only STAGES that row's pick, and Continue sends the whole pick at once —
+  // the host grants every staged row in one message and marks the seat done.
+  // Sending on the first tap closed the door on the rest (a chest tap lost the
+  // card, a card tap lost the chest). The staged pick survives re-renders
+  // (other seats' snapshots) for as long as the same door stands.
+  let staged = { key: null, pick: null };
+  function stagedPick(key) {
+    if (staged.key !== key) staged = { key, pick: { cardId: null, takeRelic: false, relicId: null, flask: false, chestIndex: null } };
+    return staged.pick;
+  }
+  const toggle = (pick, field, value) => { pick[field] = pick[field] === value ? (field === 'flask' ? false : null) : value; };
+  // The door's rows, each tap staging into `pick`; `onDone(pick)` sends it.
+  function spoilsRows(offer, { takeable = null, dataKey, pick, onDone, relicOnly = false }) {
+    const grid = relicOnly ? null : el('div', { class: 'reward-row' });
+    for (const cid of relicOnly ? [] : offer.cardIds || []) {
+      const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
+      if (pick.cardId === cid) { card.classList.add('selected'); card.setAttribute('aria-pressed', 'true'); }
+      card.addEventListener('click', () => { toggle(pick, 'cardId', cid); render(); });
+      grid.appendChild(card);
+    }
+    const relics = relicTakes(offer, dataKey, (relicId) => { toggle(pick, 'relicId', relicId); pick.takeRelic = pick.relicId != null; render(); }, pick.relicId);
+    const chest = relicOnly ? [] : chestTakes(offer, takeable, dataKey, (i) => { toggle(pick, 'chestIndex', i); render(); }, pick.chestIndex);
+    const flask = !relicOnly && offer.flaskId
+      ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, selected: pick.flask, className: 'coop-take', attrs: { dataset: { [dataKey]: 'flask' } } })
+      : null;
+    if (flask) flask.addEventListener('click', () => { toggle(pick, 'flask', true); render(); });
+    const any = pick.cardId || pick.relicId || pick.flask || pick.chestIndex != null;
+    const done = choice({ glyph: '›', name: any ? 'Continue' : 'Skip all', description: any ? 'Take what you chose.' : 'Leave the spoils behind.', className: 'coop-continue', attrs: { dataset: { [dataKey]: 'done' } } });
+    done.addEventListener('click', () => onDone({ ...pick }));
+    return { grid, relics, chest, takes: [...relics, flask, done] };
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
-    if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
+    if (!offer || (snap.scene.chosen && snap.scene.chosen[me])) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
     const stone = offer.smithingStoneReceipt;
-    const grid = el('div', { class: 'reward-row' });
-    let pick = { cardId: null, takeRelic: false, relicId: null, flask: false };
-    const submit = () => send({ t: 'chooseReward', pick });
-    offer.cardIds.forEach((cid) => {
-      const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
-      card.addEventListener('click', () => { pick.cardId = cid; submit(); });
-      grid.appendChild(card);
-    });
-    const relics = relicTakes(offer, 'take', (relicId) => { pick.takeRelic = true; pick.relicId = relicId; submit(); });
-    const chest = chestTakes(offer, offer.chestTakeable, 'take', (chestIndex) => { pick.chestIndex = chestIndex; submit(); });
-    const takes = [
-      ...relics,
-      offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
-      choice({ glyph: '›', name: 'Skip the card', attrs: { dataset: { take: 'skip' } } }),
-    ];
+    const pick = stagedPick(`reward:${snap.actNumber}:${snap.floor}:${JSON.stringify(offer)}`);
+    const { grid, relics, chest, takes } = spoilsRows(offer, { dataKey: 'take', pick, onDone: (p) => send({ t: 'chooseReward', pick: p }) });
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
       note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
@@ -1186,12 +1206,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         relics.length > 1 ? subtitle(t('reward.relic.eyebrow')) : null,
         chest.length ? subtitle(t('reward.chest.eyebrow')) : null,
         chest.length ? options(chest, { class: 'coop-choices coop-chest' }) : null,
-        options(takes, { class: 'coop-choices' }),
+        options(takes.filter(Boolean), { class: 'coop-choices' }),
       ],
-    });
-    app.querySelectorAll('[data-take]').forEach((b) => {
-      if (b.dataset.take === 'relic' || b.dataset.take === 'chest') return; // wired where made
-      b.addEventListener('click', () => { if (b.dataset.take === 'flask') pick.flask = true; submit(); });
     });
   }
   function renderShrine() {
@@ -1351,30 +1367,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }));
       return;
     }
-    const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
-    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
-    const takeRelic = (relicId) => resolve({ takeRelic: true, relicId });
-    const relics = item.type === 'reward' ? relicTakes(item.offer, 'cu', takeRelic)
-      : item.type === 'treasure' && item.relicId ? relicTakes({ relicId: item.relicId }, 'cu', takeRelic) : [];
-    // A missed elite chest replays its STORED options (SPEC §3.8.1, co-op).
-    const chest = item.type === 'reward' ? chestTakes(item.offer, item.chestTakeable, 'cu', (chestIndex) => resolve({ chestIndex })) : [];
+    const offer = item.type === 'reward' ? item.offer : { cardIds: [], relicId: item.relicId || null };
+    const pick = stagedPick(`cu:${remaining}:${JSON.stringify(item)}`);
+    const { grid, relics, chest, takes } = spoilsRows(offer, {
+      takeable: item.chestTakeable, dataKey: 'cu', pick, relicOnly: item.type !== 'reward',
+      onDone: (p) => send({ t: 'catchupChoice', index: 0, pick: p }),
+    });
     sceneDoor({
       title, eyebrow: debt,
       note: 'Claim what you would have earned while away.',
       children: [
         grid,
+        relics.length > 1 ? subtitle(t('reward.relic.eyebrow')) : null,
         chest.length ? subtitle(t('reward.chest.eyebrow')) : null,
         chest.length ? options(chest, { class: 'coop-choices coop-chest' }) : null,
-        options([
-          ...relics,
-          choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
-        ], { class: 'coop-choices' }),
+        options(takes.filter(Boolean), { class: 'coop-choices' }),
       ],
     });
-    if (grid) {
-      item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
-    }
-    app.querySelectorAll('[data-cu]').forEach((b) => { if (b.dataset.cu !== 'relic' && b.dataset.cu !== 'chest') b.addEventListener('click', () => resolve({})); });
   }
   function renderComplete() {
     const win = snap.scene.victory;

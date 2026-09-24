@@ -355,6 +355,7 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     assert.deepEqual(opts.map((o) => o.dataset.chestIndex), ['0', '1', '2']);
     assert.equal(app.querySelectorAll('.coop-relic-take').length, 0, 'no single relic beside the chest');
     opts[2].click();
+    app.querySelector('.coop-continue').click();
     assert.equal(sent.length, 1);
     assert.equal(sent[0].t, 'chooseReward');
     assert.equal(sent[0].pick.chestIndex, 2);
@@ -369,7 +370,9 @@ test('the co-op reward door lays out the chest and sends the index tapped; a sta
     cuOpts[1].click();
     assert.equal(cu.sent.filter((m) => m.t === 'catchupChoice').length, 0, 'a disabled option sends nothing');
     cuOpts[0].click();
-    assert.deepEqual(cu.sent.at(-1), { ...cu.sent.at(-1), t: 'catchupChoice', index: 0, pick: { chestIndex: 0 } });
+    cu.app.querySelector('.coop-continue').click();
+    assert.equal(cu.sent.at(-1).t, 'catchupChoice');
+    assert.equal(cu.sent.at(-1).pick.chestIndex, 0);
   } finally {
     globalThis.setInterval = realInterval;
   }
@@ -388,4 +391,43 @@ test('a seat that re-sends its chest pick is granted the chest once', () => {
   S.chooseReward('p1', { chestIndex: 0 });
   S.chooseReward('p1', { chestIndex: 1 });
   assert.equal(m1.run.cinders, before + 77, 'one chest option, once');
+});
+
+test('one elite door: the card AND a chest option are staged and land together (Codex P1)', async () => {
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const offer = { pool: 'elite', cardIds: ['stomp', 'executioner'], cinders: 1, chest: { options: OPTIONS } };
+    const { app, sent } = await mountCoopScreen({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: offer } } });
+    app.querySelectorAll('.coop-chest-option')[2].click();
+    assert.equal(sent.length, 0, 'a chest tap does not close the door');
+    app.querySelectorAll('.reward-row .card')[1].click();
+    assert.equal(sent.length, 0, 'nor does a card tap');
+    assert.equal(app.querySelectorAll('.coop-chest-option')[2].className.includes('is-selected'), true, 'the staged chest option stays marked');
+    app.querySelector('.coop-continue').click();
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].pick.cardId, 'executioner');
+    assert.equal(sent[0].pick.chestIndex, 2);
+
+    // The host lands both from that one message, in a one-seat session.
+    const S = createSession({ registries: REG, seedString: 'SOLOSEAT' });
+    S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
+    S.start();
+    S.session.cursorId = Object.keys(S.session.mapGraph.nodes)[0];
+    const m = seat(S, 'p1');
+    S.session.scene = { kind: 'reward', pool: 'elite', offers: { p1: offer }, chosen: {}, afterReward: null };
+    const deck = m.run.deck.length;
+    const cinders = m.run.cinders;
+    assert.equal(S.chooseReward('p1', sent[0].pick).ok, true);
+    assert.equal(m.run.deck.length, deck + 1);
+    assert.equal(m.run.deck.at(-1).cardId, 'executioner');
+    assert.equal(m.run.cinders, cinders + 90);
+    // Once per seat still holds: a repeat grants nothing more.
+    S.session.scene = { kind: 'reward', pool: 'elite', offers: { p1: offer }, chosen: {}, afterReward: null, claimed: { p1: { card: true, chest: true } } };
+    S.chooseReward('p1', sent[0].pick);
+    assert.equal(m.run.deck.length, deck + 1);
+    assert.equal(m.run.cinders, cinders + 90);
+  } finally {
+    globalThis.setInterval = realInterval;
+  }
 });

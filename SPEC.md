@@ -455,8 +455,10 @@ object in its catch-up entry, so the catch-up replays the stored options and nev
   drawn, so no payload roll is spent on it). A co-op chest therefore offers up to three of
   `relic`, `upgrade`, `cinders`.
 - **Claim.** A pick names one option by index (`chooseReward` / `resolveCatchup` with
-  `chestIndex`), and like every co-op take it is the seat's one pick for that door (a card, a
-  relic, a flask, or a chest option). The host grants it through `applyChestOption`, the solo
+  `chestIndex`). The co-op door, like solo's, lets a seat take a row of each kind — the card,
+  the relic, the flask and one chest option: each tap only stages its row and the seat's single
+  **Continue** ("Skip all" with nothing staged) sends the whole pick in one message, which the
+  host grants row by row, once per seat (`scene.claimed`), before marking the seat done. The host grants it through `applyChestOption`, the solo
   grant; an index outside the stored options lands nothing. A pick that **cannot land now** is
   refused with nothing mutated and the door stays open: only a catch-up can meet one, when an
   earlier replayed entry has since upgraded or removed the deck instance an `owned` upgrade
