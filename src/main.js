@@ -108,7 +108,9 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, freezeFigures, playKillCam, guardHitFloatParts } from './ui/fx.js';
+import { killCamPlan, hitStopMs } from './ui/models/CombatJuiceModel.js';
+import { playPoseOn } from './ui/services/PoseAnimator.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -781,6 +783,7 @@ function applyDisplaySettings(settings) {
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
   document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
+  document.body.classList.toggle('no-killcam', !settingOn(settings, 'killCam')); // SPEC §7.4 combat juice
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
@@ -2702,6 +2705,8 @@ function poseFxShowcase() {
   const enemies = [...document.querySelectorAll('.combatant.enemy .sprite')];
   const player = document.querySelector('.combatant.player .sprite');
   if (!layer || !enemies.length || !player) return;
+  const juice = shotParams.get('shotFx');
+  if (juice === 'hitstop' || juice === 'killcam') { poseCombatJuice(juice, layer, enemies[0], player); return; }
   // Container: THE FX LAYER — these are `position: absolute` children of
   // `.fx-layer`, so the layer is the containing block and the bound, NOT the
   // viewport (the layer is `inset: 0` over the combat board only).
@@ -2760,6 +2765,44 @@ function poseFxShowcase() {
       e1.firstElementChild.style.animationPlayState = 'paused';
     }
   }
+}
+
+// ?shot=fx&shotFx=hitstop|killcam — SPEC §7.4 combat juice, posed through the
+// SAME fx.js helpers the paced timeline calls, held open (ms = Infinity) so
+// the frame can be photographed. Dev-only; the decisions are the model's.
+function poseCombatJuice(kind, layer, target, player) {
+  const ctx = { layer, combatEl: document.querySelector('.combat') };
+  window.__juiceShot = kind;
+  // floatNum schedules its own removal; a held copy outlives it, paused mid-pop.
+  const hold = (el, atMs) => {
+    if (!el) return;
+    const kept = el.cloneNode(true);
+    kept.style.animationDelay = `-${atMs}ms`;
+    kept.style.animationPlayState = 'paused';
+    el.replaceWith(kept);
+  };
+  if (kind === 'hitstop') {
+    // A 38-damage crit: its float at its in-tier scale, the slash, the victim
+    // on its impact frame, and the attacker held mid-lunge.
+    const parts = guardHitFloatParts({ amount: 38, blocked: 0 });
+    hold(fxFloatNum(layer, target, parts.damage.text, parts.damage.cls, null, { jitter: false, scale: parts.damage.scale }), 200);
+    target.classList.add('hitflash', 'hit-heavy');
+    target.style.setProperty('--hurt-duration', '380ms');
+    player.classList.add('act-attack');
+    for (const a of (player.closest('[data-eid]') || player).getAnimations({ subtree: true })) {
+      const d = Number(a.effect?.getComputedTiming?.().duration);
+      if (Number.isFinite(d)) a.currentTime = d * 0.55;
+    }
+    freezeFigures({ targets: [target], sources: [player] }, Infinity);
+    window.__juiceHitStopMs = hitStopMs(38);
+    return;
+  }
+  // Kill cam on a boss-rank kill: the ✝, the defeated pose, zoom + vignette.
+  hold(fxFloatNum(layer, target, '✝', 'dmg heavy', null, { jitter: false }), 260);
+  playPoseOn(target, 'defeated');
+  const plan = killCamPlan({ rank: 'boss' }, {});
+  playKillCam(ctx, target, { ...plan, ms: Infinity });
+  window.__juiceKillCamMs = plan.ms;
 }
 
 // Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
