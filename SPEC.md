@@ -1689,7 +1689,7 @@ Three things this list once excluded have since shipped and are no longer non-go
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The one item still open is the elite count for 1.0 in §12.4. Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
+**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The items still open are the elite count for 1.0 in §12.4 and the Power resting stance in §12.5 (stage 3 rows P6 and P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
 
 ### 12.1 Dodge and action feedback
 
