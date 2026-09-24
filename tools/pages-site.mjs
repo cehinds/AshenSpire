@@ -387,6 +387,11 @@ function assemble(outDir, keep) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
+  // The build/ and dist/ aliases fetch the shipped score from beside themselves
+  // (content/music.js SHIPPED_MUSIC_FOLDER); git carries it only at the root.
+  if (existsSync(join(outDir, 'music'))) {
+    for (const alias of ['build', 'dist']) if (existsSync(join(outDir, alias))) cpSync(join(outDir, 'music'), join(outDir, alias, 'music'), { recursive: true });
+  }
   writeFileSync(join(outDir, '.nojekyll'), '');
 
   let checks = 0;
