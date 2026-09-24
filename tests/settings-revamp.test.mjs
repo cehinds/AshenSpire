@@ -446,8 +446,11 @@ test('a profile that cannot be saved is not left applied', async () => {
   const { applyProfile } = await import('../src/ui/components/settingsSync.js');
   const settings = { screenShake: false, reducedMotion: true };
   const parsed = { changes: { screenShake: true, musicVolume: 20 }, cleared: ['reducedMotion'] };
-  assert.throws(() => applyProfile(settings, () => ({ ok: false }), parsed, {}), /could not be saved/);
+  const calls = [];
+  assert.throws(() => applyProfile(settings, (c) => { calls.push(c); return { ok: false }; }, parsed, {}), /could not be saved/);
   assert.deepEqual(settings, { screenShake: false, reducedMotion: true });
+  assert.deepEqual(calls[1], { screenShake: false, musicVolume: undefined, reducedMotion: true },
+    'the old values go back through onChange too, so the live state follows');
 });
 
 test('navigate() reads its own cursor, and a refused token write is reported', async () => {

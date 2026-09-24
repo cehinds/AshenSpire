@@ -59,10 +59,15 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   }
   const result = onChange(changed);
   if (result?.ok === false) {
-    // Not saved, so not applied: put every value back as it was.
+    // Not saved, so not applied: put every value back as it was — here, and
+    // through the same onChange, so the game's own settings and the live
+    // display and audio (applied before the save was refused) go back too.
+    const back = {};
     for (const [key, before] of Object.entries(had)) {
+      back[key] = before ? before.value : undefined;
       if (before) settings[key] = before.value; else delete settings[key];
     }
+    onChange(back);
     throw new Error('Settings could not be saved on this device.');
   }
   return diff.length;
