@@ -60,8 +60,16 @@ check(rogue?.startingSignatureCard === 'ambush' && rogueCards.some((card) => car
   'Ambush is the Rogue starter signature');
 check(rogue?.startingRelic === 'cutpursesCoin' && bundle.relics.some((row) => row.id === 'cutpursesCoin' && row.rarity === 'starter'),
   "Cutpurse's Coin is the Rogue starter relic");
-check(JSON.stringify(rogue?.startingFlaskAllocation) === JSON.stringify({ hp: 3, mana: 1 }),
-  'Rogue starts with 3 Crimson / 1 Azure charge');
+// The split is the class row's; the pool it must fill is balance.flaskCapacity.
+// Both are tunable content, so neither is a literal here.
+const flaskCapacity = bundle.balance.flaskCapacity;
+const flaskSplit = rogue?.startingFlaskAllocation;
+check(Number.isSafeInteger(flaskCapacity) && flaskCapacity > 0
+  && Number.isSafeInteger(flaskSplit?.hp) && flaskSplit.hp >= 0
+  && Number.isSafeInteger(flaskSplit?.mana) && flaskSplit.mana >= 0
+  && flaskSplit.hp + flaskSplit.mana === flaskCapacity,
+  `Rogue starts with ${flaskSplit?.hp} Crimson / ${flaskSplit?.mana} Azure, filling the ${flaskCapacity}-charge flask pool`,
+  `allocation ${JSON.stringify(flaskSplit)}; flaskCapacity ${flaskCapacity}`);
 
 const tuned = bundle.attributeRules?.presets?.tuned?.rogue;
 check(JSON.stringify(tuned) === JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }),
@@ -126,8 +134,9 @@ check(Number.isSafeInteger(deckSize) && run?.deck?.length === deckSize
   && run.deck.filter((card) => card.cardId === rogue?.abilityCard).length === 1,
   `Rogue starts with the startingDeckSize ${deckSize}-card deck, one Ambush and one Prepare`,
   `deck ${run?.deck?.length}: ${(run?.deck || []).map((card) => card.cardId).join(', ')}`);
-check(run?.flaskCharges?.capacity === 4 && run.flaskCharges.hp === 3 && run.flaskCharges.mana === 1,
-  'Rogue run carries the authored 4-charge 3/1 split', JSON.stringify(run?.flaskCharges));
+check(run?.flaskCharges?.capacity === flaskCapacity
+  && run.flaskCharges.hp === flaskSplit?.hp && run.flaskCharges.mana === flaskSplit?.mana,
+  `Rogue run carries the authored ${flaskCapacity}-charge ${flaskSplit?.hp}/${flaskSplit?.mana} split`, JSON.stringify(run?.flaskCharges));
 
 console.log(`\nrogue-parity: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
