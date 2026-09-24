@@ -348,6 +348,23 @@ function endPlayerTurn(combat, discardIds = []) {
   drainQueue(combat);
   if (combat.result) return;
 
+  // …then each card still in hand fires its authored `onTurnEndInHand` effect
+  // list (e.g. Guilt: lose 1 HP, SPEC §5.2). Content owns the numbers; the
+  // engine only walks the hand, before the hand is discarded.
+  let inHandFired = false;
+  for (const card of [...combat.piles.hand]) {
+    const hook = resolveCard(combat.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      combat.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(combat);
+    if (combat.result) return;
+  }
+
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -889,6 +906,22 @@ function effectiveCost(combat, def) {
   })).action;
 }
 
+// What playing this card costs right now, in every pool: Actions (X spends
+// them all), Mana and Stamina, weight class and relic reductions applied. The
+// one pricing doPlayCard pays, exported so a bot can ask before it plays.
+function playCosts(combat, def) {
+  const weightClass = playerWeightClass(combat).weightClass;
+  const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
+  return { energy: def.cost === 'X' ? combat.player.energy : effectiveCost(combat, def), mana: pools.mana, stamina: pools.stamina };
+}
+
+/** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
+export function cardPlayCosts(combat, cardInstanceId) {
+  const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  return playCosts(combat, resolveCard(combat.registries, inst));
+}
+
 function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (combat.phase !== 'player') throw new Error('Cards can only be played on the player turn');
   const p = combat.player;
@@ -902,10 +935,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
-  const cost = isX ? p.energy : effectiveCost(combat, def);
-  const pools = F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }));
-  const manaCost = pools.mana;
-  const staminaCost = pools.stamina;
+  const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);

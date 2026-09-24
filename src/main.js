@@ -20,12 +20,11 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
-import { resolveHandRules } from './model/handRules.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyAdvancedSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
-import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
+import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
@@ -39,7 +38,7 @@ import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
-import { createCombat } from './engine/combat.js';
+import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
 import { equippedPieces } from './model/loadout.js';
@@ -86,7 +85,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -111,6 +110,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { SHIPPED_MUSIC_FOLDER } from './content/music.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
@@ -306,7 +306,7 @@ let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 // the readers each apply for themselves — one that skipped it would show a
 // different number from one that did. Rewritten once, here, so the settings
 // row, the item card, the export and the fight are looking at one key.
-if (hasLegacyItemRatingSettings(activeSettings)) {
+if (hasLegacyAdvancedSettings(activeSettings)) {
   // Whatever the rewrite could not carry across exactly — a fractional plus, a
   // sum past a row's ceiling, a set's Poise that is also its weight — is said
   // here as well as at the import door, so a profile is never migrated in
@@ -810,7 +810,11 @@ function applyDisplaySettings(settings) {
   // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
   applyLoreType(settings);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
-  document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
+  // A profile that never touched the row — or holds a value the row does not
+  // offer — gets the row's default (compact), as the settings screen shows it.
+  const densityRow = settingsRow('mapHeaderDensity');
+  const density = densityRow.choices.includes(settings.mapHeaderDensity) ? settings.mapHeaderDensity : densityRow.def;
+  document.body.classList.toggle('map-compact', density === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
   // The quick-menu experiment. Handed to the component the same way input.js is
@@ -842,8 +846,11 @@ function applyDisplaySettings(settings) {
   audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
-  // re-fetching the manifest on every unrelated settings tweak).
-  const folder = settings.musicFolder || '';
+  // re-fetching the manifest on every unrelated settings tweak). Blank means the
+  // score shipped beside the page (content/music.js SHIPPED_MUSIC_FOLDER) when
+  // served over http(s); a file:// page cannot fetch it and keeps the synth.
+  const served = /^https?:$/.test(globalThis.location?.protocol || '');
+  const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
   if (folder !== lastMusicFolder) {
     lastMusicFolder = folder;
     audio.configureMusic({ folder });
@@ -2158,56 +2165,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createCombat({
-    ratingsRules: registries.balance.combatRatings || null,
-    handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createRunCombat({
     registries,
     rng,
-    player: {
-      classId: run.class,
-      attributes: run.attributes,
-      // The rule this run was born with, so the Poise vessel combat stamps
-      // is the one its character sheet shows (plan phase 9).
-      derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
-      skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
-      coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
-      maxHp: run.maxHp,
-      hp: run.hp,
-      maxMana: run.maxMana,
-      mana: run.mana,
-      maxStamina: run.maxStamina,
-      stamina: run.stamina,
-      energyMax: run.energyMax,
-      drawPerTurn: run.drawPerTurn,
-      damageBySchoolAdd: run.damageBySchoolAdd,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
-      removedAttackSlotIds: run.removedAttackSlotIds,
-      equipmentPoolDeficits: run.equipmentPoolDeficits,
-      itemUpgradeLevels: run.itemUpgradeLevels,
-      itemMounts: run.itemMounts,
-      armamentLevels: run.armamentLevels,
-      deck: run.deck,
-      relicIds: run.relics,
-      flasks: run.flasks,
-      flaskCharges: run.flaskCharges,
-      loadout: run.loadout,
-      // The shot door's override, when parked (null otherwise — createCombat
-      // then derives the threshold from the loadout receipt, the real path).
-      ...(shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {}),
-    },
+    run,
+    settings: saves.loadMeta().settings || {},
+    // The shot door's override, when parked (null otherwise — createCombat
+    // then derives the threshold from the loadout receipt, the real path).
+    player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
-    // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
-    // point the other per-fight rules are decided — Settings → Advanced changes
-    // it for the NEXT fight, which is what the row's note promises, and is why
-    // there is no live re-read inside the swap.
-    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
-    // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
-    // enter through the same door Custom Climb buffs already used — the engine
-    // has no equipment code, only statuses applied at combat start.
-    playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
+    playerStatuses: cm.playerStatuses,
   });
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
@@ -2315,14 +2284,7 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
-  run.flasks = combat.player.flasks; // drunk flasks stay drunk
-  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
-  for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = combat.player[field];
-    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    run[maxField] = combat.player[maxField];
-  }
-  run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.

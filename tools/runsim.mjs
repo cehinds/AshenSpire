@@ -22,9 +22,11 @@
 //   same climbs it always measured (§13.6); on, it measures every order.
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
+import { affordableCards, refusalsFor } from './simbot.mjs';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
@@ -152,6 +154,7 @@ function resetFleetCounters() {
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
+const STALEMATE_TURNS = 150; // a fight still open this long is conceded (botFight)
 
 // ---- the deep tally (read-only over a finished fight's eventLog) ------------
 function newDeepStats() {
@@ -190,38 +193,22 @@ function tallyFight(ds, combat, hpEntering) {
 // ---- the combat bot (same policy as tests/balance) --------------------------
 function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const enc = REG.encounters.get(encounterId);
-  const combat = createCombat({
-    registries: REG, rng,
-    // The run's own stamped pools and loadout, whole. createPlayerCombatEntity
-    // REFUSES an unstamped energyMax/drawPerTurn since the derived-stat train,
-    // and this sim crashed on its first seed from the day that landed until
-    // 2026-08-14 — a fleet simulator dead at the door, found only when the
-    // vigour rebalance needed before/after fleets. Passing run fields by name
-    // (not `...run`) keeps the sim honest about what a fight consumes.
-    player: {
-      classId: run.class, attributes: run.attributes, loadout: run.loadout,
-      skills: run.skills,
-      coreTags: run.coreTags,
-      maxHp: run.maxHp, hp: run.hp,
-      maxMana: run.maxMana, mana: run.mana,
-      maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-      deck: run.deck, relicIds: run.relics, flasks: run.flasks,
-      flaskCharges: run.flaskCharges,
-      // The relic damage authority the host stamps at run creation
-      // (D23, model/relicModifiers.js). Both fleets built their player
-      // literal by name and NOBODY added this field when it landed, so
-      // every simulated Starseer fought without the Starstone Shard's
-      // +1 magic — a live pool the game reads and the sim did not.
-      damageBySchoolAdd: run.damageBySchoolAdd,
-    },
+  // THE LIVE DOOR (engine/runCombat.js): the fight main.js builds for this
+  // run on a fresh profile — its hand rules, rating rules, swap price and
+  // equipment start statuses, which this sim's own option list never carried.
+  const combat = createRunCombat({
+    registries: REG, rng, run,
     enemyIds: enc.enemies,
     hpMult: cm.hpMult || 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
   let guard = 0;
-  while (!combat.result && guard++ < 9000) {
+  // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a
+  // retained hand full of cards the pools cannot pay for, block and healing
+  // outpacing the enemy. A player there can only concede, so a fight still
+  // open after STALEMATE_TURNS turns is scored as lost and counted as a
+  // stalemate, and the crash below is kept for a bot stuck inside one turn.
+  while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
     // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
     // hoards flasks under-measures the sustain the game actually provides.
     if (combat.player.hp < combat.player.maxHp * 0.55) {
@@ -250,30 +237,34 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
         }
       }
     }
-    const card = combat.piles.hand.find((h) => {
-      const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
-    });
+    // Leftmost card affordable in every pool (tools/simbot.mjs); a card the
+    // engine still refuses is set aside for the turn, and the bot plays on.
+    const refused = refusalsFor(combat);
+    const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
+    if (!card) { dispatch(combat, { type: 'endTurn' }); continue; }
     try {
-      if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
-      else dispatch(combat, { type: 'endTurn' });
+      dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
     } catch (e) {
-      dispatch(combat, { type: 'endTurn' });
+      refused.add(card.instanceId);
     }
   }
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
+  const outcome = combat.result || 'stalemate';
   if (deepStats) tallyFight(deepStats, combat, run.hp);
-  run.flasks = combat.player.flasks;
-  // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (src/main.js:1335), and without
+  // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
+  // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
+  // the next fight, as they do for a player. Only HP used to, so every fight
+  // opened on full pools and cross-fight starvation was invisible here.
+  //
+  // Flask charges, the reason this write-back first existed (src/main.js:1335), and without
   // it the vessels are INFINITE. createPlayerCombatEntity COPIES flaskCharges
   // ({ ...flaskCharges }), so a fight spends the copy; main.js copies the spent
   // pool back onto the run and the next fight starts where the last one ended.
   // The sim never did, so every fight re-opened with a full vessel — a bot with
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
-  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  runCombatEnd(run, combat);
   // The skill receipt, as main.js onCombatEnd pays it (plan phase 4a).
   applySkillXp(REG, run, skillXpReceipt(combat));
   // The character level (plan phase 6), as main.js onCombatEnd pays it: a won
@@ -281,8 +272,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   awardLevelXp(REG, run, combatLevelXp(REG, {
     victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
   }));
-  if (combat.result === 'victory') run.hp = combat.player.hp;
-  return combat.result;
+  return outcome;
 }
 
 function afterVictory(run, rng, pool) {
@@ -352,8 +342,8 @@ function simulateRun(classId, seed, ds = null) {
     return result;
   };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
-  // node with. On a lost fight botFight does NOT write hp back, so run.hp
-  // still holds the entering value at the moment of the record.
+  // node with. botFight writes the pools back on a loss too (runCombatEnd),
+  // so each caller captures hpIn before the fight.
   const recordDeath = (ds2, act, hpIn) => {
     if (!ds2) return;
     ds2.deaths++; ds2.deathActs[Math.min(act, 3) - 1]++;
@@ -410,7 +400,9 @@ function simulateRun(classId, seed, ds = null) {
           if (run.combatEntered) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
-            if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `ambush:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
+            const hpIn = run.hp;
+        const fought = botFight(run, rng, encId, cm, ds);
+            if (fought !== 'victory') { result.deaths = `ambush${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
             afterVictory(run, rng, 'normal');
           }
           kind = null;
@@ -421,7 +413,9 @@ function simulateRun(classId, seed, ds = null) {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
           : rollEncounter(REG, rng, { pool, seat });
-        if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
+        const hpIn = run.hp;
+        const fought = botFight(run, rng, encId, cm, ds);
+        if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });

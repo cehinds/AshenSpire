@@ -571,6 +571,22 @@ function endOnePlayerTurn(C, P) {
   fireOwnerHooks(C, p, 'ownerTurnEnd');
   drainQueue(C);
   if (C.result) return;
+  // Each card still in this seat's hand fires its authored `onTurnEndInHand`
+  // list (Guilt: lose 1 HP, SPEC §5.2) — the solo engine's rule, same order:
+  // after owner hooks, before status decay and the hand discard.
+  let inHandFired = false;
+  for (const card of [...C.piles.hand]) {
+    const hook = resolveCard(C.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      C.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(C);
+    if (C.result) return;
+  }
   S.decayAtTurnEnd(C, p);
   // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
   // recovers, a spending turn does not — the same rule and door as the solo

@@ -268,6 +268,20 @@ export function computeTokenBindings(effects) {
   return out;
 }
 
+/**
+ * cardTokenEffects(card) → the effect list a card's text template binds to:
+ * its play `effects`, then its `onTurnEndInHand` hook (Guilt's HP loss). The
+ * hook is appended AFTER the play effects so a play effect's token never
+ * changes; a hook op sharing a base binds as `{base.2}`. Shared by the
+ * validator and the static token projection (model/playingCard.js), so the
+ * number a card shows is the number its hook fires.
+ */
+export function cardTokenEffects(card) {
+  const effects = card && Array.isArray(card.effects) ? card.effects : [];
+  const hook = card && Array.isArray(card.onTurnEndInHand) ? card.onTurnEndInHand : [];
+  return hook.length ? [...effects, ...hook] : effects;
+}
+
 export function extractTemplateTokens(template) {
   const tokens = [];
   const re = tokenRe();
@@ -2477,12 +2491,13 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
-  checkTemplate(card.textTemplate, card.effects, `${path}.textTemplate`, err);
+  checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;
     if (typeof upTemplate === 'string' && Array.isArray(upEffects)) {
-      checkTemplate(upTemplate, upEffects, `${path}.upgrade.textTemplate`, err);
+      // The upgrade cannot override the in-hand hook, so it inherits the base's.
+      checkTemplate(upTemplate, cardTokenEffects({ effects: upEffects, onTurnEndInHand: card.onTurnEndInHand }), `${path}.upgrade.textTemplate`, err);
     }
   }
 }
