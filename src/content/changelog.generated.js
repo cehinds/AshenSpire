@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Behind the scenes: a missing changelog line is filled in",
-    "detail": "Nothing you see in the game changes. The card-layout drawings update from #1263 now has its own line in this changelog, so the check that every change is recorded passes again.",
-    "build": "0.7.1.464",
+    "detail": "Nothing you see in the game changes. The card-layout drawings update from #1263 now has its own line in this changelog, which it had been missing.",
+    "build": "0.7.1.466",
     "pullRequest": 1293,
     "url": "https://github.com/cehinds/AshenSpire/pull/1293"
   },
