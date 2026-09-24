@@ -149,6 +149,29 @@ test('a checkpoint saved with the chooser pending re-mounts the same choice, not
   assert.deepEqual(run.relics, []);
 }));
 
+test('a refused Continue hands its auto-pick draws back, so the retry picks what a reload would', () => withDom((dom) => {
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  const saves = { loadMeta: () => ({ settings: { rewardCollect: 'auto' } }), saveMeta() {} };
+  const collect = (seed, refuseFirst) => {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = freshRun();
+    const rng = createRng(seed);
+    let refuse = refuseFirst;
+    mountRewards(app, { registries: REG, run, rng, saves, checkpoint: { states: {}, chosenCardId: null, chosenRelicId: null }, rewards: offer(), onDone() {}, onPersist: () => !refuse });
+    if (refuseFirst) {
+      assert.throws(() => app.querySelector('#reward-continue').click(), /Reward save was refused/);
+      assert.deepEqual(run.relics, [], 'the refused save granted nothing');
+      refuse = false;
+    }
+    app.querySelector('#reward-continue').click();
+    return { relics: run.relics, counters: rng.getCounters() };
+  };
+  for (let seed = 1; seed <= 12; seed++) {
+    assert.deepEqual(collect(seed, true), collect(seed, false), `seed ${seed}: same relic, same counters`);
+  }
+}));
+
 test('a corrupt or stale boss relic choice is refused at the save doors, by name', async () => {
   const { createRunState, validateRunShape } = await import('../src/model/state.js');
   const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
