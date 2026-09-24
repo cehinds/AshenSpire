@@ -45,7 +45,7 @@ linked. Update this file after every PR.
 
 - [ ] **A headless full run in CI**. Test: `node tools/runsim.mjs 5` on fixed seeds for every class, run by `tests/run-node.mjs`, exits 0 with 0 crashes.
 - [ ] **A browser full run**. Test: on a fixed seed, Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors.
-- [ ] **Save/resume holds in the browser** (§9 M2). Test: reload on the map, mid-combat and after an abandon; the serialized run minus timestamps is deep-equal to the state before the reload.
+- [ ] **Save/resume holds in the browser** (§9 M2, §3.12). Test, three separate cases: (a) a reload on the map gives a run deep-equal to the one before, minus timestamps; (b) **Save Game** or **Save and Quit** mid-combat, then a reload, gives back exactly the hand, the piles, the enemies with their intents, and the resources, through the `CombatSnapshotService` record; (c) a plain reload or abandon mid-combat, with no explicit save, restarts that encounter from its entry checkpoint.
 
 ## 4. Balance
 
@@ -84,7 +84,7 @@ linked. Update this file after every PR.
 
 ## 9. Accessibility
 
-- [ ] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs --gate` runs in CI and exits 0, and the tool's `KNOWN_BELOW` ledger is empty for text rows, so every text token in all three palettes is ≥ 4.5:1 (≥ 3:1 for large text). A report run without `--gate` exits 0 even when rows fail, so it proves nothing.
+- [ ] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs --gate` runs in CI and exits 0. Its `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off` (today it gates only those two), and its `KNOWN_BELOW` ledger has no text rows. Then every text token in all three palettes is ≥ 4.5:1 (≥ 3:1 for large text). A report run without `--gate` exits 0 even when rows fail, so it proves nothing.
 - [ ] **Reduced motion is proven in a browser**. Test: `document.getAnimations()` finds nothing over 0.01 s during one combat turn.
 - [x] Text scaling, reduced motion, reduce flashes, high contrast, cb-safe, and key/pad remapping exist (`src/ui/screens/settings.js`).
 - [ ] **Escape or pad B backs out of every screen**. Test: a dispatch per screen calls Back exactly once.
