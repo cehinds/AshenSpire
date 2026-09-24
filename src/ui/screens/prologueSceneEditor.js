@@ -1,7 +1,7 @@
 import { openModal } from '../kit/index.js';
-import { anchorLocalBox } from '../fx.js';
 import { mountPrologue } from './prologue.js';
 import { placePrologueCharacter } from '../prologueCharacter.js';
+import { anchorLocalBox } from '../fx.js';
 import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
