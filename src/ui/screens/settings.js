@@ -1227,12 +1227,12 @@ export function buttonStep(row, value = row.def) {
   return Math.max(step, coarse);
 }
 
-function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep }) {
+function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep, sliderStep = step }) {
   const name = esc(stripTags(label));
   const sliderValue = Math.min(Math.max(Number(value), span[0]), span[1]);
   return `<span class="set-stepper" data-stepper>`
     + `<button type="button" class="as-btn set-step" data-step="-1" data-step-by="${bStep}" aria-label="Decrease ${name}"${value <= min ? ' disabled' : ''}>−</button>`
-    + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${step}" value="${sliderValue}" aria-label="${name} slider">`
+    + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${sliderStep}" value="${sliderValue}" aria-label="${name} slider">`
     + `<input type="number" class="${fieldClass}" data-key="${esc(key)}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="${inputMode}" aria-label="${name}">`
     + (unit ? `<span class="set-unit" aria-hidden="true">${esc(unit)}</span>` : '')
     + `<button type="button" class="as-btn set-step" data-step="1" data-step-by="${bStep}" aria-label="Increase ${name}"${value >= max ? ' disabled' : ''}>+</button>`
@@ -1373,7 +1373,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     return `${rowOpen('set-row-wide set-row-number')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
-          ${stepperHtml({ key: r.key, label: r.label, value: val, min: r.min, max: r.max, step, span: sliderSpan(r, val), fieldClass: 'set-num', sliderClass: 'set-num-slider', inputMode, bStep: buttonStep(r, val), unit: r.unit || '' })}
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: r.min, max: r.max, step, span: sliderSpan(r, val), fieldClass: 'set-num', sliderClass: 'set-num-slider', inputMode, bStep: buttonStep(r, val), unit: r.unit || '',
+            // A fractional row's authored values need not sit on its step grid
+            // (0.01 on a 0.05 step); `any` lets the thumb stand where the value is.
+            sliderStep: r.integer === false || !Number.isInteger(step) ? 'any' : step })}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;

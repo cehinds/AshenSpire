@@ -263,3 +263,10 @@ test('the dev-preview standalone files are named so they open as dev builds', as
     assert.equal(buildChannel({ pathname: `/Downloads/dev-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), 'dev', name);
   }
 });
+
+test('a fractional slider can stand on an off-step authored value', () => {
+  const html = settingsRowHtml({}, { key: 'x.frac', label: 'Frac', type: 'number', def: 0.01, min: 0, max: 5, step: 0.05, integer: false });
+  assert.match(html, /class="set-num-slider"[^>]*step="any"[^>]*value="0.01"/);
+  const whole = settingsRowHtml({}, { key: 'x.int', label: 'Int', type: 'number', def: 3, min: 0, max: 10, step: 1 });
+  assert.match(whole, /class="set-num-slider"[^>]*step="1"/);
+});
