@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-24
 
+- **Behind the scenes: the changelog lists this day's entries in build order again** ([#1303](https://github.com/cehinds/AshenSpire/pull/1303), `0.7.1.467`). Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first.
 - **Behind the scenes: every card, relic and event has a way in** ([#1281](https://github.com/cehinds/AshenSpire/pull/1281), `0.7.1.466`). Nothing you play changes. A new check walks the game's content and finds a route by which each card, relic and event can actually reach a player, so nothing authored sits unreachable.
 - **Behind the scenes: leaving a fight and coming back is now tested** ([#1280](https://github.com/cehinds/AshenSpire/pull/1280), `0.7.1.465`). Nothing you play changes. A new automated test abandons a run in the middle of a fight, reloads it, and checks that you land back at the fight's start with the same deck, HP and enemies, as the spec promises.
 - **Behind the scenes: every merged pull request is checked for its changelog entry, however it landed** ([#1275](https://github.com/cehinds/AshenSpire/pull/1275), `0.7.1.464`). Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.

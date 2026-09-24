@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1303",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
+    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first.",
+    "build": "0.7.1.467",
+    "pullRequest": 1303,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
     "id": "pr-1281",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -53,16 +63,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
-    "id": "pr-1270",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "The balance simulator now plays by the game's rules",
-    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
-    "build": "0.7.1.455",
-    "pullRequest": 1270,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
-  },
-  {
     "id": "pr-1285",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -71,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.456",
     "pullRequest": 1285,
     "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1270",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The balance simulator now plays by the game's rules",
+    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
+    "build": "0.7.1.455",
+    "pullRequest": 1270,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
     "id": "pr-1271",
