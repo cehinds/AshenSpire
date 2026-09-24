@@ -18,4 +18,4 @@ The final scene starts with its artwork focused toward the top, keeping the dist
 
 Both formats were visually inspected after compression. The regional road, climate, distant unlit Ashen Spire and actor placement area remain readable. Verification runs focused prologue tests and validates every entry in `art/prologue-2026-09-19/assets.json` against shipped WebP dimensions, bytes and alpha.
 
-The source masters and shipping assets are staged in the isolated `codex/prologue-path-art` worktree for integration into `dev`.
+The Crownfall desktop and mobile plates were refined again to add two very small towers on the mountain summits flanking the central Ashen Spire. The left peak is snow-dusted; the right has a restrained volcanic ember glow. Their exact edit prompts are `prompts/crownfall-towers-desktop.txt` and `prompts/crownfall-towers-mobile.txt`. The PNG masters and compressed WebPs were visually inspected after this edit.
