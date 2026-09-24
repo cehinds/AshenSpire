@@ -187,7 +187,7 @@ function topic(row, section) {
   }
   if (section === 'World') {
     if (/^rest\.|shrineMultiUse/.test(path)) return 'Rest & shrines';
-    if (/^(atlas|seatTiers)/.test(path)) return 'Atlas & seats';
+    if (/^(atlas|seatTiers|bossTiers)/.test(path)) return 'Atlas & seats';
     if (/^customMods/.test(path)) return 'Run modifiers';
     if (/^coop/.test(path)) return 'Co-op';
     return words(path.split('.')[0]);

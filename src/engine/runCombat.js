@@ -16,9 +16,18 @@
 import { createCombat } from './combat.js';
 import { resolveHandRules, handRulesForClass } from '../model/handRules.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
+import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
+  // A fight opens with the Stamina the framework's entry rule gives
+  // (mechanics.stamina.combatStartRefill, plan A2); Mana carries as it is.
+  // A refill also settles the Stamina deficit an equipment swap carried, so
+  // the next swap cannot take the refilled points back.
+  const stamina = staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina });
+  const equipmentPoolDeficits = run.equipmentPoolDeficits
+    ? { ...run.equipmentPoolDeficits, stamina: staminaDeficitAtCombatStart(run.equipmentPoolDeficits.stamina) }
+    : run.equipmentPoolDeficits;
   return {
     classId: run.class,
     attributes: run.attributes,
@@ -32,14 +41,14 @@ export function runCombatPlayer(run) {
     maxMana: run.maxMana,
     mana: run.mana,
     maxStamina: run.maxStamina,
-    stamina: run.stamina,
+    stamina,
     energyMax: run.energyMax,
     drawPerTurn: run.drawPerTurn,
     damageBySchoolAdd: run.damageBySchoolAdd,
     equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: run.equipmentAttackSlotCount,
     removedAttackSlotIds: run.removedAttackSlotIds,
-    equipmentPoolDeficits: run.equipmentPoolDeficits,
+    equipmentPoolDeficits,
     itemUpgradeLevels: run.itemUpgradeLevels,
     itemMounts: run.itemMounts,
     armamentLevels: run.armamentLevels,
@@ -52,7 +61,7 @@ export function runCombatPlayer(run) {
 }
 
 /**
- * createRunCombat({ registries, rng, run, enemyIds, settings, hpMult,
+ * createRunCombat({ registries, rng, run, enemyIds, settings, hpMult, enemyDamageMult,
  *   enemyStatuses, playerStatuses, player }) → combat
  *
  * `settings` is the profile's settings object (meta.settings); a fresh
@@ -63,7 +72,7 @@ export function runCombatPlayer(run) {
  */
 export function createRunCombat({
   registries, rng, run, enemyIds, settings = {},
-  hpMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
+  hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
   return createCombat({
     ratingsRules: registries.balance.combatRatings || null,
@@ -75,6 +84,7 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run), ...player },
     enemyIds,
     hpMult,
+    enemyDamageMult,
     enemyStatuses,
     // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
     // point the other per-fight rules are decided — Settings → Advanced changes

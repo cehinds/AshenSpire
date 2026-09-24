@@ -751,12 +751,34 @@ export const balance = {
   // what keeps every existing seed's fights byte-identical (§13.6). The values
   // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
   // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
-  // bosses weighted together). Tier 1 is 1 by definition and the validator
-  // holds it there.
+  // bosses weighted together, as authored). Tier 1 is 1 by definition and the
+  // validator holds it there. A BOSS fight reads bossTiers below instead: the
+  // same ratio on HP and move damage, × the tier's boss row.
   seatTiers: {
     1: 1, 2: 1.5, 3: 1.9,
     [NOTE]: {
       '{tier}': 'Enemy HP multiplier for a tier-{tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1.',
+    },
+  },
+  // BOSSES BY THE TIER THEY ARE MET AT (SPEC §13.3). Seats are drawn in a
+  // random order per run (§13.4), so a boss's difficulty cannot be authored
+  // into its roster row: the Marches boss is a run's first boss in a third of
+  // climbs and its second in another third. A boss fight at tier T takes the
+  // seatTiers ratio against ITS OWN seat's baseline on HP AND on every move's
+  // damage (engine: enemyDamageMult), then × bossTiers[T].hp / .damage — an
+  // absolute row per tier, not a ratio (model/seats.js bossTierScale). Only
+  // 'boss'-pool fights read it; World Journey has no seat and is untouched.
+  // TUNED (#1284) with `node tools/runsim.mjs <n> --seeded-seats`, the order a
+  // real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
+  // Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
+  // order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
+  bossTiers: {
+    1: { hp: 0.8, damage: 0.8 },
+    2: { hp: 2.2, damage: 1.5 },
+    3: { hp: 2.2, damage: 1.5 },
+    [NOTE]: {
+      '{tier}.hp': 'Boss HP multiplier when a boss is met at tier {tier} (whichever seat holds it), on top of the seat-tier ratio.',
+      '{tier}.damage': 'Boss move-damage multiplier when a boss is met at tier {tier} (whichever seat holds it).',
     },
   },
   customMods: {
@@ -814,7 +836,8 @@ export const balance = {
     // It is OFF under the character models, and that is a call worth stating
     // rather than burying: he assigned that surface its CONTENTS ("really just
     // health and poise"), not a scaling rule. Turning it on there is defensible
-    // and informative — the act-3 boss carries 250 HP against a 12 HP wisp —
+    // and informative — the act-3 boss is authored at 250 HP (550 met at tier 3,
+  // balance.bossTiers) against a 12 HP wisp —
     // but the under-model track is 84.6 px at 390x844, so most of the roster
     // lands on the 16 px floor and stops encoding anything.
     //

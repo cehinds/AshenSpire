@@ -1,6 +1,7 @@
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
 import { placePrologueCharacter } from '../prologueCharacter.js';
+import { anchorLocalBox } from '../fx.js';
 import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
@@ -115,10 +116,9 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     const visible = scope === 'scene' && group === 'Traveller' && actor;
     resizeHandle.hidden = !visible;
     if (!visible) return;
-    const actorBox = actor.getBoundingClientRect();
-    const viewBox = viewport.getBoundingClientRect();
-    resizeHandle.style.left = `${actorBox.left - viewBox.left + actorBox.width * .72}px`;
-    resizeHandle.style.top = `${actorBox.top - viewBox.top + actorBox.height * .08}px`;
+    const box = anchorLocalBox(viewport, actor);
+    resizeHandle.style.left = `${box.left + box.width * .72}px`;
+    resizeHandle.style.top = `${box.top + box.height * .08}px`;
   };
   const preview = () => {
     cleanup?.();
