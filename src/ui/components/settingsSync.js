@@ -133,6 +133,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     pending = null;
     write(SYNC_STORAGE.config, JSON.stringify(cfg));
     write(SYNC_STORAGE.lastSha, null);
+    write(SYNC_STORAGE.lastAt, null);
     draw();
     status(`Now using the “${name}” profile. Save, Load and start-up loading use it on this device.`);
   };
@@ -336,6 +337,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       pending = null;
       write(SYNC_STORAGE.config, JSON.stringify(cfg));
       write(SYNC_STORAGE.lastSha, null);
+      write(SYNC_STORAGE.lastAt, null);
       profiles = null;
       listNote = '';
       draw();

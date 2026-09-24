@@ -198,13 +198,33 @@ function graceRefillRows() {
  */
 export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
   if (debug) return [];
+  const shown = releaseShownKeys();
+  return Object.keys(settings).filter((key) => settings[key] !== undefined && key.startsWith('gameConfig.') && !shown.has(key));
+}
+
+/** releaseShownKeys() → every key a release build's visible rows show. */
+function releaseShownKeys() {
   const shown = new Set();
   const advanced = categoryHandler('Advanced')?.rows || [];
   for (const group of visibleAdvancedGroups(false)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
     for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) shown.add(row.key);
   }
-  return Object.keys(settings).filter((key) => key.startsWith('gameConfig.') && settings[key] !== undefined && !shown.has(key));
+  return shown;
+}
+
+/**
+ * promotionFor(defaults, debug) → the promotion this build applies. A release
+ * build never applies hidden tuning it cannot show or let the player clear for
+ * good, so those keys are left out there (and a value an earlier promotion
+ * seeded for one is withdrawn by the seed's own "dropped key" rule).
+ */
+export function promotionFor(defaults, debug = pageDebug()) {
+  if (debug) return defaults;
+  const shown = releaseShownKeys();
+  const values = Object.fromEntries(Object.entries(defaults?.values || {})
+    .filter(([key]) => !key.startsWith('gameConfig.') || shown.has(key)));
+  return { ...defaults, values };
 }
 
 /** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
@@ -1214,12 +1234,12 @@ export function offerUndo(label, snapshot) {
  * back to its promoted default when there is one, else is cleared so the row's
  * own default applies; an Undo is offered.
  */
-export function resetKeys(settings, onChange, keys, label = 'Reset') {
+export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = PROMOTED_DEFAULTS } = {}) {
   const snapshot = {};
   const changed = {};
   for (const key of keys) {
     snapshot[key] = settings[key];
-    if (Object.hasOwn(PROMOTED_DEFAULTS, key)) { settings[key] = PROMOTED_DEFAULTS[key]; changed[key] = PROMOTED_DEFAULTS[key]; }
+    if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
     else { delete settings[key]; changed[key] = undefined; }
   }
   const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
@@ -2525,7 +2545,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (clearTuning) clearTuning.onclick = () => {
     const keys = hiddenTuningKeys(settings);
     if (!keys.length) return;
-    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`);
+    // Cleared, not reset: a promoted value for hidden tuning is not this
+    // build's default either (promotionFor leaves it out at boot).
+    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
     headerTools.querySelector('details').open = false;
     repaintPanel({ keepScroll: true });
   };

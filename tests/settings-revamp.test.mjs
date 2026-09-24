@@ -413,3 +413,31 @@ test('a player value that happens to equal a promotion is not recorded as seeded
   const moved = seedSettingsDefaults(chose, { digest: 'b', values: { musicVolume: 50, screenShake: false } });
   assert.equal(Object.hasOwn(moved, 'musicVolume'), false, 'the player\'s 40 survives the next promotion');
 });
+
+test('a release build neither applies nor keeps promoted hidden tuning', async () => {
+  const { promotionFor, resetKeys, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const defaults = { digest: 'x', values: { screenShake: false, 'gameConfig.combatRatings.multiplier': 1.5 } };
+  assert.deepEqual(promotionFor(defaults, true), defaults, 'debug builds apply all of it');
+  assert.deepEqual(promotionFor(defaults, false).values, { screenShake: false }, 'release leaves hidden tuning out');
+  const settings = { 'gameConfig.combatRatings.multiplier': 1.5 };
+  const keys = hiddenTuningKeys(settings, false);
+  resetKeys(settings, () => ({ ok: true }), keys, 'clear', { promoted: {} });
+  assert.equal(Object.hasOwn(settings, 'gameConfig.combatRatings.multiplier'), false, 'cleared, not reset to the promotion');
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const seeded = { 'gameConfig.combatRatings.multiplier': 1.5, [SEED_KEY]: { 'gameConfig.combatRatings.multiplier': 1.5 } };
+  const moved = seedSettingsDefaults(seeded, promotionFor(defaults, false));
+  assert.equal(moved['gameConfig.combatRatings.multiplier'], undefined, 'an earlier seed of it is withdrawn on release');
+  assert.equal(Object.hasOwn(moved, 'gameConfig.combatRatings.multiplier'), true);
+});
+
+test('pad directions, profile switches and cleared volumes reach the live state', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(input, /else if \(i === 1[2-5]\) moveFocus\(/, 'the D-pad goes through navigate()');
+  assert.match(input, /if \(Math\.abs\(ax\) > Math\.abs\(ay\)\) navigate\(/, 'so does the stick');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.equal((panel.match(/write\(SYNC_STORAGE\.lastSha, null\);\s*write\(SYNC_STORAGE\.lastAt, null\);/g) || []).length, 2);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /musicVolume: settings\.musicVolume \?\? AUDIO_DEFAULTS\.musicVolume/);
+  assert.match(main, /sfxVolume: settings\.sfxVolume \?\? AUDIO_DEFAULTS\.sfxVolume/);
+});

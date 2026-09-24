@@ -89,7 +89,7 @@ import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.j
 import { seedSettingsDefaults } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug } from './ui/buildChannel.js';
-import { openSettings, settingsRows, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -113,7 +113,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -327,7 +327,7 @@ let activeSettings = bringStoredProfileForward(activeMeta);
 // key still at an earlier promotion's value follows a new one; a key the
 // player chose is theirs. Applied before anything reads the profile.
 {
-  const seeded = seedSettingsDefaults(activeSettings, SETTINGS_DEFAULTS);
+  const seeded = seedSettingsDefaults(activeSettings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
   if (Object.keys(seeded).length) {
     for (const [key, value] of Object.entries(seeded)) {
       if (value === undefined) delete activeSettings[key]; else activeSettings[key] = value;
@@ -859,7 +859,15 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
-  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  // A cleared key (a Reset, a profile that leaves it out) means the default:
+  // setVolumes ignores a missing field, so say the default out loud.
+  audio.setVolumes({
+    ...settings,
+    musicEnabled: resolveMusicEnabled(settings),
+    musicVolume: settings.musicVolume ?? AUDIO_DEFAULTS.musicVolume,
+    sfxVolume: settings.sfxVolume ?? AUDIO_DEFAULTS.sfxVolume,
+    muteAudio: settings.muteAudio === true,
+  });
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the

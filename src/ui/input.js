@@ -727,6 +727,28 @@ function pressEnd(cancelled = false) {
 }
 
 // Left/right on a focused slider nudges its value (keyboard + pad parity).
+/**
+ * navigate(dir, target) — one direction from the keyboard, the D-pad or the
+ * stick. Left/right on a Settings stepper's − or + presses − or + (the pad
+ * drives the game cursor; a mouse or Tab leaves DOM focus there), and on a
+ * focused slider tunes it; anything else moves focus.
+ */
+function navigate(dir, target = null) {
+  if (dir === 'left' || dir === 'right') {
+    const stepButton = [cur, document.activeElement, target].find((el) => el?.matches?.('.set-step'));
+    const stepper = stepButton?.closest('[data-stepper]');
+    if (stepper) {
+      stepper.querySelector(`.set-step[data-step="${dir === 'right' ? 1 : -1}"]`)?.click();
+      return;
+    }
+    if (cur && cur.matches('input[type="range"]')) {
+      nudgeRange(cur, dir === 'right' ? 1 : -1);
+      return;
+    }
+  }
+  moveFocus(dir);
+}
+
 function nudgeRange(el, delta) {
   const min = Number(el.min);
   const max = Number(el.max);
@@ -873,24 +895,8 @@ function onKeydown(ev) {
     return;
   }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
-    // A Settings stepper (− slider field +): with its − or + focused, the pad's
-    // left/right (and the arrow keys) press − or + instead of moving focus.
-    // The pad drives the game cursor; a mouse or Tab leaves DOM focus there.
-    const stepButton = [cur, document.activeElement, ev.target].find((el) => el?.matches?.('.set-step'));
-    const stepper = stepButton?.closest('[data-stepper]');
-    if (stepper && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
-      stepper.querySelector(`.set-step[data-step="${ev.key === 'ArrowRight' ? 1 : -1}"]`)?.click();
-      ev.preventDefault();
-      return;
-    }
-    // On a focused slider, horizontal arrows tune it rather than navigate.
-    if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
-      nudgeRange(cur, ev.key === 'ArrowRight' ? 1 : -1);
-      ev.preventDefault();
-      return;
-    }
     ev.preventDefault();
-    moveFocus({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key]);
+    navigate({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[ev.key], ev.target);
     return;
   }
   if (!typing && ev.key === CONFIRM_KEY) {
@@ -1051,10 +1057,10 @@ function pollPads() {
       // live, so a set pressEl here was set by THIS call.
       if (a) { doAction(a.id, 'pad'); if (pressEl) padPressBtn = i; }
       // D-pad (12–15) navigates regardless of rebinds.
-      else if (i === 12) moveFocus('up');
-      else if (i === 13) moveFocus('down');
-      else if (i === 14) moveFocus('left');
-      else if (i === 15) moveFocus('right');
+      else if (i === 12) navigate('up');
+      else if (i === 13) navigate('down');
+      else if (i === 14) navigate('left');
+      else if (i === 15) navigate('right');
     }
     padPrev[pad.index] = pressed;
 
@@ -1065,8 +1071,8 @@ function pollPads() {
       gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
-        if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
-        else moveFocus(ay > 0 ? 'down' : 'up');
+        if (Math.abs(ax) > Math.abs(ay)) navigate(ax > 0 ? 'right' : 'left');
+        else navigate(ay > 0 ? 'down' : 'up');
       }
     }
   }
