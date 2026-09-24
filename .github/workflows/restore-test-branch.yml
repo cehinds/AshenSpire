@@ -42,7 +42,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
           fetch-depth: 0
       - name: Recreate test from release (or dev)
         run: |

@@ -41,7 +41,6 @@ jobs:
       # Full history: the check walks `origin/test..HEAD` for merge subjects.
       - uses: actions/checkout@v5
         with:
-          lfs: true
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-node

@@ -21,8 +21,6 @@ jobs:
     steps:
       - name: Check out the merged dev tree
         uses: actions/checkout@v5
-        with:
-          lfs: true
 
       - name: Set up Node
         uses: ./.github/actions/setup-node
