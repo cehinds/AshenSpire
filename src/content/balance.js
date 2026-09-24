@@ -313,6 +313,29 @@ export const balance = {
     },
   },
 
+  // WEAPON ART CHARGE (SPEC §12.2.1): each equipped weapon whose combat-kit
+  // Art has an unleashed form (content/weaponArtUnleashed.js) fills a meter
+  // on its own cards' hits; a full meter turns its Art's next play into the
+  // unleashed form and empties. Meters start empty every fight. A weapon's
+  // max is `maxByWeapon[id]` when authored, else `defaultMax`; 0 = no meter.
+  // model/artCharge.js is the one reader.
+  weaponArtCharge: {
+    defaultMax: 4,
+    // Quick weapons land many small hits, so they need more pips; heavy
+    // weapons land few, so they need fewer. Every other weapon reads 4.
+    maxByWeapon: { dagger: 5, twinblade: 5, parryDagger: 5, greatsword: 3, warhammer: 3, battleaxe: 3, cinderAxe: 3 },
+    gainPerHit: 1,
+    gainOnStagger: 1,
+    gainOnBurst: 1,
+    [NOTE]: {
+      defaultMax: 'How many charge pips a weapon\'s Art meter holds before its Art is unleashed, for any weapon without its own row. 0 gives that weapon no meter.',
+      'maxByWeapon.{weapon}': 'How many charge pips the {weaponName} Art meter holds before its Art is unleashed.',
+      gainPerHit: 'Charge a weapon\'s Art meter gains for each hit its own cards land on an enemy (the Art itself never charges).',
+      gainOnStagger: 'Extra Art charge a weapon gains when its hit staggers an enemy.',
+      gainOnBurst: 'Extra Art charge a weapon gains when its hit bursts an enemy\'s build-up meter, such as Bleed.',
+    },
+  },
+
   // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
   // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
   // is the floor at character level 0; it rises by `minimumPerStep` every

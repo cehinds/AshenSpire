@@ -21,6 +21,8 @@ import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './co
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
+import { attachArtCharge, takeArtUnleash } from './artCharge.js';
+import { artUnleashFor } from '../model/artCharge.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
@@ -173,6 +175,9 @@ export function createCombat({
   // The skill tracks listen to the same bus (plan phase 4a); the receipt they
   // write lives on the combat and reaches the run only through applySkillXp.
   attachSkillXp(combat);
+  // …and the Weapon Art charge meters (SPEC §12.2.1): empty at every combat
+  // start, filled by the equipped weapons' own hits.
+  attachArtCharge(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 
@@ -983,7 +988,16 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // Enqueue the card's own effects first, then announce the play — triggers
   // reacting to cardPlayed enqueue after the card's effects (FIFO).
   for (const action of F.cardActions(combat, def, p, target, cardRef, meta, sourceSnapshots)) combat.enqueue(action);
+  // A FULL ART CHARGE UNLEASHES THIS PLAY (SPEC §12.2.1): the Art's authored
+  // unleashed effects follow its own, with the same source, target and card,
+  // and the meter empties. Payment and targeting above are untouched.
+  const unleashedEffects = takeArtUnleash(combat, inst);
+  if (unleashedEffects) {
+    meta.unleashed = true;
+    for (const action of F.cardActions(combat, { effects: unleashedEffects }, p, target, cardRef, meta)) combat.enqueue(action);
+  }
   combat.emit('cardPlayed', {
+    ...(unleashedEffects ? { unleashed: true } : {}),
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
     cardType: kind,
@@ -1205,7 +1219,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
     values.push(entry);
   });
 
+  // The Art charge the play door will read (SPEC §12.2.1), for weapon Arts
+  // whose lender has a meter.
+  const unleash = artUnleashFor(combat, inst);
   return {
+    ...(unleash ? { artCharge: { weaponId: unleash.weaponId, value: unleash.value, max: unleash.max, unleashed: unleash.ready } } : {}),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

@@ -10,6 +10,7 @@ import { syncLoadoutProperties, syncRelicProperties, syncClassProperties } from 
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
+import { attachArtCharge } from './artCharge.js';
 import { refreshCombatRatings } from './combatRatings.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
@@ -83,6 +84,9 @@ export function serializeCombatSnapshot(combat) {
     skills: combat.skills,
     skillXp: combat.skillXp,
     coreTags: combat.coreTags,
+    // Each weapon's Art charge (SPEC §12.2.1). The remembered last-hit weapon
+    // is transient — no card is resolving at a committed boundary.
+    artCharge: combat.artCharge || {},
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -157,12 +161,16 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     skills: saved.skills ?? {},
     skillXp: saved.skillXp ?? {},
     coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
+    // A snapshot written before the meters existed resumes with every meter
+    // at 0 — the same state a fresh fight starts in (SPEC §12.2.1).
+    artCharge: saved.artCharge ?? {},
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
   // The one listener createCombat hooks on the bus, hooked again here: the
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
+  attachArtCharge(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   // Property mounts are never saved (definitions are not persisted): they are

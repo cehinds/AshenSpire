@@ -148,6 +148,9 @@ const FILLERS = Object.freeze({
     const sameOwner = namesakes.filter((other) => (other.class || 'colorless') === (card.class || 'colorless'));
     return sameOwner.length < 2 ? `${card.name} (${owner})` : `${card.name} (${owner}, ${card.id})`;
   },
+  // An armament by its authored name (the Art charge meter's per-weapon row).
+  weaponName: (c, { bundle }) => ((bundle && bundle.equipment && bundle.equipment.armaments) || [])
+    .find((piece) => piece && piece.id === c.weapon)?.name || word(c.weapon),
   statusLabel: (c, { bundle }) => (indexes(bundle).statuses.get(c.status) || {}).name || word(c.status),
 
   // A talent's place in the tree. The three phrases are balance.js's; this
