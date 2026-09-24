@@ -473,70 +473,62 @@ test('every relic and talent variable has a phrase in balanceWords', async () =>
   assert.deepEqual(missing, [], 'these variables have no phrase in balanceWords.effects');
 });
 
-// THE OWNER'S ×20 IS BAKED INTO THE AUTHORED TABLE (2026-09-24), so every
-// reader of `balance.rewards.cinders` pays the same, and the row is a new key,
-// `progression.cinderMultiplier`, at 1. The old `rewardMultiplier` scaled a
-// table twenty times smaller, so a stored or exported value is carried across
-// ÷ 20 and pays what it paid.
+// THE ×20 CINDERS ARE RETIRED (owner, 2026-09-24: "I hate the 20x cinder,
+// that needs to die"). The authored table pays ×1, the row is
+// `progression.cinderMultiplier` at 1, and the old `rewardMultiplier` — the key
+// his exported file carries at 20 — is dropped wherever it is met, with a
+// warning, so no profile, snapshot or file brings the ×20 back.
 const CINDER = 'gameConfig.progression.cinderMultiplier';
 const OLD_CINDER = 'gameConfig.progression.rewardMultiplier';
 const v1File = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', build: {}, overrides });
 
-test('the authored cinder table carries the owner\'s ×20 and the new row defaults to 1', () => {
-  assert.deepEqual(contentBundle.balance.rewards.cinders.normal, [900, 1500]);
-  assert.deepEqual(contentBundle.balance.rewards.cinders.elite, [2100, 3000]);
-  assert.deepEqual(contentBundle.balance.rewards.cinders.boss, [4500, 5400]);
+test('the authored cinder table pays ×1 and the new row defaults to 1', () => {
+  assert.deepEqual(contentBundle.balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.elite, [105, 150]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.boss, [225, 270]);
   const rows = advancedConfigRows(contentBundle);
   const row = rows.find((candidate) => candidate.key === CINDER);
   assert.equal(row.def, 1);
   assert.equal(row.label, 'Cinder gain multiplier');
   assert.equal(row.min, 0);
   assert.equal(row.max, 20);
-  assert.equal(row.integer, false);
   assert.ok(!rows.some((candidate) => candidate.key === OLD_CINDER), 'the old key has no row');
-  assert.deepEqual(configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal, [900, 1500]);
-  assert.deepEqual(configuredContentBundle(contentBundle, { [CINDER]: 0.5 }).balance.rewards.cinders.normal, [450, 750]);
+  assert.deepEqual(configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { [CINDER]: 2 }).balance.rewards.cinders.normal, [90, 150]);
 });
 
-test('a stored rewardMultiplier is carried across as ÷ 20 and pays what it paid', () => {
+test('a stored rewardMultiplier is dropped, never carried: the ×20 cannot come back', () => {
   const owner = { [OLD_CINDER]: 20 };
   const warnings = [];
   normalizeAdvancedSettings(owner, contentBundle, warnings);
-  assert.deepEqual(owner, { [CINDER]: 1 });
+  assert.deepEqual(owner, {});
   assert.equal(warnings.length, 1);
-  assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [900, 1500]);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [45, 75]);
 
-  const two = { [OLD_CINDER]: 2 };
-  normalizeAdvancedSettings(two, contentBundle);
-  assert.equal(two[CINDER], 0.1);
-  assert.deepEqual(configuredContentBundle(contentBundle, two).balance.rewards.cinders.normal, [90, 150]);
+  // Un-normalized readers (an old run snapshot) ignore it too.
+  assert.deepEqual(configuredContentBundle(contentBundle, { [OLD_CINDER]: 20 }).balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { overrides: { [OLD_CINDER]: 20 }, ratingsVersion: 1 }).balance.rewards.cinders.normal, [45, 75]);
 
-  // Un-normalized readers (an old run snapshot) read it the same way.
-  assert.deepEqual(configuredContentBundle(contentBundle, { [OLD_CINDER]: 2 }).balance.rewards.cinders.normal, [90, 150]);
-  assert.deepEqual(configuredContentBundle(contentBundle, { overrides: { [OLD_CINDER]: 20 }, ratingsVersion: 1 }).balance.rewards.cinders.normal, [900, 1500]);
-
-  // Both present: the new key wins and the old is dropped.
+  // A new-key value set alongside it is kept.
   const both = { [OLD_CINDER]: 20, [CINDER]: 3 };
   normalizeAdvancedSettings(both, contentBundle);
   assert.deepEqual(both, { [CINDER]: 3 });
 
   // The export never writes the old key.
-  const exported = advancedConfigExport({ [OLD_CINDER]: 2 }, {}, [CINDER]);
+  const exported = advancedConfigExport({ [OLD_CINDER]: 20 }, {}, [CINDER]);
   assert.ok(!exported.includes('rewardMultiplier'));
-  assert.equal(JSON.parse(exported).overrides[CINDER], 0.1);
 });
 
-test('a v1 file carrying rewardMultiplier 20 imports as cinderMultiplier 1, with a warning', () => {
+test('a v1 file carrying rewardMultiplier 20 imports without it, with a warning', () => {
   const warnings = [];
-  const changes = parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20 }), contentBundle, {},
+  const changes = parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20, 'gameConfig.balance.startingCinders': 20 }), contentBundle, {},
     advancedConfigRows(contentBundle), warnings);
-  assert.deepEqual(changes, { [CINDER]: 1 });
+  assert.deepEqual(changes, { 'gameConfig.balance.startingCinders': 20 });
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /divided by 20/);
-  const newer = [];
-  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [CINDER]: 2 }), contentBundle, {}, [], newer), { [CINDER]: 2 },
-    'the new key wins when both are present');
-  assert.deepEqual(newer, []);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [CINDER]: 2 }), contentBundle, {}, [], []), { [CINDER]: 2 },
+    'the new key still imports beside it');
 });
 
 test('a file written on the old, higher defaults still imports', () => {

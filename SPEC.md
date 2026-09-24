@@ -899,9 +899,11 @@ faucet) is gone with the purse.
 
 **Cinders at the start and from fights (owner, 2026-09-24).** A run opens with
 `balance.startingCinders` **20** cinders (0 before). Combat rewards pay from
-`balance.rewards.cinders` — normal 900–1500, elite 2100–3000, boss 4500–5400 — the owner's
-×20 baked into the authored table (45–75 / 105–150 / 225–270 before). The Advanced
-`cinderMultiplier` row scales that table and defaults to 1, which pays it as authored.
+`balance.rewards.cinders` — normal 45–75, elite 105–150, boss 225–270. The Advanced
+`cinderMultiplier` row scales that table and defaults to 1. The owner's exported
+`progression.rewardMultiplier: 20` is **retired, not a default** (owner, 2026-09-24: "I hate
+the 20x cinder, that needs to die"): the old key is dropped with a warning wherever a
+profile, run snapshot or imported file carries it.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
