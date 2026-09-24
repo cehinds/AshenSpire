@@ -47,13 +47,18 @@ export const relics = [
     name: 'Starstone Shard',
     rarity: 'starter',
     passives: {
+      // A2 Starseer starvation: Mana 1 -> 3 and Max HP +14 (34 -> 48; 38 -> 52 under
+      // A3's ruleset 7. Re-measured on A3 at 120 runs: +14 keeps the Starseer at 47/120,
+      // +10 drops it to 37/120, below the 35-65% band, so +14 stays).
+      // (plan A2, `node tools/runsim.mjs 60`: Starseer 1/60 -> 21/60 with the other A2 Starseer rows; 82/200 alone).
       modifiers: [
-        { tag: 'resource.flat', resource: 'mana', amount: 1 },
+        { tag: 'resource.flat', resource: 'mana', amount: 3 },
         { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+        { tag: 'resource.flat', resource: 'hp', amount: 14 },
       ],
     },
     icon: '💠',
-    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
+    textTemplate: 'Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {

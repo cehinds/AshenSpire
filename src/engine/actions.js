@@ -652,7 +652,9 @@ function runOpcode(ctx, action, eff) {
       const p = ctx.player;
       if (!action.source || action.source.id !== p.id) break;
       const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
-      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      // No sheet reads as no Dexterity term (framework weight.js), never as
+      // a number from the retired d20 scale.
+      const dexterity = ctx.attributes ? ctx.attributes.dexterity : undefined;
       const stance = playerWeightClass(ctx);
       const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
       ctx.emit('dodgeRolled', {

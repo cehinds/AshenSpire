@@ -663,8 +663,9 @@ test('the worked example recomputes from the edited values and shows the whole s
   // A character in play is shown at its own level (Codex review, #1252).
   const veteran = statsTopicPreview({}, 'HP', { constitution: 2 }, 11);
   assert.equal(veteran.examples[0].lines[0].label, 'HP at level 11');
-  assert.equal(veteran.examples[0].lines[0].total, 30 + 2 * 4 + Math.floor(10 * 1), 'ten levels of growth by level 11');
-  assert.match(veteran.examples[0].lines[0].expression, /10 levels × 1 → 10/);
+  // Ruleset 7 (plan A3): 36 + 2 × CON + 2.5 a level.
+  assert.equal(veteran.examples[0].lines[0].total, 36 + 2 * 2 + Math.floor(10 * 2.5), 'ten levels of growth by level 11');
+  assert.match(veteran.examples[0].lines[0].expression, /10 levels × 2\.5 → 25/);
   assert.equal(veteran.examples[0].lines[1].label, 'HP at level 12', 'and the next level that adds to it');
   assert.match(veteran.subject.label, /level 11/);
   const mana = statsTopicPreview({}, 'Mana', { wisdom: 2 }, 3);
@@ -774,7 +775,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // elsewhere means the edited HP base is not what any run receives.
   const inRun = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 });
   assert.match(inRun.refused, /flask/i);
-  assert.equal(inRun.examples[0].lines[0].total, 30 + 2 * 4, 'the authored HP base, not the refused edit');
+  assert.equal(inRun.examples[0].lines[0].total, 36 + 2 * 2, 'the authored HP base, not the refused edit (ruleset 7)');
   // Held to the whole of validateContent, not only what createRunState trips
   // on (Codex, #1252): a Mana card-cost floor no card meets is refused at boot.
   const cost = statsTopicPreview({ 'gameConfig.balance.mana.minActionCost': 99, 'gameConfig.derivedStatRules.rules.hp.base': 50, settingsStatsExampleClass: 'reaver' }, 'HP');

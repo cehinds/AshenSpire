@@ -105,6 +105,10 @@ const SKILL_LEVELS = argv.includes('--skill-levels');
 // normalizeRunAttributes, so an illegal spread is refused there by name rather
 // than silently clamped into a number this tool would then report as a band.
 // Omit the flag and the fleet runs the shipped presets, exactly as before.
+// THE LEVEL-UP PICK (plan A3): `--levelup=<attributeId>` sends every earned
+// point to that attribute instead of Constitution, so a dominant pick shows
+// as a win-rate gap between fleets that differ only in where points go.
+const LEVELUP_ATTR = (argv.find((a) => a.startsWith('--levelup=')) || '').slice('--levelup='.length) || 'constitution';
 const SPEND = (argv.find((a) => a.startsWith('--spend=')) || '').slice('--spend='.length) || null;
 function spendAllocation(classId) {
   if (!SPEND) return undefined;
@@ -165,11 +169,16 @@ function newDeepStats() {
     playerHpLost: 0, playerBlock: 0, playerHealed: 0, flasksDrunk: 0,
     deaths: 0, deathActs: [0, 0, 0], deathMaxHp: 0, deathHpIn: 0,
     hpInSum: 0, // HP entering every fight, victories included
+    // Incoming damage per encounter (plan A3): HP lost per fight, keyed by
+    // act and pool, so pools are retuned from what a fight actually costs.
+    fightKey: null, byKey: {}, dodges: 0, dodgeHits: 0, dodgeGuard: 0,
   };
 }
 function tallyFight(ds, combat, hpEntering) {
   ds.fights++;
   ds.hpInSum += hpEntering;
+  const bucket = ds.byKey[ds.fightKey || 'other'] || (ds.byKey[ds.fightKey || 'other'] = { fights: 0, hpLost: 0, hpIn: 0 });
+  bucket.fights++; bucket.hpIn += hpEntering;
   let turns = 0;
   for (const ev of combat.eventLog) {
     switch (ev.type) {
@@ -177,9 +186,10 @@ function tallyFight(ds, combat, hpEntering) {
       case 'cardPlayed': ds.cards++; if (ev.ordinalThisTurn >= 2) ds.comboPlays++; break;
       case 'energySpent': ds.energySpent += ev.amount; break;
       case 'flaskUsed': ds.flasksDrunk++; break;
+      case 'dodgeRolled': ds.dodges++; if (ev.success) { ds.dodgeHits++; ds.dodgeGuard += ev.temporaryGuard; } break;
       case 'blockGained': if (ev.targetId === 'player') ds.playerBlock += ev.amount; break;
       case 'healed': if (ev.targetId === 'player') ds.playerHealed += ev.amount; break;
-      case 'hpLost': if (ev.targetId === 'player') ds.playerHpLost += ev.amount; break;
+      case 'hpLost': if (ev.targetId === 'player') { ds.playerHpLost += ev.amount; bucket.hpLost += ev.amount; } break;
       case 'damageDealt': if (ev.targetId !== 'player') { ds.dmgDealt += ev.amount; ds.dmgBlockedByEnemy += ev.blocked; } break;
     }
   }
@@ -401,6 +411,7 @@ function simulateRun(classId, seed, ds = null) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
             const hpIn = run.hp;
+        if (ds) ds.fightKey = `a${act}.event`;
         const fought = botFight(run, rng, encId, cm, ds);
             if (fought !== 'victory') { result.deaths = `ambush${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
             afterVictory(run, rng, 'normal');
@@ -414,6 +425,7 @@ function simulateRun(classId, seed, ds = null) {
         const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
           : rollEncounter(REG, rng, { pool, seat });
         const hpIn = run.hp;
+        if (ds) ds.fightKey = `a${act}.${pool}`;
         const fought = botFight(run, rng, encId, cm, ds);
         if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
         afterVictory(run, rng, pool);
@@ -452,9 +464,10 @@ function simulateRun(classId, seed, ds = null) {
         leaveLocation(visit);
         // THE BOT ASSIGNS EVERY POINT IT HAS EARNED — the shrine is where the
         // level's points land (plan phase 6). Constitution every time: the
-        // greedy pilot measures how many levels the climb pays, not which.
+        // greedy pilot measures how many levels the climb pays, not which
+        // (`--levelup=<attributeId>` measures which).
         for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
-          applyLevelUp(REG, run, 'constitution');
+          applyLevelUp(REG, run, LEVELUP_ATTR);
           result.levelUps = (result.levelUps || 0) + 1;
           levelUps += 1;
         }
@@ -478,7 +491,7 @@ function simulateRun(classId, seed, ds = null) {
 // ---- fleet -------------------------------------------------------------------
 function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
-console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
+console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + (LEVELUP_ATTR !== 'constitution' ? `  |  level-up points: ${LEVELUP_ATTR}` : '') + '\n');
 let crash = null;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 const skillLevelsByClass = {};
@@ -530,8 +543,16 @@ for (const cls of REG.classes.all()) {
     console.log(
       `        per fight: dealt ${perFight(ds.dmgDealt)} (enemy blocked ${perFight(ds.dmgBlockedByEnemy)})` +
       `  hp lost ${perFight(ds.playerHpLost)}  block ${perFight(ds.playerBlock)}  healed ${perFight(ds.playerHealed)}` +
-      `  flasks drunk ${ds.flasksDrunk}`
+      `  flasks drunk ${ds.flasksDrunk}` +
+      `  dodges ${ds.dodges} (${ds.dodgeHits} landed, ${(ds.dodgeGuard / Math.max(1, ds.dodgeHits)).toFixed(1)} guard each)`
     );
+    const keys = Object.keys(ds.byKey).sort();
+    if (keys.length) {
+      console.log('        hp lost per fight (act.pool: mean lost / mean HP in, fights): ' + keys.map((k) => {
+        const b = ds.byKey[k];
+        return `${k} ${(b.hpLost / b.fights).toFixed(1)}/${(b.hpIn / b.fights).toFixed(0)} (${b.fights})`;
+      }).join('  '));
+    }
     if (ds.deaths) {
       console.log(
         `        deaths ${ds.deaths}: by act ${ds.deathActs.join('/')}` +

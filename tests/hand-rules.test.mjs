@@ -41,11 +41,13 @@ test('default draws the Draw stat every turn and discards what is unplayed (plan
   assert.equal(small.piles.hand.length, 3);
 });
 
-test('a run born before ruleset 7 keeps retain-and-fill unless the profile chose otherwise', () => {
+test('a run born before ruleset 8 keeps retain-and-fill unless the profile chose otherwise', () => {
   assert.deepEqual([handRulesDefaultsFor(6).drawMode, handRulesDefaultsFor(6).retain], ['fill', true]);
-  assert.deepEqual([handRulesDefaultsFor(7).drawMode, handRulesDefaultsFor(7).retain], ['derived', false]);
+  // Ruleset 7 is plan A3's Actions/HP retune, still dealt a base-3 Draw row.
+  assert.deepEqual([handRulesDefaultsFor(7).drawMode, handRulesDefaultsFor(7).retain], ['fill', true]);
+  assert.deepEqual([handRulesDefaultsFor(8).drawMode, handRulesDefaultsFor(8).retain], ['derived', false]);
   assert.equal(handRulesDefaultsFor(undefined).drawMode, 'derived');
-  const chosen = resolveHandRules({ [prefix + 'drawMode']: 'fixed' }, contentBundle.attributes, handRulesDefaultsFor(6));
+  const chosen = resolveHandRules({ [prefix + 'drawMode']: 'fixed' }, contentBundle.attributes, handRulesDefaultsFor(7));
   assert.equal(chosen.drawMode, 'fixed');
   assert.equal(chosen.retain, true);
 });

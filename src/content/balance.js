@@ -1602,7 +1602,10 @@ export const balance = {
     wrathCoil: { damage: 3 },
     // The four class kit relics (plan phase 5a, proposal §4).
     ashenGrip: { restoreStamina: 1 },
-    lodestarShard: { restoreMana: 1 },
+    // A2 Starseer starvation: 1 -> 3, beside Starstone Shard's Mana +3, so a
+    // Starseer whose Mana carries between fights still opens with a cast
+    // (plan A2, `node tools/runsim.mjs 60`: Starseer 1/60 -> 21/60 with the other A2 Starseer rows; 82/200 alone).
+    lodestarShard: { restoreMana: 3 },
     waxenSeal: { heal: 3 },
     whetstonePouch: { bleed: 2 },
     [NOTE]: {

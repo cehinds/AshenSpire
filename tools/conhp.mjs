@@ -82,11 +82,12 @@ check('HP and Stamina consume Constitution; HP follows the resolved per-point ru
   const hp = contentBundle.derivedStatRules.rules.hp;
   const stamina = contentBundle.derivedStatRules.rules.stamina;
   // Ruleset 6 (#1253): a base and a decimal weight per attribute, no tier.
-  eq(hp.constitution, 4, 'HP source (ruleset 6: four per point of constitution)');
-  eq(hp.base, 30, 'HP base');
-  eq(hp.perLevel, 1, 'HP growth per level');
+  // Ruleset 7 (plan A3): 36 + 2 x CON, two and a half per level.
+  eq(hp.constitution, 2, 'HP source (ruleset 7: two per point of constitution)');
+  eq(hp.base, 36, 'HP base');
+  eq(hp.perLevel, 2.5, 'HP growth per level');
   assert(!('pointsPerTier' in hp) && !('gainPerTier' in hp), 'HP states no tier and no gain');
-  eq(stamina.constitution, 1, 'Stamina source (ruleset 6: a weight on constitution)');
+  eq(stamina.constitution, 1, 'Stamina source (ruleset 6 and 7: a weight on constitution)');
 });
 
 
@@ -219,7 +220,7 @@ check('each adjacent CON point adds exactly the resolved HP gain', () => {
   // Ruleset 6: HP's Constitution weight is 4, a whole number, so every point
   // pays floor(CON x 4) - floor((CON - 1) x 4) = 4 exactly.
   const hp = at4.derivedStatRuleSnapshot.rules.rules.hp;
-  eq(hp.constitution, 4, 'resolved HP weight on Constitution');
+  eq(hp.constitution, 2, 'resolved HP weight on Constitution (ruleset 7)');
   eq(at4.maxHp - at2.maxHp, 2 * hp.constitution, 'two CON points add two resolved weights');
   eq(at4.maxHp - at3.maxHp, hp.constitution, 'one CON point adds one resolved weight');
 });
@@ -309,7 +310,7 @@ check('new host snapshots carry the resolved data-owned HP rule', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xc00, classId: 'herald', registries });
   const hp = run.derivedStatRuleSnapshot.rules.rules.hp;
-  eq(hp.constitution, 4, 'snapshot source (ruleset 6: four per point of constitution)');
+  eq(hp.constitution, 2, 'snapshot source (ruleset 7: two per point of constitution)');
   assert(Number.isFinite(hp.base), 'snapshot HP base must be host-resolved numeric data');
   assert(Number.isFinite(hp.constitution), 'snapshot HP coefficient must be host-resolved numeric data');
   eq(run.maxHp, expectedHp(registries, run), 'host-stamped maxHp');

@@ -36,8 +36,16 @@ export function computeWeightClass({ constitution, strength, bonuses = 0, weight
   return { capacity, load, percent, weightClass: weightClassFor(percent) };
 }
 
+/**
+ * attributeModifier(score) — the Dexterity term of the dodge, re-centred on
+ * the lean attribute scale by two data rows (mechanics.dodgeRoll
+ * `dexterityCentre`, `dexterityPerModifier`): floor((score − centre) / per).
+ */
 export function attributeModifier(score) {
-  return Math.floor((score - 10) / 2);
+  const { dexterityCentre, dexterityPerModifier } = mechanics.dodgeRoll;
+  // No sheet (a fixture, a foundation fight) reads as the centre: no term.
+  if (!Number.isFinite(score)) return 0;
+  return Math.floor((score - dexterityCentre) / Math.max(1, dexterityPerModifier));
 }
 
 /**
@@ -60,8 +68,13 @@ export function dodgeRollCheck({
     check,
     difficulty,
     success,
+    // A landed dodge always guards something: the sum is floored at the
+    // data row `temporaryGuardMinimum`, whatever Dexterity and the class say.
     temporaryGuard: success
-      ? mechanics.dodgeRoll.temporaryGuardBase + attributeModifier(dexterity) + weightClass.temporaryGuardModifier
+      ? Math.max(
+        mechanics.dodgeRoll.temporaryGuardMinimum,
+        mechanics.dodgeRoll.temporaryGuardBase + attributeModifier(dexterity) + weightClass.temporaryGuardModifier,
+      )
       : 0,
     cost: { stamina: weightClass.dodgeStaminaCost, actions: weightClass.dodgeActionCost },
   };

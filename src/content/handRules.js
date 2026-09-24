@@ -26,5 +26,5 @@ export const handRulesDefaults = {
 // A run whose derived-stat snapshot predates this ruleset was dealt its Draw
 // row for a retained, refilled hand (a base-3 row). Where the profile states no
 // choice of its own, such a run keeps the defaults it was played under.
-export const derivedHandSinceRuleset = 7;
+export const derivedHandSinceRuleset = 8;
 export const legacyHandRulesDefaults = { retain: true, drawMode: 'fill' };

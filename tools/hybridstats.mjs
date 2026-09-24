@@ -71,14 +71,14 @@ check('shipping content and registries expose one derived-rules object', () => {
 
 check('a standard Reaver run owns the versioned snapshot and all approved derived outputs', () => {
   const run = fresh();
-  // Ruleset 6 (#1253), worked by hand from src/content/derivedStats.js for the
+  // Ruleset 8 (plan A3's rows, plan A4's Draw base), worked by hand from src/content/derivedStats.js for the
   // lean Reaver (STR 3, DEX 1, CON 2, WIS 1, INT 1):
-  //   HP      30 + floor(2 x 4) = 38, plus the Forsaken Medallion's flat 10
+  //   HP      36 + floor(2 x 2) = 40, plus the Forsaken Medallion's flat 10
   //   Mana     1 + floor(1 x 1) = 2      Stamina  1 + floor(2 x 1) = 3
-  //   Actions  3 + floor(1 x 0.2) = 3    draw     5 + floor(1 x 0.2) = 5 (ruleset 7)
-  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 7, 'ruleset version');
-  equal(run.maxHp, 48, 'CON-derived max HP plus the starter relic');
-  equal(run.hp, 48, 'new run HP starts full');
+  //   Actions  3 + floor(1 x 0.25) = 3   draw     5 + floor(1 x 0.2) = 5 (ruleset 8)
+  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 8, 'ruleset version (8: plan A3 rows, A4 draw)');
+  equal(run.maxHp, 50, 'CON-derived max HP plus the starter relic');
+  equal(run.hp, 50, 'new run HP starts full');
   equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
   equal(run.mana, 2, 'new run Mana starts full');
   equal(run.maxStamina, 3, 'CON-derived max Stamina');
@@ -119,19 +119,19 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
-  equal(run.maxHp, 48, 'migrated max HP under the Constitution weight');
-  equal(run.hp, 38, 'HP deficit of 10 preserved across the migration');
+  equal(run.maxHp, 50, 'migrated max HP under the Constitution weight');
+  equal(run.hp, 40, 'HP deficit of 10 preserved across the migration');
   equal(run.maxMana, 2, 'migrated max Mana');
   equal(run.mana, 1, 'legacy Mana proportion preserved');
   equal(run.maxStamina, 3, 'Stamina created from real attributes');
   equal(run.stamina, 3, 'new Stamina pool starts full');
-  equal(run.derivedStatRuleSnapshot.rulesetVersion, 7, 'migration stamps ruleset');
+  equal(run.derivedStatRuleSnapshot.rulesetVersion, 8, 'migration stamps ruleset');
 });
 
 check('solo combat consumes run Energy/Draw and transports real Stamina without inventing spend', () => {
   const run = fresh({ derivedStatOptions: { explicitOverride: { rules: { energy: { base: 4 }, draw: { base: 7 } } } } });
   const combat = createCombat({ registries: REG, rng: createRng(99), player: playerInput(run), enemyIds: ['blightHound'] });
-  // Override base 4 + floor(DEX 1 x 0.2) = 4 (ruleset 6, lean Reaver).
+  // Override base 4 + floor(DEX 1 x 0.25) = 4 (ruleset 7, lean Reaver).
   equal(combat.player.energyMax, 4, 'combat Energy max');
   equal(combat.drawPerTurn, 7, 'opening/per-turn draw (override base 7 + floor(INT 1 x 0.2))');
   equal(combat.player.maxStamina, 3, 'combat Stamina max');
@@ -144,7 +144,7 @@ check('host session snapshot is authoritative for derived rules and every curren
   S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
   S.start();
   const party = S.snapshot().party[0];
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 7, 'party ruleset');
+  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 8, 'party ruleset');
   equal(party.maxStamina, 3, 'party Stamina max');
   equal(party.stamina, 3, 'party Stamina current');
   equal(party.maxMana, 2, 'party derived Mana max');
@@ -169,7 +169,7 @@ check('Mana authority is WIS data and gameplay uses small-unit costs/restores', 
   equal(derivedStatRules.rules.mana.base, 1, 'Mana base');
   equal(derivedStatRules.rules.mana.wisdom, 1, 'Mana source (ruleset 6: a weight on wisdom)');
   equal(derivedStatRules.rules.mana.cap ?? derivedStatRules.defaults.cap, null, 'Mana cap');
-  for (const id of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+  for (const id of ['gorefireSlash', 'starstoneArc', 'urgentHeal']) {
     equal(contentBundle.cards.find((card) => card.id === id)?.manaCost, 1, `${id} Mana cost`);
   }
   const azure = contentBundle.flasks.find((flask) => flask.id === 'azureFlask');
@@ -191,7 +191,7 @@ check('Mana semantic constant scan refuses legacy class-scale authority', () => 
 check('co-op UI affordability and host execution agree for all three Mana signatures', () => {
   const coopSource = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
   assert(/meP\.mana\s*>=\s*(\(def\.manaCost\s*\|\|\s*0\)|costs\.mana)/.test(coopSource), 'co-op hand omits Mana from affordability');
-  for (const cardId of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+  for (const cardId of ['gorefireSlash', 'starstoneArc', 'urgentHeal']) {
     const fight = (mana) => createCoopCombat({
       registries: REG,
       rng: createRng(0x6d616e61),
