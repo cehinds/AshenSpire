@@ -5,6 +5,8 @@
 // <head> through headMetaTags() below, so the copy cannot drift from the source.
 // REQUIRED_HEAD_META lists only the tags that must exist; headMetaTags() also
 // copies optional ones of the same kinds (og:type, other og:*, apple-touch-icon).
+// It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here
+// changes the built <head>, so it moves the source digest.
 // Zero dependencies (Node core only); pure string work, safe to import in tests.
 
 // Each required tag, as a name the error message can use and a pattern that

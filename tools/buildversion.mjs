@@ -167,6 +167,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
+  'tools/head-meta.mjs',
 ]);
 
 /**
