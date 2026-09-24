@@ -13,7 +13,7 @@ Run `node tools/launch.mjs --build-only` to generate all three editions:
   `dist/AshenSpire-mobile.html` are the same build reading its art from
   `assets-mobile/`: every image with a side of 384 px or more halved, all
   re-encoded lossy (`tools/mobileart-policy.mjs`: q50, alpha q60). The file is
-  held under 50 MB — `bundle.mjs --mobile` refuses to write one over the budget
+  held under 30 MB — `bundle.mjs --mobile` refuses to write one over the budget
   and `verify-shipped.mjs` fails a committed one. The Pages site serves it at
   `/<branch>/<ordinal>/mobile/` and offers both downloads side by side.
   Regenerate the twins after any change under `assets/` with

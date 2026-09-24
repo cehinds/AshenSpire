@@ -19,8 +19,8 @@ export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
-  playerSpriteScale: 0.9,
-  enemySpriteScale: 0.9,
+  playerSpriteScale: 1,
+  enemySpriteScale: 2,
   playerSpawnRow: 'C',
   enemySpawnRow: 'C',
   playerSpawnColumn: '2',
@@ -33,7 +33,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   frontLayer: 0, backLayer: 200,
   rowALayer: 0, rowBLayer: 0, rowCLayer: 0, rowDLayer: 0, rowELayer: 0, rowFLayer: 0,
   gridShape: 'wide-rhombus', gridLayer: 'behind',
-  playerGridColor: '#d5cc63', enemyGridColor: '#e1a679',
+  playerGridColor: '#0000ff', enemyGridColor: '#ff0000',
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });

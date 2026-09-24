@@ -646,6 +646,11 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.derivedStatRules.rules.energy.base': 2,
     'gameConfig.derivedStatRules.rules.energy.dexterity': 0,
     'gameConfig.derivedStatRules.rules.energy.strength': 0.3,
+    // The stock Actions rule also reads WIS, INT and level; zeroed so the sum
+    // under test is exactly base + STR.
+    'gameConfig.derivedStatRules.rules.energy.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.energy.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.energy.perLevel': 0,
   };
   const current = { strength: 11, dexterity: 2, constitution: 3, wisdom: 4, intelligence: 5 };
   const actions = statsTopicPreview(settings, 'Actions', current);
@@ -661,7 +666,9 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.match(example.subject.label, /Herald/);
   assert.equal(example.examples[0].lines.length, 2, 'HP shows level 1 and the next level that adds to it');
   // A character in play is shown at its own level (Codex review, #1252).
-  const veteran = statsTopicPreview({}, 'HP', { constitution: 2 }, 11);
+  // One HP per level, set here, so ten levels read as ten whatever the stock
+  // HP growth is.
+  const veteran = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.perLevel': 1 }, 'HP', { constitution: 2 }, 11);
   assert.equal(veteran.examples[0].lines[0].label, 'HP at level 11');
   assert.equal(veteran.examples[0].lines[0].total, 30 + 2 * 4 + Math.floor(10 * 1), 'ten levels of growth by level 11');
   assert.match(veteran.examples[0].lines[0].expression, /10 levels × 1 → 10/);
@@ -694,6 +701,9 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.starting.base': 4,
     'gameConfig.handRules.starting.baseline': 5,
     'gameConfig.handRules.starting.pointsPerCard': 2,
+    // Fill mode, set here: the stock draw is now a fixed count, and the line
+    // under test is fill's ceiling.
+    'gameConfig.handRules.drawMode': 'fill',
   }, 'Draw & hand', { intelligence: 9 });
   const opening = hand.examples[0].lines[0];
   assert.equal(opening.total, 6);
@@ -728,7 +738,17 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.match(poise.examples[0].lines[0].expression, /STR 3 × 0\.5 → 1 \+ CON 2 × 1 → 2/);
   // A starting relic's rating bonus is in the rating a new character has
   // before equipment, as combat's receipt adds it (Codex, #1252).
-  const relicAr = statsTopicPreview({ 'gameConfig.combatRatings.bonuses.relic:forsakenMedallion.ar': 5, settingsStatsExampleClass: 'reaver' }, 'Attack rating (AR)').examples[0].lines[0];
+  // AR is pinned to STR × 0.5 here so the attribute half of the sum is known;
+  // the stock AR row now reads every attribute.
+  const relicAr = statsTopicPreview({
+    'gameConfig.combatRatings.bonuses.relic:forsakenMedallion.ar': 5,
+    'gameConfig.combatRatings.ratings.ar.strength': 0.5,
+    'gameConfig.combatRatings.ratings.ar.dexterity': 0,
+    'gameConfig.combatRatings.ratings.ar.constitution': 0,
+    'gameConfig.combatRatings.ratings.ar.wisdom': 0,
+    'gameConfig.combatRatings.ratings.ar.intelligence': 0,
+    settingsStatsExampleClass: 'reaver',
+  }, 'Attack rating (AR)').examples[0].lines[0];
   assert.equal(relicAr.total, Math.floor(3 * 0.5) + 5);
   assert.match(relicAr.expression, /\+ 5 from Forsaken Medallion/);
   // With ratings off, Poise shows the conversion combat then uses, and no formula.

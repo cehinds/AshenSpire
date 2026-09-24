@@ -5,11 +5,12 @@ const rule = (weights, base = 0) => ({ base, ...Object.fromEntries(ratingAttribu
 export const defaultRatingFormula = Object.freeze({
   multiplier: 1,
   ratings: Object.freeze({
-    ar: Object.freeze(rule({ strength: 0.5 })),
-    dr: Object.freeze(rule({ dexterity: 0.5 })),
-    pr: Object.freeze(rule({ wisdom: 0.5, intelligence: 0.5 })),
-    poise: Object.freeze(rule({ constitution: 1, strength: 0.5 }, 1)),
-    ward: Object.freeze(rule({ wisdom: 1, intelligence: 0.5 }, 1)),
+    // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json).
+    ar: Object.freeze(rule({ strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 })),
+    dr: Object.freeze(rule({ strength: 0.5, dexterity: 0.75, constitution: 0.25, wisdom: 0.35, intelligence: 0.15 })),
+    pr: Object.freeze(rule({ dexterity: 0.25, constitution: 0.5, wisdom: 0.5, intelligence: 0.75 })),
+    poise: Object.freeze(rule({ constitution: 1, strength: 0.5, wisdom: 0.2, intelligence: 0.1 }, 1)),
+    ward: Object.freeze(rule({ dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 }, 1)),
   }),
 });
 

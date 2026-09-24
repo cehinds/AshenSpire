@@ -53,6 +53,9 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
+  // Read before the overlay so a mutation shows whatever the stock number is.
+  const authoredCombatWin = contentBundle.balance.xp.combatWin;
+  assert.notEqual(authoredCombatWin, 60);
   const configured = configuredContentBundle(contentBundle, {
     'gameConfig.attributeRules.presets.lean.reaver.strength': 4,
     'gameConfig.attributeRules.presets.lean.reaver.dexterity': 1,
@@ -66,7 +69,7 @@ test('configured bundle overlays starting stats and progression without mutating
   assert.equal(contentBundle.attributeRules.presets.lean.reaver.strength, 3);
   assert.equal(configured.balance.xp.combatWin, 60);
   assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
-  assert.equal(contentBundle.balance.xp.combatWin, 50);
+  assert.equal(contentBundle.balance.xp.combatWin, authoredCombatWin);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
   // The retired tier dial's key does not write the table: a ruleset-6 table
   // has no tier, so writing one would fail validation and throw every other
@@ -83,7 +86,9 @@ test('an incomplete class-stat edit is named and keeps the last valid authored p
 });
 
 test('cross-field ranges are refused instead of reaching a new run inverted', () => {
-  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': 100 };
+  // One past the authored high end, so the low end is inverted whatever the
+  // stock band is.
+  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': contentBundle.balance.rewards.cinders.normal[1] + 1 };
   assert.match(advancedConfigStructuralProblems(contentBundle, settings)[0], /rewards\.cinders\.normal/);
   assert.match(advancedConfigProblems(contentBundle, settings)[0], /first value/);
 });
@@ -142,7 +147,9 @@ test('formation appearance validates scales, colors, shapes and offsets', () => 
   assert.equal(config.frontOffsetX, 150);
   assert.equal(config.gridShape, 'wide-rhombus');
   assert.equal(config.playerGridColor, '#00ff88');
-  assert.equal(config.enemyGridColor, '#e1a679');
+  // An invalid color falls back to the stock default, never passes through.
+  assert.equal(config.enemyGridColor, presentationConfig({}).enemyGridColor);
+  assert.match(config.enemyGridColor, /^#[0-9a-f]{6}$/i);
 });
 
 test('legacy row and column names migrate to the six-cell formation grid', () => {
