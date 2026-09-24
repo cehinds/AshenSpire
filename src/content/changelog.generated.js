@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1306",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\".",
+    "build": "0.7.1.471",
+    "pullRequest": 1306,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1306"
+  },
+  {
     "id": "pr-1302",
     "date": "2026-09-24",
     "group": "2026-09-24",
