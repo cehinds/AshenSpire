@@ -12,7 +12,8 @@
 //   · CREDITS.md — a directory is covered when its path is written there,
 //     followed by a separator (`assets/bg` does not cover `assets/bgx`)
 //   · README.md §Legal and src/content/aiDisclosure.js — the set of AI vendors
-//     each names must be the same set, §Legal must link CREDITS.md, and §Legal
+//     each names must be the same set, §Legal must link CREDITS.md (a Markdown
+//     link, not the bare name), and §Legal
 //     must not deny AI involvement
 //   · every AI vendor CREDITS names must also be named by the disclosure
 //
@@ -53,7 +54,8 @@ export const VENDORS = Object.freeze([
 ]);
 
 // A §Legal sentence that denies AI involvement contradicts the disclosure.
-const DENIAL = /\bno AI\b|\bnot AI[- ]generated\b|\bwithout AI\b|\bhand[- ](made|drawn|authored)\b|\bhuman[- ]made\b/i;
+// A runtime-only claim ("No AI runs while you play") is not a denial.
+const DENIAL = /\bno AI\b(?!\s+(?:model\s+)?(?:runs|is run|at runtime))|\bnot AI[- ]generated\b|\bwithout AI\b|\bhand[- ](made|drawn|authored)\b|\bhuman[- ]made\b/i;
 
 export const vendorsIn = (text) => VENDORS.filter((v) => v.re.test(text)).map((v) => v.id);
 
@@ -84,7 +86,7 @@ export function audit({ dirs, credits, readme, disclosure }) {
     fails.push({ rule: 'legal-missing', why: 'README.md has no "## Legal" section' });
     return fails;
   }
-  if (!/CREDITS\.md/.test(legal)) fails.push({ rule: 'legal-link', why: 'README §Legal does not link CREDITS.md' });
+  if (!/\]\(\.?\/?CREDITS\.md(?:#[^)]*)?\)/.test(legal)) fails.push({ rule: 'legal-link', why: 'README §Legal does not link CREDITS.md' });
   const denial = DENIAL.exec(legal);
   if (denial) fails.push({ rule: 'legal-denial', why: `README §Legal says "${denial[0]}", which the AI disclosure contradicts` });
   const said = new Set(vendorsIn(legal));
@@ -144,6 +146,7 @@ async function selftest() {
     { name: 'longer-name-is-not-a-row', rule: 'row', input: { ...clean, dirs: ['assets/bg'], credits: 'assets/bg-extra/ only' } },
     { name: 'no-legal-section', rule: 'legal-missing', input: { ...clean, readme: '# T\n\n## Licence\n\nMIT\n' } },
     { name: 'legal-without-credits-link', rule: 'legal-link', input: { ...clean, readme: clean.readme.replace('[CREDITS.md](CREDITS.md)', 'the credits') } },
+    { name: 'legal-names-credits-without-link', rule: 'legal-link', input: { ...clean, readme: clean.readme.replace('[CREDITS.md](CREDITS.md)', 'CREDITS.md') } },
     { name: 'legal-denies-ai', rule: 'legal-denial', input: { ...clean, readme: clean.readme.replace('Art made', 'No AI was used. Art made') } },
     { name: 'legal-omits-disclosed-vendor', rule: 'legal-vendor-missing', input: { ...clean, readme: clean.readme.replace(' and code by Claude', '') } },
     { name: 'legal-names-undisclosed-vendor', rule: 'legal-vendor-extra', input: { ...clean, readme: clean.readme.replace('OpenAI', 'OpenAI and Midjourney') } },
@@ -155,6 +158,11 @@ async function selftest() {
   ];
   let bad = 0;
   const cleanFails = audit(clean);
+  const runtimeFails = audit({ ...clean, readme: clean.readme.replace('Art made', 'No AI runs while you play. Art made') });
+  if (runtimeFails.length) {
+    bad++;
+    console.log(`FAIL  runtime-only claim is red: ${runtimeFails.map((f) => f.rule).join(', ')}`);
+  } else console.log('PASS  runtime-only "No AI runs" claim stays green');
   if (cleanFails.length) {
     bad++;
     console.log(`FAIL  clean fixture is red: ${cleanFails.map((f) => f.rule).join(', ')}`);
@@ -168,11 +176,11 @@ async function selftest() {
     }
   }
   if (bad) {
-    console.log(`credits-check-selftest: ${bad} of ${plants.length + 1} checks failed`);
+    console.log(`credits-check-selftest: ${bad} of ${plants.length + 2} checks failed`);
     return 1;
   }
-  console.log(`  clean edge + ${plants.length} plants`);
-  console.log(`credits-check-selftest: OK — ${plants.length + 1} checks passed.`);
+  console.log(`  clean edge + runtime-claim edge + ${plants.length} plants`);
+  console.log(`credits-check-selftest: OK — ${plants.length + 2} checks passed.`);
   return 0;
 }
 
