@@ -45,14 +45,13 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
  * Where the mobile art itself has to land for the bundle to fit: the budget
  * less the code (~8.3 MB at 0.7.1) and base64 growth (4/3). A twin tree over
  * this is caught by --check before anyone builds with it.
- *
- * Raised 40_000_000 → 41_000_000 on 2026-09-24 for the prologue path art
- * (#1285: eight step-{crownfall,marches,reach,weald}-{desktop,mobile} scenes,
- * ~0.64 MB inlined as twins), which took the tree to ~40.30 MB. This is the
- * derived art share only: MOBILE_BUNDLE_BUDGET_BYTES, the owner's cap, is
- * unchanged, and verify-shipped.mjs still holds the whole bundle under it.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 41_000_000;
+// Was 40 MB. Raised 2026-09-24 when the prologue's eight path-step images
+// (#1285) took the twin tree to 40,295,512 bytes inlined. Measured headroom:
+// that tree bundles to 49,757,112 bytes, so art can grow by ~0.24 MB before the
+// 50 MB cap above (the owner's number, unchanged) refuses the bundle; this
+// ceiling stays inside that headroom, so the pre-build check still fails first.
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_500_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
