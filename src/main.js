@@ -49,7 +49,7 @@ import { awardLevelXp, combatLevelXp } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
-import { seatAtTier, seatTierHpMult } from './model/seats.js';
+import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
@@ -2058,7 +2058,7 @@ function enterNode(nodeId) {
 
 // ---- combat ------------------------------------------------------------------------
 // Custom Climb combat rules → generic createCombat options for a given pool.
-function combatMods(pool) {
+function combatMods(pool, encounter = null) {
   const mods = run.custom ? activeMods(run.custom) : {};
   let hpMult = 1;
   const enemyStatuses = [];
@@ -2070,7 +2070,15 @@ function combatMods(pool) {
   // ratio — exactly 1 at the baseline, so every existing seed's fights roll
   // the HP they always did. World Journey binds difficulty to its own act and
   // has no seat, so it is untouched (§13.6 claim 4).
-  if (!run.journey && Array.isArray(run.seatOrder)) hpMult *= seatTierHpMult(registries, currentSeat(), contentAct());
+  // A BOSS is scaled by the tier it is MET at (balance.bossTiers): its own
+  // seat's tier ratio on HP and move damage, × that tier's boss row — the seat
+  // order is drawn per run, so a boss's difficulty cannot be authored.
+  let damageMult = 1;
+  if (!run.journey && Array.isArray(run.seatOrder)) {
+    const boss = bossTierScale(registries, { encounter, tier: contentAct() });
+    hpMult *= boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct());
+    if (boss) damageMult = boss.damage;
+  }
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -2080,7 +2088,7 @@ function combatMods(pool) {
       enemyStatuses.push({ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop });
     }
   }
-  return { hpMult, enemyStatuses, playerStatuses };
+  return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
 function showLegacyDungeon() {
@@ -2185,7 +2193,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   if (!resuming) persist();
   const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
-  const cm = combatMods(enc.pool);
+  const cm = combatMods(enc.pool, enc);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createRunCombat({
     registries,
     rng,
@@ -2196,6 +2204,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
+    enemyDamageMult: cm.damageMult,
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });

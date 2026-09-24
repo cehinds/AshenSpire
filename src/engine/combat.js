@@ -26,7 +26,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax, enemyMoveDamage } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 export { playerWeightClass };
@@ -57,6 +57,10 @@ const QUEUE_GUARD = 10000;
  */
 export function createCombat({
   registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
+  // met at a later tier hits harder). Stamped on each enemy entity, so a
+  // snapshot carries it; 1 stamps nothing.
+  enemyDamageMult = 1,
   // WHICH SWAP-COST RULE THIS FIGHT IS UNDER (A8). Resolved once here rather
   // than per swap, for the reason `hpMult` is: a fight's rules must not change
   // under the player halfway through it. Omitted resolves to the shipping
@@ -199,6 +203,7 @@ export function createCombat({
         instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
         arcaneExposure: def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
+        damageMult: enemyDamageMult,
       })
     );
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
@@ -485,7 +490,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
-      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
+      effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
       source: enemy,
       owner: enemy,
       target: combat.player,
@@ -534,7 +539,7 @@ function rollIntents(combat, isFirstTurn = false) {
       continue;
     }
     enemy.movesHistory.push(moveId);
-    enemy.intent = buildIntent(def.moves[moveId], moveId);
+    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
   }
 }
 
@@ -566,11 +571,11 @@ function weightedMovePick(combat, enemy, def) {
   return pool[pool.length - 1][0];
 }
 
-function buildIntent(move, moveId) {
+function buildIntent(move, moveId, enemy = null) {
   return {
     kind: move.intent,
     moveId,
-    damage: move.damage != null ? move.damage : null,
+    damage: enemyMoveDamage(enemy, move),
     hits: move.damage != null ? (move.hits != null ? move.hits : 1) : null,
     block: move.block != null ? move.block : null,
     delayed: !!move.delay,

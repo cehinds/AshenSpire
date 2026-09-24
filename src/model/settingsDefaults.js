@@ -10,9 +10,9 @@ export const SEED_KEY = 'settingsDefaultsSeed';
 
 /**
  * seedSettingsDefaults(settings, defaults) → changes ({} when nothing moves).
- * `defaults` is { version, values }; `values` are setting keys → values.
+ * `defaults` is { digest, values }; `values` are setting keys → values.
  */
-export function seedSettingsDefaults(settings = {}, defaults = { version: 'none', values: {} }) {
+export function seedSettingsDefaults(settings = {}, defaults = { digest: 'none', values: {} }) {
   const values = defaults?.values || {};
   const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
   const changes = {};

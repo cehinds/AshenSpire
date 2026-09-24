@@ -32,9 +32,9 @@ async function modules() {
 export function moduleText(values) {
   const sorted = Object.fromEntries(Object.entries(values).sort(([a], [b]) => a.localeCompare(b)));
   const body = JSON.stringify(sorted, null, 2).split('\n').map((line, i) => (i ? `  ${line}` : line)).join('\n');
-  const version = Object.keys(sorted).length ? createHash('sha1').update(JSON.stringify(sorted)).digest('hex').slice(0, 10) : 'none';
+  const digest = Object.keys(sorted).length ? createHash('sha1').update(JSON.stringify(sorted)).digest('hex').slice(0, 10) : 'none';
   const head = readFileSync(TARGET, 'utf8').split('export const SETTINGS_DEFAULTS')[0];
-  return `${head}export const SETTINGS_DEFAULTS = Object.freeze({\n  version: '${version}',\n  values: Object.freeze(${body}),\n});\n`;
+  return `${head}export const SETTINGS_DEFAULTS = Object.freeze({\n  digest: '${digest}',\n  values: Object.freeze(${body}),\n});\n`;
 }
 
 async function main(argv) {
@@ -44,7 +44,7 @@ async function main(argv) {
     const file = JSON.stringify({ game: 'Ashen Spire', schemaVersion: 1, overrides: Object.fromEntries(Object.entries(SETTINGS_DEFAULTS.values)
       .map(([key, value]) => [key.startsWith('gameConfig.') ? key : `settings.${key}`, value])) });
     parseAdvancedConfigFile(file, contentBundle, {}, rows, []);
-    console.log(`settings-defaults: OK — ${Object.keys(SETTINGS_DEFAULTS.values).length} promoted value(s), version ${SETTINGS_DEFAULTS.version}`);
+    console.log(`settings-defaults: OK — ${Object.keys(SETTINGS_DEFAULTS.values).length} promoted value(s), digest ${SETTINGS_DEFAULTS.digest}`);
     return;
   }
   if (argv.includes('--clear')) {

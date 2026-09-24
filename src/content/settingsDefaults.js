@@ -12,6 +12,6 @@
 //   · Reset puts a key back to this value, not to the row's code default.
 // Empty values mean the code defaults stand, exactly as before this file.
 export const SETTINGS_DEFAULTS = Object.freeze({
-  version: 'none',
+  digest: 'none',
   values: Object.freeze({}),
 });

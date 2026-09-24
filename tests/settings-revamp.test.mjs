@@ -352,20 +352,20 @@ test('an authored slider range wins over the heuristic, and still holds the valu
 
 test('promoted defaults seed a profile once, follow a new promotion, and never override a choice', async () => {
   const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
-  const first = { version: 'a', values: { screenShake: false, musicVolume: 40 } };
+  const first = { digest: 'a', values: { screenShake: false, musicVolume: 40 } };
   const fresh = {};
   Object.assign(fresh, seedSettingsDefaults(fresh, first));
   assert.equal(fresh.screenShake, false);
   assert.equal(fresh.musicVolume, 40);
   assert.deepEqual(fresh[SEED_KEY], first.values);
   const chose = { ...fresh, musicVolume: 70 };
-  const second = { version: 'b', values: { screenShake: true, musicVolume: 55 } };
+  const second = { digest: 'b', values: { screenShake: true, musicVolume: 55 } };
   const moved = seedSettingsDefaults(chose, second);
   assert.equal(moved.screenShake, true, 'an untouched default follows the new promotion');
   assert.ok(!('musicVolume' in moved), 'the player’s own value stays');
-  const dropped = seedSettingsDefaults({ ...fresh }, { version: 'c', values: {} });
+  const dropped = seedSettingsDefaults({ ...fresh }, { digest: 'c', values: {} });
   assert.ok('screenShake' in dropped && dropped.screenShake === undefined, 'a dropped promotion hands the key back to the code default');
-  assert.deepEqual(seedSettingsDefaults({}, { version: 'none', values: {} }), {}, 'no promotion, no change');
+  assert.deepEqual(seedSettingsDefaults({}, { digest: 'none', values: {} }), {}, 'no promotion, no change');
 });
 
 test('a profile save that finishes after the location changed is not recorded', async () => {
@@ -408,8 +408,8 @@ test('changing the device-key scope forgets the loaded version, and Changed coun
 test('a player value that happens to equal a promotion is not recorded as seeded', async () => {
   const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
   const chose = { musicVolume: 40 };
-  Object.assign(chose, seedSettingsDefaults(chose, { version: 'a', values: { musicVolume: 40, screenShake: false } }));
+  Object.assign(chose, seedSettingsDefaults(chose, { digest: 'a', values: { musicVolume: 40, screenShake: false } }));
   assert.deepEqual(chose[SEED_KEY], { screenShake: false }, 'only the absent key was seeded');
-  const moved = seedSettingsDefaults(chose, { version: 'b', values: { musicVolume: 50, screenShake: false } });
+  const moved = seedSettingsDefaults(chose, { digest: 'b', values: { musicVolume: 50, screenShake: false } });
   assert.equal(Object.hasOwn(moved, 'musicVolume'), false, 'the player\'s 40 survives the next promotion');
 });
