@@ -27,9 +27,12 @@
 #                beside the other two instead of after one of them.
 #
 # CANCELLATION IS FOR PULL REQUESTS ONLY. A newer push to a PR branch makes the
-# older run's answer moot, so it is cancelled. A push to dev is a MERGE, and each
-# merge's post-merge tree is its own answer: cancelling it when the next merge
-# lands left merged commits with no run at all. So dev pushes queue instead.
+# older run's answer moot, so it is cancelled. A push to dev is a MERGE, and a
+# running dev run is no longer cancelled when the next merge lands, which closes
+# the common two-merge case. It is NOT a run per merge: GitHub keeps at most one
+# running and one pending run per group, and a newer pending run replaces the
+# older one, so in a burst of three or more merges a middle merge can still go
+# without a run. A per-SHA group for push events would give every merge its own.
 
 name: tests
 

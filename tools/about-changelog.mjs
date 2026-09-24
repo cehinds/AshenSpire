@@ -978,9 +978,29 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
 // into an empty root and runs this tool whole against it (`--root`), as CI does.
 // They insert above the real file's first `## ` heading, so the corpus is the
 // real history plus one known-bad, and drifts with nothing.
+//
+// THE CORPUS RUNS TWICE: against buildordinal.json as it stands, and against the
+// same file with the release cut to the next major at ordinal 1 — the tree the
+// day a version ships. Every plant is built from what the file holds rather than
+// from the current release, and the second pass is what proves it: a plant that
+// needed stamps of the current release in an old group went red on exactly the
+// 1.0.0 cut this mode must survive (#1279 review).
 async function orderSelftest() {
-  const real = readFileSync(OWNER, 'utf8');
   const ordinalFile = readFileSync(resolve(ROOT, 'buildordinal.json'), 'utf8');
+  const parsed = JSON.parse(ordinalFile);
+  const major = Number(String(parsed.release).split('.')[0]);
+  const bumped = JSON.stringify({ ...parsed, release: `${major + 1}.0.0`, ordinal: 1 }, null, 2);
+  let caught = 0, total = 0;
+  for (const [label, file] of [['as built', ordinalFile], [`release cut to ${major + 1}.0.0`, bumped]]) {
+    console.log(`-- check-order corpus, buildordinal.json ${label}`);
+    const pass = await orderCorpus(file);
+    caught += pass.caught; total += pass.total;
+  }
+  return { caught, total };
+}
+
+async function orderCorpus(ordinalFile) {
+  const real = readFileSync(OWNER, 'utf8');
   const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
   const at = real.indexOf('\n## ');
   if (at < 0) throw new Error('check-order selftest: CHANGELOG.md has no ## heading to plant above');
@@ -988,9 +1008,17 @@ async function orderSelftest() {
   const top = (block) => `${real.slice(0, at)}\n${block}\n${real.slice(at)}`;
   const oldDate = /\n## 2026-09-1\d\n\n/;
   const oldGroup = real.match(/\n## 2026-09-1\d\n\n([\s\S]*?)\n## /)?.[1] ?? '';
-  const oldOrdinals = [...oldGroup.matchAll(new RegExp(`\`${rel.replace(/\./g, '\\.')}\\.(\\d+)\``, 'g'))].map((m) => Number(m[1]));
-  const oldLow = Math.min(...oldOrdinals), oldHigh = Math.max(...oldOrdinals);
-  if (!oldDate.test(real) || !(oldLow < oldHigh)) throw new Error('check-order selftest: plant site drifted — no 2026-09-1x group with two builds of the current release to plant a grandfathered-date rise into');
+  // The group's own stamps, whatever release they wear, ranked as the check
+  // ranks them — so the plant does not depend on the current release.
+  const oldStamps = [...oldGroup.matchAll(/`([^`]+)`\)\./g)]
+    .map((m) => ({ build: m[1], stamp: m[1].match(STAMP) }))
+    .filter((x) => x.stamp)
+    .map((x) => ({ build: x.build, key: stampKey(x.stamp[1], Number(x.stamp[2])) }))
+    .filter((x) => x.key !== null);
+  const oldLow = oldStamps.reduce((a, b) => (a && compareStamps(a.key, b.key) <= 0 ? a : b), null);
+  const oldHigh = oldStamps.reduce((a, b) => (a && compareStamps(a.key, b.key) >= 0 ? a : b), null);
+  if (!oldDate.test(real) || !oldLow || !(compareStamps(oldLow.key, oldHigh.key) < 0)) throw new Error('check-order selftest: plant site drifted — no 2026-09-1x group with two distinct builds to plant a grandfathered-date rise into');
+  const rv = (pr, build) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${build}\`).`;
   const plants = [
     ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
     ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
@@ -1000,7 +1028,7 @@ async function orderSelftest() {
     ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, n + 1)}\n`), null, 'an older merge cannot ship a newer build'],
     // The group's own lowest then highest build, on top of it: one more rise,
     // and the group's range — so every cross-group rule — unchanged.
-    ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${r(990001, oldLow)}\n${r(990002, oldHigh)}\n`), null, 'GRANDFATHERED_RISES pins'],
+    ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${rv(990001, oldLow.build)}\n${rv(990002, oldHigh.build)}\n`), null, 'GRANDFATHERED_RISES pins'],
     ['receipt two builds past buildordinal.json', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
