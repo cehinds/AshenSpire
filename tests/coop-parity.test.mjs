@@ -465,3 +465,16 @@ test('catch-up: a held chest relic with a substitute left is still takeable and 
   assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 0 }).ok, true);
   assert.equal(m.run.relics.length, n + 1);
 });
+
+test('a flask-growth relic from a co-op chest grows the seat\'s flask belt at once', () => {
+  const S = party();
+  const m1 = seat(S, 'p1');
+  seat(S, 'p2');
+  assert.ok(m1.run.flaskCharges, 'the seat carries a flask belt');
+  assert.ok(!m1.run.relics.includes('goldenSprout'));
+  const capacity = m1.run.flaskCharges.capacity;
+  openReward(S, { p1: chestOffer([{ category: 'relic', relicId: 'goldenSprout' }]), p2: chestOffer([]) });
+  assert.equal(S.chooseReward('p1', { chestIndex: 0 }).ok, true);
+  assert.ok(m1.run.relics.includes('goldenSprout'));
+  assert.equal(m1.run.flaskCharges.capacity, capacity + 1, 'Golden Sprout\'s growth binds when the relic lands');
+});

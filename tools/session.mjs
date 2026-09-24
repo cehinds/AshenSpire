@@ -45,6 +45,7 @@ import {
   rollEliteChest,
 } from '../src/engine/encounters.js';
 import { applyChestOption } from '../src/model/rewardChest.js';
+import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { artChargeView, artUnleashFor } from '../src/model/artCharge.js';
 import { offeredRelicIds } from '../src/model/rewardplan.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
@@ -930,6 +931,9 @@ export function createSession({ registries, seedString, endless = false, restore
       m.run.flasks.push({ flaskId: offer.flaskId });
       claimed.flask = true;
     }
+    // A relic grant (chest or relic row) may be a flask-growth source: bind
+    // it now, as the solo reward door does, so the next fight carries it.
+    syncFlaskGrowth(registries, m.run);
     session.scene.chosen[memberId] = true;
     // When every present member has chosen, close the reward scene.
     const waiting = Object.keys(session.scene.offers).filter((id) => {
@@ -1042,6 +1046,7 @@ export function createSession({ registries, seedString, endless = false, restore
       const relicId = rollRelicReward(registries, m.rng, m.run.relics);
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
+        syncFlaskGrowth(registries, m.run);
       } else {
         m.catchup.push({ type: 'treasure', relicId, act: session.actNumber, floor: session.floor });
       }
@@ -1320,11 +1325,13 @@ export function createSession({ registries, seedString, endless = false, restore
         if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
       }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
+      syncFlaskGrowth(registries, m.run); // a caught-up relic may grow the flask belt
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId) {
         const id = m.run.relics.includes(item.relicId) ? rollRelicReward(registries, m.rng, m.run.relics) : item.relicId;
         if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
       }
+      syncFlaskGrowth(registries, m.run);
     } else if (item.type === 'event') {
       // THE MISSED EVENT IS CHOSEN NOW, through the door a live choice walks
       // (eventChoice), against THE OPTIONS FROZEN IN THE ENTRY: the choices
