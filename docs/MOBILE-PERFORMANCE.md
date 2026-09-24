@@ -11,10 +11,16 @@ Run `node tools/launch.mjs --build-only` to generate all three editions:
   portable single-file game with the art as painted (~253 MB on 0.7.1).
 - `AshenSpire-mobile.html`, `build/AshenSpire-mobile.html` and
   `dist/AshenSpire-mobile.html` are the same build reading its art from
-  `assets-mobile/`: every image with a side of 384 px or more halved, all
-  re-encoded lossy (`tools/mobileart-policy.mjs`: q50, alpha q60). The file is
-  held under 30 MB — `bundle.mjs --mobile` refuses to write one over the budget
-  and `verify-shipped.mjs` fails a committed one. The Pages site serves it at
+  `assets-mobile/`: every image with a side of 384 px or more scaled to 5/16
+  (512 → 160), all re-encoded lossy (`tools/mobileart-policy.mjs`: q35, alpha
+  q40 — tightened by the owner, 2026-09-24, from half size at q50 / alpha q60).
+  Full-screen backdrops (`environments/`, `bg/`, `map/`) are the one exception:
+  they keep 0.4 scale at q50, because a 1536-wide backdrop at 5/16 blocks
+  visibly across a phone. The file is held under 30 MB (~28.8 MB on 0.7.1;
+  the budget was 50 MB before 2026-09-24), with the inlined art itself held
+  under 20 MB — `bundle.mjs --mobile` refuses to write one over the budget,
+  `mobile-art.mjs --check` refuses an art tree over its share, and
+  `verify-shipped.mjs` fails a committed one. The Pages site serves it at
   `/<branch>/<ordinal>/mobile/` and offers both downloads side by side.
   Regenerate the twins after any change under `assets/` with
   `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without

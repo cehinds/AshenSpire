@@ -18,8 +18,10 @@ mobile single file with `--mobile`, and the de-inlined one with `--external-art`
 Over 95% of the full single file is base64 art. The mobile file carries the
 SAME files under the SAME `assets/…` keys, read from `assets-mobile/` — a
 committed twin tree that `tools/mobile-art.mjs` shrinks from `assets/` (every
-image with a side of 384 px or more cut to 5/16 scale, all re-encoded lossy; the rule is
-`tools/mobileart-policy.mjs`). It plays identically and looks softer. The
+image with a side of 384 px or more cut to 5/16 scale, all re-encoded lossy at
+quality 35 / alpha 40 — except the full-screen backdrops under `environments/`, `bg/`
+and `map/`, which keep 0.4 scale at quality 50 so they do not block on a phone; the
+rule is `tools/mobileart-policy.mjs`). It plays identically and looks softer. The
 budget is the owner's number — under 30 MB — and it is a refusal, not a
 warning: `bundle.mjs --mobile` will not write a file over it, and
 `tools/verify-shipped.mjs` fails a committed one. The de-inlined build fetches
