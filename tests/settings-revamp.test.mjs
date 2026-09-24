@@ -169,3 +169,16 @@ test('a refused token says what to fix', async () => {
   const fetch = async () => ({ status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) });
   await assert.rejects(fetchProfile(syncConfig({}), { token: 'bad', fetch }), /401: Bad credentials.*token was refused/);
 });
+
+test('the sync panel’s token field and switch are never wired as settings', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.ok(screen.includes("querySelectorAll('.set-text[data-key]')"), 'generic text handler needs a key');
+  assert.ok(screen.includes("querySelectorAll('.toggle[data-key]')"), 'generic toggle handler needs a key');
+  assert.doesNotMatch(screen, /querySelectorAll\('\.(set-text|toggle)'\)/);
+  for (const hook of ['data-sync-token', 'data-sync="auto"']) {
+    const tag = panel.slice(panel.lastIndexOf('<', panel.indexOf(hook)), panel.indexOf('>', panel.indexOf(hook)));
+    assert.ok(!tag.includes('data-key'), `${hook} carries no setting key`);
+  }
+});

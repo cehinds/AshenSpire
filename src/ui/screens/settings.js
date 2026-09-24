@@ -2573,7 +2573,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({[input.dataset.key]:input.value});
     });
   });
-  container.querySelectorAll('.set-text').forEach((input) => {
+  // `[data-key]`: only a control that names a setting saves one. The Defaults &
+  // sync panel's token field and switch carry no key and are its own to wire.
+  container.querySelectorAll('.set-text[data-key]').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
     const commit = () => {
@@ -3107,7 +3109,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('.toggle').forEach((btn) => {
+  container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
         const result = await toggleFullscreen();
