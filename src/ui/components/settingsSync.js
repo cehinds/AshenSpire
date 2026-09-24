@@ -19,8 +19,15 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+/** write(key, value) → true when storage now holds exactly that (or nothing, for a clear). */
 function write(key, value) {
-  try { if (value === null || value === undefined || value === '') store()?.removeItem(key); else store()?.setItem(key, value); } catch { /* storage refused */ }
+  const clear = value === null || value === undefined || value === '';
+  try {
+    const s = store();
+    if (!s) return false;
+    if (clear) s.removeItem(key); else s.setItem(key, value);
+    return clear ? s.getItem(key) === null : s.getItem(key) === value;
+  } catch { return false; } // storage refused
 }
 export function deviceSyncConfig() {
   try { return syncConfig(JSON.parse(read(SYNC_STORAGE.config) || '{}')); } catch { return syncConfig({}); }
@@ -324,7 +331,10 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('token', () => {
       const value = mount.querySelector('[data-sync-token]').value.trim();
       if (!value) { status('Paste a token first.'); return; }
-      write(SYNC_STORAGE.token, value);
+      if (!write(SYNC_STORAGE.token, value)) {
+        status('This browser would not store the token (storage is off or full here), so saving is unavailable on this device. Loading still works.');
+        return;
+      }
       draw();
       status('Token stored on this device.');
     });

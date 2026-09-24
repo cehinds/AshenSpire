@@ -449,3 +449,12 @@ test('a profile that cannot be saved is not left applied', async () => {
   assert.throws(() => applyProfile(settings, () => ({ ok: false }), parsed, {}), /could not be saved/);
   assert.deepEqual(settings, { screenShake: false, reducedMotion: true });
 });
+
+test('navigate() reads its own cursor, and a refused token write is reported', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
+  assert.match(body, /const cur = current\(\);/, 'navigate is module-level, so it must fetch the cursor itself');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, value\)\) \{/);
+});

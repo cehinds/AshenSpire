@@ -735,6 +735,7 @@ function pressEnd(cancelled = false) {
  */
 function navigate(dir, target = null) {
   if (dir === 'left' || dir === 'right') {
+    const cur = current();
     const stepButton = [cur, document.activeElement, target].find((el) => el?.matches?.('.set-step'));
     const stepper = stepButton?.closest('[data-stepper]');
     if (stepper) {
