@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1308",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two checks broken by the Crownfall landmark update pass again",
+    "detail": "Nothing you play changes. The phone edition's copy of the Crownfall prologue painting is resized to match its new source, and the scene editor's traveller resize handle now lands on the traveller at every interface zoom instead of drifting away from it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1308,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1308"
+  },
+  {
     "id": "pr-1302",
     "date": "2026-09-24",
     "group": "2026-09-24",
