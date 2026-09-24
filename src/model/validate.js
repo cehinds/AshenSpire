@@ -46,11 +46,13 @@ import { wornZoneOf, handZoneOf } from './zones.js';
 import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
-import { attributeContentProblems } from './attributes.js';
+import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
+import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
+import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -333,6 +335,7 @@ function collectContentProblems(bundle, errors = []) {
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
     }
   }
+  for (const problem of attackCardDamageConfigProblems(b)) err(problem.path, problem.msg);
 
   // Quest steps (E12): an event-level history gate must name a shipped event,
   // carry a well-formed requirement (model/quests.js is the one grammar), and
@@ -593,36 +596,17 @@ function collectContentProblems(bundle, errors = []) {
         }
       }
     }
-    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S KIT (plan phase 9). The
-    // rebase moved every attribute and every equipment minimum at once, and
-    // nothing cross-read the two: the Starseer's preset lost the Intelligence
-    // its own staff asks for, so creation refused the character the table had
-    // just authored. Summing to the mode total is not enough — the kit the
-    // class starts in has to be wearable by the points the class starts with.
-    const presetTables = (b.attributeRules || {}).presets;
-    const kitRows = ((b.equipment || {}).startingKits) || [];
-    const reqRows = ((b.equipment || {}).equipmentRequirements) || [];
-    if (presetTables && typeof presetTables === 'object' && kitRows.length && reqRows.length) {
-      const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
-      const defaultMode = (b.attributeRules || {}).defaultMode;
-      const byClass = presetTables[defaultMode];
-      if (byClass && typeof byClass === 'object') {
-        for (const kit of kitRows) {
-          if (!kit || !kit.baseline) continue;
-          const allocation = byClass[kit.classId];
-          if (!allocation) continue;
-          for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
-            for (const row of minimaFor(itemId)) {
-              const have = allocation[row.attributeId];
-              if (Number.isInteger(row.minimum) && Number.isInteger(have) && have < row.minimum) {
-                err(`attributeRules.presets.${defaultMode}.${kit.classId}.${row.attributeId}`,
-                  `is ${have}, but the class's baseline kit item '${itemId}' asks ${row.minimum} — the preset cannot hold the kit it starts in`);
-              }
-            }
-          }
-        }
-      }
-    }
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S STARTING GEAR (plan
+    // phase 9). The rule and its wording live in model/attributes.js so the
+    // Advanced settings door asks the same question of an edited preset
+    // (review, #1217); this door asks it of the authored content.
+    for (const problem of presetGearProblems({
+      presets: (b.attributeRules || {}).presets,
+      defaultMode: (b.attributeRules || {}).defaultMode,
+      startingKits: ((b.equipment || {}).startingKits) || [],
+      equipmentRequirements: ((b.equipment || {}).equipmentRequirements) || [],
+      creationClasses: ((b.characterCreation || {}).classes) || {},
+    })) err(problem.path, problem.msg);
     const poise = b.balance.poise;
     if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
     else {
@@ -689,7 +673,7 @@ function collectContentProblems(bundle, errors = []) {
     const lu = b.balance.levelUp;
     if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
     else {
-      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
     }
@@ -1242,6 +1226,9 @@ function collectContentProblems(bundle, errors = []) {
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.
   for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
+  // Mana must be at least 1 for the weakest character creation allows: a run
+  // born with 0 Mana fails its own shape check (model/startingStatConfig.js).
+  for (const problem of derivedStatFloorProblems(b)) err(problem.path, problem.message);
 
   // Relic modifier tags are a compact passive DSL. The tag is the behavior;
   // every other word is data. Validate the exact row here so a typo never

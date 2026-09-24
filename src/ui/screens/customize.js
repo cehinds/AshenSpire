@@ -31,7 +31,7 @@ import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
+import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
@@ -64,6 +64,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
@@ -287,16 +288,64 @@ export function mountCustomize(app, {
       navigation.append(item);
     }
     headTools.prepend(navigation);
-    menu.addEventListener('click', () => {
-      headTools.togglePopover();
-      if (headTools.matches(':popover-open')) {
-        const rect = menu.getBoundingClientRect();
-        const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
-        headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;
-        headTools.style.top = `${(rect.bottom + 8) / zoom}px`;
-      }
+    // THE BUTTON IS THE POPOVER'S INVOKER, NOT A HAND-ROLLED TOGGLE. It used
+    // to call `togglePopover()` from a click listener, and with `popover=auto`
+    // that cannot close: light dismiss runs on pointerup and shuts the menu,
+    // then the click handler re-opens it. Measured on ?shot=customize at
+    // 1200x730 with real CDP input, mouse and touch alike — open, open, open,
+    // open; the menu could be summoned and never put away. `popovertarget`
+    // hands the toggle to the browser, which knows an invoker from a stray
+    // click. (quicknav's ☰ toggles correctly at the same door — true, false,
+    // true — so this was this call site's bug, not the platform's.)
+    headTools.id = 'cz-menu-popover';
+    menu.setAttribute('popovertarget', headTools.id);
+    // THE SCREEN MARGIN IS PASSED, NOT ASSUMED — flask.js's rule, and its
+    // words: placeAnchored uses `pad` for the fit test AND for the bound, so
+    // the cap below needs the same number rather than a literal matched
+    // against the default by hand. quicknav writes the doubled `8` beside a
+    // call that passes no `pad`; this follows flask, which is the one of the
+    // two that homed it. That the recipe itself — "a dropdown under its
+    // button, capped to the room below" — now has three call sites is real,
+    // and flask.js already names the deferral ("Named, not touched"); lifting
+    // it into fx.js is a change to quicknav and flask too, not this fix.
+    const PAD = 4;
+    // PLACED ON `toggle`, WHICH IS WHERE THE OPEN ACTUALLY HAPPENS. With the
+    // browser owning the toggle there is no click handler to hang this on, and
+    // an open by any other route — the keyboard, a future invoker — is placed
+    // too rather than left wherever it was last.
+    headTools.addEventListener('toggle', (event) => {
+      menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open')));
+      if (event.newState !== 'open') return;
+      // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
+      // This used to be its own arithmetic, and it read the zoom off the WRONG
+      // ELEMENT: `getComputedStyle(document.documentElement).zoom`. The app is
+      // zoomed by `body { zoom: var(--ui-zoom) }` (styles/base.css), and <html>
+      // "is the one element the zoom does not touch" — so that read answered 1
+      // at every UI size and the visual px of `getBoundingClientRect()` went
+      // straight into `style.left`, a LOCAL px property. Measured through
+      // tools/placement.mjs at 1920x1080 (--ui-zoom 1.48): the menu's box was
+      // (1580.8,72.7)-(1800.8,304.7) in a 1297.3x729.7 room, its LEFT edge
+      // alone 283 px past the right one, so none of it was on the glass. It
+      // was open, sized and hit-testable the whole time — simply drawn where
+      // nobody could see it, which reads as a button that does nothing.
+      // `position: fixed` does not escape the zoom (EldenSpire#15); fx.js is
+      // the one home for the conversion.
+      const view = viewportLocalBox();
+      const anchor = anchorLocalBox(VIEWPORT_ORIGIN, menu);
+      // THE CAP IS COMPUTED BEFORE THE PLACEMENT, AND THAT ORDER IS THE POINT.
+      // Capping afterwards — what flask.js and quicknav.js both do — means
+      // placeAnchored measures the menu at its FULL height, finds it does not
+      // fit under a short window's button, and slides it up OVER the button
+      // before the cap ever applies. Measured at 1200x260 with the cap last:
+      // menu top 4.0 against a button bottom of 58.0 — `intent: 'under'` asked
+      // for, and the menu sitting on the control that summoned it. Capped
+      // first, the box placeAnchored measures is the box that will be drawn,
+      // it fits under the button by construction, and the categories scroll
+      // inside it instead. Recomputed from the room on every open, so no cap
+      // this wrote before can be measured as this open's box.
+      headTools.style.maxHeight = `${Math.max(0, view.height - (anchor.top + anchor.height + placeGap(headTools)) - PAD * 2)}px`;
+      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });
     });
-    headTools.addEventListener('toggle', () => menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open'))));
     close.querySelector('.modal-close-face').textContent = '\u00d7';
     close.before(portrait, menu, headTools);
   }
@@ -335,8 +384,16 @@ export function mountCustomize(app, {
   // #1217). Both now resolve from attributeRules.defaultMode, which is the
   // mode creation offers.
   const EDITABLE = defaultCreationModeId(registries);
-  const STANDARD = EDITABLE;
-  const POINTBUY = EDITABLE;
+  /**
+   * Which mode a PLAYER has points to place in. The two aliases this replaced
+   * (`STANDARD` and `POINTBUY`, both equal to the default mode) made every
+   * `mode.id === POINTBUY` branch tautological and its `else` unreachable, so
+   * the day a second mode returns to `visibleModeIds` the preview would price
+   * it with the default mode's preset and a preset-only mode would be routed
+   * into the point editor — silently, because nothing reads wrong today
+   * (review, #1217). The real question is whether the mode has a pool.
+   */
+  const hasPoints = (modeId) => !!modeId && creationModeHasPoints(creationMode(registries, modeId));
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.
@@ -424,7 +481,7 @@ export function mountCustomize(app, {
     // class suggestion. Every stat goes back to the mode's baseline and the
     // complete bonus pool becomes available again (SPEC 7.2). The helper is
     // #692's; this branch computed the same thing inline before it existed.
-    state.attributes = baselineAttributeAllocation(registries, POINTBUY);
+    state.attributes = baselineAttributeAllocation(registries, state.attributeMode || EDITABLE);
   }
 
   function resetClassChoices() {
@@ -437,10 +494,19 @@ export function mountCustomize(app, {
     // so the common case is one click per step, not four mandatory picks.
     state.startingArmourId = gated ? null : armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
-    // A NEW CLASS IS A NEW ALLOCATION, and it must be one the player can
-    // still reach: resetting the points while leaving the mode selected
-    // would block Continue with no way back into the editor.
-    if (state.attributeMode === POINTBUY) { state.attributeMode = ''; state.attributes = null; }
+    // A NEW CLASS IS A NEW ALLOCATION: the preset a class is biased toward is
+    // not the one the next class wants, so the points go back and the mode
+    // returns to unchosen, which puts the placeholder back and makes choosing
+    // it again a fresh allocation.
+    // ONLY IN THE GATED FLOW. This function runs at mount too, and the
+    // component catalogue deliberately mounts PRESELECTED — its specimens
+    // need a chosen state to draw (the note at the head of this screen). With
+    // the mode aliased to the one editable mode, clearing it here blanked the
+    // catalogue's own seed on the first call: the stat rows, the resources
+    // and the continue row stopped drawing, and catalogue Begin — which reads
+    // statsProblem() without modeProblem() — went green on an empty mode that
+    // createRunState refuses by name (review, #1217).
+    if (gated && hasPoints(state.attributeMode)) { state.attributeMode = ''; state.attributes = null; }
   }
 
   // ---- what each step still needs ------------------------------------------
@@ -456,26 +522,26 @@ export function mountCustomize(app, {
   function equipmentProblem() { return armourProblem() || handsProblem(); }
   function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
 
-  function pointbuyMode() { return creationMode(registries, POINTBUY); }
+  function pointbuyMode() { return creationMode(registries, state.attributeMode || EDITABLE); }
   function remainingPoints() {
     if (!state.attributes) return pointbuyMode().bonusPool;
-    return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
+    return allocationTotal(registries, state.attributeMode || EDITABLE) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
   }
   /** The point-buy alone: the pool spent exactly, every stat in bounds. */
   function allocationProblem() {
-    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    if (!hasPoints(state.attributeMode) || !state.attributes) return null;
     const remaining = remainingPoints();
     if (remaining !== 0) return remaining > 0
       ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
       : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    const problems = attributeAllocationProblems(registries, state.classId, state.attributeMode, state.attributes);
     return problems.length ? problems[0].msg : null;
   }
   /** The attributes the run would begin with: a complete point-buy, else the
    *  class preset for the chosen mode (Standard until one is chosen). */
   function effectiveAttributes() {
-    if (state.attributeMode === POINTBUY && state.attributes && !allocationProblem()) return state.attributes;
-    return classAttributePreset(registries, state.classId, state.attributeMode || STANDARD);
+    if (hasPoints(state.attributeMode) && state.attributes && !allocationProblem()) return state.attributes;
+    return classAttributePreset(registries, state.classId, state.attributeMode || EDITABLE);
   }
   /** A held weapon the effective attributes cannot wield. Checked at the
    *  hand step and at Begin — NOT in Assign points, which used to refuse
@@ -491,10 +557,12 @@ export function mountCustomize(app, {
 
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
-    // An incomplete point-buy draft uses a valid standard preset for hints.
-    const hasCompletePointBuy = state.attributeMode === POINTBUY && state.attributes
-      && attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes).length === 0;
-    const previewMode = hasCompletePointBuy ? POINTBUY : STANDARD;
+    // An incomplete draft previews from its OWN mode's class preset — not
+    // from some other mode's, which is what the retired `STANDARD` alias
+    // would have meant the day a second mode returned.
+    const previewMode = state.attributeMode || EDITABLE;
+    const hasCompletePointBuy = hasPoints(state.attributeMode) && state.attributes
+      && attributeAllocationProblems(registries, state.classId, state.attributeMode, state.attributes).length === 0;
     const attributes = hasCompletePointBuy
       ? state.attributes
       : classAttributePreset(registries, state.classId, previewMode);
@@ -536,13 +604,9 @@ export function mountCustomize(app, {
       return { id: `${role}Rating`, faceLabel, value: rating?.receipt.value ?? 0,
         formula: `${label} rating · ${rating?.profile.displayName || 'Unarmed'} · before card-specific modifiers.` };
     });
-    // ONE POISE CHIP, AND IT IS THE WHOLE THRESHOLD. The derived row carries
-    // the Constitution term only (plan phase 9); the strip's own chip is the
-    // receipt — Constitution, body armour and relics — so projecting the row
-    // here too would stand two chips labelled Poise side by side with
-    // different numbers (Codex, #1217).
+    // resourceStrip drops the derived `poise` row itself and appends the whole
+    // threshold as one chip; this call only renames three faces.
     const resources = projection.derived
-      .filter(entry => entry.id !== 'poise')
       .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
@@ -592,21 +656,37 @@ export function mountCustomize(app, {
         const mode = visibleModes.find(mode => mode.id === modes.value);
         if (!mode) return;
         state.attributeMode = mode.id;
-        if (mode.id === POINTBUY) {
-          // Entering Assign Points is an explicit fresh allocation. Return the
-          // entire authored pool instead of reopening the class-biased preset
-          // (or a previous edit) with points already spent.
-          resetAttributes();
-          openPointBuy();
+        if (hasPoints(mode.id)) {
+          // Entering Assign Points from the SELECT is an explicit fresh
+          // allocation: the whole authored pool comes back rather than the
+          // class-biased preset (or a previous edit) with points already
+          // spent. Reopening it from "Edit points" is a revision instead.
+          openPointBuy({ fresh: true });
         } else {
           closePointBuy();
         }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
     });
-    statBox.replaceChildren(modes);
+    // THE WAY BACK INTO THE POINTS. The select is the only door-opener, and
+    // with one visible mode it can never fire `change` twice: once an
+    // allocation was committed the editor was unreachable, so a player who
+    // reached the Equipment step and was told "Ash Staff needs intelligence 8
+    // — you have 3" had no path back to the stats short of changing class
+    // (which discards keepsake, armour, hands and relic) or leaving creation
+    // (review, #1217). This button is that path, and it is a revision: the
+    // committed numbers are on the steppers and Cancel puts them back.
+    const editPoints = el('button', {
+      type: 'button', class: 'as-btn cc-mode-edit', text: 'Edit points',
+      'aria-label': 'Edit your stat allocation',
+    });
+    editPoints.addEventListener('click', () => openPointBuy({ fresh: false }));
+    statBox.replaceChildren(modes, editPoints);
     // Until a mode is chosen the section is the question alone: the stat rows,
     // the resources and the way on appear with the answer.
     const chosen = Boolean(state.attributeMode);
+    // The editor only reopens what a chosen mode owns, and only the editable
+    // mode has points to edit at all.
+    showNode(editPoints, chosen && hasPoints(state.attributeMode));
     showNode($('#cz-primary-stats'), chosen);
     showNode($('#cz-derived'), chosen);
     showNode($('.cc-primary-continue-row'), chosen);
@@ -631,8 +711,8 @@ export function mountCustomize(app, {
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
   // allocation card), so its veil, head, foot, Escape and veil-click are the
-  // shell's. What this screen adds is policy: what Escape MEANS here (back to
-  // Standard), the Tab ring, and scoping the page behind it.
+  // shell's. What this screen adds is policy: what Escape MEANS here (the
+  // same as Cancel), the Tab ring, and scoping the page behind it.
   function closePointBuy({ restoreFocus = true } = {}) {
     if (!pointBuy) return;
     const door = pointBuy;
@@ -648,9 +728,23 @@ export function mountCustomize(app, {
     pointBuy = null;
   }
 
-  function openPointBuy() {
+  /**
+   * `fresh` separates the TWO WAYS IN, which want opposite things of Cancel.
+   * Choosing the mode is a fresh allocation: the pool comes back whole and
+   * cancelling returns to unchosen. Pressing "Edit points" on a committed
+   * allocation is a revision: the current numbers stay on the steppers and
+   * cancelling puts back exactly what was there, because a player who opens
+   * their own stats to look at them must not lose them by pressing Cancel.
+   */
+  function openPointBuy({ fresh = true } = {}) {
     closePointBuy({ restoreFocus: false });
-    resetAttributes();
+    // Taken BEFORE the reset below, which fills a null allocation in: read
+    // after it, a revision opened on no allocation (the catalogue's
+    // preselected mode) looked like a fresh one and Cancel then left the
+    // baseline with points unplaced (review, #1255).
+    const priorMode = state.attributeMode;
+    const priorAttributes = state.attributes ? { ...state.attributes } : null;
+    if (fresh || !state.attributes) resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
@@ -729,14 +823,14 @@ export function mountCustomize(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
-      cancelLabel: 'Standard',
+      cancelLabel: 'Cancel',
       doneLabel: 'Continue',
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),
       onIncrease: (id) => step(id, 1),
       onCancel: () => { door.outcome = 'cancel'; allocation.close(); },
       onClose: () => {
-        const outcome = door.outcome; // null: the shell dismissed it (Escape, the veil) — that is Standard
+        const outcome = door.outcome; // null: the shell dismissed it (Escape, the veil) — that is Cancel
         const restore = door.restoreFocus;
         teardownPointBuy();
         if (outcome === 'reopen') return;
@@ -745,16 +839,23 @@ export function mountCustomize(app, {
           advanceToKeepsake({ focus: restore });
           return;
         }
-        // CANCEL RETURNS TO UNCHOSEN, NOT TO A SECOND MODE. Creation offers
-        // one mode since the rebase (plan phase 9), so "cancel" can no longer
-        // mean "take the other one": re-selecting the value already in the
-        // select fires no change event, so the editor could never reopen,
-        // while the reset allocation left points unplaced and Continue
-        // refused for good (Codex, #1217). Clearing the choice puts the
-        // placeholder back, and choosing the mode again is a fresh
-        // allocation — which is what entering it always meant.
-        state.attributeMode = '';
-        state.attributes = null;
+        // CANCEL UNDOES THE WAY IN. Creation offers one mode since the
+        // rebase (plan phase 9), so "cancel" can no longer mean "take the
+        // other one": re-selecting the value already in the select fires no
+        // change event, so the editor could never reopen, while the reset
+        // allocation left points unplaced and Continue refused for good
+        // (Codex, #1217). A FRESH allocation therefore returns to unchosen —
+        // the placeholder comes back and choosing the mode again starts
+        // over. A REVISION puts back the allocation it opened, so looking at
+        // your own stats and changing your mind costs nothing (review,
+        // #1217).
+        if (!fresh) {
+          state.attributeMode = priorMode;
+          state.attributes = priorAttributes;
+        } else {
+          state.attributeMode = '';
+          state.attributes = null;
+        }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         if (restore) {
           const chooser = statBox.querySelector('.cc-mode-select');
@@ -1383,7 +1484,7 @@ export function mountCustomize(app, {
     )));
     drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
-      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
+      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
       { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
@@ -1491,7 +1592,7 @@ export function mountCustomize(app, {
       { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
         specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
-      { key: 'mode-choice', label: 'Standard / assign points', node: choiceSpecimen(
+      { key: 'mode-choice', label: 'Stat allocation mode', node: choiceSpecimen(
         'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
       ) },
       { key: 'sprite-choice', label: 'Sprite choice', node: choiceSpecimen(
@@ -1675,7 +1776,7 @@ export function mountCustomize(app, {
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
+      ...(hasPoints(state.attributeMode) && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
   updateStartRefusal();

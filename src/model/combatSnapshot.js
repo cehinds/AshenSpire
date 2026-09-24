@@ -10,6 +10,7 @@ import { combatRatingProblems } from './combatRatings.js';
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { restoreDerivedStatRuleSnapshot } from './derivedStats.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -75,6 +76,19 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
   if (snapshot.ratingsRules !== undefined) problems.push(...combatRatingProblems(snapshot.ratingsRules));
+  // The fight's copy of the run's derived-stat rules prices the Poise vessel on
+  // restore and is preferred over the run's own, so it is held to the same
+  // door the run's is: a truthy but malformed copy (`{}`, a missing row) is
+  // refused by name rather than repricing the meter from whatever it lacks.
+  // Null or absent stays legal: a fight saved before the field carries none
+  // (Codex, #1255).
+  if (snapshot.derivedStatRuleSnapshot !== undefined && snapshot.derivedStatRuleSnapshot !== null) {
+    // Every rule names a source stat, and the fight's own attributes are the
+    // ids a source stat may name — the snapshot carries its answer key.
+    const attributeIds = record(snapshot.attributes) ? Object.keys(snapshot.attributes) : [];
+    try { restoreDerivedStatRuleSnapshot(snapshot.derivedStatRuleSnapshot, { attributeIds }); }
+    catch (error) { problems.push(`derivedStatRuleSnapshot: ${error.message}`); }
+  }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');

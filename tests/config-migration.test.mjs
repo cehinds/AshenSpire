@@ -63,6 +63,9 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //   · CombatFormationModel probes now include #1180's grid cells, rowSpacing,
 //     cell labels and fitGround. Its slots keep their previous coordinates;
 //     only that module's entry is refreshed for the approved added outputs.
+//   · StartupGateModels TITLE_ENTRANCE_TIMING holdDefault "0.5s" -> "2s", for
+//     #1254: the owner's uploaded configuration sets the title pause to 2s in
+//     content/config/ui/presentation/startupGate.json. One string, by hand.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

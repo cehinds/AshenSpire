@@ -600,7 +600,8 @@ function runOpcode(ctx, action, eff) {
           const base = evalNum(ctx, action, eff.amount, 0, t);
           const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
             damageSchool: eff.damageSchool || action.card?.damageSchool,
-            tags: action.card?.tags || attackTags };
+            tags: action.card?.tags || attackTags,
+            energySpent: action.meta?.energySpent || 0 };
           if (ctx.ratingsRules && action.source?.kind === 'enemy') {
             const attackType = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`];
             if (attackType && attackType !== 'auto') carrier.damageSchool = attackType;

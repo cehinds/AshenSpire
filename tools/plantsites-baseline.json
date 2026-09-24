@@ -138,7 +138,7 @@
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "173bb26df62015f7"
+      "digest": "c843c93053de6c10"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "75d839e35e286902"
+      "digest": "ec2d1799fb555e4b"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -241,8 +241,8 @@
       "digest": "c36293eabaf8a2d6"
     },
     "tools/placement.mjs": {
-      "count": 8,
-      "digest": "b57e6a9496fd3591"
+      "count": 10,
+      "digest": "24200c44130a678b"
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
@@ -338,7 +338,7 @@
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "2c7308ecd506ea35"
+      "digest": "283880e7bfda1aa5"
     },
     "tools/zoomplace.mjs": {
       "count": 1,

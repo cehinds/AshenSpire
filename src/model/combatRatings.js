@@ -1,5 +1,7 @@
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
+import { evaluate } from './formulas.js';
+import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, defaultRatingFormula, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
 
 export { ratingIds };
@@ -249,20 +251,29 @@ export function migrateCombatRatingSettings(settings = {}, bundle, warnings = nu
 export function combatRatingRows(bundle) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
-    cat: 'Advanced', advancedGroup: 'Ratings & Resistance', statTopic: topic,
+    cat: 'Advanced', advancedGroup: 'Stats', statTopic: topic,
     key: prefix + path, def, label,
     ...(typeof def === 'number' ? { type: 'number', min: 0, max: 999, step: 0.01, integer: false } : {}),
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
-  add('enabled', true, 'Enable ratings, Poise & Ward', 'General');
-  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
-    note: 'Scales the floored attribute total of every rating at once. 1 leaves the formulas as written.',
+  add('enabled', true, 'Enable ratings, Poise & Ward', 'General', {
+    note: 'On: AR, DR, PR, Poise and Ward come from the rating formulas under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
   });
+  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
+    note: 'Scales the attribute part of every rating at once, before each base is added. 1 leaves the formulas as written.',
+  });
+  // THE FIVE FORMULAS SIT WITH THE POOLS (owner, 2026-09-21: "I'd like all
+  // the resources and stats to be in the same format … they are way too
+  // separated"). HP, Mana, Stamina, Actions, draw and Poise are written the way
+  // these are — a base and a decimal weight per attribute (content/
+  // derivedStats.js, ruleset 6) — and every one of them is a topic of Advanced
+  // → Stats (models/AdvancedSettingsGroups.js), so a rating's formula sits
+  // beside the trait it rates.
   for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
     for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      `${ratingLabel(id)} — ${words(field)}`, `${ratingLabel(id)} formula`, {
-        note: field === 'base' ? 'Added after the global multiplier, then equipment and other bonuses.'
-          : 'Contribution from each point in this attribute, floored on its own: a weight of 0.25 gives nothing until the attribute reaches 4. Set 0 to ignore it.',
+      field === 'base' ? `${ratingLabel(id)} — Base` : `${ratingLabel(id)} per ${words(field)} point`, `${ratingLabel(id)} formula`, {
+        note: field === 'base' ? 'Added after the attribute total and the multiplier; equipment and other bonuses add on top.'
+          : 'How much each point of this attribute is worth. Each attribute is rounded down on its own: 0.5 gives 1 per 2 points, 0.25 gives nothing until 4. Set 0 to ignore it.',
       });
   }
   for (const group of ['resistance', 'impact', 'breaks']) {
@@ -282,10 +293,25 @@ export function combatRatingRows(bundle) {
       });
     for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
+  // WHO WEARS IT, AND WHICH ONE IT IS. Every class owns a free starting
+  // armour that shares its name with an "All classes" set piece — the Reaver
+  // starts in a plain Wayfarer Plate, and the Wayfarer Plate set (+2 Block,
+  // +4 max HP, STR 3) is a different item any class can earn. They are two
+  // sources, `armor:reaver:default` and `armor:reaver:wayfarerPlate`, and their
+  // rows used to both read "Wayfarer Plate (reaver)". The starting
+  // piece is picked out the way loadout.js picks it (free, not a shared set),
+  // and the class is named the way the rest of the menu names it.
+  const classNames = new Map((bundle.classes || []).map((c) => [c.id, c.name || words(c.id)]));
+  const ownerOf = (piece) => {
+    if (!piece.classId) return '';
+    const owner = classNames.get(piece.classId) || words(piece.classId);
+    const starting = piece.kind === 'armor' && piece.unlock === '' && !piece.sharedSet;
+    return ` (${owner}${starting ? ', starting armour' : ''})`;
+  };
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     const authored = authoredItemRatings(bundle.equipment, piece);
     for (const id of ratingIds) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
-      `${piece.name}${piece.classId ? ` (${piece.classId})` : ''} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
+      `${piece.name}${ownerOf(piece)} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
         integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
         note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
           + `Attributes, relics and status bonuses are added to it.${itemRatingColumn(bundle.equipment, piece, id) ? ' The item card shows this number.' : ` ${piece.name} has no authored ${ratingLabel(id)} column, so this one is carried as a rating only and the item card does not print it.`}`
@@ -305,7 +331,21 @@ export function combatRatingRows(bundle) {
         note: 'Selects Poise or Ward for damage resistance and impact. Auto follows the attack’s authored type; untyped attacks are physical.',
       });
   }
-  for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${card.name} — impact override`, 'Attack overrides', {
+  // TWO CARDS, ONE NAME. The Reaver's own "Enter: Bulwark" and the one the
+  // Guardian shield creates for any class are two cards (`enterBulwark`,
+  // `guardianBulwark`); so are the Rogue's "Hamstring" attack and the colorless
+  // "Hamstring" skill. Their override rows both read "<name> — impact override",
+  // so an edit to one gave no way to know which card it changed. A name that
+  // is shared says whose card it is, in the words the armour rows above use;
+  // a name that is not shared stays as it was.
+  const cardNameCount = new Map();
+  for (const card of bundle.cards) cardNameCount.set(card.name, (cardNameCount.get(card.name) || 0) + 1);
+  const cardLabel = (card) => {
+    if ((cardNameCount.get(card.name) || 0) < 2) return card.name;
+    const owner = !card.class || card.class === 'colorless' ? 'All classes' : (classNames.get(card.class) || words(card.class));
+    return `${card.name} (${owner})`;
+  };
+  for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${cardLabel(card)} — impact override`, 'Attack overrides', {
     min: -1, max: 99, integer: true, step: 1, note: '-1 uses attack type and weapon weight. 0 causes no impact. Other values override impact per hit.',
   });
   return rows;
@@ -480,10 +520,12 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
 
 export function isMagicalAttack(ctx, carrier) {
   const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
-  const school = carrier?.damageSchool || def?.damageSchool;
-  if (school) return school !== 'physical';
-  const tags = carrier?.tags || def?.tags || [];
-  return tags.some(t => ['magic', 'magical', 'arcane', 'holy', 'fire', 'spell'].includes(t.split(':').at(-1))) || (def?.manaCost || 0) > 0;
+  return cardIsMagical({
+    ...def,
+    ...carrier,
+    damageSchool: carrier?.damageSchool || def?.damageSchool,
+    tags: carrier?.tags || def?.tags,
+  });
 }
 
 export function ratingDamageMultiplier(ctx, target, magical) {
@@ -498,11 +540,31 @@ export function attackImpact(ctx, source, carrier) {
   if (!config) return 0;
   const explicit = config.attackImpact?.[carrier?.cardId];
   if (Number.isFinite(explicit) && explicit >= 0) return explicit;
-  if (isMagicalAttack(ctx, carrier)) return config.impact.magic;
-  const enemyOverride = config.enemyImpact?.[source?.enemyId];
-  if (Number.isFinite(enemyOverride) && enemyOverride >= 0) return enemyOverride;
-  const item = ctx.registries.equipment.armaments.find(p => p.id === carrier?.sourceArmamentId);
-  if (!item) return source?.kind === 'enemy' ? config.impact.enemyPhysical : config.impact.unarmed;
-  const w = item.weight || 0, i = config.impact;
-  return w <= i.lightMaxWeight ? i.light : w <= i.mediumMaxWeight ? i.medium : w <= i.heavyMaxWeight ? i.heavy : i.colossal;
+  const magical = isMagicalAttack(ctx, carrier);
+  // A PHYSICAL HIT A WEAPON LENDS IS AS HEAVY AS THE WEAPON (SPEC §13.4): the
+  // weight category, and the per-enemy override, come before any card value,
+  // or every weapon's Strike would land with the same cost-derived number and
+  // a dagger would stagger like a warhammer.
+  if (!magical) {
+    const enemyOverride = config.enemyImpact?.[source?.enemyId];
+    if (Number.isFinite(enemyOverride) && enemyOverride >= 0) return enemyOverride;
+    const item = ctx.registries.equipment.armaments.find(p => p.id === carrier?.sourceArmamentId);
+    if (item) {
+      const w = item.weight || 0, i = config.impact;
+      return w <= i.lightMaxWeight ? i.light : w <= i.mediumMaxWeight ? i.medium : w <= i.heavyMaxWeight ? i.heavy : i.colossal;
+    }
+  }
+  // Otherwise the card's own Poise or Ward value (SPEC §3.4) is its impact.
+  // The carrier holds the RESOLVED face's values — a staff's Strike carries
+  // Ward — and the registry def is the fallback for a carrier built without.
+  const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
+  const ratingValues = carrier?.cardRatingValues
+    || (carrier?.upgraded ? def?.upgrade?.cardRatingValues : null)
+    || def?.cardRatingValues;
+  const calculated = ratingValues?.[magical ? 'ward' : 'poise'];
+  if (calculated !== undefined) {
+    return Math.max(0, evaluate(calculated, { energySpent: carrier?.energySpent || 0 }));
+  }
+  if (magical) return config.impact.magic;
+  return source?.kind === 'enemy' ? config.impact.enemyPhysical : config.impact.unarmed;
 }
