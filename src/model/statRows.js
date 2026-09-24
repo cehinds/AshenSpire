@@ -210,6 +210,8 @@ const LEGACY_HAND_MAX_KEY = 'gameConfig.balance.handMax';
 export const STAT_ROWS_MARKER = 'statRowsVersion';
 export const STAT_ROWS_VERSION = 7;
 const LEGACY_MEANING_KEY = /^gameConfig\.derivedStatRules\.rules\.(draw|poise)\./;
+/** The row keys whose meaning changed in ruleset 7 (see STAT_ROWS_MARKER). */
+export const STAT_ROWS_CHANGED_MEANING = LEGACY_MEANING_KEY;
 
 /** Whether a stored profile still holds a key ruleset 7 retired. */
 export function hasLegacyStatSettings(settings = {}) {

@@ -248,10 +248,13 @@ test('a pre-ruleset-7 draw or poise row is read as what it meant then; a marked 
   const marked = { statRowsVersion: 7, 'gameConfig.derivedStatRules.rules.draw.base': 3 };
   assert.equal(hasLegacyAdvancedSettings(marked), false);
   assert.equal(migrateLegacyStatSettings(marked), marked);
-  // Normalising marks the profile.
-  const profile = {};
+  // Normalising a profile whose stat rows it read marks it; one with none is left alone.
+  const profile = { 'gameConfig.handRules.turn.base': 3 };
   normalizeAdvancedSettings(profile, contentBundle, []);
   assert.equal(profile.statRowsVersion, 7);
+  const untouched = { sfxVolume: 0.4 };
+  normalizeAdvancedSettings(untouched, contentBundle, []);
+  assert.deepEqual(untouched, { sfxVolume: 0.4 });
   // An exported file carries the stamp, and a stamped file's draw row imports as written.
   const stamped = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { 'gameConfig.derivedStatRules.rules.draw.base': 3 } });
   assert.equal(parseAdvancedConfigFile(stamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], 3);

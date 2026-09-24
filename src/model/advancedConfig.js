@@ -128,10 +128,9 @@ const LEGACY_CINDER_WARNING = 'The Cinder gain multiplier now scales a table tha
 
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasLegacyStatSettings(settings)
-    // A profile this build has not yet marked is read once, so its `draw` and
-    // `poise` rows are known to be pre- or post-ruleset-7 (model/statRows.js).
-    || (settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION);
+  // An unmarked profile holding a `draw` or `poise` row is one of them
+  // (model/statRows.js hasLegacyStatSettings).
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -162,12 +161,37 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   }
   // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
   // fallback hand size are stat rows now; their old keys become row keys.
+  // A profile whose stat rows were read here is marked as read by a ruleset-7
+  // build, so its `draw` and `poise` rows are never re-read as the old ones.
+  const readStatRows = hasLegacyStatSettings(settings);
   const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
   if (migrated !== settings) {
     for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
     Object.assign(settings, migrated);
   }
-  settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
+  if (readStatRows) settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
+  return settings;
+}
+
+/**
+ * bringProfileForward(meta, bundle, save, warnings) → `meta.settings`,
+ * rewritten to this build's keys and — when there was anything to rewrite —
+ * handed to `save(meta)`.
+ *
+ * ONE DOOR FOR A PROFILE ARRIVING FROM STORAGE (Codex, on #1273). Boot brought
+ * the profile forward and a restore did not: a restored pre-#1273 profile kept
+ * `progression.rewardMultiplier`, which `configuredContentBundle` still paid as
+ * ÷ 20 while the Advanced Settings row opened on the new key's default of 1, so
+ * the screen misstated what was in force until the next restart. Boot and
+ * restore both come through here now. Saved, not only rewritten, because
+ * `loadMeta` re-reads the stored bytes on every call: a profile left un-saved
+ * would hand the next reader the retired key again.
+ */
+export function bringProfileForward(meta, bundle, save, warnings = null) {
+  const settings = meta.settings || (meta.settings = {});
+  if (!hasLegacyAdvancedSettings(settings)) return settings;
+  normalizeAdvancedSettings(settings, bundle, warnings);
+  save(meta);
   return settings;
 }
 
