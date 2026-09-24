@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1288",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Reading a card no longer hides behind other panels",
+    "detail": "Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.",
+    "build": "0.7.1.473",
+    "pullRequest": 1288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1288"
+  },
+  {
     "id": "pr-1289",
     "date": "2026-09-24",
     "group": "2026-09-24",
