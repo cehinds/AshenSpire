@@ -254,6 +254,13 @@ test('content validation refuses malformed meter rules and unleashed forms', () 
   assert.match(problems(missing), /weaponArtUnleashed\.greatswordSunderingHew/);
   const selfTargeted = { ...contentBundle, weaponArtUnleashed: { ...contentBundle.weaponArtUnleashed, quickstep: { effects: [{ op: 'damage', target: 'enemy', amount: 3 }] } } };
   assert.match(problems(selfTargeted), /quickstep\.effects\[0\]\.target/);
+  // An omitted target on an untargeted Art resolves to the play's source —
+  // the player — so a hostile op there is refused; a targeted Art may omit it
+  // (it resolves to the aimed enemy), and a self-only op never needs one.
+  const untargeted = { ...contentBundle, weaponArtUnleashed: { ...contentBundle.weaponArtUnleashed, quickstep: { effects: [{ op: 'damage', amount: 5 }] } } };
+  assert.match(problems(untargeted), /quickstep\.effects\[0\]\.target: .*lands on the player/);
+  const aimed = { ...contentBundle, weaponArtUnleashed: { ...contentBundle.weaponArtUnleashed, katanaDrawCut: { effects: [{ op: 'damage', amount: 5 }] }, quickstep: { effects: [{ op: 'draw', amount: 1 }] } } };
+  assert.equal(problems(aimed), '');
   const badOp = { ...contentBundle, weaponArtUnleashed: { ...contentBundle.weaponArtUnleashed, twinFang: { effects: [{ op: 'notAnOpcode' }] } } };
   assert.match(problems(badOp), /weaponArtUnleashed\.twinFang\.effects/);
   const badRule = { ...contentBundle, balance: { ...contentBundle.balance, weaponArtCharge: { ...rules, maxByWeapon: { noSuchWeapon: 3 } } } };
