@@ -315,3 +315,19 @@ test('paced playback: the shown charge advances beat by beat and lands on the li
   // An artUnleashed beat alone (no change event) still empties it.
   assert.deepEqual(advanceArtChargeDisplay({ greatsword: max }, [{ type: 'artUnleashed', weaponId: 'greatsword' }]), { greatsword: 0 });
 });
+
+// On a phone (portrait or landscape) the next card covers all but the Art
+// card's left step, so a full meter's bonus rides a one-line tab above the
+// card's top edge instead of the in-card strip; wider hands keep the strip.
+test('phone hands show the unleashed bonus as a tab above the Art card', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  assert.match(css, /\.hand \.card \.art-charge-card \.art-charge-bonus \{ display: none; \}/, 'the bonus copy is phone-only');
+  const at = css.indexOf("@media (max-width: 600px), (max-height: 500px) {\n  .hand .card[data-art-charge='full'] .art .cd-unleashed { display: none; }");
+  assert.ok(at >= 0, 'the phone block (portrait and landscape) swaps the in-card strip for the tab');
+  const block = css.slice(at, css.indexOf('\n}\n', at));
+  assert.match(block, /bottom: calc\(100% \+/, 'the tab sits above the card top, the band no neighbour covers');
+  assert.match(block, /\.art-charge-card > \.art-charge-bonus \{\s*display: inline;/, 'the tab prints the bonus words');
+  const js = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(js, /class: 'art-charge-bonus', text: strip\.textContent/, "the tab copies the card strip's own words");
+});

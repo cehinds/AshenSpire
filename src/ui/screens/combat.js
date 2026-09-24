@@ -1328,6 +1328,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // The card's own unleashed strip (card.js) prints the bonus, so the
         // marker is the pips alone and moves clear of that strip.
         badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : t('combat.art.unleashed');
+        // On a phone the next card covers all but this card's left step, so
+        // the marker also carries the strip's own compact words and rides
+        // above the card's top edge (styles/combat.css shows it there only).
+        const strip = node.querySelector('.cd-unleashed-short') || node.querySelector('.cd-unleashed-long');
+        if (strip && strip.textContent) badge.appendChild(el('span', { class: 'art-charge-bonus', text: strip.textContent, aria: { hidden: 'true' } }));
       }
       node.appendChild(badge);
       const label = node.getAttribute('aria-label');

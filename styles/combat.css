@@ -1581,6 +1581,34 @@
   .hand .card .art .cd-unleashed-short { display: inline; }
   .hand .card .art-charge-card, .hand .card[data-art-charge='full'] .art-charge-card { left: calc(2px / var(--ui-zoom, 1)); right: auto; top: calc(-8px / var(--ui-zoom, 1)); z-index: 5; }
 }
+/* The marker's copy of the unleashed words (combat.js) is for phones only;
+   wider hands read the strip on the card itself. */
+.hand .card .art-charge-card .art-charge-bonus { display: none; }
+/* Phone, portrait or landscape: the next card covers all but the Art card's
+   left step, so the strip there is cut to a sliver. When the meter is full the
+   marker becomes a tab above the card's top edge — the one band no neighbour
+   covers — carrying the compact bonus on one line, and the
+   in-card strip steps aside. */
+@media (max-width: 600px), (max-height: 500px) {
+  .hand .card[data-art-charge='full'] .art .cd-unleashed { display: none; }
+  .hand .card[data-art-charge='full'] .art-charge-card {
+    left: 0; right: auto; top: auto; bottom: calc(100% + 2px / var(--ui-zoom, 1)); z-index: 5;
+    /* One line: the band above the fan is only the selection lift tall (the
+       hand clips below it). It may run a little past the card's right edge,
+       over the free band above its neighbour; the last card's tab hangs
+       left instead, so it stays inside the hand. */
+    max-width: calc(var(--hand-card-width, 100%) * 1.3); box-sizing: border-box; overflow: hidden;
+    padding: calc(1px / var(--ui-zoom, 1)) calc(3px / var(--ui-zoom, 1)); border-radius: calc(6px / var(--ui-zoom, 1));
+    background: #120d09; border-color: #f3d57a; box-shadow: 0 0 6px #f3d57a88;
+  }
+  .hand .card[data-art-charge='full']:last-child .art-charge-card { left: auto; right: 0; }
+  /* Full is the star's meaning, so the tab spends its width on the bonus;
+     the pips stay on the HUD meter. */
+  .hand .card[data-art-charge='full'] .art-charge-card > .art-charge-pips { display: none; }
+  .hand .card[data-art-charge='full'] .art-charge-card > .art-charge-bonus {
+    display: inline; overflow: hidden; text-overflow: ellipsis; font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2; text-transform: none; letter-spacing: 0;
+  }
+}
 /* ---------- combat juice (SPEC §7.4): damage scale, hit-stop, kill cam ----------
    Decisions and every number: CombatJuiceModel.js + combatJuiceModel.json.
    These rules only draw what src/ui/fx.js sets. */
