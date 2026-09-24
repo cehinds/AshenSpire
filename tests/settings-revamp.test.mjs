@@ -367,3 +367,10 @@ test('promoted defaults seed a profile once, follow a new promotion, and never o
   assert.ok('screenShake' in dropped && dropped.screenShake === undefined, 'a dropped promotion hands the key back to the code default');
   assert.deepEqual(seedSettingsDefaults({}, { version: 'none', values: {} }), {}, 'no promotion, no change');
 });
+
+test('a profile save that finishes after the location changed is not recorded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const target = cfg;\s*const mine = generation;\s*const result = await pushProfile\(target,/);
+  assert.match(panel, /if \(mine !== generation \|\| target !== cfg\) return;\s*write\(SYNC_STORAGE\.lastSha/);
+});

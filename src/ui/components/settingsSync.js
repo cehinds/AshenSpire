@@ -268,11 +268,17 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         const text = profileText(settings, keys, { contentVersion: contentBundle.version });
         // Never upload a file another device's import would refuse.
         profileChanges(text, contentBundle, {}, rows, keys);
-        const result = await pushProfile(cfg, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile ${profileName(cfg)} (${Object.keys(JSON.parse(text).overrides).length} settings)` });
+        // Saved against a snapshot of the location; if the location changes
+        // before GitHub answers, this answer belongs to the old one and is
+        // dropped rather than recorded (or announced) under the new one.
+        const target = cfg;
+        const mine = generation;
+        const result = await pushProfile(target, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile ${profileName(target)} (${Object.keys(JSON.parse(text).overrides).length} settings)` });
+        if (mine !== generation || target !== cfg) return;
         write(SYNC_STORAGE.lastSha, result.sha || '');
         status(result.unchanged ? 'The profile on GitHub already matches this device.'
-          : `Saved the “${profileName(cfg)}” profile${result.branchCreated ? ` — created the ${cfg.branch} branch` : ''}. Other devices can load it now.`);
-        if (profiles && !profiles.includes(profileName(cfg))) { profiles = [...profiles, profileName(cfg)].sort((a, b) => a.localeCompare(b)); fillPicker(); }
+          : `Saved the “${profileName(target)}” profile${result.branchCreated ? ` — created the ${target.branch} branch` : ''}. Other devices can load it now.`);
+        if (profiles && !profiles.includes(profileName(target))) { profiles = [...profiles, profileName(target)].sort((a, b) => a.localeCompare(b)); fillPicker(); }
       } catch (error) { status(error.message); } finally { busy(btn, false, 'Save my settings to GitHub'); }
     });
     on('auto', (btn) => {
