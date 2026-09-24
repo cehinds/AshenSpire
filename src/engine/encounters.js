@@ -355,6 +355,18 @@ export function rollArmamentDrop(registries, rng, { source, found = [], carried 
 // The elite chest (SPEC §3.8.1)
 // ---------------------------------------------------------------------------
 
+/** A view of `rng` whose every draw, whatever stream it names, is on 'relicRewards'. */
+function relicStreamOnly(rng) {
+  return {
+    seed: rng.seed,
+    float: () => rng.float('relicRewards'),
+    int: (_stream, min, max) => rng.int('relicRewards', min, max),
+    pick: (_stream, array) => rng.pick('relicRewards', array),
+    shuffle: (_stream, array) => rng.shuffle('relicRewards', array),
+    chance: (_stream, pct) => rng.chance('relicRewards', pct),
+  };
+}
+
 /** The chest's closed category set, in the order the chest lays them out. */
 export { chestUpgradeable };
 
@@ -365,13 +377,20 @@ export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', '
  * Up to `balance.rewards.eliteChest.choices` options, each of a DISTINCT
  * category drawn by `categoryWeights` without replacement (stream
  * 'relicRewards'). A category that cannot build a payload is dropped and the
- * draw moves on; no buildable category at all rolls no chest. Pure apart from
+ * draw moves on; no buildable category at all rolls no chest. Every draw,
+ * the payload rolls included, is on 'relicRewards' only. Pure apart from
  * the rng: the run is read, never written. `found` is the profile's found
  * armaments (the armament roll's prefer-unfound input).
  */
-export function rollEliteChest(registries, rng, run, { found = [] } = {}) {
+export function rollEliteChest(registries, outerRng, run, { found = [] } = {}) {
   const cfg = registries.balance.rewards.eliteChest;
   if (!cfg || !(cfg.choices > 0)) return null;
+  // EVERY chest draw is on 'relicRewards' — the stream the elite's one relic
+  // drew on before the chest replaced it — whatever stream a builder names
+  // (the armament roll's 'armaments', the upgrade's 'cardRewards', the
+  // cinders' 'misc'). So the door's card offer, its armament drop and every
+  // later offer on those streams replay exactly as they did before the chest.
+  const rng = relicStreamOnly(outerRng);
   const builders = {
     relic() {
       const relicId = rollRelicReward(registries, rng, run.relics || []);

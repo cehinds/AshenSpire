@@ -395,8 +395,13 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
 | `armament` | `{ category, armamentId }` or `{ category, weaponArtId }` | the armament through the reward collector (a guaranteed elite-weighted armament roll); when none is left to find, a mountable weapon art the deck lacks joins as a card |
 | `cinders` | `{ category, cinders, smithingStones }` | a bonus purse: cinders from `eliteChest.cinders` and `eliteChest.smithingStones` Stones |
 
-- **Draw.** Categories are drawn by `eliteChest.categoryWeights` without replacement
-  (stream `relicRewards`). A category whose payload cannot be built (no relic left, no
+- **Draw.** Categories are drawn by `eliteChest.categoryWeights` without replacement.
+  **Every chest draw is on stream `relicRewards` and no other** — the category rolls and every
+  payload roll (the relic pick, the upgrade's owned-vs-rare roll and pick, the armament's
+  rarity and piece rolls or its weapon-art pick, the cinders purse). The chest never draws on
+  `cardRewards`, `armaments` or `misc`, so the door's card offer, its own armament drop and
+  every later offer on those streams replay exactly as before the chest; only `relicRewards`
+  (which the replaced elite relic drew on) moves by more than one draw. A category whose payload cannot be built (no relic left, no
   upgradeable card and no rare, no armament and no weapon art) is dropped and the draw moves
   on, so the chest may offer fewer than three; with none, the offer carries no chest.
   `upgrade` prefers an owned card with chance `eliteChest.upgradeOwnedPct`.

@@ -141,6 +141,19 @@ test('the chest offers three distinct categories, seeded', () => {
   }
 });
 
+test('the chest draws on relicRewards only, so no other stream shifts', () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    const rng = createRng(seed);
+    const chest = rollEliteChest(r, rng, newRun(seed), { found: [] });
+    assert.ok(chest && chest.options.length, `seed ${seed}: a chest`);
+    const counters = rng.getCounters();
+    for (const [stream, count] of Object.entries(counters)) {
+      if (stream === 'relicRewards') assert.ok(count > 0, `seed ${seed}: the chest drew on relicRewards`);
+      else assert.equal(count, 0, `seed ${seed}: the chest drew on ${stream}`);
+    }
+  }
+});
+
 test('every category builds a valid payload', () => {
   const seen = new Set();
   for (let seed = 1; seed < 60 && seen.size < CHEST_CATEGORIES.length; seed++) {
