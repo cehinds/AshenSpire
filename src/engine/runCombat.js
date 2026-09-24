@@ -16,6 +16,7 @@
 import { createCombat } from './combat.js';
 import { resolveHandRules } from '../model/handRules.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
+import { staminaAtCombatStart } from '../framework/resources.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
@@ -32,7 +33,9 @@ export function runCombatPlayer(run) {
     maxMana: run.maxMana,
     mana: run.mana,
     maxStamina: run.maxStamina,
-    stamina: run.stamina,
+    // A fight opens with the Stamina the framework's entry rule gives
+    // (mechanics.stamina.combatStartRefill, plan A2); Mana carries as it is.
+    stamina: staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina }),
     energyMax: run.energyMax,
     drawPerTurn: run.drawPerTurn,
     damageBySchoolAdd: run.damageBySchoolAdd,

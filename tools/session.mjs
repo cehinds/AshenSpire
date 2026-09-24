@@ -48,6 +48,7 @@ import {
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
+import { staminaAtCombatStart } from '../src/framework/resources.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
 // story before driving the real LAN intent/event/render path. Keep that setup
@@ -480,7 +481,7 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
-      maxStamina: m.run.maxStamina, stamina: m.run.stamina,
+      maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),

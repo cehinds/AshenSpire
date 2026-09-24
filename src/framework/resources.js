@@ -63,3 +63,14 @@ export function onTurnEndStamina(state) {
     staminaSpentThisTurn: 0,
   };
 }
+
+/**
+ * The Stamina a fight opens with (mechanics.stamina.combatStartRefill):
+ * 'full' opens at the maximum, 'carry' where the last fight left it.
+ */
+export function staminaAtCombatStart({ currentStamina, maxStamina }) {
+  const rule = mechanics.stamina.combatStartRefill;
+  if (rule === 'full') return maxStamina;
+  if (rule === 'carry') return currentStamina;
+  throw new Error(`mechanics.stamina.combatStartRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
+}
