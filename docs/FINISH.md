@@ -28,8 +28,8 @@ linked. Update this file after every PR.
 
 - [ ] **Guilt deals its in-hand turn-end HP loss** (SPEC §5.2, DEVELOPER "M1 known deviations" #2). Test: an engine test where Guilt in hand at turn end costs exactly the row's value (1 HP) and Guilt in draw or discard costs nothing. *Owner decision D2.*
 - [ ] **Warrior's Vow lets you choose a stance** (SPEC §5.2, deviation #3). Test: an engine test where the card offers a pending choice of every class stance, and the chosen stance is the one entered. *D2.*
-- [ ] **Frostbite exists as a status** (SPEC §4.4, deviation #1). Test: an engine test where the next hit of 10 or more deals +30%, and the status is then consumed. *D2.*
-- [ ] **Card hotkeys 1–9** (SPEC §9 M4, §7.3). Test: a unit test where pressing N selects hand card N, a second press or Enter plays it, and keys past the hand size do nothing.
+- [ ] **Remove the stale Frostbite deviation**: SPEC §4.4 marks Frostbite CUT, with Frost and `frostExposed` carrying it. Test: DEVELOPER.md "M1 known deviations" no longer lists Frostbite, and the SPEC falsifier `statuses.some(s=>s.id==='frostbite')` prints `false`.
+- [ ] **Card hotkeys 1–9 have a test**. They already ship in `src/ui/screens/combat.js` (`cardIdx`): 1–9 select a card, and with a card selected a number picks the enemy. Test: a test covers SPEC §7.3, where pressing N selects hand card N, a key past the hand size does nothing, and with a hostile card selected N targets living enemy N. The code needs no new input path.
 - [ ] **Abandoning mid-combat restarts that combat** (SPEC §9 M2), as a named test. Test: a headless test with seed S plays 2 cards, then reloads through the real load path; the combat is back at turn 1 with the same HP rolls, the same opening hand and the deck unchanged.
 - [ ] **Every card, relic and event is reachable** (SPEC §9 M3). Test: `node tools/contentreach.mjs` exits 0 with 0 orphans across 195 cards, 63 relics and 25 events, and its `--selftest` goes red on a planted orphan of each kind.
 - [ ] **SPEC text matches what shipped**: §5.1 gives 40 Rogue cards (§13.4f Prepare), §5.2 has the Goreblood row, and §12 is marked shipped. Test: `grep -n '39 authored' SPEC.md` gives 0 hits, and each §12 claim has a verdict in `docs/SPEC-RECONCILE.md`. Spec PR only.
@@ -75,7 +75,7 @@ linked. Update this file after every PR.
 
 ## 8. Mobile (plan §G)
 
-- [ ] **Targets ≥ 44 CSS px and text ≥ 11 px** at 360×640, 390×844, 768×1024 and 844×390, with 0 horizontal overflow. Test: a browser probe over combat, map, shop and compendium.
+- [ ] **Targets ≥ 44 pt on iOS and ≥ 48 dp on Android (48 CSS px on a coarse pointer), text ≥ 11 px** at 360×640, 390×844, 768×1024 and 844×390, with 0 horizontal overflow. Test: a browser probe over combat, map, shop and compendium.
 - [ ] **#724: no hand card drawn over Draw or End Turn**. Test: `node tools/hintstrip.mjs` finds 0 issues.
 - [ ] **#1142: the map camera fits the scrollport after it settles**. Test: at 390×844, `data-camera-viewport` equals the client size.
 - [ ] **#1164: the card door stacks between 601 and 703 px**. Test: a layout assertion at 601, 650 and 703 px.
@@ -84,7 +84,7 @@ linked. Update this file after every PR.
 
 ## 9. Accessibility
 
-- [ ] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs` runs in CI and passes; text contrast ≥ 4.5:1.
+- [ ] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs --gate` runs in CI and exits 0, and the tool's `KNOWN_BELOW` ledger is empty for text rows, so every text token in all three palettes is ≥ 4.5:1 (≥ 3:1 for large text). A report run without `--gate` exits 0 even when rows fail, so it proves nothing.
 - [ ] **Reduced motion is proven in a browser**. Test: `document.getAnimations()` finds nothing over 0.01 s during one combat turn.
 - [x] Text scaling, reduced motion, reduce flashes, high contrast, cb-safe, and key/pad remapping exist (`src/ui/screens/settings.js`).
 - [ ] **Escape or pad B backs out of every screen**. Test: a dispatch per screen calls Back exactly once.
@@ -123,7 +123,7 @@ linked. Update this file after every PR.
 Proposals only. Nothing below is built until the owner rules.
 
 - **D1 — Balance gate.** SPEC §9 asks for about 35–50% for an experienced player; the plan's bot band is 35–65% with a spread of 20 points or less. *Proposal:* gate on the bot band at ≥ 40 seeded runs per class, and treat the experienced-player range as the design aim.
-- **D2 — Guilt, Warrior's Vow and Frostbite.** Build the engine hooks (an in-hand turn-end trigger and a choose-one choice), or amend SPEC §4.4 and §5.2 to match what shipped. *Proposal:* build all three.
+- **D2 — Guilt and Warrior's Vow.** Build the engine hooks (an in-hand turn-end trigger and a choose-one choice), or amend SPEC §5.2 to match what shipped. *Proposal:* build both. (Frostbite is already CUT in SPEC §4.4.)
 - **D3 — COMBAT-EQUIPMENT-RULES** (the prototype gate and 50-card pools). *Proposal:* mark it post-1.0 in SPEC.
 - **D4 — Elites per seat.** Is 1 the v1 scope, or 2 or more? *Proposal:* 2 per seat.
 - **D5 — Web edition.** Ship Pages as external art with a service worker (installable, under 5 MB of HTML/JS), and keep the 254 MB file as a download (plan §D). *Proposal:* yes.
@@ -143,6 +143,6 @@ Each wave's file sets do not overlap. At most 4 tasks run per wave.
   2. `feature/stale-validators`: `tools/rogue-parity.mjs`, `tools/enemy-level-content.mjs`, and a test for each.
   3. `feature/contentreach`: new `tools/contentreach.mjs` plus a test.
   4. `feature/midcombat-reload-test`: new `tests/midcombat-reload.test.mjs`.
-- **Wave 2**: card hotkeys 1–9 (`src/ui/input.js`); the tests.yml push-cancel fix and the bundle.test job split (`.github/workflows/tests.yml`); about-changelog ordering with no browser; the DEVELOPER and versioning stale text.
+- **Wave 2**: a test for the card hotkeys 1–9; the tests.yml push-cancel fix and the bundle.test job split (`.github/workflows/tests.yml`); about-changelog ordering with no browser; the DEVELOPER and versioning stale text.
 - **Wave 3**: the SPEC reconcile PR (§5.1, §5.2, §12); the headless full-run gate (after #1270 lands); LICENSE and metadata.
 - **Later, in order**: A2–A4 → F → H → G → C (plan order), then D2 hooks, then perf and mobile probes, then the release candidate.
