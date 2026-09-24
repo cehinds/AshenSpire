@@ -343,7 +343,10 @@ export function prologueRows() {
     add([...path,'effect'], 'Transition effect', scene.name, choice(['fade','dip','push','ash','still'], {fade:'Crossfade',dip:'Fade through black',push:'Slow push',ash:'Ash reveal',still:'Still'}));
     if ('location' in scene) add([...path,'location'], 'Location caption', scene.name, {...text(160),note:'Use {location} to show the actual starting destination.'});
     if (scene.actor) for (const layout of ['desktop','mobile']) for (const axis of ['x','y','height']) {
-      add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, number(axis === 'height' ? 10 : 0,100,1));
+      const note = axis === 'x' ? '0 is the left edge, 50 is center, and 100 is the right edge of the painting.'
+        : axis === 'y' ? 'The point where the traveller’s feet touch the ground: 0 at the top, 100 at the bottom.'
+          : 'Traveller size as a percentage of the artwork height.';
+      add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, {...number(axis === 'height' ? 10 : 0,100,1), note});
     }
     // ONE TOGGLE, THEN THE SCENE'S OWN COPY OF THE WHOLE STAGING.
     add([...path,'ownStaging'], 'Use its own staging', scene.name, {note:'Off follows the opening’s Stage and Text settings. On, the rows below decide this scene alone — one scene may letterbox while the rest fill the frame.'});
