@@ -52,6 +52,11 @@ function sandbox() {
   // still refuses to invent a number is the ordinal's own home; 1a plants that.
   execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: dir });
+  // The commit below writes thousands of loose objects, which trips git's
+  // detached `gc --auto`; still writing into .git while the case removes the
+  // sandbox, it failed rmSync with ENOTEMPTY. A throwaway repo needs neither.
+  execFileSync('git', ['config', 'gc.auto', '0'], { cwd: dir });
+  execFileSync('git', ['config', 'maintenance.auto', 'false'], { cwd: dir });
   execFileSync('git', ['config', 'user.email', 'bundle-selftest@family.local'], { cwd: dir });
   execFileSync('git', ['config', 'user.name', 'bundle-selftest'], { cwd: dir });
   execFileSync('git', ['add', '-A'], { cwd: dir });
