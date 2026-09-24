@@ -432,9 +432,15 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   options to choose from. `applyChestOption` refuses the mismatch and the spent card alike
   and grants nothing. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
-  while the bag is full — and while the door's own armament row is still pending it needs
-  **two** free slots, since that row claims one first (it is listed and auto-collected before
-  the chest); a taken or skipped armament row claims none. If the auto pick still cannot land
+  while the bag is full. **Under auto-collect** (`resolveContinue`, `autoTakeChest`) it also
+  needs **two** free slots while the door's own armament row is still pending, since that row
+  claims one first (it is listed and auto-collected before the chest; the plan's
+  `autoTakeable`); a taken or skipped armament row claims none, and a chest with no option
+  auto-collect may land is left, with no draw. **A player's own pick** (the chest chooser)
+  reads the bag as it stands when the chooser opens (`takeable`): with one slot free the
+  chest's piece may be taken and the standalone drop left — that drop's collector then
+  refuses it at the cap — and once the standalone drop has filled the bag the chest's piece
+  is locked. If the auto pick still cannot land
   (a collector refuses the piece), the next takeable option in row order is granted instead
   (`landChestPick`, `model/rewardChest.js`), so an openable chest is never dropped. The
   chest's armament piece is never the door's own armament drop: that drop is rolled first

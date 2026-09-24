@@ -110,7 +110,10 @@ export function mountRewards(app, {
       return true;
     };
   }
-  const plan = rewardPlan(rewards, {
+  // The run-derived facts the plan reads — a function, because the chest
+  // chooser re-reads the bag at pick time (a player's own pick is judged
+  // against the bag as it stands, model/rewardplan.js).
+  const planFacts = () => ({
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
     // home, two questions (the model asks "is there room", the collector's
@@ -129,6 +132,7 @@ export function mountRewards(app, {
     chestOptionsSpent: (rewards.chest?.options || []).map((o) => o?.category === 'upgrade' && o.mode === 'owned'
       && !chestUpgradeable(registries, run, (run.deck || []).find((c) => c.instanceId === o.instanceId))),
   });
+  const plan = rewardPlan(rewards, planFacts());
   // The fight's progression, derived once: the ledgers are already paid and
   // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
   // panel's whole claim is what this one moved, and a treasure room (or an
@@ -950,7 +954,13 @@ export function mountRewards(app, {
 
   // Select one option, then Confirm — the card chooser's two beats. An
   // option the bag cannot hold is drawn locked with its reason.
-  function renderChestChooser(row) {
+  function renderChestChooser(mounted) {
+    // A PLAYER'S PICK IS JUDGED AGAINST THE BAG AS IT STANDS (SPEC §3.8.1):
+    // re-derived now, so a chest armament is open while a slot is free even
+    // with the door's own armament row pending (leaving that drop is the
+    // player's choice), and closed once that row has filled the bag.
+    const live = rewardPlan(rewards, planFacts()).rows.find((r) => r.key === mounted.key);
+    const row = live ? { ...mounted, takeable: live.takeable } : mounted;
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,

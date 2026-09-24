@@ -309,13 +309,24 @@ test('the door\'s armament row claims its bag slot before the chest\'s piece', (
   ] } };
   const plan = rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
   const chestRow = plan.rows.find((row) => row.kind === 'chest');
-  assert.deepEqual(chestRow.takeable, [false, true], 'one free slot is the armament row\'s');
+  assert.deepEqual(chestRow.autoTakeable, [false, true], 'under auto-collect one free slot is the armament row\'s');
+  assert.deepEqual(chestRow.takeable, [true, true], 'a player\'s own pick reads the bag as it stands (#1287)');
   const taken = resolveContinue(plan, {}, 'auto', () => 0).take;
   assert.deepEqual(taken.map((row) => row.kind), ['armament', 'chest']);
   assert.equal(taken[1].optionIndex, 1, 'auto-collect lands the chest on the purse');
+  assert.deepEqual(taken[1].takeable, [false, true], 'the auto row carries the reserved reading to its grant');
   // Once the armament row is settled (taken: the bag counts it; skipped), the slot math is the bag's own.
-  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1, armamentRowSettled: true }).rows.find((row) => row.kind === 'chest').takeable, [true, true]);
-  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 2 }).rows.find((row) => row.kind === 'chest').takeable, [true, true]);
+  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1, armamentRowSettled: true }).rows.find((row) => row.kind === 'chest').autoTakeable, [true, true]);
+  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 2 }).rows.find((row) => row.kind === 'chest').autoTakeable, [true, true]);
+  // An all-armament chest with the one slot reserved: open to the player, left by auto-collect (no draw).
+  const armsOnly = { armamentId: 'longsword', chest: { options: [{ category: 'armament', armamentId: 'greatsword' }] } };
+  const armsPlan = rewardPlan(armsOnly, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
+  assert.equal(armsPlan.rows.find((row) => row.kind === 'chest').blockedBy, null);
+  let draws = 0;
+  const auto = resolveContinue(armsPlan, {}, 'auto', () => { draws++; return 0; });
+  assert.deepEqual(auto.take.map((row) => row.kind), ['armament']);
+  assert.deepEqual(auto.leave.map((row) => row.kind), ['chest']);
+  assert.equal(draws, 0);
 });
 
 test('auto-collect never loses the elite chest to a bag the armament row just filled', () => {
@@ -709,4 +720,53 @@ test('the pity counters are refused at the shape door unless the game could have
   assert.equal(shape({ cardRarityOffset: cfg.offsetMax, cardRewardsSinceRare: 12 }), '');
   for (const bad of [1.5, -1, NaN, Infinity]) assert.match(shape({ cardRewardsSinceRare: bad }), /cardRewardsSinceRare must be a non-negative integer/);
   for (const bad of [0.5, cfg.offsetStart - 1, cfg.offsetMax + 1, 1e9, -Infinity]) assert.match(shape({ cardRarityOffset: bad }), /cardRarityOffset must be an integer in/);
+});
+
+test('manual: with one slot free the chest\'s armament is the player\'s to take over the standalone drop (#1287)', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const cap = r.balance.equipment.storageSlots || 8;
+    const mount = () => {
+      const app = document.createElement('main'); document.body.append(app);
+      const storage = Array.from({ length: cap - 1 }, (_, i) => `filler${i}`);
+      const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage } };
+      const collect = (id) => { if (storage.length >= cap) return false; storage.push(id); return true; };
+      const rewards = { armamentId: 'longsword', chest: { options: [
+        { category: 'armament', armamentId: 'greatsword' },
+        { category: 'cinders', cinders: 90, smithingStones: 1 },
+      ] } };
+      const checkpoint = { states: {}, chosenCardId: null };
+      mountRewards(app, { registries: r, run, checkpoint, rewards, onDone() {}, onPersist() {}, onCollectArmament: collect,
+        saves: { loadMeta: () => ({ settings: { rewardCollect: 'manual' } }), saveMeta() {} } });
+      return { app, run, storage, checkpoint };
+    };
+    // The chest's piece first: it lands in the one free slot.
+    {
+      const { app, storage, checkpoint } = mount();
+      app.querySelector('[data-kind="chest"]').click();
+      const tiles = app.querySelectorAll('.reward-row .reward-chest-option');
+      assert.equal(tiles[0].disabled, false, 'the chest armament is open with one slot free');
+      tiles[0].click();
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(checkpoint.states.chest, 'taken');
+      assert.equal(storage.at(-1), 'greatsword');
+    }
+    // The standalone drop first: it fills the bag, and the chest's piece is then locked.
+    {
+      const { app, storage } = mount();
+      app.querySelector('[data-kind="armament"]').click();
+      app.querySelector('#reward-detail-take')?.click();
+      assert.equal(storage.at(-1), 'longsword');
+      app.querySelector('[data-kind="chest"]').click();
+      assert.equal(app.querySelectorAll('.reward-row .reward-chest-option')[0].disabled, true, 'the bag is full now');
+    }
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
+    }
+  }
 });

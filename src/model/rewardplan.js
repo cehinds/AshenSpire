@@ -59,12 +59,17 @@ export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
 const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
 
 /**
- * The bag slots the chest's armament piece may use: the free slots less the
- * one the door's own armament row will take, unless that row is already
- * settled (`facts.armamentRowSettled`: taken — the bag already counts it — or
- * skipped).
+ * The bag slots the chest's armament piece may use UNDER AUTO-COLLECT: the
+ * free slots less the one the door's own armament row will take, unless that
+ * row is already settled (`facts.armamentRowSettled`: taken — the bag already
+ * counts it — or skipped). A player's own pick reads the bag as it stands
+ * (`facts.armamentSlotsFree`): leaving the standalone drop is theirs to choose.
  */
 const chestArmamentSlots = (r, facts) => (facts.armamentSlotsFree || 0) - (r.armamentId && !facts.armamentRowSettled ? 1 : 0);
+
+/** Per option: may it land, with `slots` bag slots for an armament piece. */
+const chestTakeable = (r, facts, slots) => r.chest.options.map((o, i) => !(facts.chestOptionsSpent && facts.chestOptionsSpent[i])
+  && !(o.category === 'armament' && o.armamentId && !(slots > 0)));
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -142,10 +147,14 @@ const KINDS = {
     // The elite chest (SPEC §3.8.1): pick ONE of its options. `takeable` is
     // per option — an armament cannot land in a full bag — derived here the
     // armament row's way, so the chooser and auto-collect read one answer.
-    // The door's own armament row claims a bag slot first (it is listed, and
-    // auto-collected, before the chest): while that row is still pending the
-    // chest's piece counts one slot fewer, so auto-collect never lands the
-    // chest's pick on an armament the row has just filled the bag against.
+    // The door's own armament row claims a bag slot first UNDER AUTO-COLLECT
+    // (it is listed, and auto-collected, before the chest): while that row is
+    // still pending `autoTakeable` counts the chest's piece one slot fewer, so
+    // auto-collect never lands the chest's pick on an armament the row has
+    // just filled the bag against. `takeable` is the player's own pick, read
+    // against the bag as it stands: with one slot free they may take the
+    // chest's piece and leave the standalone drop (whose collector then
+    // refuses it at the cap).
     present: (r) => !!r.chest && Array.isArray(r.chest.options) && r.chest.options.length > 0,
     row: (r, facts) => ({
       options: r.chest.options.map((o) => ({ ...o })),
@@ -154,10 +163,10 @@ const KINDS = {
       // (a skill threshold upgraded it since the offer was drawn — SPEC
       // §3.8.1) is spent: shown, locked, never auto-picked. The caller states
       // which (`facts.chestOptionsSpent`, by option index); this file never reads the deck.
-      takeable: r.chest.options.map((o, i) => !(facts.chestOptionsSpent && facts.chestOptionsSpent[i])
-        && !(o.category === 'armament' && o.armamentId && !(chestArmamentSlots(r, facts) > 0))),
+      takeable: chestTakeable(r, facts, facts.armamentSlotsFree || 0),
+      autoTakeable: chestTakeable(r, facts, chestArmamentSlots(r, facts)),
     }),
-    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || chestArmamentSlots(r, facts) > 0 ? null : 'storage'),
+    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || (facts.armamentSlotsFree || 0) > 0 ? null : 'storage'),
   },
   relic: {
     // A boss offers a CHOICE of distinct boss relics (`relicIds`, SPEC §6.1);
@@ -216,9 +225,14 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
       if (row.kind === 'chest') {
-        // Only a takeable option may be picked; the seeded pick chooses among them.
-        const open = row.options.map((_, i) => i).filter((i) => row.takeable[i]);
-        take.push({ ...row, optionIndex: open[pick(open.length) % open.length] });
+        // Only an option auto-collect may land is picked (the pending armament
+        // row's slot reserved); the seeded pick chooses among them. The row
+        // handed on carries that reading as its `takeable`, so the grant and
+        // its fallback (landChestPick) honour the same reservation.
+        const takeable = row.autoTakeable || row.takeable;
+        const open = row.options.map((_, i) => i).filter((i) => takeable[i]);
+        if (!open.length) { leave.push(row); continue; }
+        take.push({ ...row, takeable, optionIndex: open[pick(open.length) % open.length] });
       } else if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || (row.kind === 'relic' && row.choice)) {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
