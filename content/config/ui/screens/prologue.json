@@ -148,11 +148,13 @@
           "enabled": true,
           "order": 5,
           "banner": false,
-          "ownStaging": false,
+          "ownStaging": true,
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {}
+          "stage": {
+            "imageFocusY": 0
+          }
         },
         {
           "id": "extraA",
