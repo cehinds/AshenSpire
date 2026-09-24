@@ -1217,7 +1217,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-sync a { color: var(--accent, #c9a45c); overflow-wrap: anywhere; }
 .set-sync-acts { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .set-sync-acts .set-text { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-floor); }
-.set-sync-select { flex: 1 1 10rem; min-width: 0; min-height: var(--tap-floor); max-width: 100%; }
+.set-sync-select { flex: 1 1 10rem; min-width: 0; min-height: var(--tap-floor); max-width: 100%; padding: .4rem .6rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); font: inherit; }
 .set-sync-active { color: var(--gold); overflow-wrap: anywhere; }
 .set-sync-preview { margin: .2rem 0 .6rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
 .set-sync-diff { margin: .4rem 0; padding-left: 1.1rem; display: grid; gap: .2rem; }

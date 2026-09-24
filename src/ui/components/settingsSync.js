@@ -242,11 +242,13 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         : '<p>This device already matches the profile.</p>';
       box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
         try {
+          // What every key held before, so Settings can offer Undo.
+          const before = Object.fromEntries(profileDiff(settings, pending.parsed).map(({ key, from }) => [key, from]));
           const moved = applyProfile(settings, onChange, pending.parsed);
           write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
           pending = null;
-          afterApply(moved);
+          afterApply(moved, before);
         } catch (error) { status(error.message); }
       });
       box.querySelector('[data-sync="cancel"]')?.addEventListener('click', () => { pending = null; box.hidden = true; box.innerHTML = ''; });

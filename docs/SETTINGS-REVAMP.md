@@ -98,43 +98,52 @@ not what a profile holds.
 (toggles stay on the right). Choice chips wrap, dropdowns take the full width,
 and every −/+ and Reset meets the tap floor.
 
-## 4. Suggested next steps (not in this change)
+## 4. The suggestions, implemented
 
-Highest value first.
+All ten suggestions from the first pass have been built.
 
-1. **Live preview strip for Display & Accessibility.** A sample card, a line
-   of body text and a HUD bar, drawn at the current UI size, text size, card
-   size, accent and contrast, and pinned above those topics. Changing a
-   setting would show its effect without closing Settings. The Stats worked
-   example already shows the approach works.
-2. **"Changed" filter.** A chip beside search that lists only rows with a dot,
-   across every section, with a *Reset all shown* button. This makes "what did
-   I change?" a one-tap question.
-3. **Named profiles.** `settings-profiles/<name>.json` (desk, phone, balance
-   test A/B) with a picker. The model already takes any `.json` path.
-4. **Build-time defaults from the profile.** Let the owner promote
-   `settings-profiles/default.json` into the shipped defaults (a PR that writes
-   the values as row defaults), so new players on main start from the tuned
-   set. This needs a decision on which keys a player build may inherit.
-5. **Undo toast.** Show *Changed X · Undo* for 5 s after any Reset, group
-   reset or profile load, restoring from a snapshot taken just before.
-6. **Per-device keys.** Mark UI size, text size and fullscreen as device-local
-   so a profile saved on a desktop does not shrink a phone's text. Either leave
-   them out of the profile or keep them in a `device` block that is only
-   applied on a matching width class.
-7. **Retire the "Assign points" style dials.** Several tuning rows are
-   reachable only through a 0–999 field. Give each authored row an explicit
-   `min`/`max`/`step` that reflects its real design range. The slider span
-   heuristic then becomes unnecessary.
-8. **Settings tour.** The first time Settings opens in a release build, show
-   a one-line hint for search and Reset.
-9. **Gamepad affordances for steppers.** LB/RB already move between tabs.
-   With a stepper focused, map left/right to −/+ and hold-to-repeat.
-10. **Old keys on main.** A player who tuned values on an old build keeps those
-    values on main but can no longer see the rows. Consider a single *Reset
-    developer tuning* button in About on release builds. Alternatively, ignore
-    `gameConfig.*` overrides when debug is off. That second option changes
-    gameplay, so it is the owner's call.
+1. **Live preview strip**: see the preview component under
+   `src/ui/components/`. It sits at the top of General → Display and
+   Accessibility. It shows a real card, text, buttons and a resource bar, all
+   drawn with the current UI size, text size, accent and contrast. It can be
+   folded away, and it remembers whether it was open.
+2. **Changed filter**: the **Changed · N** button in the header lists every
+   setting whose value differs from its default, across all sections. A search
+   narrows that list further. While the list is showing, the ⋮ menu's scoped
+   reset becomes **Reset these results** and resets exactly the rows listed.
+3. **Named profiles**: profiles are stored as `settings-profiles/<name>.json`.
+   Defaults & sync lists the existing ones on its branch. Pick one, or type a
+   new name; the file is created on the first save.
+4. **Build-time defaults**: run `node tools/settings-defaults.mjs <profile.json>`
+   to write `src/content/settingsDefaults.js`. The file passes through the same
+   import checks as a normal import, and screen-size keys are left out. What a
+   player sees at startup:
+   - A key they have never set starts at the promoted value.
+   - A key still at an earlier promotion's value moves to the new one.
+   - A key they chose themselves is never overwritten.
+
+   After a promotion, Reset returns a setting to the promoted value.
+   `--clear` goes back to the code defaults, and `--check` validates the file.
+   Rebuild and write a changelog receipt afterwards.
+5. **Undo**: every row Reset, group or results reset, Reset all, hidden-tuning
+   clear and profile load shows a *… · Undo* bar for 8 seconds.
+6. **Per-device keys**: `DEVICE_KEYS` covers UI size, text size, tap size,
+   fullscreen, quick menu and the phone Armaments placement. By default they
+   stay out of a profile and are neither applied nor cleared on load. The
+   switch *Include this device's screen settings* (set per device) adds them.
+7. **Design ranges**: a row may declare `sliderRange: [lo, hi]` for its slider.
+   Rows that don't declare one keep the adaptive slider, which is centred on
+   the value and widens when a committed value falls outside it. No row sets a
+   range yet; add them as tuning settles.
+8. **First-open tip**: a one-line hint covering search, the changed dot, Reset
+   and Changed. It is dismissed once and remembered in the profile.
+9. **Gamepad**: with − or + focused, the pad's left/right, or the arrow keys,
+   press it. On a fractional slider, left/right moves by 1% of its span.
+10. **Old tuning on release builds**: when stored `gameConfig.*` values belong
+    to rows that a release build hides, the ⋮ menu offers
+    **Clear hidden tuning (N)**, with Undo. Hidden values still apply until
+    cleared; ignoring them outright would change gameplay, so that remains the
+    owner's decision.
 
 ## 5. How it was checked
 
