@@ -199,17 +199,6 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      # SAY THAT THE SITE IS BEHIND, BECAUSE NOBODY WAS BEING TOLD.
-      #
-      # #553: after #543 correctly took the deploy credential off the push path,
-      # nothing republished — and nothing SAID nothing had republished, so /dev
-      # /test /release served stale builds for hours with every run green.
-      #
-      # A first attempt at this fixed it by publishing automatically behind a
-      # repository-variable switch. That was rejected: publishing the site is an
-      # owner action, taken deliberately each time, and a standing switch is a
-      # delegation to every future push. So this step reports; it does not
-      # publish, and nothing here should ever grow the ability to.
       # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
       #
       # #553: after #543 correctly took the deploy credential off the push path,
