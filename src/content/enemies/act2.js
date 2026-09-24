@@ -148,19 +148,23 @@ export const act2Enemies = [
     size: 'large',
     tint: 'var(--gold)',
     name: 'The Stitched King',
-    hp: [195, 195],
+    // A2 difficulty: HP and every move's damage x1.7 (HP 195), as for
+    // every act-2/3 boss. The owner's XP curve levels a climb ~25 times, so
+    // bosses are where runs are decided (`node tools/runsim.mjs 120`: wins
+    // 95/77/94/67% -> 48/45/52/54% Reaver/Starseer/Rogue/Herald with the A2 rows).
+    hp: [332, 332],
     poiseMax: 34,
     levelProfile: { min: 11, max: 12 },
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {
-      scepterBlow: { intent: 'attack', damage: 11, weight: 40, maxConsecutive: 2 },
-      graspingHands: { intent: 'attack', damage: 5, hits: 3, weight: 30, maxConsecutive: 2 },
+      scepterBlow: { intent: 'attack', damage: 19, weight: 40, maxConsecutive: 2 },
+      graspingHands: { intent: 'attack', damage: 9, hits: 3, weight: 30, maxConsecutive: 2 },
       courtlyDecree: {
         intent: 'block', block: 15, weight: 30, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
       },
-      thousandHands: { intent: 'attack', damage: 3, hits: 6, weight: 40, locked: true },
+      thousandHands: { intent: 'attack', damage: 5, hits: 6, weight: 40, locked: true },
     },
     phases: [
       {
@@ -267,9 +271,10 @@ export const act2Enemies = [
     "id": "glassRegent",
     "name": "The Glass Regent",
     "size": "large",
+    // A2 difficulty: HP and every move's damage x1.7 (HP 180; see the Stitched King).
     "hp": [
-      180,
-      180
+      306,
+      306
     ],
     "poiseMax": 26,
     "levelProfile": {
@@ -287,20 +292,20 @@ export const act2Enemies = [
       },
       "crystalRapier": {
         "intent": "attack",
-        "damage": 15,
+        "damage": 26,
         "weight": 45,
         "maxConsecutive": 2
       },
       "splinterRain": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 10,
         "weight": 30,
         "hits": 3,
         "maxConsecutive": 1
       },
       "shatteredCourt": {
         "intent": "attack",
-        "damage": 7,
+        "damage": 12,
         "weight": 35,
         "maxConsecutive": 1,
         "delay": {
@@ -336,9 +341,10 @@ export const act2Enemies = [
     "id": "marrowOrganist",
     "name": "The Marrow Organist",
     "size": "large",
+    // A2 difficulty: HP and every move's damage x1.7 (HP 190; see the Stitched King).
     "hp": [
-      190,
-      190
+      323,
+      323
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -363,14 +369,14 @@ export const act2Enemies = [
       },
       "ivoryKeys": {
         "intent": "attack",
-        "damage": 8,
+        "damage": 14,
         "weight": 40,
         "hits": 3,
         "maxConsecutive": 2
       },
       "funeralChord": {
         "intent": "attack",
-        "damage": 28,
+        "damage": 48,
         "weight": 25,
         "maxConsecutive": 1,
         "delay": {

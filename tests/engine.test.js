@@ -1615,9 +1615,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(soloMagic.player.mana, Math.min(starRun.maxMana, REG.balance.powers.starstoneShard.restoreMana + REG.balance.powers.lodestarShard.restoreMana), 'Starstone combatStart recovery restores Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) more');
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
-    eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
+    // A2: Starstone Shard's magic damage is +2 (was +1).
+    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 7, 'solo live primary damage matches preview');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
 
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
@@ -1633,8 +1634,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
-    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 7,
-      'co-op live magic damage uses the same host-stamped +1');
+    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
+      'co-op live magic damage uses the same host-stamped +2');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
@@ -1825,7 +1826,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['blightedValkyrie'] });
     const e1 = getEntity(v, 'e1');
     applyLoseHp(v, e1, 30); // give her something to heal back
-    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 12 dmg + 2 player Bleed
+    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 20 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
     assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
     eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
@@ -1840,7 +1841,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Stitched King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.
     const k = makeCombat({ deck: Array(5).fill('defend'), enemies: ['stitchedKing'] });
     const king = getEntity(k, 'e1');
-    applyLoseHp(k, king, 115); // 220 → 105 (<50%): checkPhases fires in afterHpChange
+    // A2 raised his HP (195 → 332 authored), so the cut is read off his pool.
+    applyLoseHp(k, king, king.hp - Math.floor(king.maxHp * 0.45)); // → 45% (<50%): checkPhases fires in afterHpChange
     dispatch(k, { type: 'endTurn' }); // drain phase effects
     assert(king.unlockedMoves.includes('thousandHands'), 'phase 2 move unlocked');
     assert(S.getStacks(king, 'strength') >= 2, 'phase buffed his Strength');

@@ -5,7 +5,7 @@
   },
   "starstoneShard": {
     "name": "Starstone Shard",
-    "text": "Max HP +14. Mana +3. Magic damage +1. Begin each combat with Starstone Charge and restore 1 Mana."
+    "text": "Max HP +14. Mana +1. Magic damage +2. Begin each combat with Starstone Charge and restore 1 Mana."
   },
   "cutpursesCoin": {
     "name": "Cutpurse's Coin",
@@ -241,7 +241,7 @@
   },
   "lodestarShard": {
     "name": "Lodestar Shard",
-    "text": "Begin each combat with 3 extra Mana."
+    "text": "Begin each combat with 1 extra Mana."
   },
   "waxenSeal": {
     "name": "Waxen Seal",

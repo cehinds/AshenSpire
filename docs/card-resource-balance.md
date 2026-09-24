@@ -16,12 +16,15 @@ Upgrading a card preserves its resource category.
 The current combat-reward census is 52 Common, 51 Uncommon and 41 Rare cards.
 The resulting Stamina-bearing/dual counts are 16/8, 26/15 and 29/21.
 
-**A2 exception (Starseer starvation).** The four Starseer common attacks —
+**A2 exceptions (caster starvation).** The four Starseer common attacks —
 Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — cost Actions
-only, so the Common row ships at 12/4 rather than 16/8. A Starseer's Mana
-carries between fights while every fight opens with full Stamina, and with
-Mana on its commons the class won 1 of 60 simulated runs (`node
-tools/runsim.mjs 60`); with this and its other A2 rows it won 21 (82 of 200).
+only, and the Herald's Blight Touch costs Stamina without Mana, so the Common
+row ships at 12 Stamina-bearing / 3 dual rather than 16/8. Mana carries between
+fights while every fight opens with full Stamina, so a caster whose attacks
+needed Mana ran dry: with Mana on its commons the Starseer won 1 of 60
+simulated runs, and a Herald on a dry Mana pool stalled or lost at the act-2
+boss (`node tools/runsim.mjs 120` with the A2 rows: Herald 45 wins with Mana
+on Blight Touch, 66 without).
 
 The census covers the union of the four class combat-reward pools.
 It excludes merchant-only neutral cards, starter cards, special cards and cards available only through

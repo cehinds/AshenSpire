@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1284",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Every fight opens with full Stamina, and the Starseer can fight with no Mana left",
-    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer was hit hardest by that, so its kit is rebuilt around it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and as plain spells they build 1 Arcane Exposure per hit instead of 5. Arcane Ward blocks 7 instead of 4. Starstone Shard adds 14 Max HP and 3 Mana, so a new Starseer starts on 48 HP. Lodestar Shard restores 3 Mana as each fight begins. Over 60 simulated runs a class on the current rules, the Reaver now wins 58, the Starseer 46, the Rogue 56 and the Herald 41.",
-    "build": "0.7.1.465",
+    "summary": "Every fight opens with full Stamina, casters can fight with no Mana left, and the act 2 and 3 bosses are much tougher",
+    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer and the Herald were hit hardest by running out of Mana, so their attacks no longer need it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and as plain spells they build 1 Arcane Exposure per hit instead of 5. The Herald's Blight Touch costs Stamina but no Mana. Arcane Ward blocks 7 instead of 4. Starstone Shard adds 14 Max HP and 2 Magic damage instead of 1, so a new Starseer starts on 48 HP. With the quicker levels a climb now earns, the act 2 and act 3 bosses were the only fights still likely to end a run, and most runs got past them, so every one of them has 70% more HP and hits 70% harder. Over 120 simulated runs a class, the Reaver now wins 58, the Starseer 54, the Rogue 62 and the Herald 65 — about half each, where before this change they won 107, 19, 94 and 84.",
+    "build": "0.7.1.467",
     "pullRequest": 1284,
     "url": "https://github.com/cehinds/AshenSpire/pull/1284"
   },

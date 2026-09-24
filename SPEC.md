@@ -873,12 +873,12 @@ continue to validate exactly as authored.
 
 The `tuned` opening presets are contractual and each sums to 53:
 
-| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation |
+| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation (the owner's defaults, `classes.js`, #1273) |
 |---|---|---|
-| Reaver | `13 / 11 / 11 / 8 / 10` | `3 / 1` |
-| Starseer | `11 / 11 / 8 / 13 / 10` | `3 / 1` (A2; was `2 / 2`) |
-| Herald | `12 / 11 / 8 / 12 / 10` | `3 / 1` |
-| Rogue | `11 / 13 / 10 / 9 / 10` | `3 / 1` |
+| Reaver | `13 / 11 / 11 / 8 / 10` | `2 / 1` |
+| Starseer | `11 / 11 / 8 / 13 / 10` | `1 / 2` |
+| Herald | `12 / 11 / 8 / 12 / 10` | `2 / 1` |
+| Rogue | `11 / 13 / 10 / 9 / 10` | `2 / 1` |
 
 The preset is an editor opening position, not a lock: players may redistribute the fixed
 total within the mode's data-authored bounds. Starting derived values come only from the

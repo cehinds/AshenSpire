@@ -13,15 +13,18 @@ test('combat reward costs meet inclusive rounded rarity shares, including upgrad
   // A2 (Starseer starvation) takes the four Starseer common attacks — Comet
   // Fragment, Starblade Phalanx, Starlance, Frost Nova — off both lines, so
   // the Common row sits four cards under its rounded 30% / 15% shares
-  // (docs/card-resource-balance.md records the exception).
+  // (docs/card-resource-balance.md records the exception). A2 (Herald
+  // starvation) also takes Blight Touch off the Mana line only, so the Common
+  // dual share sits one further card under.
   const a2ActionOnly = { common: 4, uncommon: 0, rare: 0 };
+  const a2StaminaOnly = { common: 1, uncommon: 0, rare: 0 };
   for (const [rarity, count, staminaShare, dualShare] of [
     ['common', 52, 0.3, 0.15], ['uncommon', 51, 0.5, 0.3], ['rare', 41, 0.7, 0.5],
   ]) {
     const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count, `${rarity}: distinct combat-reward denominator`);
     assert.equal(cards.filter(c => c.staminaCost > 0).length, Math.round(count * staminaShare) - a2ActionOnly[rarity]);
-    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare) - a2ActionOnly[rarity]);
+    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare) - a2ActionOnly[rarity] - a2StaminaOnly[rarity]);
     for (const c of cards) {
       assert.ok(!c.manaCost || c.staminaCost, `${c.id}: dual costs include stamina`);
       assert.ok(profile(c).every(n => n === 0 || n === 1), `${c.id}: authored small resource costs`);
