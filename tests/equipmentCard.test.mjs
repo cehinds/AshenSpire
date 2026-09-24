@@ -78,3 +78,11 @@ test('armor DR shows additive defense bonuses once and preserves other effects',
  assert.equal(m.bonuses.length, 1);
  assert.match(m.bonuses[0].label, /4/);
 });
+
+test('an armament card shows the weight it adds to equip load, itemWeightScale applied', async () => {
+  const { pieceWeight } = await import('../src/model/statProjection.js');
+  const piece = r.equipment.armaments.find(p => p.id === 'straightSword');
+  const weight = equipmentCardModel(r, piece).facts.find(f => f.label === 'Weight');
+  assert.equal(weight.value, pieceWeight(piece));
+  assert.notEqual(weight.value, piece.weight, 'the authored weight is on the pre-lean scale; the card shows the load');
+});

@@ -893,6 +893,13 @@ test('a mid-combat swap keeps what the smith did: an emptied art mount stays a D
   const stale = { hand: [], draw: [{ instanceId: artKey, cardId: 'crimsonCleave', equipmentRole: 'weaponArt', grantedBy: 'straightSword', upgraded: false }], discard: [], exhaust: [] };
   reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout }, stale);
   eq(stale.draw[0].cardId, 'crimsonCleave', 'without the mounts the swap door would re-mint the extracted art — which is why the combat carries them');
+  // Everyone has the dodge: a body-owned Dodge Roll in hand when the swap
+  // brings an art mount that falls back to the Dodge Roll moves to that mount
+  // IN HAND — it is not swept away and re-minted into the discard.
+  const moving = { hand: [{ instanceId: 'weaponArt:unarmed:dodgeRoll', cardId: dodge, equipmentRole: 'weaponArt', grantedBy: 'unarmed:body', upgraded: false }], draw: [], discard: [], exhaust: [] };
+  reconcileGrantedCardsInCombat(REG2, { class: run.class, loadout: run.loadout, itemMounts: run.itemMounts }, moving);
+  eq(moving.hand.map((c) => `${c.instanceId}=${c.cardId}`).join(','), `${artKey}=${dodge}`, 'the Dodge Roll stays in hand under the mount that now owns it');
+  eq(moving.discard.filter((c) => c.cardId === dodge).length, 0, 'and no second Dodge Roll lands in the discard');
 });
 
 test('a granted instance is never a per-copy upgrade candidate', () => {

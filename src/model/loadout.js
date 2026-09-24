@@ -2051,6 +2051,24 @@ function currentInstanceId(inst) {
   return inst.instanceId;
 }
 
+// The Dodge Roll changes owner — hand, body, or a smith-emptied art mount
+// that falls back to it — without leaving the pile it is in. Before the sweep,
+// an unwanted Dodge Roll takes the id of a wanted one no pile holds yet, so
+// the sweep adopts it where it sits rather than dropping it and minting a
+// copy into the discard.
+function carryDodgeRoll(registries, piles, wanted) {
+  const dodgeId = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique)?.baseCardId;
+  if (!dodgeId) return;
+  const all = piles.flat();
+  const held = new Set(all.map((inst) => inst && currentInstanceId(inst)));
+  const open = [...wanted.values()].filter((d) => d.equipmentRole === 'weaponArt' && d.cardId === dodgeId && !held.has(d.instanceId));
+  for (const inst of all) {
+    if (!open.length) return;
+    if (!isItemOwned(inst) || inst.equipmentRole !== 'weaponArt' || inst.cardId !== dodgeId || wanted.has(inst.instanceId)) continue;
+    inst.instanceId = open.shift().instanceId;
+  }
+}
+
 function adoptWanted(inst, wanted) {
   if (inst.cardId !== wanted.cardId || (inst.upgraded === true) !== (wanted.upgraded === true)) return wanted;
   // Older combat snapshots omitted ownership metadata. Adopt it without moving
@@ -2069,6 +2087,7 @@ export function reconcileGrantedCards(registries, run) {
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
+  carryDodgeRoll(registries, [run.deck], wanted);
   const kept = [];
   for (const inst of run.deck) {
     if (!isItemOwned(inst)) { kept.push(inst); continue; }
@@ -2273,6 +2292,7 @@ export function reconcileGrantedCardsInCombat(registries, run, piles) {
   const desired = desiredGrantInstances(registries, { ...run, deck });
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
+  carryDodgeRoll(registries, [piles.hand, piles.draw, piles.discard, piles.exhaust], wanted);
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = [];
     for (const inst of pile) {
