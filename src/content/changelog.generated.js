@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Fights pay their normal Cinders again",
     "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders. Character creation now offers two ways to set your stats: Standard opens on your class's own spread — mostly 1s, with its three points already placed (the Starseer starts with Intelligence 3) — ready to go, and Assign points starts every stat at 1 with 3 points for you to place, a number you can change in Advanced settings. Your opening hand now depends on your class: a base of 3 (Reaver), 4 (Rogue, Herald) or 5 (Starseer), plus one card once your class's main stat reaches 3, so a Standard character opens with 4 to 6 cards. Character creation shows that number as its own Hand chip, beside Draw, the cards you draw on each later turn.",
-    "build": "0.7.1.490",
+    "build": "0.7.1.492",
     "pullRequest": 1294,
     "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+  },
+  {
+    "id": "pr-1309",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A landed Dodge Roll now gives real Block, and a Medium dodge costs less Stamina",
+    "detail": "The dodge still measured your Dexterity on the old attribute scale, where 10 was average. Every new character has 1 to 4 Dexterity, so the roll came out at −3 to −5. A dodge landed less than half the time and gave about 1 Block, and little or none if you were Medium or Heavy. It is now measured on the current scale: 3 Dexterity gives no modifier, 1 gives −1, and every 2 points above 3 give +1. A landed dodge now gives at least 2 Block, and 5 or more for a Light character. A Medium dodge costs 1 Stamina and 1 Action instead of 2 Stamina, and a Heavy dodge costs 2 Stamina and 1 Action instead of 3 and 2. Over 240 simulated runs a class, dodges now land about 60% of the time for 4 to 6 Block. The Reaver now wins 112 runs, the Starseer 104, the Rogue 141 and the Herald 136, where before this change they won 105, 103, 135 and 135. A character made on an older attribute scale keeps the dodge it had.",
+    "build": "0.7.1.487",
+    "pullRequest": 1309,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1309"
   },
   {
     "id": "pr-1304",
