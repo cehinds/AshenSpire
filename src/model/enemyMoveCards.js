@@ -1,4 +1,5 @@
 // Read-only enemy action cards. The engine owns selection and live previews.
+import { enemyMoveDamage } from './state.js';
 const words = (value) => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
 function effectText(effect, registries) {
@@ -19,7 +20,7 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
   return Object.entries(def.moves || {}).map(([moveId, move]) => {
     const active = preview?.moveId === moveId;
     const liveDamage = active && preview.damage != null;
-    const damage = liveDamage ? preview.damage : move.damage;
+    const damage = liveDamage ? preview.damage : enemyMoveDamage(enemy, move);
     const hits = liveDamage ? (preview.hits ?? 1) : (move.hits ?? 1);
     const locked = !!move.locked && !(enemy?.unlockedMoves || []).includes(moveId);
     const pieces = [];

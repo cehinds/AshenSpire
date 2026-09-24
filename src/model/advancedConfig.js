@@ -162,6 +162,28 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   return settings;
 }
 
+/**
+ * bringProfileForward(meta, bundle, save, warnings) → `meta.settings`,
+ * rewritten to this build's keys and — when there was anything to rewrite —
+ * handed to `save(meta)`.
+ *
+ * ONE DOOR FOR A PROFILE ARRIVING FROM STORAGE (Codex, on #1273). Boot brought
+ * the profile forward and a restore did not: a restored pre-#1273 profile kept
+ * `progression.rewardMultiplier`, which `configuredContentBundle` still paid as
+ * ÷ 20 while the Advanced Settings row opened on the new key's default of 1, so
+ * the screen misstated what was in force until the next restart. Boot and
+ * restore both come through here now. Saved, not only rewritten, because
+ * `loadMeta` re-reads the stored bytes on every call: a profile left un-saved
+ * would hand the next reader the retired key again.
+ */
+export function bringProfileForward(meta, bundle, save, warnings = null) {
+  const settings = meta.settings || (meta.settings = {});
+  if (!hasLegacyAdvancedSettings(settings)) return settings;
+  normalizeAdvancedSettings(settings, bundle, warnings);
+  save(meta);
+  return settings;
+}
+
 // A DIAL THIS BUILD RETIRED, so an older export still imports. `parseAdvanced-
 // ConfigFile` refuses an unknown key OUTRIGHT — "Nothing was imported" — which
 // is right for a typo and wrong for a key this build itself removed: the
