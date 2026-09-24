@@ -693,6 +693,8 @@ test('a stored profile is rewritten to the rows this build has', async () => {
   assert.deepEqual(profile, {
     'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5,
     'settings.musicEnabled': true,
+    // The ruleset-7 marker (model/statRows.js): this profile's stat rows are read as they mean now.
+    statRowsVersion: 7,
   }, 'the old key is gone and unrelated settings are untouched');
 
   // Which is what closes the gap the reviewer named: the row now opens on the

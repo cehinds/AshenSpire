@@ -502,7 +502,8 @@ test('a stored rewardMultiplier is carried across as ÷ 20 and pays what it paid
   const owner = { [OLD_CINDER]: 20 };
   const warnings = [];
   normalizeAdvancedSettings(owner, contentBundle, warnings);
-  assert.deepEqual(owner, { [CINDER]: 1 });
+  // …and marked as read by a ruleset-7 build (model/statRows.js).
+  assert.deepEqual(owner, { [CINDER]: 1, statRowsVersion: 7 });
   assert.equal(warnings.length, 1);
   assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [900, 1500]);
 
@@ -518,7 +519,7 @@ test('a stored rewardMultiplier is carried across as ÷ 20 and pays what it paid
   // Both present: the new key wins and the old is dropped.
   const both = { [OLD_CINDER]: 20, [CINDER]: 3 };
   normalizeAdvancedSettings(both, contentBundle);
-  assert.deepEqual(both, { [CINDER]: 3 });
+  assert.deepEqual(both, { [CINDER]: 3, statRowsVersion: 7 });
 
   // The export never writes the old key.
   const exported = advancedConfigExport({ [OLD_CINDER]: 2 }, {}, [CINDER]);
