@@ -106,7 +106,7 @@ const CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.cinderMultiplier`;
 const LEGACY_CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`;
 const LEGACY_CINDER_KEYS = Object.freeze([LEGACY_CINDER_KEY, `settings.${LEGACY_CINDER_KEY}`]);
 
-function withLegacyCinderMultiplier(entries) {
+function withoutRetiredCinderKey(entries) {
   return entries.filter(([key]) => !LEGACY_CINDER_KEYS.includes(key));
 }
 
@@ -192,7 +192,7 @@ function withoutSupersededLegacy(entries) {
   // They are translated by scene id before anything looks a row up, so an
   // exported file written before the reorder still imports, and lands on the
   // scene it was written for. See migratePrologueEntries.
-  return migratePrologueEntries(withLegacyCinderMultiplier(entries)
+  return migratePrologueEntries(withoutRetiredCinderKey(entries)
     .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
     .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
@@ -851,7 +851,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   // Read through the legacy filter, so a run snapshot that still carries the
   // retired `rewardMultiplier` pays the authored table, never ×20.
-  const cinderSetting = Object.fromEntries(withLegacyCinderMultiplier(Object.entries(settings)))[CINDER_KEY];
+  const cinderSetting = Object.fromEntries(withoutRetiredCinderKey(Object.entries(settings)))[CINDER_KEY];
   const rewardMultiplier = cinderSetting === undefined ? NaN : Number(cinderSetting);
   if (Number.isFinite(rewardMultiplier) && rewardMultiplier !== 1 && configured.balance.rewards?.cinders) {
     for (const range of Object.values(configured.balance.rewards.cinders)) {

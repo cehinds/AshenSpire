@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1294",
+    "id": "pr-1274",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "Fights pay their normal Cinders again",
-    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. A saved or imported Cinder multiplier of 20 from an older configuration is set aside with a notice rather than applied, and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders.",
-    "build": "0.7.1.460",
-    "pullRequest": 1294,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
   },
   {
     "id": "pr-1273",
