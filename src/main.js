@@ -20,7 +20,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyAdvancedSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -49,7 +49,7 @@ import { awardLevelXp, combatLevelXp } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
-import { seatAtTier, seatTierHpMult } from './model/seats.js';
+import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
@@ -299,27 +299,25 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-let activeMeta = saves.loadMeta();
-let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 // A PROFILE IS BROUGHT FORWARD BEFORE ANYTHING READS IT. The per-item rating
 // rows stopped being pluses and became the item's own values (#1242), and that
 // migration reads the item's authored rating, so it cannot be a lookup table
 // the readers each apply for themselves — one that skipped it would show a
 // different number from one that did. Rewritten once, here, so the settings
-// row, the item card, the export and the fight are looking at one key.
-if (hasLegacyAdvancedSettings(activeSettings)) {
+// row, the item card, the export and the fight are looking at one key — and
+// again through the same door when a restore swaps the profile (Codex, #1273).
+function bringStoredProfileForward(meta) {
   // Whatever the rewrite could not carry across exactly — a fractional plus, a
   // sum past a row's ceiling, a set's Poise that is also its weight — is said
   // here as well as at the import door, so a profile is never migrated in
   // complete silence (review, #1242).
   const carried = [];
-  normalizeAdvancedSettings(activeSettings, contentBundle, carried);
+  const settings = bringProfileForward(meta, contentBundle, (brought) => saves.saveMeta(brought), carried);
   for (const line of carried) console.warn('[advanced-config]', line);
-  // WRITTEN BACK, or the rewrite lasts only as long as this object: `loadMeta`
-  // re-reads the stored bytes on every call, so a profile left un-saved would
-  // hand the next reader the retired key again.
-  saves.saveMeta(activeMeta);
+  return settings;
 }
+let activeMeta = saves.loadMeta();
+let activeSettings = bringStoredProfileForward(activeMeta);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
@@ -1396,7 +1394,9 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
 function showProfile() {
   openProfileArchive({
     saves,
-    onRestored: () => applyRestoredSettings(saves.loadMeta().settings || {}),
+    // Through boot's door first: a restored profile from before a key was
+    // renamed must reach the rows, the bundle and storage already rewritten.
+    onRestored: () => applyRestoredSettings(bringStoredProfileForward(saves.loadMeta())),
   });
 }
 
@@ -2041,7 +2041,7 @@ function enterNode(nodeId) {
 
 // ---- combat ------------------------------------------------------------------------
 // Custom Climb combat rules → generic createCombat options for a given pool.
-function combatMods(pool) {
+function combatMods(pool, encounter = null) {
   const mods = run.custom ? activeMods(run.custom) : {};
   let hpMult = 1;
   const enemyStatuses = [];
@@ -2053,7 +2053,15 @@ function combatMods(pool) {
   // ratio — exactly 1 at the baseline, so every existing seed's fights roll
   // the HP they always did. World Journey binds difficulty to its own act and
   // has no seat, so it is untouched (§13.6 claim 4).
-  if (!run.journey && Array.isArray(run.seatOrder)) hpMult *= seatTierHpMult(registries, currentSeat(), contentAct());
+  // A BOSS is scaled by the tier it is MET at (balance.bossTiers): its own
+  // seat's tier ratio on HP and move damage, × that tier's boss row — the seat
+  // order is drawn per run, so a boss's difficulty cannot be authored.
+  let damageMult = 1;
+  if (!run.journey && Array.isArray(run.seatOrder)) {
+    const boss = bossTierScale(registries, { encounter, tier: contentAct() });
+    hpMult *= boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct());
+    if (boss) damageMult = boss.damage;
+  }
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -2063,7 +2071,7 @@ function combatMods(pool) {
       enemyStatuses.push({ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop });
     }
   }
-  return { hpMult, enemyStatuses, playerStatuses };
+  return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
 function showLegacyDungeon() {
@@ -2168,7 +2176,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   if (!resuming) persist();
   const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
-  const cm = combatMods(enc.pool);
+  const cm = combatMods(enc.pool, enc);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createRunCombat({
     registries,
     rng,
@@ -2179,6 +2187,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
+    enemyDamageMult: cm.damageMult,
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });
