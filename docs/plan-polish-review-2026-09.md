@@ -122,7 +122,7 @@ amended before code moves.
   does not change. Baseline before the dodge rows, `node tools/runsim.mjs
   240 --seeded-seats`: Reaver 105, Starseer 103, Rogue 135, Herald 135 of
   240, already inside the 35–65% band.)
-  - [ ] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
+  - [x] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
   - [x] Dodge Roll's guard is `3 + floor((DEX−10)/2)` plus the weight bonus:
     ≤ 0 at DEX 1–4 and negative with no floor when Heavy at DEX 1–3. Heavy also prices it at A2/SP3,
     more than a Starseer's whole Stamina pool (`src/framework/weight.js` ~36,

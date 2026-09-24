@@ -330,6 +330,9 @@ test('dodge roll: check math, temporary guard, and weight-class costs', () => {
   eq(noSheet.temporaryGuard, 3 + 0 + 3, 'no sheet reads as no Dexterity term, not as the retired d20 10');
   const lose = dodgeRollCheck({ roll: 5, dexterity: 3, attributeMode: 'lean', weightClass, incomingAttackModifier: 3 });
   assert(!lose.success && lose.temporaryGuard === 0, 'failed roll grants nothing');
+  eq([2, 4].map((dexterity) => dodgeRollCheck({ roll: 12, dexterity, attributeMode: 'lean', weightClass }).temporaryGuard), [3 - 1 + 3, 3 + 0 + 3], 'lean DEX 2 reads -1, DEX 4 reads 0 (floor)');
+  for (const row of ['dexterityCentre', 'dexterityPerModifier']) assert(Number.isFinite(mechanicsData.dodgeRoll[row]), `mechanics.dodgeRoll.${row} is a number`);
+  for (const [mode, centre] of Object.entries(mechanicsData.dodgeRoll.dexterityCentreByMode)) assert(Number.isFinite(centre), `dexterityCentreByMode.${mode} is a number`);
   // A run made on an older scale keeps the d20-scale centre, so an update
   // never moves its dodge (mechanics.dodgeRoll.dexterityCentre).
   for (const mode of ['standard', 'tuned', 'tuned2', 'pointbuy', undefined]) {
