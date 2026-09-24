@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import {
   advancedConfigRows,
@@ -12,6 +13,7 @@ import {
   saveAdvancedConfigFile,
   parseAdvancedConfigFile,
   normalizeAdvancedSettings,
+  bringProfileForward,
 } from '../src/model/advancedConfig.js';
 
 test('settings files round trip and leave unrelated settings untouched', () => {
@@ -518,6 +520,40 @@ test('a stored rewardMultiplier is dropped, never carried: the ×20 cannot come 
   // The export never writes the old key.
   const exported = advancedConfigExport({ [OLD_CINDER]: 20 }, {}, [CINDER]);
   assert.ok(!exported.includes('rewardMultiplier'));
+});
+
+// A RESTORE IS A PROFILE ARRIVING FROM STORAGE, like boot (Codex, on #1273).
+// Boot brought the profile forward and restore did not. Since #1294 the old
+// `rewardMultiplier` is retired, so a restored profile drops it, is saved,
+// and pays the authored table the Advanced Settings row opens on.
+test('a restored profile carrying rewardMultiplier drops it and is saved', () => {
+  const restored = { settings: { [OLD_CINDER]: 2, sfxVolume: 0.4 }, unlocks: ['reaver'] };
+  const saved = [];
+  const warnings = [];
+  const settings = bringProfileForward(restored, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
+  assert.equal(settings, restored.settings, 'rewritten in place, so the live profile is the one read');
+  assert.deepEqual(settings, { sfxVolume: 0.4 });
+  assert.ok(!Object.hasOwn(settings, OLD_CINDER), 'the old key is gone');
+  assert.deepEqual(saved, [restored], 'and the rewrite is written back, whole profile included');
+  assert.equal(warnings.length, 1);
+  const row = advancedConfigRows(contentBundle).find((candidate) => candidate.key === CINDER);
+  assert.equal(settings[row.key] ?? row.def, 1, 'the row shows what the bundle pays');
+  assert.deepEqual(configuredContentBundle(contentBundle, settings).balance.rewards.cinders.normal, [45, 75]);
+
+  // A current profile is left alone and not re-saved; a bare one gains a settings object.
+  const current = { settings: { [CINDER]: 0.5 } };
+  bringProfileForward(current, contentBundle, () => assert.fail('nothing to bring forward'));
+  assert.deepEqual(current.settings, { [CINDER]: 0.5 });
+  const bare = {};
+  assert.deepEqual(bringProfileForward(bare, contentBundle, () => assert.fail('nothing to bring forward')), {});
+  assert.deepEqual(bare, { settings: {} });
+});
+
+test('boot and profile restore both come through the one door', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.equal(main.match(/bringProfileForward\(/g)?.length, 1, 'main.js calls the model door once, from its helper');
+  assert.match(main, /let activeSettings = bringStoredProfileForward\(activeMeta\);/);
+  assert.match(main, /onRestored: \(\) => applyRestoredSettings\(bringStoredProfileForward\(saves\.loadMeta\(\)\)\)/);
 });
 
 test('a v1 file carrying rewardMultiplier 20 imports without it, with a warning', () => {

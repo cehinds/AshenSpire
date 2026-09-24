@@ -101,6 +101,8 @@ test('tint follows the selected motif and destination follows the run',()=>{
   const finalScene = PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'step');
   assert.equal(finalScene.ownStaging, true, 'the destination scene keeps the distant Spire in frame');
   assert.equal(prologueStaging(prologueConfig(), finalScene).imageFocusY, 0);
+  assert.deepEqual([finalScene.actor.desktop.x, finalScene.actor.desktop.y, finalScene.actor.mobile.x], [50, 96, 50], 'the default traveller stands on the road in both layouts');
+  assert.equal(prologueConfig({[`${PROLOGUE_PREFIX}scenes.step.actor.mobile.x`]: 62}).scenes.find(scene => scene.id === 'step').actor.mobile.x, 62);
   for (const art of ['weald','marches','reach','crownfall']) {
     for (const layout of ['desktop','mobile']) {
       const path = prologueArtwork('step',layout,{destinationArt:art});

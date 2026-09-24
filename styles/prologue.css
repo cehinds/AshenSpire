@@ -27,7 +27,7 @@
 .pse-visual{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;background:radial-gradient(circle at 50% 30%,#282018,#100e0c 75%);overflow:auto}
 .pse-visual-note{align-self:stretch;margin:0;color:#d5c6aa;font-size:.85rem;text-align:center}
 .pse-viewport{position:relative;width:100%;aspect-ratio:16/9;min-height:0;max-height:100%;overflow:hidden;box-shadow:0 12px 34px #0009;border:1px solid #796244;background:#100e0c}
-.pse-viewport.pse-phone{width:min(100%,390px);height:min(100%,780px);aspect-ratio:9/19.5;flex:none}
+.pse-viewport.pse-phone{width:auto;height:min(100%,780px);max-width:100%;aspect-ratio:9/19.5;flex:none}
 .pse-viewport .prologue-screen{height:100%;min-height:0;font-size:clamp(.7rem,.9vw,1rem);overflow:hidden}
 .pse-viewport .prologue-title{font-size:calc(1.6em*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
 .pse-viewport .prologue-speaker{font-size:calc(1.2em*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
@@ -56,6 +56,12 @@
 .pse-custom{display:flex;align-items:center;gap:.55rem;padding:.7rem .8rem;border:1px solid #9f7742;border-radius:6px;background:#403020;color:#fff1dc;font-weight:600}
 .pse-custom input{width:1.3rem;height:1.3rem;accent-color:#d5ae67}
 .pse-group-help{color:#c5b69e;line-height:1.45}
+.pse-position-slider{width:100%;min-height:32px;accent-color:#d5ae67;cursor:pointer}
+.pse-positioning .prologue-actor{pointer-events:auto;cursor:grab;touch-action:none}
+.pse-dragging .prologue-actor{cursor:grabbing}
+.pse-resize-handle{position:absolute;z-index:5;width:36px;height:36px;display:grid;place-items:center;border:2px solid #f2d28c;border-radius:50%;background:#24170de8;color:#ffdf9b;font-size:1.45rem;line-height:1;box-shadow:0 2px 12px #000c;cursor:nesw-resize;touch-action:none;transform:translate(-50%,-50%)}
+.pse-resize-handle:hover,.pse-resize-handle:focus-visible{background:#4a3019;outline:2px solid #fff0c8;outline-offset:2px}
+.pse-resize-handle[hidden]{display:none}
 .set-scene-edit{border-color:#c49d62!important;color:#ffdfad!important}
 .pse-phone .prologue-screen{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
 .pse-phone .prologue-layout-panelLeft .prologue-stage,.pse-phone .prologue-layout-panelRight .prologue-stage,.pse-phone .prologue-layout-overlay .prologue-stage{grid-row:1;grid-column:1}
