@@ -86,7 +86,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { autoLoadProfile } from './ui/components/settingsSync.js';
+import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { pageDebug } from './ui/buildChannel.js';
 import { openSettings, settingsRows, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
@@ -3535,16 +3535,21 @@ if (shotState === 'combat-test') {
   // was measured three times over. A seed is passed rather than randomised so
   // the seed field photographs the same on every run.
   showCustomize(1, shotState === 'components');
-} else {
-  showTitle();
-}
-
-// YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on a
-// debug build, only when this device opted in, and never for a photograph:
-// a posed ?shot= state must draw the same bytes on every machine.
-if (pageDebug() && !shotState) {
-  autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows() })
+} else if (pageDebug() && autoLoadEnabled()) {
+  // YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on
+  // a debug build, only when this device opted in, and never for a photograph
+  // (a posed ?shot= state takes the branches above). The title — Continue and
+  // New Game — waits for it, at most PROFILE_WAIT_MS, so no run starts on the
+  // settings the profile is about to replace; a profile later than that is
+  // left for the next start rather than applied mid-session.
+  const PROFILE_WAIT_MS = 3000;
+  let waiting = true;
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
+  Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
+    .finally(() => { waiting = false; showTitle(); });
+} else {
+  showTitle();
 }
 

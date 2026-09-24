@@ -55,12 +55,18 @@ export function applyProfile(settings, onChange, parsed) {
  * of it (by blob sha), so a setting changed here afterwards is not overwritten
  * again until the profile itself changes.
  */
-export async function autoLoadProfile({ settings, onChange, rows, fetch = globalThis.fetch }) {
-  if (read(SYNC_STORAGE.auto) !== '1') return { applied: 0, reason: 'off' };
+/** True when this device loads the profile at startup. */
+export function autoLoadEnabled() { return read(SYNC_STORAGE.auto) === '1'; }
+
+export async function autoLoadProfile({ settings, onChange, rows, fetch = globalThis.fetch, stillWanted = () => true }) {
+  if (!autoLoadEnabled()) return { applied: 0, reason: 'off' };
   const cfg = deviceSyncConfig();
   const remote = await fetchProfile(cfg, { token: read(SYNC_STORAGE.token) || '', fetch });
   if (!remote) return { applied: 0, reason: 'missing' };
   if (remote.sha && remote.sha === read(SYNC_STORAGE.lastSha)) return { applied: 0, reason: 'unchanged' };
+  // Arrived after the game went on without it: change nothing mid-session and
+  // leave the sha unrecorded, so the next start loads it.
+  if (!stillWanted()) return { applied: 0, reason: 'late' };
   const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeys(rows));
   const applied = applyProfile(settings, onChange, parsed);
   write(SYNC_STORAGE.lastSha, remote.sha || '');

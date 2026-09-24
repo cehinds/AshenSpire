@@ -197,3 +197,27 @@ test('the sync panel’s token field and switch are never wired as settings', as
 test('a malformed page path does not break channel detection', () => {
   assert.equal(buildChannel({ pathname: '/AshenSpire/dev/12/%E0%A4%A', hostname: 'cehinds.github.io', protocol: 'https:' }, 'standalone file'), 'dev');
 });
+
+test('auto-load applies only while the game is still waiting for it', async () => {
+  const { autoLoadProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SYNC_STORAGE } = await import('../src/model/settingsSync.js');
+  const store = new Map([[SYNC_STORAGE.auto, '1']]);
+  const saved = globalThis.localStorage;
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+  try {
+    const rows = settingsRows();
+    const text = profileText({ screenShake: false }, profileKeys(rows));
+    const fetch = async () => ({ status: 200, ok: true, json: async () => ({ content: toBase64(text), sha: 'p1' }) });
+    const settings = {};
+    const changes = [];
+    const late = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch, stillWanted: () => false });
+    assert.equal(late.reason, 'late');
+    assert.deepEqual(changes, []);
+    assert.equal(store.get(SYNC_STORAGE.lastSha), undefined, 'a late profile is left for the next start');
+    const onTime = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch });
+    assert.equal(onTime.applied, 1);
+    assert.equal(settings.screenShake, false);
+    assert.equal(store.get(SYNC_STORAGE.lastSha), 'p1');
+    assert.equal((await autoLoadProfile({ settings, onChange: () => {}, rows, fetch })).reason, 'unchanged');
+  } finally { globalThis.localStorage = saved; }
+});
