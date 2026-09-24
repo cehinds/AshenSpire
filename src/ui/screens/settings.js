@@ -1192,8 +1192,8 @@ function markModified(container, settings, changes) {
  * rowDefault(row) → the value Reset restores: the owner's promoted default
  * (src/content/settingsDefaults.js) when there is one, else the row's own.
  */
-export function rowDefault(row) {
-  if (row && Object.hasOwn(PROMOTED_DEFAULTS, row.key)) return PROMOTED_DEFAULTS[row.key];
+export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
+  if (row && Object.hasOwn(promoted, row.key)) return promoted[row.key];
   return row?.def;
 }
 
@@ -1231,16 +1231,20 @@ export function resetKeys(settings, onChange, keys, label = 'Reset') {
 const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
 
 /** rowModified(settings, row) → true when the stored value differs from the default. */
-export function rowModified(settings, row) {
+export function rowModified(settings, row, promoted = PROMOTED_DEFAULTS) {
   if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
   const stored = settings?.[row.key];
   if (stored === undefined) return false;
   // A resolved row (Music, the "uses its own" switches) is changed when
-  // clearing its own key would change what it resolves to.
-  if (row.resolve) return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: undefined });
-  const def = rowDefault(row);
+  // setting its key back to its default (the promoted one if there is one,
+  // else cleared) would change what it resolves to.
+  if (row.resolve) {
+    const base = Object.hasOwn(promoted, row.key) ? promoted[row.key] : undefined;
+    return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: base });
+  }
+  const def = rowDefault(row, promoted);
   if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
-  return stored !== rowDefault(row);
+  return stored !== def;
 }
 
 function resetButtonHtml(settings, r) {

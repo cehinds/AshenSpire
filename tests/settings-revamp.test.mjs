@@ -374,3 +374,12 @@ test('a profile save that finishes after the location changed is not recorded', 
   assert.match(panel, /const target = cfg;\s*const mine = generation;\s*const result = await pushProfile\(target,/);
   assert.match(panel, /if \(mine !== generation \|\| target !== cfg\) return;\s*write\(SYNC_STORAGE\.lastSha/);
 });
+
+test('a resolved row set to its promoted default is not changed', async () => {
+  const { rowModified } = await import('../src/ui/screens/settings.js');
+  const row = settingsRow('musicEnabled');
+  const promoted = { musicEnabled: false };
+  assert.equal(rowModified({ musicEnabled: false }, row, promoted), false, 'the promoted value is the default');
+  assert.equal(rowModified({ musicEnabled: true }, row, promoted), true, 'moving off the promoted value is a change');
+  assert.equal(rowModified({ musicEnabled: false }, row, {}), true, 'with no promoted default, off is a change');
+});
