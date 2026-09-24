@@ -51,7 +51,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve as pathResolve } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
@@ -87,8 +87,8 @@ export function unreceipted(mergeSubjects, changelogText) {
   return { receipted, merged, missing: merged.filter((n) => !receipted.has(n)) };
 }
 
-function git(args) {
-  return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+function git(args, cwd = ROOT) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8' });
 }
 
 function resolve(rev) {
@@ -96,8 +96,10 @@ function resolve(rev) {
   catch { return null; }
 }
 
-function rangeSubjects(since) {
-  const lines = (args) => git(['log', ...args]).split('\n').filter(Boolean);
+// `cwd` and `limit` exist for tests/receipts-window.test.mjs, which drives this
+// against a scratch repository; check() always uses the defaults.
+export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
+  const lines = (args) => git(['log', ...args], cwd).split('\n').filter(Boolean);
   if (since) {
     const spec = `${since}..HEAD`;
     // Every merge commit in the range (the original reach), plus every commit on
@@ -115,15 +117,24 @@ function rangeSubjects(since) {
   // everything not already an ancestor of the oldest of them — and never less
   // than the last 40 first-parent commits it always covered. Both are prefixes
   // of the same first-parent line, so the longer one contains the shorter.
-  const merges = lines(['--merges', '--max-count=40', '--format=%H %s', 'HEAD']).map((l) => {
+  //
+  // THE BOUNDARY IS WHERE THE OLDEST MERGE JOINED THIS LINE, not the merge
+  // itself. The merge walk follows all ancestry, so its 40th merge can sit on a
+  // side branch; `HEAD ^<that merge>` then excludes only what that side branch
+  // descends from, and the first-parent walk runs back to the side branch's old
+  // fork — into history the window never meant to judge. `--ancestry-path`
+  // keeps only the first-parent commits that contain the oldest merge: from
+  // HEAD down to the commit that landed it. On the first-parent line itself the
+  // two agree.
+  const merges = lines(['--merges', `--max-count=${limit}`, '--format=%H %s', 'HEAD']).map((l) => {
     const i = l.indexOf(' ');
     return { hash: l.slice(0, i), subject: l.slice(i + 1) };
   });
   const fp = (extra) => lines(['--first-parent', '--format=%s', ...extra]);
-  let firstParent = fp(['--max-count=40', 'HEAD']);
-  if (merges.length < 40) firstParent = fp(['HEAD']);
+  let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
+  if (merges.length < limit) firstParent = fp(['HEAD']);
   else {
-    const toBoundary = fp(['HEAD', `^${merges[merges.length - 1].hash}`]);
+    const toBoundary = fp(['--ancestry-path', `${merges[merges.length - 1].hash}..HEAD`]);
     if (toBoundary.length > firstParent.length) firstParent = toBoundary;
   }
   return [
@@ -253,7 +264,9 @@ function selftest() {
 }
 
 const argv = process.argv.slice(2);
-if (argv.includes('--selftest')) process.exit(selftest());
+const invoked = process.argv[1] && fileURLToPath(import.meta.url) === pathResolve(process.argv[1]);
+if (!invoked) { /* imported by a test: export only, run nothing */ }
+else if (argv.includes('--selftest')) process.exit(selftest());
 else if (argv.includes('--check') || argv.length === 0) {
   const i = argv.indexOf('--since');
   process.exit(check(i >= 0 ? argv[i + 1] : null));
