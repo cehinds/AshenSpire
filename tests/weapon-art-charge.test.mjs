@@ -14,20 +14,22 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { assertCombatSnapshot } from '../src/model/combatSnapshot.js';
+import { executeAction } from '../src/engine/actions.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 
 const registries = createRegistries(contentBundle);
 const rules = contentBundle.balance.weaponArtCharge;
 
-function fight({ right = 'greatsword', rightSets = null, left = null, seed = 812 } = {}) {
-  const run = createRunState({ seed, classId: 'reaver', registries });
+function fight({ right = 'greatsword', rightSets = null, left = null, seed = 812, classId = 'reaver', ratingsRules = null } = {}) {
+  const run = createRunState({ seed, classId, registries });
   run.loadout.active.rightHand = 0;
   run.loadout.sets.rightHand = rightSets ? [...rightSets] : [right, null, null];
   run.loadout.active.leftHand = 0;
   run.loadout.sets.leftHand[0] = left;
-  run.deck = startingDeckRefs(registries, run.loadout, 'reaver').map((ref, i) => ({ ...ref, instanceId: `art-charge:${i}`, upgraded: false }));
+  run.deck = startingDeckRefs(registries, run.loadout, classId).map((ref, i) => ({ ...ref, instanceId: `art-charge:${i}`, upgraded: false }));
   run.equipmentAttackSlotCount = run.deck.filter((c) => c.equipmentRole === 'attack').length;
   stampDeck(registries, run);
-  const combat = createCombat({ registries, rng: createRng(seed), enemyIds: ['wanderingSoldier'], player: {
+  const combat = createCombat({ registries, rng: createRng(seed), ...(ratingsRules ? { ratingsRules } : {}), enemyIds: ['wanderingSoldier'], player: {
     ...structuredClone(run), classId: run.class, relicIds: run.relics, loadout: run.loadout,
   } });
   // Tough, unstaggerable-by-default targets so a test controls every fill.
@@ -92,7 +94,8 @@ test('a stagger caused by the weapon\'s hit adds its bonus charge', () => {
     assert.equal(combat.artCharge.greatsword, Math.min(artChargeMax(registries, 'greatsword'), rules.gainPerHit + staggers * rules.gainOnStagger));
   } else {
     // No impact on this card in this ruleset: prove the credit through the
-    // listener with the same event the engine would emit.
+    // listener with the same events the engine would emit.
+    combat.emit('cardPlayed', { cardInstanceId: 'x' });
     combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 3, blocked: 0, cardInstanceId: 'x', grantedBy: 'greatsword', equipmentRole: 'granted', isAttack: true });
     const before = combat.artCharge.greatsword;
     combat.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId });
@@ -125,12 +128,18 @@ test('a build-up burst caused by the weapon\'s hit adds its bonus charge; the Po
 test('the last weapon hit is forgotten by an unlent hit, a flask, a swap and the end of its card', () => {
   const combat = fight();
   const enemy = combat.enemies[0];
-  const hit = () => combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 3, blocked: 0, cardInstanceId: 'k', grantedBy: 'greatsword', equipmentRole: 'granted', isAttack: true });
+  // Card 'k' is announced, then lands the weapon's hit.
+  const hit = () => {
+    combat.emit('cardPlayed', { cardInstanceId: 'k' });
+    combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 3, blocked: 0, cardInstanceId: 'k', grantedBy: 'greatsword', equipmentRole: 'granted', isAttack: true });
+  };
   const staggerCredits = () => {
     const before = combat.artCharge.greatsword || 0;
     combat.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId });
     return (combat.artCharge.greatsword || 0) - before;
   };
+  hit();
+  assert.equal(staggerCredits(), rules.gainOnStagger, 'straight after the weapon\'s hit, the stagger is the weapon\'s');
   // A relic / status tick hit with no lender after the weapon's hit.
   hit();
   combat.emit('damageDealt', { sourceId: 'player', targetId: enemy.id, amount: 2, blocked: 0, isAttack: false });
@@ -205,6 +214,7 @@ test('the meter belongs to the weapon: a swap keeps each weapon\'s charge apart'
   dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
   assert.deepEqual(artChargeView(combat).map((r) => [r.weaponId, r.value]), [['katana', 0]], 'the swapped-in weapon starts from its own value');
   // The swapped-out weapon neither gains nor shows while stowed.
+  combat.emit('cardPlayed', { cardInstanceId: 'x' });
   combat.emit('damageDealt', { sourceId: 'player', targetId: combat.enemies[0].id, amount: 3, blocked: 0, cardInstanceId: 'x', grantedBy: 'greatsword', equipmentRole: 'granted', isAttack: true });
   assert.equal(combat.artCharge.greatsword, 2 * rules.gainPerHit);
   play(combat, kitAttack('katana'));
@@ -337,4 +347,28 @@ test('a full meter or Art card flashes once: a repaint that rebuilds it while fu
   const screen = await readFile(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.ok(!/wasFull\s*=\s*node\.dataset/.test(screen), 'the hand card no longer reads its own (rebuilt) node for the flash');
   assert.ok(/newlyFullIds\(artCardsFullBefore/.test(screen), 'the hand card flash reads the screen-held memory');
+});
+
+test('a status that remembers the weapon\'s card and strikes back later charges nothing', () => {
+  // Under Combat Ratings a self-status applied by a magical card keeps that
+  // card (`ratingCard`) and its hooks fire WITH it — lender tags and all.
+  // Zealotry strikes back when its owner loses HP, on the enemy's turn: that
+  // is not the card's own resolution, so no meter moves.
+  const ratingsRules = resolveCombatRatings({ 'gameConfig.combatRatings.enabled': true }, contentBundle);
+  assert.ok(ratingsRules.enabled);
+  const combat = fight({ right: 'ashStaff', classId: 'starseer', ratingsRules });
+  const kit = everyCard(combat).find((c) => c.grantedBy === 'ashStaff' && c.equipmentRole !== 'weaponArt');
+  const card = { sourceArmamentId: kit.sourceArmamentId, equipmentRole: kit.equipmentRole, instanceId: kit.instanceId, cardId: kit.cardId, grantedBy: kit.grantedBy, damageSchool: 'magic' };
+  executeAction(combat, { effect: { op: 'applyStatus', target: 'self', status: 'zealotry', stacks: 1 }, source: combat.player, owner: combat.player, target: combat.player, card, meta: {} });
+  assert.ok(combat.player.statuses.zealotry.ratingCard, 'the status remembers the staff\'s card');
+  let struckBack = 0;
+  for (let turn = 0; turn < 4; turn++) {
+    combat.player.block = 0;
+    combat.player.hp = combat.player.maxHp = 500;
+    const { events } = dispatch(combat, { type: 'endTurn' });
+    struckBack += events.filter((e) => e.type === 'damageDealt' && e.sourceId === combat.player.id && e.sourceArmamentId === 'ashStaff').length;
+    assert.deepEqual(events.filter((e) => e.type === 'artChargeChanged'), [], `turn ${turn}: no charge from a retaliation`);
+  }
+  assert.ok(struckBack > 0, 'the fixture really struck back with the staff\'s card');
+  assert.equal(combat.artCharge.ashStaff || 0, 0);
 });
