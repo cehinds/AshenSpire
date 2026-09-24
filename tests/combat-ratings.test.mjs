@@ -701,7 +701,8 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR 
   const set = configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
   assert.equal(set.poiseThreshold, 3, 'the armour key parses through its two colons');
   assert.equal(authoredItemRatings(configured.equipment, set).poise, 3);
-  assert.equal(pieceWeight(set), 3, 'a set’s Poise IS its weight — the row’s note says so');
+  const { mechanics } = await import('../src/framework/data/mechanics.js');
+  assert.equal(pieceWeight(set), Math.round(3 * mechanics.weight.itemWeightScale * 10) / 10, 'a set’s Poise IS its weight (rescaled by itemWeightScale) — the row’s note says so');
   assert.equal(contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8,
     'and the authored bundle is untouched');
 

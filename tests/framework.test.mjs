@@ -765,6 +765,9 @@ function grantFixtureRegistries(packagesById) {
 // keeps its shipped combat kit (SPEC §3.8 "Complete armament kits", #904), so
 // its three item-owned instances compose beside the fixture's.
 const ROUND_SHIELD_KIT = ['kit:roundShield:attack', 'kit:roundShield:guard', 'weaponArt:roundShield:shieldBash'];
+// Everyone has the dodge (owner's rule, 2026-09-24): with no hand empty the
+// body owns the one Dodge Roll every composed deck carries.
+const BODY_DODGE = 'weaponArt:unarmed:body:dodgeRoll';
 
 // SPEC §3.8 "Complete armament kits" (#904, 0.6.0.115): EVERY shipped
 // hand-equipped armament authors a combatKit and lends one Strike, one Guard
@@ -783,8 +786,8 @@ test('every armament installs exactly its kit\'s signature art; the baseline Rea
   const owned = run.deck.filter((c) => c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt').map((c) => c.instanceId).sort();
   eq(owned, [
     'kit:roundShield:attack', 'kit:roundShield:guard', 'kit:straightSword:attack', 'kit:straightSword:guard',
-    'weaponArt:roundShield:shieldBash', 'weaponArt:straightSword:guardCounter',
-  ], 'the starting kits compose exactly the two kits and their signature arts');
+    'weaponArt:roundShield:shieldBash', 'weaponArt:straightSword:guardCounter', BODY_DODGE,
+  ], 'the starting kits compose exactly the two kits and their signature arts, and the body\'s Dodge Roll');
 });
 
 test('grants and weapon arts compose at creation and reconcile through equip transitions', () => {
@@ -798,7 +801,7 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
     .map((c) => c.instanceId).sort();
   eq(composed(), [
     'granted:straightSword:quickstep:0', 'granted:straightSword:quickstep:1',
-    ...ROUND_SHIELD_KIT, 'weaponArt:straightSword:crimsonCleave',
+    ...ROUND_SHIELD_KIT, 'weaponArt:straightSword:crimsonCleave', BODY_DODGE,
   ].sort(), 'creation composes grants and the default art with deterministic ids');
   const art = run.deck.find((c) => c.instanceId === 'weaponArt:straightSword:crimsonCleave');
   eq(art.damageSchool, 'physical', 'a composed instance is carrier-stamped by the same authoritative pass, not left raw');
@@ -830,7 +833,7 @@ test('dual-wield weapon arts reconcile through the RIGHT_THEN_LEFT split — a s
   });
   const run = createRunState({ seed: 7, classId: 'reaver', registries: REG3 });
   const arts = run.deck.filter((c) => c.equipmentRole === 'weaponArt').map((c) => c.instanceId).sort();
-  eq(arts, ['weaponArt:roundShield:quickstep', 'weaponArt:straightSword:crimsonCleave'],
+  eq(arts, ['weaponArt:roundShield:quickstep', 'weaponArt:straightSword:crimsonCleave', BODY_DODGE],
     'the shared art survives on the right; the left contributes only its unique art');
 });
 
@@ -852,7 +855,7 @@ test('a mid-combat swap reconciles granted instances across the combat piles', (
   reconcileGrantedCardsInCombat(REG2, run, piles);
   eq(piles.hand.length, 0, 'the stale grant leaves the hand with its armament');
   eq(piles.draw.map((c) => c.instanceId), ['i1', 'granted:straightSword:quickstep:0'], 'a present wanted grant stays put, not duplicated');
-  eq(piles.discard.map((c) => c.instanceId).sort(), ['weaponArt:straightSword:crimsonCleave', ...ROUND_SHIELD_KIT].sort(), 'the missing art (and the shield kit the piles lacked) lands in the discard pile');
+  eq(piles.discard.map((c) => c.instanceId).sort(), ['weaponArt:straightSword:crimsonCleave', ...ROUND_SHIELD_KIT, BODY_DODGE].sort(), 'the missing art (and the shield kit and body dodge the piles lacked) lands in the discard pile');
   eq(piles.discard[0].instanceId, 'weaponArt:straightSword:crimsonCleave', 'the right hand reconciles first');
   eq(piles.discard[0].upgraded, false, 'a reconciled instance carries the boolean upgraded field combat saves require');
   const snapshot = structuredClone(piles);
@@ -931,7 +934,7 @@ test('a granted instance is never a removal candidate', () => {
   run.deck = run.deck.filter((c) => c.grantedBy || c.cardId !== 'quickstep');
   const grantedCount = () => run.deck.filter((c) => c.grantedBy).length;
   // Two fixture quickstep grants plus the round shield's kit Strike, Guard and Art.
-  eq(grantedCount(), 2 + ROUND_SHIELD_KIT.length, 'the fixture grants and the shield kit are item-owned');
+  eq(grantedCount(), 2 + ROUND_SHIELD_KIT.length + 1, 'the fixture grants, the shield kit and the body\'s Dodge Roll are owned by the loadout');
   const granted = grantedCount();
 
   // Targeted by cardId: only the granted copies carry quickstep — nothing removable.
@@ -946,7 +949,7 @@ test('a granted instance is never a removal candidate', () => {
   eq(run.deck.length, before - 1, 'the random removal still removes an ordinary card');
 });
 
-const { playerLoadReceipt } = await import('../src/model/statProjection.js');
+const { playerLoadReceipt, pieceWeight } = await import('../src/model/statProjection.js');
 const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
 const { renderCandidateComparison } = await import('../src/ui/components/equipmentReceipts.js');
 const weightHome = await import('../src/framework/weight.js');
@@ -966,13 +969,16 @@ test('the bridge decides Weight Class through the framework service, with the Te
 test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   const r = playerLoadReceipt(LEGACY_REG, run);
-  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule)
-  eq(r.hands, 12, 'hands weigh their authored weight');
-  eq(r.armour, 8, 'armour weighs its poiseThreshold under the A-side rule');
-  eq(r.load, 20, 'load sums both');
+  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule),
+  // each rescaled by mechanics.weight.itemWeightScale onto the lean attribute scale's capacity
+  const scale = mechanicsHome.mechanics.weight.itemWeightScale;
+  const tenth = (n) => Math.round(n * 10) / 10;
+  eq(r.hands, tenth(tenth(5 * scale) + tenth(7 * scale)), 'hands weigh their authored weight, rescaled');
+  eq(r.armour, tenth(8 * scale), 'armour weighs its poiseThreshold under the A-side rule, rescaled');
+  eq(r.load, tenth(r.hands + r.armour), 'load sums both');
   eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
-  eq(r.classId, 'medium', 'the sword-and-shield reaver start stands Medium (20 of 40) — the class exists for the player');
-  eq(r.active, false, 'no combat rule consumes the class yet');
+  eq(r.classId, 'medium', `the sword-and-shield reaver start stands Medium (${r.load} of ${r.capacity}, ${r.percent}%) — the class exists for the player`);
+  eq(r.active, true, 'every deck carries a Dodge Roll, so the class is consumed');
 });
 
 // ---- the unarmed package, stamina and the dodge — LIVE ------------------------
@@ -1006,10 +1012,14 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   const guards = run.deck.filter((c) => c.equipmentRole === 'guard').map((c) => c.cardId);
   const techniques = run.deck.filter((c) => c.equipmentRole === 'technique').map((c) => c.cardId);
   eq(guards.length > 0 && guards.every((id) => id === 'evasiveGuard'), true, `every unarmed guard slot is Evasive Guard (${guards.join(',')})`);
-  eq(techniques.length > 0 && techniques.every((id) => id === 'dodgeRoll'), true, `every unarmed technique slot is Dodge Roll (${techniques.join(',')})`);
+  eq(techniques.every((id) => id === 'dodgeRoll'), true, `any unarmed technique slot is Dodge Roll (${techniques.join(',')})`);
+  // Since #904 an armed start has no technique slot to become the Dodge Roll,
+  // so the bare hands carry it: one, owned by the first empty hand.
+  const dodges = run.deck.filter((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll');
+  eq(dodges.map((c) => c.grantedBy), ['unarmed:right'], `a born-armed run with both hands emptied still has exactly one Dodge Roll (${dodges.map((c) => c.instanceId).join(',') || 'none'})`);
 });
 
-test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and loses it when the hand is filled', () => {
+test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and filling the hand keeps it on the body', () => {
   const { stampDeck } = compositionDoor;
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   const leftBefore = run.loadout.sets.leftHand.slice();
@@ -1027,11 +1037,12 @@ test('one empty hand composes the Dodge Roll beside the armed hand\'s technique,
   eq(arts.filter((c) => c.grantedBy === 'straightSword').map((c) => c.cardId), ['guardCounter'], `the armed hand's signature art stays its own (arts: ${arts.map((c) => c.cardId).join(',')})`);
   run.loadout.sets.leftHand = leftBefore;
   stampDeck(LEGACY_REG, run);
-  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'filling the hand takes the dodge away');
+  const dodges = run.deck.filter((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll');
+  eq(dodges.map((c) => c.grantedBy), ['unarmed:body'], 'filling the hand moves the one Dodge Roll to the body; it is never taken away');
   run.loadout.sets.leftHand = leftBefore.map(() => null);
   run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
   stampDeck(LEGACY_REG, run);
-  eq(run.deck.some((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll'), false, 'both hands empty is the unarmed package, not an extra art');
+  eq(run.deck.filter((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll').map((c) => c.grantedBy), ['unarmed:right'], 'both hands empty still carries exactly one Dodge Roll, on the right hand');
   eq(run.deck.filter((c) => c.equipmentRole === 'technique').every((c) => c.cardId === 'dodgeRoll'), true, 'every unarmed technique slot is the Dodge Roll');
 });
 
@@ -1082,7 +1093,8 @@ test('the Armoury comparison carries the swap\'s load and Weight Class before an
   }).candidate;
   eq(compared.load.before, before.load, 'before is the standing readout');
   eq(compared.load.capacity, before.capacity, 'capacity is the run\'s and does not move in a swap');
-  eq(compared.load.after, before.load - 7 + towerShield.weight, 'after swaps the round shield\'s weight for the tower shield\'s');
+  const roundShield = contentBundle.equipment.armaments.find((p) => p.id === 'roundShield');
+  eq(compared.load.after, Math.round((before.load - pieceWeight(roundShield) + pieceWeight(towerShield)) * 10) / 10, 'after swaps the round shield\'s weight for the tower shield\'s');
   eq(compared.load.beforeClassId, before.classId, 'before class is the standing readout\'s');
   eq(compared.load.changesClass, compared.load.beforeClassId !== compared.load.afterClassId, 'class-change flag agrees with the ids');
   eq(typeof compared.load.afterWord, 'string', 'the after class resolves to a word');
@@ -1090,7 +1102,7 @@ test('the Armoury comparison carries the swap\'s load and Weight Class before an
   const bare = equipmentSurfaceReceipt(LEGACY_REG, run, {
     candidate: { slotId: 'leftHand', setIndex: 0, pieceId: null },
   }).candidate;
-  eq(bare.load.after, before.load - 7, 'unequipping the shield sheds exactly its weight');
+  eq(bare.load.after, Math.round((before.load - pieceWeight(roundShield)) * 10) / 10, 'unequipping the shield sheds exactly its weight');
   const html = renderCandidateComparison(compared);
   eq(html.includes(`${compared.load.before} (${compared.load.beforePercent}%) → <strong>${compared.load.after} (${compared.load.afterPercent}%)</strong> of ${compared.load.capacity}`), true,
     'the rendered row shows both loads with their percents over the capacity');
@@ -1134,10 +1146,11 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
     },
     enemyIds: [contentBundle.enemies[0].id],
   });
-  // A five-weight sword at capacities 30, 7 and 6 exercises the real load
-  // calculation without replacing the Weight Class or cost implementations.
-  combat.loadout = { sets: { rightHand: ['straightSword'], leftHand: [null], armor: [null] }, active: {}, storage: [] };
-  combat.attributes = { dexterity: 10, constitution: weight === 'light' ? 10 : 1, strength: weight === 'light' ? 10 : weight === 'medium' ? 5 : 4 };
+  // A warhammer and tower shield (authored 9 + 12, 4.2 after itemWeightScale)
+  // at capacities 30, 7 and 5 exercises the real load calculation without
+  // replacing the Weight Class or cost implementations.
+  combat.loadout = { sets: { rightHand: ['warhammer'], leftHand: ['towerShield'], armor: [null] }, active: {}, storage: [] };
+  combat.attributes = { dexterity: 10, constitution: weight === 'light' ? 10 : weight === 'medium' ? 3 : 2, strength: weight === 'light' ? 10 : 1 };
   eq(playerWeightClass(combat).weightClass.id, weight, 'fixture reaches requested Weight Class');
   return { combat, draws: () => draws };
 }

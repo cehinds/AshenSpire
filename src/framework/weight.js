@@ -12,7 +12,8 @@ export function carryCapacity({ constitution, strength, bonuses = 0 }) {
 }
 
 export function equipLoad({ mainHandWeight = 0, offHandWeight = 0, armorWeight = 0, otherCountedWeight = 0 }) {
-  return mainHandWeight + offHandWeight + armorWeight + otherCountedWeight;
+  // Rounded to a tenth: scaled piece weights (itemWeightScale) are tenths.
+  return Math.round((mainHandWeight + offHandWeight + armorWeight + otherCountedWeight) * 10) / 10;
 }
 
 export function loadPercent(load, capacity) {

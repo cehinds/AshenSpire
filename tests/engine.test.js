@@ -2146,7 +2146,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the default died: state.js composed N attacks, then stampDeck rebuilt the
     // attack plan from the LEGACY roleCopies.attack and refused the mismatch.
     // The quota now defaults to the composed plan wherever it is live.
-    for (const [bias, wantAttack, wantGuard] of [[0.5, 4, 4], [0.75, 6, 2], [0.25, 2, 6], [1, 8, 0], [0, 0, 8]]) {
+    // Seven filler, not eight: the born-armed Reaver's Dodge Roll (everyone has
+    // the dodge, owner's rule 2026-09-24) is a bound card and counts against
+    // the cap like any other, so the base cards make room for it.
+    for (const [bias, wantAttack, wantGuard] of [[0.5, 4, 3], [0.75, 5, 2], [0.25, 2, 5], [1, 7, 0], [0, 0, 7]]) {
       const balance = JSON.parse(JSON.stringify(legacyBundle.balance));
       balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
       const reg = createRegistries({ ...legacyTestBundle(), balance });
@@ -2648,7 +2651,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('26n. basic attack removal retires a slot and the birth quota survives save and load', () => {
     const run = createRunState({ seed: 1, classId: 'reaver', registries: LEGACY_REG });
     const composed = run.deck.filter(isEquipmentComposedInstance);
-    assert(composed.length === 4 && composed.every((c) => c.equipmentAttackSlotId),
+    const slots = composed.filter((c) => c.equipmentAttackSlotId);
+    // The composed set also holds the body's Dodge Roll (grantedBy, no slot id).
+    assert(slots.length === 4 && composed.filter((c) => !c.equipmentAttackSlotId).every((c) => c.grantedBy),
       'the four attack slots are equipment-composed, and the predicate says so');
     eq(run.equipmentAttackSlotCount, 4, 'and the run recorded that as its quota');
 
@@ -2781,7 +2786,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const run = createRunState({ seed: 2, classId: 'reaver', registries: biasedReg });
     const actual = { attack: 0, guard: 0 };
     for (const card of run.deck) if (actual[card.equipmentRole] !== undefined) actual[card.equipmentRole] += 1;
-    eq(actual.attack, 6, 'the deck really is six attacks at this bias');
+    // Seven filler (the body's Dodge Roll takes one base card's place under the cap).
+    eq(actual.attack, 5, 'the deck really is five attacks at this bias');
     eq(actual.guard, 2, 'and two guards');
     const roles = equipmentSurfaceReceipt(biasedReg, run).roles;
     const shown = Object.fromEntries(roles.map((r) => [r.role, r.copies]));
@@ -2821,7 +2827,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       return out;
     };
     const born = roleCount(run.deck);
-    eq(born.guard, 3, 'two grants shift the composed guard count to three');
+    // Two grants, plus the body's Dodge Roll, all under the cap.
+    eq(born.guard, 2, 'the grants shift the composed guard count to two');
     assert(born.guard !== legacyBundle.balance.equipment.roleCopies.guard,
       'and that differs from the authored table, which is what makes this checkable');
 
@@ -3004,7 +3011,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, 0, 'this deck really has no guards');
     const shown = Object.fromEntries(equipmentSurfaceReceipt(biasedReg, run).roles.map((r) => [r.role, r.copies]));
     eq(shown.guard, 0, 'and the panel says zero rather than the authored four');
-    eq(shown.attack, 8, 'while the attacks it does have are counted');
+    eq(shown.attack, 7, 'while the attacks it does have are counted (seven: the body\'s Dodge Roll holds one place under the cap)');
     // The deck is the COMPLETE answer when there is one — no merge to fall
     // through, which is what makes the mistake unwritable here rather than
     // guarded against.
@@ -3661,7 +3668,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const combat = createCombat({
       registries: LEGACY_REG,
       rng,
-      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout },
+      // The run's birth quota rides into the fight as it does from main.js: the
+      // body's Dodge Roll makes a replan from the swapped loadout disagree with it.
+      player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout, equipmentAttackSlotCount: run.equipmentAttackSlotCount },
       enemyIds: ['fellWarden'],
     });
     const energyBefore = combat.player.energy;
@@ -8427,7 +8436,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     fresh.loadout.sets.rightHand = [null, null, null];
     fresh.loadout.sets.leftHand = [null, null, null];
     stampDeck(REG, fresh);
-    eq(fresh.deck.filter(isItemOwned).length, 0, 'unequipping removes every lent instance');
+    // What stays is not lent: the one Dodge Roll the bare hands own (everyone has the dodge).
+    eq(fresh.deck.filter(isItemOwned).map((c) => c.grantedBy).join(','), 'unarmed:right', 'unequipping removes every lent instance; only the bare hand\'s Dodge Roll stays');
     eq(fresh.zones.worn.head, null, 'and the projection still reads');
 
     // The review of #1183. The body layer is the RESOLVED armour row: an id the
