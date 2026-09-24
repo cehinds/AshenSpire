@@ -1443,7 +1443,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const a = REG.classes.get(id).startingFlaskAllocation;
         return `${a.hp}/${a.mana}`;
       }).join('|'),
-      '3/1|2/2|3/1|3/1',
+      '3/1|3/1|3/1|3/1',
       'all four class allocations consume all four charges exactly as approved',
     );
     const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
@@ -1586,7 +1586,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
       enemyIds: ['tGiant'],
     });
-    eq(soloMagic.player.mana, 2, 'Starstone combatStart recovery restores one Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) one more');
+    eq(soloMagic.player.mana, Math.min(starRun.maxMana, REG.balance.powers.starstoneShard.restoreMana + REG.balance.powers.lodestarShard.restoreMana), 'Starstone combatStart recovery restores Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) more');
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
     eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
@@ -1604,7 +1604,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
       enemyIds: ['tGiant'],
     });
-    eq(coopMagic.players.get('p1').entity.mana, 2, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
+    eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
     eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 7,
@@ -6563,10 +6563,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // five tiers and a point bought 20 HP. Nothing divides the attribute now:
     // the authored row is 20 + 4 per Constitution TIER and a tier is a point,
     // so the arithmetic below is 20 + 4 × CON + flat. Ruleset 7 (plan A3)
-    // restated the row as 36 + 2 × CON, moving half of CON's HP onto the level.
+    // restated the row as 36 + 2 × CON, moving half of CON's HP onto the level;
+    // the Starseer's flat bonus is its Starstone Shard (plan A2).
     const hpBase = REG.derivedStatRules.rules.hp.base;
     const perPoint = 2;
-    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 0], ['rogue', 2, 0], ['herald', 2, 0]]) {
+    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 14], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
@@ -8967,7 +8968,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     applyHeal(heals, entA, 5);
     eq(fires('A'), 1, "A's seal answers A's own heal, still whole"); eq(fires('B'), 1, "and B's once is spent");
     // Lodestar Shard: extra Mana at combat start.
-    const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 3 });
+    const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
     // Attune restores Mana and exhausts; upgraded it stays.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
@@ -9541,8 +9542,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
-    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
-    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstoneArc' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
+    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstoneArc\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
     assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
@@ -9662,9 +9663,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // raising it strands the starter card of every run already under way
     // (a legacy Reaver at Wisdom 8 holds one Mana). That step needs
     // run-stamped costs, which is a mechanism and not this phase's number.
-    const art = REG.cards.get('starstonePebble');
+    // A2 took the Starseer's own signature art off both lines (it costs
+    // actions only), so the 1/1 claim is read off a Starseer Mana spell.
+    const art = REG.cards.get('starstoneArc');
+    assert(!REG.cards.get('starstonePebble').manaCost && !REG.cards.get('starstonePebble').staminaCost,
+      'A2: the Starseer signature art costs actions only');
     assert(star.maxStamina >= art.staminaCost && star.maxMana >= art.manaCost,
-      'the signature art is playable on the first floor');
+      'a Starseer Mana spell is playable on the first floor');
     assert(art.staminaCost === 1 && art.manaCost === 1,
       'and stays at 1/1 until costs travel with the run rather than with the table');
 

@@ -95,7 +95,7 @@ test('authored styles use deterministic effects and melee is target-local',()=>{
 });
 test('live named card styles select their authored effects',()=>{
  const reg=createRegistries(contentBundle);
- for(const [id,kind]of [['starstonePebble','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
+ for(const [id,kind]of [['starstoneArc','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
 });
 
 test('expanded effects retain paid card motifs and action-only profile fallbacks without changing resource auras',()=>{
