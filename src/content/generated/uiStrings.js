@@ -290,6 +290,118 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.kind.chest",
+    "extends": "",
+    "short": "Elite chest",
+    "full": "A chest of big rewards: choose one, the rest stay shut.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.chooseOne",
+    "extends": "",
+    "short": "Choose one of {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.took",
+    "extends": "",
+    "short": "<b>{name}</b> taken from the chest.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.eyebrow",
+    "extends": "",
+    "short": "Open the chest",
+    "full": "Pick one reward; the others stay in the chest.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.aria",
+    "extends": "",
+    "short": "Chest rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.unavailable",
+    "extends": "",
+    "short": "Your bag is full",
+    "full": "There is no room in your bag for an armament. Choose another reward.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.relic",
+    "extends": "",
+    "short": "Relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.upgrade",
+    "extends": "",
+    "short": "Upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.armament",
+    "extends": "",
+    "short": "Armament",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.weaponArt",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.cinders",
+    "extends": "",
+    "short": "Purse",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.upgrade.owned",
+    "extends": "",
+    "short": "Upgrade your <b>{name}</b> to <b>{upgraded}</b>.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.upgrade.rare",
+    "extends": "",
+    "short": "<b>{name}</b> joins the deck already upgraded.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.weaponArt",
+    "extends": "",
+    "short": "<b>{name}</b> joins the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.purse",
+    "extends": "",
+    "short": "{cinders} cinders and {stones} Smithing Stone{plural}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.purseName",
+    "extends": "",
+    "short": "{cinders} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.card.joins",
     "extends": "",
     "short": "<b>{name}</b> joins the deck.",

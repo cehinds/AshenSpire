@@ -1546,6 +1546,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 }
 :root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+/* The elite chest (SPEC §3.8.1): its options stack as full-width tiles so a
+   relic's sentence wraps inside the tile instead of running past its edge. */
+.reward-door .reward-chest-row { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0.8rem; }
+.reward-door .reward-row.reward-chest-row > .reward-chest-option { flex: 0 0 auto; width: 100%; max-width: 36rem; margin: 0 auto; text-align: left; white-space: normal; }
+.reward-door .reward-chest-option .cp-body p { margin: 0; white-space: normal; overflow-wrap: anywhere; }
+.reward-door .reward-chest-cat { font-size: 0.8rem; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }

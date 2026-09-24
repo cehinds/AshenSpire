@@ -62,6 +62,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollEliteChest,
   buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
@@ -2427,9 +2428,12 @@ async function onCombatEnd(result, combat, enc) {
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     classDrafts,
     skillDrafts: drafts,
-    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    // Handed the run, the card offer reads and moves the rarity pity (SPEC §3.8.1).
+    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), run }),
     flaskId: rollFlaskDrop(registries, rng, run),
-    relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // The elite chest (SPEC §3.8.1) replaces the elite's one random relic:
+    // a visible pick of one big reward from distinct categories.
+    chest: enc.pool === 'elite' ? rollEliteChest(registries, rng, run, { found: saves.loadMeta().found || [] }) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not
     // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
     // no-op there rather than a hidden 0%).
@@ -3341,7 +3345,17 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=chest` poses the ELITE door (SPEC §3.8.1): the chest in
+      // the relic's old seat, three authored options, no roll — a relic, a
+      // rare card pre-upgraded and a purse, so every capture is identical.
+      ...(pose === 'chest' ? {
+        title: 'ELITE FELLED',
+        chest: { options: [
+          { category: 'relic', relicId: 'forsakenMedallion' },
+          { category: 'upgrade', mode: 'rare', cardId: registries.classes.get(run.class).cardPool.find((id) => registries.cards.get(id).rarity === 'rare') },
+          { category: 'cinders', cinders: registries.balance.rewards.eliteChest.cinders[0], smithingStones: registries.balance.rewards.eliteChest.smithingStones },
+        ] },
+      } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
