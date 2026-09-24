@@ -144,43 +144,6 @@ function indexNodes(nodes) {
 }
 
 /**
- * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
- *
- * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
- *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
- *   `columns` absent falls back to the widest column in use AND SAYS SO — a
- *   silent fallback here re-opens the class of defect it was added to close.
- *
- * `viewer` — WHO IS LOOKING. Every field is legitimately different per client:
- *   `meta`      the viewer's own settings (map zoom, map reveal). May be absent.
- *   `reachable` Set of ids this viewer may act on.
- *   `current`   the id being stood on, or null.
- *   `path`      the ids already travelled, in order. Feeds the fog light.
- *   `mode`      'fog' | 'path'; omitted, it is read from `meta`.
- *   `reveal`    the Sealstone Key.
- *   `shrineGlow` OPTIONAL override for the shrine-lane setting. Omitted, it is
- *              read from `meta` — the setting is the player's, and this exists
- *              so a harness can pose both answers without writing a profile.
- *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
- *   `classes`   (node) → extra classes. `my-vote` lives here.
- *   `tooltip`   (node, reading) → html.
- *   `onPick`    (id, { shownType, revealed }) → void, fired only for reachable
- *               nodes; the reading is what this board drew for the node.
- *
- * `chromeHtml` is emitted BETWEEN the scrollport and the tap note, and the
- * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
- * of the viewport, so once the zoom bar stopped floating the two claimed one
- * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
- * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
- * omits it because that screen has no matching legend popover.
- *
- * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
- * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
- * carries a veil guard and a re-mount singleton that are the screen's business,
- * and a second listener living in here would be the third thing stepping the
- * zoom twice.
- */
-/**
  * watchViewport(el, { read, onChange, delayMs, RO, setTimer, clearTimer })
  * — the camera's STANDING re-fit (#1142). The first-settle observer in
  * `recenter` is one-shot by design: it waits for the first non-zero size and
@@ -235,6 +198,43 @@ export function watchViewport(el, {
   };
 }
 
+/**
+ * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
+ *
+ * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
+ *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
+ *   `columns` absent falls back to the widest column in use AND SAYS SO — a
+ *   silent fallback here re-opens the class of defect it was added to close.
+ *
+ * `viewer` — WHO IS LOOKING. Every field is legitimately different per client:
+ *   `meta`      the viewer's own settings (map zoom, map reveal). May be absent.
+ *   `reachable` Set of ids this viewer may act on.
+ *   `current`   the id being stood on, or null.
+ *   `path`      the ids already travelled, in order. Feeds the fog light.
+ *   `mode`      'fog' | 'path'; omitted, it is read from `meta`.
+ *   `reveal`    the Sealstone Key.
+ *   `shrineGlow` OPTIONAL override for the shrine-lane setting. Omitted, it is
+ *              read from `meta` — the setting is the player's, and this exists
+ *              so a harness can pose both answers without writing a profile.
+ *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
+ *   `classes`   (node) → extra classes. `my-vote` lives here.
+ *   `tooltip`   (node, reading) → html.
+ *   `onPick`    (id, { shownType, revealed }) → void, fired only for reachable
+ *               nodes; the reading is what this board drew for the node.
+ *
+ * `chromeHtml` is emitted BETWEEN the scrollport and the tap note, and the
+ * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
+ * of the viewport, so once the zoom bar stopped floating the two claimed one
+ * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
+ * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
+ * omits it because that screen has no matching legend popover.
+ *
+ * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
+ * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
+ * carries a veil guard and a re-mount singleton that are the screen's business,
+ * and a second listener living in here would be the third thing stepping the
+ * zoom twice.
+ */
 export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendControl = false }) {
   const byId = indexNodes(act.nodes);
   const nodes = Object.values(byId);
