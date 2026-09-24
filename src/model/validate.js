@@ -2227,8 +2227,11 @@ function validateRewardTuning(b, err) {
       if (!int(chest.smithingStones, 0)) err(`${root}.smithingStones`, `must be a non-negative integer, ${got(chest.smithingStones)}`);
     }
   }
-  if (rewards.bossRelicChoices !== undefined && !int(rewards.bossRelicChoices, 1)) err('balance.rewards.bossRelicChoices', `must be an integer of at least 1, ${got(rewards.bossRelicChoices)}`);
-  if (rewards.bossRelicConsolationCinders !== undefined && !int(rewards.bossRelicConsolationCinders, 0)) err('balance.rewards.bossRelicConsolationCinders', `must be a non-negative integer, ${got(rewards.bossRelicConsolationCinders)}`);
+  // Both boss-reward knobs are required: an absent count rolls no relic
+  // choice at all and an absent consolation pays nothing, so a bundle
+  // missing either would silently strip every boss reward (SPEC §6.1).
+  if (!int(rewards.bossRelicChoices, 1)) err('balance.rewards.bossRelicChoices', `must be an integer of at least 1, ${got(rewards.bossRelicChoices)}`);
+  if (!int(rewards.bossRelicConsolationCinders, 0)) err('balance.rewards.bossRelicConsolationCinders', `must be a non-negative integer, ${got(rewards.bossRelicConsolationCinders)}`);
 }
 
 const WEAPON_ART_CHARGE_KEYS = Object.freeze(['defaultMax', 'maxByWeapon', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']);

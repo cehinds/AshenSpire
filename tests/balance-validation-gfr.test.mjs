@@ -70,8 +70,8 @@ test('balance.rewards.cardPity: each malformed value is refused by name', () => 
 });
 
 test('boss relic choice and consolation are refused by name', () => {
-  for (const v of [0, 1.5, null, '3']) refusedAt(withRewards({ bossRelicChoices: v }), 'balance.rewards.bossRelicChoices', String(v));
-  for (const v of [-1, 2.5, null]) refusedAt(withRewards({ bossRelicConsolationCinders: v }), 'balance.rewards.bossRelicConsolationCinders', String(v));
+  for (const v of [0, 1.5, null, '3', undefined]) refusedAt(withRewards({ bossRelicChoices: v }), 'balance.rewards.bossRelicChoices', String(v));
+  for (const v of [-1, 2.5, null, undefined]) refusedAt(withRewards({ bossRelicConsolationCinders: v }), 'balance.rewards.bossRelicConsolationCinders', String(v));
 });
 
 test('weaponScaling and weaponArtCharge keep their existing refusals', () => {
