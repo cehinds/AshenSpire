@@ -21,6 +21,13 @@
 
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 
+// THE SHIPPED SCORE. The repo's music/ folder (music/manifest.json, filled from
+// music/PROMPTS.md) is served beside every hosted and preview build. With the
+// Custom music folder setting blank, a page served over http(s) reads it from
+// here; a context it leaves empty, a missing file or a file:// page (browsers
+// block the fetch) keeps the procedural beds below.
+export const SHIPPED_MUSIC_FOLDER = 'music';
+
 // A real build can point these at files; missing/failed loads fall back to synth.
 export const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',

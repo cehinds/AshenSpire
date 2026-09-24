@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "A restored profile shows its real Cinder multiplier straight away",
     "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
-    "build": "0.7.1.458",
+    "build": "0.7.1.465",
     "pullRequest": 1295,
     "url": "https://github.com/cehinds/AshenSpire/pull/1295"
+  },
+  {
+    "id": "pr-1274",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
   },
   {
     "id": "pr-1273",
