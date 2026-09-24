@@ -1,4 +1,5 @@
 import { previewPrologue } from './prologue.js';
+import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -1286,6 +1287,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
           <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
           <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
           <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(scene.id)}" aria-label="Edit ${esc(scene.name)} with live preview">Edit & preview</button>
           <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
           ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
         </span>
@@ -1299,6 +1301,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <ol class="set-scene-list" data-scene-list>${list}</ol>
         <div class="set-scene-tools">
           <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(config.scenes[staged[0]]?.id || 'warmth')}">Open live scene editor</button>
           <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
           ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
         </div>
@@ -2038,6 +2041,15 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
+function visibleAdvancedSubgroups(rows, groupId) {
+  const groups = advancedSubgroups(rows, groupId);
+  // The scene editor owns per-scene values and shows their actual effect beside
+  // the painting. Keeping another 70-plus controls under each scene tab meant
+  // the inactive private staging looked editable while changing nothing.
+  if (groupId !== 'Opening') return groups;
+  return groups.filter(group => !group.rows.some(row => row.prologuePath?.[0] === 'scenes'));
+}
+
 // ---- search: EVERY section at once (2026-09-24 revamp) ----------------------
 //
 // Find used to filter the rows of the Advanced section already open, so a
@@ -2049,7 +2061,7 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
 const SEARCH_LIMIT = 120;
 const subgroupCache = new Map();
 function cachedSubgroups(rows, groupId) {
-  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, advancedSubgroups(rows, groupId));
+  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, visibleAdvancedSubgroups(rows, groupId));
   return subgroupCache.get(groupId);
 }
 
@@ -2554,7 +2566,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings);
-      const groups = advancedSubgroups(ROWS, currentGroup);
+      const groups = visibleAdvancedSubgroups(ROWS, currentGroup);
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
@@ -2583,6 +2595,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('[data-scene-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.sceneEdit }));
   });
   container.querySelectorAll('.set-prologue-text').forEach(input => {
     input.addEventListener('input', () => {
