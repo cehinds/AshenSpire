@@ -7,6 +7,7 @@ import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { thaw } from '../config/authored.js';
+import { stageTimeout, clearStageTimeout } from './services/stageClock.js';
 
 const ATTACK = uiConfig.presentation.reaverAttack.components.attack;
 
@@ -108,9 +109,10 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
     if (frameIndex >= REAVER_ATTACK_SEQUENCE.length) return;
     image.src = frameUrl(REAVER_ATTACK_SEQUENCE[frameIndex]);
     image.dataset.frameId = `P${String(frameIndex + 1).padStart(2, '0')}`;
-    timer = setTimeout(advance, timing.frameMs);
+    timer = stageTimeout(actorEl, advance, timing.frameMs);
   };
-  timer = setTimeout(advance, timing.frameMs);
+  // Frame steps run on the stage clock so a hit-stop holds the swing.
+  timer = stageTimeout(actorEl, advance, timing.frameMs);
 
   return {
     impactMs: timing.impactMs,
@@ -118,7 +120,7 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
     cancel() {
       if (cancelled) return;
       cancelled = true;
-      clearTimeout(timer);
+      clearStageTimeout(timer);
       image.remove();
       priorFigure.hidden = false;
       priorFigure.style.display = priorDisplay;

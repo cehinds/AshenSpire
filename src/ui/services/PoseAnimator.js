@@ -20,6 +20,7 @@
 // and the animation-speed setting scales how long a pose is held (the pose IS the
 // actor animation, so it rides the same lunge window rather than adding time).
 import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/poseSprites.js';
+import { stageTimeout, clearStageTimeout } from './stageClock.js';
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
 import { hintImage } from '../imageHints.js';
@@ -121,7 +122,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     return throwable[n % throwable.length];
   };
   const settle = () => {
-    if (timer) { clearTimeout(timer); timer = null; }
+    if (timer) { clearStageTimeout(timer); timer = null; }
     if (current === 'idle') return;
     current = 'idle';
     img.src = assetUrl(POSE_DIR + idle.f);
@@ -151,15 +152,16 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
       // there for the rest of the fight.
       const target = resolve(pose);
       if (!poseFrame(classId, target, tint)) return false;
-      if (timer) { clearTimeout(timer); timer = null; }
+      if (timer) { clearStageTimeout(timer); timer = null; }
       setPose(target);
-      timer = setTimeout(settle, Math.max(POSE_MOTION.minimumPlayMs, ms));
+      // On the stage clock so a hit-stop can hold this frame (stageClock.js).
+      timer = stageTimeout(el, settle, Math.max(POSE_MOTION.minimumPlayMs, ms));
       return true;
     },
     settle,
     /** Who this figure is, for the swing rotation that outlives its DOM. */
     id,
-    dispose() { if (timer) clearTimeout(timer); timer = null; },
+    dispose() { if (timer) clearStageTimeout(timer); timer = null; },
   });
 }
 

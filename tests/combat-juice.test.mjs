@@ -11,7 +11,7 @@ import {
 const T = COMBAT_JUICE.sizing.damageTiers;
 const H = COMBAT_JUICE.motion.hitStop;
 const K = COMBAT_JUICE.motion.killCam;
-const OPEN = { paced: true, reducedMotion: false, screenShake: true, killCam: true };
+const OPEN = { paced: true, reducedMotion: false, killCam: true };
 const hit = (amount, blocked = 0) => ({ type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked });
 const died = (targetId) => ({ type: 'enemyDied', targetId, enemyId: targetId });
 
@@ -97,15 +97,18 @@ test('kill cam: elites and bosses by stature, the winning blow by config', () =>
   assert.equal(maxKillCamMs(), Math.max(K.bossMs, K.eliteMs, K.lastEnemyMs));
 });
 
-test('every kill-cam gate closes it: reduced motion, screen shake, its toggle, instant speed', () => {
+test('every kill-cam gate closes it: reduced motion, its toggle, instant speed — and only those', () => {
   assert.equal(killCamGatesOpen(OPEN), true);
   assert.equal(killCamGatesOpen({}), true, 'a sparse store reads as defaults (on)');
-  for (const [k, v] of [['reducedMotion', true], ['screenShake', false], ['killCam', false], ['paced', false]]) {
+  for (const [k, v] of [['reducedMotion', true], ['killCam', false], ['paced', false]]) {
     const gates = { ...OPEN, [k]: v };
     assert.equal(killCamGatesOpen(gates), false, `${k}=${v}`);
     assert.equal(killCamPlan({ rank: 'boss' }, gates), null, `${k}=${v} → no boss cam`);
     assert.equal(pickKillCam([died('b')], { rankOf: () => 'boss', won: true }, gates), null, `${k}=${v} → nothing picked`);
   }
+  // Screen shake is its own switch: turning the kick off leaves the kill cam on.
+  assert.equal(killCamGatesOpen({ ...OPEN, screenShake: false }), true, 'Screen shake off does not close the kill cam');
+  assert.equal(killCamPlan({ rank: 'boss' }, { ...OPEN, screenShake: false }).reason, 'boss');
 });
 
 test('pickKillCam: one per dispatch, boss > elite > winning blow, latest wins ties', () => {
@@ -123,4 +126,67 @@ test('pickKillCam: one per dispatch, boss > elite > winning blow, latest wins ti
   assert.equal(pickKillCam([died('el'), died('el2')], { rankOf }, OPEN).event.targetId, 'el2', 'tie → latest');
   assert.equal(pickKillCam([died('el'), died('n2')], { rankOf, won: true }, OPEN).event.targetId, 'el', 'elite > winning blow');
   assert.equal(pickKillCam('nope', { rankOf }, OPEN), null, 'garbage log');
+});
+
+// ---- the stage clock: hit-stop reaches JS-timer painted poses -------------
+import { stageTimeout, clearStageTimeout, freezeStageTimers, setStageClock, pendingStageSteps } from '../src/ui/services/stageClock.js';
+
+function fakeClock() {
+  let now = 0, seq = 0;
+  const due = new Map();
+  return {
+    set: (fn, ms) => { const id = ++seq; due.set(id, { fn, at: now + ms }); return id; },
+    clear: (id) => { due.delete(id); },
+    now: () => now,
+    advance(ms) {
+      const end = now + ms;
+      for (;;) {
+        const next = [...due.entries()].filter(([, t]) => t.at <= end).sort((a, b) => a[1].at - b[1].at)[0];
+        if (!next) break;
+        due.delete(next[0]); now = next[1].at; next[1].fn();
+      }
+      now = end;
+    },
+  };
+}
+const figure = (...kids) => ({ contains: (el) => kids.includes(el) });
+
+test('a frozen figure holds its painted frame steps and resumes each with its remainder', () => {
+  const fake = fakeClock();
+  const prev = setStageClock(fake);
+  try {
+    const host = {}, other = {};
+    const fired = [];
+    stageTimeout(host, () => fired.push(['host', fake.now()]), 100);
+    stageTimeout(other, () => fired.push(['other', fake.now()]), 100);
+    fake.advance(40);
+    freezeStageTimers([figure(host)], 80);
+    fake.advance(70); // t=110: the unfrozen figure's step fires on time
+    assert.deepEqual(fired, [['other', 100]]);
+    fake.advance(100); // released at t=120, 60 ms were left → fires at 180
+    assert.deepEqual(fired, [['other', 100], ['host', 180]], 'delayed by exactly the hold');
+    assert.equal(pendingStageSteps(), 0);
+  } finally { setStageClock(prev); }
+});
+
+test('stage clock edges: zero hold, steps scheduled mid-freeze, cancel, early release', () => {
+  const fake = fakeClock();
+  const prev = setStageClock(fake);
+  try {
+    const host = {};
+    const fig = figure(host);
+    const fired = [];
+    assert.equal(typeof freezeStageTimers([fig], 0), 'function', 'a zero hold is a no-op release');
+    const release = freezeStageTimers([fig], Infinity);
+    stageTimeout(host, () => fired.push(fake.now()), 30); // scheduled while frozen: waits
+    const cancelled = stageTimeout(host, () => fired.push('cancelled'), 10);
+    clearStageTimeout(cancelled);
+    clearStageTimeout(null); // null-safe, like clearTimeout
+    fake.advance(500);
+    assert.deepEqual(fired, [], 'nothing fires while the figure is held');
+    release(); release(); // idempotent
+    fake.advance(30);
+    assert.deepEqual(fired, [530], 'resumes with its full 30 ms once released');
+    assert.equal(pendingStageSteps(), 0);
+  } finally { setStageClock(prev); }
 });

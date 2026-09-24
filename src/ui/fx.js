@@ -10,6 +10,7 @@ import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
+import { freezeStageTimers } from './services/stageClock.js';
 import { reducedMotionRequested } from './motion.js';
 import { dodgeReceipt } from './components/dodgeReceipt.js';
 import {
@@ -486,7 +487,8 @@ const animationsOf = (el) => (el && typeof el.getAnimations === 'function' ? el.
  * on the named figures pauses for `ms`; a hurt animation that JUST started on
  * a target is first moved to its impact frame (knocked back, flashing), so
  * the freeze holds the moment of the hit rather than the frame before it.
- * `.hit-stop` also holds any CSS animation that starts during the freeze.
+ * `.hit-stop` also holds any CSS animation that starts during the freeze, and
+ * the stage clock holds every painted-sprite frame step drawn inside them.
  * Returns the release (also run by releaseCombatJuice).
  */
 export function freezeFigures({ targets = [], sources = [] }, ms) {
@@ -513,10 +515,14 @@ export function freezeFigures({ targets = [], sources = [] }, ms) {
       } catch (e) { /* a foreign animation must not break the hit */ }
     }
   }
+  // Painted fighters step frames on JS timers, not animations: hold those too,
+  // or a painted swing plays straight through the freeze (stageClock.js).
+  const releaseStages = freezeStageTimers(figures, Infinity);
   let timer = null;
   const release = () => {
     if (!juiceReleases.delete(release)) return;
     clearTimeout(timer);
+    releaseStages();
     for (const fig of figures) fig.classList.remove('hit-stop');
     for (const a of paused) {
       try { if (a.playState === 'paused') a.play(); } catch (e) { /* cancelled meanwhile */ }
@@ -723,7 +729,7 @@ export function playTimeline(events, ctx, done) {
   // never sees either, which is the gate.
   const body = document.body.classList;
   const killCam = pickKillCam(events, { rankOf: rankReader(ctx), won: !!(ctx.fightWon && ctx.fightWon()) }, {
-    paced: true, reducedMotion: reduced, screenShake: !body.contains('no-shake'), killCam: !body.contains('no-killcam'),
+    paced: true, reducedMotion: reduced, killCam: !body.contains('no-killcam'),
   });
   const vctx = { ...ctx, hitStop: true, killCam };
   let heldMs = 0; // this beat's accumulated hit-stop/kill-cam hold
@@ -962,8 +968,9 @@ function baseVisualFor(e, beatKind) {
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         flash(anchor, 'hitflash', heavy ? 380 : 220, stop);
         // An animated figure recoils in its own art as well as in CSS, and holds
-        // it as long as the flash it belongs to.
-        playPoseOn(anchor, 'hit', (heavy ? 380 : 220) + stop);
+        // it as long as the flash it belongs to. (Its settle timer is on the
+        // stage clock, which the hit-stop below holds — no +stop here.)
+        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
         if (heavy) {
           flash(anchor, 'hit-heavy', 380, stop);
           shake(ctx.combatEl);

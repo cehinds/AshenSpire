@@ -359,10 +359,10 @@ const ROWS = [
     note: 'Italic or upright for the one-line identity shown in card inspection.' },
   { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
-  // SPEC §7.4 combat juice. Also needs Screen shake on (it is a camera move)
-  // and paced playback; CombatJuiceModel.killCamGatesOpen is the one gate.
+  // SPEC §7.4 combat juice. Independent of Screen shake; Reduced motion and
+  // instant pacing also skip it. CombatJuiceModel.killCamGatesOpen is the one gate.
   { cat: 'Combat', key: 'killCam', def: true, label: 'Kill cam', selfEvident: true,
-    note: 'A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Needs Screen shake on.' },
+    note: 'A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },

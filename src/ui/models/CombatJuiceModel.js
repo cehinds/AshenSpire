@@ -84,7 +84,9 @@ export function rankForStature(stature, cfg = COMBAT_JUICE) {
 
 /** killCamGatesOpen(gates) → may a kill cam play at all under these settings? */
 export function killCamGatesOpen(gates = {}) {
-  return gates.paced !== false && !gates.reducedMotion && gates.screenShake !== false && gates.killCam !== false;
+  // Deliberately NOT gated on Screen shake: a player who dislikes the kick may
+  // still want the close-up, and each has its own switch.
+  return gates.paced !== false && !gates.reducedMotion && gates.killCam !== false;
 }
 
 /**
