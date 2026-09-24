@@ -480,14 +480,19 @@ amended before code moves.
   self time). Index by `trigger.on` when mounts and statuses change.
 - [ ] **Load receipt (S).** `effectiveCost` calls `playerWeightClass()`
   twice per card play, rebuilding the loadout each time (11.5% inclusive).
-  Cache per combat, invalidate on equipment change.
+  Cache per combat, invalidate on equipment change. In co-op, `setActive`
+  swaps attributes, loadout and upgrade levels per seat
+  (`coopCombat.js` ~242), so key the cache by seat or limit it to solo.
 - [ ] **Boot validation (S).** `validateContent` ~115 ms, 21% in
   `eligibleCards`/`authoredCardTags` filtering 1,785 tagging rows per card
   (`attackCardDamage.js` ~60, ~281). Build a card→tags map once; validate the
   authored bundle in CI and only overrides at runtime.
-- [ ] **Minify and lazy-load (S).** ~9 MB of unminified code;
-  `config/generated/ui.js` 1.1 MB pretty JSON (503 KB compact); load
-  `changelog.generated.js` when its screen opens. `worldAtlas.js` feeds
+- [ ] **Minify and lazy-load (S–M).** ~9 MB of unminified code;
+  `config/generated/ui.js` 1.1 MB pretty JSON (503 KB compact). Loading
+  `changelog.generated.js` when its screen opens needs bundler support first:
+  `tools/bundle.mjs` (~269) rejects every `import()` and inlines the static
+  graph, so add code-splitting or a fetched resource, or only defer its
+  initialisation. `worldAtlas.js` feeds
   journey generation, encounters, save validation and `atlasQuests`, so
   defer it only to the run-loading boundary, never to the atlas screen.
 - [ ] **Render keys and observers (S).** Combat memo keys `JSON.stringify` the
