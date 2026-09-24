@@ -112,7 +112,9 @@ export function applyChestOption(registries, run, option, { collectArmament = nu
   if (!option) return false;
   switch (option.category) {
     case 'relic':
-      if (!option.relicId || run.relics.includes(option.relicId)) return false;
+      // An id the registries do not hold never lands (a restored offer from
+      // another build): it would crash the next node's relic resolve.
+      if (!option.relicId || !registries.relics.has(option.relicId) || run.relics.includes(option.relicId)) return false;
       run.relics.push(option.relicId);
       return true;
     case 'upgrade':

@@ -17,7 +17,8 @@ import assert from 'node:assert/strict';
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createSession } from '../tools/session.mjs';
+import { createSession, restoreSession } from '../tools/session.mjs';
+import { applyChestOption } from '../src/model/rewardChest.js';
 import { rollEliteChest } from '../src/engine/encounters.js';
 import { createRng } from '../src/engine/rng.js';
 import { receiptJuicePlan, coopFinaleHoldMs, hitStopForEvent, COMBAT_JUICE } from '../src/ui/models/CombatJuiceModel.js';
@@ -322,6 +323,33 @@ test('a stale chest option on catch-up is marked and refused, and the entry wait
   assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 1 }).ok, true);
   assert.equal(m.run.cinders, before.cinders + 5);
   assert.equal(m.catchup.length, 0);
+});
+
+test('a restored offer or catch-up entry naming unknown content is refused at the door, never granted', () => {
+  const bad = { category: 'relic', relicId: 'noSuchRelic' };
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  // The pending reward scene: p1's stored chest names a relic this build lacks.
+  const S = party();
+  openReward(S, { p1: chestOffer([bad, purse]), p2: chestOffer([purse]) });
+  const saved = JSON.parse(JSON.stringify(S.serialize()));
+  const R = restoreSession(REG, saved);
+  assert.deepEqual(R.refusedMembers().map((r) => r.id), ['p1'], 'the poisoned seat is refused with its reason');
+  assert.match(R.refusedMembers()[0].reason, /noSuchRelic/);
+  R.setConnected('p1', true);
+  assert.equal(R.chooseReward('p1', { chestIndex: 0 }).ok, false, 'nothing is granted from the bad offer');
+
+  // A catch-up entry, by the same door.
+  const T = party();
+  seat(T, 'p2').catchup.push({ type: 'reward', offer: chestOffer([bad, purse]), act: 1, floor: 1 });
+  const U = restoreSession(REG, JSON.parse(JSON.stringify(T.serialize())));
+  assert.deepEqual(U.refusedMembers().map((r) => r.id), ['p2']);
+  assert.equal(U.livingMembers().some((m) => m.id === 'p2'), false);
+
+  // And the grant itself refuses an id the registries do not hold.
+  const run = structuredClone(seat(T, 'p1').run);
+  const relics = run.relics.slice();
+  assert.equal(applyChestOption(REG, run, bad), false);
+  assert.deepEqual(run.relics, relics);
 });
 
 // ---- the co-op screen's chest door --------------------------------------------
