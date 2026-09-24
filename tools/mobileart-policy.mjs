@@ -45,18 +45,21 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 50_000_000;
 
 /**
  * Where the mobile art itself has to land for the bundle to fit: the budget
- * less the code (~8.3 MB at 0.7.1) and base64 growth (4/3). A twin tree over
- * this is caught by --check before anyone builds with it.
+ * less everything else in the file (~9.5 MB of code, CSS and fonts at
+ * 0.7.1.475) and base64 growth (4/3). A twin tree over this is caught by
+ * --check before anyone builds with it.
  *
  * Counted as the bundle inlines it: each DISTINCT image once
  * (see `distinctInlinedBytes`), because the bundler maps byte-identical files
  * to one data URI.
  *
- * Raised 40 → 41 MB on the owner's call (2026-09-24), when #1285's prologue
- * steps took the tree 0.3 MB over. The mobile file keeps its own 50 MB ceiling
+ * Raised 40 → 40.4 MB on the owner's call (2026-09-24), when #1285's
+ * prologue steps took the tree 0.3 MB over. Not higher: with ~9.5 MB of
+ * non-art in the file, art past ~40.49 MB would pass --check and still be
+ * refused at 50 MB by the bundler. The mobile file keeps its own 50 MB ceiling
  * above (MOBILE_BUNDLE_BUDGET_BYTES), which verify-shipped still enforces.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 41_000_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 40_400_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
@@ -64,15 +67,24 @@ export function inlinedBytes(n) {
 }
 
 /**
- * distinctInlinedBytes(buffers) → what a set of files costs the bundle when
+ * distinctAssetId(buf, ext) → the identity the bundler aliases on: the bytes
+ * AND the file type, so two files can never share a data URI of the wrong MIME.
+ */
+export function distinctAssetId(buf, ext = '') {
+  return `${String(ext).toLowerCase()}:${createHash('sha1').update(buf).digest('hex')}`;
+}
+
+/**
+ * distinctInlinedBytes(files) → what a set of files costs the bundle when
  * each distinct content is inlined once (tools/bundle.mjs aliases duplicates).
  * Content is compared byte for byte, keyed by a SHA-1 of the bytes.
  */
-export function distinctInlinedBytes(buffers, hash = (buf) => createHash('sha1').update(buf).digest('hex')) {
+export function distinctInlinedBytes(files, hash = distinctAssetId) {
   const seen = new Set();
   let total = 0;
-  for (const buf of buffers) {
-    const id = hash(buf);
+  for (const file of files) {
+    const buf = Buffer.isBuffer(file) ? file : file.buf;
+    const id = hash(buf, Buffer.isBuffer(file) ? '' : file.ext);
     if (seen.has(id)) continue;
     seen.add(id);
     total += inlinedBytes(buf.length);

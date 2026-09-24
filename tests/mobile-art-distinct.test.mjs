@@ -8,7 +8,10 @@ test('the art budget counts each distinct image once, as the bundle inlines it',
   const b = Buffer.from('other bytes!');
   assert.equal(distinctInlinedBytes([a, Buffer.from('same bytes'), b]), inlinedBytes(a.length) + inlinedBytes(b.length));
   assert.equal(distinctInlinedBytes([]), 0);
-  assert.ok(MOBILE_ART_INLINED_BUDGET_BYTES < MOBILE_BUNDLE_BUDGET_BYTES, 'the art budget stays under the file ceiling');
+  assert.equal(distinctInlinedBytes([{ buf: a, ext: '.webp' }, { buf: a, ext: '.svg' }]), 2 * inlinedBytes(a.length),
+    'the same bytes under a different type are two assets, never one alias');
+  // ~9.5 MB of the mobile file is not art: the art budget must leave room for it.
+  assert.ok(MOBILE_ART_INLINED_BUDGET_BYTES + 9_500_000 <= MOBILE_BUNDLE_BUDGET_BYTES, 'art at budget still fits the 50 MB file');
 });
 
 test('the bundler aliases byte-identical images instead of inlining them twice', () => {

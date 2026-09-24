@@ -88,7 +88,10 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
     const src = readFileSync(abs);
     const out = readFileSync(resolve(twinDir, rel));
     rawBytes += out.length;
-    inlinedFiles.push(out);
+    // Fonts reach the page through CSS, which inlines every face as it is, so
+    // they are never aliased and always count in full.
+    if (rel.startsWith('fonts/')) inlined += inlinedBytes(out.length);
+    else inlinedFiles.push({ buf: out, ext: extname(rel) });
     if (extname(rel).toLowerCase() === '.webp') {
       const s = webpDimensions(src);
       const t = webpDimensions(out);
@@ -122,7 +125,7 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
   checks += 1;
   // The bundle inlines each distinct image once (duplicates are aliased), so
   // the budget is held to that, not to the sum of every path.
-  inlined = distinctInlinedBytes(inlinedFiles);
+  inlined += distinctInlinedBytes(inlinedFiles);
   if (inlined > budget) findings.push(`the twin tree inlines to ${inlined} bytes, over the ${budget}-byte budget — tighten tools/mobileart-policy.mjs or cut art`);
   return { findings, checks, files: wanted.length, rawBytes, inlined };
 }

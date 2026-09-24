@@ -158,8 +158,9 @@ Highest value first.
 #1285's prologue steps took the mobile art 0.3 MB over its 40 MB budget.
 Per the owner: **raise, then optimize.**
 
-- `MOBILE_ART_INLINED_BUDGET_BYTES` raised 40 → 41 MB. The mobile file keeps
-  its 50 MB ceiling, which `verify-shipped` still enforces.
+- `MOBILE_ART_INLINED_BUDGET_BYTES` raised 40 → 40.4 MB. It stops there
+  because about 9.5 MB of the mobile file is not art, and the file must stay
+  under its 50 MB ceiling, which the bundler and `verify-shipped` enforce.
 - The bundler now inlines each **distinct** image once. 50 images were
   byte-identical to another path, such as an outfit's menu and detail plate or
   a portrait shared by two sets. A repeated path now becomes an alias of the
