@@ -11,8 +11,8 @@
 //
 // main.js cannot be imported headless (it mounts the DOM), so `enterCombat`
 // below mirrors main.js enterCombat's non-UI half line for line: the entry
-// receipt, the persist BEFORE the fight is built, and the createCombat player
-// literal. The reload mirrors main.js resumeRun: loadRun → createRng(seed,
+// receipt, the persist BEFORE the fight is built, and the shared createRunCombat
+// door (src/engine/runCombat.js) main.js builds the fight through. The reload mirrors main.js resumeRun: loadRun → createRng(seed,
 // streamCounters) → enterCombat(..., { resuming: true }). The last test reads
 // src/main.js as text and fails if the ordering this mirror depends on moves.
 import test from 'node:test';
@@ -21,11 +21,10 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { resolveHandRules } from '../src/model/handRules.js';
-import { runMods, resolveSwapCostRule } from '../src/model/loadout.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
 import { restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { buildActMap, drawSeatOrder } from '../src/engine/actmap.js';
 import { rollEncounter } from '../src/engine/encounters.js';
@@ -62,31 +61,15 @@ function enterCombat(saves, run, rng, nodeId, encounterId, { resuming = false } 
   const enc = registries.encounters.get(encounterId);
   if (savedSnapshot) return restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot });
   const seat = seatAtTier(run.seatOrder, run.actNumber);
-  return createCombat({
-    ratingsRules: registries.balance.combatRatings || null,
-    handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
+  return createRunCombat({
     registries,
     rng,
-    player: {
-      classId: run.class, attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
-      skills: run.skills, coreTags: run.coreTags,
-      maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana,
-      maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
-      damageBySchoolAdd: run.damageBySchoolAdd,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
-      removedAttackSlotIds: run.removedAttackSlotIds,
-      equipmentPoolDeficits: run.equipmentPoolDeficits,
-      itemUpgradeLevels: run.itemUpgradeLevels, itemMounts: run.itemMounts, armamentLevels: run.armamentLevels,
-      deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges,
-      loadout: run.loadout,
-    },
+    run,
+    settings: saves.loadMeta().settings || {},
     enemyIds: enc.enemies,
     hpMult: seatTierHpMult(registries, seat, run.actNumber),
     enemyStatuses: [],
-    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
-    playerStatuses: [...runMods(registries, run.loadout, run.class).startStatuses],
+    playerStatuses: [],
   });
 }
 
@@ -196,7 +179,7 @@ test('M2 parity: main.js still orders entry persist, snapshot guard and reload r
     'enterCombat still discards a snapshot that already carries a result');
   const persistAt = enter.indexOf('if (!resuming) persist();');
   assert.ok(persistAt >= 0, 'enterCombat still persists the entry receipt when not resuming');
-  const buildAt = Math.min(...['createCombat(', 'restoreCombatSnapshot('].map((needle) => {
+  const buildAt = Math.min(...['createRunCombat(', 'restoreCombatSnapshot('].map((needle) => {
     const at = enter.indexOf(needle);
     assert.ok(at >= 0, `enterCombat still calls ${needle}`);
     return at;

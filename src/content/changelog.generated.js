@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1280",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: leaving a fight and coming back is now tested",
+    "detail": "Nothing you play changes. A new automated test abandons a run in the middle of a fight, reloads it, and checks that you land back at the fight's start with the same deck, HP and enemies, as the spec promises.",
+    "build": "0.7.1.465",
+    "pullRequest": 1280,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1280"
+  },
+  {
     "id": "pr-1275",
     "date": "2026-09-24",
     "group": "2026-09-24",
