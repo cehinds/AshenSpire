@@ -2257,6 +2257,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
   }
+  if (shotState === 'combat' && shotParams.has('shotEnemyHp')) {
+    // `?shotEnemyHp=<n>` — every living enemy starts at most n HP, so one real
+    // card play is the killing blow (SPEC §7.4 kill-cam evidence). Host state
+    // before mount, like the fixtures around it; never written to a save.
+    const hp = Number(shotParams.get('shotEnemyHp'));
+    if (!Number.isInteger(hp) || hp < 1) throw new Error(`?shotEnemyHp=${shotParams.get('shotEnemyHp')}: needs a whole number ≥ 1`);
+    for (const enemy of combat.enemies) if (enemy.alive) enemy.hp = Math.min(enemy.hp, hp);
+  }
   if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
     // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
     // shot boot uses memory storage, and this host-state fixture is applied
@@ -3433,7 +3441,15 @@ if (shotState === 'combat-test') {
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
+    // `?shotEncounter=<id>` — fight a named encounter (e.g. an elite or boss)
+    // from the first node, for SPEC §7.4 kill-cam evidence on a real kill.
+    // An unknown id refuses by name rather than photograph some other fight.
+    const shotEncounter = shotParams.get('shotEncounter');
+    if (shotEncounter && !registries.encounters.all().some((e) => e.id === shotEncounter)) {
+      throw new Error(`?shotEncounter=${shotEncounter}: no such encounter`);
+    }
     if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
+    else if (shotEncounter) enterCombat(startId, shotEncounter);
     else enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
