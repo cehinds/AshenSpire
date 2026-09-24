@@ -13,6 +13,10 @@
 // (endArtChargeResolution), `playerTurnEnd`, `flaskUsed`, `armamentSwapped`
 // and any player hit on an enemy that no equipped weapon lent clear it, and an
 // Art's own hit clears it, so an Art never charges its own meter. Headless; no RNG.
+//
+// Co-op (item 10) runs the same listener: coopCombat's setActive points
+// `combat.artCharge` at the acting seat's own map, and only that seat's hits
+// (`sourcePlayerId === playerKey`) count.
 
 import { artChargeRules, artChargeMax, artChargeValue, artUnleashFor, isWeaponEquipped, lendingWeaponOf } from '../model/artCharge.js';
 
@@ -25,7 +29,13 @@ function charge(combat, weaponId, amount, reason) {
   if (value === before) return;
   combat.artCharge = combat.artCharge || {};
   combat.artCharge[weaponId] = value;
-  combat.emit('artChargeChanged', { weaponId, value, max, amount: value - before, reason });
+  combat.emit('artChargeChanged', { ...seatOf(combat), weaponId, value, max, amount: value - before, reason });
+}
+
+// Co-op (SPEC §12.2.1 item 10): the seat whose meters these are rides the
+// receipt. Solo sets no playerKey, so solo events are unchanged.
+function seatOf(combat) {
+  return combat.players && combat.playerKey ? { playerId: combat.playerKey } : {};
 }
 
 function isEnemy(combat, id) {
@@ -35,7 +45,7 @@ function isEnemy(combat, id) {
 /** recordArtCharge(combat, event) — called by the bus after every event. */
 export function recordArtCharge(combat, event) {
   const rules = artChargeRules(combat.registries);
-  if (!rules || !combat.player || combat.players) return;
+  if (!rules || !combat.player) return;
   switch (event.type) {
     case 'cardPlayed':
       combat._artChargeLastHit = null;
@@ -49,6 +59,9 @@ export function recordArtCharge(combat, event) {
       return;
     case 'damageDealt': {
       if (event.sourceId !== combat.player.id || !isEnemy(combat, event.targetId) || !(event.amount > 0)) return;
+      // Co-op: every seat's entity is `player`; only the ACTIVE seat's own hit
+      // fills the active seat's meters (C.artCharge is that seat's map).
+      if (combat.players && event.sourcePlayerId !== combat.playerKey) { combat._artChargeLastHit = null; return; }
       // Only the card being resolved lands the weapon's hits. A status or
       // trigger that remembers a card (a Combat Ratings `ratingCard`) and
       // fires later — on the enemy's turn, say — is not that card's hit.
@@ -106,7 +119,7 @@ export function takeArtUnleash(combat, inst) {
   if (!unleash || !unleash.ready) return null;
   combat.artCharge = combat.artCharge || {};
   combat.artCharge[unleash.weaponId] = 0;
-  combat.emit('artChargeChanged', { weaponId: unleash.weaponId, value: 0, max: unleash.max, amount: -unleash.value, reason: 'unleash' });
-  combat.emit('artUnleashed', { weaponId: unleash.weaponId, cardId: inst.cardId, cardInstanceId: inst.instanceId });
+  combat.emit('artChargeChanged', { ...seatOf(combat), weaponId: unleash.weaponId, value: 0, max: unleash.max, amount: -unleash.value, reason: 'unleash' });
+  combat.emit('artUnleashed', { ...seatOf(combat), weaponId: unleash.weaponId, cardId: inst.cardId, cardInstanceId: inst.instanceId });
   return unleash.form.effects;
 }

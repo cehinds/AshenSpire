@@ -135,3 +135,50 @@ export function maxKillCamMs(cfg = COMBAT_JUICE) {
   const M = cfg.motion.killCam;
   return Math.max(M.bossMs, M.eliteMs, M.lastEnemyMs);
 }
+
+// ---------------------------------------------------------------------------
+// Co-op (SPEC §7.4 "Co-op"): no paced timeline — a snapshot's receipts play at
+// once (coop.js spawnCombatFx) — so the same decisions are gathered per receipt.
+// ---------------------------------------------------------------------------
+
+/** The figure a receipt event struck: a seat id for a player, else the entity id. */
+function struckId(e) {
+  if (e.targetPlayerId) return e.targetPlayerId;
+  if (e.targetId === 'player') return e.playerId || null;
+  return e.targetId || null;
+}
+
+/**
+ * receiptJuicePlan(events, { rankOf, won }, gates) → { stops, killCam }
+ *   stops   — [{ targetId, sourceIds, ms }]: one freeze per struck figure, its
+ *             length the LONGEST hitStopForEvent among the receipt's hits and
+ *             staggers on it (a figure freezes once; stops never stack), with
+ *             the seats/enemies that struck it.
+ *   killCam — pickKillCam over the receipt's deaths, or null.
+ * Gates are solo's: instant speed (paced false) and reduced motion skip both.
+ */
+export function receiptJuicePlan(events, { rankOf = () => null, won = false } = {}, gates = {}, cfg = COMBAT_JUICE) {
+  const byTarget = new Map();
+  for (const e of Array.isArray(events) ? events : []) {
+    const ms = hitStopForEvent(e, gates, cfg);
+    if (!(ms > 0)) continue;
+    const targetId = struckId(e);
+    if (!targetId) continue;
+    const row = byTarget.get(targetId) || { targetId, sourceIds: [], ms: 0 };
+    row.ms = Math.max(row.ms, ms);
+    const sourceId = e.sourcePlayerId || (e.sourceId && e.sourceId !== 'player' ? e.sourceId : null);
+    if (sourceId && sourceId !== targetId && !row.sourceIds.includes(sourceId)) row.sourceIds.push(sourceId);
+    byTarget.set(targetId, row);
+  }
+  return { stops: [...byTarget.values()], killCam: pickKillCam(events, { rankOf, won }, gates, cfg) };
+}
+
+/**
+ * coopFinaleHoldMs(killCam, gates) → how long a co-op client holds a fight's
+ * last frame before the next scene: the kill cam's length when one plays,
+ * else motion.coopFinaleHoldMs; 0 at instant speed.
+ */
+export function coopFinaleHoldMs(killCam, gates = {}, cfg = COMBAT_JUICE) {
+  if (gates.paced === false) return 0;
+  return killCam && killCam.plan ? killCam.plan.ms : cfg.motion.coopFinaleHoldMs;
+}

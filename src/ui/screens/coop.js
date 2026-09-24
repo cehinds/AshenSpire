@@ -60,7 +60,12 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts, freezeFigures, playKillCam, releaseCombatJuice, getAnimSpeed } from '../fx.js';
+import { reducedMotionRequested } from '../motion.js';
+import { receiptJuicePlan, rankForStature, coopFinaleHoldMs } from '../models/CombatJuiceModel.js';
+import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
+import { unleashedFormFor, unleashedTemplate } from '../../model/artCharge.js';
+import { chestOptionView } from '../components/chestOption.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -469,6 +474,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function render() {
     if (!snap) return;
+    // The board is rebuilt wholesale: no freeze or kill cam may outlive it.
+    releaseCombatJuice();
     posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
@@ -582,6 +589,56 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
 
   // ---- combat (parity board) ------------------------------------------------
+  // ---- Weapon Art charge (SPEC §12.2.1 item 10) ------------------------------
+  // Which seats' meters were full at the last paint, so a meter flashes once
+  // when it FILLS rather than on every repaint while full.
+  const artChargeFullBefore = new Map();
+  function newlyFullArtCharges(seatId, rows) {
+    const full = new Set(rows.filter((row) => row.full).map((row) => row.weaponId));
+    const before = artChargeFullBefore.get(seatId) || new Set();
+    artChargeFullBefore.set(seatId, full);
+    return new Set([...full].filter((id) => !before.has(id)));
+  }
+  function statusDisplayName(id) {
+    try { return registries.statuses.get(id).name || id; } catch { return id; }
+  }
+  // A full Art prints its unleashed strip (card.js reads preview.artCharge).
+  // The co-op client prices, it does not preview: the strip's numbers are the
+  // unleashed form's authored amounts, as every co-op card face's are.
+  function artChargePreview(preview, card) {
+    const charge = card.artCharge;
+    const form = charge && charge.unleashed ? unleashedFormFor(registries, card.cardId) : null;
+    if (!form) return preview;
+    const tokens = { ...(preview.tokens || {}) };
+    form.effects.forEach((eff, i) => {
+      const value = eff.op === 'applyStatus' ? (eff.stacks != null ? eff.stacks : 1) : eff.amount;
+      if (typeof value === 'number') tokens[`unleashed.${i}`] = value;
+    });
+    return {
+      ...preview, tokens,
+      artCharge: { ...charge, textTemplate: unleashedTemplate(form, statusDisplayName), shortTemplate: unleashedTemplate(form, statusDisplayName, { short: true }) },
+    };
+  }
+  // The Art card in hand wears its weapon's pips, and the full edge when the
+  // meter is full — the host's reading of the play door (hand[i].artCharge).
+  function decorateArtChargeCards(hand) {
+    for (const card of hand) {
+      const node = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(card.instanceId)}"]`);
+      const charge = card.artCharge;
+      if (!node || !charge) continue;
+      node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
+      const badge = el('span', { class: 'art-charge-card' });
+      badge.appendChild(artChargePips(charge.value, charge.max));
+      const form = charge.unleashed ? unleashedFormFor(registries, card.cardId) : null;
+      if (form) badge.title = `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}`;
+      node.appendChild(badge);
+      const weapon = (registries.equipment.armaments || []).find((a) => a.id === charge.weaponId);
+      node.dataset.artChargeLabel = artChargeLabel({ name: weapon ? weapon.name : charge.weaponId, artName: card.cardId, value: charge.value, max: charge.max, full: charge.unleashed });
+      const label = node.getAttribute('aria-label');
+      if (label) node.setAttribute('aria-label', `${label}. ${node.dataset.artChargeLabel}`);
+    }
+  }
+
   function renderCombat() {
     const sc = snap.scene;
     const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
@@ -690,6 +747,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
+      // THE SEAT'S WEAPON ART METERS (SPEC §12.2.1 item 10): the host's rows,
+      // drawn by the solo component; a meter that just filled flashes once.
+      const chargeEl = artChargeMeter(p.artCharge || [], { flashIds: newlyFullArtCharges(p.id, p.artCharge || []) });
+      if (chargeEl) {
+        for (const node of chargeEl.querySelectorAll('.art-charge-row')) {
+          const row = p.artCharge.find((r) => r.weaponId === node.dataset.weaponId);
+          const form = row && unleashedFormFor(registries, row.artCardId);
+          attachTooltip(node, () => `<div class="tt-title">${esc(row.name)} · Art charge ${row.value}/${row.max}</div>${esc(`Hits with ${row.name}'s cards fill this. When full, ${row.artName} is unleashed on its next play${form ? `: ${unleashedSummary(form.effects, statusDisplayName)}` : ''}.`)}`);
+        }
+        // Overhead, before the seat's info, as solo leads with them
+        // (adoptCombatantFrame lifts .art-charge into the leading slot).
+        box.prepend(chargeEl);
+      }
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
         box.addEventListener('click', () => {
@@ -790,11 +860,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
-            preview: costs.preview,
+            preview: artChargePreview(costs.preview, c),
             selected: c.instanceId === armedFriendlyCard,
           };
         }),
       });
+      decorateArtChargeCards(meP.hand);
     } else {
       handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
@@ -837,7 +908,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ahost.replaceWith(card);
     }
 
-    const canEnd = meP && meP.alive && meP.connected && !meP.ended;
+    const canEnd = !pacing && meP && meP.alive && meP.connected && !meP.ended;
     const et = app.querySelector('#coop-endturn');
     et.disabled = !canEnd;
     const hasPlayable = canEnd && meP.hand.some(card => {
@@ -1065,6 +1136,29 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return card;
     });
   }
+  /**
+   * The elite chest's options (SPEC §3.8.1, co-op): one option per stored
+   * entry, worded by the solo reward screen's view, whose tap names the index
+   * it takes. `takeable` (the host's catch-up reading) draws a stale option
+   * disabled with its reason; the host refuses it either way.
+   */
+  function chestTakes(offer, takeable, dataKey, onPick) {
+    const list = offer && offer.chest && Array.isArray(offer.chest.options) ? offer.chest.options : [];
+    return list.map((option, i) => {
+      const view = chestOptionView(registries, option);
+      const open = !Array.isArray(takeable) || takeable[i] !== false;
+      const card = choice({
+        glyph: view.glyph, name: `${view.label}: ${view.name}`, disabled: !open,
+        reason: open ? '' : 'This no longer fits your deck: it changed since the chest was rolled. Choose another.',
+        className: 'coop-take coop-chest-option', attrs: { dataset: { [dataKey]: 'chest', chestIndex: String(i) } },
+      });
+      // The view's sentence is markup (its uiStrings rows carry <b>).
+      const body = card.querySelector('.ob');
+      if (body && view.text) body.appendChild(el('span', { class: 'od', html: view.text }));
+      if (open) card.addEventListener('click', () => onPick(i));
+      return card;
+    });
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
@@ -1078,6 +1172,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       grid.appendChild(card);
     });
     const relics = relicTakes(offer, 'take', (relicId) => { pick.takeRelic = true; pick.relicId = relicId; submit(); });
+    const chest = chestTakes(offer, offer.chestTakeable, 'take', (chestIndex) => { pick.chestIndex = chestIndex; submit(); });
     const takes = [
       ...relics,
       offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
@@ -1089,11 +1184,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       children: [
         subtitle('Choose a card'), grid,
         relics.length > 1 ? subtitle(t('reward.relic.eyebrow')) : null,
+        chest.length ? subtitle(t('reward.chest.eyebrow')) : null,
+        chest.length ? options(chest, { class: 'coop-choices coop-chest' }) : null,
         options(takes, { class: 'coop-choices' }),
       ],
     });
     app.querySelectorAll('[data-take]').forEach((b) => {
-      if (b.dataset.take === 'relic') return; // wired where it was made (relicTakes)
+      if (b.dataset.take === 'relic' || b.dataset.take === 'chest') return; // wired where made
       b.addEventListener('click', () => { if (b.dataset.take === 'flask') pick.flask = true; submit(); });
     });
   }
@@ -1259,11 +1356,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const takeRelic = (relicId) => resolve({ takeRelic: true, relicId });
     const relics = item.type === 'reward' ? relicTakes(item.offer, 'cu', takeRelic)
       : item.type === 'treasure' && item.relicId ? relicTakes({ relicId: item.relicId }, 'cu', takeRelic) : [];
+    // A missed elite chest replays its STORED options (SPEC §3.8.1, co-op).
+    const chest = item.type === 'reward' ? chestTakes(item.offer, item.chestTakeable, 'cu', (chestIndex) => resolve({ chestIndex })) : [];
     sceneDoor({
       title, eyebrow: debt,
       note: 'Claim what you would have earned while away.',
       children: [
         grid,
+        chest.length ? subtitle(t('reward.chest.eyebrow')) : null,
+        chest.length ? options(chest, { class: 'coop-choices coop-chest' }) : null,
         options([
           ...relics,
           choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
@@ -1273,7 +1374,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (grid) {
       item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
     }
-    app.querySelectorAll('[data-cu]').forEach((b) => { if (b.dataset.cu !== 'relic') b.addEventListener('click', () => resolve({})); });
+    app.querySelectorAll('[data-cu]').forEach((b) => { if (b.dataset.cu !== 'relic' && b.dataset.cu !== 'chest') b.addEventListener('click', () => resolve({})); });
   }
   function renderComplete() {
     const win = snap.scene.victory;
@@ -1305,6 +1406,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const sc = s.scene;
+    if (s.finale && sc && sc.kind !== 'combat' && prevCombat && app.querySelector('.combat.coop')) {
+      playFinale(s);
+      return;
+    }
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
     if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
       paceEnemyTurn(s, moves);
@@ -1370,6 +1475,56 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       pacing = false;
       render();
       if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
+    }
+  }
+
+  // ---- combat juice (SPEC §7.4, co-op) --------------------------------------
+  // No paced timeline here: the receipt plays at once, so CombatJuiceModel's
+  // receiptJuicePlan gathers the same decisions per struck figure and fx.js's
+  // own helpers play them. Gates are solo's settings.
+  let lastKillCam = null;
+  function juiceGates() {
+    return {
+      paced: getAnimSpeed() !== 'instant',
+      reducedMotion: reducedMotionRequested(),
+      killCam: !document.body.classList.contains('no-killcam'),
+    };
+  }
+  function playReceiptJuice(scene) {
+    const figure = (id) => app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`);
+    const plan = receiptJuicePlan(scene.events || [], {
+      rankOf: (id) => { const box = figure(id); return box ? rankForStature(box.dataset.stature) : null; },
+      won: scene.result === 'victory',
+    }, juiceGates());
+    for (const stop of plan.stops) {
+      const target = figure(stop.targetId);
+      if (target) freezeFigures({ targets: [target], sources: stop.sourceIds.map(figure).filter(Boolean) }, stop.ms);
+    }
+    lastKillCam = plan.killCam;
+    const anchor = plan.killCam && figure(plan.killCam.event.targetId);
+    if (anchor) playKillCam({ combatEl: app.querySelector('.combat'), layer: app.querySelector('.fx-layer') }, anchor, plan.killCam.plan);
+  }
+
+  // THE FIGHT-ENDING FRAME (SPEC §7.4, co-op). The host settles a won or lost
+  // fight into the next scene in the same snapshot and sends the fight's last
+  // combat scene beside it as `finale`. A client that was showing the fight
+  // plays that frame on its board — floats, hit-stop, kill cam — holds it,
+  // then draws the new scene; frames that arrive meanwhile queue behind it.
+  async function playFinale(s) {
+    pacing = true;
+    try {
+      lastKillCam = null;
+      snap = { ...s, scene: s.finale };
+      render();
+      const ribbon = app.querySelector('.turn-ribbon');
+      if (ribbon) ribbon.textContent = s.finale.result === 'victory' ? 'Victory' : s.finale.result === 'defeat' ? 'Defeat' : '';
+      await sleep(coopFinaleHoldMs(lastKillCam, juiceGates()));
+    } finally {
+      const frames = [s, ...pendingSnaps];
+      pendingSnaps = [];
+      pacing = false;
+      snap = frames[frames.length - 1];
+      render();
     }
   }
 
@@ -1520,6 +1675,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
     }
     layoutReceiptRows(receiptRowsByTarget);
+    // COMBAT JUICE (SPEC §7.4, co-op): the solo decisions over this receipt.
+    if (hasNewReceipts) playReceiptJuice(now);
     if (hasNewReceipts) lastReceiptSeq = receiptSeq;
     for (const e of now.enemies) {
       const pe = prev.enemies.find((x) => x.id === e.id);

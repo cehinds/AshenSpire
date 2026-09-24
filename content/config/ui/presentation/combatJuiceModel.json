@@ -6,7 +6,8 @@
   },
   "motion": {
     "hitStop": { "minMs": 40, "critMs": 80, "maxMs": 120, "staggerMs": 100, "impactFraction": 0.34, "freshAnimationMs": 50 },
-    "killCam": { "bossMs": 900, "eliteMs": 750, "lastEnemyMs": 600, "slowRate": 0.35, "zoomInMs": 160, "zoomOutMs": 200 }
+    "killCam": { "bossMs": 900, "eliteMs": 750, "lastEnemyMs": 600, "slowRate": 0.35, "zoomInMs": 160, "zoomOutMs": 200 },
+    "coopFinaleHoldMs": 700
   },
   "behavior": {
     "killCam": { "lastEnemy": true, "rankByStature": { "huge": "boss", "large": "elite" } }

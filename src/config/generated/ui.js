@@ -25,7 +25,7 @@
 // source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatFormationModel.json fafe847869663431
-// source content/config/ui/presentation/combatJuiceModel.json 0f8daa2ab7ca2a37
+// source content/config/ui/presentation/combatJuiceModel.json c900049ceb988347
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 5f145ed3602bc65f
@@ -2962,7 +2962,8 @@ export const uiConfig = deepFreeze({
           "slowRate": 0.35,
           "zoomInMs": 160,
           "zoomOutMs": 200
-        }
+        },
+        "coopFinaleHoldMs": 700
       },
       "behavior": {
         "killCam": {

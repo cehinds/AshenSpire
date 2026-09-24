@@ -160,6 +160,16 @@ for stance and player-status hooks. `setActive` now publishes `C.playerKey`
 state by it. Solo never sets `playerKey`, so solo keys are unchanged; enemies
 stay shared (they have unique entity ids). Covered by engine test 24.
 
+**Game-feel parity (PR #1287 round 2).** Co-op fights carry each seat's own
+Weapon Art charge meters (SPEC §12.2.1 item 10: `P.artCharge`, pointed at by
+`setActive`, filled only by that seat's hits, unleashed by its full Art, drawn
+over each seat and on the viewer's Art card). The snapshot's event receipts get
+solo's hit-stop and kill cam through `receiptJuicePlan` (SPEC §7.4 "Co-op"), and
+a fight-ending kill reaches the board as the host's transient `finale` frame.
+Elites open each seat's own chest (SPEC §3.8.1): rolled on the seat's stream,
+stored in the offer and the catch-up entry so a reconnect replays the same
+options, no armament category, a stale pick refused with nothing mutated.
+
 ## Constraints
 
 - The single-file `dist/AshenSpire.html` has **no server**, so co-op requires

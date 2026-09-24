@@ -2881,6 +2881,21 @@ function coopCombatShot() {
     },
     party,
   };
+  // `?shotArt=partial|full` (SPEC §12.2.1 item 10): each seat's Weapon Art
+  // meters as the host sends them — artChargeView rows off the class's real
+  // starting loadout — and the viewer's Art card in hand with its charge.
+  const shotArt = shotParams.get('shotArt');
+  if (shotArt === 'partial' || shotArt === 'full') {
+    const seatRows = (classId, charge) => {
+      const seatRun = createRunState({ seed: 1, classId, registries });
+      return artChargeView({ registries, loadout: seatRun.loadout, player: { classId } }, charge);
+    };
+    const [p1, p2] = snapshot.scene.players;
+    const full = shotArt === 'full';
+    p1.artCharge = seatRows('starseer', { ashStaff: full ? 4 : 2 });
+    p2.artCharge = seatRows('reaver', { straightSword: 3, roundShield: full ? 4 : 1 });
+    p1.hand = [...p1.hand.slice(0, 4), { instanceId: 'h-art', cardId: 'starSpark', upgraded: false, artCharge: { weaponId: 'ashStaff', value: full ? 4 : 2, max: 4, unleashed: full } }];
+  }
   if (shotParams.get('shotArcane') === 'matrix') {
     const [locked, immune] = snapshot.scene.enemies;
     locked.arcaneExposure = {
@@ -2960,7 +2975,13 @@ function coopRewardShot(pose = null) {
   const boss = pose === 'bossRelic';
   const offer = boss
     ? { pool: 'boss', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 240, flaskId: null, relicId: null, relicIds: rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, []) }
-    : { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' };
+    // An elite door carries the seat's chest, as the host rolls it (SPEC
+    // §3.8.1, co-op: no armament category).
+    : { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', chest: { options: [
+      { category: 'relic', relicId: 'forsakenMedallion' },
+      { category: 'upgrade', mode: 'rare', cardId: 'executioner' },
+      { category: 'cinders', cinders: 90, smithingStones: 1 },
+    ] } };
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
     seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
