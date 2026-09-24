@@ -39,7 +39,7 @@ test('an S weapon pays +2 a point above the anchor and the flat rating at or bel
 test('an A weapon pays +1, +2 across two points; B +1 a point; every step is at least +1 on S and A', () => {
   const battleaxe = armament('battleaxe');
   assert.equal(battleaxe.scaling.strength, 'A');
-  assert.equal(ar(battleaxe, stats({ strength: 4 })).attributeValue, 2);
+  assert.equal(ar(battleaxe, stats({ strength: 4 })).attributeValue, 3);
   assert.equal(ar(battleaxe, stats({ strength: 5 })).attributeValue, 4);
   const sword = armament('straightSword');
   assert.equal(sword.scaling.strength, 'B');
@@ -57,12 +57,42 @@ test('an A weapon pays +1, +2 across two points; B +1 a point; every step is at 
   }
 });
 
+test('a graded weapon never reads below the flat rating, and equals it at or below the anchor', () => {
+  // Regression: the anchor share and the graded share were floored apart, so
+  // the anchor's leftover half-point was lost (dagger DEX at STR 4 read 1 graded
+  // against 2 flat; an ungraded-but-weighted WIS read one below flat forever).
+  const graded = registries.equipment.armaments.filter((piece) => piece.scaling);
+  assert.ok(graded.length > 0);
+  for (const piece of graded) {
+    const ratingId = registries.equipment.basicCardProfiles.find((p) => p.id === piece.attackProfile).ratingId;
+    for (const attributeId of ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']) {
+      for (let v = 1; v <= 20; v++) {
+        const attributes = stats({ [attributeId]: v });
+        const flat = effectiveEquipmentRating(defaultRatingFormula, attributes, piece, { ratingId }, ratingId).value;
+        const withGrades = effectiveEquipmentRating(defaultRatingFormula, attributes, piece, { ratingId }, ratingId, scaling).value;
+        assert.ok(withGrades >= flat, `${piece.id} ${attributeId} ${v}: graded ${withGrades} >= flat ${flat}`);
+        if (v <= scaling.anchor) assert.equal(withGrades, flat, `${piece.id} ${attributeId} ${v}: at or below the anchor graded is flat`);
+      }
+    }
+  }
+  // Every attribute at once, too (the ungraded-but-weighted terms).
+  for (const piece of graded) {
+    const ratingId = registries.equipment.basicCardProfiles.find((p) => p.id === piece.attackProfile).ratingId;
+    for (let v = 1; v <= 20; v++) {
+      const attributes = stats({ strength: v, dexterity: v, constitution: v, wisdom: v, intelligence: v });
+      const flat = effectiveEquipmentRating(defaultRatingFormula, attributes, piece, { ratingId }, ratingId).value;
+      const withGrades = effectiveEquipmentRating(defaultRatingFormula, attributes, piece, { ratingId }, ratingId, scaling).value;
+      assert.ok(withGrades >= flat, `${piece.id} all at ${v}: graded ${withGrades} >= flat ${flat}`);
+    }
+  }
+});
+
 test('the graded receipt carries its grades, anchor and coefficients', () => {
   const receipt = gradedAttributeRatingReceipt(defaultRatingFormula, stats({ intelligence: 5, wisdom: 4 }), 'pr', { intelligence: 'A' }, scaling);
-  // INT: floor(0.5 × 3) + floor(1.5 × 2) = 1 + 3; WIS (ungraded, keeps 0.5): floor(1.5) + floor(0.5) = 1 + 0.
+  // INT: floor(0.5 × 3 + 1.5 × 2) = floor(4.5) = 4; WIS (ungraded): the flat floor(0.5 × 4) = 2.
   assert.equal(receipt.terms.intelligence, 4);
-  assert.equal(receipt.terms.wisdom, 1);
-  assert.equal(receipt.value, 5);
+  assert.equal(receipt.terms.wisdom, 2);
+  assert.equal(receipt.value, 6);
   assert.equal(receipt.coefficients.intelligence, 1.5);
   assert.equal(receipt.coefficients.wisdom, 0.5);
 });

@@ -67,9 +67,9 @@ export function pieceIsGraded(piece, id, scaling) {
 /**
  * gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) → the
  * attributeRatingReceipt shape, each term priced
- *   floor(w × min(v, anchor)) + floor(c × max(0, v − anchor))
- * with `w` the rule's weight and `c` the grade's coefficient (`w` when the
- * attribute is ungraded). Carries `grades`, `anchor` and `coefficients`.
+ *   floor(w × min(v, anchor) + c × max(0, v − anchor))
+ * with `w` the rule's weight and `c` the grade's coefficient; an ungraded
+ * attribute is the flat term floor(w × v). Carries `grades`, `anchor` and `coefficients`.
  */
 export function gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) {
   const rule = config?.ratings?.[id];
@@ -85,9 +85,11 @@ export function gradedAttributeRatingReceipt(config, attributes, id, grades, sca
   }));
   const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => {
     const v = values[attributeId];
-    const flat = Math.floor(Math.min(v, anchor) * weights[attributeId] + 1e-9);
-    const above = Math.floor(Math.max(0, v - anchor) * coefficients[attributeId] + 1e-9);
-    return [attributeId, flat + above];
+    // An ungraded attribute is the flat term exactly; a graded one is floored
+    // ONCE over the whole sum, so the half the anchor's own share leaves over
+    // is never thrown away (a graded weapon never reads below the flat one).
+    if (grades?.[attributeId] == null) return [attributeId, Math.floor(v * weights[attributeId] + 1e-9)];
+    return [attributeId, Math.floor(Math.min(v, anchor) * weights[attributeId] + Math.max(0, v - anchor) * coefficients[attributeId] + 1e-9)];
   }));
   const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
   const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
