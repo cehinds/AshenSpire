@@ -504,6 +504,9 @@ should appear in rewards. Notes:
   `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `onTurnEndInHand` (optional effect list) fires at the player's turn end for
+  each copy still in hand, before the hand is discarded — Guilt's
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Solo combat only for now.
 
 ## Add a status (one file: `src/content/statuses.js`)
 

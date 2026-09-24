@@ -348,6 +348,23 @@ function endPlayerTurn(combat, discardIds = []) {
   drainQueue(combat);
   if (combat.result) return;
 
+  // …then each card still in hand fires its authored `onTurnEndInHand` effect
+  // list (e.g. Guilt: lose 1 HP, SPEC §5.2). Content owns the numbers; the
+  // engine only walks the hand, before the hand is discarded.
+  let inHandFired = false;
+  for (const card of [...combat.piles.hand]) {
+    const hook = resolveCard(combat.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      combat.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(combat);
+    if (combat.result) return;
+  }
+
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
