@@ -60,7 +60,12 @@ P3  D payload & release model (owner sign-off) · K code structure · L engine p
 **Target after A4:** every class at 35–65% bot win rate at default settings,
 best-to-worst spread ≤ 20 points, no class dying mostly to act-1 normal
 fights. Before/after tables in each PR body. Balance moves are data rows, not
-code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
+code literals. The bot win rate is a proxy: SPEC §9 M3's target for an
+experienced player stays ~35–50%.
+
+Items marked **(owner ruling)** change a number or rule the owner approved or
+SPEC states. They go to the owner with simulator evidence first; SPEC is
+amended before code moves.
 
 - [ ] **A1 Simulator parity (S–M).** `tools/runsim.mjs` and
   `tools/balance.mjs` do not pass `handRules`/`ratingsRules` the way
@@ -77,9 +82,16 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
   (`content/framework/mechanics.json` ~6, ~10); both pools persist across
   fights (`src/main.js` ~2282); the validator forces every Mana card to also
   cost Stamina (23/36 Starseer, 20/36 Herald reward cards cost both).
-  - [ ] Stamina refills at combat start; Mana refills at combat end.
-  - [ ] Drop the "Mana card must also cost Stamina" rule; re-cost cards that
-    were dual-costed only because of it.
+  - [ ] **(owner ruling)** Stamina refills at combat start; Mana refills at
+    combat end. The recovery numbers in `mechanics.json` are owner-approved
+    ("Approved new-rule numbers"; `docs/framework-migration-checklist.md`
+    row 7).
+  - [ ] **(owner ruling)** Drop the "Mana card must also cost Stamina" rule
+    and re-cost cards dual-costed only because of it. SPEC states it ("Mana is
+    never the first cost line").
+  - [ ] Within the current rules: re-cost Starseer and Herald cards and add
+    Stamina or Mana recovery through relics, rests or cards, so the class
+    becomes viable even if the rulings stand.
   - [ ] Fix dominated cards: Comet Fragment vs Shooting Shard, Starblade
     Phalanx vs Star Slicer (`starseer.js`); Bloodhunter's Strike vs Goreslash;
     Warhorn duplicates Traveler's Whetstone (`balance.js` ~1599, ~1618).
@@ -88,7 +100,8 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
 - [ ] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
   scale:
   - [ ] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
-  - [ ] Dodge Roll gives 0 Block at DEX 1–4 and charges up to A2/SP3 while
+  - [ ] Dodge Roll's guard is `3 + floor((DEX−10)/2)` plus the weight bonus:
+    ≤ 0 at DEX 1–4 and negative with no floor when Heavy at DEX 1–3. It charges up to A2/SP3 while
     printing A0/SP1 (`src/framework/weight.js` ~36, ~55); it sits in two
     starter decks.
   - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
@@ -104,14 +117,17 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
   the derived draw stat (`src/engine/handRules.js` ~6–10) and make 21 draw
   cards and 6 draw relics near-dead.
-  - [ ] Default to a fixed draw of 5 with end-of-turn discard.
+  - [ ] Default to drawing the derived Draw stat each turn with end-of-turn
+    discard (SPEC §5 turn end already discards non-Retain cards); retune the
+    Draw row so a new character draws about 5 (`3 + floor(INT/5)` is 3 at
+    creation).
   - [ ] Keep Retain as a keyword or class trait; keep the old mode selectable.
-  - [ ] Make the derived draw stat apply.
 
 ### E1. Test hygiene (one session, beside A)
 
 - [ ] Discover `tests/**/*.test.mjs` instead of the hand-typed list in
-  `tests/run-node.mjs` (18 files currently never run).
+  `tests/run-node.mjs`: 31 test files are not in its list, and about 17 of
+  them (including `seats`, `shared-armor`, `framework`) run in no CI job.
 - [ ] Root-cause the red suites — never skip or quarantine:
   - [ ] `shared-armor.test.mjs` 16/18 (`'Requires STR 3'` vs `/12/`, likely
     the old stat scale).
@@ -207,8 +223,8 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
   combat and customize modules during the gate or prologue; let a key skip
   the reveal.
 - [ ] **Touch info (M).** A tap on an intent shows nothing; the double-tap /
-  hold scheme (`tooltip.js` ~24) is never taught; desktop hover waits
-  > 900 ms. Single tap opens tips on icons with no primary action; ~400 ms
+  hold scheme (`tooltip.js` ~24) is never taught; desktop hover waits more
+  than 900 ms. Single tap opens tips on icons with no primary action; ~400 ms
   hover; one-time hint.
 - [ ] **Esc (S).** Route Esc to each screen's Back/Leave through the `cancel`
   action (`src/ui/input.js` ~103): compendium, victory dialog, shop, event,
