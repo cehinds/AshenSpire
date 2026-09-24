@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Fights and rewards hit harder",
     "detail": "A boss now lays out three different boss relics and you keep one, as the rules always promised. Elites open a chest: choose one of three big rewards — a relic, an upgraded card, an armament or weapon art, or a purse of cinders and a Smithing Stone. Card rewards now remember bad luck: every common raises your next rare chance, and four offers in a row without a rare guarantee one. Every weapon fills an Art charge as its cards land hits; when the pips are full, its next Weapon Art is unleashed with an extra effect printed on the card. Weapons carry scaling grades (S to D), so points above 3 in the right attribute visibly raise that weapon's damage, and the Shrine's Level up shows exactly what each point changes before you assign it (\"Slashing Strike 8 → 10\"). Reaching a level after a fight now announces itself. Heavy hits and Staggers briefly freeze the fighters, killing an elite or boss slows into a short kill cam (its own setting; off under reduced motion), and damage numbers grow with the size of the hit.",
-    "build": "0.7.1.451",
+    "build": "0.7.1.453",
     "pullRequest": 1287,
     "url": "https://github.com/cehinds/AshenSpire/pull/1287"
   },
