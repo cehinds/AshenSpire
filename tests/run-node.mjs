@@ -139,14 +139,15 @@ if (CORE) {
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
   const files = found.filter(file => !NOT_SPAWNED.has(file));
   // The spec reporter ends with a count and, on a failure, a "failing tests"
-  // section; only that section is printed back, so a red run names its file.
+  // section. A red run prints the reporter's whole output: a file that dies
+  // before registering a test (a syntax error, a missing import) shows its
+  // exception ABOVE that section, and the section alone would drop the reason.
   const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
   const out = `${result.stdout || ''}${result.stderr || ''}`;
   const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
   const ok = result.status === 0 && !stale.length && count('fail') === 0;
   if (!ok) {
-    const failing = out.indexOf('✖ failing tests:');
-    console.log(failing >= 0 ? out.slice(failing) : out || String(result.error));
+    console.log(out || String(result.error));
     for (const file of stale) console.log(`  NOT_SPAWNED names ${file}, which no longer exists — remove the entry`);
   }
   console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${files.length} files, ${count('tests')} tests, ${count('fail')} failed` +
