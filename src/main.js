@@ -1100,7 +1100,9 @@ function startClimb() {
 function showPrologue() {
   const openingRun = run;
   const settings = { ...saves.loadMeta().settings, ...run.advancedConfigSnapshot?.overrides };
-  audio.music('map');
+  // The region's map context, so a prologue that keeps its music hands it to
+  // showMap() unchanged instead of restarting it.
+  audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   mountPrologue(app, {
     // The opening may take the music with it, scene by scene (Advanced →
     // Opening → Music); `map` above is what it starts over.
