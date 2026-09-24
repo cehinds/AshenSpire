@@ -769,6 +769,10 @@ function headingDate(group) {
   return group.match(RELEASE_HEADING)?.[2] ?? group.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
 }
 
+// The one receipt shape this file reads. parseChangelog parses with it, and
+// --check-order refuses any receipt-LIKE line that does not match it.
+const RECEIPT_LINE = /^- \*\*(.+?)\*\* \(\[#(\d+)\]\((https:\/\/github\.com\/cehinds\/AshenSpire\/pull\/(\d+))\), `([^`]+)`\)\.(?: (.+))?$/;
+
 export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
@@ -778,7 +782,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     if (line.startsWith('## ')) { group = line.slice(3).trim(); continue; }
     if (!line.startsWith('- ')) continue;
     if (linkDefinitionLabel(stripBlockContainerPrefixes(line)) !== null) continue;
-    const match = line.match(/^- \*\*(.+?)\*\* \(\[#(\d+)\]\((https:\/\/github\.com\/cehinds\/AshenSpire\/pull\/(\d+))\), `([^`]+)`\)\.(?: (.+))?$/);
+    const match = line.match(RECEIPT_LINE);
     if (!match) throw new Error(`unparseable changelog receipt: ${line}`);
     const [, summary, prText, url, urlPr, build, prose = ''] = match;
     if (prText !== urlPr) throw new Error(`pull-request label and URL disagree: ${line}`);
@@ -1020,8 +1024,19 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
       rest = next;
     }
   };
-  const RECEIPT_LINK = /\[#\d+\]\([^)\s]*\/pull\/\d+\)/;
-  const RECEIPT_STAMP = /`\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+`/;
+  // RECEIPT-LIKE IS DECIDED LOOSELY, NOT BY LINK SYNTAX. A titled link
+  // (`…/pull/999 "PR")`), an autolink `<…/pull/999>` or a reference link
+  // `[#999][r]` each rendered a receipt the narrow link regex missed, so it was
+  // neither refused nor read (#1279 review). A line is receipt-like if it names
+  // a pull request anywhere (`/pull/<digits>` or `#<digits>`) AND a four-part
+  // build stamp anywhere, backticked or bare, whatever the link form; any such
+  // line that is not a top-level `- ` bullet the strict RECEIPT_LINE accepts is
+  // refused. Above the first `## ` heading the file's own preamble cites `#189`
+  // and `0.4.0.0777` in prose, so there a line is receipt-like only when it
+  // names a `/pull/<digits>` URL (any link form) with a stamp.
+  const RECEIPT_PR = /\/pull\/\d+|#\d+/;
+  const RECEIPT_PR_URL = /\/pull\/\d+/;
+  const RECEIPT_STAMP = /\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+/;
   let newerHeading = null;
   let priorContent = '';
   const lines = markdown.split(/\r?\n/);
@@ -1035,8 +1050,9 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     if (/^(?:=+|-+)[ \t]*$/.test(content) && prior.trim() !== '') {
       throw new Error(`check-order: line '${line}' underlines '${prior}' as a setext heading, which this file does not use — a date is a '## ' heading, and the receipts under this one would be dated by the heading above`);
     }
-    if (RECEIPT_LINK.test(line) && RECEIPT_STAMP.test(line) && !line.startsWith('- ')) {
-      throw new Error(`check-order: line '${line}' carries a receipt but is not a top-level '- ' bullet, so no check would read its build`);
+    const names = newerHeading ? RECEIPT_PR : RECEIPT_PR_URL;
+    if (names.test(line) && RECEIPT_STAMP.test(line) && !(line.startsWith('- ') && RECEIPT_LINE.test(line))) {
+      throw new Error(`check-order: line '${line}' carries a receipt but is not a top-level '- ' bullet in the receipt form '- **Summary** ([#N](https://github.com/cehinds/AshenSpire/pull/N), \`X.Y.Z.N\`).', so no check would read its build`);
     }
     if (!line.startsWith('## ')) continue;
     const heading = line.slice(3).trim();
@@ -1212,6 +1228,17 @@ async function orderCorpus(ordinalFile) {
     ['heading inside a block quote inside an ordered list item', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}1. > ## 2020-01-01\n\n`), null, 'bare \'## \' group heading'],
     ['heading indented four spaces under a list item', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}${r(990001, n)}\n\n    ## 2020-01-01\n\n`), null, 'bare \'## \' group heading'],
     ['receipt nested as a sub-bullet', real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}  ${r(990001, 999, '9.9.9')}\n\n`), null, 'not a top-level \'- \' bullet'],
+    // Receipt-like lines in link forms the strict shape does not read, each
+    // naming a build that does not exist, inside a block quote (the shape the
+    // review found) and as a top-level bullet.
+    ...[
+      ['a titled link', `- **Nested** ([#999](https://github.com/cehinds/AshenSpire/pull/999 "PR"), \`9.9.9.999\`).`],
+      ['an autolink', `- **Nested** (#999 <https://github.com/cehinds/AshenSpire/pull/999>, \`9.9.9.999\`).`],
+      ['a reference-style link', `- **Nested** ([#999][r], \`9.9.9.999\`).\n\n[r]: https://github.com/cehinds/AshenSpire/pull/999`],
+    ].flatMap(([form, line]) => [
+      [`receipt with ${form} inside a block quote`, real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}> ${line.replace(/\n/g, '\n> ')}\n\n`), null, 'not a top-level \'- \' bullet'],
+      [`receipt with ${form} as a top-level bullet`, real.replace(/\n## (\d{4}-\d{2}-\d{2})\n\n/, (m) => `${m}${line}\n\n`), null, 'not a top-level \'- \' bullet'],
+    ]),
     ['empty date heading above the newest group', top(`## 2020-01-01\n`), null, 'headings run newest first'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
