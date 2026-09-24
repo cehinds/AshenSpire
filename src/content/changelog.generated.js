@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The map re-centres when your screen changes size",
     "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
-    "build": "0.7.1.481",
+    "build": "0.7.1.483",
     "pullRequest": 1289,
     "url": "https://github.com/cehinds/AshenSpire/pull/1289"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the combat card hotkeys are tested",
     "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
-    "build": "0.7.1.479",
+    "build": "0.7.1.481",
     "pullRequest": 1278,
     "url": "https://github.com/cehinds/AshenSpire/pull/1278"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
     "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
-    "build": "0.7.1.477",
+    "build": "0.7.1.479",
     "pullRequest": 1279,
     "url": "https://github.com/cehinds/AshenSpire/pull/1279"
   },
@@ -123,16 +123,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
-    "id": "pr-1270",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "The balance simulator now plays by the game's rules",
-    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
-    "build": "0.7.1.455",
-    "pullRequest": 1270,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
-  },
-  {
     "id": "pr-1285",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -141,6 +131,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.456",
     "pullRequest": 1285,
     "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1270",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The balance simulator now plays by the game's rules",
+    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
+    "build": "0.7.1.455",
+    "pullRequest": 1270,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
     "id": "pr-1271",
