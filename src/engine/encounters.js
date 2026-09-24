@@ -226,6 +226,18 @@ export function rollBossRelicChoices(registries, rng, ownedIds, count = registri
 }
 
 /**
+ * autoPickBossRelic(registries, rng, ownedIds) → relic id | null.
+ * A player-less boss door (simulators, bots): lays out the same choice
+ * rollBossRelicChoices does, then keeps one through a seeded pick on the same
+ * 'relicRewards' stream. null when the pool is exhausted — the caller pays
+ * balance.rewards.bossRelicConsolationCinders, as the game does.
+ */
+export function autoPickBossRelic(registries, rng, ownedIds) {
+  const offered = rollBossRelicChoices(registries, rng, ownedIds);
+  return offered.length ? rng.pick('relicRewards', offered) : null;
+}
+
+/**
  * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
  *
  * Deterministic on stream 'armaments', like every other reward roll, so a seed

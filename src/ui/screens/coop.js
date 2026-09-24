@@ -53,7 +53,8 @@ import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combat
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
-import { renderCard } from '../components/card.js';
+import { renderCard, relicText } from '../components/card.js';
+import { offeredRelicIds } from '../../model/rewardplan.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
@@ -1042,29 +1043,59 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
+  /**
+   * The relic takes an offer lays out (SPEC §6.1): the single relic as the
+   * one 'Take the relic' it always was, a boss's choice as one option per
+   * relic — name, icon and rule — whose tap names the relic it keeps. The
+   * ids are rewardplan's one reading of the offer; the host honours only an
+   * id it offered, so a seat can keep one and never two.
+   */
+  // Each option carries its own listener (`onPick(relicId)`), so the id it
+  // keeps is bound where the option is made, never re-read from the DOM.
+  function relicTakes(offer, dataKey, onPick) {
+    const ids = offeredRelicIds(offer);
+    if (!ids.length) return [];
+    const single = offer.relicId || ids.length === 1;
+    return (single ? ids.slice(0, 1) : ids).map((id) => {
+      const def = registries.relics.get(id);
+      const card = single
+        ? choice({ glyph: '◆', name: 'Take the relic', description: def.name, className: 'coop-take coop-relic-take', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } })
+        : choice({ glyph: def.icon || '◆', name: def.name, description: relicText(def, registries), className: 'coop-take coop-relic-take coop-boss-relic', attrs: { dataset: { [dataKey]: 'relic', relicId: id } } });
+      card.addEventListener('click', () => onPick(id));
+      return card;
+    });
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
     const stone = offer.smithingStoneReceipt;
     const grid = el('div', { class: 'reward-row' });
-    let pick = { cardId: null, takeRelic: false, flask: false };
+    let pick = { cardId: null, takeRelic: false, relicId: null, flask: false };
     const submit = () => send({ t: 'chooseReward', pick });
     offer.cardIds.forEach((cid) => {
       const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
       card.addEventListener('click', () => { pick.cardId = cid; submit(); });
       grid.appendChild(card);
     });
+    const relics = relicTakes(offer, 'take', (relicId) => { pick.takeRelic = true; pick.relicId = relicId; submit(); });
     const takes = [
-      offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
+      ...relics,
       offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
       choice({ glyph: '›', name: 'Skip the card', attrs: { dataset: { take: 'skip' } } }),
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
       note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
-      children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
+      children: [
+        subtitle('Choose a card'), grid,
+        relics.length > 1 ? subtitle(t('reward.relic.eyebrow')) : null,
+        options(takes, { class: 'coop-choices' }),
+      ],
     });
-    app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
+    app.querySelectorAll('[data-take]').forEach((b) => {
+      if (b.dataset.take === 'relic') return; // wired where it was made (relicTakes)
+      b.addEventListener('click', () => { if (b.dataset.take === 'flask') pick.flask = true; submit(); });
+    });
   }
   function renderShrine() {
     const done = snap.scene.done && snap.scene.done[me];
@@ -1224,23 +1255,25 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
-    const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
+    const takeRelic = (relicId) => resolve({ takeRelic: true, relicId });
+    const relics = item.type === 'reward' ? relicTakes(item.offer, 'cu', takeRelic)
+      : item.type === 'treasure' && item.relicId ? relicTakes({ relicId: item.relicId }, 'cu', takeRelic) : [];
     sceneDoor({
       title, eyebrow: debt,
       note: 'Claim what you would have earned while away.',
       children: [
         grid,
         options([
-          relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
+          ...relics,
           choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],
     });
-    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
     if (grid) {
       item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
     }
-    app.querySelectorAll('[data-cu]').forEach((b) => b.addEventListener('click', () => resolve(b.dataset.cu === 'relic' ? { takeRelic: true } : {})));
+    app.querySelectorAll('[data-cu]').forEach((b) => { if (b.dataset.cu !== 'relic') b.addEventListener('click', () => resolve({})); });
   }
   function renderComplete() {
     const win = snap.scene.victory;

@@ -39,6 +39,7 @@ import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollClassDraftIds, rollFlaskDrop,
   rollRelicReward,
+  autoPickBossRelic,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
@@ -424,8 +425,10 @@ function simulateRun(classId, seed, ds = null) {
         if (botFight(run, rng, encId, cm, ds) !== 'victory') { result.deaths = `${pool}:${encId}`; recordDeath(ds, act, run.hp); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
-          const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
+          // SPEC §6.1: the boss lays out its choice; the bot keeps one by seeded pick.
+          const boss = autoPickBossRelic(REG, rng, run.relics);
           if (boss) run.relics.push(boss);
+          else run.cinders += REG.balance.rewards.bossRelicConsolationCinders || 0;
           break; // act cleared
         }
       } else if (kind === 'shrine') {

@@ -46,6 +46,15 @@ export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:$
 export const pickIds = (row) => (Array.isArray(row.nodeIds) ? row.nodeIds
   : Array.isArray(row.relicIds) ? row.relicIds : row.cardIds || []);
 
+/**
+ * offeredRelicIds(offer) → the relic ids an offer lays out (SPEC §6.1): a
+ * boss's `relicIds` choice, or the single `relicId` elites and treasure (and
+ * pre-choice boss saves) carry. The one reading of "which relics are on the
+ * table", shared by the solo menu, the co-op screen and the co-op host.
+ */
+export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
+  : Array.isArray(offer.relicIds) ? offer.relicIds.filter(Boolean) : []);
+
 /** The field a choice row's pick lands in, by kind. */
 const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
 
@@ -125,10 +134,10 @@ const KINDS = {
     // A boss offers a CHOICE of distinct boss relics (`relicIds`, SPEC §6.1);
     // elites and treasure carry the single `relicId` they always did. One
     // row either way: 2+ ids is a choice, one id is a plain take.
-    present: (r) => !!r.relicId || (Array.isArray(r.relicIds) && r.relicIds.length > 0),
+    present: (r) => offeredRelicIds(r).length > 0,
     row: (r) => {
-      if (r.relicId || !Array.isArray(r.relicIds)) return { relicId: r.relicId };
-      return r.relicIds.length > 1 ? { relicIds: r.relicIds.slice(), choice: true } : { relicId: r.relicIds[0] };
+      const ids = offeredRelicIds(r);
+      return !r.relicId && ids.length > 1 ? { relicIds: ids, choice: true } : { relicId: ids[0] };
     },
     blocked: () => null,
   },
@@ -230,7 +239,7 @@ export function unseenIds(rewards = {}, possessions = {}) {
   const draftIds = (rewards.skillDrafts || []).flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
-    relics: [...new Set([...(rewards.relicId ? [rewards.relicId] : []), ...(rewards.relicIds || [])])].filter((id) => !holds(possessions.relics, id)),
+    relics: [...new Set(offeredRelicIds(rewards))].filter((id) => !holds(possessions.relics, id)),
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
   };

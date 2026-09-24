@@ -2884,11 +2884,17 @@ function coopShotParty() {
     { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
 }
-function coopRewardShot() {
+function coopRewardShot(pose = null) {
+  // `?shotReward=bossRelic`: the boss door's choice of three (SPEC §6.1), the
+  // pool's first three in authored order — the host's own shape, no roll.
+  const boss = pose === 'bossRelic';
+  const offer = boss
+    ? { pool: 'boss', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 240, flaskId: null, relicId: null, relicIds: rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, []) }
+    : { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' };
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
     seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
+    scene: { kind: 'reward', pool: offer.pool, chosen: {}, afterReward: null, offers: { p1: offer } },
     party: coopShotParty(),
   };
 }
@@ -3419,7 +3425,7 @@ if (shotState === 'combat-test') {
   }
   coopStubMount(coopMapShot(w == null ? 0 : Number(w)), 'p1');
 } else if (shotState === 'coopreward') {
-  coopStubMount(coopRewardShot(), 'p1');
+  coopStubMount(coopRewardShot(shotParams.get('shotReward')), 'p1');
 } else if (shotState === 'coopshrine') {
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {
