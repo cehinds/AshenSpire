@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
     "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
-    "build": "0.7.1.470",
+    "build": "0.7.1.472",
     "pullRequest": 1279,
     "url": "https://github.com/cehinds/AshenSpire/pull/1279"
   },
