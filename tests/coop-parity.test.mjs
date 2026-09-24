@@ -554,7 +554,7 @@ function mountCoopBoard() {
     const app = dom.document.createElement('main');
     dom.document.body.append(app);
     mountCoop(app, { registries: REG, conn, myId: 'p1', meta: {}, onSettingsChange() {}, onLeave() {} });
-    return { app, deliver: (snapshot) => conn._h.onMessage({ t: 'state', snapshot }) };
+    return { app, deliver: (snapshot) => conn._h.onMessage({ t: 'state', snapshot }), message: (m) => conn._h.onMessage(m) };
   });
 }
 
@@ -597,6 +597,36 @@ test('a finale that arrives while the enemy turn plays is still played before th
     assert.ok(app.querySelector('.coop-continue'), 'then the reward door drew');
   } finally {
     globalThis.setTimeout = realTimeout;
+    globalThis.setInterval = realInterval;
+  }
+});
+
+// ---- a refused choice is told to the sender (tools/lan.mjs → coop.js) ----------
+
+test('the LAN host sends a refused reward or catch-up choice back, and the screen says so', async () => {
+  const { applyGameIntent } = await import('../tools/lan.mjs');
+  const S = party();
+  const purse = { category: 'cinders', cinders: 5, smithingStones: 0 };
+  openReward(S, { p1: chestOffer([purse]), p2: chestOffer([purse]) });
+  assert.deepEqual(applyGameIntent(S, 'p1', { t: 'chooseReward', pick: {} }), { handled: true, refusal: null });
+  const again = applyGameIntent(S, 'p1', { t: 'chooseReward', pick: { chestIndex: 0 } });
+  assert.equal(again.handled, true);
+  assert.deepEqual(again.refusal, { t: 'intentRefused', intent: 'chooseReward', error: 'already chosen' });
+  const cu = applyGameIntent(S, 'p2', { t: 'catchupChoice', index: 0, pick: {} });
+  assert.equal(cu.refusal.intent, 'catchupChoice');
+  assert.equal(cu.refusal.error, 'nothing to catch up');
+  assert.equal(applyGameIntent(S, 'p1', { t: 'noSuchIntent' }).handled, false);
+
+  const realInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); return h; };
+  try {
+    const { deliver, message } = await mountCoopBoard();
+    deliver({ ...baseSnap, party: partyRows(), scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: chestOffer([purse]) } } });
+    message(again.refusal);
+    const shown = globalThis.document.querySelector('.coop-turn-banner');
+    assert.ok(shown, 'the refusal is announced');
+    assert.match(shown.textContent, /already chosen/);
+  } finally {
     globalThis.setInterval = realInterval;
   }
 });

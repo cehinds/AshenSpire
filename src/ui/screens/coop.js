@@ -208,6 +208,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
+      // The host refused a reward or catch-up choice (tools/lan.mjs): say so,
+      // as the turn banners do; the door stays up to choose again.
+      if (msg.t === 'intentRefused') banner(t('coop.intentRefused', { reason: String(msg.error || '') }), true);
     },
     onClose: () => {
       teardown();
