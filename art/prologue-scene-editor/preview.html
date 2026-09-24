@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/">
+  <title>Ashen Spire · opening scene editor preview</title>
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/prologue.css">
+  <link rel="stylesheet" href="styles/ui.css">
+  <link rel="stylesheet" href="styles/kit.css">
+  <link rel="stylesheet" href="styles/responsive-type.css">
+</head>
+<body>
+  <main style="max-width:48rem;margin:12vh auto;padding:2rem;color:#eee6d5">
+    <h1>Opening scene editor preview</h1>
+    <p>Inspect scene settings beside the actual game renderer. This standalone preview keeps edits in this browser tab; in the game, they save to your profile.</p>
+    <button type="button" id="open">Open scene editor</button>
+  </main>
+  <script type="module">
+    import { openPrologueSceneEditor } from '/src/ui/screens/prologueSceneEditor.js';
+    const settings = {};
+    const open = () => openPrologueSceneEditor(settings, () => ({ ok: true }), { sceneId: 'step' });
+    document.getElementById('open').addEventListener('click', open);
+    open();
+  </script>
+</body>
+</html>
