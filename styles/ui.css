@@ -1229,6 +1229,21 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 4.6rem; width: 4.6rem; }
   :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
 }
+/* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
+   Display and Accessibility. It only arranges the sample; every face in it is
+   the game's own rule, restyled by the classes/vars applyDisplaySettings writes. */
+[data-settings-host] .set-preview { margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--r-2, 8px); background: var(--bg); min-width: 0; max-width: 100%; box-sizing: border-box; }
+[data-settings-host] .set-preview > .set-preview-summary { display: flex; align-items: center; min-height: var(--tap-floor, 44px); padding: 0 .9rem; cursor: pointer; font: 600 1.1rem/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+[data-settings-host] .set-preview > .set-preview-body { display: flex; align-items: flex-start; gap: 1rem; padding: 0 .9rem .9rem; min-width: 0; }
+[data-settings-host] .set-preview-text { display: flex; flex-direction: column; gap: .5rem; flex: 1 1 auto; min-width: 0; }
+[data-settings-host] .set-preview-heading { white-space: normal; overflow-wrap: anywhere; }
+[data-settings-host] .set-preview-lore { margin: 0; color: var(--parchment); font-family: var(--lore-font); font-size: var(--lore-size); line-height: var(--lore-leading); letter-spacing: var(--lore-tracking); font-style: var(--lore-slant); }
+[data-settings-host] .set-preview-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+[data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 152px), 40%); min-width: 0; }
+[data-settings-host] .set-preview-card > .card { width: 100%; max-width: 100%; margin: 0; }
+@media (max-width: 600px) {
+  [data-settings-host] .set-preview > .set-preview-body { padding: 0 .7rem .7rem; gap: .7rem; }
+}
 .set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
 :root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
 :root .hand .card.selected { border-color: var(--selection-color, #59bd75); }

@@ -15,6 +15,7 @@ import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
 import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
+import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
@@ -2131,7 +2132,8 @@ function searchResultsHtml(settings, query) {
     + `<div class="set-card-list" data-search-results="${hits.length}">${body}</div>${more}`;
 }
 
-function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, query = '') {
+/** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, query = '') {
   if (query) return searchResultsHtml(settings, query);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
@@ -2142,7 +2144,7 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div><div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
   }
   const h = categoryHandler(cat);
   if (!h) {
@@ -2371,6 +2373,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }
   const wire = () => {
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
+  mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
