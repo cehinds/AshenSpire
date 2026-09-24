@@ -332,6 +332,7 @@ let mapEntries = 0;
 let mapBytes = 0;
 let copiedAssets = 0;
 let copiedDetail = 0;
+let copiedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
 if (MOBILE) {
@@ -1039,6 +1040,15 @@ if (EXTERNAL_ART) {
     cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
     copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
   }
+  // The shipped score, same contract: a served page with the music-folder
+  // setting blank fetches music/manifest.json from beside itself
+  // (content/music.js SHIPPED_MUSIC_FOLDER), so a hosted build without it
+  // 404s on boot and falls back to the synth.
+  const musicSrc = resolve(ROOT, 'music');
+  if (existsSync(musicSrc)) {
+    cpSync(musicSrc, resolve(OUT_DIR, 'music'), { recursive: true });
+    copiedMusic = walkCount(resolve(OUT_DIR, 'music'));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1060,6 +1070,7 @@ if (EXTERNAL_ART) {
   console.log('  css assets linked: ' + externalCssUrls + ' (rebased onto the output HTML)');
   console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
     + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
+  console.log('  shipped score    : ' + copiedMusic + ' files → ' + idOf(resolve(OUT_DIR, 'music')));
 } else {
   console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
   console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');
