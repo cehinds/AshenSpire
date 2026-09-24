@@ -134,6 +134,7 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
   if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
   if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');
+  if (snapshot.attributeMode != null && !nonEmptyString(snapshot.attributeMode)) problems.push('attributeMode must be a string or null');
   if (!record(snapshot.swapCostRule)) problems.push('swapCostRule must be an object');
   if (!Array.isArray(snapshot.eventLog)) problems.push('eventLog must be an array');
   if (!Array.isArray(snapshot.triggerState)

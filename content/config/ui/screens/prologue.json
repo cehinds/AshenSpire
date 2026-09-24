@@ -134,14 +134,14 @@
           "character": true,
           "actor": {
             "desktop": {
-              "x": 30,
-              "y": 84,
+              "x": 50,
+              "y": 96,
               "height": 40
             },
             "mobile": {
-              "x": 31,
-              "y": 81,
-              "height": 28
+              "x": 40,
+              "y": 96,
+              "height": 40
             }
           },
           "art": "step",
@@ -243,6 +243,9 @@
         "previewClass": "reaver",
         "previewScene": "warmth",
         "shadowStrength": 0.7,
+        "editorGrid": false,
+        "editorSnap": true,
+        "editorGridStep": 5,
         "layout": "caption",
         "imageScale": 1,
         "imageFit": "cover",
@@ -256,6 +259,11 @@
         "textBoxVisible": true,
         "textBoxOpacity": 1,
         "textBoxColor": "#100e0c",
+        "captionFixedHeight": false,
+        "captionHeightVh": 18,
+        "bannerBox": true,
+        "bannerBoxColor": "#100e0c",
+        "bannerBoxOpacity": 1,
         "textOutline": false,
         "textOutlineColor": "#100e0c",
         "textOutlineWidth": 2,

@@ -162,6 +162,28 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   return settings;
 }
 
+/**
+ * bringProfileForward(meta, bundle, save, warnings) → `meta.settings`,
+ * rewritten to this build's keys and — when there was anything to rewrite —
+ * handed to `save(meta)`.
+ *
+ * ONE DOOR FOR A PROFILE ARRIVING FROM STORAGE (Codex, on #1273). Boot brought
+ * the profile forward and a restore did not: a restored pre-#1273 profile kept
+ * `progression.rewardMultiplier`, which `configuredContentBundle` still paid as
+ * ÷ 20 while the Advanced Settings row opened on the new key's default of 1, so
+ * the screen misstated what was in force until the next restart. Boot and
+ * restore both come through here now. Saved, not only rewritten, because
+ * `loadMeta` re-reads the stored bytes on every call: a profile left un-saved
+ * would hand the next reader the retired key again.
+ */
+export function bringProfileForward(meta, bundle, save, warnings = null) {
+  const settings = meta.settings || (meta.settings = {});
+  if (!hasLegacyAdvancedSettings(settings)) return settings;
+  normalizeAdvancedSettings(settings, bundle, warnings);
+  save(meta);
+  return settings;
+}
+
 // A DIAL THIS BUILD RETIRED, so an older export still imports. `parseAdvanced-
 // ConfigFile` refuses an unknown key OUTRIGHT — "Nothing was imported" — which
 // is right for a typo and wrong for a key this build itself removed: the
@@ -544,8 +566,8 @@ const PRESENTATION_ROWS = Object.freeze([
   ]),
   { key: 'playerSpriteScale', label: 'Player sprite scale', min: 0.5, max: 2, step: 0.05, integer: false, note: 'Scale the player figure without changing its combat footprint.' },
   { key: 'enemySpriteScale', label: 'Enemy sprite scale', min: 0.5, max: 2, step: 0.05, integer: false, note: 'Scale enemy figures without changing targeting or combat rules.' },
-  { key: 'settingsWidthPercent', label: 'Settings window width', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings window may use.' },
-  { key: 'settingsHeightPercent', label: 'Settings window height', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings window may use.' },
+  { key: 'settingsWidthPercent', label: 'Settings panel width', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings panel may use.' },
+  { key: 'settingsHeightPercent', label: 'Settings panel height', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings panel may use.' },
 ]);
 
 function presentationRows() {
@@ -1174,47 +1196,4 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   const problems = advancedConfigProblems(bundle, { ...current, ...changes });
   if (problems.length) throw new Error(`Nothing was imported. ${problems[0]}`);
   return changes;
-}
-
-export async function saveAdvancedConfigFile(settings, options = {}) {
-  return saveJsonFile(advancedConfigExport(settings, options.build || {}, options.includeKeys || []), options);
-}
-
-/**
- * saveJsonFile(text, options) → the Save As door, then the download fallback.
- *
- * Extracted from `saveAdvancedConfigFile` when the opening grew a file of its
- * own: two exports, one set of browser quirks. The caller decides what the
- * bytes are and what the file is called; this only decides how it leaves.
- */
-export async function saveJsonFile(text, options = {}) {
-  const win = options.window || globalThis.window;
-  const doc = options.document || globalThis.document;
-  const filename = options.filename || 'ashen-spire-game-config.json';
-  if (win && typeof win.showSaveFilePicker === 'function') {
-    try {
-      const handle = await win.showSaveFilePicker({
-        suggestedName: filename,
-        types: [{ description: options.description || 'Ashen Spire game configuration', accept: { 'application/json': ['.json'] } }],
-      });
-      const writable = await handle.createWritable();
-      await writable.write(text);
-      await writable.close();
-      return { ok: true, method: 'save-as', filename };
-    } catch (error) {
-      if (error?.name !== 'AbortError') console.warn('Game configuration Save As failed; using browser download.', error);
-    }
-  }
-  if (!doc || !win?.URL) return { ok: false, method: 'unavailable', filename };
-  const blob = new Blob([text], { type: 'application/json' });
-  const url = win.URL.createObjectURL(blob);
-  const anchor = doc.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.hidden = true;
-  doc.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  win.setTimeout(() => win.URL.revokeObjectURL(url), 0);
-  return { ok: true, method: 'download', filename };
 }
