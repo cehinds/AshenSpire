@@ -396,6 +396,8 @@ sync without duplicating persistence.
 | `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested behavior and computed contrast are covered from Map and Combat at 1200×730, 390×844, and 320×640. |
 | `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
 | `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; parchment text clears 4.5:1 while the danger border retains blood/ember, and the destructive callback runs exactly once and never before activation. |
+| `lore-line` | card or equipment `flavor` text | `loreLine.loreLine` | The one-line identity shown in card and equipment inspection, set in the player's lore type (Advanced → Text & lore, `LoreTypeModel`). When the lore has more than its identity line it is a button with a Read cue; otherwise plain text. |
+| `lore-modal` | the same `flavor` text, split by `loreParts` | `loreLine.openLoreModal` | Small shared-shell modal over the inspection: eyebrow, card name, identity line, history, and the closing line set apart under a rule. Escape, ✕ and a scrim press close only this modal and return focus to the line. |
 | `controls-rebind-capture` | `rebind-capture-service` state | `controls.renderControls` | Controls keyboard/pad binding surface. An armed keyboard capture owns its keydown before the surrounding overlay. |
 | `controls-key-rebind-control` | action id + capture state | `controls.renderControls` | Stable keyboard rebind action. Press… is cancelled by Escape without mutation, then focus returns to this control; re-arming accepts a free key. |
 
@@ -601,7 +603,7 @@ copy counts from the run's deck planner, grant reconciliation and card stamping.
 nodes persist through selection so the 180 ms lift/scale transition can settle smoothly.
 Phones use a smaller lift, and OS/in-game reduced motion disables movement. Continue
 opens the named next section; automatic advancement defaults off. Flavor stays on one
-line with an ellipsis, and full wording is available in the Flavor inspection disclosure.
+line with an ellipsis, and full wording is available in the inspection's lore line.
 Review: `equipment-selection-preview.html`; checks: `tools/starting-equipment-qa.mjs`.
 
 Equipment cards (#784): Inventory, starting equipment choices and equipped-item

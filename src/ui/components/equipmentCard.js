@@ -8,6 +8,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { metadataFooter } from '../models/IdentityModel.js';
+import { loreLine } from './loreLine.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 import { t } from '../strings.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
@@ -290,12 +291,9 @@ export function equipmentDetails(explanations) {
   }
   details.append(tags);
   const lore = explanations.find(entry => entry.role === 'flavor' && entry.label);
-  if (lore) {
-    const disclosure = document.createElement('details'); disclosure.className = 'inspection-lore';
-    const summary = document.createElement('summary'); summary.textContent = 'Flavor'; summary.tabIndex = 0;
-    const text = document.createElement('p'); text.textContent = lore.label;
-    disclosure.append(summary, text); details.append(disclosure);
-  }
+  // The identity line, as card inspection shows it (components/loreLine.js).
+  const line = lore ? loreLine({ text: lore.label }) : null;
+  if (line) details.append(line);
   return decorateKeywords(details);
 }
 

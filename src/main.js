@@ -123,6 +123,7 @@ import { surfaceReport } from './ui/surfaces.js';
 import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
+import { applyLoreType } from './ui/models/LoreTypeModel.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -806,6 +807,8 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
   document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
   document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
+  // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
+  applyLoreType(settings);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);

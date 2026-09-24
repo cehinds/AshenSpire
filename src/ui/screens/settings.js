@@ -31,6 +31,7 @@ import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
 import { t } from '../strings.js';
+import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
@@ -333,6 +334,29 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
+  // CARD LORE TYPE (owner, 2026-09-23): "make it configurable in the advanced
+  // settings for text related things, with sub options for flavor text". The
+  // lists and defaults live in models/LoreTypeModel.js, which also stamps the
+  // answer on <html>. Interface text size and readable headings stay in
+  // General → Accessibility, their one home; the tab's tip says so.
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreFace', type: 'choice', def: LORE_TYPE_DEFAULTS.loreFace,
+    choices: LORE_FACES.map((face) => face.label), label: 'Typeface',
+    note: 'The face card lore is set in: the one line in card inspection and the lore window it opens. Every face ships with the game; Cinzel has no italic and is always set upright.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreSize', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSize,
+    choices: LORE_SIZES, label: 'Size',
+    note: 'How large card lore is set. Stacks with Text size and UI size.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreLeading', type: 'choice', def: LORE_TYPE_DEFAULTS.loreLeading,
+    choices: LORE_LEADING, label: 'Line spacing', selfEvident: true,
+    note: 'Space between the lines of the lore window.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreTracking', type: 'choice', def: LORE_TYPE_DEFAULTS.loreTracking,
+    choices: LORE_TRACKING, label: 'Letter spacing', selfEvident: true,
+    note: 'Space between the letters of card lore.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreSlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSlant,
+    choices: LORE_SLANTS, label: 'Lore slant', selfEvident: true,
+    note: 'Italic or upright for the body of the lore window.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreIdentitySlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreIdentitySlant,
+    choices: LORE_SLANTS, label: 'Identity line slant', selfEvident: true,
+    note: 'Italic or upright for the one-line identity shown in card inspection.' },
   { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
@@ -658,6 +682,7 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
   { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
+  { id: 'Text', label: 'Text & lore', tip: 'Typeface, size and spacing for card lore. Interface text size and readable headings are in General → Accessibility.' },
   { id: 'Battlefield', label: 'Battlefield', tip: 'Formation layout, grid, character placement and formation movement.' },
   // The wireframe decisions the drawings leave open, one topic per family of
   // surfaces, now beside the other size controls (cards, the settings window):

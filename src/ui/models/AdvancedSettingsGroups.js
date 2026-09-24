@@ -143,6 +143,7 @@ function topic(row, section) {
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.cardSizeTopic) return 'Card size';
   if (row.debugTopic) return 'Diagnostics';
+  if (row.textTopic) return row.textTopic;
   if (row.statTopic) return row.statTopic;
   if (row.prologueTopic) return row.prologueTopic;
   if (row.handTopic) return row.handTopic;
@@ -261,6 +262,7 @@ export function advancedSubgroups(rows, section) {
   // window follow.
   if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.label), 'Card size', 'Window']);
   if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
+  if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
   if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);
   if (section === 'Equipment') {
     byOrder(['Starting equipment', 'Equipment general', 'Equipment balance', 'Equipment swapping', 'Equipment drops', 'Drop rarity',
