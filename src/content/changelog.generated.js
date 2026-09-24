@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
     "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
-    "build": "0.7.1.457",
+    "build": "0.7.1.464",
     "pullRequest": 1275,
     "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
+    "id": "pr-1274",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The first recorded music: the map, boss and victory screens",
+    "detail": "Four orchestral tracks — two for the map, one boss battle, one victory hymn — now play in hosted and preview builds instead of the generated score; every other screen keeps the generated music until its tracks are made. A build opened straight from a file on disk still plays the generated score, because browsers block it from loading audio files beside it. The prompts every track is made from are in music/PROMPTS.md, and Settings → Advanced → Custom music folder still points the game at your own folder.",
+    "build": "0.7.1.463",
+    "pullRequest": 1274,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1274"
   },
   {
     "id": "pr-1273",
