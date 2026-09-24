@@ -743,12 +743,26 @@ empirical Act-1 win-rate pass (the naive bot). The **Run History** screen
 the live win-rate telemetry the balance pass is tuned against. Re-run the harness
 after any content or tuning change to catch regressions.
 
+Every simulator fight is the live fight: `src/main.js` and the simulators
+(`runsim`, `balance`, `measure-classes`) build a run's combat through
+`src/engine/runCombat.js` (`createRunCombat` — hand rules, rating rules, swap
+price and equipment start statuses from the profile's settings, `{}` for a fresh
+profile) and settle it through `runCombatEnd`, which carries HP, Mana, Stamina
+and flasks into the next fight. The bots choose from `tools/simbot.mjs`
+(`affordableCards`: playable and affordable in Actions, Mana and Stamina, priced
+by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
+concede a fight still open after 150 turns as a stalemate.
+`node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
+(`tests/balance-doc.test.mjs` runs it); regenerate with
+`node tools/balance.mjs > docs/BALANCE.md`.
+
 `node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
 path → encounters → combats → rewards → shrines/events/ambushes → act bosses,
 Acts 1–3) with the same greedy bot plus a simple pilot. Any crash is a real
 integration bug; the win rate is a completability **floor**, not a balance
-target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
-zero crashes, and the Herald completes full 3-act runs even naively.
+target (the bot can't pilot combos or curate a deck). Baseline at 100
+runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reaver
+12, Starseer 1, Rogue 54, Herald 58 wins; zero crashes.
 
 ## M1 known deviations (tracked for M2/M3)
 

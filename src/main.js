@@ -21,11 +21,10 @@ import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armam
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
-import { resolveHandRules } from './model/handRules.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
-import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
+import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
@@ -39,7 +38,7 @@ import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
-import { createCombat } from './engine/combat.js';
+import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
 import { equippedPieces } from './model/loadout.js';
@@ -2160,56 +2159,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createCombat({
-    ratingsRules: registries.balance.combatRatings || null,
-    handRules: resolveHandRules(saves.loadMeta().settings || {}, contentBundle.attributes),
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot }) : createRunCombat({
     registries,
     rng,
-    player: {
-      classId: run.class,
-      attributes: run.attributes,
-      // The rule this run was born with, so the Poise vessel combat stamps
-      // is the one its character sheet shows (plan phase 9).
-      derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
-      skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
-      coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
-      maxHp: run.maxHp,
-      hp: run.hp,
-      maxMana: run.maxMana,
-      mana: run.mana,
-      maxStamina: run.maxStamina,
-      stamina: run.stamina,
-      energyMax: run.energyMax,
-      drawPerTurn: run.drawPerTurn,
-      damageBySchoolAdd: run.damageBySchoolAdd,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-      equipmentAttackSlotCount: run.equipmentAttackSlotCount,
-      removedAttackSlotIds: run.removedAttackSlotIds,
-      equipmentPoolDeficits: run.equipmentPoolDeficits,
-      itemUpgradeLevels: run.itemUpgradeLevels,
-      itemMounts: run.itemMounts,
-      armamentLevels: run.armamentLevels,
-      deck: run.deck,
-      relicIds: run.relics,
-      flasks: run.flasks,
-      flaskCharges: run.flaskCharges,
-      loadout: run.loadout,
-      // The shot door's override, when parked (null otherwise — createCombat
-      // then derives the threshold from the loadout receipt, the real path).
-      ...(shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {}),
-    },
+    run,
+    settings: saves.loadMeta().settings || {},
+    // The shot door's override, when parked (null otherwise — createCombat
+    // then derives the threshold from the loadout receipt, the real path).
+    player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
     hpMult: cm.hpMult,
     enemyStatuses: cm.enemyStatuses,
-    // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
-    // point the other per-fight rules are decided — Settings → Advanced changes
-    // it for the NEXT fight, which is what the row's note promises, and is why
-    // there is no live re-read inside the swap.
-    swapCostRule: resolveSwapCostRule(registries, saves.loadMeta()),
-    // `self.*` mods (Strength from an oathsworn set, Regen from a warm habit)
-    // enter through the same door Custom Climb buffs already used — the engine
-    // has no equipment code, only statuses applied at combat start.
-    playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
+    playerStatuses: cm.playerStatuses,
   });
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
@@ -2317,14 +2278,7 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
-  run.flasks = combat.player.flasks; // drunk flasks stay drunk
-  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
-  for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = combat.player[field];
-    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    run[maxField] = combat.player[maxField];
-  }
-  run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
