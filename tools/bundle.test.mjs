@@ -196,7 +196,12 @@ if (process.argv.includes('--eol-selftest')) {
 }
 
 // ---- 1. The control: an untouched tree still builds -------------------------
-{
+// EVERY CASE RUNS IN ITS OWN FUNCTION FRAME. As bare `{ … }` blocks at module
+// top level, each case's block-scoped locals stayed alive in the one top-level
+// frame after the block ended — every case kept its own ~500 MB copy of the
+// built bundle, and the run died at the CI runner's 4.3 GB heap. A frame that
+// returns releases them.
+(() => {
   const dir = sandbox();
   const r = build(dir);
   check('control: an unmodified tree builds and exits 0', r.status === 0, `exit ${r.status}: ${r.out.slice(-200)}`);
@@ -204,7 +209,7 @@ if (process.argv.includes('--eol-selftest')) {
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 1a. The build refuses rather than invents an ordinal -----------------
 // THIS CASE USED TO PLANT THE WRONG DOOR, and it went red rather than wrong:
@@ -217,7 +222,7 @@ if (process.argv.includes('--eol-selftest')) {
 // invent a number when the ordinal's one home is gone. `readOrdinal` is the
 // door that still says so, and bundle.mjs turns its throw into a refusal page
 // rather than a bundle, so that is what this plants instead.
-{
+(() => {
   const dir = sandbox();
   rmSync(resolve(dir, 'buildordinal.json'), { force: true });
   appendFileSync(resolve(dir, 'src/content/balance.js'), '\n// move the canonical digest\n');
@@ -228,7 +233,7 @@ if (process.argv.includes('--eol-selftest')) {
     /could not derive the build version/.test(r.out) && /buildordinal\.json/.test(r.out),
     r.out.slice(-400));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 1b. Text assets are content, not checkout-EOL receipts ---------------
 // PR #201 exposed the platform seam: Windows materialised the parchment SVGs
@@ -237,9 +242,9 @@ if (process.argv.includes('--eol-selftest')) {
 // the LF Git blobs and changed only the embedded payloads. Run the REAL bundler
 // in two real sandboxes and require exact output identity. Then put the raw read
 // back into the CRLF sandbox and require this same comparison to catch it.
-{
+(() => {
   runEolSelftest();
-}
+})();
 
 // ---- 2. Bjorn's defect: a dropped brace in a content file -------------------
 // Planted in two different files, because the original report was reproduced in
@@ -337,7 +342,7 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
 // ---- 3. Vira's edge: ugly is not broken ------------------------------------
 // The gate must red for a PARSE failure and stay green for a bundle that is
 // merely unpleasant — otherwise it becomes a style opinion nobody asked for.
-{
+(() => {
   const dir = sandbox();
   const p = resolve(dir, 'src/content/statuses.js');
   const src = readFileSync(p, 'utf8');
@@ -352,13 +357,13 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
   check('ugly-but-valid source still builds (the gate is not a style check)',
     r.status === 0, `exit ${r.status}: ${r.out.slice(-200)}`);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 4. A multi-line import must not shift the reported line ---------------
 // rewriteImport collapses a multi-line import to one line; without padding,
 // every line below it shifts and the reported number points at the wrong place.
 // A check that names the WRONG line is worse than one that names none.
-{
+(() => {
   const dir = sandbox();
   const p = resolve(dir, 'src/content/statuses.js');
   let src = readFileSync(p, 'utf8');
@@ -372,7 +377,7 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
     new RegExp(`statuses\\.js:${expectLine}\\b`).test(r.out),
     `expected statuses.js:${expectLine}, got: ${(/statuses\.js:\d+/.exec(r.out) || ['none'])[0]}`);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5. The two second copies #77 left behind -----------------------------
 // One class, not two bugs: a second copy IS an instrument that cannot fail,
@@ -413,7 +418,7 @@ const RETYPE_OPEN = ['return `${RUNTIME_OPEN}  var __modules = {',
 const CONTENT_IIFE = '\n(function () {\n  "use strict";\n  // an ordinary preamble in an ordinary file\n})();\n';
 
 // ---- 5a. The guard reds on a re-typed, non-strict runtime opening ----------
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, ...RETYPE_OPEN);
   check('5a: fixture could re-type the runtime opening', ok);
@@ -424,13 +429,13 @@ const CONTENT_IIFE = '\n(function () {\n  "use strict";\n  // an ordinary preamb
   check('5a: the failure says which invariant broke',
     /no longer opens with RUNTIME_OPEN/.test(r.out), r.out.slice(0, 200));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5b. KNOWN-BAD: #77's regex passes that same tree ----------------------
 // Without this case 5a is a green nobody has seen fail for the right reason.
 // The regex searched all of `runtime` — which by that line holds all 93 module
 // bodies — so content answered a question about the wrapper.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, ...RETYPE_OPEN);
   appendFileSync(resolve(dir, 'src/content/balance.js'), CONTENT_IIFE, 'utf8');
@@ -448,13 +453,13 @@ const CONTENT_IIFE = '\n(function () {\n  "use strict";\n  // an ordinary preamb
   check('5b: and what it passed really was a non-strict runtime',
     existsSync(out) && /<script>\s*\(function \(\) \{\s*var __modules/.test(readFileSync(out, 'utf8')));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5c. The language probe reds when the directive leaves its one home ----
 // `startsWith` alone is blind here: edit RUNTIME_OPEN and the assertion agrees
 // with the edit. Hoisting without this would have traded the regex's false
 // pass for a blind spot the regex did not have.
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, "const STRICT_DIRECTIVE = '\"use strict\";';", "const STRICT_DIRECTIVE = '';");
   check('5c: fixture could empty the strict directive', ok);
@@ -464,19 +469,19 @@ const CONTENT_IIFE = '\n(function () {\n  "use strict";\n  // an ordinary preamb
   check('5c: the failure names the language, not the text',
     /does not put module bodies in strict mode/.test(r.out), r.out.slice(0, 200));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5d. Both edges: ordinary content must NOT trip the guard --------------
 // A guard that reds on a legal IIFE would be a style opinion nobody asked for,
 // and it would be found by whoever writes the first one.
-{
+(() => {
   const dir = sandbox();
   appendFileSync(resolve(dir, 'src/content/balance.js'), CONTENT_IIFE, 'utf8');
   const r = build(dir);
   check('5d: a strict IIFE in content, runtime untouched, still builds',
     r.status === 0, `exit ${r.status}: ${r.out.slice(-200)}`);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5e. The factory signature: one home reaches BOTH sides ---------------
 // Bjorn's probe parameter, which the two copies swallowed silently.
@@ -495,7 +500,7 @@ const callOf = (html) => /factory\(([^)]*)\);/.exec(html);
 // reaches both sides). Its dishonest twin is 5h below, which asserts the
 // build now REFUSES it.
 const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  ['__probe', 'null'],"];
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, ...PROBE_PARAM);
   check('5e: fixture could add a probe parameter at the one home', ok);
@@ -509,13 +514,13 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
     d && c && arity(d[1]) === arity(c[1]),
     d && c ? `declared ${arity(d[1])} (${d[1]}) vs called ${arity(c[1])} (${c[1]})` : 'not found');
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5f. KNOWN-BAD: the #77 shape, with the call site hardcoded again ------
 // Proves 5e's arity check can go red. At 18aab6f this was the shipped state:
 // MODULE_FN gained `__probe`, the emitted bundle declared four parameters and
 // was called with three, exit 0, and nothing said so.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, ...PROBE_PARAM);
   const ok = patchTool(dir, '    ${MODULE_CALL}', '    factory(module, module.exports, require);');
@@ -529,10 +534,10 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
     d && c && arity(d[1]) === 4 && arity(c[1]) === 3,
     d && c ? `declared ${arity(d[1])} vs called ${arity(c[1])}` : 'not found');
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5g. The control, unmutated: the two sides agree today ----------------
-{
+(() => {
   const dir = sandbox();
   build(dir);
   const html = readFileSync(resolve(dir, 'build/AshenSpire.html'), 'utf8');
@@ -541,7 +546,7 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
     d && c && arity(d[1]) === arity(c[1]) && arity(d[1]) === 3,
     d && c ? `declared ${arity(d[1])} vs called ${arity(c[1])}` : 'not found');
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5h. The ASYMMETRIC #77 shape: gate strict, runtime sloppy -------------
 // Bjorn ran this by hand at 7a03c6e and it worked, and nothing in the tree said
@@ -553,7 +558,7 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
 // design is for.
 const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_DIRECTIVE}\\n`;',
   'const RUNTIME_OPEN = `(function () {\\n`;'];
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, ...RETYPE_RUNTIME_OPEN);
   check('5h: fixture could re-type RUNTIME_OPEN past its one home', ok);
@@ -564,14 +569,14 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
   check('5h: the failure names the language, and points at RUNTIME_OPEN',
     /does not put module bodies in strict mode/.test(r.out) && /RUNTIME_OPEN/.test(r.out), r.out.slice(0, 240));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5i. KNOWN-BAD: only the language probe catches 5h ---------------------
 // Without this, 5h is a green that could be coming from the position assertion
 // and nobody would know. `startsWith` is blind here BY CONSTRUCTION — the
 // runtime is assembled FROM RUNTIME_OPEN, so it agrees with whatever
 // RUNTIME_OPEN now says, including a sloppy opening.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, ...RETYPE_RUNTIME_OPEN);
   const ok = patchTool(dir, 'if (!runtimeIsStrict) {', 'if (false) {');
@@ -583,7 +588,7 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
   check('5i: and what it passed really was a non-strict runtime',
     existsSync(out) && /<script>\s*\(function \(\) \{\s*var __modules/.test(readFileSync(out, 'utf8')));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5j. The asymmetry itself, observed ------------------------------------
 // #77 in the mirror: there the gate was sloppy and the browser strict, so a
@@ -592,7 +597,7 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
 // silent half: the runtime that would have shipped is not the language the gate
 // checked. This case is what makes 5h a statement about asymmetry rather than
 // about strictness in general.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, ...RETYPE_RUNTIME_OPEN);
   patchTool(dir, 'if (!runtimeIsStrict) {', 'if (false) {');
@@ -602,7 +607,7 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
   check('5j: the GATE is still strict — a strict-only fault reds even with the probe off',
     r.status === 1 && /[Oo]ctal/.test(r.out), `exit ${r.status}: ${r.out.slice(0, 200)}`);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5k. ARGUMENT IDENTITY, not just arity ---------------------------------
 // Bjorn's second card, and his own line turned on my fix: a consistency check
@@ -612,7 +617,7 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
 // shipped `factory(module, module, require);`, all 44 cases green. Latent only
 // because no module body reads bare `exports` today — the silent kind.
 const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],"];
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, ...WRONG_ARG);
   check('5k: fixture could plant Bjorn\'s wrong argument at the one home', ok);
@@ -621,14 +626,14 @@ const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],
   check('5k: and it says which promise was broken',
     /exports is not module\.exports/.test(r.out), r.out.slice(0, 300));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5l. KNOWN-BAD: the arity check is blind to it, exactly as shipped -----
 // Proves 5k reds for the NEW assertion and not for something the tree already
 // had. With the signature probe neutralised this reproduces Bjorn's finding
 // byte for byte: exit 0, `factory(module, module, require);`, and 5e/5g's
 // arity comparison still perfectly green.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, ...WRONG_ARG);
   const ok = patchTool(dir, 'if (probeScope.__signatureProbeOK !== true) {', 'if (false) {');
@@ -643,14 +648,14 @@ const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],
     d && c && arity(d[1]) === arity(c[1]) && arity(d[1]) === 3,
     d && c ? `declared ${arity(d[1])} vs called ${arity(c[1])}` : 'not found');
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5m. An argument that names nothing ------------------------------------
 // This was 5e's own plant until this commit: ['__probe', '__probe'] passes an
 // identifier that exists nowhere in the runtime, so the bundle it built would
 // have thrown ReferenceError on load. The fixture never noticed because nothing
 // executed what it built. It does now.
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir, "  ['require', 'require'],", "  ['require', 'require'],\n  ['__probe', '__probe'],");
   check('5m: fixture could plant an argument naming nothing', ok);
@@ -658,12 +663,12 @@ const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],
   check('5m: an argument the runtime cannot supply FAILS the build', r.status === 1, `exit ${r.status}: ${r.out.slice(0, 200)}`);
   check('5m: and it names the identifier', /__probe is not defined/.test(r.out), r.out.slice(0, 300));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 5n. Both edges: a DIFFERENT but correct signature still builds --------
 // The probe must check what the loader does, not match a remembered string. A
 // reordered signature is a legal one, and a golden-text check would red on it.
-{
+(() => {
   const dir = sandbox();
   const ok = patchTool(dir,
     "  ['module', 'module'],\n  ['exports', 'module.exports'],",
@@ -677,7 +682,7 @@ const WRONG_ARG = ["  ['exports', 'module.exports'],", "  ['exports', 'module'],
     && /factory\(module\.exports, module, require\);/.test(html),
     (declOf(html) || ['none'])[0] + ' / ' + (callOf(html) || ['none'])[0]);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 6. REFUSAL COMPLETENESS ----------------------------------------------
 // #77's property 3 in Marina's own words: "a refused write must not leave a
@@ -753,7 +758,7 @@ for (const [label, plant] of REFUSALS) {
 // A refusal with no reason recorded must say so, not invent one. This is the
 // throw case's own edge: the page is standing where the game was, and it is
 // honest that it cannot name the fault.
-{
+(() => {
   const dir = sandbox();
   patchTool(dir, `writeFileSync(OUT_PATH, html, 'utf8');`,
     `throw new Error('a refusal that never calls fail()');\nwriteFileSync(OUT_PATH, html, 'utf8');`);
@@ -762,7 +767,7 @@ for (const [label, plant] of REFUSALS) {
   check('6: a refusal that named no reason says exactly that on the page',
     /without naming a reason/.test(page), page.slice(0, 120));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // The dangling check used to run AFTER the write: `bundle.mjs: OK`, a full
 // playable game on disk, then exit 1. Both edges of one run were true.
@@ -795,7 +800,7 @@ for (const [label, plant] of NO_OK_BEFORE_ERROR) {
 // Without this, case 6 is a green nobody has watched fail. The hook is the ONLY
 // writer of the refusal page now, so neutralising its one guard clause restores
 // exactly the d51b8e0 behaviour.
-{
+(() => {
   const dir = sandbox();
   build(dir);
   const before = goodBundleOf(dir);
@@ -809,7 +814,7 @@ for (const [label, plant] of NO_OK_BEFORE_ERROR) {
     after === before && before.length > 500000 && !after.includes('This build did not happen'),
     `identical=${after === before}`);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 6y. The other edge: success must NOT write the refusal page ------------
 // Bjorn's card, taken here. This case used to prove "it wrote the game" with
@@ -839,7 +844,7 @@ const wholeGame = (html) => {
   try { new vm.Script(source, { filename: 'built-bundle' }); } catch (err) { return { ok: false, why: err.message }; }
   return { ok: true, why: '' };
 };
-{
+(() => {
   const dir = sandbox();
   const r = build(dir);
   const out = goodBundleOf(dir);
@@ -850,14 +855,14 @@ const wholeGame = (html) => {
   check('6y: and what it wrote is a WHOLE program, not a fragment that contains id="app"',
     w.ok, w.why);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 6v. KNOWN-BAD for 6y: a fragment must fail the check that a game passes -
 // Two truncations, because they fail for two different reasons and only the
 // second proves the PARSER is doing the work. Both keep `id="app"`, so both
 // satisfy the predicate 6y used to rely on — which is the finding, stated as a
 // fixture instead of as a sentence.
-{
+(() => {
   const dir = sandbox();
   build(dir);
   const good = goodBundleOf(dir);
@@ -889,21 +894,21 @@ const wholeGame = (html) => {
   check('6v: KNOWN-BAD — a half-written script body is rejected BY THE PARSER',
     !b.ok && b.why !== 'no complete <script> block in the output', b.why);
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 // ---- 7. The tool prints its own boundary on SUCCESS -------------------------
 // SPEC §8 clause 5 — Marina's audit law, which was hers and unpaid in the tool
 // we hardened: bundle.mjs printed nine lines of what it did and nothing on what
 // it did not. This test exists because a boundary nothing checks rots the way
 // the required-coverage list in §8 rotted.
-{
+(() => {
   const dir = sandbox();
   const r = build(dir);
   check('7: a successful build prints a BOUNDARY block', r.status === 0 && /^BOUNDARY:/m.test(r.out), r.out.slice(-200));
   check('7: and it names the biggest hole — compiled, never run',
     /COMPILED, never RUN/.test(r.out), r.out.slice(-300));
   rmSync(dir, { recursive: true, force: true });
-}
+})();
 
 console.log(`\n${fails} failing case(s).`);
 console.log('BOUNDARY: this proves the bundler REFUSES and names the fault. It does not');
