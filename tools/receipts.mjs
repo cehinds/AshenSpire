@@ -122,10 +122,12 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   // itself. The merge walk follows all ancestry, so its 40th merge can sit on a
   // side branch; `HEAD ^<that merge>` then excludes only what that side branch
   // descends from, and the first-parent walk runs back to the side branch's old
-  // fork — into history the window never meant to judge. `--ancestry-path`
-  // keeps only the first-parent commits that contain the oldest merge: from
-  // HEAD down to the commit that landed it. On the first-parent line itself the
-  // two agree.
+  // fork — into history the window never meant to judge. So the boundary is
+  // found in two steps: every descendant of the oldest merge (the full graph —
+  // `--first-parent --ancestry-path` together never reaches a side-branch
+  // merge and returns nothing), then the first-parent commits from HEAD down
+  // to the last one in that set, which is the commit that landed it. On the
+  // first-parent line itself this is exactly `HEAD ^<merge>`.
   const merges = lines(['--merges', `--max-count=${limit}`, '--format=%H %s', 'HEAD']).map((l) => {
     const i = l.indexOf(' ');
     return { hash: l.slice(0, i), subject: l.slice(i + 1) };
@@ -134,7 +136,14 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
   if (merges.length < limit) firstParent = fp(['HEAD']);
   else {
-    const toBoundary = fp(['--ancestry-path', `${merges[merges.length - 1].hash}..HEAD`]);
+    const oldest = merges[merges.length - 1].hash;
+    const descendants = new Set(git(['rev-list', '--ancestry-path', `${oldest}..HEAD`], cwd).split('\n').filter(Boolean));
+    const toBoundary = [];
+    for (const l of lines(['--first-parent', '--format=%H %s', 'HEAD'])) {
+      const i = l.indexOf(' ');
+      if (!descendants.has(l.slice(0, i))) break;
+      toBoundary.push(l.slice(i + 1));
+    }
     if (toBoundary.length > firstParent.length) firstParent = toBoundary;
   }
   return [

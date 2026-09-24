@@ -2,8 +2,11 @@
 // fetched) must end where its oldest merge JOINED the first-parent line. When
 // that merge sits on a side branch, excluding only its ancestors let the
 // first-parent walk run back past the side branch's fork and judge squashes
-// the window never covered (Codex review on #1275). This drives the real git
-// walk against a scratch repository built for exactly that shape.
+// the window never covered; and `--first-parent --ancestry-path` together
+// never reach a side-branch merge, so the window fell back to its floor and
+// missed squashes between the floor and the landing (both Codex reviews on
+// #1275). This drives the real git walk against a scratch repository built
+// for exactly that shape.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,11 +46,17 @@ function scratchRepo() {
   git('checkout', '-q', 'side');
   commit('side work');
   merge('sub', "Merge branch 'sub' into side");
+  // Work after that merge, so the landing's second parent is not the merge
+  // itself: a first-parent walk then never touches the merge.
+  commit('side follow-up');
   // Main moves on after the fork with a squash that has no receipt. It is older
   // than the side branch's landing, so the window must not judge it.
   git('checkout', '-q', 'main');
   commit('Old unreceipted squash (#90)');
   merge('side', 'Merge pull request #91 from o/side');
+  // After the landing, but further back than the 4-commit floor: inside the
+  // window, so its missing receipt must be reported.
+  commit('Unreceipted squash after the landing (#95)');
   for (let i = 0; i < 4; i += 1) commit(`chore ${i}`);
   for (const pr of [92, 93]) {
     git('checkout', '-q', '-b', `b${pr}`);
@@ -58,14 +67,14 @@ function scratchRepo() {
   return dir;
 }
 
-test('the fallback window stops where its oldest merge joined the first-parent line', () => {
+test('the fallback window reaches, and stops at, where its oldest merge joined the first-parent line', () => {
   const dir = scratchRepo();
   try {
     const md = [91, 92, 93].map((n) => `x ([#${n}](https://github.com/o/r/pull/${n}), \`0.1.0.${n}\`)`).join('\n');
     const subjects = rangeSubjects(null, { cwd: dir, limit: 4 });
     const { merged, missing } = unreceipted(subjects, md);
     assert.ok(merged.includes('91') && merged.includes('93'), `the window still covers the recent landings, got ${merged.join(', ')}`);
-    assert.deepEqual(missing, [], 'a squash from before the side branch landed is outside the window');
+    assert.deepEqual(missing, ['95'], 'the squash after the landing is judged; the one before the side branch landed is not');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
