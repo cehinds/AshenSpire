@@ -1231,7 +1231,7 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3 (§6.1). Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
+Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop the elite chest (§3.8.1; co-op elites keep a single relic); bosses drop a boss-relic choice of 3 (§6.1). Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
 
 ### 6.1 Boss relic choice
 
