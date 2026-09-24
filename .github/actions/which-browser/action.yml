@@ -1,0 +1,14 @@
+name: Which browser will be used
+description: >-
+  Print the Chrome/Chromium binary the browser probes will launch. Informational
+  only: when none exists the probes themselves exit 2 (unknown, which blocks).
+runs:
+  using: composite
+  steps:
+    - name: Which browser will be used
+      shell: bash
+      run: |
+        for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+          [ -x "$p" ] && echo "found: $p" && "$p" --version
+        done
+        echo "(the probes exit 2 if none of these exist — unknown, which blocks)"

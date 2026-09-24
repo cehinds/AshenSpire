@@ -44,16 +44,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
 
       - name: The base branch, for the tools that measure against it
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       - name: Engine suite, every discovered test file, and each tool's verdict on the tree
         run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
@@ -63,16 +61,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
 
       - name: The base branch, for the tools that measure against it
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       - name: Every tool check still catches its own known-bad corpus
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
