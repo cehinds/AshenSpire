@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1278",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the combat card hotkeys are tested",
+    "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
+    "build": "0.7.1.465",
+    "pullRequest": 1278,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1278"
+  },
+  {
     "id": "pr-1274",
     "date": "2026-09-24",
     "group": "2026-09-24",
