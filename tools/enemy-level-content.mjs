@@ -25,10 +25,13 @@ function orphanEnemies(bundle) {
   return bundle.enemies.filter((enemy) => !reachable.has(enemy.id)).map((enemy) => enemy.id);
 }
 
-// a3_bossRotValkyrie is the one seatless row (SPEC §13.5): a boss, never pooled by seat.
+// a3_bossRotValkyrie is the one seatless row (SPEC §13.5): a boss, never pooled
+// by seat. It is exempt by id, so a second null seat is still reported.
+const SEATLESS_BOSS = 'a3_bossRotValkyrie';
 function unseatedEncounters(bundle) {
   return bundle.encounters
-    .filter((encounter) => !SEAT_TIER.has(encounter.seat) && !(encounter.seat == null && encounter.pool === 'boss'))
+    .filter((encounter) => !SEAT_TIER.has(encounter.seat)
+      && !(encounter.id === SEATLESS_BOSS && encounter.seat == null && encounter.pool === 'boss'))
     .map((encounter) => `${encounter.id}=${encounter.seat}`);
 }
 
@@ -185,6 +188,12 @@ if (process.argv.includes('--selftest')) {
       const encounters = contentBundle.encounters.map((encounter) => ({ ...encounter }));
       encounters[0].seat = null;
       return unseatedEncounters({ ...contentBundle, encounters }).length > 0;
+    }],
+    ['a second seatless boss is caught', () => {
+      const encounters = contentBundle.encounters.map((encounter) => ({ ...encounter }));
+      const boss = encounters.find((encounter) => encounter.pool === 'boss' && encounter.id !== SEATLESS_BOSS);
+      boss.seat = null;
+      return unseatedEncounters({ ...contentBundle, encounters }).includes(`${boss.id}=null`);
     }],
     ['a same-seat later-floor regression is caught', () => {
       const encounters = contentBundle.encounters.map((encounter) => ({ ...encounter }));

@@ -96,9 +96,15 @@ const kits = bundle.equipment.startingKits.filter((row) => row.classId === 'rogu
 // Class outfits only: a sharedSet row is a shared armour set worn by the class, not its own outfit.
 const outfits = bundle.equipment.armour.filter((row) => row.classId === 'rogue' && !row.sharedSet);
 check(kits.length === 2 && kits.filter((row) => row.baseline).length === 1, 'Rogue has two kits and one baseline kit');
-check(outfits.length >= 4 && outfits.filter((row) => row.unlock === '').length === 1,
-  `Rogue has ${outfits.length} class outfits and one free baseline outfit`,
-  `outfits ${outfits.map((row) => `${row.id}:${row.unlock || 'free'}`).join(', ')}`);
+// SPEC's parity slice fixes a floor of four outfits; later content drops add
+// more (waywatcher), so the count is a lower bound. What keeps a stray row out
+// is the data: exactly one free baseline, and every other outfit gated by a
+// registered outfit unlock.
+const outfitUnlocks = new Set((bundle.unlocks || []).filter((row) => row.kind === 'outfit').map((row) => row.id));
+const ungated = outfits.filter((row) => row.unlock !== '' && !outfitUnlocks.has(row.unlock));
+check(outfits.length >= 4 && outfits.filter((row) => row.unlock === '').length === 1 && ungated.length === 0,
+  `Rogue has ${outfits.length} class outfits: one free baseline, the rest behind registered outfit unlocks`,
+  `outfits ${outfits.map((row) => `${row.id}:${row.unlock || 'free'}`).join(', ')}; unregistered ${ungated.map((row) => row.id).join(', ')}`);
 check(kits.every((kit) => ['dagger', 'shortbow'].includes(kit.rightHand)
   && ['', 'buckler', 'parryDagger'].includes(kit.leftHand)), 'Rogue kits reuse registered armament kinds');
 
