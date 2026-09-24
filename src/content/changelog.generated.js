@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "A restored profile shows its real Cinder multiplier straight away",
     "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
-    "build": "0.7.1.467",
+    "build": "0.7.1.468",
     "pullRequest": 1295,
     "url": "https://github.com/cehinds/AshenSpire/pull/1295"
+  },
+  {
+    "id": "pr-1281",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: every card, relic and event has a way in",
+    "detail": "Nothing you play changes. A new check walks the game's content and finds a route by which each card, relic and event can actually reach a player, so nothing authored sits unreachable.",
+    "build": "0.7.1.466",
+    "pullRequest": 1281,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1281"
   },
   {
     "id": "pr-1280",
