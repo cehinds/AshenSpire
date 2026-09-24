@@ -126,8 +126,8 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   // found in two steps: every descendant of the oldest merge (the full graph —
   // `--first-parent --ancestry-path` together never reaches a side-branch
   // merge and returns nothing), then the first-parent commits from HEAD down
-  // to the last one in that set, which is the commit that landed it. On the
-  // first-parent line itself this is exactly `HEAD ^<merge>`.
+  // to the last one in that set, which is the commit that landed it (or the
+  // merge itself, when it sits on the first-parent line).
   const merges = lines(['--merges', `--max-count=${limit}`, '--format=%H %s', 'HEAD']).map((l) => {
     const i = l.indexOf(' ');
     return { hash: l.slice(0, i), subject: l.slice(i + 1) };
@@ -137,7 +137,11 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   if (merges.length < limit) firstParent = fp(['HEAD']);
   else {
     const oldest = merges[merges.length - 1].hash;
+    // The oldest merge itself belongs to the window too: `A..B` excludes A, and a
+    // merge on the first-parent line titled `… (#N)` is a landing only when it
+    // is walked as a first-parent commit.
     const descendants = new Set(git(['rev-list', '--ancestry-path', `${oldest}..HEAD`], cwd).split('\n').filter(Boolean));
+    descendants.add(oldest);
     const toBoundary = [];
     for (const l of lines(['--first-parent', '--format=%H %s', 'HEAD'])) {
       const i = l.indexOf(' ');
