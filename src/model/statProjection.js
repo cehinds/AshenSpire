@@ -8,7 +8,7 @@ import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
-import { ratingsConfigFor, statRow } from './statRows.js';
+import { ratingStatRows, ratingsConfigFor, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 
 // The labels and the order used to be a frozen map right here — a second home
@@ -262,5 +262,7 @@ export function statProjection(registries, run) {
       note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
     };
   });
-  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
+  // The rating rows this run reads (its own, or its retired formula restated),
+  // so an attribute card names the weights its fights actually use.
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run) };
 }

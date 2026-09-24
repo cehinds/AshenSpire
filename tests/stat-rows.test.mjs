@@ -292,3 +292,20 @@ test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with 
   assert.equal(attributePart(20), 6, 'held to its max');
   assert(attributePart(1) <= attributePart(3));
 });
+
+test('rating receipts show a row bound, and an old run\'s attribute cards name its own rating formula', async () => {
+  const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
+  const { attributeRatingReceipt: receiptOf } = await import('../src/model/ratingFormula.js');
+  const config = { ratings: { ar: { base: 0, strength: 1, max: 1 }, dr: { base: 0 }, pr: { base: 0 }, poise: { base: 0 }, ward: { base: 0 } } };
+  const ar = receiptOf(config, { strength: 2 }, 'ar');
+  const html = renderPlayerPoise({ ratings: { ar: 3 }, ratingAttributes: { ar }, ratingSources: [{ kind: 'equipment', name: 'Sword', ar: 2 }], note: '' });
+  assert.match(html, /<b>-1<\/b> held to its max/);
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const registries = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.combatRatings.ratings.ar.strength': 2 }));
+  const run = createRunState({ seed: 4, classId: 'reaver', registries });
+  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
+  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
+  const strength = cards.find((card) => card.id === 'strength');
+  assert(strength.reveal.lines.some((line) => line === 'AR: floor(2 × STR)'), strength.reveal.lines.join(' | '));
+});

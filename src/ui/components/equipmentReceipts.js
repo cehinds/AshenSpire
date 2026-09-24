@@ -65,6 +65,13 @@ function ratingCalculationHtml(id, value, receipt) {
       ? `<span>floor(<b>${numberText(attribute.multiplier)}</b> global × (${formulaTerms}))</span>`
       : `<span>(${formulaTerms})</span>`,
     ...(attribute.levelBonus ? [`<span><b>${numberText(attribute.levelBonus)}</b> level</span>`] : []),
+    // A row's min or max held the attribute part: say by how much, so the
+    // shown sum is the one combat uses (Codex, #1296).
+    ...(() => {
+      const scaled = attribute.multiplier !== 1 ? Math.floor(attribute.weighted * attribute.multiplier + 1e-9) : attribute.weighted;
+      const held = attribute.value - (attribute.base + scaled + (attribute.levelBonus || 0));
+      return held ? [`<span><b>${numberText(held)}</b> held to its ${held < 0 ? 'max' : 'min'}</span>`] : [];
+    })(),
     ...additions,
   ].join(' + ');
   return `<div class="rating-calculation" data-rating-id="${esc(id)}">`

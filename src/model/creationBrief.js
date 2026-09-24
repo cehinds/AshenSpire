@@ -142,17 +142,19 @@ function foldedSummary(sense) {
 const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
 const FEED_EXCLUDED = new Set(RATING_ROWS);
 
-function ratingWeightFacts(registries, attributeId) {
+// THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
+// ruleset 7 fights by its retired formula, and its card must say so.
+function ratingWeightFacts(registries, attributeId, runRows = null) {
   const table = registries.derivedStatRules;
   const short = registries.attributes.get(attributeId).shortLabel;
-  if (!table?.rules) return [];
+  if (!runRows && !table?.rules) return [];
   return RATING_ROWS
-    .map((id) => [id, resolvedRuleRow(table, id)])
+    .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
     .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short})`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}`,
         summary: `${label} weight ${rule[attributeId]}`,
       };
     });
@@ -235,7 +237,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
         return { label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
       });
     const unlocks = unlockLines(registries, def.id);
-    const ratingFacts = ratingWeightFacts(registries, def.id);
+    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null);
     const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
