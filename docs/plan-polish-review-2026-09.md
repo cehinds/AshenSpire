@@ -104,8 +104,11 @@ amended before code moves.
   - [ ] Within the current rules: re-cost Starseer and Herald cards and add
     Stamina or Mana recovery through relics, rests or cards, so the class
     becomes viable even if the rulings stand.
-  - [ ] Fix dominated cards: Comet Fragment vs Shooting Shard, Starblade
-    Phalanx vs Star Slicer (`starseer.js`); Bloodhunter's Strike vs Goreslash;
+  - [ ] Remeasure apparently dominated cards on their full effects before
+    re-costing. Comet Fragment and Starblade Phalanx build 5 Arcane
+    Exposure per hit where Shooting Shard and Star Slicer build 1
+    (`generated/cardExposure.js`), and Exposure can break, so damage and cost
+    alone undersell them. Also Bloodhunter's Strike vs Goreslash;
     Warhorn duplicates Traveler's Whetstone (`balance.js` ~1599, ~1618).
   - [ ] Consider one or two relics that bend Stamina or Mana (none of the 55
     non-starter relics do).
@@ -446,8 +449,10 @@ amended before code moves.
   direction — replace with an import-graph layer check in `ci.yml`.
 - [ ] **Framework re-export layer (M).** `framework/index.js` says nothing
   consults it, yet engine and model import it; `framework/optionDecision.js`
-  imports ui. Finish or abandon the cutover; teach `tools/bundle.mjs`
-  `export { } from`.
+  imports ui. Finish or abandon the cutover. If the barrel ships,
+  either teach `tools/bundle.mjs` (graph walk and transform) both
+  `export { } from` and `export * from`, which every barrel line uses, or
+  rewrite the barrel as named re-exports.
 - [ ] **Tools (S–M).** 283 files; 65 referenced by nothing; 82 committed
   `tools/results/*`; 22 tools launch Chromium themselves. A tools manifest,
   archive the unreferenced, ignore results.
