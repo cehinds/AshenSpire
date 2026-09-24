@@ -168,9 +168,17 @@ test('the first save makes the branch from dev, then the file; later saves repla
   assert.equal(contentsUrl(cfg), 'https://api.github.com/repos/cehinds/AshenSpire/contents/settings-profiles/default.json');
 });
 
-test('a refused token says what to fix', async () => {
-  const fetch = async () => ({ status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) });
-  await assert.rejects(fetchProfile(syncConfig({}), { token: 'bad', fetch }), /401: Bad credentials.*token was refused/);
+test('a refused token does not stop a public profile loading; a refused save says what to fix', async () => {
+  const seen = [];
+  const fetch = async (url, init = {}) => {
+    seen.push(init.headers?.Authorization || 'anonymous');
+    if (init.headers?.Authorization) return { status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) };
+    return { status: 200, ok: true, json: async () => ({ content: toBase64('{}'), sha: 's' }) };
+  };
+  assert.deepEqual(await fetchProfile(syncConfig({}), { token: 'bad', fetch }), { text: '{}', sha: 's' });
+  assert.deepEqual(seen, ['Bearer bad', 'anonymous']);
+  const refuse = async () => ({ status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) });
+  await assert.rejects(pushProfile(syncConfig({}), 'x', { token: 'bad', fetch: refuse }), /401: Bad credentials.*token was refused/);
 });
 
 test('the sync panel’s token field and switch are never wired as settings', async () => {

@@ -140,7 +140,11 @@ async function failure(res, what) {
  * (or its branch) does not exist yet.
  */
 export async function fetchProfile(cfg, { token = '', fetch = globalThis.fetch } = {}) {
-  const res = await fetch(`${contentsUrl(cfg)}?ref=${encodeURIComponent(cfg.branch)}`, { headers: headers(token), cache: 'no-store' });
+  const url = `${contentsUrl(cfg)}?ref=${encodeURIComponent(cfg.branch)}`;
+  let res = await fetch(url, { headers: headers(token), cache: 'no-store' });
+  // A token is only needed to save. An expired or revoked one must not stop a
+  // public profile from loading, so a refused read is retried without it.
+  if (res.status === 401 && token) res = await fetch(url, { headers: headers(''), cache: 'no-store' });
   if (res.status === 404) return null;
   if (!res.ok) throw await failure(res, 'Loading the profile');
   const body = await res.json();
