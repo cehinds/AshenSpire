@@ -169,7 +169,7 @@ check('Mana authority is WIS data and gameplay uses small-unit costs/restores', 
   equal(derivedStatRules.rules.mana.base, 1, 'Mana base');
   equal(derivedStatRules.rules.mana.wisdom, 1, 'Mana source (ruleset 6: a weight on wisdom)');
   equal(derivedStatRules.rules.mana.cap ?? derivedStatRules.defaults.cap, null, 'Mana cap');
-  for (const id of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+  for (const id of ['gorefireSlash', 'starstoneArc', 'urgentHeal']) {
     equal(contentBundle.cards.find((card) => card.id === id)?.manaCost, 1, `${id} Mana cost`);
   }
   const azure = contentBundle.flasks.find((flask) => flask.id === 'azureFlask');
@@ -191,7 +191,7 @@ check('Mana semantic constant scan refuses legacy class-scale authority', () => 
 check('co-op UI affordability and host execution agree for all three Mana signatures', () => {
   const coopSource = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
   assert(/meP\.mana\s*>=\s*(\(def\.manaCost\s*\|\|\s*0\)|costs\.mana)/.test(coopSource), 'co-op hand omits Mana from affordability');
-  for (const cardId of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
+  for (const cardId of ['gorefireSlash', 'starstoneArc', 'urgentHeal']) {
     const fight = (mana) => createCoopCombat({
       registries: REG,
       rng: createRng(0x6d616e61),

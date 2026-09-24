@@ -44,10 +44,14 @@ const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order)
 // a decimal weight per attribute floored on its own, and a decimal growth per
 // level — the rating shape. Every number below was worked out from that sentence
 // and the table's authored weights, not read back from the resolver.
-const CONTRACT_RULESET_VERSION = 6;
+// RULESET 7 (plan A3, 2026-09-24): ruleset 6 with Actions at 0.25 per DEX and
+// HP at 36 + 2 per CON + 2.5 per level; Draw keeps its base of 3. Every Energy
+// and HP number below was re-derived by hand from those rows; Draw, Mana,
+// Stamina and Poise did not move.
+const CONTRACT_RULESET_VERSION = 7;
 
 // `maxHp: 84` is deliberately NOT the HP base any row uses. The HP row is a flat
-// 30 and ignores class data, so a fixture carrying a different number is what
+// 36 and ignores class data, so a fixture carrying a different number is what
 // makes that provable rather than assumed.
 const CLASS = { id: 'reaver', maxHp: 84 };
 let failures = 0;
@@ -92,7 +96,7 @@ check('one authoritative object carries the global defaults', () => {
 check('the six rows answer to the ruled attributes', () => {
   const got = Object.entries(derivedStatRules.rules)
     .map(([id, row]) => `${id}:${ruleWeights(row).map(([attr, weight]) => `${attr}x${weight}`).join('+')}`).join(',');
-  equal(got, 'energy:dexterityx0.2,draw:intelligencex0.2,hp:constitutionx4,stamina:constitutionx1,mana:wisdomx1,poise:constitutionx1', 'row map');
+  equal(got, 'energy:dexterityx0.25,draw:intelligencex0.2,hp:constitutionx2,stamina:constitutionx1,mana:wisdomx1,poise:constitutionx1', 'row map');
 });
 
 check('the shipped table passes the closed schema', () => {
@@ -100,9 +104,9 @@ check('the shipped table passes the closed schema', () => {
   assert(Array.isArray(problems) && problems.length === 0, problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
 });
 
-// A WEIGHT OF 0.2 IS ONE EVERY FIVE POINTS, FLOORED ON ITS OWN: DEX 10 buys
-// floor(10 x 0.2) = 2 Actions on the base 3.
-check('DEX 10 gives Energy base 3 + floor(10 x 0.2) = 5', () => {
+// A WEIGHT OF 0.25 IS ONE EVERY FOUR POINTS, FLOORED ON ITS OWN: DEX 10 buys
+// floor(10 x 0.25) = floor(2.5) = 2 Actions on the base 3.
+check('DEX 10 gives Energy base 3 + floor(10 x 0.25) = 5', () => {
   const out = deriveStat(resolved(), 'energy', { attributes: { dexterity: 10 }, classDef: CLASS });
   equal(out.terms.dexterity, 2, 'dexterity term'); equal(out.raw, 5, 'raw'); equal(out.value, 5, 'value');
 });
@@ -126,16 +130,17 @@ check('WIS 10 is the only Mana authority and yields base 1 + 10 = 11', () => {
   equal(out.base, 1, 'Mana base'); equal(out.value, 11, 'Mana');
 });
 
-check('CON HP is a flat base plus four per point, and reads no class field', () => {
+check('CON HP is a flat base plus two per point, and reads no class field', () => {
   const out = deriveStat(resolved(), 'hp', { attributes: { constitution: 10 }, classDef: CLASS });
-  equal(out.base, 30, 'HP base is the row, not the class'); equal(out.terms.constitution, 40, 'four per CON point');
-  equal(out.value, 70, 'derived HP: 30 + 10 x 4');
+  equal(out.base, 36, 'HP base is the row, not the class'); equal(out.terms.constitution, 20, 'two per CON point');
+  equal(out.value, 56, 'derived HP: 36 + 10 x 2');
 });
 
-check('the level term is one decimal, floored: HP 1, Mana/Stamina 0.2, Draw 0.1', () => {
+check('the level term is one decimal, floored: HP 2.5, Mana/Stamina 0.2, Draw 0.1', () => {
   const at = (id, level, attributes) => deriveStat(resolved(), id, { attributes, classDef: CLASS, level }).levelBonus;
   equal(at('hp', 1, { constitution: 1 }), 0, 'no term at level 1');
-  equal(at('hp', 4, { constitution: 1 }), 3, 'HP: one per level past the first');
+  equal(at('hp', 2, { constitution: 1 }), 2, 'HP: floor(1 x 2.5) at level 2');
+  equal(at('hp', 4, { constitution: 1 }), 7, 'HP: floor(3 x 2.5) three levels past the first');
   equal(at('mana', 5, { wisdom: 1 }), 0, 'Mana: four fifths is not yet a point');
   equal(at('mana', 6, { wisdom: 1 }), 1, 'Mana: five fifths is one');
   equal(at('draw', 10, { intelligence: 1 }), 0, 'Draw waits for level 11');
@@ -157,7 +162,7 @@ check('an authored row outranks the authored global defaults', () => {
   source.defaults.perLevel = 0.5;
   const rules = resolveDerivedStatRules(source, { attributeIds: ATTRIBUTE_IDS, classFields: ['maxHp'] });
   equal(deriveStat(rules, 'energy', { attributes: { dexterity: 1 }, classDef: CLASS, level: 3 }).levelBonus, 1, 'Energy inherits 0.5');
-  equal(deriveStat(rules, 'hp', { attributes: { constitution: 1 }, classDef: CLASS, level: 3 }).levelBonus, 2, 'HP keeps its own 1');
+  equal(deriveStat(rules, 'hp', { attributes: { constitution: 1 }, classDef: CLASS, level: 3 }).levelBonus, 5, 'HP keeps its own 2.5: floor(2 x 2.5)');
 });
 
 // The equipment-profile helper keeps the single-stat tier vocabulary — it is a
@@ -184,7 +189,7 @@ check('shipped Energy and Draw resolve cap null and grow unbounded at high stats
   equal(rules.rules.draw.cap, null, 'Draw cap');
   const energy = deriveStat(rules, 'energy', { attributes: { dexterity: 5000 }, classDef: CLASS });
   const draw = deriveStat(rules, 'draw', { attributes: { intelligence: 5000 }, classDef: CLASS });
-  equal(energy.value, 1003, 'uncapped high-stat Energy: base 3 + floor(5000 x 0.2)');
+  equal(energy.value, 1253, 'uncapped high-stat Energy: base 3 + floor(5000 x 0.25)');
   equal(draw.value, 1003, 'uncapped high-stat Draw: base 3 + floor(5000 x 0.2)');
 });
 
@@ -194,7 +199,7 @@ check('neither HP nor Mana reads class data, and deriving mutates no input', () 
   const attributes = { constitution: 10, wisdom: 10 };
   const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
   const before = JSON.stringify({ attributes, classDef });
-  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 30, 'HP ignores class data');
+  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 36, 'HP ignores class data');
   equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 1, 'Mana ignores class data');
   equal(JSON.stringify({ attributes, classDef }), before, 'inputs unchanged');
 });

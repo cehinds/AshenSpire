@@ -57,7 +57,8 @@ export const derivedStatRules = {
   //           most — so the growth the level pays, not #1238's
   //           70-HP opening, is what was retuned. Shipped presets, 120
   //           runs a class, CON picks: Reaver 61 -> 68, Rogue 66 -> 68,
-  //           Herald 69 -> 67 (with the Dodge Roll retune in mechanics.json).
+  //           Herald 69 -> 67 (with plan A3's evasion-roll retune in
+  //           content/framework/mechanics.json).
   //
   // Draw is left to plan A4 (hand rules); Stamina, Mana and Poise read right
   // on the lean scale and are unchanged. Ruleset 6 and earlier are restored
