@@ -957,16 +957,45 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   }
   const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: false });
   checks += entries.length;
+  // PROSE STAMPS DO NOT BREAK A CHAIN. A receipt whose stamp is prose has no
+  // build to order, so it is stepped over rather than ending the comparison:
+  // each stamped receipt is weighed against the nearest STAMPED one above it in
+  // its date, and each stamped group against the nearest stamped group above it
+  // (parseChangelog compares only adjacent groups, so a prose-only group
+  // between two stamped ones hid an inversion across it — #1279 review).
+  const keyOf = (build) => { const m = build.match(STAMP); return m ? stampKey(m[1], Number(m[2])) : null; };
   let rises = 0;
-  for (let i = 1; i < entries.length; i++) {
-    const above = entries[i - 1], below = entries[i];
-    if (above.date !== below.date) continue;
-    const a = above.build.match(STAMP), b = below.build.match(STAMP);
-    if (!a || !b) continue;
-    const newer = stampKey(a[1], Number(a[2])), older = stampKey(b[1], Number(b[2]));
-    if (compareStamps(older, newer) <= 0) continue;
-    if (below.date < WITHIN_DATE_FROM) { rises++; continue; }
-    throw new Error(`check-order: build rises within ${below.date}: #${below.pullRequest} cites \`${below.build}\` below #${above.pullRequest}'s \`${above.build}\` — receipts run newest first inside a date too`);
+  let above = null;
+  for (const below of entries) {
+    if (above && above.date !== below.date) above = null;
+    const older = keyOf(below.build);
+    if (older === null) continue;
+    if (above) {
+      const newer = keyOf(above.build);
+      if (compareStamps(older, newer) > 0) {
+        if (below.date < WITHIN_DATE_FROM) rises++;
+        else throw new Error(`check-order: build rises within ${below.date}: #${below.pullRequest} cites \`${below.build}\` below #${above.pullRequest}'s \`${above.build}\` — receipts run newest first inside a date too`);
+      }
+    }
+    above = below;
+  }
+  const groups = [];
+  for (const e of entries) {
+    if (!groups.length || groups[groups.length - 1].group !== e.group) groups.push({ group: e.group, stamps: [] });
+    const key = keyOf(e.build);
+    if (key !== null) groups[groups.length - 1].stamps.push({ build: e.build, key });
+  }
+  let newerGroup = null;
+  for (const g of groups) {
+    if (!g.stamps.length) continue;
+    if (newerGroup) {
+      const highestOld = g.stamps.reduce((a, b) => (compareStamps(a.key, b.key) >= 0 ? a : b));
+      const lowestNew = newerGroup.stamps.reduce((a, b) => (compareStamps(a.key, b.key) <= 0 ? a : b));
+      if (compareStamps(highestOld.key, lowestNew.key) > 0) {
+        throw new Error(`check-order: build runs backward across groups: '${g.group}' cites \`${highestOld.build}\`, newer stamped group '${newerGroup.group}' cites \`${lowestNew.build}\` — an older merge cannot ship a newer build`);
+      }
+    }
+    newerGroup = g;
   }
   if (rises !== GRANDFATHERED_RISES) {
     throw new Error(`check-order: ${rises} within-date rise(s) before ${WITHIN_DATE_FROM}, but GRANDFATHERED_RISES pins ${GRANDFATHERED_RISES}`
@@ -1033,6 +1062,10 @@ async function orderCorpus(ordinalFile) {
     // The group's own lowest then highest build, on top of it: one more rise,
     // and the group's range — so every cross-group rule — unchanged.
     ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${rv(990001, oldLow.build)}\n${rv(990002, oldHigh.build)}\n`), null, 'GRANDFATHERED_RISES pins'],
+    // A prose-stamped receipt between two stamped ones, and a prose-only group
+    // between two stamped groups, must not hide the inversion across them.
+    ['build rising within a date across a prose-stamped receipt', top(`## 2099-01-01\n\n${r(990001, n)}\n${rv(990002, 'evidence-only')}\n${r(990003, 0, next)}\n`), null, 'build rises within 2099-01-01'],
+    ['build rising across a prose-only group', top(`## 2099-01-03\n\n${r(990001, n)}\n\n## 2099-01-02\n\n${rv(990002, 'evidence-only')}\n\n## 2099-01-01\n\n${r(990003, 0, next)}\n`), null, 'runs backward across groups'],
     ['receipt one build past buildordinal.json (the allowance is --write\'s, not the check\'s)', top(`## 2099-01-01\n\n${r(990001, n + 1)}\n`), null, 'a receipt cannot name a build that has not happened'],
     ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
     ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
