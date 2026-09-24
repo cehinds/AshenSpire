@@ -521,10 +521,7 @@ export const weapons = [
     "attackProfile": "sceptreArcaneAttack",
     "guardProfile": "sceptreGuard",
     "techniqueProfile": "staffTechnique",
-    "mods": [
-      "power.potency=+1",
-      "strike.blight=+2"
-    ],
+    "mods": "power.potency=+1",
     "unlock": "",
     "blurb": "Someone knelt for this once.",
     "dropWeight": 7,

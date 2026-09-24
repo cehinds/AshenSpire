@@ -1443,8 +1443,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         const a = REG.classes.get(id).startingFlaskAllocation;
         return `${a.hp}/${a.mana}`;
       }).join('|'),
-      '3/1|3/1|3/1|3/1',
-      'all four class allocations consume all four charges exactly as approved',
+      '3/1|3/1|3/1|1/3',
+      'all four class allocations consume all four charges exactly as approved (Herald 1/3 since plan A4)',
     );
     const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
     reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 4 });
@@ -1627,7 +1627,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
     const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'], stamina: 2 });
     playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
-    eq(g.player.block, 2, 'overheal converted to Block');
+    eq(g.player.block, REG.balance.powers.goldFigurine.block, 'overheal converted to Block');
+    eq(REG.balance.powers.goldFigurine.block, 1, 'the Figurine armors 1 a heal (plan A4: was 2)');
     dispatch(g, { type: 'endTurn' }); // tRegen heals itself
     assert(logOf(g, 'healed').some((e) => e.targetId === 'e1'), 'enemy healed itself');
     eq(g.player.block, 0, "enemy heals did NOT trigger the Figurine (eventTargetIsOwner)");
@@ -8259,12 +8260,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(mounts['relic:forsakenMedallion'].kind, 'relic', 'the mount records the carrier kind');
     eq(REG.relics.get('forsakenMedallion').triggers, undefined, 'the relic definition no longer carries triggers');
 
-    // Forsaken Medallion: the FIRST attack of the combat also deals 4 Poise.
+    // Forsaken Medallion: the FIRST attack of the combat also deals its Poise
+    // (balance.powers.forsakenMedallion.poiseDamage: 3 since plan A4, was 4).
     const enemy = () => c.enemies.find((e) => e.alive);
     const before = enemy().poiseMeter.value;
     playFromHand(c, 'strike', enemy().id);
     const afterFirst = enemy().poiseMeter.value;
-    assert(afterFirst - before >= 4, `the relic's opening Poise landed (${before} → ${afterFirst})`);
+    const medallionPoise = REG.balance.powers.forsakenMedallion.poiseDamage;
+    eq(medallionPoise, 3, 'the Medallion opens with 3 Poise (plan A4)');
+    assert(afterFirst - before >= medallionPoise, `the relic's opening Poise landed (${before} → ${afterFirst})`);
     eq(logOf(c, 'relicTriggered').filter((e) => e.relicId === 'forsakenMedallion').length, 1,
       'the mount scan emits relicTriggered, which is what ui/fx.js draws the relic flash from');
 

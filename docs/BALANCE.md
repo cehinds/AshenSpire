@@ -139,7 +139,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | bossOmen (boss) | 51.7 | 43.6 / 50 |
 | Reaver | lanternFlight (normal) | 100 | 2.9 / 50 |
 | Reaver | briarRefuge (normal) | 100 | 0.7 / 50 |
-| Reaver | chainAmbush (normal) | 100 | 0.8 / 50 |
+| Reaver | chainAmbush (normal) | 100 | 1.9 / 50 |
 | Reaver | bossBellKeeper (boss) | 50 | 44.4 / 50 |
 | Reaver | bossThornMatriarch (boss) | 37.7 | 46 / 50 |
 | Starseer | loneSoldier (normal) | 100 | 0.9 / 52 |
@@ -166,18 +166,18 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Rogue | chainAmbush (normal) | 100 | 0.4 / 40 |
 | Rogue | bossBellKeeper (boss) | 42.3 | 35.6 / 40 |
 | Rogue | bossThornMatriarch (boss) | 17.7 | 38.2 / 40 |
-| Herald | loneSoldier (normal) | 100 | 0.4 / 40 |
-| Herald | patrol (normal) | 100 | 2.5 / 40 |
-| Herald | packHunt (normal) | 100 | 2.2 / 40 |
-| Herald | twinPatrol (normal) | 100 | 2.7 / 40 |
-| Herald | bruiser (normal) | 100 | 2.1 / 40 |
-| Herald | eliteWyrm (elite) | 100 | 8.6 / 40 |
-| Herald | bossOmen (boss) | 89.7 | 21.6 / 40 |
-| Herald | lanternFlight (normal) | 100 | 1.1 / 40 |
-| Herald | briarRefuge (normal) | 100 | 0.1 / 40 |
-| Herald | chainAmbush (normal) | 100 | 0.3 / 40 |
-| Herald | bossBellKeeper (boss) | 99 | 17.7 / 40 |
-| Herald | bossThornMatriarch (boss) | 89.7 | 20.5 / 40 |
+| Herald | loneSoldier (normal) | 100 | 0.9 / 40 |
+| Herald | patrol (normal) | 100 | 5.1 / 40 |
+| Herald | packHunt (normal) | 100 | 4.2 / 40 |
+| Herald | twinPatrol (normal) | 100 | 4.7 / 40 |
+| Herald | bruiser (normal) | 100 | 4.3 / 40 |
+| Herald | eliteWyrm (elite) | 86.3 | 25.1 / 40 |
+| Herald | bossOmen (boss) | 5.3 | 39.6 / 40 |
+| Herald | lanternFlight (normal) | 100 | 2.6 / 40 |
+| Herald | briarRefuge (normal) | 100 | 0.4 / 40 |
+| Herald | chainAmbush (normal) | 100 | 0.8 / 40 |
+| Herald | bossBellKeeper (boss) | 17.3 | 38.9 / 40 |
+| Herald | bossThornMatriarch (boss) | 3.3 | 39.8 / 40 |
 
 ## 6. Findings
 

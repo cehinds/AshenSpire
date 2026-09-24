@@ -1509,8 +1509,10 @@ export const balance = {
     reservoir: {
         restoreMana: 1
     },
+    // Plan A4 (discard hand): 2 -> 1 with the Gold Figurine below; see the
+    // Herald's row in content/classes.js for the measured package.
     warmth: {
-        block: 2
+        block: 1
     },
     vigil: {
         heal: 1
@@ -1552,10 +1554,13 @@ export const balance = {
 },
 
   powers: {
-    forsakenMedallion: { poiseDamage: 4 },
+    // Plan A4 (discard hand): 4 -> 3. `node tools/runsim.mjs 120`, Reaver
+    // 80/120 -> 71/120 (2 was 62/120).
+    forsakenMedallion: { poiseDamage: 3 },
     starstoneShard: { starstoneCharge: 1, restoreMana: 1 },
     cutpursesCoin: { prepared: 1, venom: 2 },
-    goldFigurine: { block: 2 },
+    // Plan A4 (discard hand): 2 -> 1, part of the Herald package in classes.js.
+    goldFigurine: { block: 1 },
     goldenSprout: { heal: 3 },
     whetstoneFragment: { damage: 4 },
     kindlingCharm: { draw: 1 },

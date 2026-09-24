@@ -88,7 +88,15 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    // Plan A4 (discard hand) retune, `node tools/runsim.mjs 120`: the discard
+    // hand lifted the Herald from 67/120 to 102/120 wins, its sustain (vigil
+    // heals feeding the Gold Figurine and Warmth) leaving its HP flasks
+    // largely undrunk (a third of the other classes') for the act-2 boss.
+    // Belt 3 HP + 1 Mana -> 1 HP + 3 Mana, Gold Figurine and Warmth block
+    // 2 -> 1, and the Bone Sceptre's strike Blight +2 dropped
+    // (content/source/weapons.csv): 68/120 together. No one row moved it more
+    // than ~13 wins alone; each alone left the Herald above 65%.
+    startingFlaskAllocation: { hp: 1, mana: 3 },
     startingRelic: 'goldFigurine',
     kitRelic: 'waxenSeal',
     startingSignatureCard: 'urgentHeal',

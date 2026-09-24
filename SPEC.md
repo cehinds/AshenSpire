@@ -866,7 +866,7 @@ The `tuned` opening presets are contractual and each sums to 53:
 |---|---|---|
 | Reaver | `13 / 11 / 11 / 8 / 10` | `3 / 1` |
 | Starseer | `11 / 11 / 8 / 13 / 10` | `3 / 1` (A2; was `2 / 2`) |
-| Herald | `12 / 11 / 8 / 12 / 10` | `3 / 1` |
+| Herald | `12 / 11 / 8 / 12 / 10` | `1 / 3` (A4; was `3 / 1`) |
 | Rogue | `11 / 13 / 10 / 9 / 10` | `3 / 1` |
 
 The preset is an editor opening position, not a lock: players may redistribute the fixed
@@ -1015,8 +1015,9 @@ It remains history, not a second implementable mode.
   Mana at no cinder, action or item cost. Every split whose non-negative integers sum to 4 is
   legal; reallocating is a committed run choice, and current charges are bounded by the new
   per-kind maxima. Utility potions are untouched.
-- **Class openings.** Reaver, Herald and Rogue start `3 HP / 1 Mana`; Starseer starts `2 HP /
-  2 Mana`. These are presets over the same freely reallocatable pool, not class caps.
+- **Class openings.** Reaver, Starseer and Rogue start `3 HP / 1 Mana` (the Starseer's was
+  `2 / 2` before plan A2); the Herald starts `1 HP / 3 Mana` (plan A4: its own heals carry it,
+  and its HP flasks went largely undrunk under the discard hand). These are presets over the same freely reallocatable pool, not class caps.
 - **Configurable in debug settings.** Debug controls edit the same capacity/allocation data
   domain and show its lawful range; they do not author an independent ladder or refill count.
 - **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus

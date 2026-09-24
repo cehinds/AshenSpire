@@ -1,7 +1,7 @@
 {
   "forsakenMedallion": {
     "name": "Forsaken Medallion",
-    "text": "Max HP +10. Your first attack each combat also deals 4 Poise damage."
+    "text": "Max HP +10. Your first attack each combat also deals 3 Poise damage."
   },
   "starstoneShard": {
     "name": "Starstone Shard",
@@ -13,7 +13,7 @@
   },
   "goldFigurine": {
     "name": "Gold Figurine",
-    "text": "Whenever you heal, gain 2 Block (even at full HP)."
+    "text": "Whenever you heal, gain 1 Block (even at full HP)."
   },
   "goldenSprout": {
     "name": "Golden Sprout",

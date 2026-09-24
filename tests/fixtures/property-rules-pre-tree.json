@@ -88,7 +88,7 @@
     "do": [
      {
       "op": "poiseDamage",
-      "amount": 4
+      "amount": 3
      }
     ]
    }
@@ -183,7 +183,7 @@
      {
       "op": "block",
       "target": "owner",
-      "amount": 2
+      "amount": 1
      }
     ]
    }
