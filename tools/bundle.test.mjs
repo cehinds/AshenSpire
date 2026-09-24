@@ -19,6 +19,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 let fails = 0;
@@ -59,8 +60,10 @@ function sandbox() {
 }
 
 function build(dir) {
-  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], { cwd: dir, encoding: 'utf8' });
-  return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
+  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  // A child that died (signal, spawn error) says so, rather than reading as `exit null`.
+  const died = r.signal ? `\n[child killed by ${r.signal}]` : r.error ? `\n[child failed: ${r.error.message}]` : '';
+  return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + died };
 }
 
 function assetMapPayload(bundleBytes, rel, mime) {
@@ -105,33 +108,44 @@ function forceTreeEol(dir, eol) {
   forceEol(dir, paths, eol);
 }
 
+// What the EOL cases need from a build, without holding its ~250 MB output: a
+// hash for identity, the length for the message, and the two payloads that
+// the binary cases compare. Holding every sandbox's output at once starved the
+// CI runner, and the next child build was killed.
+function buildDigest(dir, run, binaryRel) {
+  if (run.status !== 0) return null;
+  const bytes = readFileSync(resolve(dir, 'build/AshenSpire.html'));
+  return {
+    hash: createHash('sha256').update(bytes).digest('hex'),
+    length: bytes.length,
+    map: assetMapPayload(bytes, binaryRel, 'image/webp'),
+    css: cssPayload(bytes, '.backdrop.act-1', 'image/webp'),
+  };
+}
+
 function runEolSelftest() {
   const lfDir = sandbox();
   const crlfDir = sandbox();
   forceTreeEol(lfDir, 'lf');
   forceTreeEol(crlfDir, 'crlf');
+  const binaryRel = 'assets/bg/bg_act1.webp';
   const lfRun = build(lfDir);
+  const lfOut = buildDigest(lfDir, lfRun, binaryRel);
   const crlfRun = build(crlfDir);
-  const lfOut = lfRun.status === 0 ? readFileSync(resolve(lfDir, 'build/AshenSpire.html')) : null;
-  const crlfOut = crlfRun.status === 0 ? readFileSync(resolve(crlfDir, 'build/AshenSpire.html')) : null;
+  const crlfOut = buildDigest(crlfDir, crlfRun, binaryRel);
   check('text-asset EOL: LF and CRLF sandboxes both build',
     lfRun.status === 0 && crlfRun.status === 0,
     `LF exit ${lfRun.status}; CRLF exit ${crlfRun.status}`);
   check('text-asset EOL: LF and CRLF builds are byte-identical',
-    !!lfOut && !!crlfOut && lfOut.equals(crlfOut),
+    !!lfOut && !!crlfOut && lfOut.hash === crlfOut.hash,
     `LF ${lfOut?.length ?? 0} bytes; CRLF ${crlfOut?.length ?? 0} bytes`);
 
-  const binaryRel = 'assets/bg/bg_act1.webp';
   const lfBinary = readFileSync(resolve(lfDir, binaryRel));
   const crlfBinary = readFileSync(resolve(crlfDir, binaryRel));
-  const binaryMapExact = !!lfOut && !!crlfOut && [
-    assetMapPayload(lfOut, binaryRel, 'image/webp'),
-    assetMapPayload(crlfOut, binaryRel, 'image/webp'),
-  ].every((payload) => payload?.equals(lfBinary)) && lfBinary.equals(crlfBinary);
-  const binaryCssExact = !!lfOut && !!crlfOut && [
-    cssPayload(lfOut, '.backdrop.act-1', 'image/webp'),
-    cssPayload(crlfOut, '.backdrop.act-1', 'image/webp'),
-  ].every((payload) => payload?.equals(lfBinary));
+  const binaryMapExact = !!lfOut && !!crlfOut && [lfOut.map, crlfOut.map]
+    .every((payload) => payload?.equals(lfBinary)) && lfBinary.equals(crlfBinary);
+  const binaryCssExact = !!lfOut && !!crlfOut && [lfOut.css, crlfOut.css]
+    .every((payload) => payload?.equals(lfBinary));
   check('binary preservation: asset-map payload equals source bytes in LF and CRLF builds', binaryMapExact);
   check('binary preservation: CSS url payload equals source bytes in LF and CRLF builds', binaryCssExact);
 
@@ -141,12 +155,10 @@ function runEolSelftest() {
     '    const buf = readAssetBytes(abs);',
     '    const buf = readFileSync(abs);');
   const plantedRun = build(plantedDir);
-  const plantedOut = plantedRun.status === 0
-    ? readFileSync(resolve(plantedDir, 'build/AshenSpire.html'))
-    : null;
+  const plantedOut = buildDigest(plantedDir, plantedRun, binaryRel);
   check('text-asset EOL known-bad: raw-byte asset-map read was planted', planted);
   check('text-asset EOL known-bad: raw CRLF payload is caught by output identity',
-    plantedRun.status === 0 && !!lfOut && !!plantedOut && !lfOut.equals(plantedOut),
+    plantedRun.status === 0 && !!lfOut && !!plantedOut && lfOut.hash !== plantedOut.hash,
     `plant exit ${plantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${plantedOut?.length ?? 0}`);
 
   const cssPlantedDir = sandbox();
@@ -155,12 +167,10 @@ function runEolSelftest() {
     "  const css = inlineCssUrls(readText(cssAbs), cssAbs);",
     "  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);");
   const cssPlantedRun = build(cssPlantedDir);
-  const cssPlantedOut = cssPlantedRun.status === 0
-    ? readFileSync(resolve(cssPlantedDir, 'build/AshenSpire.html'))
-    : null;
+  const cssPlantedOut = buildDigest(cssPlantedDir, cssPlantedRun, binaryRel);
   check('text-source EOL known-bad: raw CSS read was planted', cssPlanted);
   check('text-source EOL known-bad: raw CRLF CSS is caught by output identity',
-    cssPlantedRun.status === 0 && !!lfOut && !!cssPlantedOut && !lfOut.equals(cssPlantedOut),
+    cssPlantedRun.status === 0 && !!lfOut && !!cssPlantedOut && lfOut.hash !== cssPlantedOut.hash,
     `plant exit ${cssPlantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${cssPlantedOut?.length ?? 0}`);
 
   const binaryPlantedDir = sandbox();
@@ -168,18 +178,16 @@ function runEolSelftest() {
     "const TEXT_ASSET_EXTS = new Set(['.svg']);",
     "const TEXT_ASSET_EXTS = new Set(['.svg', '.webp']);");
   const binaryPlantedRun = build(binaryPlantedDir);
-  const binaryPlantedOut = binaryPlantedRun.status === 0
-    ? readFileSync(resolve(binaryPlantedDir, 'build/AshenSpire.html'))
-    : null;
+  const binaryPlantedOut = buildDigest(binaryPlantedDir, binaryPlantedRun, binaryRel);
   const binarySource = readFileSync(resolve(binaryPlantedDir, binaryRel));
-  const badMap = binaryPlantedOut && assetMapPayload(binaryPlantedOut, binaryRel, 'image/webp');
-  const badCss = binaryPlantedOut && cssPayload(binaryPlantedOut, '.backdrop.act-1', 'image/webp');
+  const badMap = binaryPlantedOut && binaryPlantedOut.map;
+  const badCss = binaryPlantedOut && binaryPlantedOut.css;
   check('binary preservation known-bad: a binary extension was planted as text', binaryPlanted);
   check('binary preservation known-bad: both shared embedding paths catch corrupted binary bytes',
     binaryPlantedRun.status === 0
       && !!badMap && !badMap.equals(binarySource)
       && !!badCss && !badCss.equals(binarySource),
-    `plant exit ${binaryPlantedRun.status}; source ${binarySource.length}; map ${badMap?.length ?? 0}; CSS ${badCss?.length ?? 0}`);
+    `plant exit ${binaryPlantedRun.status}${binaryPlantedRun.status === 0 ? '' : ` (${binaryPlantedRun.out.slice(-300)})`}; source ${binarySource.length}; map ${badMap?.length ?? 0}; CSS ${badCss?.length ?? 0}`);
 
   rmSync(lfDir, { recursive: true, force: true });
   rmSync(crlfDir, { recursive: true, force: true });
