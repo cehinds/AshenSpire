@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: every merged pull request is checked for its changelog entry, however it landed",
     "detail": "Nothing you see in the game changes. The check that each merged pull request has an entry in this changelog used to recognise only one kind of merge, so squashed merges and hand-titled merges slipped past it; it now recognises all three kinds, and the four entries it had missed (#1262, #1263, #1268 and #1269) are written in.",
-    "build": "0.7.1.453",
+    "build": "0.7.1.454",
     "pullRequest": 1275,
     "url": "https://github.com/cehinds/AshenSpire/pull/1275"
+  },
+  {
+    "id": "pr-1271",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Herald phones get the full-body figure too",
+    "detail": "The Herald's new full-body painting from #1268 reached desktop but not the phone edition, which kept showing the old head-and-shoulders crop. The five Herald sprites in the mobile art set now show the whole figure, boots included, as they do on desktop.",
+    "build": "0.7.1.451",
+    "pullRequest": 1271,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1271"
   },
   {
     "id": "pr-1272",
