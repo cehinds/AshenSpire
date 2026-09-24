@@ -26,8 +26,8 @@ import { createRegistries } from './src/model/registries.js';
 
 const bundle = {
   version: '1',                       // becomes registries.contentVersion
-  balance: { energy: 3, draw: 5, handMax: 10, flaskSlots: 3,
-             startingRunes: 0,
+  balance: { energy: 3, draw: 5, handMax: 5, flaskSlots: 3,
+             startingCinders: 20,
              poise: { growthMult: 1.25, onFill: [/* effects */] },
              /* ...every other tuning constant */ },
   cards: [ /* card defs */ ],
@@ -67,7 +67,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 |---|---|
 | `energy` (3) | player energy at turn start |
 | `draw` (5) | cards drawn at player turn start |
-| `handMax` (10) | hand limit; overflow draws go to discard |
+| `handMax` (5; 10 before 2026-09-24) | fallback hand limit for a fight created without hand rules (co-op, headless); overflow draws go to discard. A solo fight's limit is its hand rules' capacity (`content/handRules.js`, SPEC §4.1) |
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
 | `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
@@ -76,7 +76,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | `mana.minActionCost` / `minStaminaCost` (1 / 1) | a card that costs Mana costs at least these (validation) |
 | `exposure.staggerBreakPoise` / `resonanceSpreadPct` / `buildupPerManaSpell` (6 / 50 / 5) | the focus properties' numbers and the Mana spell's buildup floor |
 | `poise.onFill` ([]) | effects enqueued when a poise meter fills, `owner`/`self` = the Staggered enemy. **This is where content applies its "staggered" status** (e.g. `damageTakenMult: 1.5` + a `playerTurnEnd` hook that removes itself). The engine never names that status. |
-| `startingRunes` (0) | initial cinders in `createRunState` |
+| `startingCinders` (20; 0 before 2026-09-24) | initial cinders in `createRunState` |
 
 ---
 

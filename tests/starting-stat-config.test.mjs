@@ -51,7 +51,10 @@ test('a retuned pool moves the presets and leaves every threshold alone', () => 
   assert.equal(row.constitution, 2);
   const receipt = deriveStat(a.derivedStatRuleSnapshot.rules, 'hp',
     { attributes: a.attributes, classDef: registries.classes.get('reaver'), level: 1 });
-  assert.equal(receipt.value, row.base + Math.floor(a.attributes.constitution * row.constitution));
+  // Every attribute term the row carries, each floored on its own (the stock
+  // HP row also reads STR and WIS); CON's is the configured 2.
+  const terms = contentBundle.attributes.reduce((sum, { id }) => sum + Math.floor((a.attributes[id] || 0) * (row[id] || 0) + 1e-9), 0);
+  assert.equal(receipt.value, row.base + terms);
 
   // A bigger pool buys more, which is the whole of what a pool now does.
   const narrow = createRunState({ registries: createRegistries(configuredContentBundle(contentBundle, settings)), classId: 'reaver', seed: 42, attributeMode: 'lean' });
@@ -239,14 +242,17 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
   const rules = contentBundle.derivedStatRules.rules;
   // Ruleset 6: base plus each attribute's own floored term, as a rating reads.
-  const pool = (id, attributeId) => rules[id].base + Math.floor(run.attributes[attributeId] * rules[id][attributeId] + 1e-9);
-  assert.equal(run.energyMax, pool('energy', 'dexterity'));
-  assert.equal(run.drawPerTurn, pool('draw', 'intelligence'));
-  assert.equal(run.maxMana, pool('mana', 'wisdom'));
-  // The numbers those rows now state, on the lean span: Mana is its base of 1
-  // plus Wisdom, and Actions and draw sit at their base of 3 until a point
-  // clears a five-point tier no lean character can reach.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 2]);
+  // The stock rows read a spread of attributes (owner, 2026-09-24), so every
+  // term the row carries is summed; level 1 adds no level term.
+  const pool = (id) => rules[id].base + contentBundle.attributes.reduce((sum, { id: attributeId }) =>
+    sum + Math.floor((run.attributes[attributeId] || 0) * (rules[id][attributeId] || 0) + 1e-9), 0);
+  assert.equal(run.energyMax, pool('energy'));
+  assert.equal(run.drawPerTurn, pool('draw'));
+  assert.equal(run.maxMana, pool('mana'));
+  // The numbers those rows now state for a stock lean Reaver: Actions and draw
+  // sit at their base of 3, and Mana at its base of 1 — WIS 1 at 0.5 a point
+  // floors to nothing, and no other term reaches a whole point on the lean span.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 1]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {
@@ -472,7 +478,13 @@ test('an attribute card never promises more than the rule pays', async () => {
   // paid — a card that promises more than the rule pays is worse than one that
   // says nothing. The pool no longer produces such a tier; the Advanced
   // threshold row still can, so the property is driven by that row instead.
-  const wide = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 0.6 });
+  // The stock HP row also reads STR, and the raised run below pays for its CON
+  // point with a STR point — so STR's HP weight is zeroed here, or the trade
+  // itself would cost HP the card never promised for Constitution.
+  const wide = configuredContentBundle(contentBundle, {
+    'gameConfig.derivedStatRules.rules.hp.pointsPerTier': 0.6,
+    'gameConfig.derivedStatRules.rules.hp.strength': 0,
+  });
   const { card, run, registries } = hpLine(wide);
   const stated = /HP \+(\d+) every 1 point/.exec(card.reveal.lines.find(line => line.startsWith('HP ')))?.[1];
   const raised = createRunState({
@@ -575,9 +587,15 @@ test('a ruleset-6 table refuses a legacy per-row gain layer by name', async () =
 test('a run lists a stat on the card its own snapshot scales it with', async () => {
   const { attributeCardModels } = await import('../src/model/creationBrief.js');
   const { statProjection } = await import('../src/model/statProjection.js');
-  const registries = createRegistries(contentBundle);
+  // The run starts on an HP row that reads Constitution alone, set here — the
+  // stock row also reads STR and WIS, which would put an HP line on the
+  // Strength card from the run's own snapshot.
+  const conOnly = { 'gameConfig.derivedStatRules.rules.hp.strength': 0, 'gameConfig.derivedStatRules.rules.hp.wisdom': 0 };
+  const registries = createRegistries(configuredContentBundle(contentBundle, conOnly));
   const run = createRunState({ registries, classId: 'reaver', seed: 13 });
+  assert.equal(run.derivedStatRuleSnapshot.rules.rules.hp.strength || 0, 0, 'the run was born with HP on Constitution only');
   const moved = createRegistries(configuredContentBundle(contentBundle, {
+    ...conOnly,
     'gameConfig.derivedStatRules.rules.hp.constitution': 0,
     'gameConfig.derivedStatRules.rules.hp.strength': 4,
   }));
@@ -608,9 +626,13 @@ test('a stat base is whole points, and Mana cannot be configured to zero', async
   const problems = advancedConfigProblemRows(contentBundle, zero);
   const mana = problems.find((p) => /Mana would be 0/.test(p.message));
   assert.ok(mana && mana.keys.includes('gameConfig.derivedStatRules.rules.mana.base'), 'and the Settings rows say so');
-  // One point of Mana from the weakest allocation is enough.
-  assert.ok(!advancedConfigProblemRows(contentBundle, { 'gameConfig.derivedStatRules.rules.mana.base': 0 })
-    .some((p) => /Mana would be/.test(p.message)), 'base 0 with WIS 1 still yields 1');
+  // One point of Mana from the weakest allocation is enough. WIS pays a whole
+  // point here by setting — the stock 0.5 floors WIS 1 to nothing, so base 0
+  // alone is now (rightly) refused for the stock weights.
+  assert.ok(!advancedConfigProblemRows(contentBundle, {
+    'gameConfig.derivedStatRules.rules.mana.base': 0,
+    'gameConfig.derivedStatRules.rules.mana.wisdom': 1,
+  }).some((p) => /Mana would be/.test(p.message)), 'base 0 with WIS 1 still yields 1');
   assert.ok(validateContent(contentBundle).ok, 'the shipped table passes both');
 });
 

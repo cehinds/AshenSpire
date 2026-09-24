@@ -324,6 +324,14 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       },
     });
   }
+  const armourDefenseRating = (outfit) => {
+    const value = outfit.defenseRating ?? '';
+    if (value === '') return 0;
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armour '${outfit.classId}/${outfit.id}' defenseRating must be blank or a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
     // The outfit's poise threshold is its weight under the A-side rule, so it
@@ -349,10 +357,11 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         // Outfits author no weight column; the legacy identity `weight ==
         // poiseThreshold` (the armament rule) is adopted for armour as the
         // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
-        // The B-side — armour weightless — is `itemWeight: 0` here. No
-        // defenseRating column exists for outfits; 0 remains inert.
+        // The B-side — armour weightless — is `itemWeight: 0` here. The
+        // optional outfits.csv defenseRating column carries the piece's own DR
+        // rating; a blank cell is 0.
         itemWeight: outfit.poiseThreshold,
-        defenseRating: 0,
+        defenseRating: armourDefenseRating(outfit),
       },
     });
   }
