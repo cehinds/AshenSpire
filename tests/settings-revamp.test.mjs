@@ -253,3 +253,13 @@ test('a profile that already matches is recorded as loaded', async () => {
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(!diff\.length\) \{\s*write\(SYNC_STORAGE\.lastSha, remote\.sha/);
 });
+
+test('the dev-preview standalone files are named so they open as dev builds', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
+  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s]*\.html)/g)].map((m) => m[1]);
+  assert.ok(names.length >= 2, 'the workflow still writes the standalone files');
+  for (const name of names) {
+    assert.equal(buildChannel({ pathname: `/Downloads/dev-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), 'dev', name);
+  }
+});
