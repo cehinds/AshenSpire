@@ -4,6 +4,8 @@ Drop your own tracks here to replace the built-in generated score. Everything is
 optional — any context you leave empty keeps the procedural music, so you can
 override just the battle music if you like.
 
+Generation prompts for every context: [PROMPTS.md](PROMPTS.md).
+
 ## Setup
 
 1. Put audio files (`.mp3` or `.ogg`) into the per-context subfolders below.
