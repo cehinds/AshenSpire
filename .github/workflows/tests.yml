@@ -67,4 +67,5 @@ jobs:
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
 
       - name: Parse gate — the bundler's own known-bad fixtures
+        if: always() # independent of the step above; a red there must not hide this
         run: node tools/bundle.test.mjs

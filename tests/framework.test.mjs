@@ -765,9 +765,9 @@ function grantFixtureRegistries(packagesById) {
 // keeps its shipped combat kit (SPEC §3.8 "Complete armament kits", #904), so
 // its three item-owned instances compose beside the fixture's.
 const ROUND_SHIELD_KIT = ['kit:roundShield:attack', 'kit:roundShield:guard', 'weaponArt:roundShield:shieldBash'];
-// Everyone has the dodge (owner's rule, 2026-09-24): with no hand empty the
-// body owns the one Dodge Roll every composed deck carries.
-const BODY_DODGE = 'weaponArt:unarmed:body:dodgeRoll';
+// Everyone has the dodge (owner's rule, 2026-09-24): every composed deck
+// carries one Dodge Roll under one owner-free id (a hand or the body owns it).
+const BODY_DODGE = 'weaponArt:unarmed:dodgeRoll';
 
 // SPEC §3.8 "Complete armament kits" (#904, 0.6.0.115): EVERY shipped
 // hand-equipped armament authors a combatKit and lends one Strike, one Guard
@@ -816,7 +816,7 @@ test('grants and weapon arts compose at creation and reconcile through equip tra
   reconcileGrantedCards(REG2, run);
   // The sword's grants leave with it; the hand it left is EMPTY beside the
   // shield, and an empty hand carries the Dodge Roll (the owner's rule).
-  eq(composed(), [...ROUND_SHIELD_KIT, 'weaponArt:unarmed:right:dodgeRoll'].sort(), 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
+  eq(composed(), [...ROUND_SHIELD_KIT, BODY_DODGE].sort(), 'unequip removes every granted instance; the emptied hand carries the Dodge Roll');
   run.loadout.sets.rightHand = savedSets.rightHand;
   reconcileGrantedCards(REG2, run);
   eq(composed(), before, 're-equip restores them exactly');
@@ -1017,6 +1017,18 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   // so the bare hands carry it: one, owned by the first empty hand.
   const dodges = run.deck.filter((c) => c.equipmentRole === 'weaponArt' && c.cardId === 'dodgeRoll');
   eq(dodges.map((c) => c.grantedBy), ['unarmed:right'], `a born-armed run with both hands emptied still has exactly one Dodge Roll (${dodges.map((c) => c.instanceId).join(',') || 'none'})`);
+  // Born unarmed, and a legacy save whose technique slot already holds one:
+  // every Dodge Roll in the deck is counted, whatever its role.
+  for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
+    const bare = createRunState({ seed: 7, classId, registries: LEGACY_REG, startingHands: { leftHand: null, rightHand: null } });
+    eq(bare.deck.filter((c) => c.cardId === 'dodgeRoll').length, 1, `${classId} created unarmed carries exactly one Dodge Roll`);
+  }
+  const legacy = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  legacy.loadout.sets.rightHand = legacy.loadout.sets.rightHand.map(() => null);
+  legacy.loadout.sets.leftHand = legacy.loadout.sets.leftHand.map(() => null);
+  legacy.deck.push({ instanceId: 'legacy-technique', cardId: 'dodgeRoll', upgraded: false, equipmentRole: 'technique' });
+  stampDeck(LEGACY_REG, legacy);
+  eq(legacy.deck.filter((c) => c.cardId === 'dodgeRoll').map((c) => c.instanceId).join(','), 'legacy-technique', 'a saved technique-slot Dodge Roll is the one; no second is minted');
 });
 
 test('one empty hand composes the Dodge Roll beside the armed hand\'s technique, and filling the hand keeps it on the body', () => {

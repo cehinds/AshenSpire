@@ -17,7 +17,9 @@ export function equipLoad({ mainHandWeight = 0, offHandWeight = 0, armorWeight =
 }
 
 export function loadPercent(load, capacity) {
-  return Math.floor((100 * load) / Math.max(1, capacity));
+  // Loads are tenths (itemWeightScale); work in whole tenths so 4.6 / 10 is
+  // 46%, not the 45% that 100 * 4.6 = 459.99… floors to.
+  return Math.floor((10 * Math.round(10 * load)) / Math.max(1, capacity));
 }
 
 export function weightClassFor(percent) {

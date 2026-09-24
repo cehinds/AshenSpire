@@ -115,7 +115,7 @@ if (CORE) {
   const { fileURLToPath } = await import('node:url');
   const root = fileURLToPath(new URL('..', import.meta.url));
   // Generated output and third-party trees hold no tests of ours. Dot-directories
-  // are skipped except .github, whose workflow helpers carry their own tests.
+  // are skipped except .github, so a workflow helper's own test is found too.
   const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'scratch']);
   const NOT_SPAWNED = new Map([
     ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
