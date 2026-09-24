@@ -243,6 +243,19 @@ test('a chest pick grants exactly the named option and nothing else', () => {
   assert.deepEqual(m2.run.relics.slice(relicsBefore), [relic]);
 });
 
+test('a seat that has chosen cannot take a chest option while the others choose', () => {
+  const S = party();
+  const m1 = seat(S, 'p1');
+  const purse = { category: 'cinders', cinders: 55, smithingStones: 0 };
+  openReward(S, { p1: { ...chestOffer([purse]), cardIds: ['stomp'] }, p2: chestOffer([purse]) });
+  assert.equal(S.chooseReward('p1', { cardId: 'stomp' }).ok, true);
+  const before = structuredClone(m1.run);
+  const res = S.chooseReward('p1', { chestIndex: 0 });
+  assert.equal(res.ok, false, 'the second pick at one door is refused');
+  assert.deepEqual(m1.run, before, 'nothing granted on top');
+  assert.equal(S.session.scene.kind, 'reward', 'p2 is still choosing');
+});
+
 test('a bad index or a stale upgrade is refused with nothing mutated, and the door stays open', () => {
   const S = party();
   const m = seat(S, 'p1');

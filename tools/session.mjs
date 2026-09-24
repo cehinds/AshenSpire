@@ -904,6 +904,11 @@ export function createSession({ registries, seedString, endless = false, restore
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // ONE PICK PER SEAT: the screen stages every row and sends the whole door
+    // once on Continue (coop-parity), so a seat that has chosen is done at
+    // this door. A later message — a stale re-send, or a chest pick while the
+    // others choose — is refused whole, never granted on top.
+    if (session.scene.chosen && session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
     // ONE OF EACH PER SEAT: the screen stays up (and re-sends its whole pick)
     // after a seat's first tap while the others choose, so a second message
     // may name the card again, ANOTHER relic of a boss choice (SPEC §6.1) or
