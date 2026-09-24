@@ -471,3 +471,18 @@ test('every relic and talent variable has a phrase in balanceWords', async () =>
   const missing = [...variables].filter((variable) => !Object.hasOwn(balanceWords.effects, variable));
   assert.deepEqual(missing, [], 'these variables have no phrase in balanceWords.effects');
 });
+
+// The Cinder gain multiplier's default is 20 and applies when the row is unset.
+// A profile that stored the owner's 20 (his exported file, 2026-09-24) must get
+// the same ×20 a fresh profile gets — not 20 on top of a pre-multiplied table.
+test('the cinder multiplier default is idempotent with a stored 20', () => {
+  const authored = contentBundle.balance.rewards.cinders.normal;
+  const key = 'gameConfig.progression.rewardMultiplier';
+  const fresh = configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal;
+  const stored = configuredContentBundle(contentBundle, { [key]: 20 }).balance.rewards.cinders.normal;
+  const one = configuredContentBundle(contentBundle, { [key]: 1 }).balance.rewards.cinders.normal;
+  assert.deepEqual(fresh, authored.map((n) => n * 20));
+  assert.deepEqual(stored, fresh);
+  assert.deepEqual(one, authored);
+  assert.equal(advancedConfigRows(contentBundle).find((row) => row.key === key).def, 20);
+});

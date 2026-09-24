@@ -16,6 +16,10 @@ import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
+// The Cinder gain multiplier's default (owner, 2026-09-24: 20). It applies
+// when the row is unset, so a profile that stored 20 gets ×20, not ×400: the
+// authored cinder table stays the ×1 baseline the multiplier scales.
+export const REWARD_MULTIPLIER_DEFAULT = 20;
 
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
@@ -589,10 +593,10 @@ function progressionRows(bundle) {
       // Cinders only — it never touched XP, whatever its old label said — so it
       // is filed with the Cinders it multiplies (Rewards → Combat rewards).
       cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.05,
-      min: 0, max: 20, def: 1,
+      min: 0, max: 20, def: REWARD_MULTIPLIER_DEFAULT,
       key: `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`,
       label: 'Cinder gain multiplier',
-      note: 'Multiply Cinders earned from combat rewards. 1 keeps authored rewards. Applies to a new run.',
+      note: `Multiply Cinders earned from combat rewards. ${REWARD_MULTIPLIER_DEFAULT} is the shipped default; 1 keeps the authored table. Applies to a new run.`,
       specialKey: 'rewardMultiplier', searchPath: 'progression experience exp cinder reward gain multiplier',
     },
   ];
@@ -810,7 +814,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
     for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));
   }
-  const rewardMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`]);
+  const rewardMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`] ?? REWARD_MULTIPLIER_DEFAULT);
   if (Number.isFinite(rewardMultiplier) && configured.balance.rewards?.cinders) {
     for (const range of Object.values(configured.balance.rewards.cinders)) {
       if (!Array.isArray(range)) continue;

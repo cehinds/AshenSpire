@@ -70,7 +70,7 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
  * Starting deck/relic/HP come from the class def; cinders from
- * balance.startingCinders (default 0).
+ * balance.startingCinders (default 20).
  */
 export function createRunState({
   seed,

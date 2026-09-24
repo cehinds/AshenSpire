@@ -406,8 +406,7 @@ export const balance = {
     // this one now (2026-09-11) — the shop by this same ×3, the level ladder
     // by measurement, each explained where it lives.
     cinders: {
-      // ×20 (owner, 2026-09-24: Cinder gain multiplier 20, baked in).
-      normal: [900, 1500], elite: [2100, 3000], boss: [4500, 5400],
+      normal: [45, 75], elite: [105, 150], boss: [225, 270],
       [NOTE]: {
         '{kind}.{end}': 'The {band} of the cinders that {pool} pays.',
       },

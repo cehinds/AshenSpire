@@ -86,7 +86,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -810,7 +810,8 @@ function applyDisplaySettings(settings) {
   // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
   applyLoreType(settings);
   document.body.classList.toggle('hide-hints', settings.controlHints === false);
-  document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
+  // A profile that never touched the row gets the row's default (compact).
+  document.body.classList.toggle('map-compact', (settings.mapHeaderDensity ?? settingsRow('mapHeaderDensity').def) === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
   // The quick-menu experiment. Handed to the component the same way input.js is
