@@ -1098,7 +1098,7 @@ function wireStepper(wrap, { read, commit, min, max, step }) {
   const fit = (v) => {
     if (!slider || !Number.isFinite(v)) return;
     if (v > Number(slider.max)) slider.max = String(Math.min(max, niceCeil(v * 1.5)));
-    if (v < Number(slider.min)) slider.min = String(min);
+    if (v < Number(slider.min)) slider.min = String(Math.max(min, -niceCeil(Math.abs(v) * 1.5)));
     slider.value = String(v);
   };
   const sync = () => {
@@ -1207,7 +1207,11 @@ export function sliderSpan(row, value) {
   const step = row.step ?? 1;
   if (row.slider || (max - min) / step <= 400) return [min, max];
   const anchor = Math.max(Math.abs(Number(value) || 0), Math.abs(Number(row.def) || 0), step * 10);
-  return [min, Math.max(min + step, Math.min(max, niceCeil(anchor * 3)))];
+  const reach = niceCeil(anchor * 3);
+  // A signed domain (−999…999) is centred too: both ends come in around the
+  // value, each clamped to the declared range.
+  const low = Math.max(min, -reach);
+  return [low, Math.max(low + step, Math.min(max, reach))];
 }
 
 /** niceCeil(x) → the smallest 1, 2 or 5 × 10ⁿ at or above x. */

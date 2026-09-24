@@ -277,3 +277,9 @@ test('−/+ step from an off-grid value instead of snapping to the grid', async 
   assert.match(screen, /const round = \(v\) => Number\(v\.toFixed\(10\)\);/);
   assert.doesNotMatch(screen, /Math\.round\(v \/ step\) \* step/);
 });
+
+test('a compact slider over a signed range is centred on its value', () => {
+  assert.deepEqual(sliderSpan({ min: -999, max: 999, step: 1, def: 5 }, 5), [-50, 50]);
+  assert.deepEqual(sliderSpan({ min: -500, max: 500, step: 1, def: 0 }, 0), [-50, 50]);
+  assert.deepEqual(sliderSpan({ min: -3, max: 999, step: 1, def: 5 }, 5), [-3, 50], 'a shallow negative floor is kept');
+});
