@@ -614,6 +614,10 @@ export const RUN_SHAPE = [
   { key: 'lastMountReceipt', type: 'object', optional: true },
   { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
+  // Card-rarity pity (SPEC §3.8.1). Optional: absent reads as the balance
+  // start and zero, written on the first card offer that reads them.
+  { key: 'cardRarityOffset', type: 'number', optional: true },
+  { key: 'cardRewardsSinceRare', type: 'number', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -890,7 +894,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
         problems.push('pendingReward.states must be an object');
       } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'chest', 'relic'];
         const draftKeys = new Set(pendingDraftKeys(pending));
         for (const [key, state] of Object.entries(pending.states)) {
           // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
@@ -951,6 +955,19 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           for (const draft of drafts) {
             if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
           }
+        }
+      }
+      // The elite chest (SPEC §3.8.1): a Taken chest names the option it took.
+      if (pending.rewards?.chest != null) {
+        const options = pending.rewards.chest && pending.rewards.chest.options;
+        if (!Array.isArray(options) || !options.length || options.some((o) => !o || typeof o.category !== 'string')) {
+          problems.push('pendingReward.rewards.chest.options must be a non-empty array of { category, … }');
+        } else {
+          const idx = pending.chosenChestIndex;
+          if (idx !== undefined && idx !== null && (!Number.isInteger(idx) || idx < 0 || idx >= options.length)) {
+            problems.push('pendingReward.chosenChestIndex must index pendingReward.rewards.chest.options');
+          }
+          if (pending.states?.chest === 'taken' && !Number.isInteger(idx)) problems.push('pendingReward chest Taken state requires chosenChestIndex');
         }
       }
       if (pending.chosenCardId !== null && pending.chosenCardId !== undefined

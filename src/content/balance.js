@@ -438,6 +438,45 @@ export const balance = {
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    // Card-rarity pity (SPEC §3.8.1, the StS rare offset): percentage points
+    // added to each card slot's rare chance. Starts below zero so the first
+    // fights stay lean, climbs with every common shown, resets on a rare —
+    // and an offer after `rareGuaranteeAfter` rare-less ones always holds one.
+    cardPity: {
+      offsetStart: -5,
+      offsetStep: 1,
+      offsetMax: 40,
+      rareGuaranteeAfter: 4,
+      [NOTE]: {
+        offsetStart: 'Percentage points added to a card\'s rare chance at the start of a run, and again each time a rare is offered.',
+        offsetStep: 'How many points the rare chance climbs for each common card offered at a normal or elite fight.',
+        offsetMax: 'The most points the climbing rare chance may add.',
+        rareGuaranteeAfter: 'How many card offers in a row may show no rare before the next one is certain to hold one.',
+      },
+    },
+    // The elite chest (SPEC §3.8.1): an elite's single random relic became a
+    // visible pick of one big reward from `choices` distinct categories.
+    eliteChest: {
+      choices: 3,
+      categoryWeights: {
+        relic: 30, upgrade: 25, armament: 25, cinders: 20,
+        [NOTE]: {
+          relic: 'How often an elite chest offers a relic, weighed against its other categories.',
+          upgrade: 'How often an elite chest offers an upgraded card, weighed against its other categories.',
+          armament: 'How often an elite chest offers an armament or weapon art, weighed against its other categories.',
+          cinders: 'How often an elite chest offers a purse of cinders and Smithing Stones, weighed against its other categories.',
+        },
+      },
+      upgradeOwnedPct: 50,
+      cinders: [90, 130],
+      smithingStones: 1,
+      [NOTE]: {
+        choices: 'How many different rewards an elite chest lays out to choose one from.',
+        upgradeOwnedPct: 'The chance an elite chest\'s card upgrade is one of your own cards rather than a new rare card, already upgraded.',
+        'cinders.{end}': 'The {band} of the cinders an elite chest\'s purse holds.',
+        smithingStones: 'How many Smithing Stones an elite chest\'s purse holds.',
+      },
+    },
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',

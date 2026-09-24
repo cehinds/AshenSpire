@@ -1,0 +1,234 @@
+// tests/reward-pity-chest.test.mjs — card-rarity pity and the elite chest
+// (SPEC §3.8.1).
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import {
+  rollCardRewardIds, pityWeights, rollEliteChest, chestUpgradeable, CHEST_CATEGORIES,
+} from '../src/engine/encounters.js';
+import { rewardPlan, resolveContinue } from '../src/model/rewardplan.js';
+import { applyChestOption } from '../src/model/rewardChest.js';
+
+const r = createRegistries(contentBundle);
+const pity = r.balance.rewards.cardPity;
+const rarity = (id) => r.cards.get(id).rarity;
+const newRun = (seed = 5, classId = 'reaver') => createRunState({ registries: r, classId, seed });
+
+// A scripted rng: `float` answers from a queue (then 0), `pick` takes the first.
+const scripted = (floats = []) => ({
+  float: () => (floats.length ? floats.shift() : 0),
+  pick: (_s, items) => items[0],
+  int: (_s, lo) => lo,
+});
+
+test('pity weights: rare share plus offset, clamped, rest split in ratio', () => {
+  const w = { common: 60, uncommon: 35, rare: 5 };
+  const all = ['common', 'uncommon', 'rare'];
+  assert.deepEqual(pityWeights(w, all, 0), { rare: 5, common: 60, uncommon: 35 });
+  const low = pityWeights(w, all, -5);
+  assert.equal(low.rare, 0);
+  assert.ok(Math.abs(low.common - (100 * 60) / 95) < 1e-9);
+  assert.ok(Math.abs(low.uncommon - (100 * 35) / 95) < 1e-9);
+  assert.equal(pityWeights(w, all, 10).rare, 15);
+  assert.equal(pityWeights(w, all, 200).rare, 100);
+  assert.equal(pityWeights(w, all, -50).rare, 0);
+  // A pool with no rare card keeps its authored row.
+  assert.equal(pityWeights(w, ['common', 'uncommon'], 30), w);
+});
+
+test('offset climbs per common shown, resets on a rare, and is capped', () => {
+  const run = newRun();
+  assert.equal(run.cardRarityOffset, undefined, 'a fresh run carries no counter until first read');
+  // Rolls of 0 land every slot on common.
+  rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'normal', run });
+  const n = r.balance.rewards.cardChoices;
+  assert.equal(run.cardRarityOffset, pity.offsetStart + n * pity.offsetStep);
+  assert.equal(run.cardRewardsSinceRare, 1);
+  run.cardRarityOffset = pity.offsetMax;
+  rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'normal', run });
+  assert.equal(run.cardRarityOffset, pity.offsetMax, 'capped at offsetMax');
+  // A roll just under 1 lands in the rare band (last) — the offset resets.
+  run.cardRewardsSinceRare = 0;
+  rollCardRewardIds(r, scripted([0, 0, 0.9999]), { classId: 'reaver', pool: 'normal', run });
+  assert.equal(run.cardRarityOffset, pity.offsetStart);
+  assert.equal(run.cardRewardsSinceRare, 0);
+});
+
+test('offset shifts the rare band: a roll that missed rare now hits it', () => {
+  const run = newRun();
+  // Normal pool: 5% rare. A roll at 0.93 is uncommon at offset 0 …
+  run.cardRarityOffset = 0;
+  const plain = rollCardRewardIds(r, scripted([0.93]), { classId: 'reaver', pool: 'normal', run });
+  assert.equal(rarity(plain[0]), 'uncommon');
+  // … and rare once the offset opens the band to 5 + 5 = 10%.
+  run.cardRarityOffset = 5;
+  const lifted = rollCardRewardIds(r, scripted([0.93]), { classId: 'reaver', pool: 'normal', run });
+  assert.equal(rarity(lifted[0]), 'rare');
+});
+
+test(`a rare is guaranteed after ${pity.rareGuaranteeAfter} rare-less offers`, () => {
+  const run = newRun();
+  for (let i = 0; i < pity.rareGuaranteeAfter; i++) {
+    const ids = rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'normal', run });
+    assert.ok(!ids.some((id) => rarity(id) === 'rare'), `offer ${i + 1} is all common`);
+  }
+  assert.equal(run.cardRewardsSinceRare, pity.rareGuaranteeAfter);
+  const ids = rollCardRewardIds(r, scripted(), { classId: 'reaver', pool: 'normal', run });
+  assert.equal(ids.filter((id) => rarity(id) === 'rare').length, 1, 'the last slot became a rare');
+  assert.equal(rarity(ids.at(-1)), 'rare');
+  assert.equal(new Set(ids).size, ids.length, 'still distinct');
+  assert.equal(run.cardRewardsSinceRare, 0);
+  assert.equal(run.cardRarityOffset, pity.offsetStart);
+});
+
+test('over real seeds no stretch runs longer than the guarantee', () => {
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const run = newRun(seed);
+    const rng = createRng(seed);
+    let streak = 0;
+    for (let i = 0; i < 40; i++) {
+      const ids = rollCardRewardIds(r, rng, { classId: 'reaver', pool: 'normal', run });
+      streak = ids.some((id) => rarity(id) === 'rare') ? 0 : streak + 1;
+      assert.ok(streak <= pity.rareGuaranteeAfter, `seed ${seed}: streak ${streak}`);
+    }
+  }
+});
+
+test('pity is seeded: one seed replays the same offers and counters', () => {
+  const play = () => {
+    const run = newRun(11);
+    const rng = createRng(11);
+    const offers = [];
+    for (let i = 0; i < 12; i++) offers.push(rollCardRewardIds(r, rng, { classId: 'reaver', pool: i % 3 ? 'normal' : 'elite', run }));
+    return { offers, offset: run.cardRarityOffset, since: run.cardRewardsSinceRare };
+  };
+  assert.deepEqual(play(), play());
+});
+
+test('no run, or Chaos Rewards, leaves the counters alone', () => {
+  const run = newRun();
+  rollCardRewardIds(r, createRng(3), { classId: 'reaver', pool: 'normal' });
+  rollCardRewardIds(r, createRng(3), { classId: 'reaver', pool: 'normal', run, flatRarity: true });
+  assert.equal(run.cardRarityOffset, undefined);
+  assert.equal(run.cardRewardsSinceRare, undefined);
+});
+
+test('an old save without the counters defaults them on first read', () => {
+  const run = newRun();
+  delete run.cardRarityOffset;
+  delete run.cardRewardsSinceRare;
+  const json = JSON.parse(JSON.stringify(run));
+  const ids = rollCardRewardIds(r, createRng(4), { classId: 'reaver', pool: 'normal', run: json });
+  assert.equal(ids.length, r.balance.rewards.cardChoices);
+  assert.ok(Number.isFinite(json.cardRarityOffset));
+  assert.ok(Number.isInteger(json.cardRewardsSinceRare));
+});
+
+// ---- the elite chest -------------------------------------------------------
+
+test('the chest offers three distinct categories, seeded', () => {
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    const run = newRun(seed);
+    const chest = rollEliteChest(r, createRng(seed), run, { found: [] });
+    assert.equal(chest.options.length, r.balance.rewards.eliteChest.choices, `seed ${seed}`);
+    const cats = chest.options.map((o) => o.category);
+    assert.equal(new Set(cats).size, cats.length, `seed ${seed}: distinct ${cats}`);
+    for (const c of cats) assert.ok(CHEST_CATEGORIES.includes(c));
+    assert.deepEqual(rollEliteChest(r, createRng(seed), newRun(seed), { found: [] }), chest, 'same seed, same chest');
+  }
+});
+
+test('every category builds a valid payload', () => {
+  const seen = new Set();
+  for (let seed = 1; seed < 60 && seen.size < CHEST_CATEGORIES.length; seed++) {
+    const run = newRun(seed);
+    for (const o of rollEliteChest(r, createRng(seed), run).options) {
+      seen.add(o.category);
+      if (o.category === 'relic') assert.ok(r.relics.has(o.relicId) && !run.relics.includes(o.relicId));
+      if (o.category === 'upgrade') {
+        if (o.mode === 'owned') assert.ok(chestUpgradeable(r, run, run.deck.find((c) => c.instanceId === o.instanceId)));
+        else assert.equal(rarity(o.cardId), 'rare');
+      }
+      if (o.category === 'armament') assert.ok(o.armamentId || o.weaponArtId);
+      if (o.category === 'cinders') {
+        const [lo, hi] = r.balance.rewards.eliteChest.cinders;
+        assert.ok(o.cinders >= lo && o.cinders <= hi);
+        assert.equal(o.smithingStones, r.balance.rewards.eliteChest.smithingStones);
+      }
+    }
+  }
+  assert.deepEqual([...seen].sort(), [...CHEST_CATEGORIES].sort());
+});
+
+test('an unbuildable category is dropped, not offered empty', () => {
+  const run = newRun(2);
+  run.relics = r.relics.all().map((x) => x.id); // nothing left to drop
+  for (let seed = 1; seed < 20; seed++) {
+    const chest = rollEliteChest(r, createRng(seed), run);
+    assert.ok(!chest.options.some((o) => o.category === 'relic'));
+    assert.equal(chest.options.length, 3);
+  }
+});
+
+test('taking a chest option grants exactly that option', () => {
+  const base = newRun(7);
+  const cases = [
+    { category: 'relic', relicId: r.relics.all().find((x) => x.rarity === 'common' && !base.relics.includes(x.id)).id },
+    { category: 'upgrade', mode: 'owned', instanceId: base.deck.find((c) => chestUpgradeable(r, base, c))?.instanceId },
+    { category: 'upgrade', mode: 'rare', cardId: r.classes.get('reaver').cardPool.find((id) => rarity(id) === 'rare') },
+    { category: 'cinders', cinders: 100, smithingStones: 1 },
+  ].filter((o) => o.category !== 'upgrade' || o.instanceId || o.cardId);
+  for (const option of cases) {
+    const run = structuredClone(base);
+    const before = structuredClone(run);
+    assert.equal(applyChestOption(r, run, option), true, option.category);
+    if (option.category === 'relic') {
+      assert.deepEqual(run.relics, [...before.relics, option.relicId]);
+      assert.equal(run.deck.length, before.deck.length);
+      assert.equal(run.cinders, before.cinders);
+    } else if (option.category === 'upgrade' && option.mode === 'owned') {
+      assert.equal(run.deck.length, before.deck.length);
+      const changed = run.deck.filter((c, i) => JSON.stringify(c) !== JSON.stringify(before.deck[i]));
+      assert.equal(changed.length, 1);
+      assert.equal(changed[0].instanceId, option.instanceId);
+      assert.equal(changed[0].upgraded, true);
+      assert.deepEqual(run.relics, before.relics);
+    } else if (option.category === 'upgrade') {
+      assert.equal(run.deck.length, before.deck.length + 1);
+      assert.deepEqual(run.deck.at(-1).cardId, option.cardId);
+      assert.equal(run.deck.at(-1).upgraded, true);
+    } else {
+      assert.equal(run.cinders, before.cinders + 100);
+      assert.equal(run.smithingStones, (before.smithingStones || 0) + 1);
+      assert.deepEqual(run.deck, before.deck);
+      assert.deepEqual(run.relics, before.relics);
+    }
+  }
+});
+
+test('the chest is one choice row in the reward menu, auto-collect picks one', () => {
+  const chest = { options: [
+    { category: 'relic', relicId: 'x' },
+    { category: 'armament', armamentId: 'y' },
+    { category: 'cinders', cinders: 90, smithingStones: 1 },
+  ] };
+  const plan = rewardPlan({ cinders: 50, chest }, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
+  const row = plan.rows.find((x) => x.kind === 'chest');
+  assert.equal(row.key, 'chest');
+  assert.equal(row.choice, true);
+  assert.equal(row.options.length, 3);
+  const { take } = resolveContinue(plan, {}, 'auto', () => 2);
+  const took = take.find((x) => x.kind === 'chest');
+  assert.equal(took.optionIndex, 2);
+  // A full bag makes the armament option untakeable; auto never picks it.
+  const full = rewardPlan({ chest }, { flaskSlotsFree: 1, armamentSlotsFree: 0 });
+  const fullRow = full.rows[0];
+  assert.deepEqual(fullRow.takeable, [true, false, true]);
+  const picks = [0, 1].map((i) => resolveContinue(full, {}, 'auto', () => i).take[0].optionIndex);
+  assert.deepEqual(picks, [0, 2]);
+  // Manual Continue leaves it.
+  assert.equal(resolveContinue(plan, {}, 'manual').take.length, 0);
+});
