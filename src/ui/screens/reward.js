@@ -561,9 +561,22 @@ export function mountRewards(app, {
       attachTooltip(btn, () => `<div class="tt-title">${esc(tTip('reward.skip'))}</div>${esc(tFull('reward.skip'))}`);
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        states[btn.dataset.skip] = 'skipped';
-        persistProgress();
-        renderMenu(btn.dataset.skip);
+        // A skip is a decision the save must carry (the boss relic chooser's
+        // Skip, below): a refused save puts the row back, says so, and throws
+        // nothing — the row stays skippable for a retry.
+        const row = plan.rows.find((r) => r.key === btn.dataset.skip);
+        if (!row || states[row.key]) return;
+        const before = snapshotForRollback();
+        states[row.key] = 'skipped';
+        try {
+          persistProgress();
+        } catch {
+          restoreRollback(before, row);
+          const note = app.querySelector('#reward-hold-copy');
+          if (note) note.textContent = t('reward.card.saveFailed');
+          return;
+        }
+        renderMenu(row.key);
       });
     }
 

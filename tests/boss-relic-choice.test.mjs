@@ -225,3 +225,24 @@ test('a corrupt or stale boss relic choice is refused at the save doors, by name
   assert.equal(load(ids), '');
   assert.match(load([ids[0], 'noSuchRelic']), /boss relic choice 'noSuchRelic' is unknown/);
 });
+
+test('a refused save puts a blocked row\'s menu Skip back, without throwing (#1287)', () => withDom(() => {
+  const app = document.createElement('main'); document.body.append(app);
+  const cap = REG.balance.equipment.storageSlots || 8;
+  const armamentId = REG.equipment.armaments[0].id;
+  const run = { ...freshRun(), loadout: { storage: Array.from({ length: cap }, () => armamentId) } };
+  const checkpoint = { states: {}, chosenCardId: null, chosenRelicId: null };
+  let refuse = true;
+  mountRewards(app, { registries: REG, run, checkpoint, rewards: { title: 'ELITE', armamentId }, onDone() {}, onPersist: () => !refuse });
+  const row = app.querySelector('[data-kind="armament"]');
+  assert.equal(row.dataset.state, 'blocked', 'a full bag blocks the armament row');
+  const checkpointBefore = structuredClone(checkpoint);
+  assert.doesNotThrow(() => app.querySelector('[data-skip="armament"]').click(), 'a refused skip is not an uncaught throw');
+  assert.deepEqual(checkpoint.states, checkpointBefore.states, 'the refused skip is rolled back');
+  assert.match(app.querySelector('#reward-hold-copy').textContent, /could not be saved/);
+  // The retry lands.
+  refuse = false;
+  app.querySelector('[data-skip="armament"]').click();
+  assert.equal(checkpoint.states.armament, 'skipped');
+  assert.equal(app.querySelector('[data-kind="armament"]').dataset.state, 'skipped');
+}));
