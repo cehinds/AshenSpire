@@ -2449,6 +2449,11 @@ async function onCombatEnd(result, combat, enc) {
   // schools, and while one is on the table the class-card offer is not.
   const drafts = rollSkillDrafts(enc.pool);
   const classDrafts = rollClassDrafts();
+  // Elites are the mid-run source of armaments; ordinary fights are not
+  // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
+  // no-op there rather than a hidden 0%). Rolled before the chest (their
+  // streams are disjoint, SPEC §3.8.1) so the chest can exclude this piece.
+  const doorArmamentId = rollDrop(enc.pool);
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
@@ -2459,11 +2464,8 @@ async function onCombatEnd(result, combat, enc) {
     flaskId: rollFlaskDrop(registries, rng, run),
     // The elite chest (SPEC §3.8.1) replaces the elite's one random relic:
     // a visible pick of one big reward from distinct categories.
-    chest: enc.pool === 'elite' ? rollEliteChest(registries, rng, run, { found: saves.loadMeta().found || [] }) : null,
-    // Elites are the mid-run source of armaments; ordinary fights are not
-    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
-    // no-op there rather than a hidden 0%).
-    armamentId: rollDrop(enc.pool),
+    chest: enc.pool === 'elite' ? rollEliteChest(registries, rng, run, { found: saves.loadMeta().found || [], exclude: [doorArmamentId] }) : null,
+    armamentId: doorArmamentId,
     smithingStoneReceipt,
     xpGains,
   };

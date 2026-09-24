@@ -373,16 +373,17 @@ export { chestUpgradeable };
 export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
 
 /**
- * rollEliteChest(registries, rng, run, { found }) → { options } | null.
+ * rollEliteChest(registries, rng, run, { found, exclude }) → { options } | null.
  * Up to `balance.rewards.eliteChest.choices` options, each of a DISTINCT
  * category drawn by `categoryWeights` without replacement (stream
  * 'relicRewards'). A category that cannot build a payload is dropped and the
  * draw moves on; no buildable category at all rolls no chest. Every draw,
  * the payload rolls included, is on 'relicRewards' only. Pure apart from
  * the rng: the run is read, never written. `found` is the profile's found
- * armaments (the armament roll's prefer-unfound input).
+ * armaments (the armament roll's prefer-unfound input); `exclude` names
+ * armament ids the chest's piece may not be (the door's own armament drop).
  */
-export function rollEliteChest(registries, outerRng, run, { found = [] } = {}) {
+export function rollEliteChest(registries, outerRng, run, { found = [], exclude = [] } = {}) {
   const cfg = registries.balance.rewards.eliteChest;
   if (!cfg || !(cfg.choices > 0)) return null;
   // EVERY chest draw is on 'relicRewards' — the stream the elite's one relic
@@ -410,7 +411,9 @@ export function rollEliteChest(registries, outerRng, run, { found = [] } = {}) {
       return rares.length ? { category: 'upgrade', mode: 'rare', cardId: rng.pick('cardRewards', rares) } : null;
     },
     armament() {
-      const armamentId = rollArmamentDrop(registries, rng, { source: 'elite', found, carried: carriedIds(run.loadout), guaranteed: true });
+      // The door's own armament drop (`exclude`) is never the chest's piece too.
+      const carried = [...carriedIds(run.loadout), ...exclude.filter(Boolean)];
+      const armamentId = rollArmamentDrop(registries, rng, { source: 'elite', found, carried, guaranteed: true });
       if (armamentId) return { category: 'armament', armamentId };
       const inDeck = new Set((run.deck || []).map((c) => c.cardId));
       const arts = eligibleWeaponArts(registries).filter((id) => !inDeck.has(id));

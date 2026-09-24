@@ -73,7 +73,7 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { applyChestOption } from '../../model/rewardChest.js';
+import { applyChestOption, landChestPick } from '../../model/rewardChest.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', chest: '▣', relic: '◆' };
 
@@ -103,6 +103,10 @@ export function mountRewards(app, {
       0,
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
+    // A resumed door whose armament row is already settled: a taken piece is
+    // in the bag (counted above), a skipped one needs no slot, so the chest's
+    // piece need not leave one for it (model/rewardplan.js).
+    armamentRowSettled: !!checkpoint?.states?.armament,
   });
   // The fight's progression, derived once: the ledgers are already paid and
   // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
@@ -526,7 +530,13 @@ export function mountRewards(app, {
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
-        if (apply[row.kind](row)) {
+        // A chest pick that cannot land (the bag filled after the plan was
+        // drawn) falls back to another takeable option rather than dropping
+        // the whole chest on the floor (model/rewardChest.js landChestPick).
+        const landed = row.kind === 'chest'
+          ? landChestPick(row, (i) => apply.chest({ ...row, optionIndex: i })) !== null
+          : apply[row.kind](row);
+        if (landed) {
           states[row.key] = 'taken';
           persistProgress();
         }

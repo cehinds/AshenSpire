@@ -59,6 +59,14 @@ export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
 const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
 
 /**
+ * The bag slots the chest's armament piece may use: the free slots less the
+ * one the door's own armament row will take, unless that row is already
+ * settled (`facts.armamentRowSettled`: taken — the bag already counts it — or
+ * skipped).
+ */
+const chestArmamentSlots = (r, facts) => (facts.armamentSlotsFree || 0) - (r.armamentId && !facts.armamentRowSettled ? 1 : 0);
+
+/**
  * Per-kind descriptors: how a kind reads its slice of the offer.
  * `present` — does the offer carry this kind at all;
  * `blocked` — a TOKEN reason collection can not happen, or null (the
@@ -134,13 +142,17 @@ const KINDS = {
     // The elite chest (SPEC §3.8.1): pick ONE of its options. `takeable` is
     // per option — an armament cannot land in a full bag — derived here the
     // armament row's way, so the chooser and auto-collect read one answer.
+    // The door's own armament row claims a bag slot first (it is listed, and
+    // auto-collected, before the chest): while that row is still pending the
+    // chest's piece counts one slot fewer, so auto-collect never lands the
+    // chest's pick on an armament the row has just filled the bag against.
     present: (r) => !!r.chest && Array.isArray(r.chest.options) && r.chest.options.length > 0,
     row: (r, facts) => ({
       options: r.chest.options.map((o) => ({ ...o })),
       choice: r.chest.options.length > 1,
-      takeable: r.chest.options.map((o) => !(o.category === 'armament' && o.armamentId && !(facts.armamentSlotsFree > 0))),
+      takeable: r.chest.options.map((o) => !(o.category === 'armament' && o.armamentId && !(chestArmamentSlots(r, facts) > 0))),
     }),
-    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || facts.armamentSlotsFree > 0 ? null : 'storage'),
+    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || chestArmamentSlots(r, facts) > 0 ? null : 'storage'),
   },
   relic: {
     // A boss offers a CHOICE of distinct boss relics (`relicIds`, SPEC §6.1);
@@ -158,7 +170,8 @@ const KINDS = {
 /**
  * rewardPlan(rewards, facts) → { rows }
  * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`,
- * `armamentSlotsFree`); the offer stays pure data. Defaults are CONSERVATIVE
+ * `armamentSlotsFree`, and `armamentRowSettled` — the armament row already
+ * taken or skipped); the offer stays pure data. Defaults are CONSERVATIVE
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */

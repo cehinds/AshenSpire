@@ -409,7 +409,13 @@ offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
   an option grants exactly that option and nothing else; its index is kept on the reward
   checkpoint (`chosenChestIndex`) so a reload resumes it. Auto-collect picks one of the
   takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
-  while the bag is full. An old save whose pending elite offer still carries `relicId`
+  while the bag is full — and while the door's own armament row is still pending it needs
+  **two** free slots, since that row claims one first (it is listed and auto-collected before
+  the chest); a taken or skipped armament row claims none. If the auto pick still cannot land
+  (a collector refuses the piece), the next takeable option in row order is granted instead
+  (`landChestPick`, `model/rewardChest.js`), so an openable chest is never dropped. The
+  chest's armament piece is never the door's own armament drop: that drop is rolled first
+  (on `armaments`; the streams are disjoint) and passed to `rollEliteChest` as `exclude`. An old save whose pending elite offer still carries `relicId`
   resumes with its relic row, unchanged.
 
 **Simulators and co-op.** The balance simulators (`tools/runsim.mjs`,

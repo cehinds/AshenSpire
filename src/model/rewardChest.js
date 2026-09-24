@@ -69,6 +69,24 @@ export function applyChestOption(registries, run, option, { collectArmament = nu
 }
 
 /**
+ * landChestPick(row, grant) → the option index that landed, or null.
+ * An auto-collected chest row tries its seeded pick (`row.optionIndex`)
+ * first; when that grant fails (the bag filled after the plan was drawn, a
+ * collector refused a duplicate), each other TAKEABLE option in row order is
+ * tried instead, so the chest is never dropped while it holds anything that
+ * can land. `grant(index)` is the caller's apply; it answers true when it landed.
+ */
+export function landChestPick(row, grant) {
+  if (!row || !Array.isArray(row.options)) return null;
+  const order = [row.optionIndex, ...row.options.map((_, i) => i).filter((i) => i !== row.optionIndex)];
+  for (const i of order) {
+    if (!Number.isInteger(i) || !row.takeable?.[i]) continue;
+    if (grant(i)) return i;
+  }
+  return null;
+}
+
+/**
  * autoTakeChest(registries, run, chest, pick, { armamentSlotsFree, collectArmament })
  * → the option granted, or null. A player-less elite door (simulators, bots):
  * the chest goes through the reward plan and its auto-collect exactly as the
@@ -82,6 +100,6 @@ export function autoTakeChest(registries, run, chest, pick, { armamentSlotsFree 
   const plan = rewardPlan({ chest }, { flaskSlotsFree: 0, armamentSlotsFree });
   const row = resolveContinue(plan, {}, 'auto', pick).take.find((r) => r.kind === 'chest');
   if (!row) return null;
-  const option = row.options[row.optionIndex];
-  return applyChestOption(registries, run, option, { collectArmament }) ? option : null;
+  const landed = landChestPick(row, (i) => applyChestOption(registries, run, row.options[i], { collectArmament }));
+  return landed === null ? null : row.options[landed];
 }

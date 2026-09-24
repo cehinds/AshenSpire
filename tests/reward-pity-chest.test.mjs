@@ -10,7 +10,7 @@ import {
   rollCardRewardIds, pityWeights, rollEliteChest, chestUpgradeable, CHEST_CATEGORIES,
 } from '../src/engine/encounters.js';
 import { rewardPlan, resolveContinue } from '../src/model/rewardplan.js';
-import { applyChestOption, autoTakeChest } from '../src/model/rewardChest.js';
+import { applyChestOption, autoTakeChest, landChestPick } from '../src/model/rewardChest.js';
 
 const r = createRegistries(contentBundle);
 const pity = r.balance.rewards.cardPity;
@@ -287,6 +287,72 @@ test('the reward door: open the chest, pick one, Confirm grants exactly it', asy
       else globalThis[key] = value;
     }
   }
+});
+
+test('the chest never offers the door\'s own armament drop', () => {
+  let excluded = 0;
+  for (let seed = 1; seed <= 60; seed++) {
+    const piece = rollEliteChest(r, createRng(seed), newRun(seed), { found: [] }).options.find((o) => o.armamentId);
+    if (!piece) continue;
+    const again = rollEliteChest(r, createRng(seed), newRun(seed), { found: [], exclude: [piece.armamentId] });
+    const other = again.options.find((o) => o.category === 'armament');
+    if (other) assert.notEqual(other.armamentId, piece.armamentId, `seed ${seed}: the door's piece is not the chest's too`);
+    excluded++;
+  }
+  assert.ok(excluded > 0, 'some seed rolled an armament piece to exclude');
+});
+
+test('the door\'s armament row claims its bag slot before the chest\'s piece', () => {
+  const rewards = { armamentId: 'longsword', chest: { options: [
+    { category: 'armament', armamentId: 'greatsword' },
+    { category: 'cinders', cinders: 50, smithingStones: 1 },
+  ] } };
+  const plan = rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
+  const chestRow = plan.rows.find((row) => row.kind === 'chest');
+  assert.deepEqual(chestRow.takeable, [false, true], 'one free slot is the armament row\'s');
+  const taken = resolveContinue(plan, {}, 'auto', () => 0).take;
+  assert.deepEqual(taken.map((row) => row.kind), ['armament', 'chest']);
+  assert.equal(taken[1].optionIndex, 1, 'auto-collect lands the chest on the purse');
+  // Once the armament row is settled (taken: the bag counts it; skipped), the slot math is the bag's own.
+  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1, armamentRowSettled: true }).rows.find((row) => row.kind === 'chest').takeable, [true, true]);
+  assert.deepEqual(rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 2 }).rows.find((row) => row.kind === 'chest').takeable, [true, true]);
+});
+
+test('auto-collect never loses the elite chest to a bag the armament row just filled', () => {
+  // The reward screen's Continue, headless: the plan, the seeded auto pick,
+  // the armament collector and the chest's landing door (landChestPick).
+  const storage = ['a', 'b', 'c', 'd', 'e', 'f', 'g']; // one slot free
+  const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage } };
+  const collectArmament = (id) => { if (storage.length >= 8) return false; storage.push(id); return true; };
+  const rewards = { armamentId: 'longsword', chest: { options: [
+    { category: 'armament', armamentId: 'greatsword' },
+    { category: 'cinders', cinders: 90, smithingStones: 1 },
+  ] } };
+  const plan = rewardPlan(rewards, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
+  const states = {};
+  for (const row of resolveContinue(plan, {}, 'auto', () => 0).take) {
+    const landed = row.kind === 'chest'
+      ? landChestPick(row, (i) => applyChestOption(r, run, row.options[i], { collectArmament })) !== null
+      : collectArmament(row.armamentId);
+    if (landed) states[row.key] = 'taken';
+  }
+  assert.deepEqual(states, { armament: 'taken', chest: 'taken' }, 'the chest was claimed, not dropped');
+  assert.deepEqual(storage.slice(7), ['longsword']);
+  assert.equal(run.cinders, 90);
+});
+
+test('a chest pick that fails to land falls back to another takeable option', () => {
+  const row = { options: [{ category: 'armament', armamentId: 'greatsword' }, { category: 'relic', relicId: 'x' }, { category: 'cinders', cinders: 90 }], takeable: [true, false, true], optionIndex: 0 };
+  const tried = [];
+  assert.equal(landChestPick(row, (i) => { tried.push(i); return i === 2; }), 2);
+  assert.deepEqual(tried, [0, 2], 'the pick first, then the takeable options in order; never an untakeable one');
+  assert.equal(landChestPick(row, () => false), null);
+  // A bot door: the collector refuses the piece, the purse lands instead.
+  const run = newRun();
+  const cinders = run.cinders;
+  const got = autoTakeChest(r, run, { options: [row.options[0], row.options[2]] }, () => 0, { armamentSlotsFree: 3, collectArmament: () => false });
+  assert.equal(got.category, 'cinders');
+  assert.equal(run.cinders, cinders + 90);
 });
 
 test('save shape: a taken chest names its option; an old relic offer still validates', () => {
