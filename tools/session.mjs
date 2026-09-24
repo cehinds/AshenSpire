@@ -868,7 +868,12 @@ export function createSession({ registries, seedString, endless = false, restore
    */
   function chestTakeable(m, option, { catchup = false } = {}) {
     if (!option) return false;
-    if (catchup && option.category === 'relic' && m.run.relics.includes(option.relicId)) return true;
+    // A relic an earlier replayed entry already granted is paid by a
+    // substitute — takeable only while one is left to roll. The check reads
+    // the pool without drawing (a stub pick), so marking the view spends no RNG.
+    if (catchup && option.category === 'relic' && m.run.relics.includes(option.relicId)) {
+      return rollRelicReward(registries, { pick: (_stream, pool) => pool[0] }, m.run.relics) !== null;
+    }
     const copy = { ...m.run, deck: structuredClone(m.run.deck), relics: [...m.run.relics] };
     return applyChestOption(registries, copy, option);
   }
@@ -1295,7 +1300,8 @@ export function createSession({ registries, seedString, endless = false, restore
         const option = offer.chest.options[pick.chestIndex];
         if (option.category === 'relic' && m.run.relics.includes(option.relicId)) {
           const id = rollRelicReward(registries, m.rng, m.run.relics);
-          if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+          if (!id) return { ok: false, error: 'that chest option can no longer be taken' }; // chestTakeable refuses first
+          m.run.relics.push(id);
         } else {
           applyChestOption(registries, m.run, option);
         }

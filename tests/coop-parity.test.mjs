@@ -431,3 +431,37 @@ test('one elite door: the card AND a chest option are staged and land together (
     globalThis.setInterval = realInterval;
   }
 });
+
+test('catch-up: a held chest relic with no substitute left is unavailable and refused, the entry waits (Codex P2)', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const stored = REG.relics.all().find((r) => r.rarity === 'common').id;
+  const offer = chestOffer([{ category: 'relic', relicId: stored }, { category: 'cinders', cinders: 5, smithingStones: 0 }]);
+  m.catchup.push({ type: 'reward', offer, act: 1, floor: 1 });
+  // An earlier replayed entry granted the stored relic, and the seat owns every substitute.
+  for (const id of REG.relics.all().map((r) => r.id)) if (!m.run.relics.includes(id)) m.run.relics.push(id);
+  const view = S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0];
+  assert.deepEqual(view.chestTakeable, [false, true], 'the duplicate relic is not advertised');
+  const before = structuredClone(m.run);
+  const rng = JSON.stringify(m.rng.getCounters());
+  const res = S.resolveCatchup('p1', 0, { chestIndex: 0 });
+  assert.equal(res.ok, false);
+  assert.deepEqual(m.run, before, 'nothing granted');
+  assert.equal(m.catchup.length, 1, 'the entry is not consumed');
+  assert.equal(JSON.stringify(m.rng.getCounters()), rng, 'no draw spent');
+  assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 1 }).ok, true, 'another option still lands');
+  assert.equal(m.run.cinders, before.cinders + 5);
+  assert.equal(m.catchup.length, 0);
+});
+
+test('catch-up: a held chest relic with a substitute left is still takeable and pays the substitute', () => {
+  const S = party();
+  const m = seat(S, 'p1');
+  const held = REG.relics.all().find((r) => r.rarity === 'common' && !m.run.relics.includes(r.id)).id;
+  m.run.relics.push(held);
+  m.catchup.push({ type: 'reward', offer: chestOffer([{ category: 'relic', relicId: held }]), act: 1, floor: 1 });
+  assert.deepEqual(S.snapshot().party.find((p) => p.id === 'p1').catchupQueue[0].chestTakeable, [true]);
+  const n = m.run.relics.length;
+  assert.equal(S.resolveCatchup('p1', 0, { chestIndex: 0 }).ok, true);
+  assert.equal(m.run.relics.length, n + 1);
+});

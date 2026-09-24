@@ -466,7 +466,7 @@ object in its catch-up entry, so the catch-up replays the stored options and nev
   (`chestTakeable`, from a dry run of the same grant on a copy of the seat's run) and the
   co-op screen draws a stale option disabled with its reason. A `relic` option whose relic an
   earlier replayed entry already granted follows the co-op catch-up relic rule (a substitute
-  rolled against the relics in hand), as the single elite relic always did.
+  rolled against the relics in hand), as the single elite relic always did — takeable only while a substitute is left: with none, `chestTakeable` marks it unavailable (read without drawing) and the pick is refused without consuming the entry, so another option can be taken.
 - **Save compatibility.** A persisted session (`.coop-session.json`) whose pending elite offer
   or catch-up entry still carries `relicId` resumes with its single relic, unchanged; a chest
   offer is plain JSON in the scene and the queue, which the session already persists.
