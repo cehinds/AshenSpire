@@ -25,6 +25,7 @@ import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { enemyMoveDamage } from '../../model/state.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
@@ -645,8 +646,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  function moveDetail(move, preview = null) {
-    const source = preview || move || {};
+  // A move read off its roster row is scaled by the enemy's damageMult (a
+  // tier-scaled boss), the same helper the intent, the hit and the move
+  // cards read, so the skill list and Previous actions never print authored
+  // damage beside a scaled hit.
+  function moveDetail(move, preview = null, entity = null) {
+    const source = preview || { ...(move || {}), damage: enemyMoveDamage(entity, move) };
     const pieces = [];
     if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
     if (source.block != null) pieces.push(`${source.block} Block`);
@@ -691,7 +696,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const currentMoveId = intent.moveId;
     const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
-      detail: moveDetail(move, moveId === currentMoveId ? intent : null),
+      detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
@@ -718,7 +723,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       skills,
       statuses: statusDetails(entity),
       entityId: entity.id,
-      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId]) })),
+      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
       // No authored lore exists for enemies yet; unknown, not none.
       lore: null,
