@@ -19,7 +19,8 @@
 //   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
 //   default order. Off by default so the win-rate corpus keeps comparing the
-//   same climbs it always measured (§13.6); on, it measures every order.
+//   same climbs it always measured (§13.6); on, it measures every order — the
+//   distribution a real run draws, and the one balance.bossTiers is tuned on.
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -31,7 +32,7 @@ import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
-import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
+import { seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext as xpToNextLevel } from '../src/model/levelup.js';
@@ -193,13 +194,17 @@ function tallyFight(ds, combat, hpEntering) {
 // ---- the combat bot (same policy as tests/balance) --------------------------
 function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const enc = REG.encounters.get(encounterId);
+  // A boss scales by the tier it is met at (balance.bossTiers) in place of
+  // the seat ratio, as main.js's combatMods does.
+  const boss = bossTierScale(REG, { encounter: enc, tier: run.actNumber });
   // THE LIVE DOOR (engine/runCombat.js): the fight main.js builds for this
   // run on a fresh profile — its hand rules, rating rules, swap price and
   // equipment start statuses, which this sim's own option list never carried.
   const combat = createRunCombat({
     registries: REG, rng, run,
     enemyIds: enc.enemies,
-    hpMult: cm.hpMult || 1,
+    hpMult: boss ? (cm.loopMult || 1) * boss.hp : (cm.hpMult || 1),
+    enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
   let guard = 0;
@@ -363,7 +368,7 @@ function simulateRun(classId, seed, ds = null) {
     const tierMult = seatTierHpMult(REG, seat, contentAct);
     const hpMult = (1 + ENDLESS_HP_PER_LOOP * loop) * tierMult;
     const cm = hpMult !== 1 || loop > 0
-      ? { hpMult, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
+      ? { hpMult, loopMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
       : {};
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
