@@ -5810,7 +5810,7 @@
             "__number": "880"
           },
           "holdDefault": {
-            "__string": "0.5s"
+            "__string": "2s"
           },
           "holdDurations": {
             "__keys": [

@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1265",
+    "id": "pr-1254",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "A written plan for polish, feel and structure",
-    "detail": "Nothing you see changes yet. Seven reviews of the game — its rules and balance, its world and writing, how it looks and feels in a fight, how its sprites and art are sized and lit, how it fits phones, tablets and large screens, how its code is laid out, and how fast it loads and runs — are now one checklist in the repository, docs/plan-polish-review-2026-09.md, ordered by what to fix first: a Starseer that won none of its simulated runs (a result to confirm once the simulator plays by the live rules) and the Stamina and Mana pools that may be starving it, the test suites that never run, a card play that takes more than a second to land, text that shrinks to six pixels on a tablet, names borrowed from other games, and a 253 MB page that is almost all inlined art. Each item carries its evidence and its size, and the design choices that are the owner's to make are marked as such.",
-    "build": "0.7.1.442",
-    "pullRequest": 1265,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1265"
+    "summary": "New players start with the owner's chosen defaults",
+    "detail": "Rewards are collected by hand rather than all at once, a Shrine stays open for Rest, Smith and Level until you leave, and flasks can be drunk from the map. The city title holds for 2 seconds, and the short-screen warning is off, so a sideways phone draws the board anyway. Settings you have already chosen keep their values.",
+    "build": "0.7.1.443",
+    "pullRequest": 1254,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1254"
   },
   {
     "id": "pr-1264",

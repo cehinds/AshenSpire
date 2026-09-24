@@ -632,7 +632,7 @@ function applyUiScale(settings) {
   // screen. `!== false` so a profile written before this row existed keeps the
   // gate — and so does a `?shot=` boot, which by construction has no durable
   // settings and resolves every one of them to its default.
-  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });
+  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, 'uprightGate') });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in

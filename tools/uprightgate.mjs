@@ -366,8 +366,8 @@ if (process.argv.includes('--selftest')) {
         // red only because something checks that the refusal STOPS.
         name: 'the gate stands on every shape — a refusal with a dead premise',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
-        replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
+        replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
       {
@@ -376,8 +376,8 @@ if (process.argv.includes('--selftest')) {
         // going and looking at the turned viewport.
         name: 'the advice stops being derived — it always says "turn your phone"',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
-        replace: '  updateUprightGate({ short, offerRotate: true, enabled: settings.uprightGate !== false });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
+        replace: '  updateUprightGate({ short, offerRotate: true, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /(ADVICE IS FALSE|says 'rotate')/,
       },
       {
@@ -395,8 +395,8 @@ if (process.argv.includes('--selftest')) {
         // and lets the player start a run they cannot finish.
         name: 'the gate is combat-only — the player is let in at the door',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
-        replace: '  updateUprightGate({ short: short && !!document.querySelector(\'.combat\'), offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
+        replace: '  updateUprightGate({ short: short && !!document.querySelector(\'.combat\'), offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /THE GATE IS NOT GLOBAL/,
       },
       {

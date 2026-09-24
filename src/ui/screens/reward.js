@@ -345,7 +345,7 @@ export function mountRewards(app, {
 
   function collectMode() {
     const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
-    const dial = registries.balance.ui.rewardCollect || { def: 'auto', modes: ['auto', 'manual'] };
+    const dial = registries.balance.ui.rewardCollect || { def: 'manual', modes: ['auto', 'manual'] };
     return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
   }
 
