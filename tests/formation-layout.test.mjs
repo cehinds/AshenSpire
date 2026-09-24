@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FORMATION_PRESETS, formationDimensions, formationSpawn, isFormationCell } from '../src/model/formationLayout.js';
+import { FORMATION_DEFAULTS, FORMATION_PRESETS, formationDimensions, formationSpawn, isFormationCell } from '../src/model/formationLayout.js';
 import { presentationConfig, advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
@@ -79,7 +79,8 @@ test('movement accepts the whole selected player grid and rejects enemy or hidde
 test('layout configuration clamps whole grid dimensions and round trips through export', () => {
   const invalid = config({ formationColumns: 9, formationRows: 4.8, formationPreset: 'invalid', groundSkew: -100 });
   assert.equal(invalid.formationColumns, 3); assert.equal(invalid.formationRows, 5);
-  assert.equal(invalid.formationPreset, 'classic-v'); assert.equal(invalid.groundSkew, -35);
+  // An unknown preset falls back to the authored default ('straight' since the owner's exported config, 2026-09-24).
+  assert.equal(invalid.formationPreset, FORMATION_DEFAULTS.formationPreset); assert.equal(invalid.groundSkew, -35);
   const settings = { 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6,
     'gameConfig.presentation.formationPreset': 'back-slant', 'gameConfig.presentation.groundTilt': 50, 'gameConfig.presentation.rowFScale': 1.7 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);

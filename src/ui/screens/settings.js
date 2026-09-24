@@ -367,7 +367,7 @@ const ROWS = [
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
     note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
