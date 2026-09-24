@@ -21,6 +21,13 @@
 // the extent of each vendor's work correctly — that wording is the owner's to
 // approve (`approved` in src/content/aiDisclosure.js).
 //
+// Two scope limits. (1) "Covered" means the path appears anywhere in
+// CREDITS.md, prose included, not only in a Source/Rights table row: a passing
+// citation such as `assets/classes/SUCCESSOR-CONTRACT.md` covers assets/classes.
+// (2) Coverage is checked one level under assets/ and music/ only; a mention of
+// any subpath (`assets/environments/legacy/`) covers the whole directory, so a
+// new sibling subdirectory under a covered directory is not checked.
+//
 // The --selftest is in memory: it plants each known-bad into fixture text (and
 // into the real tree's text) and requires the matching red. It writes nothing.
 //
