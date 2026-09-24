@@ -212,7 +212,7 @@ export const colorlessCards = [
     keywords: ['unplayable'], icon: '⛓',
     effects: [],
     onTurnEndInHand: [{ op: 'loseHp', target: 'self', amount: 1, cause: 'curse:guilt' }],
-    textTemplate: 'Unplayable. At the end of your turn, if this is in your hand, lose 1 HP.',
+    textTemplate: 'Unplayable. At the end of your turn, if this is in your hand, lose {loseHp} HP.',
     flavor: "What follows looting at the Second Cairn.\n\nThe second time is easier. That is how climbers know the ring has begun on them.",
   },
 ];

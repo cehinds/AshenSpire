@@ -506,7 +506,9 @@ should appear in rewards. Notes:
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
-  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Solo combat only for now.
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in solo and co-op
+  combat. Its numbers bind to the card's text template after `effects`
+  (Guilt's text says `{loseHp}`).
 
 ## Add a status (one file: `src/content/statuses.js`)
 

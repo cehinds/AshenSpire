@@ -29,7 +29,7 @@
 
 import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
-import { computeTokenBindings } from './validate.js';
+import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 
 const freeze = (value) => Object.freeze(value);
@@ -45,8 +45,9 @@ const freeze = (value) => Object.freeze(value);
  */
 export function staticCardTokens(def) {
   const tokens = {};
-  for (const binding of computeTokenBindings(def.effects || [])) {
-    const value = (def.effects[binding.index] || {})[binding.field];
+  const effects = cardTokenEffects(def);
+  for (const binding of computeTokenBindings(effects)) {
+    const value = (effects[binding.index] || {})[binding.field];
     if (typeof value === 'number') tokens[binding.token] = value;
   }
   return tokens;
