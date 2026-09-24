@@ -90,10 +90,10 @@ conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.
 
 | Class | Max HP (derived) | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |
 |-------|-----------------:|----------:|------------:|-------------:|
-| Reaver | 48 | 9.3 | 14.9 | 22.3 |
-| Starseer | 34 | 11.8 | 18.9 | 28.3 |
-| Rogue | 38 | 12.4 | 19.8 | 29.8 |
-| Herald | 38 | 11.5 | 18.4 | 27.6 |
+| Reaver | 49 | 6.9 | 11 | 16.6 |
+| Starseer | 34 | 9.1 | 14.6 | 21.8 |
+| Rogue | 38 | 7.3 | 11.7 | 17.5 |
+| Herald | 38 | 6.9 | 11 | 16.6 |
 
 ## 4. Sanity table — elites & bosses
 
@@ -104,19 +104,19 @@ lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
 
 | Tier | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
 |----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|
-| 1 | eliteWyrm | 70 | 0.7 | 11.3 | 6.7 | 6.9 | 4.9 | **race — check** |
-| 1 | bossOmen | 120 | — | 11.3 | 10.7 | 10.4 | 3.3 | **race — check** |
-| 1 | bossBellKeeper | 116 | — | 11.3 | 10.3 | 10.7 | 3.2 | **race — check** |
-| 1 | bossThornMatriarch | 110 | — | 11.3 | 9.8 | 9.9 | 3.4 | **race — check** |
-| 2 | a2_eliteDuelist | 93 | — | 18 | 5.2 | 10.2 | 3.3 | **race — check** |
-| 2 | a2_bossStitchedKing | 195 | — | 18 | 10.8 | 8.9 | 3.8 | **race — check** |
-| 2 | a2_bossGlassRegent | 180 | — | 18 | 10 | 12.1 | 2.8 | **race — check** |
-| 2 | a2_bossMarrowOrganist | 190 | 1.1 | 18 | 11.2 | 16.6 | 2 | **race — check** |
-| 3 | a3_eliteWyrmLord | 135 | 1.4 | 27 | 5.3 | 8.3 | 4.1 | **race — check** |
-| 3 | a3_bossRotValkyrie | 250 | — | 27 | 9.3 | 12 | 2.8 | **race — check** |
-| 3 | a3_bossFurnaceSaint | 260 | — | 27 | 9.6 | 19.5 | 1.7 | **race — check** |
-| 3 | a3_bossHollowAstronomer | 225 | — | 27 | 8.3 | 24.9 | 1.4 | **race — check** |
-| 3 | a3_bossAshheartDragon | 245 | — | 27 | 9.1 | 12.7 | 2.7 | **race — check** |
+| 1 | eliteWyrm | 70 | 0.7 | 7.6 | 10.3 | 6.9 | 4.9 | **race — check** |
+| 1 | bossOmen | 120 | — | 7.6 | 15.9 | 10.4 | 3.3 | **race — check** |
+| 1 | bossBellKeeper | 116 | — | 7.6 | 15.4 | 10.7 | 3.2 | **race — check** |
+| 1 | bossThornMatriarch | 110 | — | 7.6 | 14.6 | 9.9 | 3.4 | **race — check** |
+| 2 | a2_eliteDuelist | 93 | — | 12.1 | 7.7 | 10.2 | 3.3 | **race — check** |
+| 2 | a2_bossStitchedKing | 195 | — | 12.1 | 16.1 | 8.9 | 3.8 | **race — check** |
+| 2 | a2_bossGlassRegent | 180 | — | 12.1 | 14.9 | 12.1 | 2.8 | **race — check** |
+| 2 | a2_bossMarrowOrganist | 190 | 1.1 | 12.1 | 17.2 | 16.6 | 2 | **race — check** |
+| 3 | a3_eliteWyrmLord | 135 | 1.4 | 18.1 | 8.1 | 8.3 | 4.1 | **race — check** |
+| 3 | a3_bossRotValkyrie | 250 | — | 18.1 | 13.8 | 12 | 2.8 | **race — check** |
+| 3 | a3_bossFurnaceSaint | 260 | — | 18.1 | 14.3 | 19.5 | 1.7 | **race — check** |
+| 3 | a3_bossHollowAstronomer | 225 | — | 18.1 | 12.4 | 24.9 | 1.4 | **race — check** |
+| 3 | a3_bossAshheartDragon | 245 | — | 18.1 | 13.5 | 12.7 | 2.7 | **race — check** |
 
 > Note: the Blighted Valkyrie (final boss) also heals **3 per hit she lands** via a
 > phase trigger (not a move effect), up to ~15/turn on her 5-hit moves — the
@@ -130,54 +130,54 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 1.9 / 48 |
-| Reaver | patrol (normal) | 100 | 7.8 / 48 |
-| Reaver | packHunt (normal) | 100 | 7.2 / 48 |
-| Reaver | twinPatrol (normal) | 100 | 7.2 / 48 |
-| Reaver | bruiser (normal) | 100 | 7.2 / 48 |
-| Reaver | eliteWyrm (elite) | 99 | 19.1 / 48 |
-| Reaver | bossOmen (boss) | 81 | 35.2 / 48 |
-| Reaver | lanternFlight (normal) | 100 | 3.1 / 48 |
-| Reaver | briarRefuge (normal) | 100 | 0.9 / 48 |
-| Reaver | chainAmbush (normal) | 100 | 1 / 48 |
-| Reaver | bossBellKeeper (boss) | 78.7 | 36.1 / 48 |
-| Reaver | bossThornMatriarch (boss) | 70 | 39 / 48 |
-| Starseer | loneSoldier (normal) | 100 | 2.6 / 34 |
-| Starseer | patrol (normal) | 85.3 | 18.8 / 34 |
-| Starseer | packHunt (normal) | 76 | 20.7 / 34 |
-| Starseer | twinPatrol (normal) | 98.7 | 13 / 34 |
-| Starseer | bruiser (normal) | 97 | 13 / 34 |
-| Starseer | eliteWyrm (elite) | 6.7 | 33.6 / 34 |
+| Reaver | loneSoldier (normal) | 100 | 3.3 / 49 |
+| Reaver | patrol (normal) | 99.7 | 16.7 / 49 |
+| Reaver | packHunt (normal) | 99.3 | 18.4 / 49 |
+| Reaver | twinPatrol (normal) | 100 | 17.1 / 49 |
+| Reaver | bruiser (normal) | 99.7 | 20.9 / 49 |
+| Reaver | eliteWyrm (elite) | 25.3 | 47 / 49 |
+| Reaver | bossOmen (boss) | 0.3 | 49 / 49 |
+| Reaver | lanternFlight (normal) | 100 | 7.3 / 49 |
+| Reaver | briarRefuge (normal) | 100 | 3.1 / 49 |
+| Reaver | chainAmbush (normal) | 100 | 2 / 49 |
+| Reaver | bossBellKeeper (boss) | 0.7 | 49 / 49 |
+| Reaver | bossThornMatriarch (boss) | 0.3 | 49 / 49 |
+| Starseer | loneSoldier (normal) | 100 | 2.4 / 34 |
+| Starseer | patrol (normal) | 90.7 | 19.1 / 34 |
+| Starseer | packHunt (normal) | 76 | 19.5 / 34 |
+| Starseer | twinPatrol (normal) | 95 | 17.6 / 34 |
+| Starseer | bruiser (normal) | 84.7 | 19.4 / 34 |
+| Starseer | eliteWyrm (elite) | 0.3 | 34 / 34 |
 | Starseer | bossOmen (boss) | 0 | 34 / 34 |
-| Starseer | lanternFlight (normal) | 94.3 | 13.5 / 34 |
-| Starseer | briarRefuge (normal) | 100 | 1.3 / 34 |
-| Starseer | chainAmbush (normal) | 100 | 2.6 / 34 |
+| Starseer | lanternFlight (normal) | 99.3 | 10.2 / 34 |
+| Starseer | briarRefuge (normal) | 100 | 1.8 / 34 |
+| Starseer | chainAmbush (normal) | 100 | 1.9 / 34 |
 | Starseer | bossBellKeeper (boss) | 0 | 34 / 34 |
 | Starseer | bossThornMatriarch (boss) | 0 | 34 / 34 |
-| Rogue | loneSoldier (normal) | 100 | 0.9 / 38 |
-| Rogue | patrol (normal) | 100 | 6.8 / 38 |
-| Rogue | packHunt (normal) | 99.7 | 7.6 / 38 |
-| Rogue | twinPatrol (normal) | 100 | 5.2 / 38 |
-| Rogue | bruiser (normal) | 100 | 5.4 / 38 |
-| Rogue | eliteWyrm (elite) | 87.3 | 22.2 / 38 |
-| Rogue | bossOmen (boss) | 7.7 | 37.5 / 38 |
-| Rogue | lanternFlight (normal) | 100 | 4.3 / 38 |
-| Rogue | briarRefuge (normal) | 100 | 0.4 / 38 |
-| Rogue | chainAmbush (normal) | 100 | 1 / 38 |
-| Rogue | bossBellKeeper (boss) | 21.7 | 36.2 / 38 |
-| Rogue | bossThornMatriarch (boss) | 10 | 37.2 / 38 |
-| Herald | loneSoldier (normal) | 100 | 0.6 / 38 |
-| Herald | patrol (normal) | 100 | 2.8 / 38 |
-| Herald | packHunt (normal) | 100 | 2.9 / 38 |
-| Herald | twinPatrol (normal) | 100 | 2.4 / 38 |
-| Herald | bruiser (normal) | 100 | 2.2 / 38 |
-| Herald | eliteWyrm (elite) | 100 | 7.4 / 38 |
-| Herald | bossOmen (boss) | 86.3 | 21.7 / 38 |
-| Herald | lanternFlight (normal) | 100 | 1.3 / 38 |
-| Herald | briarRefuge (normal) | 100 | 0.1 / 38 |
-| Herald | chainAmbush (normal) | 100 | 0.6 / 38 |
-| Herald | bossBellKeeper (boss) | 97.3 | 17.8 / 38 |
-| Herald | bossThornMatriarch (boss) | 89.7 | 20.5 / 38 |
+| Rogue | loneSoldier (normal) | 100 | 0.8 / 38 |
+| Rogue | patrol (normal) | 99.7 | 9.6 / 38 |
+| Rogue | packHunt (normal) | 95.7 | 11 / 38 |
+| Rogue | twinPatrol (normal) | 99 | 10.6 / 38 |
+| Rogue | bruiser (normal) | 98.3 | 12.3 / 38 |
+| Rogue | eliteWyrm (elite) | 7.7 | 37.3 / 38 |
+| Rogue | bossOmen (boss) | 0 | 38 / 38 |
+| Rogue | lanternFlight (normal) | 100 | 5.1 / 38 |
+| Rogue | briarRefuge (normal) | 100 | 1.2 / 38 |
+| Rogue | chainAmbush (normal) | 100 | 0.8 / 38 |
+| Rogue | bossBellKeeper (boss) | 0 | 38 / 38 |
+| Rogue | bossThornMatriarch (boss) | 0 | 38 / 38 |
+| Herald | loneSoldier (normal) | 100 | 0.7 / 38 |
+| Herald | patrol (normal) | 100 | 5 / 38 |
+| Herald | packHunt (normal) | 100 | 5.7 / 38 |
+| Herald | twinPatrol (normal) | 100 | 5.1 / 38 |
+| Herald | bruiser (normal) | 100 | 4.9 / 38 |
+| Herald | eliteWyrm (elite) | 98 | 17 / 38 |
+| Herald | bossOmen (boss) | 29.3 | 35.1 / 38 |
+| Herald | lanternFlight (normal) | 100 | 1.7 / 38 |
+| Herald | briarRefuge (normal) | 100 | 0.4 / 38 |
+| Herald | chainAmbush (normal) | 100 | 0.5 / 38 |
+| Herald | bossBellKeeper (boss) | 52.3 | 32.4 / 38 |
+| Herald | bossThornMatriarch (boss) | 35.3 | 34.3 / 38 |
 
 ## 6. Findings
 

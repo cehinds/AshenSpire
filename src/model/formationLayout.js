@@ -8,14 +8,14 @@ export const FORMATION_PRESETS = Object.freeze([
 ]);
 export const FORMATION_FIELDS = Object.freeze([
   { key: 'formationColumns', label: 'Columns per side', min: 1, max: 3, def: 2, step: 1, integer: true },
-  { key: 'formationRows', label: 'Rows per side', min: 1, max: 6, def: 3, step: 1, integer: true },
+  { key: 'formationRows', label: 'Rows per side', min: 1, max: 6, def: 2, step: 1, integer: true },
   { key: 'formationWidth', label: 'Width', min: 40, max: 100, def: 80, step: 1, integer: true, suffix: '%' },
   { key: 'formationDepth', label: 'Depth', min: 30, max: 100, def: 60, step: 1, integer: true, suffix: '%' },
   { key: 'formationGap', label: 'Team gap', min: 4, max: 30, def: 12, step: 1, integer: true, suffix: '%' },
   { key: 'groundTilt', label: 'Tilt', min: 0, max: 65, def: 35, step: 1, integer: true, suffix: '°' },
   { key: 'groundSkew', label: 'Skew', min: -35, max: 35, def: 15, step: 1, integer: true, suffix: '°' },
 ]);
-export const FORMATION_DEFAULTS = Object.freeze({ formationPreset: 'classic-v',
+export const FORMATION_DEFAULTS = Object.freeze({ formationPreset: 'straight',
   ...Object.fromEntries(FORMATION_FIELDS.map(field => [field.key, field.def])) });
 
 export function formationLayoutConfig(values = {}) {

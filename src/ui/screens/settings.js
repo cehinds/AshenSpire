@@ -367,7 +367,7 @@ const ROWS = [
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
     note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
@@ -409,7 +409,7 @@ const ROWS = [
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
-    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
+    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = the score shipped in music/ beside the game, or the built-in generated score where that is unavailable.' },
 
   { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Card flick to play',
     note: 'Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.' },

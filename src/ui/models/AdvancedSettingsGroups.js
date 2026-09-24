@@ -208,7 +208,7 @@ function topic(row, section) {
     }
     if (/rarityWeightsByClass/.test(path)) return `Rarity · ${words(path.split('.')[2])}`;
     if (/rarityWeights/.test(path)) return 'Reward rarity';
-    if (/^(rewards|startingCinders|progression\.rewardMultiplier)/.test(path)) return 'Combat rewards';
+    if (/^(rewards|startingCinders|progression\.cinderMultiplier)/.test(path)) return 'Combat rewards';
     return words(path.split('.')[0]);
   }
   return 'General';
