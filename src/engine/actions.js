@@ -26,6 +26,7 @@
 import * as F from './combatRules.js';
 import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
+import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
@@ -1021,7 +1022,8 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     player: facade,
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
-    handMax: registries.balance.handMax,
+    // The run context never draws; the retired fallback keeps the field a number.
+    handMax: LEGACY_HAND_MAX,
     queue: [],
     eventLog: events,
     _buffer: null,

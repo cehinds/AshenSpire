@@ -1,11 +1,14 @@
 // One read model for character stats on every non-combat comparison surface.
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
-import { deriveStat, deriveStatIncrease, levelBonus, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { deriveStat, deriveStatIncrease, isStatRowRuleset, levelBonus, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+
+const RATING_ONLY = new Set(['ar', 'dr', 'pr', 'ward']);
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
+import { ratingsConfigFor, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 
 // The labels and the order used to be a frozen map right here — a second home
@@ -39,7 +42,7 @@ const LEGACY_PLAYER_POISE_RULE = Object.freeze({ base: 0, constitution: 1, perLe
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
-    const receipt = ratingReceipt(registries, run, registries.balance.combatRatings);
+    const receipt = ratingReceipt(registries, run, ratingsConfigFor(registries, run));
     return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
       raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
       equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
@@ -76,7 +79,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
   const ownSnapshot = run.derivedStatRuleSnapshot?.rules;
   const poiseRule = ownSnapshot?.rules
     ? resolvedRuleRow(ownSnapshot, 'poise') || LEGACY_PLAYER_POISE_RULE
-    : resolvedRuleRow(registries.derivedStatRules, 'poise');
+    : statRow(registries, run, 'poise');
   // A run handed without attributes (a headless fixture) has no attribute term,
   // so every attribute the row names reads 0 rather than refusing the fixture.
   const poiseAttributes = Object.fromEntries(ruleWeights(poiseRule || {})
@@ -218,8 +221,13 @@ export function statProjection(registries, run) {
   // took every stat surface down with it (Codex, #1217). The pairing the
   // content door enforces is between the live table's halves; across a
   // version boundary the snapshot decides.
+  // THE COMBAT RATINGS ARE NOT PROJECTED HERE. They are rows of the same
+  // table (ruleset 7), but a rating is only its attribute part until armour,
+  // weapons and relics are added, and `ratingReceipt` — which reads these
+  // same rows — is the surface that shows the whole of it.
   const derived = presentationRows(registries).filter((presentation) => (
-    snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
+    !RATING_ONLY.has(presentation.id)
+    && snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
   )).map((presentation) => {
     const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
@@ -249,8 +257,9 @@ export function statProjection(registries, run) {
         : `${receipt.tier} × ${receipt.gain}`}`
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
-        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Stats → Draw & hand.' : '',
+        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
+        + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };

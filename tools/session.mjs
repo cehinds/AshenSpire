@@ -482,6 +482,8 @@ export function createSession({ registries, seedString, endless = false, restore
       maxMana: m.run.maxMana, mana: m.run.mana,
       maxStamina: m.run.maxStamina, stamina: m.run.stamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      // The level every stat row's `perLevel` reads (ruleset 7).
+      level: m.run.level?.level,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },

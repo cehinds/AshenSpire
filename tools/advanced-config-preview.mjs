@@ -191,7 +191,9 @@ async function main() {
       if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
       }
-      if (shape.search && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
+      // Only the placement shapes search for the placement rows; the Reaver
+      // search lands on class defaults, which carry none.
+      if (shape.search && shape.group === 'Battlefield' && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
         .every((label) => state.placementLabels.includes(label))) {
         throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
       }

@@ -53,8 +53,7 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
-import { defaultRatingFormula } from './ratingFormula.js';
-import { ruleWeights } from './derivedStats.js';
+import { resolvedRuleRow, ruleWeights } from './derivedStats.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -138,16 +137,22 @@ function foldedSummary(sense) {
   return sentence || text;
 }
 
+// The combat ratings are rows of the derived-stat table (ruleset 7) and read
+// the same way; they are listed as scaling rather than as a pool a point buys.
+const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
+const FEED_EXCLUDED = new Set(RATING_ROWS);
+
 function ratingWeightFacts(registries, attributeId) {
-  const config = registries.balance?.combatRatings || defaultRatingFormula;
+  const table = registries.derivedStatRules;
   const short = registries.attributes.get(attributeId).shortLabel;
-  if (!config?.ratings) return [];
-  return Object.entries(config.ratings)
-    .filter(([, rule]) => Number(rule[attributeId]) > 0)
+  if (!table?.rules) return [];
+  return RATING_ROWS
+    .map((id) => [id, resolvedRuleRow(table, id)])
+    .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short}), then × ${config.multiplier ?? 1} global`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})`,
         summary: `${label} weight ${rule[attributeId]}`,
       };
     });
@@ -189,6 +194,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // the fold's line and the face's summary are the same numbers — the rules
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
+      .filter(([id]) => !FEED_EXCLUDED.has(id))
       // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single

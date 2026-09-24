@@ -15,6 +15,7 @@
 
 import { createCombat } from './combat.js';
 import { resolveHandRules } from '../model/handRules.js';
+import { handStatRows, ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
@@ -22,6 +23,8 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     attributes: run.attributes,
+    // The character level every stat row's `perLevel` reads (ruleset 7).
+    level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
     // The rule this run was born with, so the Poise vessel combat stamps
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
@@ -66,8 +69,11 @@ export function createRunCombat({
   hpMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
   return createCombat({
-    ratingsRules: registries.balance.combatRatings || null,
-    handRules: resolveHandRules(settings || {}, registries.attributes.all()),
+    // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
+    // three hand rows are this run's own — its snapshot's, or for a run born
+    // before ruleset 7 the retired homes it was priced by (model/statRows.js).
+    ratingsRules: ratingsConfigFor(registries, run) || null,
+    handRules: resolveHandRules(settings || {}, handStatRows(registries, run, { settings: settings || {} })),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

@@ -598,7 +598,7 @@ export function mountCustomize(app, {
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot);
+    const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run);
     const ratingRows = [['attack', 'AR', 'Attack'], ['guard', 'DR', 'Defense']].map(([role, faceLabel, label]) => {
       const rating = ratings.find(row => row.role === role);
       return { id: `${role}Rating`, faceLabel, value: rating?.receipt.value ?? 0,

@@ -63,6 +63,7 @@ import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statPr
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
+import { LEGACY_HAND_MAX } from '../src/model/statRows.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
@@ -282,19 +283,26 @@ function attributeTerms(row, attributes) {
 }
 
 // `handMax` pins the hand cap for a fixture whose mechanic needs room past the
-// shipped cap (balance.handMax, 5 since 2026-09-24); omitted, the shipped cap.
+// fallback cap; omitted, the fallback. These fixtures hand createCombat no hand
+// rules, so the cap is LEGACY_HAND_MAX (5, model/statRows.js) — `balance.handMax`
+// was retired in ruleset 7 and a copy of it on the registries is read by
+// nothing. The pin is therefore set on the fight itself, after the opening
+// draw (five cards, inside either cap): with no hand rules nothing recomputes
+// `handMax`, so every later draw reads the pinned value.
 function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
     return { instanceId: `c${i + 1}`, cardId: isObj ? d.id : d, upgraded: isObj ? !!d.up : false };
   });
-  return createCombat({
-    registries: handMax == null ? REG : { ...REG, balance: { ...REG.balance, handMax } },
+  const c = createCombat({
+    registries: REG,
     rng,
     player: { classId: 'reaver', maxHp, hp, mana, maxMana, stamina, maxStamina, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
+  if (handMax != null) c.handMax = handMax;
+  return c;
 }
 
 /**
@@ -430,12 +438,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 5. Hand limit overflow → discard ---------------------------------------
   test('5. draws past the hand cap go to discard (handFull)', () => {
-    // The cap is the authored one (balance.handMax: 10 until 2026-09-24, 5
-    // since), read rather than restated; the deck still holds more than any
-    // cap tBigDraw can fill, so the overflow is real at either value.
+    // The cap is the fallback a fight handed no hand rules reads
+    // (LEGACY_HAND_MAX, model/statRows.js: 5 — the value `balance.handMax`
+    // shipped with until ruleset 7 retired it for the handSize row), read
+    // rather than restated; the deck still holds more than any cap tBigDraw
+    // can fill, so the overflow is real at either value.
     const c = makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] });
     playFromHand(c, 'tBigDraw');
-    eq(c.piles.hand.length, REG.balance.handMax, `hand capped at the authored ${REG.balance.handMax}`);
+    eq(c.handMax, LEGACY_HAND_MAX, 'a fight with no hand rules reads the legacy fallback cap');
+    eq(c.piles.hand.length, LEGACY_HAND_MAX, `hand capped at the fallback ${LEGACY_HAND_MAX}`);
     assert(logOf(c, 'cardDiscarded').some((e) => e.reason === 'handFull'), 'handFull discard emitted');
   });
 
@@ -1437,9 +1448,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('17. throwaway status (meter + hook + modifier) works with zero engine changes', () => {
     // 7-card deck (tCharge is Innate → both in the opening hand) so the
     // ownerTurnStart bonus draw has cards left to actually draw. The hand cap
-    // is pinned past the five-card turn draw: at the shipped cap of 5
-    // (2026-09-24) the sixth card is a handFull discard, and the hook would be
-    // measured by the cap rather than by the draw it asked for.
+    // is pinned past the five-card turn draw: at the fallback cap of 5
+    // (LEGACY_HAND_MAX) the sixth card is a handFull discard, and the hook
+    // would be measured by the cap rather than by the draw it asked for.
     const c = makeCombat({ deck: ['tCharge', 'tCharge', 'strike', 'strike', 'strike', 'strike', 'strike'], handMax: 10 });
     playFromHand(c, 'tCharge'); // 3
     playFromHand(c, 'tCharge'); // 6 ≥ 5 → fill: +7 block, max ×2 → 10, value 1
@@ -6350,7 +6361,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 30 + ⌊0.35⌋ +
+    // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 38; Actions 3 (every weight floors to 0 at 1–3
+    // points); Draw is the ruleset-7 draw row, 2 + ⌊0.1 × INT 1⌋ = 2 (min 2).
+    // It read 3 under ruleset 6, whose draw row had base 3; the hand's draw
+    // now IS that row, and it lands on the old hand-rule turn draw (2 below
+    // INT 9) rather than the old derived one.
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
     // 100,120,…,350 before). The rounding holds the first eight steps at its
     // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
@@ -6363,7 +6380,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
+    // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/2', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -7044,11 +7062,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const byHand = resolveDerivedStatRules(edited, {
       attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana'],
     });
-    // Actions state their own 0.1 since 2026-09-24, so Poise is the row left
-    // that states none — the inheriting edge rests on it alone now.
+    // Actions state their own 0.1 since 2026-09-24. Since ruleset 7 the draw
+    // row states NO level term (owner: draw {2, int 0.1, min 2, max 10}), so
+    // it joins Poise on the inheriting edge; Mana and Stamina state 0.2.
     eq(byHand.rules.hp.perLevel, 2, 'HP keeps its authored growth when only the fallback default changes');
-    eq(byHand.rules.draw.perLevel, 0.1, 'Hand keeps its authored growth');
+    eq(byHand.rules.mana.perLevel, 0.2, 'Mana keeps its authored growth');
+    eq(byHand.rules.stamina.perLevel, 0.2, 'Stamina keeps its authored growth');
     eq(byHand.rules.energy.perLevel, 0.1, 'Actions keep their authored growth');
+    eq(byHand.rules.draw.perLevel, 0.5, 'the Draw row, which states none, inherits the edited fallback default');
     eq(byHand.rules.poise.perLevel, 0.5, 'Poise inherits the edited fallback default');
     assert(!validateContent({ ...contentBundle, derivedStatRules: { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } } }).ok,
       'and a ruleset-6 table that spells a tier is refused — there is none to set');
@@ -7844,7 +7865,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       && constitution.reveal.lines.some((line) => /^Stamina \+1 every 2 points$/.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.75 × STR), then × 1 global'),
+    // Since ruleset 7 AR is the `ar` row of the derived-stat table and there
+    // is no global multiplier to state: the line is the row's own weight.
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('AR: floor(0.75 × STR)'),
       'the active rating formula projects Strength AR weight without copied UI prose');
 
     const changed = {
@@ -9309,16 +9332,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE LEVEL TERM IS A DECIMAL NOW (ruleset 6, owner 2026-09-21: "I'll just
     // use decimal values to set the growth per level"). `perLevel` is what a row
     // gains PER LEVEL, so HP at 2 (1 before the owner's 2026-09-24 defaults)
-    // climbs every level and Mana, Stamina and draw at 0.2/0.2/0.1 land on
-    // exactly the levels they always did — the same rate the retired
+    // climbs every level and Mana, Stamina and Actions at 0.2/0.2/0.1 land on
+    // exactly the levels a fifth and a tenth reach — the same rate the retired
     // `{ every, gain }` cadence stated, arriving smoothly. Beside whatever the
     // points bought; the deficit is carried, the current pools ride up.
+    // RULESET 7 (owner, 2026-09-24): the draw row states NO level term
+    // ({ base 2, int 0.1, min 2, max 10 }), so the tenth-per-level edge this
+    // test used to read on the hand now rests on Actions, and the hand is
+    // checked to hold still.
     const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
     const rules = run.derivedStatRuleSnapshot.rules.rules;
-    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.draw.perLevel}`, '2/0.2/0.2/0.1',
-      'every row carries its level term in the snapshot, as one decimal');
+    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.energy.perLevel}/${rules.draw.perLevel}`, '2/0.2/0.2/0.1/0',
+      'every row carries its level term in the snapshot, as one decimal — the draw row\'s is the table default, 0');
     const levelTerm = (id, level) => Math.floor((level - 1) * rules[id].perLevel + 1e-9);
-    const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, drawPerTurn: run.drawPerTurn };
+    const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn };
     run.hp = run.maxHp - 7;
     awardLevelXp(REG, run, [1, 2, 3, 4].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
     eq(run.level.level, 5); eq(run.maxHp, born.maxHp + levelTerm('hp', 5), 'HP has climbed every level');
@@ -9328,17 +9355,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.maxHp, born.maxHp + levelTerm('hp', 6), 'level 6 adds the HP term'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
     eq(run.maxMana, born.maxMana + 1, 'and level 6 is where the fifths reach a whole point of Mana');
     eq(run.maxStamina, born.maxStamina + 1);
-    eq(run.drawPerTurn, born.drawPerTurn, 'the hand waits for level 11');
+    eq(run.energyMax, born.energyMax, 'Actions wait for level 11');
     awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
-    eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + levelTerm('hp', 11));
+    eq(run.level.level, 11); eq(run.energyMax, born.energyMax + 1, 'level 11 acts once more'); eq(run.maxHp, born.maxHp + levelTerm('hp', 11));
+    eq(run.drawPerTurn, born.drawPerTurn, 'and the hand, whose row has no level term, draws what it drew at level 1');
     eq(characterLevel(run), 11, 'the readers read the ledger'); eq(playerLevel(REG, run), 11, 'and so does the hidden player level');
     // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
     // formula's addends equal its result once the level term is non-zero.
     const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
     eq(shown.levelBonus, levelTerm('hp', 11)); assert(shown.formula.includes(`+ ${levelTerm('hp', 11)} level`), `the HP formula names the level term — ${shown.formula}`);
     eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
-    const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
-    assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);
+    const actionsShown = statProjection(REG, run).derived.find((row) => row.id === 'energy');
+    assert(/\+ 1 level = /.test(actionsShown.formula), `the Actions formula names its one level Action — ${actionsShown.formula}`);
     eq(statProjection(REG, createRunState({ seed: 3, classId: 'reaver', registries: REG })).derived.find((row) => row.id === 'hp').formula.includes('level'), false, 'and at level 1 there is no term to show');
 
     // THE LOAD DOOR accepts the bumped pools (they are the snapshot's own
@@ -9703,9 +9731,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // SINCE RULESET 7 Poise is ONE row with a spread of weights (owner:
+    // { base 1, str 0.5, con 1, wis 0.3, int 0.2 }), so Constitution is one
+    // term of several; each attribute floors on its own. Reaver lean (STR 3 ·
+    // DEX 1 · CON 2 · WIS 1 · INT 1): 1 + ⌊1.5⌋ + ⌊2⌋ + ⌊0.3⌋ + ⌊0.2⌋ = 4.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
-    eq(receipt.attribute, poiseRow.base + Math.floor(run.attributes.constitution * poiseRow.constitution + 1e-9),
+    eq(receipt.attribute, poiseRow.base + attributeTerms(poiseRow, run.attributes),
       'Constitution through derivedStatRules.rules.poise');
+    eq(receipt.attribute, 4, 'the worked Reaver number, re-derived by hand from the row');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerPerConstitution: 1 } } })).some((e) => /balance\.poise\.playerPerConstitution/.test(e)),
       'and the retired balance copy is refused by name, so the coefficient cannot regrow a second home');
     assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id.split('+').includes('constitution')), 'and the receipt names it');
@@ -9734,7 +9767,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // each term floored on its own — with Wisdom still leading Mana and
     // Constitution still leading Stamina, at half a point a point.
     const rules = REG.derivedStatRules;
-    eq(rules.rulesetVersion, 6, 'the authored table is ruleset 6 — the one format');
+    // RULESET 7 (owner, 2026-09-24) keeps ruleset 6's one row format and
+    // puts every stat in it: the hand (openingHand, draw, handSize) and the
+    // combat ratings (ar, dr, pr, ward) are rows of this table now, and a
+    // ruleset-6 snapshot is still restored without them.
+    eq(rules.rulesetVersion, 7, 'the authored table is ruleset 7 — the one format, every stat');
+    eq(['openingHand', 'draw', 'handSize', 'ar', 'dr', 'pr', 'ward'].every((id) => !!rules.rules[id]), true, 'the hand and rating rows are authored in it');
+    eq(derivedStatIdsFor(6).includes('handSize') || derivedStatIdsFor(6).includes('ar'), false, 'ruleset 6 requires no hand or rating row');
+    eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
     eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
     eq(rules.rules.stamina.constitution, 0.5, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '30/4', 'HP is 30 + 4 × CON');

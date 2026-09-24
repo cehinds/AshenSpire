@@ -59,7 +59,12 @@ function ratingCalculationHtml(id, value, receipt) {
     .map(source => `<span class="rating-source" data-source-kind="${esc(source.kind)}"><b>${numberText(source[id])}</b> ${esc(source.name)}</span>`);
   const formula = [
     `<span><b>${numberText(attribute.base)}</b> base</span>`,
-    `<span>floor(<b>${numberText(attribute.multiplier)}</b> global × (${formulaTerms}))</span>`,
+    // The one row formula (ruleset 7) has no global multiplier; a fight saved
+    // before it still carries one, and is shown the way it is priced.
+    attribute.multiplier !== 1
+      ? `<span>floor(<b>${numberText(attribute.multiplier)}</b> global × (${formulaTerms}))</span>`
+      : `<span>(${formulaTerms})</span>`,
+    ...(attribute.levelBonus ? [`<span><b>${numberText(attribute.levelBonus)}</b> level</span>`] : []),
     ...additions,
   ].join(' + ');
   return `<div class="rating-calculation" data-rating-id="${esc(id)}">`

@@ -557,7 +557,13 @@ test('a file written on the old, higher defaults still imports', () => {
     'gameConfig.classes.herald.startingFlaskAllocation.hp': 3,
     'gameConfig.classes.herald.startingFlaskAllocation.mana': 1,
   };
-  assert.deepEqual(parseAdvancedConfigFile(v1File(old), contentBundle), old);
+  // Ruleset 7 retired `balance.handMax` (every fight reads the handSize stat
+  // row), so it is converted away — said once — and everything else imports.
+  const warnings = [];
+  const { 'gameConfig.balance.handMax': _retired, ...kept } = old;
+  assert.deepEqual(parseAdvancedConfigFile(v1File(old), contentBundle, {}, [], warnings), kept);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /fallback hand capacity was retired/);
   // And a larger tuning of the curves than either build shipped.
   const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);

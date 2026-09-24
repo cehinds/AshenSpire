@@ -16,7 +16,8 @@ import { formationMovePlan } from '../model/formationMovement.js';
 
 import * as A from './actions.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
-import { scaledCards } from '../model/handRules.js';
+import { handRow, scaledCards } from '../model/handRules.js';
+import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -65,7 +66,6 @@ export function createCombat({
   // his Settings choice is read.
   swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
 }) {
-  const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -125,7 +125,11 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: handRules ? scaledCards(handRules.capacity, player.attributes) : (bal.handMax != null ? bal.handMax : 10),
+    // THE HAND SIZE IS A STAT ROW (ruleset 7). A fight handed no hand rules —
+    // an old headless fixture — keeps the retired fallback it always had.
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), player.attributes, player.level) : LEGACY_HAND_MAX,
+    // The character level a row's `perLevel` reads, for the hand and ratings.
+    ...(Number.isInteger(player.level) ? { characterLevel: player.level } : {}),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,

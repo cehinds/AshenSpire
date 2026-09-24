@@ -613,6 +613,17 @@ function collectContentProblems(bundle, errors = []) {
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
       if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
     }
+    // RULESET 7 RETIRED THREE HOMES FOR ONE NUMBER EACH. A copy returning to
+    // any of them is refused by name, as `playerPerConstitution` is above:
+    // the hand size, the rating formula and its multiplier, and the hand
+    // rules' counts are rows of derivedStatRules now.
+    if (b.balance.handMax !== undefined) err('balance.handMax', 'was retired in derived-stat ruleset 7: the hand size is derivedStatRules.rules.handSize, and a copy here is a second home for one number');
+    if (b.balance.combatRatings !== undefined && b.balance.combatRatings !== null && typeof b.balance.combatRatings === 'object') {
+      if (b.balance.combatRatings.multiplier !== undefined) err('balance.combatRatings.multiplier', 'was retired in derived-stat ruleset 7: each rating is a derivedStatRules row whose weights are the whole formula');
+    }
+    for (const group of ['starting', 'turn', 'capacity']) {
+      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}, and a copy here is a second home for one number`);
+    }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);

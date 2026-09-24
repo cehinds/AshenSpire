@@ -87,6 +87,12 @@ test('stat-driven hand sizes read the attribute the sheet shows', async () => {
   const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
   assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
   assert.equal(scaledCards(rule, { intelligence: 10 }), 5);
+  // Ruleset 7: a hand count is a stat row, read the same way — 3 base +
+  // floor(INT × 0.2) lands on the same 3 and 5. (The group above is the shape a
+  // fight saved before ruleset 7 carries, still counted exactly.)
+  const row = { base: 3, intelligence: 0.2, min: 1, max: 20 };
+  assert.equal(scaledCards(row, { intelligence: 2 }), 3);
+  assert.equal(scaledCards(row, { intelligence: 10 }), 5);
 });
 
 // ---- the owner's report, as two properties (2026-09-20) --------------------
@@ -241,18 +247,24 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   const run = createRunState({ registries, classId: 'reaver', seed: 7, attributeMode: 'lean' });
   assert.equal(run.attributeModeSnapshot.statConversionScale, undefined, 'the mode carries no scale');
   const rules = contentBundle.derivedStatRules.rules;
-  // Ruleset 6: base plus each attribute's own floored term, as a rating reads.
-  // The stock rows read a spread of attributes (owner, 2026-09-24), so every
-  // term the row carries is summed; level 1 adds no level term.
-  const pool = (id) => rules[id].base + contentBundle.attributes.reduce((sum, { id: attributeId }) =>
-    sum + Math.floor((run.attributes[attributeId] || 0) * (rules[id][attributeId] || 0) + 1e-9), 0);
+  // Ruleset 7: base plus each attribute's own floored term, as a rating reads,
+  // kept within the row's own min and max. The stock rows read a spread of
+  // attributes (owner, 2026-09-24), so every term the row carries is summed;
+  // level 1 adds no level term.
+  const pool = (id) => {
+    const raw = rules[id].base + contentBundle.attributes.reduce((sum, { id: attributeId }) =>
+      sum + Math.floor((run.attributes[attributeId] || 0) * (rules[id][attributeId] || 0) + 1e-9), 0);
+    return Math.min(rules[id].max ?? Infinity, Math.max(rules[id].min ?? 0, raw));
+  };
   assert.equal(run.energyMax, pool('energy'));
   assert.equal(run.drawPerTurn, pool('draw'));
   assert.equal(run.maxMana, pool('mana'));
-  // The numbers those rows now state for a stock lean Reaver: Actions and draw
-  // sit at their base of 3, and Mana at its base of 1 — WIS 1 at 0.5 a point
-  // floors to nothing, and no other term reaches a whole point on the lean span.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 1]);
+  // The numbers those rows now state for a stock lean Reaver (STR 3, DEX 1,
+  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 2
+  // (INT 1 at 0.1 floors to nothing; its min is 2 as well), and Mana at its
+  // base of 1 — WIS 1 at 0.5 a point floors to nothing, and no other term
+  // reaches a whole point on the lean span.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 2, 1]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {

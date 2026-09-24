@@ -122,7 +122,7 @@ Design laws (contractual):
 1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
 2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
 3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
-4. **All tuning is data.** `content/balance.js` holds every global constant (energy 3, draw 5, the fallback hand capacity `handMax` 5, reward odds, rune ranges, prices, flask drop decay). A balance change is a one-file data diff.
+4. **All tuning is data.** `content/balance.js` holds every global constant that is not a stat row (reward odds, rune ranges, prices, flask drop decay); every stat is a row of `content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
 5. **Headless engine.** Nothing under `src/engine/` or `src/model/` references `document`, `window`, `localStorage`, or timers. A combat runs to completion from `tests/index.html` with no UI imports.
 6. **Budgeted escape hatch.** `content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
 
@@ -181,7 +181,7 @@ defect this layering exists to catch.
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
 | MapConfig | per-act: `floors, columns, pathCount, typeWeights, floorRules` |
-| Balance | flat constants object (energy, draw, handMax, odds tables, prices…) |
+| Balance | flat constants object (odds tables, prices…; stats are derivedStatRules rows) |
 
 - `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
 - **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
@@ -263,22 +263,60 @@ fold is authored in content data; Settings/debug overrides layer over that data 
 adding a second formula in UI or engine code. The run snapshots the resolved formula rules at
 birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
 
+**One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
+character has — HP, Mana, Stamina, Actions, the opening hand, the per-turn draw, the hand size,
+AR, DR, PR, Ward and Poise — is ONE row of `content/derivedStats.js`, in one shape:
+
+`{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
+
+and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
+
+`value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
+
+Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
+attribute reaches 8. Equipment, relics and statuses are external addends on top (armour
+`poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
+owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's to 1.
+
+| Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| HP (`hp`) | 30 | 0.35 | — | 4 | 0.1 | — | 2 | — | Preserved from ruleset 6; the run clamps max HP to ≥ 1. |
+| Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
+| Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
+| Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
+| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.45 | — | 3–15 | Preserved (was hand rules `starting`). |
+| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Preserved (was hand rules `turn`); every fight, co-op included. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.19 | — | 1–30 | Preserved (was hand rules `capacity` and `balance.handMax`). |
+| AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
+| DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
+| PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |
+| Ward (`ward`) | 1 | — | 0.2 | 0.3 | 1 | 0.5 | — | — | 〃 |
+| Poise (`poise`) | 1 | 0.5 | — | 1 | 0.3 | 0.2 | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
+
 | Output | Default formula | Meaning |
 |---|---|---|
-| Maximum HP | `30 + floor(0.35 × STR) + 4 × CON + floor(0.1 × WIS) + floor(2 × (level − 1)) + flat bonuses` | Flat bonuses are the declared relic/equipment/run folds, not class-id branches. |
-| Draw (fallback) | `3 + floor(0.25 × DEX) + floor(0.25 × WIS) + floor(0.5 × INT) + floor(0.1 × (level − 1))` | The derived Draw pool, read by a fight handed no hand rules (co-op, headless). A solo fight's opening draw, turn draw and hand capacity are the hand rules of §4.1. |
 | Defense | `-6 + DEX` | The data-owned base value used by the basic guard/defense profile. |
-| Actions / turn | `3 + floor(0.1 × STR) + floor(0.2 × DEX) + floor(0.01 × WIS) + floor(0.01 × INT) + floor(0.1 × (level − 1))` | The player-facing Actions value; engine naming may migrate separately. |
-| Mana | `1 + floor(0.1 × STR) + floor(0.25 × CON) + floor(0.5 × WIS) + floor(0.3 × INT) + floor(0.2 × (level − 1))` | Wisdom leads; classes carry no second Mana base. |
-| Stamina | `1 + floor(0.25 × STR) + floor(0.25 × DEX) + floor(0.5 × CON) + floor(0.1 × WIS) + floor(0.2 × (level − 1))` | Spent by Stamina-cost cards; an idle turn recovers some. |
 | Strike | `-6 + STR` | The data-owned base value used by the basic physical strike profile. |
 | Magic | `-6 + WIS` | The data-owned base value used by the basic magic profile. |
 
-HP, Draw, Actions, Mana and Stamina are the owner's defaults of 2026-09-24
-(`content/derivedStats.js`, ruleset 6: every pool reads a spread of attributes, each term
-floored on its own, the level term a decimal per level past the first). They replace the
-single-attribute rows — `30 + 4 × CON`, `3 + floor(INT / 5)`, `3 + floor(DEX / 5)`,
-`1 + WIS`, `1 + CON` — that §13.4l records as ruleset 5.
+**Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
+one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
+baseline, pointsPerCard, minimum, maximum }`) and `balance.handMax`. `validateContent` refuses
+each by name if it returns (`balance.handMax`, `balance.combatRatings.multiplier`,
+`handRules.starting|turn|capacity`), as it refuses `balance.poise.playerPerConstitution`. Their
+settings keys convert on import and on profile load/restore into the rows' own keys
+(`gameConfig.derivedStatRules.rules.<id>.<field>`; `model/statRows.js`
+`migrateLegacyStatSettings`): rating weights and bases carry over, a multiplier ≠ 1 is folded
+into the weights, a tuned hand group is fitted to the closest weight row, each with a warning.
+**Old runs are priced as they were.** A run snapshots its rows at birth; a run born under
+ruleset 1–6 reads its own snapshot's pools plus the retired homes restated as rows with exact
+carrier fields (`pointsBaseline`, `pointsPerIncrease`, `multiplier`), from the frozen ruleset-6
+numbers and its own configuration snapshot, and a saved fight keeps the rating and hand rules it
+was saved with. Only new runs read ruleset 7.
+
+Ruleset 6 (the owner's multi-attribute pool defaults of 2026-09-24) and ruleset 5's
+single-attribute rows (`30 + 4 × CON`, `3 + floor(INT / 5)`, `3 + floor(DEX / 5)`, `1 + WIS`,
+`1 + CON`, §13.4l) remain readable for the saves born under them.
 
 The defaults above are independently configurable rows. “Configurable” never means parsing
 formula strings or letting a screen recompute them: the structured formula table remains the
@@ -701,28 +739,22 @@ scope and verification.
 
 ### 4.1 Turn loop
 
-**Configurable hand rules (2026-09-19):** Solo gameplay snapshots Advanced →
-Stats → Draw & hand at the start of each new combat. Each count is
-base + floor(max(0, INT − baseline) / points per card), clamped to its
-minimum/maximum. The shipped defaults (owner, 2026-09-24; `content/handRules.js`):
-
-| Count | Base | Stat | Baseline | Points per card | Min–max |
-|---|---|---|---|---|---|
-| Opening draw | 4 | INT | 1 | 2 | 3–15 |
-| Turn draw (fixed mode) | 2 | INT | 4 | 5 | 2–10 |
-| Hand capacity | 7 | INT | 1 | 5 | 1–30 |
-
-The opening draw is also bounded by hand capacity. Unplayed cards are retained
-by default. Later turns draw a **fixed** number by default — the turn draw, never
-past capacity; fill mode instead draws up to current capacity. Overflow
-defaults to **discard**: retained cards past capacity are selected for discard
-at turn end. (Before 2026-09-24 the defaults were fill mode, keep overflow, an
-opening draw of 3 + floor(max(0, INT − 10) / 10) and capacity 10.) Opening draw,
-fixed turn draw, and capacity independently configure base, stat
-enablement/source/baseline, points per additional card, and minimum/maximum.
-Opening stats are evaluated at combat start; subsequent draw and capacity
-values at turn start. A fight handed no hand rules (co-op, headless) draws its
-derived Draw each turn and caps the hand at `balance.handMax` (5).
+**Configurable hand rules (2026-09-19; counts are stat rows since ruleset 7):** A fight counts
+cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`), **Draw / turn**
+(`draw`) and **Hand size** (`handSize`) — priced by the one row formula and snapshotted with the
+run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
+beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
+discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
+The opening hand is also bounded by the hand size. Unplayed cards are retained by default.
+Later turns draw a **fixed** number by default — the Draw / turn row, never past the hand size;
+fill mode instead draws up to the hand size. Overflow defaults to **discard**: retained cards past
+the hand size are selected for discard at turn end. Opening counts are evaluated at combat start;
+later draws and the hand size at turn start. **Co-op reads the same rows**: each seat's opening
+hand, turn draw and hand size come from its own run's rows, it keeps unplayed cards under the
+shipped behaviour options and discards what is over its hand size at turn end. A seat or saved
+fight born before ruleset 7 keeps what it had: solo, its hand rules as saved (the retired
+single-stat groups, read exactly); co-op, a fresh hand of its derived draw capped at the retired
+fallback of 5.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to
@@ -736,7 +768,7 @@ their previous rules; the numbered legacy sequence below describes those rules.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the hand capacity — `balance.handMax` (**5**, 10 before 2026-09-24) in a fight without hand rules — excess drawn cards go to discard with a "hand full" toast (StS behavior).
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — excess drawn cards go to discard with a "hand full" toast (StS behavior).
 4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
@@ -814,7 +846,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. **The player has one too** (§13.4k): its max is the derived `poise` row read against Constitution (§13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
+| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
@@ -1938,15 +1970,15 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` action and `minStaminaCost` stamina (1 / 1), base and upgrade alike — `validate.js` refuses a card under either floor BY NAME (`cards.<id>.staminaCost: '<name>' costs Mana, so it costs at least 1 stamina …`), an upgrade inheriting the base's lines where it leaves them unsaid. The re-cost this rule forced: the four signature arts cost 1 stamina beside their 1 Mana (the proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it — under the current tiers two classes start with one point of each); Comet Fragment costs an action; seven Mana powers whose upgrade was "costs 0" now drop the Mana line instead (an action floor leaves nothing else to drop). A Mana spell (one whose school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such row in `cardExposure.csv` reads 5, action-only spells keep 1.
 - **A focus owns what its break does** (§3.6's property mounts): beside the sceptres' `siphon` and the wand's `overcharge`, **`staggerBreak`** (the plain staves: Ash, Starstone, Wyrmhorn) deals `balance.exposure.staggerBreakPoise` (6) Poise damage to the foe whose Exposure the holder's own hit broke, and **`resonance`** (the Goldbough Branch) pours `balance.exposure.resonanceSpreadPct` (50) of the broken foe's threshold into every OTHER foe as buildup — the new opcode **`arcaneBuildup`** (`amount` | `pct`, exactly one) on the new target **`otherEnemies`** (every living enemy but the firing event's and the action's own target). The Blight Rod and the Gorefire Brand carry `overcharge`. Every focus is a `staff` kind, so the proposal's staff / wand / orb reading is by item, in `tagging.csv`. Buildup has one path to a meter, `addArcaneExposure` (a hit's and a pour's alike): immune and locked foes refuse by name, a fill resets and breaks.
-- **The player's Poise meter is real.** Its max is Constitution through the derived `poise` row (§13.4l) + the worn body armour's `poiseThreshold` + relic `poiseThresholdAdd` (`playerPoiseThresholdReceipt`, `active: true`; a weapon's `poiseThreshold` is its weight, not the wearer's footing). Impact fills it — `dealPoiseDamage` takes the player as it takes an enemy, and `impactDealt` is emitted for every target so the armour skill hooks (§13.4d) hear it; outside the foundation ruleset (the shipped fight is created without one) an enemy blow that draws blood rocks the player by `balance.poise.playerImpactPerHit` (2), the ruleset's weapon impact replacing it wherever a ruleset is handed in. A restored fight re-derives the max from the receipt, never from the save. In co-op the receipts carry `targetPlayerId`. A fill Staggers the player: `balance.stagger.player` names the statuses applied and their stacks (`vulnerable` 2, `weak` 2, ordinary decay — the engine names no status) and the actions owed to the NEXT turn (`actionLoss` 1: the turn opens `energyMax − pendingActionLoss`, once); `meterFilled` and **`playerStaggered`** `{ targetId, actionLoss, statuses }` are emitted; the meter grows by `poise.growthMult` as an enemy's does. Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l). Co-op stamps the same receipt per member.
+- **The player's Poise meter is real.** Its max is the one `poise` stat row (§3.5; with combat ratings on, the Poise rating, which reads the same row) + the worn body armour's `poiseThreshold` + relic `poiseThresholdAdd` (`playerPoiseThresholdReceipt`, `active: true`; a weapon's `poiseThreshold` is its weight, not the wearer's footing). Impact fills it — `dealPoiseDamage` takes the player as it takes an enemy, and `impactDealt` is emitted for every target so the armour skill hooks (§13.4d) hear it; outside the foundation ruleset (the shipped fight is created without one) an enemy blow that draws blood rocks the player by `balance.poise.playerImpactPerHit` (2), the ruleset's weapon impact replacing it wherever a ruleset is handed in. A restored fight re-derives the max from the receipt, never from the save. In co-op the receipts carry `targetPlayerId`. A fill Staggers the player: `balance.stagger.player` names the statuses applied and their stacks (`vulnerable` 2, `weak` 2, ordinary decay — the engine names no status) and the actions owed to the NEXT turn (`actionLoss` 1: the turn opens `energyMax − pendingActionLoss`, once); `meterFilled` and **`playerStaggered`** `{ targetId, actionLoss, statuses }` are emitted; the meter grows by `poise.growthMult` as an enemy's does. Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l). Co-op stamps the same receipt per member.
 
 *Falsify:* a Mana card with no stamina line, no action line, or an upgrade that drops the action line under a Mana cost is refused by name, an X-cost Mana card passes, a negative floor and a missing `balance.mana` are refused, a stagger status the bundle lacks is refused, a Mana spell building 1 is refused, `arcaneBuildup` with neither or both selectors is refused; a self-aimed pour of the player's whole max applies 2 Vulnerable and 2 Weak, emits one `playerStaggered` naming one action, grows the meter ×1.25, opens the next turn one action short and the turn after whole; the receipt is Constitution × the row + body armour + relics and `createCombat` stamps it (engine test 92); a starseer's Ash Staff break batters the foe's Poise by 6 and refunds nothing, a Goldbough Branch break pours half the threshold into the other foe and none into the broken one (property-mount tests).
 
 ### 13.4l The attribute rebase: one creation scale, one derived ruleset, one equip gate (plan phase 9)
 
 - **Creation offers one scale.** `tuned2` is the mode a new run is born under: baseline 5 across the five attributes, ten points to place, floor 3 and ceiling 12, points reclaimed by dropping a stat toward the floor (`belowBaseline: 'allow'`, `redistribution: 'fixedTotal'`), for a fixed total of 35. `tuned`, `standard` and `pointbuy` remain in the table and out of creation (`characterCreation.visibleModeIds`): every in-flight save was admitted against its own mode's total at the load door, and a mode that vanished would archive those runs. The ceiling caps CREATION, not the character — levelled points raise it, as they always did.
-- **Derived-stat ruleset 5** (superseded: ruleset 6, and the owner's multi-attribute defaults of 2026-09-24 in §3.5, are what a new run is born under). `hp = 30 + 4 × CON`, `mana = 1 + WIS`, `stamina = 1 + CON`, `poise = 1 + CON`, `energy = 3 + floor(DEX / 5)`, `draw = 3 + floor(INT / 5)`, plus the phase-6 level thresholds each row already carried. Every row is the one calculation — `base + multiplier × Σ floor(weight × attribute)` — read against the attribute the character sheet shows; no creation mode converts an attribute on its way in. Mana and Stamina drop their five-point tier: a point of Wisdom IS a point of Mana and a point of Constitution IS a point of Stamina. That makes a signature art costing two of each affordable for a NEW run, but the arts stay at 1/1: a card resolves its cost from the live table while a run's pools are snapshotted, so raising it would strand the starter card of every run already under way. That half of §13.4k's deferral waits on run-stamped card costs. Rulesets 1 through 4 remain readable: a run restores the snapshot it was written with, and the required row set is a function of the version, so a version-4 save is never asked for a row it never had.
-- **Poise is a derived row, and each run is priced by its own.** `derivedStatRules.rules.poise` owns the Constitution term §13.4k parked in balance; `playerPoiseThresholdReceipt` reads it there, and `balance.poise.playerPerConstitution` is refused by name if it returns, because one number may not have two homes. THE RUN'S OWN SNAPSHOT DECIDES: the rules travel into the fight through `createCombat` AND through the combat snapshot, so a quit-and-load cannot re-price the vessel from the live table; a run whose snapshot predates the row keeps the term phase 8 priced it by — Constitution one-for-one, `balance.poise.playerPerConstitution` as shipped — not the live row, and the live table answers only a caller carrying no snapshot at all — a headless fixture or a creation preview.
+- **Derived-stat ruleset 5** (superseded: ruleset 7 in §3.5 — every stat, the hand and the combat ratings included, one row of one table — is what a new run is born under; ruleset 6 introduced the multi-attribute pool rows). `hp = 30 + 4 × CON`, `mana = 1 + WIS`, `stamina = 1 + CON`, `poise = 1 + CON`, `energy = 3 + floor(DEX / 5)`, `draw = 3 + floor(INT / 5)`, plus the phase-6 level thresholds each row already carried. Every row is the one calculation — `base + multiplier × Σ floor(weight × attribute)` — read against the attribute the character sheet shows; no creation mode converts an attribute on its way in. Mana and Stamina drop their five-point tier: a point of Wisdom IS a point of Mana and a point of Constitution IS a point of Stamina. That makes a signature art costing two of each affordable for a NEW run, but the arts stay at 1/1: a card resolves its cost from the live table while a run's pools are snapshotted, so raising it would strand the starter card of every run already under way. That half of §13.4k's deferral waits on run-stamped card costs. Rulesets 1 through 4 remain readable: a run restores the snapshot it was written with, and the required row set is a function of the version, so a version-4 save is never asked for a row it never had.
+- **Poise is a derived row, and each run is priced by its own.** Since ruleset 7 it is also the ONE Poise — the rating formula's second Poise row is retired (§3.5). `derivedStatRules.rules.poise` owns the Constitution term §13.4k parked in balance; `playerPoiseThresholdReceipt` reads it there, and `balance.poise.playerPerConstitution` is refused by name if it returns, because one number may not have two homes. THE RUN'S OWN SNAPSHOT DECIDES: the rules travel into the fight through `createCombat` AND through the combat snapshot, so a quit-and-load cannot re-price the vessel from the live table; a run whose snapshot predates the row keeps the term phase 8 priced it by — Constitution one-for-one, `balance.poise.playerPerConstitution` as shipped — not the live row, and the live table answers only a caller carrying no snapshot at all — a headless fixture or a creation preview.
 - **Equipment minima are rebased, and the question can be asked before the act.** `equipmentRequirements.csv` moves onto the 3–12 scale. `equipPiece` has refused an item the attributes cannot hold for as long as the minima have existed and remains the gate of record; `canEquip` now answers the same question in words when a caller names both the candidate and the attributes, so a surface can say why before it tries. Asked without an item or without attributes, it keeps its old answer, and it reads the same inputs the mutation reads — the smithing tiers whose `requirement` deltas lower a minimum among them — so the seal and the act can never disagree. A preset that cannot hold its own class's starting gear — either hand of the baseline kit, or any outfit in that class's creation list (`characterCreation.classes.<id>.armourIds`) — is refused by name at BOTH doors that admit a preset: the content door (`validateContent`, through `presetGearProblems` in `model/attributes.js`) and the Advanced settings door (`advancedConfigProblems`: the per-cell kit floor for the two hands, `presetGearProblems` for the outfits, both against the CONFIGURED minima). A class whose Advanced preset fails either keeps its authored attributes on its own, so the boot never meets a preset Settings refused — before this, such a preset threw away the whole game configuration behind a generic notice.
 - **The band was re-measured.** `docs/BALANCE.md` §5 is regenerated on the rebased content; the tier-1 boss band moved up for the Reaver and the Rogue and remains the M3 balance pass's to settle.
 

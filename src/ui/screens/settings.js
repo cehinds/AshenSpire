@@ -2146,12 +2146,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
-    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const rules = resolveHandRules(settings);
     // The Stats → Draw & hand worked example states the hand these rules deal
     // (`refreshStatsPreviews`); what is left here is which rows apply.
     const section = container.querySelector('[data-advanced-panel="Stats"]');
     if (section) {
-      for (const row of handRulesRows(contentBundle.attributes)) {
+      for (const row of handRulesRows()) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])

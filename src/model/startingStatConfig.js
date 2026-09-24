@@ -1,12 +1,8 @@
 import { presetGearProblems } from './attributes.js';
-import { ratingIds } from './ratingFormula.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { ownKey } from './settingOverrides.js';
 
 const PREFIX = 'gameConfig.startingStats.';
-// A pool that shares a rating's name is labelled as a pool so the two rows
-// cannot read alike.
-const RATING_NAMES = ratingIds;
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
 
@@ -495,18 +491,15 @@ export function derivedStatFloorProblems(bundle) {
 }
 
 // ONE ANSWER PER NUMBER (#1256, owner 2026-09-23: "multiple settings changing
-// the same setting"). Two derived rows share their quantity with another row,
-// and the note is where the row says which one is in force, so nobody sets
-// both and wonders why one did nothing:
-//   - Draw is the legacy per-turn draw: a fight that carries hand rules — every
-//     solo fight — draws by the hand rules' turn draws instead.
-//   - Poise is the threshold only while combat ratings are off; with them on,
-//     the Poise rating formula sets it.
-// (The "Stat points per tier" sentence #1256 carried here is gone with the
-// dial itself — ruleset 6 has no tier, #1253.)
+// the same setting"). Since ruleset 7 no row shares its quantity with another
+// — the legacy draw, the second Poise and the fallback hand size are gone —
+// so the note only says where a row's number is used.
 function derivedRowNote(id) {
-  if (id === 'draw') return ' Only for fights without hand rules (co-op and older saves); solo fights use the turn draws above.';
-  if (id === 'poise') return ' Only while combat ratings are off; otherwise the Poise rating formula sets the threshold.';
+  if (['ar', 'dr', 'pr', 'ward'].includes(id)) return ' Only while combat ratings are on. Equipment, relics and statuses add on top.';
+  if (id === 'poise') return ' Armour and relic Poise add on top.';
+  if (id === 'draw') return ' Cards drawn at the start of each turn after the first (a fixed draw), never past the hand size.';
+  if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size.';
+  if (id === 'handSize') return ' The most cards a hand holds, in solo and co-op alike.';
   return '';
 }
 
@@ -591,41 +584,48 @@ export function startingStatRows(bundle) {
   // be its own section under stats, and have sub sections for actions, draw,
   // hp, stamina mana, etc", owner 2026-09-21), beside its rating formula from
   // combatRatings.js and everything else that decides it.
+  // ---- RULESET 7: ONE EDITOR PER ROW, THE SAME FIELDS IN THE SAME ORDER ----
+  //
+  // "I'd like all features, handsize, draw amount, actions, ar, dr, pr, ward,
+  // poise, stamina, mana, hp settings to have a similiar interface and be
+  // driven by only that interface" (owner, 2026-09-24). Every row of the
+  // derived-stat table — the pools, the hand and the combat ratings — is
+  // edited here with the same nine fields, in this order:
+  //
+  //   Base · STR · DEX · CON · WIS · INT · Per level · Min · Max
   const derivedDefaults = bundle.derivedStatRules.defaults || {};
   const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
   for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
     const presentation = bundle.derivedStatRules.presentation[id];
-    // POISE IS BOTH A POOL AND A RATING, and they now share this topic. The
-    // rating keeps its name (combatRatings.js); the pool says it is one, so no
-    // two rows on this screen read the same.
-    const face = presentation.faceLabel || presentation.label;
-    const label = RATING_NAMES.includes(id) ? `${face} pool` : face;
+    const label = presentation.label;
     const rule = { ...derivedDefaults, ...authored };
-    // Labels name the trait and what one unit of the row buys, so a search
-    // that finds every "per level" row still tells them apart.
+    // Labels name the row and the field, so a search that finds every "per
+    // level" row still tells them apart.
     const fields = [
       ['base', `${label} — Base`, 0, 1,
         'What this is worth before a single attribute point is spent, and before equipment, relics and level.'],
-      ...attributeRows.map((attribute) => [attribute.id, `${label} per ${attribute.label} point`, 0, 0.05,
-        `Gained from each point of ${attribute.label}, rounded down on its own exactly as a rating's is: 0.2 gives nothing until ${attribute.label} reaches 5, then one more every five. 0 ignores ${attribute.label}.`]),
-      ['perLevel', `${label} per level`, 0, 0.05,
+      ...attributeRows.map((attribute) => [attribute.id, `${label} — ${attribute.shortLabel || attribute.label} (per ${attribute.label} point)`, 0, 0.01,
+        `Gained from each point of ${attribute.label}, rounded down on its own: 0.25 gives nothing until ${attribute.label} reaches 4, then one more every four. 0 ignores ${attribute.label}.`]),
+      ['perLevel', `${label} — Per level`, 0, 0.05,
         'Gained per character level after the first, as a decimal and rounded down: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
+      ['min', `${label} — Min`, 0, 1, 'Never less than this, whatever the attributes. 0 sets no floor.'],
+      ['max', `${label} — Max`, 0, 1, 'Never more than this, whatever the attributes. 999 sets no ceiling.'],
     ];
     for (const [field, title, min, step, note] of fields) {
       // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
       // 'classField' }`, which resolves per class at the run door; a number row
       // for it would overwrite the reference with one value for every class.
-      const value = field === 'base' ? rule.base : (rule[field] ?? 0);
+      const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? 999) : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
         min, step,
-        // Filed under this trait's own topic of Advanced → Stats, under the
-        // subsection the row's term belongs to (models/AdvancedSettingsGroups.js).
-        advancedGroup: 'Stats', derivedStatId: id,
-        settingSection: field === 'perLevel' ? 'Level growth' : 'Formula',
+        // Filed under this row's own topic of Advanced → Stats
+        // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
+        advancedGroup: 'Stats', derivedStatId: id, statField: field,
+        settingSection: 'Formula',
         // Whole points only: every other term is floored, so a fractional base
-        // would be the one way a pool stopped being a whole number.
-        ...(field === 'base' ? { integer: true } : {}),
+        // or bound would be the one way a stat stopped being a whole number.
+        ...(['base', 'min', 'max'].includes(field) ? { integer: true } : {}),
         configPath: ['derivedStatRules', 'rules', id, field],
         note: `${note}${derivedRowNote(id)} The value you set is the value a new run is born with; nothing rescales it.`,
       });

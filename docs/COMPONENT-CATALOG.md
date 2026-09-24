@@ -670,12 +670,12 @@ class/outfit filters, pose order, timing, portrait and conversation references.
 
 Advanced → Stats is the one editing area for everything an attribute turns
 into. Each trait is a topic — Actions, Draw & hand, HP, Stamina, Mana, Poise,
-Ward, AR, DR, PR — holding its ruleset-6 formula (base, a decimal weight per
-attribute, growth per level), its rating formula and related constants under
-subsection headings (`models/AdvancedSettingsGroups.js` `statsSection`). Draw &
-hand keeps Starting hand, Turn draws, Hand capacity and Retention & discards
-together, with the Draw conversion and fallback capacity under "Co-op & legacy
-fallback"; Poise ends with the rows used only while ratings are off.
+Ward, AR, DR, PR — holding its stat row (ruleset 7: one editor per row, the
+same fields in the same order — Base, STR, DEX, CON, WIS, INT, Per level, Min,
+Max) and related constants under subsection headings
+(`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
+Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
+ends with the legacy meter rows used only while ratings are off.
 `src/ui/models/StatsPreviewModel.js` computes the worked example above each
 topic from the same configured bundle, derived-stat engine, hand rules and
 rating receipt the game uses (a new character through `createRunState`, so
@@ -690,4 +690,4 @@ cancel without changing combat state. `src/engine/handRules.js` validates the
 selection independently before the turn can advance.
 
 ### Ratings, Poise and Ward
-Advanced → Stats holds a topic for each rating formula, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

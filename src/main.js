@@ -897,6 +897,16 @@ window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  // A RESTORED PROFILE IS BROUGHT FORWARD THROUGH THE SAME DOOR THE BOOT USES,
+  // or a profile saved before ruleset 7 would come back holding the retired
+  // rating, hand-rule and hand-size keys that no row reads any more.
+  if (hasLegacyAdvancedSettings(settings)) {
+    const carried = [];
+    normalizeAdvancedSettings(settings, contentBundle, carried);
+    for (const line of carried) console.warn('[advanced-config]', line);
+    activeMeta.settings = settings;
+    saves.saveMeta({ ...activeMeta, settings });
+  }
   for (const key of Object.keys(activeSettings)) delete activeSettings[key];
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
