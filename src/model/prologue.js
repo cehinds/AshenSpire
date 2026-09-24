@@ -136,6 +136,14 @@ export const PROLOGUE_STAGE_FIELDS = Object.freeze([
   { key: 'textBoxVisible', topic: 'Text', label: 'Container is visible', note: 'Off keeps the container’s spacing but draws nothing behind the words.' },
   { key: 'textBoxOpacity', topic: 'Text', label: 'Container opacity', min: 0, max: 1, step: .01 },
   { key: 'textBoxColor', topic: 'Text', label: 'Container colour', type: 'colorSwatch' },
+  { key: 'captionFixedHeight', topic: 'Text', label: 'Use a fixed caption height',
+    note: 'Keeps the text panel the same height while the artwork fills the remaining space.' },
+  { key: 'captionHeightVh', topic: 'Text', label: 'Caption height (scene vh)', min: 8, max: 60, step: 1, integer: true,
+    note: 'Height as a percentage of the scene viewport. Long text scrolls inside the panel.' },
+  { key: 'bannerBox', topic: 'Text', label: 'Title banner has a container',
+    note: 'Places the title on a separate shaded strip over the artwork.' },
+  { key: 'bannerBoxColor', topic: 'Text', label: 'Title banner container colour', type: 'colorSwatch' },
+  { key: 'bannerBoxOpacity', topic: 'Text', label: 'Title banner container opacity', min: 0, max: 1, step: .01 },
   { key: 'textOutline', topic: 'Text', label: 'Outline the text',
     note: 'Draws a contrasting edge around every letter so words stay legible over bright artwork.' },
   { key: 'textOutlineColor', topic: 'Text', label: 'Outline colour', type: 'colorSwatch' },
@@ -309,6 +317,9 @@ export function prologueRows() {
   add(['presentation', 'tintSource'], 'Artwork tint follows', 'Motif', choice(['accent','character','custom'], {accent:'Interface accent',character:'Character tint',custom:'Custom colour'}));
   add(['presentation', 'customTint'], 'Custom artwork colour', 'Motif', {type:'color'});
   add(['presentation', 'shadowStrength'], 'Character shadow strength', 'Motif', number(0,1,.05));
+  add(['presentation', 'editorGrid'], 'Show scene editor grid', 'Stage');
+  add(['presentation', 'editorSnap'], 'Snap scene editor drags to grid', 'Stage');
+  add(['presentation', 'editorGridStep'], 'Scene editor grid interval (%)', 'Stage', whole(2, 25));
   // The house style: what a scene is staged in unless it answers for itself.
   for (const field of PROLOGUE_STAGE_FIELDS) {
     add(['presentation', field.key], field.label, field.topic, {
