@@ -171,8 +171,8 @@ export function createFrameworkBridge() {
      * already-rolled die, Dexterity, and the class the player stands in decide
      * success and the temporary guard; randomness stays the engine's.
      */
-    dodgeRoll({ roll, dexterity, weightClass, otherEvasionModifiers = 0, incomingAttackModifier = 0 }) {
-      return dodgeRollCheck({ roll, dexterity, weightClass, otherEvasionModifiers, incomingAttackModifier });
+    dodgeRoll({ roll, dexterity, attributeMode, weightClass, otherEvasionModifiers = 0, incomingAttackModifier = 0 }) {
+      return dodgeRollCheck({ roll, dexterity, attributeMode, weightClass, otherEvasionModifiers, incomingAttackModifier });
     },
 
     /**
