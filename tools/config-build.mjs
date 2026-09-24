@@ -216,6 +216,7 @@ export function compileEntries(entries) {
     seen.set(slot, f.rel);
     config[f.group][f.key] = out;
     if (f.group === 'scenes') errors.push(...sceneProblems(f.rel, out));
+    if (f.group === 'presentation' && f.key === 'combatJuiceModel') errors.push(...combatJuiceProblems(f.rel, out));
   }
 
   // Tokens: resolved inside their own scope and exported as plain values.
@@ -298,6 +299,76 @@ export function sceneProblems(rel, scene) {
   if (isObject(positioning.portraits) && 'visibleFraction' in positioning.portraits) {
     const f = positioning.portraits.visibleFraction;
     if (typeof f !== 'number' || !(f > 0 && f <= 1)) out.push(`${at}: positioning.portraits.visibleFraction ${Number.isFinite(f) ? f : JSON.stringify(f)} must satisfy 0 < f ≤ 1`);
+  }
+  return out;
+}
+
+/**
+ * The combat-juice contract (SPEC §7.4; src/ui/models/CombatJuiceModel.js
+ * reads these raw). Tiers must climb strictly past heavy — hit-stop divides by
+ * (critAt − heavyAt) and (capAt − critAt) — and every length is a
+ * non-negative number of ms. Every refusal names the file and the field.
+ */
+export function combatJuiceProblems(rel, cfg) {
+  const out = [];
+  const at = `${CONFIG_DIR}/${rel}`;
+  const say = (path, rule, v) => out.push(`${at}: ${path} ${rule}, got ${JSON.stringify(v)}`);
+  const section = (path, v) => {
+    if (isObject(v)) return v;
+    out.push(`${at}: ${path} must be an object`);
+    return null;
+  };
+  const nonNeg = (obj, path, keys) => {
+    for (const k of keys) if (!(typeof obj[k] === 'number' && Number.isFinite(obj[k]) && obj[k] >= 0)) say(`${path}.${k}`, 'must be a finite non-negative number', obj[k]);
+  };
+  const within = (obj, path, k, lo, hi, loOpen = false) => {
+    const v = obj[k];
+    if (!(typeof v === 'number' && (loOpen ? v > lo : v >= lo) && v <= hi)) say(`${path}.${k}`, `must be a number in ${loOpen ? '(' : '['}${lo}, ${hi}]`, v);
+  };
+  const sizing = section('sizing', cfg.sizing);
+  const motion = section('motion', cfg.motion);
+  const behavior = section('behavior', cfg.behavior);
+  if (sizing) {
+    const T = section('sizing.damageTiers', sizing.damageTiers);
+    if (T) {
+      nonNeg(T, 'sizing.damageTiers', ['chipBelow', 'heavyAt', 'critAt', 'capAt']);
+      if ([T.chipBelow, T.heavyAt, T.critAt, T.capAt].every(Number.isFinite) && !(T.chipBelow <= T.heavyAt && T.heavyAt < T.critAt && T.critAt < T.capAt)) {
+        out.push(`${at}: sizing.damageTiers must climb chipBelow ≤ heavyAt < critAt < capAt, got ${JSON.stringify(T)}`);
+      }
+    }
+    const S = section('sizing.damageScale', sizing.damageScale);
+    if (S) nonNeg(S, 'sizing.damageScale', ['normalBoost', 'heavyBoost', 'critBoost']);
+    const K = section('sizing.killCam', sizing.killCam);
+    if (K) {
+      within(K, 'sizing.killCam', 'zoom', 0, Infinity, true);
+      within(K, 'sizing.killCam', 'vignetteOpacity', 0, 1);
+    }
+  }
+  if (motion) {
+    const H = section('motion.hitStop', motion.hitStop);
+    if (H) {
+      nonNeg(H, 'motion.hitStop', ['minMs', 'critMs', 'maxMs', 'staggerMs', 'freshAnimationMs']);
+      within(H, 'motion.hitStop', 'impactFraction', 0, 1);
+      if ([H.minMs, H.critMs, H.maxMs].every(Number.isFinite) && !(H.minMs <= H.critMs && H.critMs <= H.maxMs)) {
+        out.push(`${at}: motion.hitStop must climb minMs ≤ critMs ≤ maxMs, got ${JSON.stringify({ minMs: H.minMs, critMs: H.critMs, maxMs: H.maxMs })}`);
+      }
+    }
+    const K = section('motion.killCam', motion.killCam);
+    if (K) {
+      nonNeg(K, 'motion.killCam', ['bossMs', 'eliteMs', 'lastEnemyMs', 'zoomInMs', 'zoomOutMs']);
+      within(K, 'motion.killCam', 'slowRate', 0, 1, true);
+    }
+    nonNeg(motion, 'motion', ['coopFinaleHoldMs']);
+  }
+  if (behavior) {
+    const K = section('behavior.killCam', behavior.killCam);
+    if (K) {
+      if (typeof K.lastEnemy !== 'boolean') say('behavior.killCam.lastEnemy', 'must be true or false', K.lastEnemy);
+      const ranks = section('behavior.killCam.rankByStature', K.rankByStature);
+      if (ranks) for (const [stature, rank] of Object.entries(ranks)) {
+        if (!['boss', 'elite'].includes(rank)) say(`behavior.killCam.rankByStature.${stature}`, "must be 'boss' or 'elite'", rank);
+      }
+    }
   }
   return out;
 }

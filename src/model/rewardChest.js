@@ -9,8 +9,10 @@ import { isItemOwned } from './loadout.js';
 import { sourceArmamentId } from './smithing.js';
 import { rewardPlan, resolveContinue } from './rewardplan.js';
 
-/** The chest's closed category set, in the order the chest lays them out (SPEC §3.8.1). */
-export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
+// The chest's closed category set lives in model/schemas.js (the content
+// door reads it too, and cannot import this file without a cycle).
+import { CHEST_CATEGORIES } from './schemas.js';
+export { CHEST_CATEGORIES };
 
 const isId = (value) => typeof value === 'string' && value.length > 0;
 const isCount = (value) => Number.isInteger(value) && value >= 0;

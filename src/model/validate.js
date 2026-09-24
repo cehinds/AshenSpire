@@ -38,6 +38,7 @@ import {
   NODE_RELATIONS,
   VARIABLE_SCOPES,
   CARD_RARITIES,
+  CHEST_CATEGORIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
@@ -642,6 +643,7 @@ function collectContentProblems(bundle, errors = []) {
       }
     }
   }
+  validateRewardTuning(b, err);
 
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
@@ -2179,6 +2181,55 @@ function isPlainObject(v) {
 // ---------------------------------------------------------------------------
 
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat'];
+
+// The reward knobs the game-feel rework added (SPEC §3.8.1, §6.1): card pity,
+// the elite chest, the boss relic pick. The engine reads them raw
+// (engine/encounters.js), so a malformed one is refused here BY NAME at boot
+// rather than throwing mid-run when a chest rolls its purse. An absent block
+// is left to the engine's own absence rule; a present one must be whole.
+function validateRewardTuning(b, err) {
+  const rewards = b.balance && b.balance.rewards;
+  if (!isPlainObject(rewards)) return;
+  const int = (v, min) => Number.isInteger(v) && v >= min;
+  const got = (v) => `got ${JSON.stringify(v)}`;
+  const pity = rewards.cardPity;
+  if (pity !== undefined) {
+    const root = 'balance.rewards.cardPity';
+    if (!isPlainObject(pity)) err(root, 'must be an object { offsetStart, offsetStep, offsetMax, rareGuaranteeAfter }');
+    else {
+      for (const key of Object.keys(pity)) if (!['offsetStart', 'offsetStep', 'offsetMax', 'rareGuaranteeAfter'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      for (const key of ['offsetStart', 'offsetMax']) if (!Number.isInteger(pity[key])) err(`${root}.${key}`, `must be an integer (percentage points), ${got(pity[key])}`);
+      if (!int(pity.offsetStep, 0)) err(`${root}.offsetStep`, `must be a non-negative integer, ${got(pity.offsetStep)}`);
+      if (Number.isInteger(pity.offsetStart) && Number.isInteger(pity.offsetMax) && pity.offsetStart > pity.offsetMax) err(`${root}.offsetStart`, `must not exceed offsetMax (${pity.offsetMax}), ${got(pity.offsetStart)}`);
+      if (!int(pity.rareGuaranteeAfter, 1)) err(`${root}.rareGuaranteeAfter`, `must be an integer of at least 1, ${got(pity.rareGuaranteeAfter)}`);
+    }
+  }
+  const chest = rewards.eliteChest;
+  if (chest !== undefined) {
+    const root = 'balance.rewards.eliteChest';
+    if (!isPlainObject(chest)) err(root, 'must be an object { choices, categoryWeights, upgradeOwnedPct, cinders, smithingStones }');
+    else {
+      for (const key of Object.keys(chest)) if (!['choices', 'categoryWeights', 'upgradeOwnedPct', 'cinders', 'smithingStones'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      if (!int(chest.choices, 1)) err(`${root}.choices`, `must be an integer of at least 1, ${got(chest.choices)}`);
+      const weights = chest.categoryWeights;
+      if (!isPlainObject(weights)) err(`${root}.categoryWeights`, `must be an object of category → weight (${CHEST_CATEGORIES.join(', ')})`);
+      else {
+        for (const [category, weight] of Object.entries(weights)) {
+          if (!CHEST_CATEGORIES.includes(category)) err(`${root}.categoryWeights.${category}`, `unknown chest category (known: ${CHEST_CATEGORIES.join(', ')})`);
+          else if (!Number.isFinite(weight) || weight < 0) err(`${root}.categoryWeights.${category}`, `must be a finite non-negative weight, ${got(weight)}`);
+        }
+        if (!CHEST_CATEGORIES.some((c) => Number.isFinite(weights[c]) && weights[c] > 0)) err(`${root}.categoryWeights`, 'must give at least one category a positive weight');
+      }
+      if (!(Number.isFinite(chest.upgradeOwnedPct) && chest.upgradeOwnedPct >= 0 && chest.upgradeOwnedPct <= 100)) err(`${root}.upgradeOwnedPct`, `must be a percent 0–100, ${got(chest.upgradeOwnedPct)}`);
+      const purse = chest.cinders;
+      if (!Array.isArray(purse) || purse.length !== 2 || !int(purse[0], 0) || !int(purse[1], 0)) err(`${root}.cinders`, `must be [lo, hi] non-negative integers, ${got(purse)}`);
+      else if (purse[0] > purse[1]) err(`${root}.cinders`, `lo must not exceed hi, ${got(purse)}`);
+      if (!int(chest.smithingStones, 0)) err(`${root}.smithingStones`, `must be a non-negative integer, ${got(chest.smithingStones)}`);
+    }
+  }
+  if (rewards.bossRelicChoices !== undefined && !int(rewards.bossRelicChoices, 1)) err('balance.rewards.bossRelicChoices', `must be an integer of at least 1, ${got(rewards.bossRelicChoices)}`);
+  if (rewards.bossRelicConsolationCinders !== undefined && !int(rewards.bossRelicConsolationCinders, 0)) err('balance.rewards.bossRelicConsolationCinders', `must be a non-negative integer, ${got(rewards.bossRelicConsolationCinders)}`);
+}
 
 const WEAPON_ART_CHARGE_KEYS = Object.freeze(['defaultMax', 'maxByWeapon', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']);
 // Unleashed ops that land on whoever resolveTargets picks, so an omitted

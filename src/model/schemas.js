@@ -1056,3 +1056,6 @@ export const SCHEMAS = Object.freeze({
 
   balance: any, // flat constants object; shape is content's concern (SPEC §3.3)
 });
+
+/** The elite chest's closed category set, in the order the chest lays them out (SPEC §3.8.1). */
+export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);
