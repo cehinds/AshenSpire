@@ -242,3 +242,7 @@ Thirty-two original transparent atlases generated with the built-in image_gen to
 ## Unarmed physical outfit suites (2026-09-19)
 
 Thirty-two original transparent atlases generated with built-in OpenAI image generation from the project's class/outfit paintings and one shared unarmed pose reference. Exact prompts and PNG masters are retained in `art/unarmed-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 armor entries, including three existing catalog art aliases. Both hands are empty; no effects are baked into these frames. No third-party artwork was downloaded and no third-party license is claimed.
+
+## Generated music score (2026-09-24)
+
+Four original 180-second instrumental tracks generated for AshenSpire with ElevenLabs Music (`eleven_music_v2`): `music/map/ashen_map_1.mp3`, `music/map/ashen_map_2.mp3`, `music/boss/ashen_boss_1.mp3` and `music/victory/ashen_victory_1.mp3`, listed in `music/manifest.json`. Prompts are in `music/PROMPTS.md`. Contexts without a track keep the built-in generated score. No third-party recordings were used and no third-party asset license is claimed.
