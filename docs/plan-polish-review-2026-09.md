@@ -93,8 +93,12 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
     starter decks.
   - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
     out of reach at creation; DEX 5 is the dominant level-up pick.
-  - [ ] Starting HP 34–48 against enemies tuned for ~70
-    (`src/model/attributes.js` ~64–80 says so).
+  - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
+    where #1238 shipped 70 (`src/content/attributes.js` ~74, which calls
+    moving them "a retune of `derivedStatRules` and the rating weights").
+    Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
+    120); measure incoming damage per encounter with the A1 simulator and
+    retune pools or enemy damage from that, not from the old figure.
   - [ ] SPEC §13.4m still describes the conversion scale removed on 09-21.
 - [ ] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
@@ -211,8 +215,6 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
   rest.
 - [ ] **Combat HUD (M).** 27 numbers, 13 glyph-only nodes, 11 bars at once.
   Hide cinders/act/floor in combat; one HP readout; one Actions readout.
-- [ ] **Bars (S).** HP drawn against 200 (`resources.js` ~61) and Mana
-  against 20 — scale to the real maximum.
 - [ ] **Map (M).** Opens on one node; frame the next 2–3 rows, fog later
   ones; header band full width.
 - [ ] **Reward and rest (S–M).** Drop the duplicate status column; "Upgrade:
@@ -313,6 +315,13 @@ code literals (SPEC §9 M3 sets the experienced-player target at ~35–50%).
   - [ ] Merge class XP into character level, or open tier 3 by act 2?
   - [ ] Cut or hide dormant tracks, empty equipment slots, smithing tiers?
   - [ ] Freeze one creation mode and ruleset until all four classes pass A.
+- [ ] **Resource bar reference.** HP bars are drawn against 200 and Mana and
+  Stamina against 20 — the owner's ruling of 2026-08-22
+  (`src/content/resources.js` `HUD_REFERENCE_MAX`), so a trough shows a
+  pool's capacity. Since the rebase, a full 34–48 HP pool fills about a fifth
+  of its track and a 2–4 Mana pool a tenth to a fifth. The ruling's own
+  removal condition anticipates revisiting it: keep the reference, or lower
+  it to the rebased band?
 - [ ] **J. The hook first (M).** "Your weapon drafts your cards" is the
   distinct idea; creation opens on a 3-point stat spread. Make kit choice the
   first creation screen (three weapons per class, each changing the starter
