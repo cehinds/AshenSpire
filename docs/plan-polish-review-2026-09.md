@@ -192,9 +192,11 @@ amended before code moves.
   - [ ] Recoil and a 1–2 px shake on every hit, scaled by damage (shake is
     currently only at ≥ 15, `fx.js` ~790).
   - [ ] Trailing "ghost" HP bar.
-- [ ] **Pose swap (S).** The player sprite vanishes mid-attack
-  (`visibility:hidden` swap, `combat.css` ~411–432); crossfade instead. Add a
-  CSS squash for enemy anticipation and an eased recovery.
+- [ ] **Pose swap (S).** The enemy idle/attack poses swap by
+  `visibility:hidden` (`combat.css` ~411–432); crossfade instead. The player
+  runs through `PoseAnimator`, which swaps the image source, so trace that
+  path before claiming a player-side gap. Add a CSS squash for enemy
+  anticipation and an eased recovery.
 - [ ] **Hover lift (S).** Inline transforms in `hand.js` (~123, ~275) fight
   `!important` rules (`combat.css` ~990, ~1085); compose
   `transform: var(--fan) translateY(var(--lift, 0))` and drop the overrides.
@@ -283,10 +285,13 @@ amended before code moves.
 ### H. Sprite scale and asset hygiene
 
 - [ ] **Threat scale (M).** `fitCombatSprites` (`CombatSpriteScaleModel.js`
-  ~19–37) fits every fighter to one visible height, so a hound equals the
-  knight; boss fights shrink the hero to 82 px (22 px on phone) under
-  ~330 px of empty sky.
-  - [ ] Per-enemy authored `heightScale`.
+  ~19–37) fits every fighter to one visible height within a stature, so a
+  hound equals the knight; boss fights shrink the hero to 82 px (22 px on
+  phone) under ~330 px of empty sky.
+  - [ ] **(owner ruling)** Per-enemy size. The owner's 2026-09-03 ruling
+    (`src/ui/components/stature.js`) is three statures derived from the
+    encounter pool with no authored field, so hound = knight is intended.
+    Ask before adding any per-enemy scale.
   - [ ] A floor under the hero's size.
   - [ ] Bosses rise into headroom instead of taking the hero's width.
 - [ ] **Upscaling (S).** Combat backdrop drawn at 1.9–2.55× (1536×1024
@@ -303,8 +308,11 @@ amended before code moves.
 - [ ] **Icons (S–M).** Reward screen uses unicode glyphs though 512 px
   `icon_*.webp` exist; replace colour OS emoji in card art, HUD pips, flask
   and medallion with one monochrome engraved set.
-- [ ] **Font (S).** `--font-display: 'Cinzel'` (`styles/base.css` ~182) has
-  no `@font-face` or file; bundle a woff2 with `font-display: swap`.
+- [ ] **Font (S).** `--font-display: 'Cinzel'` (`styles/base.css` ~182)
+  matches no `@font-face`. The file already ships
+  (`assets/fonts/cinzel-400-normal.woff2`, registered as `AS Lore Cinzel` in
+  `styles/kit.css` ~4063): point the variable at that family or add a
+  `Cinzel` alias. Do not bundle a second copy.
 
 ### C. Lore pass
 
