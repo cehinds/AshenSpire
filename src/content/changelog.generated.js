@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1293",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: a missing changelog line is filled in",
+    "detail": "Nothing you see in the game changes. The card-layout drawings update from #1263 now has its own line in this changelog, so the check that every change is recorded passes again.",
+    "build": "0.7.1.457",
+    "pullRequest": 1293,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1293"
+  },
+  {
     "id": "pr-1273",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -121,6 +131,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.407",
     "pullRequest": 1253,
     "url": "https://github.com/cehinds/AshenSpire/pull/1253"
+  },
+  {
+    "id": "pr-1263",
+    "date": "2026-09-23",
+    "group": "2026-09-23",
+    "summary": "The card-layout reference drawings match the cards the game draws now",
+    "detail": "Nothing you see in the game changes. The wireframes in the design notes that show how a card face is laid out — name, cost rail, art, rules, footer, at rest, selected and inspected — were redrawn from the live card settings rather than an older sketch, and a small generator now produces them from those settings so they stay in step.",
+    "build": "0.7.1.405",
+    "pullRequest": 1263,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1263"
   },
   {
     "id": "pr-1258",
