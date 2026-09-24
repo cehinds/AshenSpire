@@ -234,3 +234,33 @@ test('each class\'s opening hand is its own pair of settings rows, and the share
   assert.equal(tuned.starting.base, 5);
   assert.equal(tuned.starting.stat, 'constitution');
 });
+
+// "Draw / turn and opening hand" said 3 for a Standard Rogue who opened on 5
+// (Codex, #1294). Creation's Hand and Draw chips come from the hand rules the
+// class's first fight is handed, so each class's promise is the hand dealt.
+import { statProjection, handResourceRows, withHandResources } from '../src/model/statProjection.js';
+
+test('character creation\'s Hand chip is the opening hand combat deals, for every class under Standard presets', () => {
+  for (const settings of [{}, settingsOf({}, LEGACY_RULES)]) {
+    for (const classDef of contentBundle.classes) {
+      const run = createRunState({ seed: 7, classId: classDef.id, registries });
+      const rows = withHandResources(statProjection(registries, run).derived, handResourceRows(registries, run, settings));
+      const hand = rows.find(row => row.id === 'openingHand');
+      const draw = rows.filter(row => row.id === 'draw');
+      const combat = createRunCombat({ registries, rng: createRng(7), run, settings, enemyIds: ['wanderingSoldier'] });
+      assert.equal(hand.value, combat.piles.hand.length, `${classDef.id}: the Hand chip is the opening hand dealt`);
+      assert.equal(hand.faceLabel, 'Hand');
+      assert.match(hand.formula, new RegExp(`= ${hand.value}$`), 'the tooltip arithmetic ends on the chip value');
+      assert.equal(draw.length, 1, 'the legacy derived draw row is replaced, not joined');
+      assert.equal(draw[0].label, 'Cards drawn each turn');
+      assert.doesNotMatch(rows.map(row => row.label).join(' | '), /opening hand and|Draw \/ turn/);
+      // Turn 2 draws what the Draw chip says whenever the hand has the room.
+      const kept = combat.piles.hand.length;
+      dispatch(combat, { type: 'endTurn' });
+      if (combat.turn === 2 && combat.handRules.drawMode === 'fixed') {
+        const room = scaledCards(combat.handRules.capacity, run.attributes) - kept;
+        assert.equal(combat.piles.hand.length - kept, Math.min(room, draw[0].value), `${classDef.id}: the Draw chip is the turn draw`);
+      }
+    }
+  }
+});

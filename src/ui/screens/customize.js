@@ -29,7 +29,7 @@ import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
-import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
@@ -81,6 +81,8 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Power Rating (PR)',
+  openingHand: 'Opening hand',
+  draw: 'Cards drawn each turn',
 });
 
 function creationDerivedLabel(entry) {
@@ -98,6 +100,11 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
 }) {
+  // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
+  // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
+  // Draw chips read from the class's own hand rules under these settings,
+  // through the door (`classHandRules`) engine/runCombat.js snapshots.
+  const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -609,7 +616,7 @@ export function mountCustomize(app, {
     });
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
-    const resources = projection.derived
+    const resources = creationResources(run, projection)
       .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
@@ -623,7 +630,7 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const resources = classResourceGrid(projection.derived.slice(0, 5));
+    const resources = classResourceGrid(creationResources(run, projection).slice(0, 5));
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -1193,8 +1200,8 @@ export function mountCustomize(app, {
   // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
   const summaryBody = el('div', { class: 'as-stack cc-summary' });
   let summaryFold = null;
-  function characterSummaryResources(projection, poise) {
-    const resources = projection.derived
+  function characterSummaryResources(derived, poise) {
+    const resources = derived
       .filter(entry => entry.id !== 'poise')
       .map(entry => ({
         id: entry.id,
@@ -1254,7 +1261,7 @@ export function mountCustomize(app, {
       value: run.attributes[def.id],
     }));
     const resources = characterSummaryResources(
-      projection,
+      creationResources(run, projection),
       playerPoiseThresholdReceipt(registries, run),
     );
     const card = el('article', {
@@ -1512,12 +1519,12 @@ export function mountCustomize(app, {
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
       sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
+      resources: classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    const classResourceSpecimen = classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
@@ -1600,7 +1607,7 @@ export function mountCustomize(app, {
       { key: 'selection-section-face', label: 'Selection subcard face', node: selectionFaceSpecimen },
       { key: 'primary-stat-card', label: 'Primary stat card', node: statHost },
       { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+        creationResources(specimenRun, specimenProjection), playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
       { key: 'mode-choice', label: 'Stat allocation mode', node: choiceSpecimen(
         'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,

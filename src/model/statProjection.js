@@ -7,6 +7,7 @@ import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
 import { mechanics } from '../framework/data/mechanics.js';
+import { classHandRules, handSizeReceipts } from './handRules.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -254,4 +255,44 @@ export function statProjection(registries, run) {
     };
   });
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
+}
+
+/**
+ * handResourceRows(registries, run, settings) → the Hand and Draw chips for a
+ * character about to begin, read off the hand rules its first fight is
+ * handed (`classHandRules`, the door engine/runCombat.js snapshots).
+ *
+ * TWO CHIPS, EACH SAYING ONE TRUE THING (Codex, #1294). Creation used to show
+ * the derived `draw` row as "Draw / turn and opening hand", but a solo fight
+ * deals its opening hand and its turn draws from the hand rules — per class
+ * since #1294 — so a Standard Rogue read Draw 3 and opened with 5 cards. The
+ * derived row still prices LAN co-op and older saved fights; these two rows
+ * replace it only where a new solo run is being previewed.
+ */
+export function handResourceRows(registries, run, settings = {}) {
+  const rules = classHandRules(settings, registries.attributes.all(), run.class);
+  const { opening, turn } = handSizeReceipts(rules, run.attributes);
+  const short = (id) => registries.attributes.get(id)?.shortLabel || id;
+  const terms = (receipt) => `${receipt.base} base${receipt.statEnabled ? ` + ${receipt.bonus} ${short(receipt.stat)}` : ''}`;
+  const limits = (receipt) => (receipt.raw < receipt.minimum ? `, raised to the minimum ${receipt.minimum}`
+    : receipt.raw > receipt.maximum ? `, limited to the maximum ${receipt.maximum}` : '');
+  const openingFormula = `${terms(opening)}${limits(opening)}${Math.min(opening.raw, opening.maximum) > opening.capacity ? `, limited to hand capacity ${opening.capacity}` : ''} = ${opening.value}`;
+  const turnFormula = turn.fill
+    ? `draw until the hand holds ${turn.capacity}`
+    : `${terms(turn)}${limits(turn)} = ${turn.value}, never past hand capacity ${turn.capacity}`;
+  return [
+    {
+      id: 'openingHand', label: 'Opening hand', faceLabel: 'Hand', disclosure: 'face', order: 4.5,
+      sense: 'The cards you hold when a fight begins.', value: opening.value, formula: `Opening hand: ${openingFormula}`, note: '',
+    },
+    {
+      id: 'draw', label: 'Cards drawn each turn', faceLabel: 'Draw', disclosure: 'face', order: 5,
+      sense: 'The cards you draw at the start of each later turn.', value: turn.value, formula: `Each turn: ${turnFormula}`, note: '',
+    },
+  ];
+}
+
+/** withHandResources(derived, handRows) → the projection's rows with the legacy `draw` row replaced by the hand-rule rows. */
+export function withHandResources(derived, handRows) {
+  return derived.flatMap((row) => (row.id === 'draw' ? handRows : [row]));
 }

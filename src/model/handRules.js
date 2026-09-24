@@ -157,6 +157,34 @@ export function handRulesForClass(rules, classId = null) {
   return fight;
 }
 
+/**
+ * classHandRules(settings, attributes, classId) → the hand rules a fight of
+ * this class is handed under these settings. The ONE door: combat
+ * (engine/runCombat.js) snapshots it, and character creation's Hand and Draw
+ * chips read it, so the hand a new character is promised is the hand its
+ * first fight deals (Codex, #1294).
+ */
+export function classHandRules(settings = {}, attributes = [], classId = null) {
+  return handRulesForClass(resolveHandRules(settings || {}, attributes), classId);
+}
+
+/**
+ * handSizeReceipts(rules, attributes) → the opening hand, the most one turn
+ * draws, and the capacity, each with the terms `scaledCards` used. The
+ * opening hand is what `turnDrawCount` (engine/handRules.js) deals into an
+ * empty hand on turn 1: the starting rule, limited by capacity. A fill draw
+ * tops the hand up to capacity; a fixed draw states the turn rule.
+ */
+export function handSizeReceipts(rules, attributes = {}) {
+  const capacity = scaledCardsReceipt(rules.capacity, attributes);
+  const starting = scaledCardsReceipt(rules.starting, attributes);
+  const opening = { ...starting, capacity: capacity.value, value: Math.min(capacity.value, starting.value) };
+  const turn = rules.drawMode === 'fill'
+    ? { fill: true, capacity: capacity.value, value: capacity.value }
+    : { ...scaledCardsReceipt(rules.turn, attributes), fill: false, capacity: capacity.value };
+  return { opening, turn, capacity };
+}
+
 export function handRulesSettingsProblems(settings = {}) {
   return Object.entries(groups).flatMap(([group, label]) => {
     const min = settings[HAND_RULES_PREFIX + group + '.minimum'] ?? handRulesDefaults[group].minimum;
