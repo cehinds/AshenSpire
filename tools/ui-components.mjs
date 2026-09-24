@@ -55,28 +55,44 @@ const REQUIRED_IDS = Object.freeze([
 ]);
 
 // THE TWO CATALOGS NAME THE SAME COMPONENTS (#1230). The Markdown catalog's
-// entries are the rows of its "| Component ID |" and "| Stable ID |" tables;
-// the interactive catalog's are the SEMANTIC_COMPONENTS records. An id in one
-// and not the other is a component one reader can find and the other cannot.
+// entries are the rows of its "| Component ID |" and "| Stable ID |" tables
+// plus every `armoury.*` id in its "| Rendered family |" table; the
+// interactive catalog's are the SEMANTIC_COMPONENTS and
+// RENDERED_ARMOURY_COMPONENTS records. An id in one and not the other is a
+// component one reader can find and the other cannot.
 export function markdownCatalogIds(md) {
   const ids = [];
-  let inTable = false;
+  let table = null;
   for (const line of md.split('\n')) {
-    if (/^\| (?:Component|Stable) ID \|/.test(line)) { inTable = true; continue; }
-    if (!inTable) continue;
-    if (!line.startsWith('|')) { inTable = false; continue; }
-    const id = line.match(/^\| `([^`]+)` \|/)?.[1];
-    if (id) ids.push(id);
+    if (/^\| (?:Component|Stable) ID \|/.test(line)) { table = 'semantic'; continue; }
+    if (/^\| Rendered family \|/.test(line)) { table = 'family'; continue; }
+    if (!table) continue;
+    if (!line.startsWith('|')) { table = null; continue; }
+    if (table === 'semantic') {
+      const id = line.match(/^\| `([^`]+)` \|/)?.[1];
+      if (id) ids.push(id);
+    } else {
+      ids.push(...[...line.matchAll(/`(armoury\.[^`]+)`/g)].map((m) => m[1]));
+    }
   }
   return ids;
 }
 
-export function htmlCatalogIds(html) {
-  const start = html.indexOf('const SEMANTIC_COMPONENTS = [');
-  if (start < 0) return [];
-  const end = html.indexOf('\n].map(', start);
+// Record ids are the first string of each array literal, in either quote
+// style, between the list's opening line and its closing "\n]".
+function htmlListIds(html, name) {
+  const start = html.indexOf(`const ${name} = [`);
+  if (start < 0) return null;
+  const end = html.indexOf('\n]', start);
   const body = html.slice(start, end < 0 ? undefined : end);
-  return [...body.matchAll(/^\s*\['([^']+)',/gm)].map((m) => m[1]);
+  return [...body.matchAll(/^\s*\[(['"])([^'"]+)\1,/gm)].map((m) => m[2]);
+}
+
+export function htmlCatalogIds(html) {
+  const semantic = htmlListIds(html, 'SEMANTIC_COMPONENTS');
+  const armoury = htmlListIds(html, 'RENDERED_ARMOURY_COMPONENTS');
+  if (!semantic?.length || !armoury?.length) return [];
+  return [...semantic, ...armoury];
 }
 
 export function catalogDisagreement(md, html) {
@@ -588,6 +604,7 @@ function selftest() {
     ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
     ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],
     ['list a component in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace("const SEMANTIC_COMPONENTS = [", "const SEMANTIC_COMPONENTS = [\n ['html-only-component','x','x','primitive','x','x','panel'],") })],
+    ['list an armoury asset id in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace('const RENDERED_ARMOURY_COMPONENTS = [', 'const RENDERED_ARMOURY_COMPONENTS = [\n ["armoury.htmlOnlyAsset",".x","x","x","x"],') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);

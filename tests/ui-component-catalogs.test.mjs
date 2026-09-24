@@ -34,3 +34,22 @@ test('a catalog that lists nothing fails the check rather than agreeing vacuousl
   const r = receipt();
   assert.equal(c22({ ...r, catalogHtml: '' }).length, 1);
 });
+
+test('an armoury asset id only in the interactive catalog fails the check', () => {
+  const r = receipt();
+  const bad = { ...r, catalogHtml: r.catalogHtml.replace('const RENDERED_ARMOURY_COMPONENTS = [', 'const RENDERED_ARMOURY_COMPONENTS = [\n ["armoury.htmlOnlyAsset",".x","x","x","x"],') };
+  assert.match(c22(bad).join('\n'), /only in component-catalog\.html: armoury\.htmlOnlyAsset/);
+});
+
+test('an armoury asset id only in the Markdown family table fails the check', () => {
+  const r = receipt();
+  const bad = { ...r, catalogMarkdown: r.catalogMarkdown.replace('`armoury.disclosure` |', '`armoury.disclosure`, `armoury.markdownOnlyAsset` |') };
+  assert.match(c22(bad).join('\n'), /only in COMPONENT-CATALOG\.md: armoury\.markdownOnlyAsset/);
+});
+
+test('a double-quoted semantic record is still read', () => {
+  const r = receipt();
+  const quoted = { ...r, catalogHtml: r.catalogHtml.replace("['startup-gate',", '["startup-gate",') };
+  assert.notEqual(quoted.catalogHtml, r.catalogHtml);
+  assert.deepEqual(c22(quoted), []);
+});
