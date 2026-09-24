@@ -56,10 +56,22 @@
 // Per class, and why that spot: the Reaver's chest plate sits in the hollow
 // between his crossed forearms; the Starseer's is the V below the mantle
 // collar, above the belt tabard's own gold triangle; the Rogue's is the clean
-// field of the jerkin below the hood's shadow. The Herald keeps 61 — its
-// shipped sprite is STILL THE BUST, that number was measured for this art, and
-// it re-inspected well, so it is left alone rather than churned. It is wrong
-// the moment its full-body figure ships, exactly as before.
+// field of the jerkin below the hood's shadow.
+//
+// THE HERALD IS NULL AGAIN, AND THAT IS THE POINT ITS OLD ENTRY MADE. It held
+// 61, measured on the BUST, above a note saying that number is wrong the moment
+// its full-body figure ships. That figure ships now, so the number went with the
+// art it was measured on rather than being carried onto a painting nobody has
+// held a disc against. 61% of a full-body Herald is lower robe, not chest: the
+// overlay would sit on the hem.
+//
+// Null here is "measured as unplaceable", which `medallionDeclared` reports as
+// a check rather than a gap — the runtime draws no medallion and the cutters
+// still ship the sprite. Re-measure it the way the others were measured (four
+// candidate discs over the shipped 450x570 sprite, the surviving pair judged
+// again at the 150x190 combat host) and put the { x, y } back. Guessing one
+// from the other three is the shared-assumption defect this whole file exists
+// to have deleted.
 //
 // Headless-safe: data only, no document, no storage, no timers.
 import { uiConfig } from '../config/generated/ui.js';
