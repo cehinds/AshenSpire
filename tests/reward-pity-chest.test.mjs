@@ -402,6 +402,47 @@ test('a refused save leaves the chest untouched, and Confirm works on retry', as
   }
 });
 
+test('Continue\'s auto-collect rolls a chest grant back when its save is refused', async () => {
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const dom = rewardDom();
+  dom.document.addEventListener = () => {};
+  dom.document.removeEventListener = () => {};
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const { mountRewards } = await import('../src/ui/screens/reward.js');
+    const app = document.createElement('main'); document.body.append(app);
+    const run = { class: 'reaver', cinders: 0, smithingStones: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
+    const checkpoint = { states: {}, chosenCardId: null };
+    const rewards = { chest: { options: [{ category: 'cinders', cinders: 90, smithingStones: 1 }] } };
+    let refuse = true;
+    let done = false;
+    // Auto collect is a profile setting; saves hands it in (and takes the seen marks).
+    const saves = { loadMeta: () => ({ settings: { rewardCollect: 'auto' } }), saveMeta() {} };
+    mountRewards(app, { registries: r, run, checkpoint, rewards, saves, onDone() { done = true; }, onPersist: () => !refuse });
+    const before = structuredClone(run);
+    const checkpointBefore = structuredClone(checkpoint);
+    // A plain click on Continue (no hold) confirms through the beat armer.
+    assert.throws(() => app.querySelector('#reward-continue').click(), /Reward save was refused/);
+    assert.deepEqual(run, before, 'a refused save leaves the run untouched');
+    assert.deepEqual(checkpoint, checkpointBefore, 'and the checkpoint');
+    assert.equal(done, false);
+    refuse = false;
+    app.querySelector('#reward-continue').click();
+    assert.equal(run.cinders, 90);
+    assert.equal(run.smithingStones, 1);
+    assert.equal(checkpoint.states.chest, 'taken');
+    assert.equal(checkpoint.chosenChestIndex, 0);
+    assert.equal(done, true);
+    app.remove();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+});
+
 test('save shape: a taken chest names its option; an old relic offer still validates', () => {
   const run = newRun(3);
   const pending = (rewards, extra = {}) => ({

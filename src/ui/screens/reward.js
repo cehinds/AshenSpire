@@ -233,27 +233,54 @@ export function mountRewards(app, {
     },
   };
 
+  // THE ROLLBACK SNAPSHOT: everything a row's grant may write — the deck
+  // (deep: a chest upgrade flips `upgraded` in place), relics, the purse and
+  // stones, the flask belt, the armament bag, the drafts' ledger and picks,
+  // and the checkpoint — so a grant whose save is refused leaves no mutation,
+  // whether it came from a tap (take) or from Continue's auto-collect (finish).
+  function snapshotForRollback() {
+    return {
+      deck: structuredClone(run.deck),
+      chosenCardId, chosenRelicId, chosenChestIndex, relics: [...run.relics],
+      chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+      cinders: run.cinders, smithingStones: run.smithingStones,
+      flasks: Array.isArray(run.flasks) ? structuredClone(run.flasks) : null,
+      storage: Array.isArray(run.loadout?.storage) ? [...run.loadout.storage] : null,
+      skills: run.skills === undefined ? undefined : structuredClone(run.skills),
+      coreTags: run.coreTags === undefined ? undefined : [...run.coreTags],
+      checkpoint: checkpoint ? structuredClone(checkpoint) : null,
+    };
+  }
+
+  function restoreRollback(before, row) {
+    run.deck.splice(0, run.deck.length, ...before.deck);
+    chosenCardId = before.chosenCardId;
+    chosenRelicId = before.chosenRelicId;
+    chosenChestIndex = before.chosenChestIndex;
+    run.relics.splice(0, run.relics.length, ...before.relics);
+    for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
+    Object.assign(chosenDraftCardIds, before.chosenDraft);
+    for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
+    Object.assign(chosenDraftNodeIds, before.chosenNode);
+    run.cinders = before.cinders;
+    run.smithingStones = before.smithingStones;
+    if (before.flasks) run.flasks.splice(0, run.flasks.length, ...before.flasks);
+    if (before.storage) run.loadout.storage.splice(0, run.loadout.storage.length, ...before.storage);
+    if (before.skills !== undefined) run.skills = before.skills;
+    if (before.coreTags !== undefined) run.coreTags = before.coreTags;
+    delete states[row.key];
+    if (checkpoint) {
+      for (const key of Object.keys(checkpoint)) delete checkpoint[key];
+      Object.assign(checkpoint, before.checkpoint);
+    }
+  }
+
   function take(row, viaKind) {
     if (states[row.key]) return false;
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'relic' || row.kind === 'chest' ? {
-      // A chest upgrade flips `upgraded` on an instance in place, so the chest's
-      // snapshot holds copies; the other kinds only add or remove instances.
-      deck: row.kind === 'chest' ? structuredClone(run.deck) : [...run.deck],
-      chosenCardId, chosenRelicId, relics: [...run.relics], chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
-      // The chest's other grants: its purse, and the bag its armament lands in
-      // (restored so a retried Confirm is not refused as a duplicate).
-      chest: row.kind === 'chest' ? {
-        chosenChestIndex, cinders: run.cinders, smithingStones: run.smithingStones,
-        storage: Array.isArray(run.loadout?.storage) ? [...run.loadout.storage] : null,
-      } : null,
-      // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
-      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
-      coreTags: row.kind === 'classDraft' ? [...(run.coreTags || [])] : null,
-      checkpoint: checkpoint ? structuredClone(checkpoint) : null,
-    } : null;
+    const cardBefore = snapshotForRollback();
     if (!apply[row.kind](row)) return false;
     states[row.key] = 'taken';
     // Reward state and the run mutation cross one save door. A reload can now
@@ -262,29 +289,7 @@ export function mountRewards(app, {
     try {
       persistProgress();
     } catch (error) {
-      if (cardBefore) {
-        run.deck.splice(0, run.deck.length, ...cardBefore.deck);
-        chosenCardId = cardBefore.chosenCardId;
-        chosenRelicId = cardBefore.chosenRelicId;
-        run.relics.splice(0, run.relics.length, ...cardBefore.relics);
-        for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
-        Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
-        if (cardBefore.skills) run.skills = cardBefore.skills;
-        if (cardBefore.coreTags) run.coreTags = cardBefore.coreTags;
-        for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
-        Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
-        if (cardBefore.chest) {
-          chosenChestIndex = cardBefore.chest.chosenChestIndex;
-          run.cinders = cardBefore.chest.cinders;
-          run.smithingStones = cardBefore.chest.smithingStones;
-          if (cardBefore.chest.storage) run.loadout.storage.splice(0, run.loadout.storage.length, ...cardBefore.chest.storage);
-        }
-        delete states[row.key];
-        if (checkpoint) {
-          for (const key of Object.keys(checkpoint)) delete checkpoint[key];
-          Object.assign(checkpoint, cardBefore.checkpoint);
-        }
-      }
+      restoreRollback(cardBefore, row);
       throw error;
     }
     if (row.kind === 'card' || row.kind === 'skillDraft') recordSeen('card', [row.cardId]);
@@ -545,6 +550,7 @@ export function mountRewards(app, {
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
+        const before = snapshotForRollback();
         // A chest pick that cannot land (the bag filled after the plan was
         // drawn) falls back to another takeable option rather than dropping
         // the whole chest on the floor (model/rewardChest.js landChestPick).
@@ -553,7 +559,13 @@ export function mountRewards(app, {
           : apply[row.kind](row);
         if (landed) {
           states[row.key] = 'taken';
-          persistProgress();
+          // The take's own door: a refused save rolls this row's grant back.
+          try {
+            persistProgress();
+          } catch (error) {
+            restoreRollback(before, row);
+            throw error;
+          }
         }
       }
       if (toTake.length) sfx.play('rewardTake');
