@@ -1139,8 +1139,12 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   // The run's own grade table (SPEC §13.4o) prices the ATTACK role only — the
   // strike the weapon throws; its guard and technique cards keep the flat
   // rating. A snapshot born before the table has none, and every weapon it
-  // holds reads flat.
-  const scaling = row.role === 'attack' ? (equipmentProfileRuleSnapshot.weaponScaling || null) : null;
+  // holds reads flat. Under the opt-in combat-ratings module the fight prices
+  // the strike off the player's own ratings (engine/combatRatings.js), which
+  // the grades do not touch (SPEC §13.4o), so the stamp reads flat there too —
+  // otherwise the card and the Level-up preview promise damage the fight never
+  // deals.
+  const scaling = row.role === 'attack' && !ratingConfig.enabled ? (equipmentProfileRuleSnapshot.weaponScaling || null) : null;
   const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, scaling);
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
