@@ -347,6 +347,7 @@ test('phone hands show the unleashed bonus as a tab above the Art card', async (
   assert.match(block, /\.art-charge-card > \.art-charge-bonus \{\s*display: inline;/, 'the tab prints the bonus words');
   const js = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(js, /class: 'art-charge-bonus', text: strip\.textContent/, "the tab copies the card strip's own words");
+});
 
 test('a full meter or Art card flashes once: a repaint that rebuilds it while full does not flash again', async () => {
   // The hand rebuilds every card node when the hand's size changes, so the
