@@ -1186,10 +1186,49 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 /* A row's own buttons (Command log's Open, the flick distance Reset) take at
    least the floor's width: "Open" measured 43.6 px wide at 844x390. */
 .set-panel .r-trail button:not(.as-toggle):not(.choice) { min-width: var(--tap-floor); }
-/* The flick setting keeps its numeric value, slider and practice surface together. */
-.num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
-.set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }
-.set-num-reset { grid-column:2; grid-row:1; }
+/* ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) ----------------------
+   Every number is  −  slider  field  +  on one line under its label, at every
+   width; the buttons meet the tap floor and repeat while held. A row that
+   differs from its default shows a dot before its name and a Reset after it. */
+[data-settings-host] .set-row-number > .as-labelstack { flex: 1 1 100%; }
+[data-settings-host] .set-row-number > .r-trail { flex: 1 1 100%; max-width: 100%; margin-left: 0; }
+.set-stepper { display: flex; align-items: center; gap: .45rem; width: 100%; min-width: 0; }
+.set-stepper > input[type='range'] { flex: 1 1 8rem; min-width: 4rem; min-height: var(--tap-floor); margin: 0; touch-action: pan-y; accent-color: var(--accent, #c9a45c); }
+:root [data-settings-host] .set-stepper > input[type='number'] { flex: 0 0 5.6rem; width: 5.6rem; min-height: var(--tap-floor); padding: .3rem .25rem; text-align: center; font-variant-numeric: tabular-nums; }
+.set-stepper > .set-step { flex: 0 0 auto; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; font-size: 1.35rem; line-height: 1; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.set-stepper > .set-step:disabled { opacity: .4; }
+/* A gated or rule-locked field locks its buttons and slider with it. */
+.set-stepper:has(> input[type='number']:disabled) > :is(.set-step, input[type='range']) { opacity: .4; pointer-events: none; }
+.set-unit { color: var(--muted); margin-left: -.25rem; }
+.set-mod-dot { display: none; width: .5rem; height: .5rem; margin-right: .45rem; border-radius: 50%; background: var(--accent, #c9a45c); vertical-align: middle; }
+.set-row[data-modified='true'] .set-mod-dot { display: inline-block; }
+.set-row-reset { margin-left: .6rem; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; vertical-align: middle; }
+.set-row-reset[hidden] { display: none; }
+.set-search-where { margin-top: 1.1rem; }
+.set-search-empty { padding: 1rem .7rem; }
+/* Defaults & sync */
+.set-sync { display: grid; gap: .6rem; }
+.set-sync a { color: var(--accent, #c9a45c); overflow-wrap: anywhere; }
+.set-sync-acts { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.set-sync-acts .set-text { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-floor); }
+.set-sync-preview { margin: .2rem 0 .6rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
+.set-sync-diff { margin: .4rem 0; padding-left: 1.1rem; display: grid; gap: .2rem; }
+.set-sync-diff s { color: var(--muted); }
+.set-sync-where { padding: .6rem .7rem; }
+.set-sync-fields { display: grid; gap: .5rem; margin-top: .6rem; }
+.set-sync-fields label { display: grid; gap: .2rem; color: var(--muted); }
+.set-sync-fields .set-text { width: 100%; min-height: var(--tap-floor); }
+@media (max-width: 600px) {
+  /* Phones: a row is label over control, the control full width. */
+  [data-settings-host] .set-panel .as-row.setting { flex-direction: column; align-items: stretch; }
+  [data-settings-host] .set-panel .as-row.setting > .as-labelstack { flex: 0 0 auto; }
+  [data-settings-host] .set-panel .as-row.setting > .r-trail { max-width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) { flex-direction: row; align-items: center; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .r-trail { margin-left: auto; }
+  [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
+  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 4.6rem; width: 4.6rem; }
+  :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
+}
 .set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
 :root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
 :root .hand .card.selected { border-color: var(--selection-color, #59bd75); }

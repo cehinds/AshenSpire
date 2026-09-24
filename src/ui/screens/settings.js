@@ -35,6 +35,8 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
+import { pageDebug } from '../buildChannel.js';
+import { renderSettingsSync } from '../components/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import {
@@ -185,6 +187,9 @@ function graceRefillRows() {
     note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
   }));
 }
+
+/** settingsRows() → every row this screen draws (the sync profile's key list). */
+export function settingsRows() { return ROWS; }
 
 const ROWS = [
   ...tooltipSettingsRows(),
@@ -689,9 +694,28 @@ const ADVANCED_GROUPS = Object.freeze([
   // every "how big and where" answer in one place.
   { id: 'Wireframes', label: 'Layout', tip: 'How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.' },
   { id: 'Export', label: 'Import, export & debug', tip: 'Load or save game configuration as a portable JSON file, and diagnostics.' },
+  { id: 'Sync', label: 'Defaults & sync', tip: 'Save your settings as your defaults on GitHub and load them on any device.' },
   { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
   { id: 'About', label: 'About', tip: 'Version and credits.' },
 ]);
+
+// ---- DEBUG-ONLY SECTIONS (owner, 2026-09-24) --------------------------------
+// "most of the advanced features probably should be locked behind a debug flag
+// that should only appear in dev and test builds. main should not have them."
+// A release build keeps the player-facing parts of Advanced — how the map, HUD,
+// cards and lore text look and confirm — plus Changelog and About. Every
+// tuning, rules, layout, import/export, diagnostics and sync section is shown
+// only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
+// Stored values are untouched either way: hiding a section changes what is
+// drawn, never what a profile holds.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Interface', 'Text', 'Changelog', 'About']);
+/** Groups with their own mounted panel instead of rows. */
+const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
+
+/** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
+export function visibleAdvancedGroups(debug = pageDebug()) {
+  return debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+}
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
@@ -736,7 +760,8 @@ export function activeAdvancedGroup(settings) {
   const raw = settings?.[ADVANCED_CAT_KEY];
   const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
   const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
-  return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+  const shown = visibleAdvancedGroups();
+  return shown.some((group) => group.id === stored) ? stored : shown[0].id;
 }
 
 // The Stats topic a migrated profile lands on: where the rows it was last
@@ -835,7 +860,7 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return pageDebug() ? 'Optional gameplay rules, tuning, diagnostics, sync, and the changelog.' : 'Map, HUD and card appearance, lore text, the changelog and About.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -1043,6 +1068,160 @@ export function compactRowLabel(label, topic) {
   return leaf.trim() || text;
 }
 
+// ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) -------------------------
+//
+// Owner: "easier to edit values with sliders direct input and buttons to
+// increase and decrease. make it so that options are consistent for all
+// buttons and have the standard expected options."
+//
+// Every number is now − · slider · field · + , and every row that holds a
+// value carries the same two affordances: a dot when it differs from its
+// default, and a Reset that puts that one row back. Nothing else about a row
+// changed — the same keys, the same commit path, the same refusals.
+
+/**
+ * wireStepper(wrap, { read, commit, min, max, step }) — the − and + buttons and
+ * the slider of one stepper. A press steps once; holding repeats and speeds up.
+ * The slider shows its value in the field while dragging and saves at most
+ * every 120 ms, then once more when released, so a drag is not a save per pixel.
+ */
+function wireStepper(wrap, { read, commit, min, max, step }) {
+  const slider = wrap.querySelector('input[type="range"]');
+  const field = wrap.querySelector('input[type="number"]');
+  const places = (String(step).split('.')[1] || '').length;
+  const round = (v) => Number((Math.round(v / step) * step).toFixed(places));
+  const buttons = [...wrap.querySelectorAll('.set-step')];
+  const sync = () => {
+    const v = read();
+    for (const b of buttons) b.disabled = Number(b.dataset.step) < 0 ? v <= min : v >= max;
+  };
+  // A gate or a hand rule disables the FIELD (it carries the key); the
+  // buttons and slider follow it rather than keeping a second lock.
+  const locked = () => !!field?.disabled;
+  const stepOnce = (b, times = 1) => {
+    if (locked()) return;
+    const by = Number(b.dataset.stepBy) || step;
+    const next = Math.min(max, Math.max(min, round(read() + Number(b.dataset.step) * by * times)));
+    commit(next);
+    sync();
+  };
+  for (const b of buttons) {
+    let timer = null;
+    let count = 0;
+    const stop = () => { clearTimeout(timer); timer = null; count = 0; };
+    b.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || b.disabled) return;
+      event.preventDefault();
+      stepOnce(b);
+      const repeat = () => {
+        count += 1;
+        stepOnce(b, count > 15 ? 5 : 1);
+        if (!b.disabled) timer = setTimeout(repeat, count > 5 ? 50 : 90);
+      };
+      timer = setTimeout(repeat, 380);
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) b.addEventListener(type, stop);
+    // Keyboard and switch access arrive as a click with no pointer (detail 0).
+    b.addEventListener('click', (event) => { if (event.detail === 0) stepOnce(b); });
+  }
+  if (slider) {
+    let pending = null;
+    slider.addEventListener('input', () => {
+      if (locked()) { slider.value = field.value; return; }
+      if (field) field.value = slider.value;
+      if (pending) return;
+      pending = setTimeout(() => { pending = null; commit(slider.value); sync(); }, 120);
+    });
+    slider.addEventListener('change', () => { clearTimeout(pending); pending = null; if (!locked()) { commit(slider.value); sync(); } });
+  }
+  field?.addEventListener('change', sync);
+}
+
+/** markModified(container, settings, changes) — the dot and Reset follow each save. */
+function markModified(container, settings, changes) {
+  for (const [key, value] of Object.entries(changes || {})) {
+    const row = rowByKey(key);
+    if (!row) continue;
+    const probe = { [key]: value === undefined ? undefined : value ?? settings[key] };
+    const on = rowModified(probe, row);
+    container.querySelectorAll(`[data-row-key="${CSS.escape(key)}"]`).forEach((el) => {
+      if (on) el.dataset.modified = 'true'; else delete el.dataset.modified;
+      const reset = el.querySelector('.set-row-reset');
+      if (reset) reset.hidden = !on;
+    });
+  }
+}
+
+/** rowDefault(row) → the value Reset restores (the row's own declared default). */
+export function rowDefault(row) {
+  return row?.def;
+}
+
+const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
+
+/** rowModified(settings, row) → true when the stored value differs from the default. */
+export function rowModified(settings, row) {
+  if (!row || !VALUE_ROW_TYPES.has(row.type) || row.resolve) return false;
+  const stored = settings?.[row.key];
+  if (stored === undefined) return false;
+  if (row.type === 'number' && typeof stored === 'number' && typeof row.def === 'number') return Math.abs(stored - row.def) > 1e-9;
+  return stored !== rowDefault(row);
+}
+
+function resetButtonHtml(settings, r) {
+  if (!VALUE_ROW_TYPES.has(r.type) || r.resolve || r.type === 'action') return '';
+  const on = rowModified(settings, r);
+  return `<button type="button" class="as-btn set-row-reset${r.type === 'number' ? ' set-num-reset' : ''}" data-reset-key="${esc(r.key)}"`
+    + ` aria-label="Reset ${esc(stripTags(r.label))} to default" title="Reset to default"${on ? '' : ' hidden'}>Reset</button>`;
+}
+
+function stripTags(text) { return String(text ?? '').replace(/<[^>]*>/g, ''); }
+
+/**
+ * sliderSpan(row, value) → [min, max] for the slider. A row whose declared
+ * range is huge (most tuning rows allow 0–999) gets a slider around its value
+ * and default instead, so a drag moves in useful steps; the field and the
+ * buttons still reach the whole declared range.
+ */
+export function sliderSpan(row, value) {
+  const min = Number.isFinite(row.min) ? row.min : 0;
+  const max = Number.isFinite(row.max) ? row.max : 100;
+  const step = row.step ?? 1;
+  if (row.slider || (max - min) / step <= 400) return [min, max];
+  const anchor = Math.max(Math.abs(Number(value) || 0), Math.abs(Number(row.def) || 0), step * 10);
+  return [min, Math.max(min + step, Math.min(max, niceCeil(anchor * 3)))];
+}
+
+/** niceCeil(x) → the smallest 1, 2 or 5 × 10ⁿ at or above x. */
+export function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const power = 10 ** Math.floor(Math.log10(x));
+  const lead = x / power;
+  return (lead <= 1 ? 1 : lead <= 2 ? 2 : lead <= 5 ? 5 : 10) * power;
+}
+
+/** buttonStep(row, value) → how far − / + move one press. */
+export function buttonStep(row, value = row.def) {
+  const step = row.step ?? 1;
+  if (row.buttonStep) return row.buttonStep;
+  if (step >= 1 || row.integer) return Math.max(1, step);
+  const size = Math.abs(Number(value) || Number(row.def) || 0);
+  const coarse = size >= 20 ? 1 : size >= 2 ? 0.1 : 0.05;
+  return Math.max(step, coarse);
+}
+
+function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep }) {
+  const name = esc(stripTags(label));
+  const sliderValue = Math.min(Math.max(Number(value), span[0]), span[1]);
+  return `<span class="set-stepper" data-stepper>`
+    + `<button type="button" class="as-btn set-step" data-step="-1" data-step-by="${bStep}" aria-label="Decrease ${name}"${value <= min ? ' disabled' : ''}>−</button>`
+    + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${step}" value="${sliderValue}" aria-label="${name} slider">`
+    + `<input type="number" class="${fieldClass}" data-key="${esc(key)}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="${inputMode}" aria-label="${name}">`
+    + (unit ? `<span class="set-unit" aria-hidden="true">${esc(unit)}</span>` : '')
+    + `<button type="button" class="as-btn set-step" data-step="1" data-step-by="${bStep}" aria-label="Increase ${name}"${value >= max ? ' disabled' : ''}>+</button>`
+    + `</span>`;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // W1a: help only where the effect is not obvious. Condition and status lines
   // are feedback, and settingsRowShowsHelp always keeps them.
@@ -1057,10 +1236,11 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>${note ? `
+        <span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}${resetButtonHtml(settings, r)}</span>${note ? `
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
-  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  const modified = rowModified(settings, r);
+  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}" data-row-key="${esc(r.key)}"${modified ? ' data-modified="true"' : ''}${attrs}>`;
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
@@ -1171,24 +1351,20 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const val = resolveNumberRow(settings, r);
     const step = r.step ?? 1;
     const inputMode = r.integer === false ? 'decimal' : 'numeric';
-    return `${rowOpen(r.slider ? 'set-row-wide' : '')}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
-          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
-                 min="${r.min}" max="${r.max}" step="${step}" inputmode="${inputMode}"
-                 aria-label="${r.label}">
-          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="${step}" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: r.min, max: r.max, step, span: sliderSpan(r, val), fieldClass: 'set-num', sliderClass: 'set-num-slider', inputMode, bStep: buttonStep(r, val), unit: r.unit || '' })}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
-    return `${rowOpen()}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack()}
-        <span class="as-status range-val" data-for="${r.key}">${val}</span>
         <span class="r-trail range-wrap">
-          <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: 0, max: 100, step: 5, span: [0, 100], fieldClass: 'set-range-num', sliderClass: 'set-range', keyOnSlider: true, unit: '%', bStep: 5 })}
         </span>
       </div>`;
   }
@@ -1855,7 +2031,62 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
-function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null) {
+// ---- search: EVERY section at once (2026-09-24 revamp) ----------------------
+//
+// Find used to filter the rows of the Advanced section already open, so a
+// setting under another tab answered "0 of 212" — and to have anything to
+// filter, every one of Advanced's ~3,000 rows had to be in the page, hidden.
+// That page was the slowness: opening Advanced built and wired all of them.
+// Now a query draws its matches, from every section this build shows, and
+// nothing else; a section draws only the topic that is open.
+const SEARCH_LIMIT = 120;
+const subgroupCache = new Map();
+function cachedSubgroups(rows, groupId) {
+  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, advancedSubgroups(rows, groupId));
+  return subgroupCache.get(groupId);
+}
+
+/** settingsSearchHits(query, debug) → [{ row, where }] across every shown section. */
+export function settingsSearchHits(query, debug = pageDebug()) {
+  const q = String(query || '').trim().toLocaleLowerCase();
+  if (!q) return [];
+  const words = q.split(/\s+/);
+  const hit = (row) => {
+    const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
+    return words.every((word) => hay.includes(word));
+  };
+  const hits = [];
+  for (const row of ROWS) {
+    if (row.retired || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
+    if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
+  }
+  const advanced = categoryHandler('Advanced')?.rows || [];
+  for (const group of visibleAdvancedGroups(debug)) {
+    if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
+    for (const sub of cachedSubgroups(advanced, group.id)) {
+      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
+    }
+  }
+  return hits;
+}
+
+function searchResultsHtml(settings, query) {
+  const hits = settingsSearchHits(query);
+  if (!hits.length) return `<p class="set-note set-search-empty" data-search-results="0">No setting matches “${esc(query)}”.</p>`;
+  let where = null;
+  const shown = hits.slice(0, SEARCH_LIMIT);
+  const body = shown.map(({ row, where: at }) => {
+    const heading = at !== where ? `<h4 class="set-subsection-heading set-search-where">${esc(at)}</h4>` : '';
+    where = at;
+    return heading + settingsRowHtml(settings, row);
+  }).join('');
+  const more = hits.length > shown.length ? `<p class="set-note">${hits.length - shown.length} more — add a word to narrow the search.</p>` : '';
+  return `<div class="set-group-summary"><span>Results from every section.</span><output data-config-count aria-live="polite">${hits.length} match${hits.length === 1 ? '' : 'es'}</output></div>`
+    + `<div class="set-card-list" data-search-results="${hits.length}">${body}</div>${more}`;
+}
+
+function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, query = '') {
+  if (query) return searchResultsHtml(settings, query);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
@@ -1882,28 +2113,32 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
+    const shownGroups = visibleAdvancedGroups();
     const active = activeAdvancedGroup(settings);
-    const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
+    const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
-    const groups = ADVANCED_GROUPS.map((group) => {
-      const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog' || group.id === 'About') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
+    // ONLY THE OPEN SECTION, AND ONLY ITS OPEN TOPIC, IS DRAWN. The others are
+    // empty shells marked `data-lazy`; choosing one repaints the panel.
+    const groups = shownGroups.map((group) => {
+      if (group.id !== active) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}" data-lazy hidden></section>`;
       }
-      const subgroups = advancedSubgroups(h.rows, group.id);
+      if (MOUNTED_ADVANCED_GROUPS[group.id]) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+          + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
+      }
+      const subgroups = cachedSubgroups(h.rows, group.id);
       const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
-      const picker = '';
-      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
-        + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          // Only the topic on screen computes its example; the others fill in
-          // when opened (`refreshStatsPreviews`), so an edit costs one example.
-          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${sub === activeSub && group.id === active ? statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel) : ''}</div>` : '')
+      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + subgroups.map((sub, index) => sub !== activeSub
+          ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
+          : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
             : sub.rows.map((row, rowIndex) => {
               // A Stats topic reads as short subsections (Formula, Level
@@ -1917,7 +2152,7 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
-      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
+      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${shownGroups.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
@@ -1947,11 +2182,25 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
+const MARKS_MODIFIED = Symbol('marks modified rows');
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null }) {
   panelSettings = settings;
+  if (!onChange[MARKS_MODIFIED]) {
+    const report = onChange;
+    onChange = Object.assign((changes) => {
+      const out = report(changes);
+      markModified(container, settings, changes);
+      return out;
+    }, { [MARKS_MODIFIED]: true });
+  }
   let html = '';
   let cats = [];
   let current = null;
+  if (!headerTools) {
+    headerTools = settingsHeaderTools();
+    headerTools.dataset.inlineSettings = 'true';
+  }
+  const searchQuery = () => (grouped ? headerTools.querySelector('[data-advanced-search]')?.value.trim() || '' : '');
   if (grouped) {
     cats = shownCategories(saves);
     // A stored category that no longer exists must not blank the screen. Fail
@@ -1992,16 +2241,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel)}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, searchQuery())}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
-  if (!headerTools) {
-    headerTools = settingsHeaderTools();
-    headerTools.dataset.inlineSettings = 'true';
-  }
   container.setAttribute('data-settings-host', '');
   // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
   // in-run overlay has no head to hang them in, so they used to be prepended
@@ -2056,6 +2301,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (vertical) container.querySelector('.set-tabs [data-member="Advanced"]')?.after(sections);
     else container.querySelector('.set-panel')?.prepend(sections);
   };
+  // ONE REPAINT for everything that changes what the pane shows — a category,
+  // an Advanced section or topic, a search, a row reset. Only the pane is
+  // rebuilt; the rail, the header tools and the page-level listeners stay.
+  let searchTimer = null;
+  function repaintPanel({ keepScroll = false } = {}) {
+    const panel = container.querySelector('.set-panel');
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel }); return; }
+    const scroll = keepScroll ? panel.scrollTop : 0;
+    const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
+    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, searchQuery());
+    panel.setAttribute('aria-labelledby', `set-tab-${current}`);
+    panel.dataset.searching = String(!!searchQuery());
+    wire();
+    panel.scrollTop = scroll;
+    if (panel.parentElement) panel.parentElement.scrollTop = outer;
+  }
   const wire = () => {
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
   placeAdvancedNavigation();
@@ -2065,7 +2327,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     headerTools.classList.toggle('search-open', !input.hidden);
     headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
     if (!input.hidden) input.focus();
-    else { input.value = ''; input.dispatchEvent(new Event('input')); }
+    else if (input.value) { input.value = ''; repaintPanel(); }
   };
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
@@ -2173,6 +2435,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (aboutMount) renderAboutSection(aboutMount);
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
+  const syncMount = container.querySelector('.set-sync-mount');
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: () => repaintPanel({ keepScroll: true }) });
 
   container.querySelectorAll('.set-subtab').forEach((button) => {
     button.classList.add('as-railitem');
@@ -2186,8 +2450,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (!target) return;
       event.preventDefault();
       event.stopPropagation();
+      const id = target.dataset.advancedGroup;
       target.click();
-      target.focus();
+      container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(id)}"]`)?.focus();
     });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
@@ -2195,6 +2460,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const picker = container.querySelector('.set-section-select');
       if (picker) picker.value = group;
       onChange({ [ADVANCED_CAT_KEY]: group });
+      // A section not yet drawn is drawn now — the whole panel, once.
+      if (container.querySelector(`.set-advanced-group[data-advanced-panel="${CSS.escape(group)}"][data-lazy]`)) {
+        repaintPanel();
+        container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(group)}"]`)?.focus({ preventScroll: true });
+        return;
+      }
       container.querySelectorAll('.set-subtab').forEach((candidate) => {
         const selected = candidate.dataset.advancedGroup === group;
         candidate.classList.toggle('on', selected);
@@ -2213,39 +2484,29 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   const advancedSearch = headerTools.querySelector('[data-advanced-search]');
+  // Rows are no longer filtered in place: a query repaints the panel with its
+  // matches from every section (`searchResultsHtml`). What is left here is the
+  // open topic's own bookkeeping — rows the hand rules hide, the count.
   const filterAdvancedRows = () => {
-    if (!advancedSearch) return;
-    const query = advancedSearch.value.trim().toLocaleLowerCase();
-    let shown = 0;
-    let total = 0;
     const section = container.querySelector('.set-advanced-group:not([hidden])');
-    if (!section) {
-      container.querySelectorAll('.set-row').forEach(row => {
-        row.hidden = !!query && !row.textContent.toLocaleLowerCase().includes(query);
+    if (section) {
+      let total = 0;
+      section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
+        total += 1;
+        row.hidden = row.dataset.handHidden === 'true';
       });
-      return;
+      const count = section.querySelector('[data-config-count]');
+      if (count) count.textContent = `${total} settings`;
     }
-    const selected = section.querySelector('[data-topic][aria-selected="true"]')?.dataset.topic;
-    section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !query && !!selected && panel.dataset.topicPanel !== selected;
-      panel.dataset.searching = String(!!query);
-    });
-    section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
-      total += 1;
-      const match = !query || row.textContent.toLocaleLowerCase().includes(query)
-        || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
-      row.hidden = !match || row.dataset.handHidden === 'true';
-      if (match) shown += 1;
-    });
-    if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !panel.querySelector('.set-row:not([hidden])');
-    });
-    const count = section.querySelector('[data-config-count]');
-    if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
     syncSubsectionHeadings();
     refreshStatsPreviews();
   };
-  if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
+  if (advancedSearch) {
+    advancedSearch.oninput = () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { if (lifecycleSentinel.isConnected) repaintPanel(); }, 160);
+    };
+  }
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
@@ -2256,12 +2517,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         tab.setAttribute('aria-selected', String(active));
         tab.classList.toggle('on', active);
       });
-      const picker = section.querySelector('.set-topic-select');
-      if (picker) picker.value = topic;
-      syncTopicPicker();
       if (advancedSearch) advancedSearch.value = '';
-      filterAdvancedRows();
-      refreshStatsPreviews();
+      repaintPanel();
+      container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2274,7 +2532,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         event.preventDefault();
         event.stopPropagation();
         next.click();
-        next.focus();
       });
     });
     section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
@@ -2509,24 +2766,36 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // clamp on every keypress would rewrite the value under his fingers.
     field.addEventListener('change', () => commit(field.value));
     field.addEventListener('blur', () => commit(field.value));
-    wrap.querySelector('.set-num-slider')?.addEventListener('input', event => commit(event.target.value));
-    wrap.querySelector('.set-num-reset')?.addEventListener('click', () => commit(row.def));
-    // Part B's slider commits on `input`, because dragging IS the gesture:
-    //   slider.addEventListener('input', () => commit(slider.value));
+    wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1 });
   });
 
   mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);
 
-  container.querySelectorAll('.set-range').forEach((slider) => {
-    const updateVolume = () => {
-      const val = Number(slider.value);
-      const out = container.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
-      if (out) out.textContent = val;
-      settings[slider.dataset.key] = val;
-      onChange({ [slider.dataset.key]: val });
+  container.querySelectorAll('.range-wrap').forEach((wrap) => {
+    const slider = wrap.querySelector('.set-range');
+    const field = wrap.querySelector('.set-range-num');
+    const key = slider.dataset.key;
+    const commit = (raw) => {
+      const val = Math.min(100, Math.max(0, Math.round(Number(raw)) || 0));
+      slider.value = String(val);
+      field.value = String(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+      refreshConditionNotes(container, settings);
     };
-    slider.addEventListener('input', updateVolume);
-    slider.addEventListener('change', updateVolume);
+    field.addEventListener('change', () => commit(field.value));
+    wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 5 });
+  });
+
+  container.querySelectorAll('[data-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.resetKey;
+      delete settings[key];
+      typedRefusals.delete(key);
+      onChange({ [key]: undefined });
+      repaintPanel({ keepScroll: true });
+      container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
+    });
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
@@ -2929,7 +3198,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   function selectCategory(cat) {
-    if (!cats.includes(cat) || cat === current) return;
+    const searching = !!searchQuery();
+    if (!cats.includes(cat) || (cat === current && !searching)) return;
+    if (searching) headerTools.querySelector('[data-advanced-search]').value = '';
     current = cat;
     settings[CAT_KEY] = cat;
     // Persisted through the same free bag every other setting rides in
@@ -2944,16 +3215,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
-    const panel = container.querySelector('.set-panel');
-    if (!panel) return;
-    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(cat, settings, saves, previewAttributes, previewLevel);
-    panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
-    // A tab switch is a new screenful. Start it at the top, or the player lands
-    // mid-way down a section they have never seen.
-    panel.scrollTop = 0;
-    if (panel.parentElement) panel.parentElement.scrollTop = 0;
-    wire();
+    // A tab switch is a new screenful: repaintPanel starts it at the top, or
+    // the player lands mid-way down a section they have never seen.
+    repaintPanel();
   }
 
   // Selection is the nav's `choose`; a pick from the opened selector list

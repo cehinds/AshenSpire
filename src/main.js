@@ -86,7 +86,9 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { autoLoadProfile } from './ui/components/settingsSync.js';
+import { pageDebug } from './ui/buildChannel.js';
+import { openSettings, settingsRows, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -3536,3 +3538,13 @@ if (shotState === 'combat-test') {
 } else {
   showTitle();
 }
+
+// YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on a
+// debug build, only when this device opted in, and never for a photograph:
+// a posed ?shot= state must draw the same bytes on every machine.
+if (pageDebug() && !shotState) {
+  autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows() })
+    .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
+    .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
+}
+

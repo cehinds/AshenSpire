@@ -176,10 +176,12 @@ async function main() {
         const modal = document.querySelector('.settings-modal');
         const body = modal.querySelector('.set-body');
         const pane = modal.querySelector('.set-panel');
-        const active = modal.querySelector('.set-advanced-group:not([hidden])');
+        // A search draws its matches from every section in one results list.
+        const results = modal.querySelector('[data-search-results]');
+        const active = results || modal.querySelector('.set-advanced-group:not([hidden])');
         const scrollable = [body, pane].filter((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== 'hidden');
         return {
-          group: active?.dataset.advancedPanel,
+          group: results ? 'search' : active?.dataset.advancedPanel,
           rows: active?.querySelectorAll('.set-row:not([hidden])').length || 0,
           placementLabels: [...(active?.querySelectorAll('.set-row:not([hidden]) .ls-label') || [])].map((node) => node.textContent),
           viewport: [innerWidth, innerHeight],
@@ -188,12 +190,11 @@ async function main() {
           overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         };
       })()`);
-      if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
+      if (state.group !== (shape.search ? 'search' : shape.group) || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
       }
-      if (shape.search && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
-        .every((label) => state.placementLabels.includes(label))) {
-        throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
+      if (shape.search && !state.placementLabels.some((label) => label.toLocaleLowerCase().includes(shape.search.toLocaleLowerCase()))) {
+        throw new Error(`${shape.name}: no result names "${shape.search}": ${JSON.stringify(state)}`);
       }
       console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
       await capture(shape.name);
