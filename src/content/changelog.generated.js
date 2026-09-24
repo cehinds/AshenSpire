@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The prologue's last journey scene shows the road you actually set out on",
     "detail": "The final scene of the opening now draws its art from your starting path — Crownfall, the Hollow Weald, the Pale Marches or Cinder Reach — with its own desktop and phone pictures, and the Ashen Spire stands in view on the horizon. Advanced Settings also gains a scene editor that shows the real prologue beside a live desktop or phone preview while you adjust each scene's text, art, staging, typography and motion.",
-    "build": "0.7.1.451",
+    "build": "0.7.1.456",
     "pullRequest": 1285,
     "url": "https://github.com/cehinds/AshenSpire/pull/1285"
   },
