@@ -557,7 +557,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
         allocation.card.querySelector('.cc-allocation-rows').before(el('section', {
-          class: 'level-up-preview', dataset: { levelUpPreview: '' }, 'aria-live': 'polite', 'aria-label': 'What the pending points change',
+          class: 'level-up-preview', dataset: { levelUpPreview: '' }, 'aria-live': 'polite', 'aria-label': t('rest.levelUp.preview'),
         }));
         allocation.card.addEventListener('keydown', (event) => {
           if (event.key !== 'Tab') return;

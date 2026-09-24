@@ -6,6 +6,7 @@
 // styles/combat.css owns both).
 
 import { el } from '../kit/index.js';
+import { t } from '../strings.js';
 
 /** The accessible sentence for one meter. */
 export function artChargeLabel(row) {
@@ -27,7 +28,7 @@ export function artChargePips(value, max) {
  */
 export function artChargeMeter(rows, { flashIds = new Set() } = {}) {
   if (!rows || !rows.length) return null;
-  const box = el('div', { class: 'art-charge', role: 'group', aria: { label: 'Weapon Art charge' } });
+  const box = el('div', { class: 'art-charge', role: 'group', aria: { label: t('combat.art.charge') } });
   for (const row of rows) {
     const item = el('div', {
       class: `art-charge-row${row.full ? ' full' : ''}${row.full && flashIds.has(row.weaponId) ? ' flash' : ''}`,
@@ -37,7 +38,7 @@ export function artChargeMeter(rows, { flashIds = new Set() } = {}) {
     });
     item.appendChild(el('span', { class: 'art-charge-name', text: row.name, aria: { hidden: 'true' } }));
     item.appendChild(artChargePips(row.value, row.max));
-    if (row.full) item.appendChild(el('span', { class: 'art-charge-ready', text: 'Unleash', aria: { hidden: 'true' } }));
+    if (row.full) item.appendChild(el('span', { class: 'art-charge-ready', text: t('combat.art.unleash'), aria: { hidden: 'true' } }));
     box.appendChild(item);
   }
   return box;

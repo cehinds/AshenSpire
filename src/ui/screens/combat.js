@@ -1316,8 +1316,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       badge.appendChild(artChargePips(charge.value, charge.max));
       if (charge.unleashed) {
         const form = unleashedFormFor(registries, inst.cardId);
-        badge.appendChild(el('span', { text: 'Unleashed' }));
-        badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : 'Unleashed';
+        badge.appendChild(el('span', { text: t('combat.art.unleashed') }));
+        badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : t('combat.art.unleashed');
       }
       node.appendChild(badge);
       const label = node.getAttribute('aria-label');

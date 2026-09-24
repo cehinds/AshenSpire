@@ -2878,5 +2878,40 @@ export const uiStrings = [
     "short": "Live portrait (W1c head)",
     "full": "The head portrait as the catalogue shows it.",
     "tip": ""
+  },
+  {
+    "id": "combat.art.charge",
+    "extends": "",
+    "short": "Weapon Art charge",
+    "full": "How close each weapon's Art is to its unleashed form.",
+    "tip": ""
+  },
+  {
+    "id": "combat.art.unleash",
+    "extends": "",
+    "short": "Unleash",
+    "full": "The next Weapon Art from this weapon fires unleashed.",
+    "tip": ""
+  },
+  {
+    "id": "combat.art.unleashed",
+    "extends": "",
+    "short": "Unleashed",
+    "full": "This Weapon Art fires its unleashed form.",
+    "tip": ""
+  },
+  {
+    "id": "rest.levelUp.preview",
+    "extends": "",
+    "short": "What the pending points change",
+    "full": "The stats the pending attribute points would change.",
+    "tip": ""
+  },
+  {
+    "id": "settings.killCam",
+    "extends": "",
+    "short": "Kill cam",
+    "full": "A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.",
+    "tip": ""
   }
 ];

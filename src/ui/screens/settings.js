@@ -30,7 +30,7 @@ import {
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
@@ -361,8 +361,8 @@ const ROWS = [
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   // SPEC §7.4 combat juice. Independent of Screen shake; Reduced motion and
   // instant pacing also skip it. CombatJuiceModel.killCamGatesOpen is the one gate.
-  { cat: 'Combat', key: 'killCam', def: true, label: 'Kill cam', selfEvident: true,
-    note: 'A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.' },
+  { cat: 'Combat', key: 'killCam', def: true, label: t('settings.killCam'), selfEvident: true,
+    note: tFull('settings.killCam') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
