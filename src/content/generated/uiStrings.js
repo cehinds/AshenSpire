@@ -2467,6 +2467,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "title.slots.newer",
+    "extends": "",
+    "short": "Saved by a newer build. Update to continue.",
+    "full": "This slot holds a climb saved by a newer build of Ashen Spire. It is kept exactly as it is; update the game to continue it.",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.title",
+    "extends": "",
+    "short": "This climb is from a newer version",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.message",
+    "extends": "",
+    "short": "Slot {slot} was saved by a newer build of Ashen Spire. It has been left exactly as it is; nothing was changed or deleted. Update Ashen Spire to continue it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.close",
+    "extends": "",
+    "short": "Keep it and close",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "save.review.delete",
     "extends": "",
     "short": "Delete slot {slot}?",

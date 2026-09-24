@@ -494,8 +494,11 @@ async function main() {
           // Horizontal calibration: the paging hand must show a moving bottom cue.
           if (onlySurface && onlySurface !== 'hand') continue;
           const appliedUi = phone ? uiScale : 'auto';
-          const handMax = balance?.handMax || balance?.combat?.handMax || 10;
-          await cdp.send('Page.navigate', { url: urlFor('combat', { textSize, uiScale: appliedUi, handLayout: 'paging' }, { shotHand: String(handMax) }) }, S);
+          // The hand size is the `handSize` stat row (ruleset 7); the pose pins
+          // it to ten so the paging hand has the same depth for every character.
+          const handMax = 10;
+          await cdp.send('Page.navigate', { url: urlFor('combat', { textSize, uiScale: appliedUi, handLayout: 'paging',
+            'gameConfig.derivedStatRules.rules.handSize.min': handMax, 'gameConfig.derivedStatRules.rules.handSize.max': handMax }, { shotHand: String(handMax) }) }, S);
           await until(`!!document.querySelector('.hand .card')`, `paging hand ${width}x${height}`);
           await ev(FREEZE); await wait(350);
           const hand = await cue('.hand', 'x');

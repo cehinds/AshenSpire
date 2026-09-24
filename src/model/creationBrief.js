@@ -53,7 +53,7 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
-import { resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -144,11 +144,11 @@ const FEED_EXCLUDED = new Set(RATING_ROWS);
 
 // THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
 // ruleset 7 fights by its retired formula, and its card must say so.
-function ratingWeightFacts(registries, attributeId, runRows = null) {
+function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING_ROWS) {
   const table = registries.derivedStatRules;
   const short = registries.attributes.get(attributeId).shortLabel;
   if (!runRows && !table?.rules) return [];
-  return RATING_ROWS
+  return ids
     .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
     .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
@@ -190,13 +190,19 @@ export function attributeCardModels(registries, attributes, { projection = null,
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
+  // its rating formula's Poise, not its pool row, so that is the one its cards
+  // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
+  const legacyPoise = !!projection?.ratingRows && !isStatRowRuleset(projection.rulesetVersion)
+    && !!registries.balance?.combatRatings?.enabled;
+  const ratingIds = legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS;
   return orderedAttributes(registries).map((authored) => {
     const def = { ...authored, value: attributes?.[authored.id] };
     // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
     // the fold's line and the face's summary are the same numbers — the rules
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
-      .filter(([id]) => !FEED_EXCLUDED.has(id))
+      .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
       // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single
@@ -237,7 +243,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
         return { label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
       });
     const unlocks = unlockLines(registries, def.id);
-    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null);
+    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
     const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`

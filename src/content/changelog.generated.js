@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Every stat is set the same way, in one place, and read from one table",
     "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your hand sizes, HP, Actions and the combat ratings read as before at the starting attributes. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
-    "build": "0.7.1.477",
+    "build": "0.7.1.487",
     "pullRequest": 1296,
     "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1304",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A save from a newer build is kept, not thrown away",
+    "detail": "Opening a run saved by a newer version of the game used to archive it and empty its slot, so going back to the newer build found the run gone. Now the slot keeps it untouched and says \"Saved by a newer build. Update to continue.\"; Continue on it opens a notice with one button, \"Keep it and close\", and nothing is written. Custom Climb, when every slot is full, now asks before replacing slot 1, the same way Customize does. Behind the scenes, one real save from every run format the game has ever written is now tested to load.",
+    "build": "0.7.1.484",
+    "pullRequest": 1304,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1304"
+  },
+  {
+    "id": "pr-1306",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\".",
+    "build": "0.7.1.482",
+    "pullRequest": 1306,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1306"
   },
   {
     "id": "pr-1284",

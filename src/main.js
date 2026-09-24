@@ -95,7 +95,7 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { openNewerSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
 import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
@@ -1178,15 +1178,25 @@ function advanceAct() {
   showMap();
 }
 
+// A refused load lands on the title. A run from a NEWER build is refused AND
+// kept (SPEC §3.12), so the landing says why, the way the profile's 'newer'
+// notice does (ui/screens/profileNotice.js): the only way on is to leave it be.
+// Nothing here writes; Delete stays the slot's own explicit, confirmed act.
+function refusedRunLanding(slot) {
+  showTitle();
+  if (saves.runStatus().state !== 'newer') return;
+  openNewerSaveNotice({ slot });
+}
+
 function resumeRun(slot = 1) {
   resetArmouryTraySession();
   activeSlot = slot;
   const authoredRegistries = createRegistries(contentBundle);
   run = saves.loadRun(authoredRegistries, slot);
-  if (!run) return showTitle();
+  if (!run) return refusedRunLanding(slot);
   rebuildRegistries(run.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
   run = saves.loadRun(registries, slot);
-  if (!run) return showTitle();
+  if (!run) return refusedRunLanding(slot);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
@@ -1712,20 +1722,7 @@ function showCustomize(slot = 1, catalog = false) {
     // an occupied slot on the title touched nothing; Begin is where the old
     // climb would be written over, so this is where it is asked, naming both
     // the save that goes and the character that replaces it.
-    onStart: (config) => {
-      // The title's own slot record: the class NAME, as the slot list prints it.
-      const existing = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
-      if (!existing) return newRun({ ...config, slot });
-      openReplaceSaveReview({
-        slot,
-        existing: { className: existing.className, facts: slotFacts(existing) },
-        replacement: { className: registries.classes.get(config.classId)?.name ?? config.classId, seed: config.seedString },
-        tone: (policyAction) => registries.framework.confirmationTone(policyAction),
-        returnFocusElement: document.activeElement,
-        onConfirm: () => newRun({ ...config, slot }),
-      });
-      return undefined;
-    },
+    onStart: (config) => startRunInSlot(config, slot),
     catalog,
   });
 }
@@ -1735,8 +1732,28 @@ function showCustomRun(slot = 1) {
     registries,
     defaultSeedString: shotState === 'customrun' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
-    onStart: (config) => newRun({ ...config, slot }),
+    // Custom Climb falls back to slot 1 when every slot is full, so it asks
+    // the same Replace question Customize does before writing over a save.
+    onStart: (config) => startRunInSlot(config, slot),
   });
+}
+
+// W2c REPLACE, AT THE WRITE BOUNDARY: the one gate every new climb passes
+// before it writes a slot. An empty slot starts at once; an occupied one asks,
+// naming the save that goes and the character that replaces it.
+function startRunInSlot(config, slot) {
+  // The title's own slot record: the class NAME, as the slot list prints it.
+  const existing = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
+  if (!existing) return newRun({ ...config, slot });
+  openReplaceSaveReview({
+    slot,
+    existing: { className: existing.className, facts: slotFacts(existing) },
+    replacement: { className: registries.classes.get(config.classId)?.name ?? config.classId, seed: config.seedString },
+    tone: (policyAction) => registries.framework.confirmationTone(policyAction),
+    returnFocusElement: document.activeElement,
+    onConfirm: () => newRun({ ...config, slot }),
+  });
+  return undefined;
 }
 
 // Draft deck builder (Custom Climb): pick cards, then start the climb.

@@ -110,8 +110,12 @@ const shotsDir = argOf('--shots');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = 390, H = 844, DPR = 2;
 
-// mode x textSize x handSize. Ten is balance.handMax — read there, posed here;
-// if handMax ever moves, ?shotHand refuses loudly and this list is one edit.
+// mode x textSize x handSize. Ten is the edge this probe measures; since
+// derived-stat ruleset 7 the hand size is the `handSize` stat row, so the pose
+// pins that row to exactly ten (HAND_SETTINGS) rather than reading a default
+// that follows the character's Intelligence. ?shotHand still refuses loudly
+// if the row and this list ever disagree.
+const HAND_SETTINGS = { 'gameConfig.derivedStatRules.rules.handSize.min': 10, 'gameConfig.derivedStatRules.rules.handSize.max': 10 };
 const CELLS = [
   { mode: 'paging', text: 'M', hand: 10 },
   { mode: 'paging', text: 'XL', hand: 10 },
@@ -298,7 +302,7 @@ async function main() {
   for (const cell of CELLS) {
     ran++;
     const name = `${cell.mode}-${cell.text}-hand${cell.hand}`;
-    const settings = { handLayout: cell.mode, textSize: cell.text };
+    const settings = { handLayout: cell.mode, textSize: cell.text, ...HAND_SETTINGS };
     const url = `${base}?shot=combat&shotHand=${cell.hand}&shotSettings=${encodeURIComponent(JSON.stringify(settings))}`;
     await cdp.send('Page.navigate', { url }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, name); await wait(600);

@@ -312,3 +312,17 @@ test('rating receipts show a row bound, and an old run\'s attribute cards name i
   const strength = cards.find((card) => card.id === 'strength');
   assert(strength.reveal.lines.some((line) => line === 'AR: floor(2 × STR)'), strength.reveal.lines.join(' | '));
 });
+
+test('an old run with ratings on names its rating Poise on its cards; a ratings-off Poise edit is not migrated', async () => {
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const run = createRunState({ seed: 4, classId: 'reaver', registries });
+  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
+  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
+  const strength = cards.find((card) => card.id === 'strength');
+  assert(strength.reveal.lines.some((line) => line === 'Poise: floor(0.5 × STR)'), strength.reveal.lines.join(' | '));
+  const off = migrateLegacyStatSettings({ 'gameConfig.combatRatings.enabled': false, 'gameConfig.combatRatings.ratings.poise.base': 50 });
+  assert.equal(off['gameConfig.derivedStatRules.rules.poise.base'], undefined);
+  assert.equal(off['gameConfig.combatRatings.ratings.poise.base'], undefined);
+});

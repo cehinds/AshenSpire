@@ -126,7 +126,7 @@ test('after changeEquipment to a sword the same break restores 0; re-equipping m
   assert.deepEqual(mountedKeys(combat), [SCEPTRE_KEY], 'and it is one mount');
   // A card may CARRY a property tag (every family may, since the tag tree) —
   // what it lacks is a hold window for the mount, which is the engine's list.
-  assert.throws(() => mountProperties(combat, { ...carrier, kind: 'card' }), /'card' has no mount window/, 'a kind with no hold window is refused by name');
+  assert.throws(() => mountProperties(combat, { ...carrier, kind: 'card' }), /'card' has no hold span to mount on/, 'a kind with no hold window is refused by name');
 });
 
 test('swapArmament to another set drops siphon, and swapping back mounts it once', () => {

@@ -273,6 +273,9 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
     for (const id of RATING_STAT_IDS) {
       const stated = ratingKeys.some((k) => k.startsWith(`gameConfig.combatRatings.ratings.${id}.`));
       if (!stated && !scaled) continue;
+      // A Poise rating edited while ratings were off never moved a thing, and
+      // the one Poise row is live either way: leave it retired (Codex, #1296).
+      if (id === 'poise' && settings['gameConfig.combatRatings.enabled'] === false) continue;
       for (const field of ['base', ...STAT_ROW_ATTRIBUTE_IDS]) {
         const own = Object.hasOwn(settings, `gameConfig.combatRatings.ratings.${id}.${field}`);
         if (!own && !scaled) continue;

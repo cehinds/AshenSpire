@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 26f4c32f56fc9a5a
+// source content/config/ui/screens/prologue.json 0e189386a8548f8f
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -908,9 +908,9 @@ export const uiConfig = deepFreeze({
                   "height": 40
                 },
                 "mobile": {
-                  "x": 50,
-                  "y": 81,
-                  "height": 28
+                  "x": 40,
+                  "y": 96,
+                  "height": 40
                 }
               },
               "art": "step",
@@ -1012,6 +1012,9 @@ export const uiConfig = deepFreeze({
             "previewClass": "reaver",
             "previewScene": "warmth",
             "shadowStrength": 0.7,
+            "editorGrid": false,
+            "editorSnap": true,
+            "editorGridStep": 5,
             "layout": "caption",
             "imageScale": 1,
             "imageFit": "cover",
@@ -1025,6 +1028,11 @@ export const uiConfig = deepFreeze({
             "textBoxVisible": true,
             "textBoxOpacity": 1,
             "textBoxColor": "#100e0c",
+            "captionFixedHeight": false,
+            "captionHeightVh": 18,
+            "bannerBox": true,
+            "bannerBoxColor": "#100e0c",
+            "bannerBoxOpacity": 1,
             "textOutline": false,
             "textOutlineColor": "#100e0c",
             "textOutlineWidth": 2,
