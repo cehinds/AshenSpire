@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-24",
     "group": "2026-09-24",
     "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
-    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305, which landed without an entry, gets its receipt below.",
-    "build": "0.7.1.474",
+    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, #1305 and #1307, which landed without entries, get their receipts below, and the scene editor's new resize handle is placed in the game's zoomed layout space, so it sits on the traveller at every text size.",
+    "build": "0.7.1.476",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1307",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Crownfall's skyline gains two distant towers, and the traveller can be resized by dragging",
+    "detail": "The Crownfall journey painting now shows a snow-dusted tower on the left summit and a faintly volcanic one on the right, with the Ashen Spire still dominant between them. In the opening scene editor, the Traveller tab adds a gold handle over the preview: drag it to resize the figure, drag the figure to move it, with desktop and phone placed separately. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.476",
+    "pullRequest": 1307,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1307"
   },
   {
     "id": "pr-1305",
@@ -18,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "The prologue's last scene puts your traveller on the road, and you can place it yourself",
     "detail": "The final journey scene used to stand the traveller on the bridge parapet beside the road; on desktop and phone it now stands on the road itself. Advanced Settings → Opening sequence → Scenes gains a Place traveller action: drag the figure in the painting, or set its position and size exactly, with separate values for desktop and phone. This receipt was written after the merge, stamped at the first build that contains it.",
-    "build": "0.7.1.474",
+    "build": "0.7.1.476",
     "pullRequest": 1305,
     "url": "https://github.com/cehinds/AshenSpire/pull/1305"
   },
