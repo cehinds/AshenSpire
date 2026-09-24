@@ -13,7 +13,7 @@ export const mechanics = {
     "idleRecoveryPerTurn": 1,
     "refundErasesSpend": false,
     "combatStartRefill": "full",
-    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with tools/runsim.mjs at 60 seeded runs a class under the live rules (plan A1): carry gave Reaver 4, Starseer 1, Rogue 29, Herald 34 wins; full gives Reaver 32, Starseer 1, Rogue 33, Herald 32. Also refilling Mana after each fight raised the Herald to 55 of 60, out of the 35-65% band, so Mana stays a run resource."
+    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
   },
   "weight": {
     "capacityBase": 0,

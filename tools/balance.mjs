@@ -27,6 +27,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { createRunState } from '../src/model/state.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
+import { bossTierScale } from '../src/model/seats.js';
 
 // A no-op punching bag for measuring unopposed player DPS.
 const DUMMY = { id: 'balanceDummy', name: 'Dummy', hp: [100000, 100000], poiseMax: 999999, moves: { wait: { intent: 'unknown', weight: 1 } } };
@@ -175,7 +176,8 @@ P('');
 P('Reference DPS by tier: tier 1 = measured start, tier 2 = ×1.6, tier 3 = ×2.4 (avg');
 P('across classes). "Turns to kill" = HP / (refDPS − heal). "Turns to die" =');
 P('lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction');
-P('(heal ≥ refDPS → cannot kill) and races (kill ≥ die).');
+P('(heal ≥ refDPS → cannot kill) and races (kill ≥ die). Boss rows are met at');
+P('their own tier: HP and incoming DPS × balance.bossTiers for that tier.');
 P('');
 P('| Tier | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |');
 P('|----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|');
@@ -191,9 +193,11 @@ for (const enc of REG.encounters.all()) {
   if (enc.pool === 'normal') continue;
   const tier = tierOf(enc);
   const stats = enc.enemies.map((id) => enemyStats(REG.enemies.get(id)));
-  const hp = stats.reduce((a, s) => a + s.hp, 0);
+  // A boss row is priced as met at its own tier: × balance.bossTiers there.
+  const boss = bossTierScale(REG, { encounter: enc, tier }) || { hp: 1, damage: 1 };
+  const hp = Math.round(stats.reduce((a, s) => a + s.hp, 0) * boss.hp);
   const heal = stats.reduce((a, s) => a + s.heal, 0);
-  const inDps = stats.reduce((a, s) => a + s.dps, 0);
+  const inDps = stats.reduce((a, s) => a + s.dps, 0) * boss.damage;
   const refDps = avgStartDps * bandMult[tier];
   const net = refDps - heal;
   const ttk = net > 0 ? hp / net : Infinity;

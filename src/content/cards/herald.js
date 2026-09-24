@@ -43,10 +43,12 @@ export const heraldCards = [
     },
   },
   {
-    // A2 Herald starvation: no Mana line (Stamina 1 stays). The Herald's one
-    // starting attack cost Mana that carries between fights, so a dry Herald
-    // could only stall: `node tools/runsim.mjs 120` with the A2 boss rows,
-    // Herald 45 -> 66/120 wins and stalled fights 5 -> 4.
+    // A2 Herald starvation: no Mana line (Stamina 1 stays), so its Exposure
+    // row reads the no-Mana 1 (SPEC §13.4k). The Herald's one starting attack
+    // cost Mana that carries between fights, so a dry Herald could only stall:
+    // with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats`
+    // (seat order drawn per run), Herald 47 -> 66/120 wins and stalled fights
+    // 8 -> 5 without the Mana line.
     id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
     flavor: "Blessing of the Feral Ember.\n\nTaken from the Chapel's blessing of the sick and turned to what the Feral Ember holds its truer purpose: to give warmth and keep no account. The Saints name it heresy.\n\nThe converts say the touch is warm. None have said otherwise.",
     keywords: [], icon: '🦠',

@@ -132,29 +132,25 @@ export const act3Enemies = [
     size: 'large',
     tint: 'var(--rot)',
     name: 'The Blighted Valkyrie',
-    // A2 difficulty: HP and every move's damage x1.7 (HP 250), as for
-    // every act-2/3 boss. The owner's XP curve levels a climb ~25 times, so
-    // bosses are where runs are decided (`node tools/runsim.mjs 120`: wins
-    // 95/77/94/67% -> 48/45/52/54% Reaver/Starseer/Rogue/Herald with the A2 rows).
-    hp: [425, 425],
+    hp: [250, 250],
     poiseMax: 36,
     levelProfile: { min: 19, max: 20 },
     art: '🦋',
     firstMove: 'spiralThrust',
     moves: {
       spiralThrust: {
-        intent: 'attack', damage: 20, weight: 35, maxConsecutive: 2,
+        intent: 'attack', damage: 12, weight: 35, maxConsecutive: 2,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 2 }],
       },
       whirlwind: {
-        intent: 'attack', damage: 7, hits: 5, weight: 30, maxConsecutive: 1,
+        intent: 'attack', damage: 4, hits: 5, weight: 30, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'player', status: 'bleed', stacks: 2 }],
       },
       rotWings: {
         intent: 'block', block: 10, weight: 20, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'player', status: 'crimsonBlight', stacks: 3 }],
       },
-      scarletDance: { intent: 'attack', damage: 9, hits: 5, weight: 35, locked: true },
+      scarletDance: { intent: 'attack', damage: 5, hits: 5, weight: 35, locked: true },
     },
     phases: [
       {
@@ -272,10 +268,9 @@ export const act3Enemies = [
     "id": "furnaceSaint",
     "name": "The Furnace Saint",
     "size": "large",
-    // A2 difficulty: HP and every move's damage x1.7 (HP 260; see the Stitched King).
     "hp": [
-      442,
-      442
+      260,
+      260
     ],
     "poiseMax": 40,
     "levelProfile": {
@@ -287,7 +282,7 @@ export const act3Enemies = [
     "moves": {
       "openFurnace": {
         "intent": "attack",
-        "damage": 54,
+        "damage": 32,
         "weight": 30,
         "maxConsecutive": 1,
         "delay": {
@@ -299,7 +294,7 @@ export const act3Enemies = [
       },
       "censerSweep": {
         "intent": "attack",
-        "damage": 37,
+        "damage": 22,
         "weight": 45,
         "maxConsecutive": 2
       },
@@ -330,10 +325,9 @@ export const act3Enemies = [
     "id": "hollowAstronomer",
     "name": "The Hollow Astronomer",
     "size": "large",
-    // A2 difficulty: HP and every move's damage x1.7 (HP 225; see the Stitched King).
     "hp": [
-      383,
-      383
+      225,
+      225
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -357,14 +351,14 @@ export const act3Enemies = [
       },
       "orbitalShards": {
         "intent": "attack",
-        "damage": 14,
+        "damage": 8,
         "weight": 45,
         "hits": 4,
         "maxConsecutive": 2
       },
       "totalEclipse": {
         "intent": "attack",
-        "damage": 51,
+        "damage": 30,
         "weight": 35,
         "maxConsecutive": 1,
         "delay": {
@@ -384,7 +378,7 @@ export const act3Enemies = [
       },
       "fallingHeavens": {
         "intent": "attack",
-        "damage": 17,
+        "damage": 10,
         "weight": 30,
         "hits": 3,
         "locked": true,
@@ -407,10 +401,9 @@ export const act3Enemies = [
     "id": "ashheartDragon",
     "name": "The Ashheart Dragon",
     "size": "large",
-    // A2 difficulty: HP and every move's damage x1.7 (HP 245; see the Stitched King).
     "hp": [
-      417,
-      417
+      245,
+      245
     ],
     "poiseMax": 34,
     "levelProfile": {
@@ -422,7 +415,7 @@ export const act3Enemies = [
     "moves": {
       "obsidianClaws": {
         "intent": "attack",
-        "damage": 20,
+        "damage": 12,
         "weight": 45,
         "hits": 2,
         "maxConsecutive": 2
@@ -448,7 +441,7 @@ export const act3Enemies = [
       },
       "ashBreath": {
         "intent": "attack",
-        "damage": 15,
+        "damage": 9,
         "weight": 35,
         "maxConsecutive": 1,
         "delay": {

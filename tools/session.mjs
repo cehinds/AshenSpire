@@ -30,7 +30,7 @@ import {
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
-import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult } from '../src/model/seats.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
@@ -518,12 +518,15 @@ export function createSession({ registries, seedString, endless = false, restore
     const loop = loopCount();
     // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; 1 at the
     // seat's own baseline). Headcount is handled by the runner.
-    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * seatTierHpMult(registries, currentSeat(), contentAct());
+    // A boss scales by the tier it is met at instead (balance.bossTiers).
+    const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
+    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       extraHpMult,
+      enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
     // Co-op player entities intentionally share the engine id `player`; the

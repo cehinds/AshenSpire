@@ -6,7 +6,7 @@ Move cards show base values except the current intent, which uses the engine pre
 
 The twelve painted portraits imported from the Unity fork remain unchanged. Fourteen new transparent portraits share their 384 × 384 frame, left-facing orientation and foot anchor. These are idle paintings animated with action-specific movement, not frame-by-frame attack strips. Authored actor and move overrides take precedence over card tags, then intent families; reduced-motion settings suppress action movement. Existing native art remains available for the other enemies and as a loading fallback.
 
-Act 2 and 3 bosses carry 1.7× their first authored HP and move damage since #1284: the owner's quicker levelling made them the only fights that decided a run.
+HP below is as authored. Since #1284 a boss is scaled by the tier it is met at, whichever region holds it (`balance.bossTiers`, SPEC §13.3): its region's tier ratio on HP and move damage, then ×0.8 HP and damage as a first boss, ×2.2 HP and ×1.5 damage as a second or final boss.
 
 | Enemy | Role | Act / location | HP | Move set |
 |---|---|---|---|---|
@@ -27,22 +27,22 @@ Act 2 and 3 bosses carry 1.7× their first authored HP and move damage since #12
 | Court Marionette | normal | Act 2 | 16–18 | Dart; Blowdart |
 | Living Armor | normal | Act 2 | 36–40 | Slam; Fortify; Crush; Rime Crush |
 | Duelist of the Court | elite | Act 2 | 90–96 | En Garde; Flurry; Lunge; Riposte |
-| The Stitched King | boss | Act 2 — Stitched Throne | 332–332 | Scepter Blow; Grasping Hands; Courtly Decree; Thousand Hands |
+| The Stitched King | boss | Act 2 — Stitched Throne | 195–195 | Scepter Blow; Grasping Hands; Courtly Decree; Thousand Hands |
 | Mirror Scribe | normal | Act 2 | 28–32 | Silver Script; Shard Volley; Polished Ward |
 | Stitch Crab | normal | Act 2 | 32–36 | Shell Fold; Seam Shears; Scuttle Rush |
-| The Glass Regent | boss | Act 2 — Hall of Mirrors | 306–306 | Prism Guard; Crystal Rapier; Splinter Rain; Shattered Court |
-| The Marrow Organist | boss | Act 2 — Ossuary Organ Hall | 323–323 | Bone Prelude; Ivory Keys; Funeral Chord; Quiet Refrain |
+| The Glass Regent | boss | Act 2 — Hall of Mirrors | 180–180 | Prism Guard; Crystal Rapier; Splinter Rain; Shattered Court |
+| The Marrow Organist | boss | Act 2 — Ossuary Organ Hall | 190–190 | Bone Prelude; Ivory Keys; Funeral Chord; Quiet Refrain |
 | Ash Revenant | normal | Act 3 | 34–38 | Cinder Slash; Reform |
 | Ember-Starved Pilgrim | normal | Act 3 | 28–32 | Desperate Claw; Wail |
 | Valkyrie Shade | normal | Act 3 | 40–44 | Spiral Lance; Blood Feather |
 | Charred Colossus | normal | Act 3 | 55–60 | Smash; Ash Cloud; Harden |
 | Wyrm Lord | elite | Act 3 | 130–140 | Consecration; Halberd Reign; Tail Sweep; Golden Bulwark |
-| The Blighted Valkyrie | boss | Act 3 — Ashen Crown | 425–425 | Spiral Thrust; Whirlwind; Rot Wings; Scarlet Dance |
+| The Blighted Valkyrie | boss | Act 3 — Ashen Crown | 250–250 | Spiral Thrust; Whirlwind; Rot Wings; Scarlet Dance |
 | Cinder Mantis | normal | Act 3 | 36–40 | Scythe Pair; Ember Pounce; Folded Blades |
 | Eclipse Cantor | normal | Act 3 | 30–34 | Dark Hymn; Lunar Ray; Fading Echo |
-| The Furnace Saint | boss | Act 3 — Furnace Chapel | 442–442 | Open Furnace; Censer Sweep; Cooling Ash |
-| The Hollow Astronomer | boss | Act 3 — Eclipse Observatory | 383–383 | Star Chart; Orbital Shards; Total Eclipse; Falling Heavens |
-| The Ashheart Dragon | boss | Act 3 — Ashheart Caldera | 417–417 | Obsidian Claws; Tail Bastion; Heart Rumble; Ash Breath |
+| The Furnace Saint | boss | Act 3 — Furnace Chapel | 260–260 | Open Furnace; Censer Sweep; Cooling Ash |
+| The Hollow Astronomer | boss | Act 3 — Eclipse Observatory | 225–225 | Star Chart; Orbital Shards; Total Eclipse; Falling Heavens |
+| The Ashheart Dragon | boss | Act 3 — Ashheart Caldera | 245–245 | Obsidian Claws; Tail Bastion; Heart Rumble; Ash Breath |
 
 ## Verification and limits
 

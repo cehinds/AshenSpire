@@ -21,10 +21,12 @@ Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — cost Actions
 only, and the Herald's Blight Touch costs Stamina without Mana, so the Common
 row ships at 12 Stamina-bearing / 3 dual rather than 16/8. Mana carries between
 fights while every fight opens with full Stamina, so a caster whose attacks
-needed Mana ran dry: with Mana on its commons the Starseer won 1 of 60
-simulated runs, and a Herald on a dry Mana pool stalled or lost at the act-2
-boss (`node tools/runsim.mjs 120` with the A2 rows: Herald 45 wins with Mana
-on Blight Touch, 66 without).
+needed Mana ran dry. Measured with every #1284 row live,
+`node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs
+a class): the Starseer wins 51, 47 with its five attacks back on Mana; the
+Herald wins 66, 47 with Mana back on Blight Touch (stalled fights 5 → 8). Blight
+Touch, no longer a Mana spell, builds the no-Mana 1 Arcane Exposure per hit
+(SPEC §13.4k); at 5 the Herald wins 68, inside the noise.
 
 The census covers the union of the four class combat-reward pools.
 It excludes merchant-only neutral cards, starter cards, special cards and cards available only through

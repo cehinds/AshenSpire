@@ -47,11 +47,11 @@ export const relics = [
     name: 'Starstone Shard',
     rarity: 'starter',
     passives: {
-      // A2 Starseer starvation: Max HP +14 (34 -> 48) and Magic damage 1 -> 2.
-      // Mana stays 1: at 3 it moved nothing (`node tools/runsim.mjs 120` with
-      // the A2 boss rows: Starseer 56/120 at Mana 3 or 1). Magic +2 took the
-      // Starseer's act-1 elite deaths from 10 to 1 and its wins 50 -> 56/120;
-      // Max HP +14 is what keeps it alive through act 1 (6 elite deaths at +0).
+      // A2 Starseer starvation: Max HP +14 (34 -> 48) and Magic damage 1 -> 2;
+      // Mana stays 1. With every #1284 row live, `node tools/runsim.mjs 120
+      // --seeded-seats` (seat order drawn per run): Starseer 51/120 wins, 40
+      // without the +14 HP (elite deaths 6 -> 14), 21 with this relic as it
+      // shipped before (+1 Magic, no HP; 27 elite and 25 normal deaths).
       modifiers: [
         { tag: 'resource.flat', resource: 'mana', amount: 1 },
         { tag: 'damage.school.flat', school: 'magic', amount: 2 },

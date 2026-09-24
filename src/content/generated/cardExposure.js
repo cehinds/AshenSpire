@@ -300,7 +300,7 @@ export const cardExposure = [
   {
     "cardId": "blightTouch",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "flagellation",

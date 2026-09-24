@@ -19,9 +19,9 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 // Comet Fragment, Starblade Phalanx, Starlance, Frost Nova) cost actions only —
 // no Mana, no Stamina — so a Starseer whose Mana carries between fights can
 // still fight; their cardExposure.csv rows drop to the action-only 1 (SPEC:
-// "action-only spells keep 1"). Measured with the Arcane Ward, Starstone Shard,
-// flask and Lodestar rows: `node tools/runsim.mjs 60` Starseer 1/60 -> 21/60
-// (82/200 alone; 78/200 with these rows left at 5, i.e. the buildup is noise).
+// "action-only spells keep 1"). Measured with every #1284 row live,
+// `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run):
+// Starseer 51/120 wins; 47/120 with these five back on 1 Stamina + 1 Mana.
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {

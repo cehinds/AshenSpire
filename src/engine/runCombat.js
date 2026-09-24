@@ -61,7 +61,7 @@ export function runCombatPlayer(run) {
 }
 
 /**
- * createRunCombat({ registries, rng, run, enemyIds, settings, hpMult,
+ * createRunCombat({ registries, rng, run, enemyIds, settings, hpMult, enemyDamageMult,
  *   enemyStatuses, playerStatuses, player }) → combat
  *
  * `settings` is the profile's settings object (meta.settings); a fresh
@@ -72,7 +72,7 @@ export function runCombatPlayer(run) {
  */
 export function createRunCombat({
   registries, rng, run, enemyIds, settings = {},
-  hpMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
+  hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
   return createCombat({
     ratingsRules: registries.balance.combatRatings || null,
@@ -82,6 +82,7 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run), ...player },
     enemyIds,
     hpMult,
+    enemyDamageMult,
     enemyStatuses,
     // WHICH SWAP PRICE THIS FIGHT IS UNDER (A8). Read once, here, at the same
     // point the other per-fight rules are decided — Settings → Advanced changes
