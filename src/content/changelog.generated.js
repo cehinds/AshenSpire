@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1306",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The automated architecture check keeps browser code out of the game's rules and data layers, and it had failed on every build. The code that saves a settings file to your device now lives with the rest of the interface code, and it saves the same way as before. Settings → Advanced now calls its two size controls \"Settings panel width\" and \"Settings panel height\"; they were labelled \"Settings window\".",
+    "build": "0.7.1.482",
+    "pullRequest": 1306,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1306"
+  },
+  {
+    "id": "pr-1284",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Every fight opens with full Stamina, casters can fight with no Mana left, and bosses grow with the order you meet them in",
+    "detail": "Stamina used to carry from one fight to the next and came back only on turns you spent none, so a hard fight left you short for every fight after it. Now each fight opens with your Stamina full. Mana still carries between fights; resting and Azure flasks restore it. The Starseer and the Herald were hit hardest by running out of Mana, so their attacks no longer need it. Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova now cost only Actions, and the Herald's Blight Touch costs Stamina but no Mana; as spells that spend no Mana they build 1 Arcane Exposure per hit instead of 5. Arcane Ward gives 3 more Block. Starstone Shard adds 14 Max HP and 2 Magic damage instead of 1, so a new Starseer starts on 48 HP. With the quicker levels a climb now earns, bosses were the only fights still likely to end a run, and most runs got past them. The regions come in a different order every run, so a boss is now scaled by when you meet it rather than by which region it lives in: your first boss has 20% less HP and hits 20% softer, and your second and final bosses have 2.2 times the HP and hit 1.5 times as hard, on top of the usual growth from region to region. A boss met earlier than its region used to come also hits softer to match its lower HP. Over 240 simulated runs a class in randomly ordered regions, the Reaver now wins 105, the Starseer 103, the Rogue 135 and the Herald 135 (44%, 43%, 56% and 56%), where before this change they won 180, 28, 183 and 159.",
+    "build": "0.7.1.475",
+    "pullRequest": 1284,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1284"
+  },
+  {
+    "id": "pr-1295",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "A restored profile shows its real Cinder multiplier straight away",
+    "detail": "Restoring a profile saved before the Cinder gain multiplier was renamed kept the old setting, so Advanced Settings showed the default of 1 while the game still paid the old value, until the next restart. A restored profile is now brought up to date the moment it lands, the same way one is at start-up: an old multiplier is carried across divided by 20, so payouts are unchanged, and the settings screen shows it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1295,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1295"
+  },
+  {
+    "id": "pr-1308",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two checks broken by the Crownfall landmark update pass again",
+    "detail": "Nothing you play changes. The phone edition's copy of the Crownfall prologue painting is resized to match its new source, and the scene editor's traveller resize handle now lands on the traveller at every interface zoom instead of drifting away from it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1308,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1308"
+  },
+  {
+    "id": "pr-1302",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map's music follows where you stand, and the bright map tracks are gone",
+    "detail": "The two recorded map tracks were too upbeat for a land after the Burning and have been withdrawn; the map plays its generated score again. The map now asks for music by region — the Hollow Weald, the Pale Marches, the Cinder Reach, the Drowned Coast and the Ashen Crown each have their own slot, with slow, dark prompts in music/PROMPTS.md — and a region without a recorded track plays the plain map music. The victory hymn is cut from three minutes to its first full phrase, about a minute.",
+    "build": "0.7.1.469",
+    "pullRequest": 1302,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1302"
+  },
+  {
     "id": "pr-1281",
     "date": "2026-09-24",
     "group": "2026-09-24",

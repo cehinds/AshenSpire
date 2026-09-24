@@ -37,7 +37,8 @@ import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceM
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -1101,6 +1102,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
           <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
           <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
           <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(scene.id)}" aria-label="Edit ${esc(scene.name)} with live preview">Edit & preview</button>
+          ${scene.character && scene.actor ? `<button type="button" class="as-btn set-scene-edit" data-scene-place="${esc(scene.id)}" aria-label="Place traveller in ${esc(scene.name)}">Place traveller</button>` : ''}
           <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
           ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
         </span>
@@ -2324,6 +2326,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
   container.querySelectorAll('[data-scene-edit]').forEach(btn => {
     btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.sceneEdit }));
+  });
+  container.querySelectorAll('[data-scene-place]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.scenePlace, tab: 'Traveller' }));
   });
   container.querySelectorAll('.set-prologue-text').forEach(input => {
     input.addEventListener('input', () => {

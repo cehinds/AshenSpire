@@ -57,7 +57,7 @@ function assertCarrier(carrier) {
   const c = carrier || {};
   const problems = [];
   if (!MOUNTABLE_KINDS.includes(c.kind)) {
-    problems.push(`kind '${c.kind}' has no mount window (mountable: ${MOUNTABLE_KINDS.join(', ')})`);
+    problems.push(`kind '${c.kind}' has no hold span to mount on (mountable: ${MOUNTABLE_KINDS.join(', ')})`);
   }
   if (typeof c.id !== 'string' || !c.id) problems.push('id must be a non-empty string');
   if (c.instanceId != null && (typeof c.instanceId !== 'string' || !c.instanceId)) problems.push('instanceId, when present, must be a non-empty string');
