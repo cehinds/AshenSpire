@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1289",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The map re-centres when your screen changes size",
+    "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
+    "build": "0.7.1.471",
+    "pullRequest": 1289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1289"
+  },
+  {
     "id": "pr-1278",
     "date": "2026-09-24",
     "group": "2026-09-24",
