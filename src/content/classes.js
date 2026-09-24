@@ -38,7 +38,9 @@ export const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    startingFlaskAllocation: { hp: 2, mana: 2 },
+    // A2 Starseer starvation: { hp: 2, mana: 2 } -> { hp: 3, mana: 1 }
+    // (plan A2, `node tools/runsim.mjs 60`: Starseer 1/60 -> 21/60 with the other A2 Starseer rows; 82/200 alone).
+    startingFlaskAllocation: { hp: 3, mana: 1 },
     startingRelic: 'starstoneShard',
     kitRelic: 'lodestarShard',
     startingSignatureCard: 'starstonePebble',

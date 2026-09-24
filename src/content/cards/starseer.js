@@ -15,10 +15,17 @@ const one = { f: 'add', args: [1] };
 const CHARGED = { p: 'hasStatus', of: 'self', status: 'starstoneCharge' };
 const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharge', stacks: one };
 
+// A2 Starseer starvation: the starter and common attacks (Starstone Pebble,
+// Comet Fragment, Starblade Phalanx, Starlance, Frost Nova) cost actions only —
+// no Mana, no Stamina — so a Starseer whose Mana carries between fights can
+// still fight; their cardExposure.csv rows drop to the action-only 1 (SPEC:
+// "action-only spells keep 1"). Measured with the Arcane Ward, Starstone Shard,
+// flask and Lodestar rows: `node tools/runsim.mjs 60` Starseer 1/60 -> 21/60
+// (82/200 alone; 78/200 with these rows left at 5, i.e. the buildup is noise).
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, type: 'attack',
     flavor: "Chip of catalogued starstone.\n\nSuch stones were weighed and numbered by the Observatory's apprentices in their first winter. The Astronomer held them inert once cooled, and wrote as much throughout his catalogue.\n\nYet frost formed upon their labels by night. Never upon the stones.",
     keywords: [], icon: '💎',
     effects: [
@@ -38,7 +45,7 @@ export const starseerCards = [
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Sorcery of the Starwatch, the first permitted beyond the lens gallery.\n\nFragments came up the Basalt Stair in miners' sacks, sold by weight, and the Astronomer catalogued every one. Chart 41 records a fall. Chart 42 records a hearth.\n\nOf what lay between, the catalogue is silent.",
     keywords: [], icon: '☄',
     effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
@@ -46,7 +53,7 @@ export const starseerCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5 }, GAIN_CHARGE] },
   },
   {
-    id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Blades ground from a single stone.\n\nThe apprentices found that blades from one stone answered one another in sequence, the second truer than the first. The Chapel's censor struck \"answered\" from the record and wrote \"rang\".\n\nThe apprentices kept the first word.",
     keywords: [], icon: '🗡',
     effects: [
@@ -166,7 +173,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'starlance', name: 'Starlance', class: 'starseer', rarity: 'common', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'starlance', name: 'Starlance', class: 'starseer', rarity: 'common', cost: 2, type: 'attack',
     flavor: "Light forced through a starstone lens.\n\nDiscovered when the great lens scorched a line across the chart-room table. The Astronomer had the table kept as it was, and recorded that the line ran true to the south-west.\n\nThe line has lengthened since.",
     keywords: [], icon: '🏹',
     effects: [
@@ -209,7 +216,7 @@ export const starseerCards = [
     // Vulnerable are what the Frost PROC leaves behind; this is the card that
     // fills the meter, and it is the Starseer's because frostExposed raises
     // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
-    id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Ring of cold, after the frozen ash of the caldera.\n\nMiners found such rings about fresh falls upon the caldera floor. Coll, a foreman, told the apprentices the ash froze before the stone landed. The Astronomer named miners unreliable witnesses.\n\nHe bought Coll's next fragment at double the price.",
     keywords: [], icon: '❄',
     effects: [

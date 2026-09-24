@@ -200,17 +200,17 @@ export const cardExposure = [
   {
     "cardId": "starstonePebble",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "cometFragment",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "starbladePhalanx",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "starShower",
@@ -225,12 +225,12 @@ export const cardExposure = [
   {
     "cardId": "starlance",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "frostNova",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "starstoneArc",

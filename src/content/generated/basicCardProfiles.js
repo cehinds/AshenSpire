@@ -175,7 +175,7 @@ export const basicCardProfiles = [
     "icon": "✦",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0,
-    "baseValue": 1,
+    "baseValue": 4,
     "ratingId": "pr",
     "cap": "",
     "flavor": "Ward drawn through a staff, taught upon Starwatch Terrace.\n\nWhere the apprentices measured the new tower's draw across the water. The Astronomer said the ward was against the salt wind.\n\nIt leaned toward the Spire whenever it was drawn.",
