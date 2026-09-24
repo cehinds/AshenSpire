@@ -236,7 +236,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const art = prologueSceneArt(scene);
     const images = [];
     if (art) {
-      const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(art,layout,{classId})});
+      const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(art,layout,{classId,destinationArt:scene.id === 'step' ? destination.art : 'crownfall'})});
       images.push(background); plate.append(background);
     } else {
       plate.classList.add('prologue-plate-bare');
