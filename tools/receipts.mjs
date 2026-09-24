@@ -97,14 +97,38 @@ function resolve(rev) {
 }
 
 function rangeSubjects(since) {
-  const spec = since ? `${since}..HEAD` : 'HEAD';
-  const cap = since ? [] : ['--max-count=40'];
-  const lines = (args) => git(['log', ...args, '--format=%s', spec, ...cap]).split('\n').filter(Boolean);
-  // Every merge commit in the range (the original reach), plus every commit on
-  // the first-parent line, which is where a squash merge lands.
+  const lines = (args) => git(['log', ...args]).split('\n').filter(Boolean);
+  if (since) {
+    const spec = `${since}..HEAD`;
+    // Every merge commit in the range (the original reach), plus every commit on
+    // the first-parent line, which is where a squash merge lands.
+    return [
+      ...lines(['--merges', '--format=%s', spec]).map((subject) => ({ subject, firstParent: false })),
+      ...lines(['--first-parent', '--format=%s', spec]).map((subject) => ({ subject, firstParent: true })),
+    ];
+  }
+  // THE FALLBACK WINDOW HAS ONE BOUNDARY, not one per walk. Capping each walk at
+  // 40 independently let the merge walk reach far older history than the
+  // first-parent walk, so a squash older than the 40th first-parent commit but
+  // newer than the 40th merge went unexamined and the check read green. The 40
+  // most recent merges set the window; the first-parent walk then covers
+  // everything not already an ancestor of the oldest of them — and never less
+  // than the last 40 first-parent commits it always covered. Both are prefixes
+  // of the same first-parent line, so the longer one contains the shorter.
+  const merges = lines(['--merges', '--max-count=40', '--format=%H %s', 'HEAD']).map((l) => {
+    const i = l.indexOf(' ');
+    return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+  });
+  const fp = (extra) => lines(['--first-parent', '--format=%s', ...extra]);
+  let firstParent = fp(['--max-count=40', 'HEAD']);
+  if (merges.length < 40) firstParent = fp(['HEAD']);
+  else {
+    const toBoundary = fp(['HEAD', `^${merges[merges.length - 1].hash}`]);
+    if (toBoundary.length > firstParent.length) firstParent = toBoundary;
+  }
   return [
-    ...lines(['--merges']).map((subject) => ({ subject, firstParent: false })),
-    ...lines(['--first-parent']).map((subject) => ({ subject, firstParent: true })),
+    ...merges.map(({ subject }) => ({ subject, firstParent: false })),
+    ...firstParent.map((subject) => ({ subject, firstParent: true })),
   ];
 }
 
