@@ -127,6 +127,20 @@
       "alpha": true
     },
     {
+      "file": "assets/prologue/step-crownfall-desktop.webp",
+      "width": 1585,
+      "height": 992,
+      "bytes": 307062,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-crownfall-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 328610,
+      "alpha": false
+    },
+    {
       "file": "assets/prologue/step-desktop.webp",
       "width": 1280,
       "height": 801,
@@ -134,10 +148,52 @@
       "alpha": false
     },
     {
+      "file": "assets/prologue/step-marches-desktop.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 347206,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-marches-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 305436,
+      "alpha": false
+    },
+    {
       "file": "assets/prologue/step-mobile.webp",
       "width": 768,
       "height": 1365,
       "bytes": 260936,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-reach-desktop.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 270130,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-reach-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 341000,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-weald-desktop.webp",
+      "width": 1585,
+      "height": 992,
+      "bytes": 385108,
+      "alpha": false
+    },
+    {
+      "file": "assets/prologue/step-weald-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "bytes": 371666,
       "alpha": false
     },
     {
@@ -169,5 +225,5 @@
       "alpha": false
     }
   ],
-  "totalBytes": 5320156
+  "totalBytes": 7976374
 }

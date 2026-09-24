@@ -67,6 +67,8 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
+import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
+import { affordableCards, refusalsFor } from './simbot.mjs';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { seatAtTier } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -526,6 +528,8 @@ function recordStarEvents(stats, events, energyAtEndTurn) {
   if (MUTATE !== 'starEnergy') stats.unspentEnergy += energyAtEndTurn.reduce((sum, n) => sum + n, 0);
 }
 
+const STALEMATE_TURNS = 150; // as runsim.mjs: a fight still open this long is conceded
+
 // Separate LCG for the random policy only — never the game's rng.
 function makeLcg(seed) {
   let s = seed >>> 0;
@@ -535,34 +539,16 @@ function makeLcg(seed) {
 // ---- the combat bot (runsim.mjs verbatim, except the card picker) -----------
 function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   const enc = REG.encounters.get(encounterId);
-  const combat = createCombat({
-    registries: REG, rng,
-    // runsim.mjs's stamped-player hunk, verbatim (this file's rule: the bot is
-    // runsim's, copied not imported; both crashed unstamped from the day the
-    // combat entity began refusing an unstamped energyMax).
-    player: {
-      classId: run.class, attributes: run.attributes, loadout: run.loadout,
-      maxHp: run.maxHp, hp: run.hp,
-      maxMana: run.maxMana, mana: run.mana,
-      maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
-      deck: run.deck, relicIds: run.relics, flasks: run.flasks,
-      flaskCharges: run.flaskCharges,
-      // The relic damage authority the host stamps at run creation
-      // (D23, model/relicModifiers.js). Both fleets built their player
-      // literal by name and NOBODY added this field when it landed, so
-      // every simulated Starseer fought without the Starstone Shard's
-      // +1 magic — a live pool the game reads and the sim did not.
-      damageBySchoolAdd: run.damageBySchoolAdd,
-    },
-    enemyIds: enc.enemies,
-  });
+  // The live door (engine/runCombat.js), as runsim.mjs builds its fights:
+  // the hand rules, rating rules, swap price and equipment start statuses a
+  // player's fight carries, which this copy's own option list never had.
+  const combat = createRunCombat({ registries: REG, rng, run, enemyIds: enc.enemies });
   const opportunityTurns = new Set();
   const energyAtEndTurn = [];
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
   let guard = 0;
-  while (!combat.result && guard++ < 9000) {
+  // A fight still open after STALEMATE_TURNS turns is conceded (runsim.mjs).
+  while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
     if (combat.player.hp < combat.player.maxHp * (MUTATE === 'flask' ? 0.75 : 0.55)) {
       // CHARGE VESSEL FIRST — mirrors runsim.mjs, which carries the reason in
       // full: `chargeKind` is the door the player's own flask buttons use, and
@@ -581,11 +567,9 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
         } catch (e) { /* flask rejected — fall through to cards */ }
       }
     }
-    const affordable = combat.piles.hand.filter((h) => {
-      const def = resolvedHandDef(h);
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
-    });
+    // Affordable in every pool, minus the turn's refusals (tools/simbot.mjs).
+    const refused = refusalsFor(combat);
+    const affordable = affordableCards(REG, combat, refused);
     const chargedAtDecision = run.class === 'starseer' && hasStatus(combat.player, 'starstoneCharge');
     const eligible = chargedAtDecision
       ? affordable.filter((h) => chargedEffects(resolvedHandDef(h)).length > 0)
@@ -616,7 +600,13 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
       } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
-      dispatch(combat, { type: 'endTurn' });
+      // Refused: set it aside for the turn and choose again (runsim.mjs). The
+      // refusal is not a decision, so it is not recorded; the re-pick is.
+      if (!card) throw e;
+      refused.add(card.instanceId);
+      if (policy === 'starseerkit' && chargedAtDecision && affordable[0]
+          && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges--;
+      continue;
     }
     const decisionEvents = combat.eventLog.slice(eventStart);
     recordStarDecision(stats, opportunityTurns, {
@@ -698,12 +688,10 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   }
   recordStarEvents(stats, combat.eventLog, energyAtEndTurn);
 
-  run.flasks = combat.player.flasks;
-  // The write-back src/main.js:1335 performs — without it the vessels are
-  // infinite, because createPlayerCombatEntity copies them. Mirrors runsim.mjs.
-  run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
-  if (combat.result === 'victory') run.hp = combat.player.hp;
-  return combat.result;
+  // The write-back main.js onCombatEnd performs (engine/runCombat.js): HP,
+  // Mana, Stamina, flasks and their charges carry to the next fight. Mirrors runsim.mjs.
+  runCombatEnd(run, combat);
+  return combat.result || 'stalemate';
 }
 
 function afterVictory(run, rng, pool) {
