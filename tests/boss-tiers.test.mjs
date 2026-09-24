@@ -160,3 +160,12 @@ test('co-op: the scene projects a boss’s damageMult, so a client’s move card
   }
   assert.ok(checked >= 2);
 });
+
+test('the solo inspector reads skills and Previous actions through the scaled move damage', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(src, /function moveDetail\(move, preview = null, entity = null\)/);
+  assert.match(src, /damage: enemyMoveDamage\(entity, move\)/, 'a roster move is scaled by the enemy it belongs to');
+  assert.match(src, /history: past\.map\(\(moveId\) => \(\{ name: words\(moveId\), detail: moveDetail\(def\.moves\?\.\[moveId\], null, entity\) \}\)\)/, 'Previous actions pass the enemy');
+  assert.match(src, /detail: moveDetail\(move, moveId === currentMoveId \? intent : null, entity\)/, 'the skill list passes the enemy');
+});
