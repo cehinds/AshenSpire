@@ -322,14 +322,22 @@ function selftest() {
 // for the next person who wants `collect` in a test.
 const RUN_AS_CLI = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
+//
+// EXIT CODE, NOT process.exit(). The report is ~15 KB of table before its
+// RESULT line, and stdout to a pipe is written asynchronously; process.exit()
+// ends the process with the tail still queued. tests/run-node.mjs reads this
+// tool through a pipe, and under load it got the table cut off before RESULT —
+// check 53's intermittent "NO RESULT LINE (exit 0)". Reproduced: 20 of 24
+// parallel runs truncated at ~10.7 KB with process.exit(), 0 of 24 with
+// process.exitCode. Setting the code lets Node drain stdout first.
 if (!RUN_AS_CLI) {
   /* imported for collect()/blankNonCode(); nothing runs */
 } else if (process.argv.includes('--selftest')) {
-  process.exit(selftest());
+  process.exitCode = selftest();
 } else if (process.argv.includes('--json')) {
   const { sets } = collect(ROOT);
   console.log(JSON.stringify(sets, null, 2));
-  process.exit(sets.some((s) => !s.readers.length) ? 1 : 0);
+  process.exitCode = sets.some((s) => !s.readers.length) ? 1 : 0;
 } else {
-  process.exit(report(ROOT).code);
+  process.exitCode = report(ROOT).code;
 }
