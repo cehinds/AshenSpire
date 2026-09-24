@@ -103,9 +103,11 @@ amended before code moves.
   scale:
   - [ ] Load `2×CON+STR` puts every class at 180–285% → always Heavy.
   - [ ] Dodge Roll's guard is `3 + floor((DEX−10)/2)` plus the weight bonus:
-    ≤ 0 at DEX 1–4 and negative with no floor when Heavy at DEX 1–3. It charges up to A2/SP3 while
-    printing A0/SP1 (`src/framework/weight.js` ~36, ~55); it sits in two
-    starter decks.
+    ≤ 0 at DEX 1–4 and negative with no floor when Heavy at DEX 1–3. Heavy also prices it at A2/SP3,
+    more than a Starseer's whole Stamina pool (`src/framework/weight.js` ~36,
+    ~55); it sits in two starter decks. (In combat the card face already
+    shows the weight-priced cost through `previewCard`; only the balance is
+    at issue.)
   - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
     out of reach at creation; DEX 5 is the dominant level-up pick.
   - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
@@ -459,4 +461,7 @@ amended before code moves.
   whole player and each enemy per render; seven `MutationObserver`s watch the
   document subtree only to detect their own removal — one disposal registry
   or an `AbortController` per screen.
-- [ ] **Saves (S, optional).** Trim the snapshot `eventLog` to its tail.
+- [ ] **Saves (S, optional).** Trim the snapshot `eventLog` to its tail —
+  but first persist a cumulative kill count in the snapshot, since
+  `onCombatEnd` counts `enemyDied` events from the log for character XP
+  (`src/main.js` ~2339) and a trimmed log would under-award a resumed fight.
