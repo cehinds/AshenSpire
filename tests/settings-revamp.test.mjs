@@ -238,3 +238,12 @@ test('while searching, the scoped reset resets the shown results and says so', a
   assert.match(screen, /query \? settingsSearchHits\(query\)\.slice\(0, SEARCH_LIMIT\)\.map\(\(hit\) => hit\.row\)/);
   assert.ok(screen.includes("'Reset these results'"));
 });
+
+test('a volume slider takes every whole percent, and a compact slider widens for values outside it', async () => {
+  const html = settingsRowHtml({ musicVolume: 33 }, settingsRow('musicVolume'));
+  assert.match(html, /class="set-range"[^>]*step="1"[^>]*value="33"/, 'a typed 33 is a slider position');
+  assert.match(html, /data-step="1" data-step-by="5"/, 'the buttons still move by 5');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(v > Number\(slider\.max\)\) slider\.max = /, 'a committed value past the span widens it');
+});

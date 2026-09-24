@@ -1092,8 +1092,17 @@ function wireStepper(wrap, { read, commit, min, max, step }) {
   const places = (String(step).split('.')[1] || '').length;
   const round = (v) => Number((Math.round(v / step) * step).toFixed(places));
   const buttons = [...wrap.querySelectorAll('.set-step')];
+  // A compact slider (sliderSpan) widens to hold any value committed outside
+  // it — typed, stepped or loaded — so thumb and field never disagree.
+  const fit = (v) => {
+    if (!slider || !Number.isFinite(v)) return;
+    if (v > Number(slider.max)) slider.max = String(Math.min(max, niceCeil(v * 1.5)));
+    if (v < Number(slider.min)) slider.min = String(min);
+    slider.value = String(v);
+  };
   const sync = () => {
     const v = read();
+    fit(v);
     for (const b of buttons) b.disabled = Number(b.dataset.step) < 0 ? v <= min : v >= max;
   };
   // A gate or a hand rule disables the FIELD (it carries the key); the
@@ -1374,7 +1383,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     return `${rowOpen('set-row-wide set-row-number')}
         ${stack()}
         <span class="r-trail range-wrap">
-          ${stepperHtml({ key: r.key, label: r.label, value: val, min: 0, max: 100, step: 5, span: [0, 100], fieldClass: 'set-range-num', sliderClass: 'set-range', keyOnSlider: true, unit: '%', bStep: 5 })}
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: 0, max: 100, step: 1, span: [0, 100], fieldClass: 'set-range-num', sliderClass: 'set-range', keyOnSlider: true, unit: '%', bStep: 5 })}
         </span>
       </div>`;
   }
@@ -2818,7 +2827,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       refreshConditionNotes(container, settings);
     };
     field.addEventListener('change', () => commit(field.value));
-    wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 5 });
+    wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 1 });
   });
 
   container.querySelectorAll('[data-reset-key]').forEach((btn) => {
