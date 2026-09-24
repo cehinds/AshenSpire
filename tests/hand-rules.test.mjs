@@ -5,14 +5,28 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { handRulesDefaults } from '../src/content/handRules.js';
 import { handRulesRows, resolveHandRules, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 
 const registries = createRegistries(contentBundle);
-function fight(overrides = {}, attributes = { intelligence: 10 }) {
-  const settings = Object.fromEntries(Object.entries(overrides).map(([k, v]) => [prefix + k, v]));
+// The rules these mechanic tests were written against: fill to a flat ten,
+// keep overflow, open on 3 + INT/10. The shipped defaults changed (owner's
+// exported config, 2026-09-24), so each fight pins these explicitly and the
+// mechanics stay covered whatever the defaults become. Pass `{}` as `base` to
+// fight under the shipped defaults instead.
+const LEGACY_RULES = {
+  drawMode: 'fill', overflow: 'keep',
+  'starting.base': 3, 'starting.statEnabled': true, 'starting.baseline': 10, 'starting.pointsPerCard': 10, 'starting.minimum': 0, 'starting.maximum': 10,
+  'turn.base': 2, 'turn.statEnabled': false, 'turn.baseline': 10, 'turn.pointsPerCard': 10, 'turn.minimum': 0, 'turn.maximum': 10,
+  'capacity.base': 10, 'capacity.statEnabled': false, 'capacity.baseline': 10, 'capacity.pointsPerCard': 10, 'capacity.minimum': 1, 'capacity.maximum': 30,
+};
+const settingsOf = (overrides = {}, base = LEGACY_RULES) =>
+  Object.fromEntries(Object.entries({ ...base, ...overrides }).map(([k, v]) => [prefix + k, v]));
+function fight(overrides = {}, attributes = { intelligence: 10 }, base = LEGACY_RULES) {
+  const settings = settingsOf(overrides, base);
   return createCombat({ registries, rng: createRng(2309), handRules: resolveHandRules(settings, contentBundle.attributes),
     player: { classId: 'reaver', maxHp: 10000, hp: 10000, maxMana: 0, energyMax: 3, drawPerTurn: 5, attributes,
       deck: Array.from({ length: 25 }, (_, i) => ({ instanceId: `c${i}`, cardId: 'strike', upgraded: false })), relicIds: [] },
@@ -20,7 +34,11 @@ function fight(overrides = {}, attributes = { intelligence: 10 }) {
   });
 }
 
-test('default opening is three; unplayed cards survive and next turn fills capacity', () => {
+test('the default opening follows the shipped starting rule; unplayed cards survive and fill mode fills capacity', () => {
+  const intelligence = { intelligence: 10 };
+  const shipped = fight({}, intelligence, {});
+  assert.equal(shipped.piles.hand.length, scaledCards(handRulesDefaults.starting, intelligence));
+  assert.equal(shipped.piles.hand.length, 8); // 4 + floor((10 − 1) ÷ 2), inside 3–15
   const c = fight();
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
@@ -33,7 +51,7 @@ test('default opening is three; unplayed cards survive and next turn fills capac
 });
 
 test('stat selection, baseline, whole intervals, bounds and scaling off', () => {
-  const rules = resolveHandRules({ [prefix + 'starting.stat']: 'strength', [prefix + 'starting.pointsPerCard']: 3 }, contentBundle.attributes);
+  const rules = resolveHandRules(settingsOf({ 'starting.stat': 'strength', 'starting.pointsPerCard': 3 }), contentBundle.attributes);
   assert.equal(scaledCards(rules.starting, { strength: 18 }), 5);
   assert.equal(scaledCards(rules.starting, { strength: 1 }), 3);
   rules.starting.statEnabled = false;
@@ -42,7 +60,13 @@ test('stat selection, baseline, whole intervals, bounds and scaling off', () => 
   assert.equal(fight({}, { intelligence: 30 }).piles.hand.length, 5);
 });
 
-test('fixed draws default to two and can be changed or scaled', () => {
+test('fixed draws are the shipped default, two below the turn baseline, and can be changed or scaled', () => {
+  assert.equal(handRulesDefaults.drawMode, 'fixed');
+  // INT 4 sits on the turn baseline: opening 4 + floor(3 ÷ 2) = 5, capacity 7, then a fixed two.
+  const shipped = fight({}, { intelligence: 4 }, {});
+  assert.equal(shipped.piles.hand.length, 5);
+  dispatch(shipped, { type: 'endTurn' });
+  assert.equal(shipped.piles.hand.length, 7);
   const c = fight({ drawMode: 'fixed' });
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.piles.hand.length, 5);

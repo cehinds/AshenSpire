@@ -27,12 +27,15 @@ const magical = { cardId: 'strike', type: 'attack', damageSchool: 'magic' };
 
 test('AR, DR and PR add once to their eligible effects; Poise and Ward formulas agree', () => {
   const c = fight();
-  // Poise and Ward open at a base of 1 (combatRatingDefaults): 1 + CON 10 +
-  // floor(STR 10 / 2), and 1 + WIS 10 + floor(INT 10 / 2).
-  assert.deepEqual(c.player.ratings, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 15);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 20);
-  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 15);
+  // Every attribute at 10 under the owner's weights (2026-09-24), each term
+  // floored on its own: AR 7 + 5 + 2 + 2 + 2 = 18; DR 5 + 7 + 2 + 3 + 1 = 18;
+  // PR 2 + 5 + 5 + 7 = 19. Poise and Ward open at a base of 1
+  // (combatRatingDefaults): 1 + CON 10 + STR 5 + WIS 2 + INT 1 = 19, and
+  // 1 + DEX 2 + CON 3 + WIS 10 + INT 5 = 21.
+  assert.deepEqual(c.player.ratings, { ar: 18, dr: 18, pr: 19, poise: 19, ward: 21 });
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 28);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 29);
+  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 28);
   assert.equal(computeBlockGain(c, c.player, 10), 10);
 });
 
@@ -142,7 +145,8 @@ test('a magical power carries PR into its later block trigger', async () => {
   c.enqueue = action => queued.push(action);
   fireOwnerHooks(c, c.player, 'ownerTurnEnd');
   for (const action of queued) executeAction(c, action);
-  assert.equal(c.player.block, 14);
+  // 4 Block from Astral Armor + PR 19, carried from the power that set it up.
+  assert.equal(c.player.block, 23);
 });
 
 
@@ -233,33 +237,35 @@ test('weapon cards add their source equipment rating without a tier', async () =
   const technique = surface.roles.find(row => row.role === 'technique');
   assert.deepEqual(
     [attack.receipt.base, attack.receipt.rating.equipmentBase, attack.receipt.rating.attributeValue, attack.receipt.rating.value, attack.receipt.rarityBonus, attack.receipt.value],
-    [5, 2, 1, 3, 0, 8],
-    'Slashing Strike is 5 base + (2 sword base AR + 1 attribute AR) + 0 rarity',
+    [5, 2, 2, 4, 0, 9],
+    'Slashing Strike is 5 base + (2 sword base AR + 2 attribute AR) + 0 rarity',
   );
   assert.deepEqual(
     [guard.receipt.base, guard.receipt.rating.equipmentBase, guard.receipt.rating.attributeValue, guard.receipt.rating.value, guard.receipt.rarityBonus, guard.receipt.value],
-    [3, 5, 0, 5, 0, 8],
-    'Shield Defend is 3 base + (5 shield base DR + 0 attribute DR) + 0 rarity',
+    [3, 5, 1, 6, 0, 9],
+    'Shield Defend is 3 base + (5 shield base DR + 1 attribute DR) + 0 rarity',
   );
   assert.deepEqual(
     [technique.receipt.base, technique.receipt.rating.id, technique.receipt.rating.value, technique.receipt.value],
-    [0, 'ar', 3, 3],
+    [0, 'ar', 4, 4],
     'Weapon Technique explicitly uses its source weapon AR',
   );
 
   const html = renderRoleCopies(surface);
   assert.doesNotMatch(html, /\btier\b/i);
   assert.doesNotMatch(html, /pointsPerTier/);
-  assert.match(html, /5 base \+ 3 AR \(weapon\) \+ 0 rarity =/);
-  assert.match(html, /3 base \+ 5 DR \(shield\) \+ 0 rarity =/);
+  assert.match(html, /5 base \+ 4 AR \(weapon\) \+ 0 rarity =/);
+  assert.match(html, /3 base \+ 6 DR \(shield\) \+ 0 rarity =/);
 
   const ratingHtml = renderPlayerPoise(surface.poise);
   assert.deepEqual(surface.poise.ratingAttributes.ar.values,
     { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 });
   for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
-  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>3<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Dexterity <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?= <strong>7<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>0<\/strong>/);
+  // The owner's weights (2026-09-24); the Reaver's default armour now carries
+  // a DR of 1, so Wayfarer Plate appears under DR as well as Poise.
+  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.75 → floor = <b>2<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>4<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Dexterity <b>1<\/b> × 0\.75 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?<b>1<\/b> Wayfarer Plate[\s\S]*?= <strong>9<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Constitution <b>2<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.75 → floor = <b>0<\/b>[\s\S]*?= <strong>1<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>12<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
@@ -297,8 +303,9 @@ test('co-op initializes source equipment ratings for every seat', async () => {
     }],
     enemyIds: ['wanderingSoldier'],
   });
-  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
-  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 8);
+  // 5 + 2 attribute AR + 2 sword AR; 3 + 1 attribute DR + 5 shield DR (the armour's DR stays out).
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 9);
+  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 9);
   assert.equal(c.enemies[0].ratings.poise, c.ratingsRules.enemyRatings.wanderingSoldier.poise);
 });
 
@@ -325,7 +332,8 @@ test('restoring a legacy combat rebuilds typed rating sources before source filt
     { name: 'Legacy off-hand weapon', ar: 99 },
   ];
   const resumed = restoreCombatSnapshot({ registries: currentRegistries, rng: createRng(998), snapshot });
-  assert.equal(computeAttackDamage(resumed, resumed.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
+  // 5 + 2 attribute AR + 2 sword AR, rebuilt: neither the stale 1 nor the legacy 99 survives.
+  assert.equal(computeAttackDamage(resumed, resumed.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 9);
   assert.deepEqual(resumed.player.ratingSources.filter(row => row.kind === 'equipment').map(row => row.sourceId), ['straightSword', 'roundShield', 'default']);
   assert.equal(resumed.player.ratingSources.every(row => row.kind), true);
 });
@@ -478,7 +486,7 @@ test('a combat save written before the multipliers still validates and resumes',
   delete legacy.multiplier;
   assert.deepEqual(combatRatingProblems(legacy), []);
   const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
-  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
+  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 18, dr: 18, pr: 19, poise: 19, ward: 21 });
   // A written multiplier is still held to its domain.
   assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
 });
@@ -540,7 +548,7 @@ test('armour ratings, relic and status bonuses are additive and counted once', a
   assert.equal(after.ar - before.ar, 10);
   const c = fight({ 'gameConfig.combatRatings.bonuses.status:strength.ar': 2 });
   applyStatus(c, c.player, 'strength', 2, c.player);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 34);
 });
 
 // THE ROW IS THE ITEM'S NUMBER, NOT A PLUS ON TOP OF IT (owner, 2026-09-21:

@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1290",
+    "id": "pr-1273",
     "date": "2026-09-24",
     "group": "2026-09-24",
-    "summary": "The phone build builds again",
-    "detail": "Nothing you play changes. The new prologue path scenes for the Crownfall, the Marches, the Reach and the Weald arrived without their smaller phone copies, so the phone edition refused to build at all; the eight copies are now made the same way as every other piece of phone art. They take the phone edition's art a little past its old 40 MB share, so that share is now 40.5 MB, still inside the room the cap leaves; the phone edition as a whole is still held under the owner's 50 MB cap.",
-    "build": "0.7.1.459",
-    "pullRequest": 1290,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1290"
+    "summary": "New characters start on the owner's tuned rules, the stat choice reads Assigned, and the mobile edition is under 30 MB",
+    "detail": "The owner's saved game configuration is now what every new player starts with: fixed turn draws, with Intelligence growing your opening hand, turn draws and hand capacity; three flask charges shared between Crimson and Azure; 20 cinders to start and twenty times the cinders from every fight; quicker levels, weapon and class skills; HP, Mana, Stamina, Actions and draw that read several attributes instead of one; new attack, defence and resistance weights; and a two-row battlefield with larger enemies. The one stat allocation at character creation is now called Assigned. The mobile download shrank from 49 MB to 29 MB — its art is recompressed smaller, with backdrops kept sharper than the rest — and plays the same. Settings you have already chosen keep their values.",
+    "build": "0.7.1.456",
+    "pullRequest": 1273,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
     "id": "pr-1270",
