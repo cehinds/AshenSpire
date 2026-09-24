@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the automated checks cost less and one of them runs again",
     "detail": "Nothing you see in the game changes. The repository's automated jobs now share one Node version and stop downloading the full game build on jobs that never open it, two orphan files are gone, and the architecture report that had crashed on every merge since the file list outgrew a buffer runs to its answer again.",
-    "build": "0.7.1.445",
+    "build": "0.7.1.447",
     "pullRequest": 1267,
     "url": "https://github.com/cehinds/AshenSpire/pull/1267"
+  },
+  {
+    "id": "pr-1266",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Every character can dodge, and a fresh character is no longer Heavy",
+    "detail": "Holding equipment used to cost you the Dodge Roll: a Reaver or Rogue who started with both hands armed had none, and a character who emptied both hands lost it too. Every deck now carries exactly one Dodge Roll whatever you hold — your bare hand owns it, or your body when both hands are full — and like every card your equipment brings it is dealt first, with Strikes and Defends filling what the starting deck has left. Item weights were also still on the old attribute scale, so every new character started Heavy (dodges cost 3 Stamina and 2 Actions); they are now a fifth of what they were, so class starts read Light or Medium again and the heaviest kits still reach Heavy. Behind the scenes, every test file in the project now runs on every pull request, in a fast suite and a separate self-test job, and eight suites that had quietly gone out of date were brought back to the rules as they stand.",
+    "build": "0.7.1.446",
+    "pullRequest": 1266,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1266"
   },
   {
     "id": "pr-1265",

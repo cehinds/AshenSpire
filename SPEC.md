@@ -505,8 +505,18 @@ author the same card; optional non-kit arts retain the existing shared-art rule.
 Reconciliation preserves cards already in discard or exhaust. Unequipping
 removes item-owned contributions and re-equipping restores their stable IDs.
 
-New armed starting decks omit the redundant global technique grant. Empty-hand
-Dodge Roll and fully unarmed Strike/Guard/technique behavior remain unchanged.
+New armed starting decks omit the redundant global technique grant. Fully
+unarmed Strike/Guard/technique behavior remains unchanged.
+
+**Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
+2026-09-02 empty-hand rule). Holding equipment never costs the dodge: every
+composed deck carries exactly one Dodge Roll as a `weaponArt` instance. An
+empty hand owns it (`grantedBy: unarmed:<hand>`, right before left); with no
+empty hand — both hands armed, or a two-handed armament — the body owns it
+(`unarmed:body`). Filling a hand moves it and never removes it. An art mount
+already holding the Dodge Roll counts, so there is one, not two. Like every
+bound card it is dealt before the base cards and counts against
+`startingDeckSize`; Strikes and Defends are added last, from what the cap leaves.
 Existing saves retain run-owned cards and their original attack-slot quota;
 normal equipment reconciliation adopts missing item-owned kits without
 re-minting permanently removed filler. Equipment previews use the same composer
@@ -1331,9 +1341,11 @@ keeps the same state and focus contract without meaningful animation.
   `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
   decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
   Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
-  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`), and the
-  item card's Weight label reads the same `pieceWeight` rule, so item and total agree by
-  construction.
+  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Every
+  piece weight is multiplied by `mechanics.weight.itemWeightScale` (0.2, owner's call 2026-09-24:
+  the lean attribute scale cut capacity, so item weights were rescaled to match) and kept to a
+  tenth. The item card's Weight label reads the same `pieceWeight` rule, so item and total agree
+  by construction.
 
   These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
   records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records
@@ -2014,7 +2026,7 @@ permission by opening a location dialog. Classic co-op remains supported while
 World Journey uses only explicitly implemented host actions.
 
 ### Shared armor sets (2026-09-19)
-Four sharedSet outfits are available in every class's Armoury after creation. They use the existing class-scoped armor save keys, with one identical authored row per wearer class. Empty unlock means owned; sharedSet excludes these rows from starting-armour selection and the exactly-one-baseline rule. Equip enforces current attributes at 12: Wayfarer Plate STR, Nightweave INT, Rite Vestments WIS, Gutter Leathers DEX. Existing starting outfits and saves remain valid.
+Four sharedSet outfits are available in every class's Armoury after creation. They use the existing class-scoped armor save keys, with one identical authored row per wearer class. Empty unlock means owned; sharedSet excludes these rows from starting-armour selection and the exactly-one-baseline rule. Equip enforces current attributes at 3 (12 before the §13.4m lean rebase): Wayfarer Plate STR, Nightweave INT, Rite Vestments WIS, Gutter Leathers DEX. Existing starting outfits and saves remain valid.
 
 Bonuses are authored in outfits.csv using existing modifiers: Wayfarer +2 Defend Block/+4 max HP; Nightweave +1 class-power Potency/+1 max Mana; Rite +1 Defend Block/+6 max HP; Gutter +1 Strike Damage/+1 max Stamina. These are modest initial alternatives, not a claim of completed balance playtesting. Tags remain in tagging.csv. inventoryArtKey selects the item illustration. sharedOutfitArt.js selects a distinct painted sprite collection for each of the sixteen class/outfit combinations, including readiness and defeat. artClassId plus artKey remains the fallback for the classic composited rig. The card review page shows all four wearers per outfit with selectable combat poses.
 

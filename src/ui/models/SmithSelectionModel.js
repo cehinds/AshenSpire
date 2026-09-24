@@ -1,4 +1,5 @@
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { pieceWeight } from '../../model/statProjection.js';
 import { relicArtAsset } from '../../model/relicArt.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the Shrine armament Smith transaction.
@@ -102,7 +103,8 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       intrinsicStats: freeze({
         attackRating: piece.attackRating ?? null,
         defenseRating: piece.defenseRating ?? null,
-        weight: piece.weight ?? null,
+        // The load weight (itemWeightScale applied), as the Armoury shows it.
+        weight: piece.weight == null ? null : pieceWeight(piece),
         weaponArtManaCost: piece.weaponArtManaCost ?? null,
         uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost ?? null,
       }),

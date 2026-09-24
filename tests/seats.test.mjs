@@ -83,11 +83,30 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
   // The fixture was generated from dev at f727b08 — the last tree where
   // buildActMap took an act — with the same seeds, and is the one thing that
   // can say "unchanged" rather than "self-consistent".
+  //
+  // The claim is about CODE (§13.6: no draw added, removed or reordered), so
+  // the maps are built against the event roster that tree shipped. Events
+  // authored since — the Turncoat's Mirror (#1193, §13.4h) and the Last
+  // Lantern (#1187) — join the ungated pool `rng.pick('events', pool)` reads,
+  // which legitimately re-picks WHICH event a seed's `?` lands on without
+  // moving a draw. Gated events are kept: with no history they are never in
+  // the pool, exactly as then. Pinned by id, so a later event cannot move it.
+  const PRE_SEAT_UNGATED_EVENTS = ['goldboughAvatar', 'abandonedCart', 'weepingPilgrim', 'bloodstainedAltar', 'wanderingPhysician', 'goldenMoth', 'feralShrine', 'ancientRuneStone', 'graveOfTheNameless', 'sleepingSmith', 'wyrmTrial', 'discardedReliquary', 'omensAltar', 'rotPriestOffer', 'handspiderNest', 'fadedGrace', 'merchantsGhost', 'cinderbearDen', 'stakeOfTheMartyr', 'twoFingersRiddle'];
+  for (const id of PRE_SEAT_UNGATED_EVENTS) assert.ok(REG.events.has(id), `pre-seat event '${id}' still ships`);
+  const gates = contentBundle.eventHistoryRequirements || {};
+  const PRE_SEAT_REG = createRegistries({ ...contentBundle, events: contentBundle.events.filter((e) => gates[e.id] || PRE_SEAT_UNGATED_EVENTS.includes(e.id)) });
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/actmap-fingerprint-pre-seats.json', import.meta.url), 'utf8'));
   for (const [key, before] of Object.entries(fixture.maps)) {
     const [seed, tier] = key.split(':').map(Number);
+    // And against TODAY's roster, every draw and every node but the picked
+    // event id is still the pre-seat tree's: the new events moved no draw.
+    const liveRng = createRng(seed);
+    const live = buildActMap(REG, liveRng, ORDER[tier - 1], tier);
+    const { seats: _liveSeats, ...liveCounters } = liveRng.getCounters();
+    const shape = (nodes) => JSON.parse(JSON.stringify(nodes.map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, kind: resolved?.kind, encounterId, destinationLabel }))));
+    assert.deepEqual({ counters: liveCounters, nodes: shape(Object.values(live.nodes)), bossIds: live.bossIds, startIds: live.startIds }, { counters: before.counters, nodes: shape(before.nodes), bossIds: before.bossIds, startIds: before.startIds }, `seed ${seed} tier ${tier} (live roster)`);
     const rng = createRng(seed);
-    const g = buildActMap(REG, rng, ORDER[tier - 1], tier);
+    const g = buildActMap(PRE_SEAT_REG, rng, ORDER[tier - 1], tier);
     const after = { counters: rng.getCounters(), nodes: Object.values(g.nodes).map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, resolved, encounterId, destinationLabel })), bossIds: g.bossIds, startIds: g.startIds };
     const { seats, ...counters } = after.counters;
     // JSON round-trip: the fixture dropped `undefined` fields the way any save does.

@@ -231,6 +231,12 @@ export const nodeTerms = [
     "template": ""
   },
   {
+    "nodeId": "equipment.dualWield",
+    "playerTermId": "term.dualWield",
+    "tooltipTermId": "term.tooltip.dualWield",
+    "template": ""
+  },
+  {
     "nodeId": "utility.evasion",
     "playerTermId": "term.evasion",
     "tooltipTermId": "term.tooltip.evasion",

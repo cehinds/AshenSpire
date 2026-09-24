@@ -6,6 +6,7 @@ import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
+import { mechanics } from '../framework/data/mechanics.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -150,8 +151,13 @@ export const ARMOUR_WEIGHT_RULE = 'poiseThreshold';
  */
 export function pieceWeight(piece) {
   if (!piece) return 0;
-  if (piece.kind === 'armor') return ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0;
-  return Number.isInteger(piece.weight) ? piece.weight : 0;
+  const authored = piece.kind === 'armor'
+    ? (ARMOUR_WEIGHT_RULE === 'poiseThreshold' ? (piece.poiseThreshold || 0) : 0)
+    : (Number.isInteger(piece.weight) ? piece.weight : 0);
+  // Authored weights are on the pre-lean attribute scale; capacity is not.
+  // One data knob (mechanics.weight.itemWeightScale) rescales every piece, to
+  // a tenth, so load and capacity are measured in the same units.
+  return Math.round(authored * mechanics.weight.itemWeightScale * 10) / 10;
 }
 
 export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
@@ -165,8 +171,9 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
     classId: piece.kind === 'armor' ? piece.classId : null,
     value: pieceWeight(piece),
   }));
-  const armour = sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0);
-  const hands = sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0);
+  const tenth = (n) => Math.round(n * 10) / 10;
+  const armour = tenth(sources.filter((s) => s.classId != null).reduce((sum, s) => sum + s.value, 0));
+  const hands = tenth(sources.filter((s) => s.classId == null).reduce((sum, s) => sum + s.value, 0));
   const decided = registries.framework.weightClass({
     attributes: run.attributes,
     bonuses: capacityBonus,
