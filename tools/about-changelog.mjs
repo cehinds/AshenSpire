@@ -3,6 +3,8 @@
 // module must be an exact structured projection of it. Normal mode checks the
 // projection and the real About disclosure. --selftest plants malformed and
 // duplicated receipts. --write performs the mechanical projection only.
+// --check-order runs the ordering rules alone, with no browser (tests.yml), and
+// --check-order --selftest runs only that corpus.
 
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -755,6 +757,18 @@ export function isLegacyStamp(key) {
  */
 export const compareStamps = compareVersions;
 
+// THE TWO HEADING SHAPES A RECEIPT MAY SIT UNDER. A date group, `## 2026-09-24`
+// (optionally followed by ` — <note>`, which the 2026-08-20 backfill uses), and
+// a RELEASE heading, `## 1.0.0 — 2026-10-01`: the day a version is cut its
+// receipts are grouped under the release, and the date after the em-dash is the
+// one the newest-first rule reads. Anything else a `## ` line says is not a
+// place a receipt can be dated, and `--check-order` refuses it by name.
+const DATE_HEADING = /^(\d{4}-\d{2}-\d{2})(?: — \S.*)?$/;
+const RELEASE_HEADING = /^(\d+\.\d+\.\d+) — (\d{4}-\d{2}-\d{2})$/;
+function headingDate(group) {
+  return group.match(RELEASE_HEADING)?.[2] ?? group.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+}
+
 export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
   const entries = [];
   const receipts = [];
@@ -768,7 +782,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     if (!match) throw new Error(`unparseable changelog receipt: ${line}`);
     const [, summary, prText, url, urlPr, build, prose = ''] = match;
     if (prText !== urlPr) throw new Error(`pull-request label and URL disagree: ${line}`);
-    const date = group.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+    const date = headingDate(group);
     if (!date) throw new Error(`receipt has no dated group: ${line}`);
     const pullRequest = Number(prText);
     const where = `receipt #${pullRequest}`;
@@ -887,6 +901,139 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     }
   }
   return entries;
+}
+// ---- --check-order: the ordering rules alone, with no browser ----
+//
+// WHY A SEPARATE MODE. The plain run proves the projection AND the real About
+// route, so it needs Chromium and a built bundle and runs in ci.yml, which is
+// dispatch-only. The ordering half needs neither, and a receipt the merge train
+// writes out of order should be refused on the pull request that writes it, in
+// tests.yml's core job. So this mode runs parseChangelog's #310 rules (dates
+// newest first across groups; no older group citing a newer build; no receipt
+// past buildordinal.json, one build ahead allowed — the receipt for the rebuild
+// the merging PR produces) and adds the rules below that parseChangelog does not
+// hold.
+//
+// WITHIN A DATE, BUILDS NEVER RISE. Receipts run newest first inside a date as
+// well as across dates, so reading down, each stamp is no newer than the one
+// above it (ties allowed: docs-only merges share a build). Measured on this tree
+// on 2026-09-24, the rule was not held before 2026-09-21: GRANDFATHERED_RISES
+// within-date rises sit in dates up to 2026-09-20, written before receipts came
+// from a merge train. Those are GRANDFATHERED, and PINNED rather than skipped —
+// the count must equal the pin exactly, so a new rise written into an old date
+// reds, and so does one repaired without updating the pin (the freed slack would
+// hide the next one). CHANGELOG.md is not rewritten here.
+export const WITHIN_DATE_FROM = '2026-09-21';
+export const GRANDFATHERED_RISES = 28;
+export const ORDER_SCOPE = [
+  'about-changelog --check-order DID NOT CHECK:',
+  '  the in-game projection or the About route (the plain run does, with a browser) ·',
+  `  within-date order in dates before ${WITHIN_DATE_FROM} (counted against the pin, not refused one by one) ·`,
+  '  that a receipt\'s build actually contains its change, or that its PR merged ·',
+  '  that a release heading\'s version matches buildordinal.json\'s release ·',
+  '  receipts whose stamp is prose rather than <release>.<ordinal> (they have no build to order).',
+].join('\n');
+
+function realCalendarDate(date) {
+  const d = new Date(`${date}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === date;
+}
+
+export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
+  if (typeof currentOrdinal !== 'number' || typeof currentRelease !== 'string') {
+    throw new Error('check-order: buildordinal.json gave no ordinal and release, so no receipt can be weighed against the builds that exist');
+  }
+  let checks = 0;
+  for (const line of markdown.split(/\r?\n/)) {
+    if (!line.startsWith('## ')) continue;
+    const heading = line.slice(3).trim();
+    const date = heading.match(RELEASE_HEADING)?.[2] ?? heading.match(DATE_HEADING)?.[1];
+    if (!date) {
+      throw new Error(`check-order: heading '${line}' is neither a date group ('## YYYY-MM-DD') nor a release heading ('## X.Y.Z — YYYY-MM-DD', em-dash)`);
+    }
+    if (!realCalendarDate(date)) throw new Error(`check-order: heading '${line}' names ${date}, which is not a calendar date`);
+    checks++;
+  }
+  const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: true });
+  checks += entries.length;
+  let rises = 0;
+  for (let i = 1; i < entries.length; i++) {
+    const above = entries[i - 1], below = entries[i];
+    if (above.date !== below.date) continue;
+    const a = above.build.match(STAMP), b = below.build.match(STAMP);
+    if (!a || !b) continue;
+    const newer = stampKey(a[1], Number(a[2])), older = stampKey(b[1], Number(b[2]));
+    if (compareStamps(older, newer) <= 0) continue;
+    if (below.date < WITHIN_DATE_FROM) { rises++; continue; }
+    throw new Error(`check-order: build rises within ${below.date}: #${below.pullRequest} cites \`${below.build}\` below #${above.pullRequest}'s \`${above.build}\` — receipts run newest first inside a date too`);
+  }
+  if (rises !== GRANDFATHERED_RISES) {
+    throw new Error(`check-order: ${rises} within-date rise(s) before ${WITHIN_DATE_FROM}, but GRANDFATHERED_RISES pins ${GRANDFATHERED_RISES}`
+      + ' — a rise written into an old date is refused like any other; if one was repaired, lower the pin in the same change');
+  }
+  return { entries, checks: checks + 1 };
+}
+
+// The plants are FILE BYTES: each writes a CHANGELOG.md and buildordinal.json
+// into an empty root and runs this tool whole against it (`--root`), as CI does.
+// They insert above the real file's first `## ` heading, so the corpus is the
+// real history plus one known-bad, and drifts with nothing.
+async function orderSelftest() {
+  const real = readFileSync(OWNER, 'utf8');
+  const ordinalFile = readFileSync(resolve(ROOT, 'buildordinal.json'), 'utf8');
+  const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
+  const at = real.indexOf('\n## ');
+  if (at < 0) throw new Error('check-order selftest: CHANGELOG.md has no ## heading to plant above');
+  const r = (pr, ord, rl = rel) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${rl}.${ord}\`).`;
+  const top = (block) => `${real.slice(0, at)}\n${block}\n${real.slice(at)}`;
+  const oldDate = /\n## 2026-09-1\d\n\n/;
+  const oldGroup = real.match(/\n## 2026-09-1\d\n\n([\s\S]*?)\n## /)?.[1] ?? '';
+  const oldOrdinals = [...oldGroup.matchAll(new RegExp(`\`${rel.replace(/\./g, '\\.')}\\.(\\d+)\``, 'g'))].map((m) => Number(m[1]));
+  const oldLow = Math.min(...oldOrdinals), oldHigh = Math.max(...oldOrdinals);
+  if (!oldDate.test(real) || !(oldLow < oldHigh)) throw new Error('check-order selftest: plant site drifted — no 2026-09-1x group with two builds of the current release to plant a grandfathered-date rise into');
+  const plants = [
+    ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
+    ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'this file runs newest first'],
+    ['build rising within a date', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, n + 1)}\n`), null, 'build rises within 2099-01-01'],
+    // Two groups sharing a date are ordered by the cross-group rule, which a
+    // release heading must not slip past.
+    ['release heading and date group sharing a date, build rising', top(`## 1.0.0 — 2099-01-01\n\n${r(990001, n)}\n\n## 2099-01-01\n\n${r(990002, n + 1)}\n`), null, 'an older merge cannot ship a newer build'],
+    // The group's own lowest then highest build, on top of it: one more rise,
+    // and the group's range — so every cross-group rule — unchanged.
+    ['rise written into a grandfathered date', real.replace(oldDate, (m) => `${m}${r(990001, oldLow)}\n${r(990002, oldHigh)}\n`), null, 'GRANDFATHERED_RISES pins'],
+    ['receipt two builds past buildordinal.json', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), null, 'a receipt cannot name a build that has not happened'],
+    ['release heading with a hyphen, not an em-dash', top(`## 1.0.0 - 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
+    ['release heading with a two-part version', top(`## 1.0 — 2099-01-01\n\n${r(990001, n)}\n`), null, 'neither a date group'],
+    ['release heading with no date', top(`## 1.0.0\n\n${r(990001, n)}\n`), null, 'neither a date group'],
+    ['date that is not on the calendar', top(`## 2099-02-30\n\n${r(990001, n)}\n`), null, 'not a calendar date'],
+    ['no buildordinal.json to weigh receipts against', real, 'absent', 'buildordinal.json gave no ordinal'],
+  ];
+  // Must PASS: a release heading on top, one build ahead (the in-PR receipt),
+  // a tie, and a descent inside the one date. (A descent ACROSS releases inside
+  // a date is proven by the real file, which has several.)
+  const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, n + 1)}\n${r(990002, n + 1)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
+  // The scope blocks print on every exit, so the tail of the output is never the
+  // reason; the one line that names it is.
+  const redLine = (out) => out.split('\n').find((l) => /RED —|Error:/.test(l)) ?? '(no red line)';
+  let caught = 0;
+  const runAt = (markdown, ordinal) => {
+    const parent = mkdtempSync(join(tmpdir(), 'about-changelog-order-'));
+    try {
+      writeFileSync(join(parent, 'CHANGELOG.md'), markdown);
+      if (ordinal !== 'absent') writeFileSync(join(parent, 'buildordinal.json'), ordinalFile);
+      const child = spawnSync(process.execPath, [SCRIPT, '--root', parent, '--check-order'], { encoding: 'utf8', timeout: 60000 });
+      return { code: child.status, out: `${child.stdout || ''}\n${child.stderr || ''}` };
+    } finally { rmSync(parent, { recursive: true, force: true }); }
+  };
+  for (const [name, markdown, ordinal, expect] of plants) {
+    const { code, out } = runAt(markdown, ordinal);
+    if (code !== 0 && out.includes(expect)) { caught++; console.log(`CAUGHT ${name}`); }
+    else { console.error(`MISS ${name}: exit=${code}; expected ${expect}; said: ${redLine(out)}`); process.exitCode = 1; }
+  }
+  const pass = runAt(good, null);
+  if (pass.code === 0) { caught++; console.log('CAUGHT (inverted) a planted 1.0.0 release heading, a one-ahead receipt, a tie and a descent pass'); }
+  else { console.error(`MISS legitimate release heading refused: exit=${pass.code}; said: ${redLine(pass.out)}`); process.exitCode = 1; }
+  return { caught, total: plants.length + 1 };
 }
 function generatedText(entries) {
   return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\nexport const GENERATED_CHANGELOG = Object.freeze(${JSON.stringify(entries, null, 2)});\n`;
@@ -1706,7 +1853,9 @@ async function selftest() {
       rmSync(tempParent, { recursive: true, force: true });
     }
   }
-  const grandTotal = total + treePlants.length;
+  const order = await orderSelftest();
+  caught += order.caught;
+  const grandTotal = total + treePlants.length + order.total;
   if (inverted !== EXPECTED_INVERTED) {
     console.error(`about-changelog selftest: RED — ${inverted} inverted case(s) ran, ${EXPECTED_INVERTED} declared.`
       + ' Update EXPECTED_INVERTED in this file, or restore the case that stopped running.');
@@ -1725,6 +1874,24 @@ try {
     const entries = parseChangelog(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease(), projecting: true });
     writeFileSync(GENERATED, generatedText(entries));
     console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
+  } else if (process.argv.includes('--check-order')) {
+    if (process.argv.includes('--selftest')) {
+      const { caught, total } = await orderSelftest();
+      if (caught === total && !process.exitCode) console.log(`about-changelog check-order selftest: OK — ${caught} known-bads, ${caught} caught`);
+      else process.exitCode = 1;
+    } else {
+      // A refused order is a FINDING (exit 1), not a harness death: the door
+      // (verdict.mjs) reads an unhandled throw as "could not run" (exit 2).
+      try {
+        const { entries, checks } = checkOrder(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() ?? undefined });
+        console.log(`about-changelog check-order: ${entries.length} receipts ordered newest first; ${GRANDFATHERED_RISES} pre-${WITHIN_DATE_FROM} within-date rises match the pin`);
+        console.log(`about-changelog check-order: OK — ${checks} checks passed`);
+      } catch (error) {
+        console.error(`about-changelog check-order: RED — ${error.message}`);
+        process.exitCode = 1;
+      }
+    }
+    console.log(ORDER_SCOPE);
   } else if (process.argv.includes('--selftest')) {
     await selftest();
   } else if (process.argv.includes('--probe-source')) {

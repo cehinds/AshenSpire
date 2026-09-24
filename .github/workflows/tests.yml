@@ -15,12 +15,21 @@
 # measured for `push: ['**']` + `pull_request`. ci.yml's own triggers are left
 # exactly as the owner set them.
 #
-# TWO JOBS, ONE RUNNER (tests/run-node.mjs), so a slow corpus cannot hold the
-# fast answer hostage and neither job reads a tree the other is mutating:
-#   core       — the engine suite, every discovered *.test.mjs, and each tool's
-#                verdict on the tree as it stands
-#   selftests  — every tool's `--selftest` known-bad corpus, plus the bundler's
-#                parse-gate fixtures (tools/bundle.test.mjs, minutes long)
+# THREE PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
+# no job reads a tree another is mutating:
+#   core       — the engine suite, every discovered *.test.mjs, each tool's
+#                verdict on the tree as it stands (tests/run-node.mjs), and the
+#                no-browser CHANGELOG ordering check with its own known-bads
+#   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
+#   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
+#                ran as a second step of `selftests` and, at about twelve
+#                minutes, set the PR's wall time on its own; alone it runs
+#                beside the other two instead of after one of them.
+#
+# CANCELLATION IS FOR PULL REQUESTS ONLY. A newer push to a PR branch makes the
+# older run's answer moot, so it is cancelled. A push to dev is a MERGE, and each
+# merge's post-merge tree is its own answer: cancelling it when the next merge
+# lands left merged commits with no run at all. So dev pushes queue instead.
 
 name: tests
 
@@ -33,7 +42,7 @@ on:
 
 concurrency:
   group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -56,6 +65,14 @@ jobs:
       - name: Engine suite, every discovered test file, and each tool's verdict on the tree
         run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
 
+      - name: CHANGELOG receipts run newest first and name builds that exist (no browser)
+        if: always() # independent of the step above; a red there must not hide this
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order
+
+      - name: The ordering check still catches its own known-bads
+        if: always()
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
+
   selftests:
     name: tool self-tests
     runs-on: ubuntu-latest
@@ -73,6 +90,14 @@ jobs:
       - name: Every tool check still catches its own known-bad corpus
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
 
+  parse-gate:
+    name: bundler parse gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-node
+
       - name: Parse gate — the bundler's own known-bad fixtures
-        if: always() # independent of the step above; a red there must not hide this
         run: node tools/bundle.test.mjs
