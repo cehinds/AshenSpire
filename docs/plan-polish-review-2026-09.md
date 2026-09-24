@@ -75,8 +75,10 @@ amended before code moves.
   - [ ] Bot picks only affordable cards and continues the turn on refusal.
   - [ ] Regenerate `docs/BALANCE.md` (stale: Reaver HP 66 documented vs 48
     live; Starseer vs packHunt 100% documented vs ~19% live) and gate it in CI.
-  - [ ] Record the baseline per class over ≥ 40 seeded runs (review measured
-    Starseer 0/20, Herald 17–18/20, Reaver and Rogue 8–12/20).
+  - [ ] Record the baseline per class over ≥ 40 seeded runs. The review's
+    bot measured Starseer 0/20, Herald 17–18/20, Reaver and Rogue 8–12/20,
+    but that bot did not yet play by the live rules, so these figures are a
+    lead, not a verdict, until A1 lands.
 - [ ] **A2 Resource starvation (M).** Stamina regains +1 only on a turn with
   no spend and Mana never regenerates in combat
   (`content/framework/mechanics.json` ~6, ~10); both pools persist across
@@ -117,11 +119,16 @@ amended before code moves.
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
   the derived draw stat (`src/engine/handRules.js` ~6–10) and make 21 draw
   cards and 6 draw relics near-dead.
-  - [ ] Default to drawing the derived Draw stat each turn with end-of-turn
-    discard (SPEC §5 turn end already discards non-Retain cards); retune the
-    Draw row so a new character draws about 5 (`3 + floor(INT/5)` is 3 at
-    creation).
-  - [ ] Keep Retain as a keyword or class trait; keep the old mode selectable.
+  - [ ] **(owner ruling)** Default solo combat to drawing the derived Draw
+    stat each turn with end-of-turn discard, and retune the Draw row so a new
+    character draws about 5 (`3 + floor(INT/5)` is 3 at creation). SPEC §4.1
+    makes retain-and-fill the solo default; the discard sequence it also
+    describes applies to older saves and LAN combat.
+  - [ ] Keep Retain as a keyword or class trait; keep the current mode
+    selectable.
+  - [ ] Within the current rules: rebalance draw cards and relics so they
+    matter under retain-and-fill (for example, by raising capacity only
+    through them).
 
 ### E1. Test hygiene (one session, beside A)
 
