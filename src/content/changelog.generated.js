@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1267",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: the automated checks cost less and one of them runs again",
+    "detail": "Nothing you see in the game changes. The repository's automated jobs now share one Node version and stop downloading the full game build on jobs that never open it, two orphan files are gone, and the architecture report that had crashed on every merge since the file list outgrew a buffer runs to its answer again.",
+    "build": "0.7.1.445",
+    "pullRequest": 1267,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1267"
+  },
+  {
     "id": "pr-1265",
     "date": "2026-09-24",
     "group": "2026-09-24",
