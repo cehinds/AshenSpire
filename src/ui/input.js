@@ -728,14 +728,17 @@ function pressEnd(cancelled = false) {
 
 // Left/right on a focused slider nudges its value (keyboard + pad parity).
 function nudgeRange(el, delta) {
-  const step = Number(el.step) || 1;
   const min = Number(el.min);
   const max = Number(el.max);
+  // `step="any"` (a fractional Settings slider) has no step: nudge by 1% of the span.
+  const step = Number(el.step) || (Number.isFinite(max - min) && max > min ? (max - min) / 100 : 1);
   let v = Number(el.value) + delta * step;
   if (!isNaN(min)) v = Math.max(min, v);
   if (!isNaN(max)) v = Math.min(max, v);
   el.value = String(v);
   el.dispatchEvent(new Event('input', { bubbles: true }));
+  // A stepper's slider saves on `change`; a pad nudge is a whole gesture.
+  el.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function synthKey(key) {
@@ -870,6 +873,16 @@ function onKeydown(ev) {
     return;
   }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+    // A Settings stepper (− slider field +): with its − or + focused, the pad's
+    // left/right (and the arrow keys) press − or + instead of moving focus.
+    // The pad drives the game cursor; a mouse or Tab leaves DOM focus there.
+    const stepButton = [cur, document.activeElement, ev.target].find((el) => el?.matches?.('.set-step'));
+    const stepper = stepButton?.closest('[data-stepper]');
+    if (stepper && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+      stepper.querySelector(`.set-step[data-step="${ev.key === 'ArrowRight' ? 1 : -1}"]`)?.click();
+      ev.preventDefault();
+      return;
+    }
     // On a focused slider, horizontal arrows tune it rather than navigate.
     if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
       nudgeRange(cur, ev.key === 'ArrowRight' ? 1 : -1);

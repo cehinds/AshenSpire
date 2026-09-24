@@ -235,7 +235,7 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
 test('while searching, the scoped reset resets the shown results and says so', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /query \? settingsSearchHits\(query, pageDebug\(\), settings\)\.slice\(0, SEARCH_LIMIT\)\.map\(\(hit\) => hit\.row\)/);
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.slice\(0, SEARCH_LIMIT\)/);
   assert.ok(screen.includes("'Reset these results'"));
 });
 
@@ -316,4 +316,54 @@ test('a profile load that finishes after the location changed is dropped', async
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(mine !== generation \|\| !btn\.isConnected\) return;/);
   assert.match(panel, /cfg = syncConfig\(raw\);\s*generation \+= 1;/);
+});
+
+test('Changed lists every modified row from every section, and nothing else', async () => {
+  const { rowDefault } = await import('../src/ui/screens/settings.js');
+  const hits = settingsSearchHits('', true, { screenShake: false, 'gameConfig.combatRatings.multiplier': 1.5 }, { changedOnly: true });
+  assert.deepEqual(hits.map((hit) => hit.row.key).sort(), ['gameConfig.combatRatings.multiplier', 'screenShake']);
+  assert.deepEqual(settingsSearchHits('', true, {}, { changedOnly: true }), [], 'a fresh profile has nothing changed');
+  assert.deepEqual(settingsSearchHits('shake', true, { screenShake: false, reducedMotion: true }, { changedOnly: true }).map((h) => h.row.key), ['screenShake'], 'words narrow it');
+  assert.equal(rowDefault(settingsRow('screenShake')), settingsRow('screenShake').def, 'no promoted default: the row default');
+});
+
+test('a reset offers Undo with exactly what it moved', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const seen = [];
+  const snapshot = resetKeys(settings, (c) => seen.push(c), ['screenShake', 'musicVolume'], 'Group reset');
+  assert.deepEqual(snapshot, { screenShake: false, musicVolume: undefined });
+  assert.equal(settings.screenShake, undefined);
+  assert.equal(settings.reducedMotion, true, 'keys outside the reset stay');
+  assert.deepEqual(seen, [{ screenShake: undefined, musicVolume: undefined }]);
+});
+
+test('a release build can see and clear tuning it hides', async () => {
+  const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { 'gameConfig.combatRatings.multiplier': 2, screenShake: false };
+  assert.deepEqual(hiddenTuningKeys(settings, false), ['gameConfig.combatRatings.multiplier']);
+  assert.deepEqual(hiddenTuningKeys(settings, true), [], 'a debug build shows every row, so nothing is hidden');
+});
+
+test('an authored slider range wins over the heuristic, and still holds the value', () => {
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 0.01, def: 1, sliderRange: [0.5, 2] }, 1), [0.5, 2]);
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 0.01, def: 1, sliderRange: [0.5, 2] }, 3), [0.5, 3]);
+});
+
+test('promoted defaults seed a profile once, follow a new promotion, and never override a choice', async () => {
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const first = { version: 'a', values: { screenShake: false, musicVolume: 40 } };
+  const fresh = {};
+  Object.assign(fresh, seedSettingsDefaults(fresh, first));
+  assert.equal(fresh.screenShake, false);
+  assert.equal(fresh.musicVolume, 40);
+  assert.deepEqual(fresh[SEED_KEY], first.values);
+  const chose = { ...fresh, musicVolume: 70 };
+  const second = { version: 'b', values: { screenShake: true, musicVolume: 55 } };
+  const moved = seedSettingsDefaults(chose, second);
+  assert.equal(moved.screenShake, true, 'an untouched default follows the new promotion');
+  assert.ok(!('musicVolume' in moved), 'the player’s own value stays');
+  const dropped = seedSettingsDefaults({ ...fresh }, { version: 'c', values: {} });
+  assert.ok('screenShake' in dropped && dropped.screenShake === undefined, 'a dropped promotion hands the key back to the code default');
+  assert.deepEqual(seedSettingsDefaults({}, { version: 'none', values: {} }), {}, 'no promotion, no change');
 });

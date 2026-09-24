@@ -86,6 +86,8 @@ import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
+import { seedSettingsDefaults } from './model/settingsDefaults.js';
+import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug } from './ui/buildChannel.js';
 import { openSettings, settingsRows, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
@@ -320,6 +322,19 @@ if (hasLegacyAdvancedSettings(activeSettings)) {
   // re-reads the stored bytes on every call, so a profile left un-saved would
   // hand the next reader the retired key again.
   saves.saveMeta(activeMeta);
+}
+// THE OWNER'S PROMOTED DEFAULTS (src/content/settingsDefaults.js, written by
+// tools/settings-defaults.mjs). A key the player never set starts there, and a
+// key still at an earlier promotion's value follows a new one; a key the
+// player chose is theirs. Applied before anything reads the profile.
+{
+  const seeded = seedSettingsDefaults(activeSettings, SETTINGS_DEFAULTS);
+  if (Object.keys(seeded).length) {
+    for (const [key, value] of Object.entries(seeded)) {
+      if (value === undefined) delete activeSettings[key]; else activeSettings[key] = value;
+    }
+    saves.saveMeta(activeMeta);
+  }
 }
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
