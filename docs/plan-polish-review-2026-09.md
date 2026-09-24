@@ -27,9 +27,15 @@ P3  D payload & release model (owner sign-off) · K code structure · L engine p
 
 - **A** runs as sequential PRs in one session: A1 makes the simulator measure
   the live game, and every later balance PR is judged with it.
-- **E1** runs beside A. **F, G, H, C** touch disjoint files from A and from
-  each other, except `styles/combat.css` and `src/ui/fx.js`, which F and H
-  share: F lands first, H rebases.
+- **E1** runs beside A. **F, G, H, C** stay off A's files. They overlap each
+  other in two places, each with a set order:
+  - `styles/combat.css` and `src/ui/fx.js` (F and H): F lands first, H
+    rebases.
+  - Player-facing copy in `src/content/relics.js` and
+    `content/source/uiStrings.csv` (G and C): every copy change in those files
+    belongs to C, including G's "(no current consumer)" relic note and the
+    flask/potion wording. G leaves those files alone and rebases if C lands
+    first.
 - **P2** items are design calls for the owner before any session builds them.
 - **D** changes how builds ship and needs the owner's sign-off, above all for
   any history rewrite.
@@ -257,9 +263,11 @@ amended before code moves.
   Tab stops — add a skip-to-hand key.
 - [ ] **Copy (S).** Tutorial says Energy, HUD says Actions (`tutorial.js`
   ~35); Quit says "YOUR CLIMB IS SAVED" with no climb; death screen repeats
-  the class name and does not group duplicate cards; flask vs potion.
+  the class name and does not group duplicate cards. (Flask vs potion
+  wording is C's.)
 - [ ] **Dev text in play (S).** "UNSTAMPED" build line and "Replay entrance"
-  on the title; "(no current consumer)" in a relic (`relics.js` ~154).
+  on the title. (The "(no current consumer)" relic note, `relics.js` ~154,
+  is C's.)
 
 ### H. Sprite scale and asset hygiene
 
