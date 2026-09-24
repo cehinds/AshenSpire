@@ -231,6 +231,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
+    // SPEC §7.4 kill cam: did this dispatch win the fight (its last kill is the winning blow)?
+    fightWon: () => combat.result === 'victory',
     // #61: fx beats read a proc row's display data (name/tint/icon) through
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.

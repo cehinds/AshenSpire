@@ -25,6 +25,7 @@
 // source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatFormationModel.json fafe847869663431
+// source content/config/ui/presentation/combatJuiceModel.json 0f8daa2ab7ca2a37
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 5f145ed3602bc65f
@@ -2925,6 +2926,52 @@ export const uiConfig = deepFreeze({
           0.25,
           1.125
         ]
+      }
+    },
+    "combatJuiceModel": {
+      "sizing": {
+        "damageTiers": {
+          "chipBelow": 6,
+          "heavyAt": 15,
+          "critAt": 25,
+          "capAt": 50
+        },
+        "damageScale": {
+          "normalBoost": 0.15,
+          "heavyBoost": 0.15,
+          "critBoost": 0.3
+        },
+        "killCam": {
+          "zoom": 1.12,
+          "vignetteOpacity": 0.6
+        }
+      },
+      "motion": {
+        "hitStop": {
+          "minMs": 40,
+          "critMs": 80,
+          "maxMs": 120,
+          "staggerMs": 100,
+          "impactFraction": 0.34,
+          "freshAnimationMs": 50
+        },
+        "killCam": {
+          "bossMs": 900,
+          "eliteMs": 750,
+          "lastEnemyMs": 600,
+          "slowRate": 0.35,
+          "zoomInMs": 160,
+          "zoomOutMs": 200
+        }
+      },
+      "behavior": {
+        "killCam": {
+          "lastEnemy": true,
+          "rankByStature": {
+            "huge": "boss",
+            "large": "elite"
+          }
+        }
       }
     },
     "combatPoseStates": {
