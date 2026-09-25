@@ -470,11 +470,11 @@ async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
 // function CI uses — never a string handed to the matcher, because the thing
 // being proven is the DOOR, and a matcher unit-test walks past it.
 const SELFTEST = [
-  // ---- THE TWO FIXTURES THE CARD REQUIRES, run from their real paths. ----
-  { fixture: 'tests/fixtures/verdict/silent_exit_zero.mjs',
-    name: "#12 fixture: prints nothing, exits 0 → SILENCE", want: 3 },
-  { fixture: 'tests/fixtures/verdict/vacuous_green.mjs',
-    name: '#12 fixture: well-formed verdict counting ZERO → refused', want: 1 },
+  // ---- THE TWO KNOWN-BADS THE CARD REQUIRES (formerly tests/fixtures/verdict/). ----
+  { file: 'process.exit(0);\n',
+    name: "#12 plant: prints nothing, exits 0 → SILENCE", want: 3 },
+  { file: "console.log('vacuous-green: OK — 0 checks passed.');\nprocess.exit(0);\n",
+    name: '#12 plant: well-formed verdict counting ZERO → refused', want: 1 },
 
   // ---- THE ARGV PLANT. The door's own worst defect: wrapper flags parsed
   // from the whole argv made a wrapped `--selftest` run THIS corpus instead of
