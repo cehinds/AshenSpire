@@ -503,4 +503,9 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   const cappedRun = createRunState({ seed: 6, classId: 'reaver', registries: capped });
   const con = attributeCardModels(capped, cappedRun.attributes, { projection: statProjection(capped, cappedRun) }).find((card) => card.id === 'constitution');
   assert.match(con.face.summary, /HP per pt \(max 40\)/);
+  // ...and a rating row's Max reaches its fact too (Codex, #1321).
+  const arCapped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.ar.max': 3 }));
+  const arRun = createRunState({ seed: 6, classId: 'reaver', registries: arCapped });
+  const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'strength');
+  assert(str.reveal.lines.some((line) => /^AR: floor\(0\.75 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
 });

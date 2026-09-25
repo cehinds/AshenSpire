@@ -154,9 +154,12 @@ function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING
     .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      // A rating row's Max is where its points stop paying, as for every
+      // other bounded fact (Codex, #1321).
+      const cap = Number.isFinite(rule.max) ? rule.max : null;
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}`,
-        summary: `${label} weight ${rule[attributeId]}`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
+        summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
       };
     });
 }
