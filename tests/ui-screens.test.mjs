@@ -103,6 +103,7 @@ function fakeDom(clock) {
     get srcElement() { return this.target; }
   }
 
+  const SIGNAL_CLEANUPS = new WeakMap();
   class EventTargetBase {
     constructor() { this._listeners = new Map(); }
     addEventListener(type, fn, opts) {
@@ -112,7 +113,19 @@ function fakeDom(clock) {
       if (list.some((l) => l.fn === fn && l.capture === capture)) return;
       const entry = { fn, capture, once: !!opts?.once };
       list.push(entry); this._listeners.set(type, list); stats.listeners++;
-      opts?.signal?.addEventListener?.('abort', () => this.removeEventListener(type, fn, opts));
+      // One real 'abort' listener per signal, fanning out to every handler it
+      // guards: one listener per handler would pass Node's MaxListeners (10)
+      // and its warning lands in console.error (Codex on #1319).
+      const signal = opts?.signal;
+      if (signal?.addEventListener) {
+        let cleanups = SIGNAL_CLEANUPS.get(signal);
+        if (!cleanups) {
+          cleanups = [];
+          SIGNAL_CLEANUPS.set(signal, cleanups);
+          signal.addEventListener('abort', () => { for (const c of cleanups.splice(0)) c(); }, { once: true });
+        }
+        cleanups.push(() => this.removeEventListener(type, fn, opts));
+      }
     }
     removeEventListener(type, fn, opts) {
       const capture = typeof opts === 'boolean' ? opts : !!opts?.capture;
