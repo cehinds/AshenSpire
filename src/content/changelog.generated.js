@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: leaving the game in the background is now tested",
     "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
-    "build": "0.7.1.505",
+    "build": "0.7.1.510",
     "pullRequest": 1298,
     "url": "https://github.com/cehinds/AshenSpire/pull/1298"
   },
@@ -18,9 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: the release checklist is written down",
     "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
-    "build": "0.7.1.505",
+    "build": "0.7.1.510",
     "pullRequest": 1300,
     "url": "https://github.com/cehinds/AshenSpire/pull/1300"
+  },
+  {
+    "id": "pr-1294",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Fights pay their normal Cinders again",
+    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders. Character creation now offers two ways to set your stats: Standard opens on your class's own spread — mostly 1s, with its three points already placed (the Starseer starts with Intelligence 3) — ready to go, and Assign points starts every stat at 1 with 3 points for you to place, a number you can change in Advanced settings; an Assign character dodges on the same scale as a Standard one, so Dexterity 1 to 3 no longer weakens its Dodge Roll as the old attribute scale did. Your opening hand now depends on your class and is always 4 to 6 cards: a base of 3 (Reaver), 4 (Rogue, Herald) or 5 (Starseer), plus one card once your class's main stat reaches 3, never fewer than 4, so a Standard character opens with 4, 5, 5 or 6 cards. Assign points can no longer be set so low that a class could not wear the equipment it starts in, and Cancel in the Assign points window puts back the Standard stats you had chosen. Saved settings or a configuration file still holding the old opening-hand limits of 3 to 15 cards move to the new 4 to 6 and say so, and a configuration file exported from an earlier build imports again instead of being refused. Character creation shows that number as its own Hand chip, beside Draw, the cards you draw on each later turn — never more than your hand can hold.",
+    "build": "0.7.1.508",
+    "pullRequest": 1294,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
   },
   {
     "id": "pr-1299",

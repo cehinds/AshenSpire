@@ -20,7 +20,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -1198,6 +1198,10 @@ function resumeRun(slot = 1) {
   if (!run) return refusedRunLanding(slot);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
+  // A snapshot still carrying the retired ×20 Cinder key: the bundle above
+  // already left it out, so this only says so — on the channel boot uses for
+  // a profile — and saves the cleaned run once, after `rng` (see below).
+  for (const line of bringRunSnapshotForward(run, () => persist())) console.warn('[advanced-config]', line);
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
   // `scene` indexes the six-scene order; `onScene` below writes the NEW order
   // back into the same field, so a state left marked version 1 would be read
@@ -1463,6 +1467,7 @@ function showSettings() {
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
+    previewClassId: run?.class || null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });
