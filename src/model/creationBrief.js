@@ -55,7 +55,7 @@ import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './l
 import { orderedAttributes } from './attributes.js';
 import { defaultRatingFormula } from './ratingFormula.js';
 import { ruleWeights } from './derivedStats.js';
-import { soloHandFacts } from './soloHand.js';
+import { handRuleFacts } from './handRules.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -245,11 +245,11 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // already hold a slash ("Actions / turn") and two would read as one rate.
     const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
     // A SOLO FIGHT'S HAND IS THE HAND RULES', NOT THE DERIVED DRAW ROW
-    // (model/soloHand.js). Given the rules this character's solo fight is
-    // handed, the face states what a point buys there — the class's opening
+    // (model/handRules.js `classHandRules`). Given the rules this character's
+    // solo fight is handed, the face states what a point buys there — the class's opening
     // hand first — and the derived Draw row, which only co-op and headless
     // fights read, leaves the face for the fold.
-    const handFacts = hand ? soloHandFacts(hand, def.id) : [];
+    const handFacts = hand ? handRuleFacts(hand, def.id) : [];
     const faceFacts = [
       // The opening hand's cap is part of the fact (a Starseer at base 5 has
       // one card of room); the turn draw's and capacity's caps are far away.

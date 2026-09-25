@@ -112,6 +112,32 @@ function withoutRetiredCinderKey(entries) {
 
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
 
+/**
+ * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
+ * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
+ * old key (either spelling), and the run handed to `save(run)` once.
+ *
+ * A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). `configuredContentBundle`
+ * already leaves the key out of a snapshot, so the payouts were right — but a
+ * resumed run lost it in silence, where SPEC §5.1 promises a warning for "a
+ * profile, run snapshot or imported file". Saved, because the snapshot is read
+ * back from storage on every load: an un-saved run would warn every resume.
+ * A snapshot without the key is left untouched and not re-saved.
+ */
+export function bringRunSnapshotForward(run, save, warnings = []) {
+  const overrides = run?.advancedConfigSnapshot?.overrides;
+  if (!overrides || typeof overrides !== 'object') return warnings;
+  const retired = LEGACY_CINDER_KEYS.filter((key) => Object.hasOwn(overrides, key));
+  if (!retired.length) return warnings;
+  // The snapshot is frozen when a run begins in this session; one read back
+  // from storage is a plain object. Either way the run gets a clean copy.
+  const kept = Object.fromEntries(withoutRetiredCinderKey(Object.entries(overrides)));
+  run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides: kept };
+  warnings.push(LEGACY_CINDER_WARNING);
+  save(run);
+  return warnings;
+}
+
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
   return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningLimits(settings);
@@ -159,13 +185,14 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  * handed to `save(meta)`.
  *
  * ONE DOOR FOR A PROFILE ARRIVING FROM STORAGE (Codex, on #1273). Boot brought
- * the profile forward and a restore did not: a restored pre-#1273 profile kept
- * `progression.rewardMultiplier`, which `configuredContentBundle` still paid as
- * ÷ 20 while the Advanced Settings row opened on the new key's default of 1, so
- * the screen misstated what was in force until the next restart. Boot and
- * restore both come through here now. Saved, not only rewritten, because
- * `loadMeta` re-reads the stored bytes on every call: a profile left un-saved
- * would hand the next reader the retired key again.
+ * the profile forward and a restore did not, so a restored profile could keep
+ * a key this build has retired. Boot and restore both come through here now.
+ * The retired `progression.rewardMultiplier` (the ×20 Cinders, #1294) is
+ * DROPPED with a warning — never converted — and the profile saved, so the
+ * Advanced Settings row and `configuredContentBundle` both read the authored
+ * table (or the profile's own `cinderMultiplier`, kept as it was). Saved, not
+ * only rewritten, because `loadMeta` re-reads the stored bytes on every call:
+ * a profile left un-saved would hand the next reader the retired key again.
  */
 export function bringProfileForward(meta, bundle, save, warnings = null) {
   const settings = meta.settings || (meta.settings = {});

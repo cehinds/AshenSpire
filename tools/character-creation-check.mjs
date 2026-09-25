@@ -13,8 +13,10 @@
 //   * the mode select offers exactly the configured creation modes;
 //   * Standard seats each class's own preset (model/attributes.js
 //     classAttributePreset), and the resource strip's Hand and Draw chips are
-//     the hand a SOLO fight of that class deals (model/soloHand.js, the same
-//     rules engine/runCombat.js hands a fight) — no derived Draw chip;
+//     the hand a SOLO fight of that class deals (model/statProjection.js
+//     handResourceRows, read through model/handRules.js classHandRules — the
+//     door engine/runCombat.js snapshots) — the legacy derived Draw row is
+//     replaced, not joined;
 //   * the class's primary stat card states the opening-hand effect;
 //   * Assign points opens on the mode's baseline with its whole pool, and
 //     spending the pool on the primary stat moves the Hand chip to the number
@@ -36,7 +38,8 @@ import { serve } from './serve.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { classAttributePreset, creationMode, orderedAttributes } from '../src/model/attributes.js';
-import { soloHandRules, soloHandSummary } from '../src/model/soloHand.js';
+import { classHandRules } from '../src/model/handRules.js';
+import { handResourceRows } from '../src/model/statProjection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'outputs'));
@@ -44,7 +47,11 @@ const registries = createRegistries(contentBundle);
 const CLASSES = registries.classes.all().map((cls) => cls.id);
 const MODES = { standard: 'lean', assign: 'assign' };
 // A `?shot=customize` boot runs on a fresh profile, so Settings are `{}`.
-const expectedHand = (classId, attributes) => soloHandSummary(soloHandRules(registries, classId, {}), attributes);
+const expectedHand = (classId, attributes) => {
+  const rows = handResourceRows(registries, { class: classId, attributes }, {});
+  const value = (id) => rows.find((row) => row.id === id).value;
+  return { opening: value('openingHand'), turn: value('draw') };
+};
 
 const wait = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms));
 function connectCdp(wsUrl) {
@@ -173,16 +180,16 @@ async function exercise(width, height, screenshotName) {
     await until(`document.querySelectorAll('#cz-primary-stats .cc-attribute-card').length===${orderedAttributes(registries).length}`, `${classId}: Standard stat cards`);
     const preset = classAttributePreset(registries, classId, MODES.standard);
     const hand = expectedHand(classId, preset);
-    const primaryStat = soloHandRules(registries, classId, {}).starting.stat;
+    const primaryStat = classHandRules({}, registries.attributes.all(), classId).starting.stat;
     const standard = await shown();
     assert(JSON.stringify(standard.stats) === JSON.stringify(preset), `${at} ${classId}: Standard seats the class preset (${JSON.stringify(standard.stats)})`);
-    assert(standard.chips.hand?.key === 'Hand' && standard.chips.hand.value === hand.opening,
-      `${at} ${classId}: the Hand chip is the solo opening hand, ${hand.opening} (${JSON.stringify(standard.chips.hand)})`);
-    assert(standard.chips.turnDraw?.key === 'Draw' && standard.chips.turnDraw.value === hand.turn,
-      `${at} ${classId}: the Draw chip is the solo turn draw, ${hand.turn} (${JSON.stringify(standard.chips.turnDraw)})`);
-    assert(!standard.chips.draw, `${at} ${classId}: the co-op derived Draw row is not on the solo strip`);
-    assert(standard.chips.hand?.formula.includes(`= ${hand.opening}`) && standard.chips.hand.formula.includes('Hand capacity'),
-      `${at} ${classId}: the Hand chip's tooltip carries its arithmetic and the hand capacity`);
+    assert(standard.chips.openingHand?.key === 'Hand' && standard.chips.openingHand.value === hand.opening,
+      `${at} ${classId}: the Hand chip is the solo opening hand, ${hand.opening} (${JSON.stringify(standard.chips.openingHand)})`);
+    assert(standard.chips.draw?.key === 'Draw' && standard.chips.draw.value === hand.turn,
+      `${at} ${classId}: the Draw chip is the solo turn draw, ${hand.turn} (${JSON.stringify(standard.chips.draw)})`);
+    assert(standard.chips.draw?.formula.startsWith('Each turn:'), `${at} ${classId}: the Draw chip is the hand rules' turn draw, not the co-op derived row`);
+    assert(standard.chips.openingHand?.formula.startsWith('Opening hand:') && standard.chips.openingHand.formula.endsWith(`= ${hand.opening}`),
+      `${at} ${classId}: the Hand chip's tooltip carries its arithmetic`);
     assert(/Opening hand per/.test(standard.summaries[primaryStat] || ''),
       `${at} ${classId}: the ${primaryStat} card states the opening-hand effect (${standard.summaries[primaryStat]})`);
     assert(Object.entries(standard.summaries).every(([id, text]) => id === primaryStat || !/Opening hand/.test(text || '')),
@@ -220,8 +227,8 @@ async function exercise(width, height, screenshotName) {
     const assigned = await shown();
     const assignedHand = expectedHand(classId, spent);
     assert(JSON.stringify(assigned.stats) === JSON.stringify(spent), `${at} ${classId}: the committed allocation is on the cards (${JSON.stringify(assigned.stats)})`);
-    assert(assigned.chips.hand?.value === assignedHand.opening,
-      `${at} ${classId}: after Assign points the Hand chip follows the allocation, ${assignedHand.opening} (${assigned.chips.hand?.value})`);
+    assert(assigned.chips.openingHand?.value === assignedHand.opening,
+      `${at} ${classId}: after Assign points the Hand chip follows the allocation, ${assignedHand.opening} (${assigned.chips.openingHand?.value})`);
     assert(await noOverflow(), `${at} ${classId}: nothing scrolls sideways`);
   }
 

@@ -31,9 +31,6 @@ test('the dodge term follows the mode: lean centres on 3, an older mode on 10', 
   const standard = framework.dodgeRoll({ roll: 10, dexterity: 7, attributeMode: 'standard', weightClass });
   assert.equal(lean.check, 12, 'lean DEX 7 reads +2');
   assert.equal(standard.check, 8, 'standard DEX 7 reads -2, as it always did');
-  // Assign points is the same 1–4 scale as Standard (lean), so it centres on 3 too.
-  const assign = framework.dodgeRoll({ roll: 10, dexterity: 7, attributeMode: 'assign', weightClass });
-  assert.equal(assign.check, 12, 'assign DEX 7 reads +2, like lean');
 });
 
 test('the mode rides a mid-fight save; an older snapshot reads the run', () => {
@@ -43,4 +40,18 @@ test('the mode rides a mid-fight save; an older snapshot reads the run', () => {
   delete saved.attributeMode;
   const older = restoreCombatSnapshot({ registries, rng: createRng(22), snapshot: saved, fallbackAttributeMode: run.attributeMode });
   assert.equal(older.attributeMode, 'standard');
+});
+
+test('an assign run dodges on the lean scale: DEX 1 and DEX 3 read as they do on lean', () => {
+  const { framework } = registries;
+  const weightClass = { evasionModifier: 0, temporaryGuardModifier: 0, dodgeStaminaCost: 1, dodgeActionCost: 0 };
+  for (const dexterity of [1, 3]) {
+    const lean = framework.dodgeRoll({ roll: 15, dexterity, attributeMode: 'lean', weightClass });
+    const assign = framework.dodgeRoll({ roll: 15, dexterity, attributeMode: 'assign', weightClass });
+    assert.equal(assign.check, lean.check, `assign DEX ${dexterity} checks as lean does`);
+    assert.equal(assign.temporaryGuard, lean.temporaryGuard, `assign DEX ${dexterity} guards as lean does`);
+    assert.equal(assign.temporaryGuard, dexterity === 3 ? 3 : 2, `a landed assign dodge at DEX ${dexterity} guards 3 + term`);
+  }
+  assert.equal(framework.dodgeRoll({ roll: 10, dexterity: 3, attributeMode: 'assign', weightClass }).check, 10, 'assign DEX 3 is the centre: no term');
+  assert.equal(framework.dodgeRoll({ roll: 10, dexterity: 1, attributeMode: 'assign', weightClass }).check, 9, 'assign DEX 1 reads -1, not the d20-scale -5');
 });

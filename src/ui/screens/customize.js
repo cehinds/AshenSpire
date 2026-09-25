@@ -28,9 +28,9 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { soloHandRules, soloHandSummary } from '../../model/soloHand.js';
 import { settingOn } from './settings.js';
-import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources } from '../../model/statProjection.js';
+import { classHandRules } from '../../model/handRules.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
@@ -82,34 +82,12 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Power Rating (PR)',
+  openingHand: 'Opening hand',
+  draw: 'Cards drawn each turn',
 });
 
 function creationDerivedLabel(entry) {
   return CREATION_DERIVED_LABELS[entry.id] || entry.faceLabel;
-}
-
-/**
- * THE HAND A SOLO FIGHT DEALS, in place of the derived Draw row. Creation
- * starts a solo climb, and a solo fight's hand is the class's hand rules
- * (model/soloHand.js) — the derived Draw row only feeds co-op and headless
- * fights, so printing it here promised an opening hand the first turn did not
- * deal. Hand is the opening hand, Draw the cards each later turn adds; the
- * strip already wraps, so hand capacity rides in Hand's tooltip rather than
- * as a third chip.
- */
-function creationHandRows(summary) {
-  return [
-    { id: 'hand', faceLabel: 'Hand', label: 'Opening hand', value: summary.opening,
-      formula: `${summary.formulas.opening}. ${summary.formulas.capacity}.` },
-    { id: 'turnDraw', faceLabel: 'Draw', label: 'Cards drawn each turn', value: summary.turn, formula: summary.formulas.turn },
-  ];
-}
-
-/** `rows` with the derived Draw row replaced by the solo hand, where it stood. */
-function withSoloHand(rows, summary) {
-  const hand = creationHandRows(summary);
-  const at = rows.findIndex((entry) => entry.id === 'draw');
-  return at < 0 ? [...rows, ...hand] : [...rows.slice(0, at), ...hand, ...rows.slice(at + 1)];
 }
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
@@ -123,6 +101,11 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
 }) {
+  // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
+  // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
+  // Draw chips read from the class's own hand rules under these settings,
+  // through the door (`classHandRules`) engine/runCombat.js snapshots.
+  const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -583,13 +566,10 @@ export function mountCustomize(app, {
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
-  /** The rules this character's solo fight would be handed (engine/runCombat.js). */
+  /** The rules this character's first fight is handed — the door
+   *  engine/runCombat.js snapshots — for the attribute cards' hand facts. */
   function creationHandRules(run) {
-    return soloHandRules(registries, run.class, meta.settings);
-  }
-  function creationHandSummary(run) {
-    return soloHandSummary(creationHandRules(run), run.attributes,
-      (id) => registries.attributes.get(id)?.shortLabel || id);
+    return classHandRules(meta.settings || {}, registries.attributes.all(), run.class);
   }
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
@@ -643,8 +623,8 @@ export function mountCustomize(app, {
     });
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
-    const resources = withSoloHand(projection.derived
-      .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) })), creationHandSummary(run));
+    const resources = creationResources(run, projection)
+      .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
   }
@@ -657,7 +637,7 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const resources = classResourceGrid(projection.derived.slice(0, 5));
+    const resources = classResourceGrid(creationResources(run, projection).slice(0, 5));
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -1238,14 +1218,13 @@ export function mountCustomize(app, {
   // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
   const summaryBody = el('div', { class: 'as-stack cc-summary' });
   let summaryFold = null;
-  function characterSummaryResources(projection, poise, hand) {
-    const resources = withSoloHand(projection.derived
+  function characterSummaryResources(derived, poise) {
+    const resources = derived
       .filter(entry => entry.id !== 'poise')
-      .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) })), hand)
       .map(entry => ({
         id: entry.id,
-        label: entry.faceLabel,
-        inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.label || entry.faceLabel,
+        label: creationDerivedLabel(entry),
+        inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.faceLabel,
         value: entry.value,
         explanation: entry.formula,
       }));
@@ -1300,9 +1279,8 @@ export function mountCustomize(app, {
       value: run.attributes[def.id],
     }));
     const resources = characterSummaryResources(
-      projection,
+      creationResources(run, projection),
       playerPoiseThresholdReceipt(registries, run),
-      creationHandSummary(run),
     );
     const card = el('article', {
       class: 'cc-summary-character',
@@ -1560,12 +1538,12 @@ export function mountCustomize(app, {
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
       sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
+      resources: classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    const classResourceSpecimen = classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
@@ -1648,7 +1626,7 @@ export function mountCustomize(app, {
       { key: 'selection-section-face', label: 'Selection subcard face', node: selectionFaceSpecimen },
       { key: 'primary-stat-card', label: 'Primary stat card', node: statHost },
       { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+        creationResources(specimenRun, specimenProjection), playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
       { key: 'mode-choice', label: 'Stat allocation mode', node: choiceSpecimen(
         'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,

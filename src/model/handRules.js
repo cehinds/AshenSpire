@@ -196,6 +196,68 @@ export function withoutRetiredOpeningLimits(entries, warnings = null) {
   return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
 }
 
+/**
+ * classHandRules(settings, attributes, classId) → the hand rules a fight of
+ * this class is handed under these settings. The ONE door: combat
+ * (engine/runCombat.js) snapshots it, and character creation's Hand and Draw
+ * chips read it, so the hand a new character is promised is the hand its
+ * first fight deals (Codex, #1294).
+ */
+export function classHandRules(settings = {}, attributes = [], classId = null) {
+  return handRulesForClass(resolveHandRules(settings || {}, attributes), classId);
+}
+
+/**
+ * handDrawCount(rules, attributes, { handSize, opening, replacements }) → how
+ * many cards one draw puts into a hand already holding `handSize`: the
+ * starting rule on the opening draw, otherwise the fixed turn rule (plus any
+ * replacements for chosen discards) or a fill to capacity — never more than
+ * the room capacity leaves. The ONE formula: combat's `turnDrawCount`
+ * (engine/handRules.js) deals it and creation's Hand and Draw chips
+ * (`handSizeReceipts`) preview it for an empty hand, so a turn draw of 2 into
+ * a capacity of 1 reads 1 on both (Codex, #1294).
+ */
+export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = false, replacements = 0 } = {}) {
+  const capacity = scaledCards(rules.capacity, attributes);
+  const room = Math.max(0, capacity - handSize);
+  const wanted = opening ? scaledCards(rules.starting, attributes)
+    : rules.drawMode === 'fill' ? room : scaledCards(rules.turn, attributes) + replacements;
+  return { capacity, room, wanted, value: Math.min(room, wanted) };
+}
+
+/**
+ * handSizeReceipts(rules, attributes) → the opening hand, the most one turn
+ * draws, and the capacity, each with the terms `scaledCards` used. Both
+ * values are `handDrawCount` into an empty hand — what `turnDrawCount`
+ * (engine/handRules.js) deals: the stated rule (`stated`), limited by
+ * capacity. A fill draw tops the hand up to capacity.
+ */
+export function handSizeReceipts(rules, attributes = {}) {
+  const capacity = scaledCardsReceipt(rules.capacity, attributes);
+  const starting = scaledCardsReceipt(rules.starting, attributes);
+  const opening = { ...starting, stated: starting.value, capacity: capacity.value, value: handDrawCount(rules, attributes, { opening: true }).value };
+  const most = handDrawCount(rules, attributes).value;
+  const turnRule = scaledCardsReceipt(rules.turn, attributes);
+  const turn = rules.drawMode === 'fill'
+    ? { fill: true, capacity: capacity.value, value: most }
+    : { ...turnRule, stated: turnRule.value, fill: false, capacity: capacity.value, value: most };
+  return { opening, turn, capacity };
+}
+
+/**
+ * handRuleFacts(rules, attrId) → what one point of `attrId` buys in the hand
+ * these rules deal, as `{ label, points, baseline, maximum }` per hand rule
+ * that grows with it (the opening hand first: it is the one a class's own
+ * attribute moves). Read by the attribute cards (model/creationBrief.js) with
+ * the rules `classHandRules` hands the character's next fight.
+ */
+export function handRuleFacts(rules, attrId) {
+  const rows = [['starting', 'Opening hand'], ...(rules.drawMode === 'fill' ? [] : [['turn', 'Turn draw']]), ['capacity', 'Hand capacity']];
+  return rows
+    .filter(([group]) => rules[group]?.statEnabled && rules[group].stat === attrId)
+    .map(([group, label]) => ({ label, points: rules[group].pointsPerCard, baseline: rules[group].baseline, maximum: rules[group].maximum }));
+}
+
 export function handRulesSettingsProblems(settings = {}) {
   return Object.entries(groups).flatMap(([group, label]) => {
     const min = settings[HAND_RULES_PREFIX + group + '.minimum'] ?? handRulesDefaults[group].minimum;

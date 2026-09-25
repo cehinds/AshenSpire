@@ -13,6 +13,7 @@ import {
   parseAdvancedConfigFile,
   normalizeAdvancedSettings,
   bringProfileForward,
+  bringRunSnapshotForward,
 } from '../src/model/advancedConfig.js';
 import { saveAdvancedConfigFile } from '../src/ui/services/saveJsonFile.js';
 
@@ -554,6 +555,35 @@ test('boot and profile restore both come through the one door', () => {
   assert.equal(main.match(/bringProfileForward\(/g)?.length, 1, 'main.js calls the model door once, from its helper');
   assert.match(main, /let activeSettings = bringStoredProfileForward\(activeMeta\);/);
   assert.match(main, /onRestored: \(\) => applyRestoredSettings\(bringStoredProfileForward\(saves\.loadMeta\(\)\)\)/);
+});
+
+// A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). SPEC §5.1 promises a
+// warning for a profile, a run snapshot or an imported file; a resumed run
+// used to lose the key in silence.
+test('a resumed run whose snapshot carries rewardMultiplier drops it, warns once and is saved once', () => {
+  const run = { seed: 7, advancedConfigSnapshot: Object.freeze({ schemaVersion: 1, overrides: Object.freeze({
+    [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20, [CINDER]: 2 }) }) };
+  const saved = [];
+  const warnings = bringRunSnapshotForward(run, (brought) => saved.push(structuredClone(brought)));
+  assert.deepEqual(run.advancedConfigSnapshot, { schemaVersion: 1, overrides: { [CINDER]: 2 } }, 'both spellings gone, the new key kept');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(saved, [run], 'the cleaned run is written back once');
+  assert.deepEqual(configuredContentBundle(contentBundle, run.advancedConfigSnapshot).balance.rewards.cinders.normal, [90, 150]);
+
+  // A clean snapshot, an empty one and a run with none are untouched and not re-saved.
+  for (const clean of [{ advancedConfigSnapshot: { schemaVersion: 1, overrides: { [CINDER]: 2 } } },
+    { advancedConfigSnapshot: { schemaVersion: 1, overrides: {} } }, { seed: 1 }]) {
+    const before = structuredClone(clean);
+    assert.deepEqual(bringRunSnapshotForward(clean, () => assert.fail('nothing to bring forward')), []);
+    assert.deepEqual(clean, before);
+  }
+});
+
+test('resumeRun brings a run snapshot forward on the [advanced-config] channel', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const resume = main.slice(main.indexOf('function resumeRun('), main.indexOf('function saveSlotRecords('));
+  assert.match(resume, /rng = createRng\(run\.seed, run\.streamCounters\);[\s\S]*bringRunSnapshotForward\(run, \(\) => persist\(\)\)\) console\.warn\('\[advanced-config\]', line\)/);
 });
 
 test('a v1 file carrying rewardMultiplier 20 imports without it, with a warning', () => {

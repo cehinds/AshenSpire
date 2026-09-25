@@ -14,7 +14,7 @@
 // onCombatEnd does, so the next fight opens where this one ended.
 
 import { createCombat } from './combat.js';
-import { resolveHandRules, handRulesForClass } from '../model/handRules.js';
+import { classHandRules } from '../model/handRules.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 
@@ -79,7 +79,7 @@ export function createRunCombat({
     ratingsRules: registries.balance.combatRatings || null,
     // The class's own opening hand is resolved HERE, into the fight's
     // snapshot, so a saved fight keeps the hand it was born with.
-    handRules: handRulesForClass(resolveHandRules(settings || {}, registries.attributes.all()), run.class),
+    handRules: classHandRules(settings || {}, registries.attributes.all(), run.class),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },
