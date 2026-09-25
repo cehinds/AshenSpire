@@ -1,8 +1,13 @@
 # Release checklist
 
 This is the written release gate for AshenSpire (docs/FINISH.md §13). A release
-candidate (RC) is ready only when every gate below is green on **one** commit, the
-RC SHA, and the owner has signed off at the bottom of this file.
+candidate (RC) is ready only when every gate below, G1–G17, is green on **one**
+commit, the RC SHA. A gate marked **RED** is red until its condition holds, and a
+gate marked **not yet runnable** counts as red. The owner then signs off outside
+this file, in a comment on the release pull request or a release issue (see
+*Owner sign-off*); only the owner cuts `release` or `main` (CONTRIBUTING.md,
+*Coordination and release boundary*). Nothing is written into this file to
+sign, because editing it makes a new commit that never ran the gates.
 
 **Only the owner cuts a release.** Agents never cut `release`, tag, or publish.
 They may run these gates and report results in a pull request into `dev`. Cutting
@@ -24,6 +29,8 @@ wrapping it would read as silence; judge it by its exit code. Exit codes from th
 
 Gates G1–G10 need only Node. G11 and G12 need a headless Chromium (Playwright
 or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
+G14–G17 are the release criteria of docs/FINISH.md that the gates above do not
+cover; G14 and G15 need only Node.
 
 ## Gates
 
@@ -46,6 +53,21 @@ Gate G13 has no local command. A hand-dispatched `ci.yml` run on the RC SHA must
 conclude **success** on every job, including the browser gates and the 3-OS
 matrix (FINISH.md §12, owner decision D7). Name the run URL in the sign-off.
 
+## Release-criterion gates
+
+A green G1–G13 does not show that a whole run can be played or that the classes
+are balanced. `balance.mjs --check` (G6) only proves docs/BALANCE.md is fresh, and
+the `ci.yml` boundary itself says none of its jobs fights, wins, loses or finishes
+a run. Each FINISH.md release criterion below is therefore its own gate, whether
+or not a command for it exists yet.
+
+| Gate | Command | Expected result | Where CI runs it |
+|------|---------|-----------------|------------------|
+| G14 | `node tools/runsim.mjs 5` | Exit 0, ending "No crashes across all simulated runs". Fixed seeds, 5 whole headless runs for every class (FINISH.md §3, line 46). Run it bare: its closing line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. It exits 1 on any crash. | not yet: FINISH.md line 46 asks for `tests/run-node.mjs` to run it |
+| G15 | none yet | **RED: not yet runnable.** A browser run on a fixed seed goes Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors (FINISH.md §3, line 47). No tool in `tools/` plays a full run in a browser. | none |
+| G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full-run win rate is inside the accepted band, and best minus worst is 20 points or less (FINISH.md §4, line 53). The band is owner decision D1 (FINISH.md line 125), whose proposal is a bot band of 35–65% at 40 or more seeded runs per class. The command prints each class's wins but exits 0 whatever they are, so read the rates. G16 stays red until FINISH.md line 53 is ticked. | none |
+| G17 | none yet | **RED: not yet runnable.** The Mana-aware A/B run, `node tools/runsim.mjs 50 --mana-ab`, prints each class's win rate and Mana spent with Mana on and off, and the result lands in docs/BALANCE.md (FINISH.md §4, line 54; SPEC §5.5.1 calls it a release gate). `tools/runsim.mjs` has no `--mana-ab` flag yet. | none |
+
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the
 gate that failed.
@@ -55,6 +77,8 @@ gate that failed.
 - [ ] G1–G12 are green on the RC SHA, and the output of each is kept (a PR
       comment or CI log link).
 - [ ] G13: the dispatched `ci.yml` run on the RC SHA succeeded.
+- [ ] G14–G17 are green on the RC SHA. None of them is still marked RED or not
+      yet runnable, and the output of each is kept.
 - [ ] CHANGELOG.md carries the release heading for this version.
 - [ ] The release notes are drafted.
 
@@ -72,7 +96,7 @@ on a release issue. The comment names:
 - the version,
 - the tested RC SHA,
 - the dispatched `ci.yml` run URL (G13),
-- the result of each gate G1–G12, with a link to its output.
+- the result of each gate G1–G12 and G14–G17, with a link to its output.
 
 After sign-off the owner cuts `release` from that RC SHA, merges it into `main`,
 tags `vX.Y.Z` on `main`, and publishes.
