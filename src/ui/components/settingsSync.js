@@ -289,6 +289,9 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       // Already matching IS loaded: record this version, or the next start
       // would treat it as new and overwrite edits made here since.
       if (!diff.length) {
+        // Nothing visible moves, but a key the profile leaves out may still go
+        // back to the promotion: save that ownership before calling it loaded.
+        try { applyProfile(settings, onChange, parsed); } catch (error) { status(error.message); return; }
         if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) {
           status('This device already matches the profile, but it could not note that (storage is off or full here), so a later start may load it again over changes you make.');
           return;

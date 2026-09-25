@@ -251,7 +251,7 @@ test('a volume slider takes every whole percent, and a compact slider widens for
 test('a profile that already matches is recorded as loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{\s*if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
 });
 
 test('the dev-preview standalone files are named so they open as dev builds', async () => {
@@ -664,4 +664,10 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
   assert.match(screen, /<span class="set-label-line"><span class="ls-label">/, 'label and Reset share one line');
+});
+
+test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}\s*if \(!write\(SYNC_STORAGE\.lastSha/);
 });
