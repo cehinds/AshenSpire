@@ -150,8 +150,11 @@ jobs:
           # The standalone is uploaded as its OWN artifact rather than nested
           # here — see the two upload steps below for why.
           mkdir -p standalone
-          cp AshenSpire.html standalone/AshenSpire.html
-          cp AshenSpire-mobile.html standalone/AshenSpire-mobile.html
+          # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
+          # a saved file's name to open the dev-only settings, and a plain
+          # AshenSpire.html is an unknown file with them locked.
+          cp AshenSpire.html standalone/AshenSpire-dev-preview.html
+          cp AshenSpire-mobile.html standalone/AshenSpire-mobile-dev-preview.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
