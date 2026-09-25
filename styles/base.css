@@ -382,6 +382,17 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   overflow: hidden;
 }
 .bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }
+/* The ghost HP trail (components/resbars.js drawGhost, SPEC §7.4): a pale bar
+   UNDER the fill, left at the old value, that holds and then drains to the new
+   one — only the span just lost shows. resbars.js never draws it under Reduced
+   motion or at Instant speed; the rules below are the belt to that brace. */
+.as-meter .m-ghost {
+  position: absolute; inset: 0 auto 0 0; border-radius: inherit; pointer-events: none;
+  background: #f3e9cf; opacity: 0.6;
+}
+@keyframes ghost-drain { to { width: var(--ghost-to); } }
+.reduced-motion .as-meter .m-ghost { display: none; }
+@media (prefers-reduced-motion: reduce) { .as-meter .m-ghost { display: none; } }
 .bar > .label {
   position: relative; z-index: 1; text-align: center; font-size: 1rem;
   line-height: 1; padding: 0.2rem 0; color: var(--parchment); text-shadow: 0 1px 2px #000;

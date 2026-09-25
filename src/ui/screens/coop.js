@@ -533,7 +533,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model' });
+    const bars = resourceBars(plan, { surface: 'model', ghost: `coop-model:${isEnemy ? 'e' : 'p'}:${ent.id}` });
     wrap.classList.add('as-meters', 'tight');
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (isEnemy) {
@@ -711,7 +711,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const mainHost = app.querySelector('.topbar .resbars-host');
     if (mainHost && meP) {
       const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
-      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
+      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main', ghost: `coop-hud:${meP.id}` }));
     }
 
     // Player seats (all party members in the fight).

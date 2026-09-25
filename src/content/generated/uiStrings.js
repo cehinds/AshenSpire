@@ -2901,6 +2901,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.skipHint",
+    "extends": "",
+    "short": "Click to skip",
+    "full": "Click or tap anywhere to skip to the end of the enemy turn.",
+    "tip": ""
+  },
+  {
     "id": "rest.levelUp.preview",
     "extends": "",
     "short": "What the pending points change",
