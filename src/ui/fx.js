@@ -489,20 +489,27 @@ const animationsOf = (el) => (el && typeof el.getAnimations === 'function' ? el.
  * the freeze holds the moment of the hit rather than the frame before it.
  * `.hit-stop` also holds any CSS animation that starts during the freeze, and
  * the stage clock holds every painted-sprite frame step drawn inside them.
+ * Freezes are reference-counted per figure, as the stage clock's are: a
+ * figure frozen by overlapping stops (one attacker striking two targets in a
+ * co-op receipt) keeps `.hit-stop` and its paused animations until the LAST
+ * of them lets go, so it is held for the longest stop, never the first.
  * Returns the release (also run by releaseCombatJuice).
  */
+const figureFreezes = new Map(); // figure -> { count, paused: Set<Animation> }
 export function freezeFigures({ targets = [], sources = [] }, ms) {
   const H = COMBAT_JUICE.motion.hitStop;
   const targetFigures = new Set(targets.map(figureOf).filter(Boolean));
   const figures = [...new Set([...targetFigures, ...sources.map(figureOf).filter(Boolean)])];
   if (!figures.length || !(ms > 0)) return () => {};
-  const paused = [];
   for (const fig of figures) {
     // Read what is running BEFORE .hit-stop lands: the class pauses CSS
     // animations itself, and a paused one would be skipped here and never
     // reach its impact frame.
     const running = animationsOf(fig).filter((a) => a.playState === 'running');
     fig.classList.add('hit-stop');
+    const hold = figureFreezes.get(fig) || { count: 0, paused: new Set() };
+    hold.count += 1;
+    figureFreezes.set(fig, hold);
     for (const a of running) {
       try {
         const timing = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
@@ -511,7 +518,7 @@ export function freezeFigures({ targets = [], sources = [] }, ms) {
           a.currentTime = dur * H.impactFraction;
         }
         a.pause();
-        paused.push(a);
+        hold.paused.add(a);
       } catch (e) { /* a foreign animation must not break the hit */ }
     }
   }
@@ -523,9 +530,14 @@ export function freezeFigures({ targets = [], sources = [] }, ms) {
     if (!juiceReleases.delete(release)) return;
     clearTimeout(timer);
     releaseStages();
-    for (const fig of figures) fig.classList.remove('hit-stop');
-    for (const a of paused) {
-      try { if (a.playState === 'paused') a.play(); } catch (e) { /* cancelled meanwhile */ }
+    for (const fig of figures) {
+      const hold = figureFreezes.get(fig);
+      if (hold && --hold.count > 0) continue; // a longer stop still holds this figure
+      figureFreezes.delete(fig);
+      fig.classList.remove('hit-stop');
+      for (const a of hold ? hold.paused : []) {
+        try { if (a.playState === 'paused') a.play(); } catch (e) { /* cancelled meanwhile */ }
+      }
     }
   };
   juiceReleases.add(release);

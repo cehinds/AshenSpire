@@ -1012,3 +1012,92 @@ test('co-op damage floats carry solo\'s within-tier --dmg-scale, so 24 reads big
     globalThis.setInterval = realInterval;
   }
 });
+
+// ---- receipt juice on the board (SPEC §7.4, co-op; PR #1287 review) ------------
+
+// Fake Web Animations on the board: each figure (by data-eid) owns a list of
+// animations, and the .combat root sees them all (getAnimations({subtree})).
+function fakeAnimation() {
+  return {
+    playState: 'running', playbackRate: 1, currentTime: 500,
+    effect: { getComputedTiming: () => ({ duration: 1000 }) },
+    pause() { this.playState = 'paused'; },
+    play() { this.playState = 'running'; },
+  };
+}
+async function juiceBoard(seed) {
+  const realTimeout = globalThis.setTimeout;
+  const realInterval = globalThis.setInterval;
+  const queued = [];
+  globalThis.setTimeout = (fn, ms, ...a) => { const t = { fn: () => fn(...a), ms: Number(ms) || 0 }; queued.push(t); return t; };
+  const liveIntervals = [];
+  globalThis.setInterval = (fn, ms, ...a) => { const h = realInterval(fn, ms, ...a); h.unref?.(); liveIntervals.push(h); return h; };
+  const restore = () => {
+    globalThis.setTimeout = realTimeout;
+    for (const h of liveIntervals) clearInterval(h);
+    globalThis.setInterval = realInterval;
+  };
+  try {
+    const S = party(seed);
+    fight(S);
+    const fightSnap = JSON.parse(JSON.stringify(S.snapshot()));
+    const board = await mountCoopBoard();
+    const anims = new Map();
+    const EP = Object.getPrototypeOf(board.app);
+    EP.getAnimations = function () {
+      if (this.classList?.contains('combat')) return [...anims.values()].flat();
+      return anims.get(this.dataset?.eid) || [];
+    };
+    // The helper's dataset does not reflect into attributes; the board finds
+    // figures by [data-eid], so read data-* through dataset here.
+    const dataKey = (k) => k.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    const { hasAttribute, getAttribute, matches } = EP;
+    EP.matches = function (sel) { return matches.call(this, sel.replace(/\s*>\s*/g, ' ')); };
+    EP.hasAttribute = function (k) { return hasAttribute.call(this, k) || (k.startsWith('data-') && this.dataset?.[dataKey(k)] !== undefined); };
+    EP.getAttribute = function (k) { const v = getAttribute.call(this, k); return v ?? (k.startsWith('data-') ? this.dataset?.[dataKey(k)] ?? null : v); };
+    board.deliver(fightSnap);
+    // Run every queued timer due by `ms` (timers queued meanwhile included).
+    const runUntil = (ms) => {
+      for (let guard = 0; guard < 1000; guard++) {
+        const i = queued.findIndex((t) => t.ms <= ms);
+        if (i < 0) return;
+        queued.splice(i, 1)[0].fn();
+      }
+    };
+    const receipt = (events) => {
+      const snap = structuredClone(fightSnap);
+      snap.scene.receiptSeq = (Number(fightSnap.scene.receiptSeq) || 0) + 1;
+      snap.scene.events = events;
+      return snap;
+    };
+    return { ...board, S, fightSnap, anims, queued, runUntil, receipt, restore };
+  } catch (e) { restore(); throw e; }
+}
+
+test('one receipt striking two figures from the same source holds that source for the longest stop', async () => {
+  const T = COMBAT_JUICE.sizing.damageTiers;
+  const H = COMBAT_JUICE.motion.hitStop;
+  const B = await juiceBoard('JUICESHARED');
+  try {
+    const enemy = B.fightSnap.scene.enemies[0];
+    const swing = fakeAnimation();
+    B.anims.set(enemy.id, [swing]);
+    B.runUntil(0);
+    B.deliver(B.receipt([
+      { type: 'damageDealt', sourceId: enemy.id, targetId: 'player', playerId: 'p1', amount: T.heavyAt, blocked: 0 },
+      { type: 'damageDealt', sourceId: enemy.id, targetId: 'player', playerId: 'p2', amount: T.capAt, blocked: 0 },
+    ]));
+    const box = B.app.querySelector(`[data-eid="${enemy.id}"]`);
+    assert.ok(box, 'the attacker is on the board');
+    assert.ok(box.classList.contains('hit-stop'), 'the shared attacker froze');
+    assert.equal(swing.playState, 'paused');
+    B.runUntil(H.minMs);
+    assert.ok(box.classList.contains('hit-stop'), 'the short stop ending does not release the attacker');
+    assert.equal(swing.playState, 'paused', 'its swing stays paused while the longer stop runs');
+    B.runUntil(H.maxMs);
+    assert.ok(!box.classList.contains('hit-stop'), 'the longest stop ends the freeze');
+    assert.equal(swing.playState, 'running', 'and the swing resumes');
+  } finally {
+    B.restore();
+  }
+});
