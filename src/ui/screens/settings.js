@@ -1243,23 +1243,37 @@ export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
 // value every touched key held before (undefined = was not stored).
 const UNDO_MS = 8000;
 let undoOffer = null;
+// Which profile an offer belongs to. Not the settings object: every save
+// reloads the profile into a new one (main.js persistSettingsChange), so an
+// identity check dropped a still-valid Undo when Settings was reopened within
+// the window. The generation moves only when the profile itself is replaced —
+// a restore, a profile load, a configuration import — via dropUndoOffer().
+let profileGeneration = 0;
 /**
- * offerUndo(label, snapshot, owner) — the next paint shows "label · Undo".
- * `owner` is the settings object the snapshot was taken from: an offer is only
- * ever painted over that same object, so a profile restored in between never
- * receives another profile's values.
+ * offerUndo(label, snapshot) — the next paint shows "label · Undo". The offer
+ * belongs to the current profile generation, so a profile replaced in between
+ * never receives another profile's values.
  */
-export function offerUndo(label, snapshot, owner = null) {
+export function offerUndo(label, snapshot) {
   if (!snapshot || !Object.keys(snapshot).length) return;
-  undoOffer = { label, snapshot, owner, until: Date.now() + UNDO_MS };
+  undoOffer = { label, snapshot, generation: profileGeneration, until: Date.now() + UNDO_MS };
 }
 
 /**
- * dropUndoOffer() — forget any pending Undo. A profile restore refills the
- * same settings object in place, so the owner check above cannot tell the
- * restored profile from the one the offer was taken from; the restore says so.
+ * dropUndoOffer() — the profile was replaced (restored, loaded or imported):
+ * start a new generation and forget any pending Undo, which was taken from the
+ * profile that is gone.
  */
-export function dropUndoOffer() { undoOffer = null; }
+export function dropUndoOffer() { profileGeneration += 1; undoOffer = null; }
+
+/**
+ * pendingUndo(now) → the offer the next paint shows, or null. An offer past its
+ * window or taken from a profile since replaced is forgotten here.
+ */
+export function pendingUndo(now = Date.now()) {
+  if (undoOffer && (now > undoOffer.until || undoOffer.generation !== profileGeneration)) undoOffer = null;
+  return undoOffer;
+}
 
 /**
  * resetKeys(settings, onChange, keys, label) → the snapshot taken. Each key goes
@@ -1310,7 +1324,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
   const seedMoved = Object.hasOwn(changed, SEED_KEY)
     && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
   if (moved.length || seedMoved) { if (Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore; }
-  offerUndo(label, undo, settings);
+  offerUndo(label, undo);
   return snapshot;
 }
 
@@ -2555,8 +2569,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   let undoTimer = null;
   function paintUndo() {
     container.querySelector(':scope > .set-undo')?.remove();
-    if (!undoOffer || Date.now() > undoOffer.until || (undoOffer.owner && undoOffer.owner !== settings)) { undoOffer = null; return; }
-    const offer = undoOffer;
+    const offer = pendingUndo();
+    if (!offer) return;
     const bar = document.createElement('div');
     bar.className = 'set-undo';
     bar.setAttribute('role', 'status');
@@ -2757,7 +2771,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const syncMount = container.querySelector('.set-sync-mount');
   if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
     if (moved || seedMoved) {
-      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', before, settings);
+      // A new profile: nothing offered before it applies any more. Its own
+      // Undo belongs to the new generation.
+      dropUndoOffer();
+      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', before);
     }
     repaintPanel({ keepScroll: true });
   } });
@@ -3189,6 +3206,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
+        dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
@@ -3687,6 +3705,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
+      dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }

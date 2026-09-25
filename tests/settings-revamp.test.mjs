@@ -702,14 +702,13 @@ test('a profile carries which values are promoted defaults, and a loading device
   assert.deepEqual(deviceC[SEED_KEY], { musicVolume: 40 });
 });
 
-test('an Undo is painted only over the settings it was taken from; a seed-only reset can be undone', async () => {
+test('an Undo is painted only over the profile it was taken from; a seed-only reset can be undone', async () => {
   const { resetKeys } = await import('../src/ui/screens/settings.js');
   const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /undoOffer\.owner && undoOffer\.owner !== settings\)\) \{ undoOffer = null; return; \}/);
-  assert.match(screen, /offerUndo\(label, undo, settings\);/);
-  assert.match(screen, /before, settings\);/, 'a profile load\'s Undo is bound too');
+  assert.match(screen, /const offer = pendingUndo\(\);\s*if \(!offer\) return;/, 'the bar paints only a current offer');
+  assert.match(screen, /dropUndoOffer\(\);\s*offerUndo\(moved \?/, 'a profile load starts a new generation before its own Undo');
   // Every key already at its promoted value, but the player's: only ownership moves.
   const settings = { musicVolume: 40 };
   resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
@@ -741,7 +740,7 @@ test('ownership survives a promotion that moved on, and an ownership-only load c
   assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
   assert.match(panel, /if \(seedMoved\) \{\s*carriedStatus = '[^']*';\s*afterApply\(0, \{ \[SEED_KEY\]: seedBefore \}, true\);/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(moved \|\| seedMoved\) \{\s*offerUndo\(/);
+  assert.match(screen, /if \(moved \|\| seedMoved\) \{[^}]*?offerUndo\(/);
 });
 
 test('a profile restore drops any pending Undo, since it refills the same settings object', async () => {
@@ -783,4 +782,26 @@ test('a promoted advanced gameConfig value stays the promotion\'s on a loading d
   assert.ok(parsed.promotionOwned.includes(adv));
   applyProfile(deviceB, () => ({ ok: true }), parsed, { [adv]: 120, sfxVolume: 30, musicVolume: 40 });
   assert.deepEqual(deviceB[SEED_KEY], { [adv]: 120, sfxVolume: 30 }, 'the advanced key keeps its promotion ownership');
+});
+
+test('an Undo survives a save and a reopen of the same profile, and never reaches a replaced one', async () => {
+  const { offerUndo, dropUndoOffer, pendingUndo } = await import('../src/ui/screens/settings.js');
+  const { readFileSync } = await import('node:fs');
+  // A reset offers Undo; the save reloads the profile into a new object and
+  // Settings is reopened over it within the window: still the same profile.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.ok(offer, 'offered');
+  assert.equal(pendingUndo(Date.now() + 1000), offer, 'still offered after a save and reopen inside the window');
+  assert.equal(pendingUndo(offer.until + 1), null, 'gone once the window closes');
+  // A profile load, restore or import replaces the profile: the offer is dropped.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  dropUndoOffer();
+  assert.equal(pendingUndo(), null, 'a replaced profile never receives the old Undo');
+  // …and an offer made after the replacement belongs to the new profile.
+  offerUndo('Profile loaded (1 setting)', { sfxVolume: 30 });
+  assert.ok(pendingUndo(), 'the load\'s own Undo is offered');
+  dropUndoOffer();
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/Object\.assign\(settings, changes\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'both configuration imports drop a pending Undo');
 });
