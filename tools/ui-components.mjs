@@ -231,6 +231,9 @@ export function cssRules(css) {
 function subjectOf(part) {
   const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
   const compound = compounds.at(-1) || '';
+  // A pseudo-element (`::before`, or the legacy one-colon four) is its own
+  // box, so the compound names no element this check is about.
+  if (/::|:(?:before|after|first-line|first-letter)(?![\w-])/i.test(compound.replace(/\([^()]*\)/g, ''))) return '';
   // :is() / :where() / :matches() match the element itself, so each of their
   // arguments contributes ITS OWN subject (recursively): `:is(.a > .b)` has
   // subject `.b`, not `.a .b`. Any other functional pseudo's arguments

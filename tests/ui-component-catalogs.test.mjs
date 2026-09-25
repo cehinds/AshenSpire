@@ -293,6 +293,14 @@ test('case and !important do not hide a hung rail', () => {
   assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.x { grid-area: rail !important; }\n` }).length, 0);
 });
 
+// Codex on #1316: a pseudo-element is its own box, not the rail.
+test('a pseudo-element on the rail is not the rail', () => {
+  const r = receipt();
+  for (const sel of ['.shared-hud .hud-bottom::before', '.shared-hud .hud-bottom:after', '.shared-hud .hud-bottom.x::marker']) {
+    assert.equal(c12({ ...r, kit: `${r.kit}\n${sel} { position: absolute; grid-area: auto; }\n` }).length, 0, sel);
+  }
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
