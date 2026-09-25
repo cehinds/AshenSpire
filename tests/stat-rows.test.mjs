@@ -327,6 +327,23 @@ test('an old run with ratings on names its rating Poise on its cards; a ratings-
   assert.equal(off['gameConfig.combatRatings.ratings.poise.base'], undefined);
 });
 
+test("an old run's attribute cards name its own hand groups, not the live hand rows", async () => {
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const run = createRunState({ seed: 4, classId: 'starseer', registries });
+  // A ruleset-6 snapshot never had the openingHand/handSize rows.
+  const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules)
+    .filter(([id]) => id !== 'openingHand' && id !== 'handSize'));
+  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
+  run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3 } };
+  const lines = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
+    .find((card) => card.id === 'intelligence').reveal.lines;
+  assert(lines.includes('Opening hand +1 every 3 points'), lines.join(' | '));
+  assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points`), lines.join(' | '));
+  assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
+});
+
 test('a saved fight whose hand size can reach 0 is refused at the fight door', async () => {
   const { handRulesProblems, resolveHandRules } = await import('../src/model/handRules.js');
   const rows = { openingHand: { base: 4 }, draw: { base: 2 }, handSize: { base: 7, min: 1, max: 30 } };

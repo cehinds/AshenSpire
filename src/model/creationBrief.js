@@ -190,6 +190,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  // A RUN'S HAND ROWS ITS SNAPSHOT NEVER HAD (born before ruleset 7) are its
+  // retired hand groups restated as rows; any other row a run's projection
+  // lacks is not the run's, so its card does not name it (Codex, #1296).
+  for (const [id, row] of Object.entries((projection && projection.handRows) || {})) {
+    if (row) {
+      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1 });
+    }
+  }
   // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
   // its rating formula's Poise, not its pool row, so that is the one its cards
   // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
@@ -203,10 +211,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
       .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
-      // A RUN IS DESCRIBED BY ITS OWN ROWS: a row its projection does not carry
-      // (the hand rows, for a run born before ruleset 7) is not the run's, so
-      // the live table must not speak for it (Codex, #1296).
-      .filter(([id]) => !projection?.derived || projected.has(id))
+      .filter(([id]) => !projection || projected.has(id))
       // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single

@@ -125,12 +125,12 @@ test('co-op: Guilt in a seat\'s hand costs that seat 1 HP at its turn end', asyn
   endTurn(C, 'p1'); // p2 has not ended, so no enemy phase runs yet
   assert.equal(p1.entity.hp, hp1 - 1, 'the seat holding Guilt loses 1 HP');
   assert.equal(p2.entity.hp, hp2, 'the other seat loses nothing');
-  // Since derived-stat ruleset 7 a co-op seat keeps unplayed cards under the
-  // shipped hand rules, as a solo fight does (SPEC §4.1), so Guilt stays in the
-  // hand that holds it — and fires again next turn end — rather than going to
-  // the discard.
-  assert.ok(p1.piles.hand.some((c) => c.instanceId === 'g1'), 'Guilt stays in the retained hand after firing');
-  assert.ok(!p1.piles.discard.some((c) => c.instanceId === 'g1'), 'and is not discarded');
+  // After firing, Guilt follows the seat's own hand rule (ruleset 7, #1296):
+  // under the shipped `retain` a seat keeps its unplayed cards, as a solo run
+  // does, so Guilt stays in hand; a seat without hand rules discards it.
+  assert.ok(p1.handRules?.retain, 'the seat reads the shipped hand rules, which retain');
+  assert.ok(p1.piles.hand.some((c) => c.instanceId === 'g1'), 'Guilt stays in the retaining seat\'s hand after firing');
+  assert.ok(!p1.piles.discard.some((c) => c.instanceId === 'g1'), 'a retained Guilt is not also discarded');
 });
 
 // The shown number is bound to the hook, not typed into the sentence.
