@@ -135,8 +135,11 @@ export function catalogDisagreement(md, html) {
 // judged as unreadable. A further CSS form is fixed here only if the shipped
 // CSS uses it; otherwise this note is the answer.
 function splitTop(text, sep) {
-  const out = []; let depth = 0; let quote = null; let cur = '';
+  const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
+    // A backslash escapes the next character, in or out of a string.
+    if (escaped) { cur += ch; escaped = false; continue; }
+    if (ch === '\\') { cur += ch; escaped = true; continue; }
     if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
     if (ch === '(' || ch === '[') depth++;
@@ -162,6 +165,7 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
   });
   for (let j = 0; j < src.length; j++) {
     const ch = src[j];
+    if (ch === '\\') { if (depth === 0) text += src.slice(j, j + 2); j++; continue; }
     if (quote) { if (depth === 0) text += ch; if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; if (depth === 0) text += ch; continue; }
     if (ch === '{') {
@@ -221,8 +225,15 @@ function scopeRoot(prelude) {
   return null;
 }
 
+// Comments are dropped only outside strings (and escapes), so `content: "/*"`
+// is a string, not the start of a comment that swallows the rules after it.
+function stripComments(css) {
+  return css.replace(/\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|\/\*[\s\S]*?(?:\*\/|$)/g,
+    (m) => (m.startsWith('/*') ? '' : m));
+}
+
 export function cssRules(css) {
-  return parseBlock(css.replace(/\/\*[\s\S]*?\*\//g, ''), null, []);
+  return parseBlock(stripComments(css), null, []);
 }
 
 // The subject of one selector (no commas): its last top-level compound, so
@@ -305,13 +316,17 @@ export function railInFlow(css) {
   // a copy a nested @media emits is conditional and is judged only below.
   const base = rules.filter((rule) => rule.selector === '.shared-hud .hud-bottom' && !rule.conditional).flatMap((rule) => rule.decls);
   return base.length > 0
-    && lastValue(base, ['position']) === 'static'
+    && /^static$/i.test(lastValue(base, ['position']) ?? '')
     && lastValue(base, ['grid-area']) === 'rail'
     && !rules.some((rule) => /^(?:absolute|fixed)\b/i.test(lastValue(rule.decls, ['position']) || '')
       // Placement too: a rail rule that sets grid-area keeps it `rail`, and
       // none re-places it by line (grid-row / grid-column and their longhands).
       || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
-      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop)));
+      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
+      // Display too: none or contents takes the rail out of the grid. Only a
+      // rule whose subject is `:empty` may hide it (a rail with no relics).
+      || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
+        && !splitTop(rule.selector, /,/).every((part) => /:empty(?![\w-])/i.test(subjectOf(part)))));
 }
 
 export function receipt() {
@@ -851,6 +866,9 @@ function selftest() {
     ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
     ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
     ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
+    ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
+    ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
+    ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
     ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
