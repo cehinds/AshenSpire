@@ -406,11 +406,15 @@ export function dealPoiseDamage(ctx, entity, amount) {
 /**
  * drawCards(ctx, n) — draw with reshuffle (stream 'shuffle') when the draw
  * pile empties; cards past the hand limit overflow to discard (SPEC §4.1(3)).
+ * An overflow draw takes only what the draw pile holds: a full hand never
+ * reshuffles the discard, or the card that just overflowed would be shuffled
+ * back and overflow again, one card burned (and receipted) many times.
  */
 export function drawCards(ctx, n) {
   for (let i = 0; i < n; i++) {
     if (ctx.handRules && ctx.piles.hand.length >= ctx.handMax) return;
     if (ctx.piles.draw.length === 0) {
+      if (ctx.piles.hand.length >= ctx.handMax) return;
       if (ctx.handRules?.reshuffle === false) return;
       if (ctx.piles.discard.length === 0) return;
       reshuffleDiscardIntoDraw(ctx);
