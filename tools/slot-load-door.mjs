@@ -8,7 +8,9 @@
 //           the newer-save notice opens and the live run is still standing.
 //           It used to close the menu and call resumeRun, whose loadRun is
 //           null for a newer slot, so the climb in hand was dropped and the
-//           player landed on the title.
+//           player landed on the title. The confirm press checks again: a
+//           newer build in another tab can rewrite the slot while the
+//           confirmation is open (NEWER-AT-CONFIRM).
 //   RESTART Abandoning a fight mid-combat (no Save Game) and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, an unchanged deck. tests/midcombat-reload
@@ -49,6 +51,13 @@ if (process.argv.includes('--selftest')) {
         find: '  if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });',
         replace: '  // slot-load-door selftest plant',
         expectRed: /RED SLOT-LOAD-NEWER-KEEPS-RUN/,
+      },
+      {
+        name: 'the confirm press stops rechecking for a newer slot',
+        file: 'src/main.js',
+        find: '      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });',
+        replace: '      // slot-load-door selftest plant',
+        expectRed: /RED SLOT-LOAD-NEWER-AT-CONFIRM/,
       },
       {
         name: 'combat entry stops writing its receipt',
@@ -265,6 +274,31 @@ try {
       problems.length ? problems.join('; ') : `turn 1, HP ${reloaded.playerHp}, the same ${reloaded.hand.length}-card opening hand, deck of ${reloaded.liveDeck.length} unchanged`);
   } catch (error) {
     check(false, 'SLOT-LOAD-MIDCOMBAT-RESTART', error.message);
+  }
+
+  // ---- RACE: the slot turns newer while the confirmation is open ---------
+  // Run saves share localStorage across tabs, and the confirmation can stay
+  // open indefinitely: a newer build in another tab can rewrite the slot
+  // after the up-front check passed. The confirm press must check again.
+  try {
+    await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'a clear board');
+    await openLoadSlot(1);
+    const asked = await ev(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`);
+    if (!asked) throw new Error('slot 1 opened no load confirmation');
+    await ev('window.__shotAgeSlot(1)');
+    await click('.confirmation-confirm');
+    await wait(300);
+    const notice = await ev(`document.querySelector('#confirmation-modal-title')?.textContent || ''`);
+    const after = await ev(`({
+      board: !!document.querySelector('.end-turn'),
+      title: !!document.querySelector('.title-menu, [data-title-action="load"]'),
+      liveDeck: window.__spoils().liveDeck || [],
+    })`);
+    const kept = after.liveDeck.length > 0 && after.board && !after.title;
+    check(/newer version/i.test(notice) && kept, 'SLOT-LOAD-NEWER-AT-CONFIRM',
+      `a slot aged behind the open confirmation is refused at the press and the run stands (${JSON.stringify({ notice, ...after, liveDeck: after.liveDeck.length })})`);
+  } catch (error) {
+    check(false, 'SLOT-LOAD-NEWER-AT-CONFIRM', error.message);
   }
   await cdp.send('Target.closeTarget', { targetId });
 } catch (error) {

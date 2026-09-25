@@ -1267,6 +1267,10 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
+      // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
+      // this confirmation can stay open indefinitely, so a newer build in
+      // another tab can rewrite the slot after the check above passed.
+      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
       closeOverlay();
       resumeRun(slot);
     },
@@ -3040,6 +3044,12 @@ if (shotState === 'combat-test') {
   if (Number.isInteger(shotNewerSlot) && shotNewerSlot > 1 && shotNewerSlot <= SLOTS) {
     const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
     bootStorage.setItem(runKey(shotNewerSlot), JSON.stringify({ ...bytes, schemaVersion: bytes.schemaVersion + 1 }));
+    // The same rewrite on demand, for a newer build in another tab writing a
+    // slot while this tab's load confirmation is still open.
+    window.__shotAgeSlot = (slot) => {
+      const aged = JSON.parse(bootStorage.getItem(runKey(slot)));
+      bootStorage.setItem(runKey(slot), JSON.stringify({ ...aged, schemaVersion: aged.schemaVersion + 1 }));
+    };
   }
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
     configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
