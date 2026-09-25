@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1320",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Three fixes the new tests caught",
+    "detail": "Taking a class-changing event no longer makes a mid-fight save fail and lose the run, and in co-op that seat now comes back after a restore. A card you gain after its skill has already reached its upgrade now arrives upgraded, instead of only after you reload. Drawing into a full hand now discards the extra card once, instead of cycling it through your discard pile.",
+    "build": "0.7.1.494",
+    "pullRequest": 1320,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1320"
+  },
+  {
     "id": "pr-1319",
     "date": "2026-09-24",
     "group": "2026-09-24",
