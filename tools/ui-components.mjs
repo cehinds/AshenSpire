@@ -256,7 +256,8 @@ function subjectOf(part) {
   return out;
 }
 const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
-const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop)).at(-1)?.value;
+// `all` sets every property at once, so it counts as a write to each.
+const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop) || d.prop === 'all').at(-1)?.value;
 
 // Every shared-HUD grid (the base band, the compact and wide map headers, the
 // narrow phone band) that sets its areas lays out a `meters` row and puts a
@@ -850,6 +851,7 @@ function selftest() {
     ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
     ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
     ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
+    ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
