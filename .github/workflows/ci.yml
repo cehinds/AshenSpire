@@ -254,6 +254,12 @@ jobs:
       - name: That twin-tree gate catches its own known-bads (9 plants)
         run: node tools/verdict.mjs -- node tools/mobile-art.mjs --selftest
 
+      - name: Every asset directory has a CREDITS row and README Legal agrees with the AI disclosure
+        run: node tools/verdict.mjs -- node tools/credits-check.mjs
+
+      - name: The credits check catches its own known-bads (12 plants)
+        run: node tools/verdict.mjs -- node tools/credits-check.mjs --selftest
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
