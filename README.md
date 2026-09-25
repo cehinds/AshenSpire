@@ -147,4 +147,6 @@ Acceptance criteria per milestone: [SPEC.md §9](SPEC.md).
 
 ## Legal
 
-Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco.
+
+The [AI disclosure](src/content/aiDisclosure.js) sums it up: "Ashen Spire was built by AI under human direction." AI assistants (Anthropic's Claude) wrote the code, design and writing, an OpenAI image-generation model (ChatGPT Codex) was used for art, and two recorded music tracks (boss and victory) were generated with ElevenLabs Music. What each tool made, and how much, is stated in that disclosure, which is the authoritative account: Settings → About, or `node tools/ai-disclosure.mjs --full`. The bundled lore fonts are SIL OFL. [CREDITS.md](CREDITS.md) lists every asset directory with its source and rights, and marks the files whose provenance is not yet recorded.

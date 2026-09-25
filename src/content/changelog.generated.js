@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-25",
     "group": "2026-09-25",
     "summary": "Behind the scenes: the interface-component check is green again and runs with the tests",
-    "detail": "Nothing you see changes. The check that the two component catalogs name the same pieces now compares each family on its own, so a piece moved from one list to the other on one side is caught. Its two red rungs were out of date rather than the game: they still expected the relic rail to hang below the HUD, where it now sits inside it beneath Vitals as the spec says, and they did not know that authored dungeons title their own map or that the Armoury reads a weapon's icon through its one shared lookup. The test suite now runs the whole check.",
-    "build": "0.7.1.503",
+    "detail": "Nothing you see changes. The check that the two component catalogs name the same pieces now compares each family on its own, so a piece moved from one list to the other on one side is caught, and an emptied list says which one it was. Its two red rungs were out of date rather than the game: they still expected the relic rail to hang below the HUD, where it now sits inside it beneath Vitals as the spec says, and they did not know that authored dungeons title their own map or that the Armoury reads a weapon's icon through its one shared lookup. The rail rung now also goes red if any later rule hangs the rail again, or if a HUD layout drops its Vitals row. The test suite now runs the check's verdict, and its self-test runs with the other tools' self-tests.",
+    "build": "0.7.1.504",
     "pullRequest": 1316,
     "url": "https://github.com/cehinds/AshenSpire/pull/1316"
+  },
+  {
+    "id": "pr-1299",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: every art and sound folder has a credits row",
+    "detail": "Nothing you play changes. A new check fails when any shipped asset folder lacks a row in CREDITS.md naming its source and rights, or when the README's legal section stops quoting the AI disclosure's summary sentence word for word; CREDITS.md gains the eleven rows it was missing.",
+    "build": "0.7.1.503",
+    "pullRequest": 1299,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1299"
   },
   {
     "id": "pr-1312",
