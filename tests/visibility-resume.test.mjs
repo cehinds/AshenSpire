@@ -19,11 +19,14 @@
 //      nothing.
 //   2. INVENTORY. Every listener registered on the page itself — any
 //      `addEventListener(` on window/document/globalThis/self or a bare
-//      global, and any `window.on<event> =` — in src/ is pinned below, ONE
-//      ENTRY PER CALL SITE, whatever its first argument is. A new call site,
-//      or a second one for an event already listed, fails this file until it
-//      is added here; a page-lifecycle event or a computed event name must
-//      also say why it cannot move state. The registrations the behaviour
+//      global — and EVERY WRITE TO A MEMBER of those four receivers (dotted,
+//      bracketed, or through Object.assign / Object.defineProperty /
+//      Object.defineProperties / Reflect.set / Reflect.defineProperty, so any
+//      spelling of `on<event> =`) in src/ is pinned below, ONE ENTRY PER
+//      CALL SITE, whatever its argument or key is. A new call site, or a
+//      second one for an event already listed, fails this file until it is
+//      added here; a page-lifecycle event, a computed event name or a
+//      computed member key must also say why it cannot move state. The registrations the behaviour
 //      half makes are also captured at runtime and checked against the pins.
 //
 // WHY A STATIC INVENTORY AND NOT ONLY RUNTIME CAPTURE. The node runner has no
@@ -243,11 +246,15 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 
 // ---- inventory of page listeners ---------------------------------------------
 // file → one entry per call site. An entry is the call's first argument as
-// written (whitespace collapsed); a property handler is `.on<event>`. A plain
-// string is enough for a literal, non-lifecycle event; a page-lifecycle event
-// or a computed name must be [argument, why it cannot move run/combat state].
+// written (whitespace collapsed); a member write on the page is `.<key>` when
+// the key is literal (`.onblur`, `.__combat`, `.title`) and `[<expr>]` when it
+// is computed; an Object.assign / defineProperties source that is not an
+// object literal is `Object.assign(<expr>)`. A plain string is enough for a
+// literal, non-lifecycle event or key; a page-lifecycle event (`'blur'` or
+// `.onblur`), a computed event name or a computed key must be
+// [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'"],
+  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot'],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
@@ -273,12 +280,12 @@ const KNOWN = {
   'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/components/tutorial.js': ["'keydown'", "'resize'"],
   'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
-  'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'"],
+  'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'", '.__fx'],
   'src/ui/gesture.js': [["'blur'", 'aborts the in-flight gesture as CANCELLED; driven above through finishCardDrag, which drops nothing'], "'pointerdown'", "'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/input.js': ["'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/kit/categoryNav.js': ["'keydown'"],
-  'src/ui/screens/combat.js': ["'keydown'"],
-  'src/ui/screens/coop.js': ["'keydown'", "'keydown'"],
+  'src/ui/screens/combat.js': ["'keydown'", '.__combat', '.__combatRunForShot', '.__renderCombatForShot'],
+  'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
   'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
@@ -286,6 +293,9 @@ const KNOWN = {
   'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists']],
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
+  'src/ui/screens/combatTest.js': ['.title'],
+  'src/ui/previews/itemCards.js': ['.title'],
+  'src/ui/previews/tooltipReviewScene.js': ['.__tooltipReviewRun'],
 };
 
 // A call on the page itself: `window.` / `document.` / `globalThis.` / `self.`
@@ -293,7 +303,126 @@ const KNOWN = {
 // own listener (`el.addEventListener`, `window.visualViewport?.addEventListener`)
 // is not the page and is not listed.
 const CALL = /(?:\b(?:window|document|globalThis|self)\s*(?:\??\.\s*|\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
-const PROP = /\b(?:window|document|globalThis|self)\s*\??\.\s*(on[a-z]+)\s*=(?![=>])/g;
+
+// MEMBER WRITES ON THE PAGE, closed at the receiver rather than per spelling:
+// any assignment to a member of window/document/globalThis/self, and any
+// Object.assign / Object.defineProperty / Object.defineProperties /
+// Reflect.set / Reflect.defineProperty whose target is one of them. Scanned on
+// a copy with comments and string/template/regex literal CONTENTS blanked (so
+// `"self.maxHp=+4"` in content data is not a write), then keys are read from
+// the real text at the same offsets.
+const RECEIVER = String.raw`(?<![.\w$])(?:window|document|globalThis|self)`;
+const MEMBER = new RegExp(String.raw`${RECEIVER}\s*(?:\.\s*([\w$]+)|\[)`, 'g');
+const ASSIGN = /^\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*/%&|^])?=(?![=>])/;
+const DEFINE = new RegExp(String.raw`\b(Object\s*\.\s*(?:assign|defineProperty|defineProperties)|Reflect\s*\.\s*(?:set|defineProperty))\s*\(\s*${RECEIVER}\s*,`, 'g');
+
+// Same length, same newlines: comments and the contents of strings, templates
+// (except their ${…} code) and regex literals become spaces.
+export function blankNonCode(src) {
+  const out = src.split('');
+  const blank = (i) => { if (out[i] !== '\n') out[i] = ' '; };
+  const stack = [];         // open template ${ … } depths
+  let depth = 0, i = 0, prev = '';
+  const regexCanStart = () => !prev || /[(,=:[!&|?{};+\-*%<>~^]$/.test(prev) || /\b(?:return|typeof|case|do|else|in|of|new|delete|void|throw|yield|await)$/.test(prev);
+  const template = () => { // i is just past a ` or a closing } of ${…}
+    while (i < src.length) {
+      if (src[i] === '\\') { blank(i); blank(i + 1); i += 2; continue; }
+      if (src[i] === '`') { i++; return; }
+      if (src[i] === '$' && src[i + 1] === '{') { stack.push(depth); depth++; i += 2; prev = '{'; return 'code'; }
+      blank(i); i++;
+    }
+  };
+  while (i < src.length) {
+    const c = src[i], d = src[i + 1];
+    if (c === '/' && d === '/') { while (i < src.length && src[i] !== '\n') blank(i++); continue; }
+    if (c === '/' && d === '*') { blank(i++); blank(i++); while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) blank(i++); blank(i++); blank(i++); continue; }
+    if (c === "'" || c === '"') { i++; while (i < src.length && src[i] !== c && src[i] !== '\n') { if (src[i] === '\\') blank(i++); blank(i++); } i++; prev = 'str'; continue; }
+    if (c === '`') { i++; template(); prev = 'str'; continue; }
+    if (c === '/' && regexCanStart()) {
+      i++; let cls = false;
+      while (i < src.length && src[i] !== '\n' && (cls || src[i] !== '/')) { if (src[i] === '\\') blank(i++); else if (src[i] === '[') cls = true; else if (src[i] === ']') cls = false; blank(i++); }
+      i++; prev = 'regex'; continue;
+    }
+    if (c === '{') depth++;
+    if (c === '}') {
+      depth--;
+      if (stack.length && depth === stack[stack.length - 1]) { stack.pop(); i++; template(); prev = 'str'; continue; }
+    }
+    if (!/\s/.test(c)) prev = /[\w$]/.test(c) ? (/[\w$]$/.test(prev) ? prev + c : c) : c;
+    i++;
+  }
+  return out.join('');
+}
+
+// The text between an opening bracket at `open` and its match, in `code`.
+function closing(code, open) {
+  let depth = 0;
+  for (let i = open; i < code.length; i++) {
+    if ('([{'.includes(code[i])) depth++;
+    else if (')]}'.includes(code[i]) && --depth === 0) return i;
+  }
+  return code.length;
+}
+// Top-level comma-separated pieces of real text between two offsets, split on
+// the blanked copy so a comma inside a string never splits.
+function pieces(text, code, from, to) {
+  const out = []; let depth = 0, start = from;
+  for (let i = from; i < to; i++) {
+    if ('([{'.includes(code[i])) depth++;
+    else if (')]}'.includes(code[i])) depth--;
+    else if (code[i] === ',' && depth === 0) { out.push([start, i]); start = i + 1; }
+  }
+  out.push([start, to]);
+  return out.map(([a, b]) => {
+    while (a < b && /\s/.test(text[a])) a++;
+    while (b > a && /\s/.test(text[b - 1])) b--;
+    return { text: text.slice(a, b), code: code.slice(a, b) };
+  }).filter((p) => p.text);
+}
+// A quoted key is literal (`['onblur']` is `.onblur`); anything else — a
+// name, a template with ${…}, an expression — is computed.
+const norm = (s) => s.trim().replace(/\s+/g, ' ');
+const keyEntry = (raw) => {
+  raw = norm(raw);
+  const m = raw.match(/^(['"])([\w$]+)\1$/) || raw.match(/^(`)([\w$]+)`$/);
+  return m ? `.${m[2]}` : `[${raw}]`;
+};
+// Every key an object-literal source would write, or one computed entry.
+function objectKeys(piece, verb) {
+  if (!piece.text.startsWith('{')) return [`${verb}(${norm(piece.text)})`];
+  const inner = pieces(piece.text, blankNonCode(piece.text), 1, piece.text.length - 1);
+  return inner.map((p) => {
+    if (p.text.startsWith('...')) return `${verb}(${norm(p.text)})`;
+    if (p.text.startsWith('[')) return keyEntry(p.text.slice(1, closing(p.code, 0)));
+    const key = p.text.match(/^(?:(?:get|set|async)\s+)?(['"]?)([\w$]+)\1\s*(?:[:(]|$)/);
+    return key ? `.${key[2]}` : `${verb}(${norm(p.text)})`;
+  });
+}
+
+/** Every write to a member of the page in one file's text, one entry each. */
+export function pageWriteSites(text) {
+  const code = blankNonCode(text);
+  const sites = [];
+  for (const m of code.matchAll(MEMBER)) {
+    let key, end;
+    if (m[1]) { key = `.${m[1]}`; end = m.index + m[0].length; }
+    else {
+      const open = m.index + m[0].length - 1;
+      end = closing(code, open) + 1;
+      key = keyEntry(text.slice(open + 1, end - 1));
+    }
+    if (ASSIGN.test(code.slice(end, end + 5))) sites.push(key);
+  }
+  for (const m of code.matchAll(DEFINE)) {
+    const verb = m[1].replace(/\s+/g, '');
+    const open = code.indexOf('(', m.index);
+    const args = pieces(text, code, open + 1, closing(code, open)).slice(1);
+    if (/assign$/.test(verb)) for (const source of args) sites.push(...objectKeys(source, verb));
+    else if (/defineProperties$/.test(verb)) sites.push(...(args[0] ? objectKeys(args[0], verb) : []));
+    else if (args[0]) sites.push(keyEntry(args[0].text));
+  }
+  return sites;
+}
 
 function firstArgument(text, start) {
   let depth = 0, quote = null, i = start;
@@ -312,16 +441,22 @@ function firstArgument(text, start) {
 export function pageListenerSites(text) {
   const sites = [];
   for (const m of text.matchAll(CALL)) sites.push(firstArgument(text, m.index + m[0].length));
-  for (const m of text.matchAll(PROP)) sites.push(`.${m[1]}`);
+  sites.push(...pageWriteSites(text));
   return sites;
 }
 
-// The event a site names, when it names one literally; null when computed.
-function literalEvent(arg) {
-  if (arg.startsWith('.on')) return arg.slice(3);
+// What an entry is: a literal event ('blur', or the handler property .onblur),
+// a literal member key that is no handler (.title, .__combat), or computed.
+function kindOf(arg) {
+  const handler = arg.match(/^\.on([a-z]+)$/);
+  if (handler) return { kind: 'event', event: handler[1] };
+  if (/^\.[\w$]+$/.test(arg)) return { kind: 'member' };
   const m = arg.match(/^(['"`])([\w:-]+)\1$/);
-  return m ? m[2] : null;
+  return m ? { kind: 'event', event: m[2] } : { kind: 'computed' };
 }
+// The event a site names, when it names one literally; null otherwise.
+const literalEvent = (arg) => kindOf(arg).event ?? null;
+const needsReason = (arg) => kindOf(arg).kind === 'computed' || LIFECYCLE_EVENTS.includes(literalEvent(arg));
 
 /** Every way `files` ({ path: text }) disagrees with `known`. Empty = pass. */
 export function inventoryProblems(files, known = KNOWN) {
@@ -334,7 +469,7 @@ export function inventoryProblems(files, known = KNOWN) {
     const listed = count(entries.map((e) => (Array.isArray(e) ? e[0] : e)));
     for (const [arg, n] of found) {
       const m = listed.get(arg) || 0;
-      if (n > m) problems.push(`${file}: ${n - m} unlisted page listener(s) on ${arg} (${n} call site(s), ${m} in KNOWN). Every page listener is pinned per call site: add one entry for it to ${where}${LIFECYCLE_EVENTS.includes(literalEvent(arg)) || literalEvent(arg) === null ? ', with why it cannot move run/combat state (and cover it in the cycle above)' : ''}`);
+      if (n > m) problems.push(`${file}: ${n - m} unlisted page listener(s) on ${arg} (${n} call site(s), ${m} in KNOWN). Every page listener is pinned per call site: add one entry for it to ${where}${needsReason(arg) ? ', with why it cannot move run/combat state (and cover it in the cycle above)' : ''}`);
     }
     for (const [arg, m] of listed) {
       const n = found.get(arg) || 0;
@@ -342,10 +477,8 @@ export function inventoryProblems(files, known = KNOWN) {
     }
     for (const e of entries) {
       const arg = Array.isArray(e) ? e[0] : e;
-      const event = literalEvent(arg);
-      const needsWhy = event === null || LIFECYCLE_EVENTS.includes(event);
-      if (needsWhy && !(Array.isArray(e) && typeof e[1] === 'string' && e[1].trim())) {
-        problems.push(`${file}: ${arg} is ${event === null ? 'a computed event name' : 'a page-lifecycle event'} — its KNOWN entry must be [${arg}, why it cannot move run/combat state]`);
+      if (needsReason(arg) && !(Array.isArray(e) && typeof e[1] === 'string' && e[1].trim())) {
+        problems.push(`${file}: ${arg} is ${kindOf(arg).kind === 'computed' ? 'a computed event name or member key' : 'a page-lifecycle event'} — its KNOWN entry must be [${arg}, why it cannot move run/combat state]`);
       }
     }
   }
@@ -373,7 +506,7 @@ test('the listeners the booted modules registered at runtime are the pinned ones
     if (file === '(outside src)') continue; // this file's own stand-ins
     const args = (KNOWN[file] || []).map((e) => (Array.isArray(e) ? e[0] : e));
     const named = args.some((a) => literalEvent(a) === type);
-    const computed = args.some((a) => literalEvent(a) === null);
+    const computed = args.some((a) => kindOf(a).kind === 'computed');
     assert.ok(named || computed, `${file} registered '${type}' on ${target}${property ? ` via on${type}` : ''} at runtime, and KNOWN has no site that could be it`);
   }
   const lifecycle = captured.filter((c) => LIFECYCLE_EVENTS.includes(c.type) && c.file !== '(outside src)').map((c) => `${c.file} ${c.type}`);
@@ -414,4 +547,50 @@ test('known-bad: other spellings of a page listener are caught too', () => {
 test('known-bad: a lifecycle entry with no reason is refused', () => {
   const known = { ...KNOWN, 'src/ui/screens/prologue.js': ["'visibilitychange'"] };
   assert.ok(inventoryProblems(SRC, known).some((p) => p.includes('page-lifecycle event')));
+});
+
+test('known-bad: every form of writing a member of the page is a call site, at the receiver', () => {
+  // [planted line, the entry it must be reported as]
+  const forms = [
+    ['window.onpagehide = save;', '.onpagehide'],
+    ['document.onvisibilitychange = save;', '.onvisibilitychange'],
+    ['window.onblur ||= save;', '.onblur'],
+    ["window['onpagehide'] = save;", '.onpagehide'],
+    ['self["onfreeze"] = save;', '.onfreeze'],
+    ["const k = 'onpagehide'; window[k] = save;", '[k]'],
+    ['globalThis[`on${name}`] = save;', '[`on${name}`]'],
+    ['Object.assign(window, { onpagehide: save });', '.onpagehide'],
+    ["Object.assign(document, { 'onvisibilitychange': save });", '.onvisibilitychange'],
+    ['Object.assign(window, { onpagehide() { endTurn(); } });', '.onpagehide'],
+    ['Object.assign(window, { [k]: save });', '[k]'],
+    ["Object.assign(window, { ['onpagehide']: save });", '.onpagehide'],
+    ['window[  prefix +  name  ] = save;', '[prefix + name]'],
+    ['Object.assign(window, { ...handlers });', 'Object.assign(...handlers)'],
+    ['Object.assign(window, handlers);', 'Object.assign(handlers)'],
+    ["Object.defineProperty(document, 'onvisibilitychange', { value: save });", '.onvisibilitychange'],
+    ['Object.defineProperty(window, k, { value: save });', '[k]'],
+    ['Object.defineProperties(window, { onpagehide: { value: save } });', '.onpagehide'],
+    ["Reflect.set(window, 'onpagehide', save);", '.onpagehide'],
+    ["Reflect.defineProperty(self, 'onfreeze', { value: save });", '.onfreeze'],
+    ['const x = `${window.onpagehide = save}`;', '.onpagehide'],
+    ['window.__stash = combat;', '.__stash'],
+  ];
+  for (const [extra, entry] of forms) {
+    const problems = inventoryProblems(plant('src/ui/screens/map.js', extra));
+    assert.ok(problems.some((p) => p.startsWith('src/ui/screens/map.js: 1 unlisted') && p.includes(` on ${entry} `)), `not caught as ${entry}: ${extra}\n${problems.join('\n')}`);
+  }
+  // Pinned without a reason, a lifecycle handler or a computed key is refused.
+  for (const entry of ['.onpagehide', '[k]', 'Object.assign(handlers)']) {
+    const known = { ...KNOWN, 'src/ui/screens/map.js': [...KNOWN['src/ui/screens/map.js'], entry] };
+    const extra = { '.onpagehide': 'window.onpagehide = save;', '[k]': 'window[k] = save;', 'Object.assign(handlers)': 'Object.assign(window, handlers);' }[entry];
+    assert.ok(inventoryProblems(plant('src/ui/screens/map.js', extra), known).some((p) => p.includes(`${entry} is a`)), `${entry} pinned with no reason was accepted`);
+  }
+  // Not writes to the page: prose, strings, templates, regexes, elements, reads.
+  assert.deepEqual(inventoryProblems(plant('src/ui/screens/map.js', [
+    '// window.onpagehide = save;',
+    "const mod = 'window.onpagehide = save'; const t = `self.maxHp=+4`;",
+    'const re = /window.onblur = f/;',
+    "el.onblur = f; input['onpagehide'] = f; Object.assign(el, { onpagehide: f });",
+    'if (window.onpagehide === f || document.title == t) run(window.innerWidth);',
+  ].join('\n'))), []);
 });
