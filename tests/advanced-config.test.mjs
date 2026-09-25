@@ -651,6 +651,38 @@ test('a stored profile carrying the shared opening hand drops it, warns once whe
   assert.match(both[0], /old limit of 15 cards was left out.*; the shared base cards and attribute are retired/);
 });
 
+test('a profile holding only the settings.-prefixed shared opening hand or cap of 15 is brought forward (Codex, on #1318)', () => {
+  for (const [key, value, said] of [[`settings.${OPEN_BASE}`, 6, /shared base cards and attribute are retired/],
+    [`settings.${OPEN_STAT}`, 'wisdom', /shared base cards and attribute are retired/],
+    ['settings.gameConfig.handRules.starting.maximum', 15, /old limit of 15 cards was left out/]]) {
+    const profile = { settings: { [key]: value, 'gameConfig.handRules.turn.base': 3 } };
+    const warnings = [];
+    let saves = 0;
+    const settings = bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
+    assert.equal(settings, profile.settings, 'rewritten in place');
+    assert.deepEqual(profile.settings, { 'gameConfig.handRules.turn.base': 3 }, `${key} is deleted from the profile`);
+    assert.equal(saves, 1, `${key} is saved once`);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], said);
+  }
+});
+
+test('every stock shared opening value ever shipped is dropped quietly, loosely compared', () => {
+  for (const settings of [{ [OPEN_BASE]: 3 }, { [OPEN_BASE]: 4 }, { [OPEN_BASE]: '3' }, { [`settings.${OPEN_BASE}`]: '4' },
+    { [OPEN_STAT]: 'intelligence' }, { [OPEN_BASE]: 3, [OPEN_STAT]: 'intelligence' }]) {
+    const profile = { settings: { ...settings } };
+    const warnings = [];
+    let saves = 0;
+    bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
+    assert.deepEqual(profile.settings, {}, `${JSON.stringify(settings)} is dropped`);
+    assert.equal(saves, 1);
+    assert.deepEqual(warnings, [], `${JSON.stringify(settings)} was never a customisation`);
+  }
+  const warnings = [];
+  bringProfileForward({ settings: { [OPEN_BASE]: 5 } }, contentBundle, () => {}, warnings);
+  assert.equal(warnings.length, 1, 'a base of 5 was a choice');
+});
+
 test('a resumed run whose snapshot carries the shared opening hand drops it, warns once and is saved once', () => {
   const run = { seed: 7, advancedConfigSnapshot: Object.freeze({ schemaVersion: 1, overrides: Object.freeze({
     [OPEN_BASE]: 2, [`settings.${OPEN_BASE}`]: 2, [OPEN_STAT]: 'dexterity', [CINDER]: 2 }) }) };

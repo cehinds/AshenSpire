@@ -2526,8 +2526,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       run,
       meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
       // The attribute cards state THIS fight's hand: its snapshot, which the
-      // synthetic `meta` above cannot resolve (Codex, #1294). A snapshot from
-      // before hand rules rode in it reads the profile, as runCombat did.
+      // synthetic `meta` above cannot resolve (Codex, #1294). A fight from
+      // before hand rules has no `combat.handRules` and deals from the legacy
+      // Draw / handMax; this fallback shows the class's CURRENT rules for it —
+      // an approximation for an old save, not a regression.
       handRules: combat.handRules || classHandRules(readSettings(), registries.attributes.all(), run.class),
       destination,
       inCombat: true,

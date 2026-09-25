@@ -752,7 +752,7 @@ applies the class row through `handRulesForClass`): the snapshot carries the
 merged `starting` rule and not the per-class table, so a saved fight deals from
 exactly what it was born with, and a snapshot written before this change keeps
 its own `starting` rule unchanged. A fight with no class row (a headless
-fixture) uses the shared rule. Advanced → Stats → Draw & hand exposes each
+fixture) uses the authored fallback. Advanced → Stats → Draw & hand exposes each
 class's base and attribute as its own pair of rows (`gameConfig.handRules.
 startingByClass.<class>.base|stat`). The shared opening base and stat
 (`gameConfig.handRules.starting.base|stat`) are **retired, not migrated**: they
