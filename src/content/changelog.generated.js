@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1318",
+    "id": "pr-1317",
     "date": "2026-09-25",
     "group": "2026-09-25",
-    "summary": "Opening-hand settings say what they do, everywhere",
-    "detail": "An older setting that gave every class the same opening hand is no longer accepted and then quietly ignored: it is set aside wherever it was saved, and when it held something other than the default a note points you to each class's own opening-hand settings under Stats → Draw & hand. The Shrine's level-up cards and the Armoury opened mid-fight now say what a point buys in your opening hand under your own settings, and the class chooser's preview shows both the Hand and the Draw chips.",
-    "build": "0.7.1.512",
-    "pullRequest": 1318,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1318"
+    "summary": "Behind the scenes: a missing changelog entry is caught before merge",
+    "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check's title-screen Continue row now names the highlighted, enabled entry it already measured, so it fails loudly instead of measuring a greyed-out one if the screenshot ever stops seeding a save. Two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
+    "build": "0.7.1.510",
+    "pullRequest": 1317,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1317"
   },
   {
     "id": "pr-1300",
@@ -41,6 +41,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.503",
     "pullRequest": 1299,
     "url": "https://github.com/cehinds/AshenSpire/pull/1299"
+  },
+  {
+    "id": "pr-1312",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The opening scene list in Settings lays out cleanly",
+    "detail": "The list of opening scenes in Settings now uses the full width of its row, with each scene's name and position side by side and its buttons on their own row beneath, so long names wrap instead of crowding the controls. This entry was written after the change merged without one.",
+    "build": "0.7.1.502",
+    "pullRequest": 1312,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1312"
   },
   {
     "id": "pr-1311",
