@@ -90,12 +90,12 @@ const PROTECTED_BRANCHES = new Set(['dev', 'test', 'release', 'main']);
  * validBranchName(name) → true when git would accept `name` as a branch
  * (`git check-ref-format --branch`): no empty, `.`-led or `.lock`-ending
  * component, no leading, trailing or doubled `/`, no trailing `.`, no `..` or
- * `@{`, not `@`, not `-`-led, and no space, control character or any of
+ * `@{`, not `@` or `HEAD`, not `-`-led, and no space, control character or any of
  * ~ ^ : ? * [ \. SAFE_BRANCH alone let `foo/`, `/foo`, `.foo` and `foo.lock`
  * through, and every request to GitHub then failed on them.
  */
 export function validBranchName(name) {
-  if (typeof name !== 'string' || !name || name === '@' || name.startsWith('-')) return false;
+  if (typeof name !== 'string' || !name || name === '@' || name === 'HEAD' || name.startsWith('-')) return false;
   if (/[\x00-\x20\x7f~^:?*[\\]/.test(name) || name.includes('..') || name.includes('@{')) return false;
   if (name.startsWith('/') || name.endsWith('/') || name.endsWith('.')) return false;
   return name.split('/').every((part) => part && !part.startsWith('.') && !part.endsWith('.lock'));

@@ -590,7 +590,7 @@ test('Save drops an older preview, and Undo gives promotion ownership back', asy
   resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(moved\.length \|\| seedMoved\) \{ if \(Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore; \}/);
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
 });
 
 test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
@@ -708,12 +708,12 @@ test('an Undo is painted only over the profile it was taken from; a seed-only re
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /const offer = pendingUndo\(\);\s*if \(!offer\) return;/, 'the bar paints only a current offer');
-  assert.match(screen, /dropUndoOffer\(\);\s*offerUndo\(moved \?/, 'a profile load starts a new generation before its own Undo');
+  assert.match(screen, /dropUndoOffer\(\);[\s\S]{0,400}?offerUndo\(moved \?/, 'a profile load starts a new generation before its own Undo');
   // Every key already at its promoted value, but the player's: only ownership moves.
   const settings = { musicVolume: 40 };
   resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
-  assert.match(screen, /if \(moved\.length \|\| seedMoved\) \{ if \(Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore; \}/);
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
 });
 
 test('a mistyped sync location is refused by name, never swapped for the default', async () => {
@@ -746,7 +746,7 @@ test('ownership survives a promotion that moved on, and an ownership-only load c
   assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
   assert.match(panel, /if \(seedMoved\) \{\s*carriedStatus = '[^']*';\s*afterApply\(0, \{ \[SEED_KEY\]: seedBefore \}, true\);/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(moved \|\| seedMoved\) \{[^}]*?offerUndo\(/);
+  assert.match(screen, /if \(moved \|\| seedMoved\) \{[\s\S]{0,600}?offerUndo\(/);
 });
 
 test('a profile restore drops any pending Undo, since it refills the same settings object', async () => {
@@ -896,4 +896,47 @@ test('a load whose promoted values would split a pair the file kept whole is ref
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.equal((screen.match(/const problem = promotionProblem\(contentBundle, settings, saved\);\s*if \(problem\) throw new Error\(/g) || []).length, 2, 'both Load settings doors refuse it before saving');
+});
+
+test('an Undo puts back ownership only for the keys its change moved', async () => {
+  const { resetKeys, pendingUndo, dropUndoOffer, applySeedPatch, seedPatch } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  // A (musicVolume) is the player's at the promoted value; B (sfxVolume) is the promotion's.
+  const settings = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const save = (changed) => {
+    const seed = seedAfterChange(settings, changed);
+    for (const [key, value] of Object.entries(changed)) { if (value === undefined) delete settings[key]; else settings[key] = value; }
+    if (seed) settings[SEED_KEY] = seed;
+    return { ok: true };
+  };
+  dropUndoOffer();
+  // Reset A: only its ownership moves (to the promotion).
+  resetKeys(settings, save, ['musicVolume'], 'reset', { promoted: { musicVolume: 40, sfxVolume: 30 } });
+  assert.deepEqual(settings[SEED_KEY], { sfxVolume: 30, musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.deepEqual(offer.seed, { musicVolume: null }, 'the offer carries A\'s ownership only');
+  // Inside the window the player moves B away and back: B is now theirs.
+  save({ sfxVolume: 20 });
+  save({ sfxVolume: 30 });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  // Undo, as the bar applies it: A's ownership back, B's left as it is now.
+  const merged = applySeedPatch(settings[SEED_KEY], offer.seed);
+  save({ ...offer.snapshot, [SEED_KEY]: merged });
+  assert.deepEqual(settings[SEED_KEY], {}, 'A is the player\'s again; B stays the player\'s');
+  dropUndoOffer();
+  // seedPatch names only the keys that differ, with what they held before.
+  assert.deepEqual(seedPatch({ a: 1, b: 2 }, { a: 1, c: 3 }), { b: { value: 2 }, c: null });
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(offer\.seed\) \{\s*restore\[SEED_KEY\] = applySeedPatch\(now\[SEED_KEY\], offer\.seed\);/, 'the bar merges, never replaces, the record');
+  assert.match(screen, /const \{ \[SEED_KEY\]: seedBefore, \.\.\.values \} = before \|\| \{\};\s*offerUndo\([^;]*values, seedPatch\(seedBefore, settings\[SEED_KEY\]\)\);/, 'a profile load\'s Undo is per key too');
+  assert.doesNotMatch(screen, /undo\[SEED_KEY\] = seedBefore/, 'no Undo carries the whole record');
+});
+
+test('HEAD is not a sync branch or base', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  assert.equal(validBranchName('HEAD'), false);
+  assert.deepEqual(syncConfigProblems({ branch: 'HEAD', base: 'HEAD' }), ['branch', 'base']);
+  assert.equal(validBranchName('HEADS'), true, 'only the exact name');
+  assert.equal(validBranchName('feature/HEAD'), true, 'git allows it as a component');
 });

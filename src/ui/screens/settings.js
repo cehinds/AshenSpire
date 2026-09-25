@@ -1251,13 +1251,41 @@ let undoOffer = null;
 // a restore, a profile load, a configuration import — via dropUndoOffer().
 let profileGeneration = 0;
 /**
- * offerUndo(label, snapshot) — the next paint shows "label · Undo". The offer
- * belongs to the current profile generation, so a profile replaced in between
- * never receives another profile's values.
+ * offerUndo(label, snapshot, seed) — the next paint shows "label · Undo". The
+ * offer belongs to the current profile generation, so a profile replaced in
+ * between never receives another profile's values. `seed` (from seedPatch) is
+ * the ownership the change moved, key by key: Undo puts back only those keys'
+ * ownership, merged into the record as it stands then, so a key the player
+ * took over inside the window stays theirs.
  */
-export function offerUndo(label, snapshot) {
-  if (!snapshot || !Object.keys(snapshot).length) return;
-  undoOffer = { label, snapshot, generation: profileGeneration, until: Date.now() + UNDO_MS };
+export function offerUndo(label, snapshot, seed = null) {
+  const hasSeed = seed && Object.keys(seed).length > 0;
+  if ((!snapshot || !Object.keys(snapshot).length) && !hasSeed) return;
+  undoOffer = { label, snapshot: snapshot || {}, seed: hasSeed ? seed : null, generation: profileGeneration, until: Date.now() + UNDO_MS };
+}
+
+/**
+ * seedPatch(before, after) → { key: { value } | null } for each key whose
+ * promotion ownership differs between two seed records: what `before` held
+ * for it (null = not the promotion's). Only the keys a change moved.
+ */
+export function seedPatch(before, after) {
+  const a = before && typeof before === 'object' ? before : {};
+  const b = after && typeof after === 'object' ? after : {};
+  const patch = {};
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || a[key] !== b[key]) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
+  }
+  return patch;
+}
+
+/** applySeedPatch(record, patch) → `record` with each patched key's ownership put back. */
+export function applySeedPatch(record, patch) {
+  const next = { ...(record && typeof record === 'object' ? record : {}) };
+  for (const [key, entry] of Object.entries(patch || {})) {
+    if (entry) next[key] = entry.value; else delete next[key];
+  }
+  return next;
 }
 
 /**
@@ -1324,8 +1352,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
   // but was the player's): that reset is saved, so it can be undone.
   const seedMoved = Object.hasOwn(changed, SEED_KEY)
     && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
-  if (moved.length || seedMoved) { if (Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore; }
-  offerUndo(label, undo);
+  offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
   return snapshot;
 }
 
@@ -2586,6 +2613,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (value === undefined) delete settings[key]; else settings[key] = value;
         restore[key] = value;
       }
+      // Ownership only for the keys the change moved, merged into the record
+      // as it is now: a key the player took over since stays theirs.
+      if (offer.seed) {
+        restore[SEED_KEY] = applySeedPatch(now[SEED_KEY], offer.seed);
+        settings[SEED_KEY] = restore[SEED_KEY];
+      }
       undoOffer = null;
       if (onChange(restore)?.ok === false) {
         // Not saved, so not undone: put the state the Undo replaced back, here
@@ -2775,7 +2808,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // A new profile: nothing offered before it applies any more. Its own
       // Undo belongs to the new generation.
       dropUndoOffer();
-      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', before);
+      // The values the load moved, and — key by key, not the whole record —
+      // the ownership it moved.
+      const { [SEED_KEY]: seedBefore, ...values } = before || {};
+      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', values, seedPatch(seedBefore, settings[SEED_KEY]));
     }
     repaintPanel({ keepScroll: true });
   } });
