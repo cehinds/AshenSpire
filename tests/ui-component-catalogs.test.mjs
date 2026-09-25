@@ -301,6 +301,14 @@ test('a pseudo-element on the rail is not the rail', () => {
   }
 });
 
+// Codex on #1316: `all` resets every property, grid-area and display too.
+test('an all reset on the rail or the top grid fails C12', () => {
+  const r = receipt();
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` }).length, 1);
+  assert.equal(railUnderMeters(`${r.kit}\n.shared-hud[data-x] > .hud-top { all: initial; }\n`), false);
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; grid-area: rail; }\n` }).length, 0);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
