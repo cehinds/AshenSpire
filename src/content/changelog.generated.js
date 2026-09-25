@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1311",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the finishing checklist matches the development line again",
+    "detail": "Nothing you see changes. The checklist that tracks the road to 1.0 now ticks what tonight's merges finished, each checked against the code or a test: Guilt's turn-end cost, the card hotkeys, the mid-combat restart, the save-migration corpus, the spec reconcile, the map re-fit, the card door and more. It marks what is only part done and says what is left, and it adds the follow-ups found on the way: seven cards with no route in, two interface checks that are red, review findings that have not been fixed, and the slow test job.",
+    "build": "0.7.1.499",
+    "pullRequest": 1311,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1311"
+  },
+  {
     "id": "pr-1303",
     "date": "2026-09-25",
     "group": "2026-09-25",
