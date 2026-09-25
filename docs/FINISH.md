@@ -102,7 +102,7 @@ the code, a test or a command run on that tree, not against a PR title.
 ## 10. Art and audio
 
 - [ ] **One style guide, with off-style assets listed** (plan §H and P2 identity). Test: the guide exists, and every `assets/*` directory is marked in style or listed as off-style.
-- [x] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure** — [#1299](https://github.com/cehinds/AshenSpire/pull/1299). Test: `node tools/credits-check.mjs` exits 0 on `dev` (33 checks, 26/26 directories), and it and its `--selftest` are steps in `ci.yml`, which runs only when dispatched (D7).
+- [x] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure** — [#1299](https://github.com/cehinds/AshenSpire/pull/1299). Test: `node tools/credits-check.mjs` exits 0 on `dev` (33 checks, 26/26 directories), and it and its `--selftest` are steps in `ci.yml`, which runs on a push to `release` or when dispatched, not on `dev` pushes or PRs (D7).
 
 ## 11. Code health
 
