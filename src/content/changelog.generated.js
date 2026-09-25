@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1322",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Synced settings keep which values you chose, and a mistyped sync location is refused",
+    "detail": "A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).",
+    "build": "0.7.1.525",
+    "pullRequest": 1322,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1322"
+  },
+  {
     "id": "pr-1296",
     "date": "2026-09-25",
     "group": "2026-09-25",
