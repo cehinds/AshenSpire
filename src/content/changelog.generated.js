@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Settings open faster, search everything, and every value has − / + and a slider",
     "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once. A Changed button lists every setting you have changed, and any Reset can be undone. A one-time tip explains search and Reset, and a gamepad presses − and + directly. Development builds can keep named profiles (desk, phone and so on); screen-size settings stay with each device unless you choose to share them. The owner can also promote a profile to be every new player's defaults.",
-    "build": "0.7.1.539",
+    "build": "0.7.1.540",
     "pullRequest": 1277,
     "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1276",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two content checks that had gone stale are fixed and now run with every test",
+    "detail": "Nothing you see in the game changes. The check that the Rogue is complete and the check that every enemy is reachable and grows stronger in order as you climb had both gone red unseen, because they counted cards, outfits, enemies and flask charges from an older roster and grouped fights by a retired act number. They now read those counts from the game's own data, group fights by the seat they belong to, and run in the test suite, so the next time either goes red a pull request fails instead of nobody noticing.",
+    "build": "0.7.1.490",
+    "pullRequest": 1276,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1276"
   },
   {
     "id": "pr-1309",
