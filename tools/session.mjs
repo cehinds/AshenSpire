@@ -349,7 +349,7 @@ export function createSession({ registries, seedString, endless = false, restore
         delete md.run.migratedFromRunSchemaVersion;
         delete md.run.reprojectedZones; // no ledger is open on a member record; the re-projection stands
         members.set(md.id, {
-          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
+          id: md.id, name: md.name, index: md.index, get classId() { return this.run.class; }, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
@@ -426,7 +426,12 @@ export function createSession({ registries, seedString, endless = false, restore
       id,
       name: String(name || 'Forsaken').slice(0, 18),
       index,
-      classId,
+      // THE MEMBER'S CLASS IS ITS RUN'S, read rather than copied: a choice's
+      // swapClass (plan phase 5c) writes run.class through the run-effect
+      // door wherever the choice resolves (the live room, a catch-up), and a
+      // copy left behind is refused by the restore door ("class ... disagrees
+      // with run class") and read by the reward and poise readers.
+      get classId() { return this.run.class; },
       connected: true,
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       spriteStyle: spriteStyle || DEFAULT_SPRITE_STYLE, // animated poses / rendered PNG / classic SVG / sigil glyph
@@ -1533,10 +1538,6 @@ export function createSession({ registries, seedString, endless = false, restore
         // live stream is not moved (Codex on #548).
         const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
         executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
-        // A CHOICE CAN SWAP THE CLASS (plan phase 5c, swapClass): the member's
-        // own copy of the class follows the run's, or the restore door refuses
-        // the seat and the reward and poise readers keep the old card.
-        if (m.run.class !== m.classId) m.classId = m.run.class;
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room

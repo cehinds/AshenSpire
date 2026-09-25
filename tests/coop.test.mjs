@@ -386,7 +386,7 @@ test('co-op: a seeded party plays the shared run through the host and the LAN do
   assert.ok(S.session.members.get('p1').run.relics.length >= p1Relics);
   // An event while away: queued with the choices its history admitted.
   const eventDef = REG.events.all().find((e) => eventChoicesWithHistory(e).length > 1
-    && eventChoicesWithHistory(e).every((c) => !(c.effects || []).some((x) => x.op === 'startCombat' || x.op === 'swapClass')));
+    && eventChoicesWithHistory(e).every((c) => !(c.effects || []).some((x) => x.op === 'startCombat')));
   assert.ok(eventDef, 'content holds a fightless event with choices');
   S.resolveNode({ type: 'event', resolved: { kind: 'event', eventId: eventDef.id } });
   assert.equal(S.scene.kind, 'event');

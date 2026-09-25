@@ -243,12 +243,6 @@ function fight(ctx, nodeId, encounterId) {
     checkCombat(ctx, combat, deckIds, at());
     // One committed turn boundary per fight crosses the save door (main.js
     // onSave): commit the snapshot, save, load, and fight on from the restore.
-    // KNOWN BUG, skipped by name: after a swapClass event the loadout's
-    // creationArmourGrant still names the old class, and loadRun refuses (and
-    // archives) a mid-fight snapshot of that run ("loadout.creationArmourGrant
-    // .classId ... does not match player.classId"). Map-level saves are fine.
-    const swapped = ctx.run.history.some((h) => h && h.kind === 'classSwapped');
-    if (swapped && !snapshotted) { snapshotted = true; ctx.stats.snapshotSkippedAfterSwap++; }
     if (!snapshotted && !combat.result && combat.turn > turn) {
       snapshotted = true;
       commitCombatSnapshot({ run: ctx.run, combat, nodeId, encounterId });
@@ -636,7 +630,7 @@ test('solo run scenario: seeded solo climbs through acts 1-3 stay valid across s
   const stats = {
     runs: 0, victories: 0, maxAct: 1, fights: 0, bosses: 0, bossChoices: 0, chests: 0, chestsTaken: 0, relicsTaken: 0,
     graces: 0, events: 0, purchases: 0, levelUps: 0, shrineLevelUps: 0, statusOnEnemy: 0, statusOnPlayer: 0,
-    artMeters: 0, smithed: 0, reconciled: 0, snapshotSkippedAfterSwap: 0, artCharged: 0, saves: 0, legacy: 0,
+    artMeters: 0, smithed: 0, reconciled: 0, artCharged: 0, saves: 0, legacy: 0,
   };
   const classes = REG.classes.all().map((c) => c.id);
   assert.ok(classes.length >= 3, 'every playable class is in the scenario');
