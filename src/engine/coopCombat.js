@@ -267,6 +267,7 @@ function setActive(C, P) {
   // class-priced cost read `attributes` / `loadout` off it, so the active
   // seat's own are exposed here — the same fields the solo engine carries.
   C.attributes = P ? P.attributes : null;
+  C.attributeMode = P ? P.attributeMode || null : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
   C.skills = P ? P.skills : {};

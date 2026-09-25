@@ -145,7 +145,7 @@ node tools/content-build.mjs           # content/source/* → src/content/genera
 node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/ (entities, terms, assets, …)
 node tools/config-build.mjs --check    # drift gate: the generated UI config is current
 
-# tests (22 assertions, SPEC §8)
+# tests — the index is derived, never hand-counted (SPEC §8): grep -n "test('" tests/engine.test.js
 node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
 node tests/run-node.mjs --no-selftests    # the fast half: engine suite, every *.test.mjs, tool verdicts
 node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftest known-bad corpus
@@ -763,17 +763,18 @@ runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reav
 
 ## M1 known deviations (tracked for M2/M3)
 
-1. **Frostbite** is specced (SPEC §4.4) but not shipped — its
-   "next big hit +30%, then consumed" needs a conditional-consume hook no M1
-   content uses. Lands with the M2 flask that applies it.
-2. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
+Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
+falsifier), not deferred.
+
+1. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
    while in hand" needs an in-hand card hook (engine seam planned with M2's
    event system, which is the first thing that can grant Guilt).
-3. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
+2. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
    a generic choose-one UI primitive is an M2/M3 feature.
-4. **Goreblood** freezes Poise thresholds as well as Bleed (the
-   `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
-   card text says so honestly).
+
+Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
+thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
+only Poise, and the card text and tooltip say Poise only.
 
 ## Dodge outcome presentation
 

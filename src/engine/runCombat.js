@@ -34,6 +34,7 @@ export function runCombatPlayer(run) {
     attributes: run.attributes,
     // The character level every stat row's `perLevel` reads (ruleset 7).
     level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
+    attributeMode: run.attributeMode, // the scale the dodge reads Dexterity on (plan A3)
     // The rule this run was born with, so the Poise vessel combat stamps
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,

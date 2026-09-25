@@ -64,6 +64,7 @@ export function serializeCombatSnapshot(combat) {
     enemies: combat.enemies,
     loadout: combat.loadout,
     attributes: combat.attributes,
+    attributeMode: combat.attributeMode || null,
     // THE RULE THE FIGHT WAS PRICED UNDER, AND IT HAS TO RIDE. The Poise
     // vessel is RE-DERIVED on restore (see below), and it is derived from this
     // snapshot — leaving it out meant a resumed fight re-priced the meter on
@@ -99,7 +100,7 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
@@ -141,6 +142,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
+    // A snapshot from before the field reads the run's creation mode.
+    attributeMode: saved.attributeMode || fallbackAttributeMode || null,
     // A snapshot written before this field existed has none of its own, so it
     // reads the RUN's — the same shape fallbackAttackSlotCount above uses, the
     // run being the authority and the snapshot's copy the optimisation. Null

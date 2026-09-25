@@ -159,6 +159,8 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // The scale those attributes were made on: the dodge's Dexterity centre.
+    attributeMode: player.attributeMode || null,
     // Carried for the same reason the attributes are: every mid-fight
     // restamp of the Poise vessel must read the rule this run was born with.
     derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
