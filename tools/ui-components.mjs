@@ -132,7 +132,7 @@ export function catalogDisagreement(md, html) {
 export function railUnderMeters(css) {
   // Each rule is judged by its LAST grid-template-areas, the one CSS honours.
   const grids = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
-    .map((m) => ({ selector: m[1].trim(), rows: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1].match(/"[^"]*"/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
+    .map((m) => ({ selector: m[1].trim(), rows: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1].match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
     .filter((g) => g.rows);
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
     && grids.every(({ rows }) => rows.some((row) => row.includes('meters'))
@@ -428,8 +428,9 @@ export function findings(r) {
       // climb, so the check pins the call and its first argument and lets the
       // rest of the argument list vary. An authored legacy dungeon mounts the
       // same map with its own title (ed4d7e6c9, `mapAdapter.title`); every
-      // generated act still falls through to actTitle.
-      || !/actRouteStripHtml\(\{\s*title:\s*(?:mapAdapter\?\.title\s*\|\|\s*)?actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
+      // generated act still falls through to actTitle. Both halves are
+      // required: dropping the authored title is a defect too (Codex, #1316).
+      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
@@ -662,6 +663,8 @@ function selftest() {
     ['re-hang the relic rail from a later layout rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n` })],
     // Codex, #1316: an override grid that drops `meters` is judged, not skipped.
     ['drop the meters row from a map-header override', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";') })],
+    ['single-quote a map-header grid that drops meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', "'info actions' 'rail actions';") })],
+    ['drop the authored dungeon title from the map route strip', 'C12 ', (r) => ({ ...r, map: r.map.replace('title: mapAdapter?.title || actTitle(', 'title: actTitle(') })],
     ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
