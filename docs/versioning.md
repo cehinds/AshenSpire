@@ -1,10 +1,11 @@
 # Versioning — when each segment increments
 
 The in-game stamp is `BUILD <MAJOR>.<MINOR>.<CANDIDATE>.<BUILD> · src <digest>`
-(currently `0.5.4.<build>`; see "The candidate is the third component" below). This document is the decision workflow for the
-three authored segments. It changes no machinery: the one home for the string
-is `src/buildversion.js`, the release triple lives only in
-`src/content/index.js` (`contentBundle.version`), and
+(the current triple is `contentBundle.version` in `src/content/index.js`;
+see "The candidate is the third component" below). This document is the
+decision workflow for the three authored segments. It changes no machinery:
+the one home for the string is `src/buildversion.js`, the release triple
+lives only in `src/content/index.js` (`contentBundle.version`), and
 `node tools/buildversion.mjs --check` keeps anyone from re-typing either.
 
 ## The four segments and their owners

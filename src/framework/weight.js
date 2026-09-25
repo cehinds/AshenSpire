@@ -36,8 +36,19 @@ export function computeWeightClass({ constitution, strength, bonuses = 0, weight
   return { capacity, load, percent, weightClass: weightClassFor(percent) };
 }
 
-export function attributeModifier(score) {
-  return Math.floor((score - 10) / 2);
+/**
+ * attributeModifier(score, attributeMode) — the Dexterity term of the dodge:
+ * floor((score − centre) / per). The centre is the run's creation mode's row
+ * (mechanics.dodgeRoll `dexterityCentreByMode`, the lean scale's 3), or
+ * `dexterityCentre` (the d20-scale 10) for a run made under an older mode,
+ * so a save from an older scale keeps the dodge it was made with.
+ */
+export function attributeModifier(score, attributeMode = undefined) {
+  const { dexterityCentre, dexterityCentreByMode = {}, dexterityPerModifier } = mechanics.dodgeRoll;
+  // No sheet (a fixture, a foundation fight) reads as the centre: no term.
+  if (!Number.isFinite(score)) return 0;
+  const centre = Object.hasOwn(dexterityCentreByMode, attributeMode) ? dexterityCentreByMode[attributeMode] : dexterityCentre;
+  return Math.floor((score - centre) / Math.max(1, dexterityPerModifier));
 }
 
 /**
@@ -46,14 +57,14 @@ export function attributeModifier(score) {
  * already-rolled d20 (the caller owns randomness; this stays deterministic).
  */
 export function dodgeRollCheck({
-  roll, dexterity, weightClass, otherEvasionModifiers = 0,
+  roll, dexterity, attributeMode = undefined, weightClass, otherEvasionModifiers = 0,
   baseDifficulty = mechanics.dodgeRoll.baseDifficulty,
   sourceCombatantModifier = 0, incomingAttackModifier = 0,
 }) {
   if (!Number.isInteger(roll) || roll < 1 || roll > mechanics.dodgeRoll.die) {
     throw new Error(`dodge roll: roll ${roll} is not a d${mechanics.dodgeRoll.die} result`);
   }
-  const check = roll + attributeModifier(dexterity) + weightClass.evasionModifier + otherEvasionModifiers;
+  const check = roll + attributeModifier(dexterity, attributeMode) + weightClass.evasionModifier + otherEvasionModifiers;
   const difficulty = baseDifficulty + sourceCombatantModifier + incomingAttackModifier;
   const success = check > difficulty;
   return {
@@ -61,7 +72,7 @@ export function dodgeRollCheck({
     difficulty,
     success,
     temporaryGuard: success
-      ? mechanics.dodgeRoll.temporaryGuardBase + attributeModifier(dexterity) + weightClass.temporaryGuardModifier
+      ? mechanics.dodgeRoll.temporaryGuardBase + attributeModifier(dexterity, attributeMode) + weightClass.temporaryGuardModifier
       : 0,
     cost: { stamina: weightClass.dodgeStaminaCost, actions: weightClass.dodgeActionCost },
   };
