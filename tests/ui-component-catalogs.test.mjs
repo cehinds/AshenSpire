@@ -53,3 +53,34 @@ test('a double-quoted semantic record is still read', () => {
   assert.notEqual(quoted.catalogHtml, r.catalogHtml);
   assert.deepEqual(c22(quoted), []);
 });
+
+// The two families are compared separately: an id that moves between the
+// Markdown "| Rendered family |" table and a Component-ID table, or between
+// the HTML SEMANTIC_COMPONENTS and RENDERED_ARMOURY_COMPONENTS arrays, is
+// still listed once on each side, so one merged set would call it agreement.
+test('an armoury asset id moved into a Markdown Component-ID table fails the check', () => {
+  const r = receipt();
+  const moved = r.catalogMarkdown
+    .replace(', `armoury.disclosure` |', ' |')
+    .replace('| `startup-gate` |', '| `armoury.disclosure` | x | x | x | x |\n| `startup-gate` |');
+  assert.notEqual(moved, r.catalogMarkdown);
+  assert.match(c22({ ...r, catalogMarkdown: moved }).join('\n'), /only in COMPONENT-CATALOG\.md: armoury\.disclosure \[semantic\]; only in component-catalog\.html: armoury\.disclosure \[armoury\]/);
+});
+
+test('an armoury record moved into the interactive SEMANTIC_COMPONENTS array fails the check', () => {
+  const r = receipt();
+  const record = ` ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],\n`;
+  assert.ok(r.catalogHtml.includes(record));
+  const moved = r.catalogHtml
+    .replace(record, '')
+    .replace('const SEMANTIC_COMPONENTS = [\n', `const SEMANTIC_COMPONENTS = [\n${record}`);
+  assert.notEqual(moved, r.catalogHtml);
+  assert.match(c22({ ...r, catalogHtml: moved }).join('\n'), /only in COMPONENT-CATALOG\.md: armoury\.shell \[armoury\]; only in component-catalog\.html: armoury\.shell \[semantic\]/);
+});
+
+// The whole verdict of tools/ui-components.mjs, not only its C22 rung. C5 and
+// C12 sat red on dev because nothing in the suite ran the tool; this line is
+// that run. Its plants live in `node tools/ui-components.mjs --selftest`.
+test('every reusable component contract of tools/ui-components.mjs holds on this checkout', () => {
+  assert.deepEqual(findings(receipt()), []);
+});

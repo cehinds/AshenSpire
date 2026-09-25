@@ -60,8 +60,15 @@ const REQUIRED_IDS = Object.freeze([
 // interactive catalog's are the SEMANTIC_COMPONENTS and
 // RENDERED_ARMOURY_COMPONENTS records. An id in one and not the other is a
 // component one reader can find and the other cannot.
-export function markdownCatalogIds(md) {
-  const ids = [];
+//
+// The two FAMILIES are compared separately: the Component/Stable-ID tables
+// against SEMANTIC_COMPONENTS, the Rendered-family table against
+// RENDERED_ARMOURY_COMPONENTS. An id moved from one family to the other on one
+// side only is still listed once per catalog, so one merged set would call
+// the catalogs in agreement while each family disagrees.
+export function markdownCatalogFamilies(md) {
+  const semantic = [];
+  const armoury = [];
   let table = null;
   for (const line of md.split('\n')) {
     if (/^\| (?:Component|Stable) ID \|/.test(line)) { table = 'semantic'; continue; }
@@ -70,12 +77,12 @@ export function markdownCatalogIds(md) {
     if (!line.startsWith('|')) { table = null; continue; }
     if (table === 'semantic') {
       const id = line.match(/^\| `([^`]+)` \|/)?.[1];
-      if (id) ids.push(id);
+      if (id) semantic.push(id);
     } else {
-      ids.push(...[...line.matchAll(/`(armoury\.[^`]+)`/g)].map((m) => m[1]));
+      armoury.push(...[...line.matchAll(/`(armoury\.[^`]+)`/g)].map((m) => m[1]));
     }
   }
-  return ids;
+  return { semantic, armoury };
 }
 
 // Record ids are the first string of each array literal, in either quote
@@ -88,21 +95,41 @@ function htmlListIds(html, name) {
   return [...body.matchAll(/^\s*\[(['"])([^'"]+)\1,/gm)].map((m) => m[2]);
 }
 
-export function htmlCatalogIds(html) {
-  const semantic = htmlListIds(html, 'SEMANTIC_COMPONENTS');
-  const armoury = htmlListIds(html, 'RENDERED_ARMOURY_COMPONENTS');
-  if (!semantic?.length || !armoury?.length) return [];
-  return [...semantic, ...armoury];
+export function htmlCatalogFamilies(html) {
+  return {
+    semantic: htmlListIds(html, 'SEMANTIC_COMPONENTS') || [],
+    armoury: htmlListIds(html, 'RENDERED_ARMOURY_COMPONENTS') || [],
+  };
 }
 
+// A one-sided id names its family, so an id moved between families reads as
+// "only here in one family, only there in the other" rather than as two
+// unrelated strays.
 export function catalogDisagreement(md, html) {
-  const mdIds = new Set(markdownCatalogIds(md));
-  const htmlIds = new Set(htmlCatalogIds(html));
-  return {
-    markdownOnly: [...mdIds].filter((id) => !htmlIds.has(id)),
-    htmlOnly: [...htmlIds].filter((id) => !mdIds.has(id)),
-    empty: !mdIds.size || !htmlIds.size,
-  };
+  const mdFamilies = markdownCatalogFamilies(md);
+  const htmlFamilies = htmlCatalogFamilies(html);
+  const markdownOnly = [];
+  const htmlOnly = [];
+  let empty = false;
+  for (const family of ['semantic', 'armoury']) {
+    const mdIds = new Set(mdFamilies[family]);
+    const htmlIds = new Set(htmlFamilies[family]);
+    if (!mdIds.size || !htmlIds.size) empty = true;
+    markdownOnly.push(...[...mdIds].filter((id) => !htmlIds.has(id)).map((id) => `${id} [${family}]`));
+    htmlOnly.push(...[...htmlIds].filter((id) => !mdIds.has(id)).map((id) => `${id} [${family}]`));
+  }
+  return { markdownOnly, htmlOnly, empty };
+}
+
+// Every shared-HUD grid (the base band, the compact and wide map headers, the
+// narrow phone band) that lays out a `meters` row puts a `rail` row directly
+// beneath it, in the same column, and the base band has such a grid.
+export function railUnderMeters(css) {
+  const grids = [...css.matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
+    .map((m) => ({ selector: m[1].trim(), rows: m[2].match(/grid-template-areas:([^;]*);/)?.[1].match(/"[^"]*"/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
+    .filter((g) => g.rows?.some((row) => row.includes('meters')));
+  return grids.some((g) => g.selector === '.shared-hud > .hud-top')
+    && grids.every(({ rows }) => rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
 }
 
 export function receipt() {
@@ -209,8 +236,18 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  // The catalogue-only armour image resolver reads no run or combat state.
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels.replace("import { armourMenuAsset } from '../../model/paintedOutfitArt.js';", '') + r.menuComponents + r.armouryComponents)
+  // The Armoury's two catalogue-only art resolvers read no run or combat
+  // state: armourMenuAsset (a piece's painted outfit) and, since 7688282ef,
+  // armamentIconAsset (a piece's authored inventory-art alias, the ONE home
+  // of that alias — inlining it here would be the bypass that commit
+  // removed). Each is excused by its exact import line, so any other name
+  // imported from either file, or any other model/engine module, is still red.
+  const armouryArtImports = [
+    "import { armamentIconAsset } from '../../model/equipmentArt.js';",
+    "import { armourMenuAsset } from '../../model/paintedOutfitArt.js';",
+  ];
+  const armouryModelsSansArt = armouryArtImports.reduce((text, line) => text.replace(line, ''), r.armouryModels);
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + armouryModelsSansArt + r.menuComponents + r.armouryComponents)
       || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
@@ -344,7 +381,15 @@ export function findings(r) {
       || !/--hud-quick-tile-size:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/--hud-quick-tile-gap:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
+      // THE RELIC RAIL IS INSIDE THE HUD, beneath Vitals (SPEC "Primary and
+      // inventory geometry": `inventory-belt` places Relics beneath Vitals).
+      // It hung absolutely beneath the band's edge until f8d7d3257 ("Contain
+      // the HUD") put it in the band's own grid, so the band grows with it;
+      // this clause pinned the hang and left C12 red on dev. What it means
+      // now: the rail is in flow in the `rail` area, and the shared grid
+      // stacks a rail row directly under the meters row.
+      || !/\.shared-hud \.hud-bottom \{[^}]*position: static;[^}]*grid-area: rail;/.test(r.kit)
+      || !railUnderMeters(r.kit)
       // The relic rail is the shared icon tray (components/iconTray.js), the
       // combatant card's status row its reference: the rail wears the tray's
       // classes and the tray sizes every icon from its own plan.
@@ -359,8 +404,10 @@ export function findings(r) {
       // The map titles its route strip with the act's own name. Since the
       // W4b header (#1052) actTitle also takes the seat's name on a seated
       // climb, so the check pins the call and its first argument and lets the
-      // rest of the argument list vary.
-      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
+      // rest of the argument list vary. An authored legacy dungeon mounts the
+      // same map with its own title (ed4d7e6c9, `mapAdapter.title`); every
+      // generated act still falls through to actTitle.
+      || !/actRouteStripHtml\(\{\s*title:\s*(?:mapAdapter\?\.title\s*\|\|\s*)?actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
@@ -579,11 +626,15 @@ function selftest() {
     ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
+    ['import run state into the Armoury models beside their art resolvers', 'C5 ', (r) => ({ ...r, armouryModels: `import { resourceBarPlan } from '../../model/resources.js';\n${r.armouryModels}` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
     // Substitutes the declaration whatever its authored value, so this plant
     // site cannot drift out from under the corpus the way the check above did.
     ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/--hud-quick-tile-size:[^;]+;/, '--hud-quick-tile-size: var(--iconbtn-size);') })],
-    ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
+    ['hang the relic rail beneath the HUD again', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\.shared-hud \.hud-bottom \{[^}]*)position: static;/, '$1position: absolute;') })],
+    ['drop the rail row from under the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"meters actions" "rail actions" "route route"', '"meters actions" "route route"') })],
+    ['put the phone band\'s rail beside the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\[data-layout='narrow'\] \.shared-hud > \.hud-top \{[^}]*)"meters actions" "rail actions"/, '$1"meters rail" "actions actions"') })],
+    ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
     // instead of its total is the defect the photograph caught.
@@ -605,6 +656,10 @@ function selftest() {
     ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],
     ['list a component in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace("const SEMANTIC_COMPONENTS = [", "const SEMANTIC_COMPONENTS = [\n ['html-only-component','x','x','primitive','x','x','panel'],") })],
     ['list an armoury asset id in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace('const RENDERED_ARMOURY_COMPONENTS = [', 'const RENDERED_ARMOURY_COMPONENTS = [\n ["armoury.htmlOnlyAsset",".x","x","x","x"],') })],
+    // Moves, not additions: each id is still listed once in each catalog, so
+    // only a per-family comparison sees them.
+    ['move an armoury asset id into a Markdown Component-ID table', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace(', `armoury.disclosure` |', ' |').replace('| `startup-gate` |', '| `armoury.disclosure` | x | x | x | x |\n| `startup-gate` |') })],
+    ['move an armoury record into SEMANTIC_COMPONENTS', 'C22 ', (r) => { const rec = ` ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],\n`; return { ...r, catalogHtml: r.catalogHtml.replace(rec, '').replace('const SEMANTIC_COMPONENTS = [\n', `const SEMANTIC_COMPONENTS = [\n${rec}`) }; }],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
