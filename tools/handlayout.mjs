@@ -2,8 +2,8 @@
 // paging is UNTOUCHED, and every claim is a number from a rendered tree.
 //
 // WHAT IT CHECKS, per cell (mode x text size, at 390x844, ten-card hand — the
-// largest dealable hand, balance.handMax, posed through ?shotHand which draws
-// by the engine's own door):
+// Hand size stat row pinned to 10 through ?shotSettings, posed through
+// ?shotHand which draws by the engine's own door):
 //   1. the word derived onto <html data-hand-layout> is the mode asked for —
 //      through ?shotSettings, the app's own settings resolution, so a tree
 //      without the word fails HERE first, by name
