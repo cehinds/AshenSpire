@@ -17,6 +17,7 @@
 
 import { itemRefIdentity, resolveUpgradedItem } from './itemUpgrades.js';
 import { carriedIds, equippedPieces, isItemOwned, itemMountInstances, pieceItemRef, stampDeck } from './loadout.js';
+import { joinDeck } from './skills.js';
 import {
   cardMountRules, isExtraMountKey, itemMountEntries, openExtraMountKey, resolveFallbackCard,
 } from './cardMounts.js';
@@ -231,7 +232,7 @@ export function commitExtraction(registries, run, itemRef, mountKey, explicitRul
   writeMount(run, itemRef, mountKey, mount.extra ? null : { card: null, extractions: mount.extractions + 1 });
   const instanceId = `extracted:${n}:${mount.cardId}`;
   if (!Array.isArray(run.deck)) run.deck = [];
-  run.deck.push({ instanceId, cardId: mount.cardId, upgraded: mount.upgraded === true });
+  joinDeck(registries, run, { instanceId, cardId: mount.cardId, upgraded: mount.upgraded === true });
   stampDeck(registries, run);
   const receipt = Object.freeze({
     schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION,

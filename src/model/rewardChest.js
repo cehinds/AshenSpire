@@ -6,6 +6,7 @@
 // It grants exactly the option handed in — nothing else in the chest moves.
 
 import { isItemOwned } from './loadout.js';
+import { joinDeck } from './skills.js';
 import { sourceArmamentId } from './smithing.js';
 import { rewardPlan, resolveContinue } from './rewardplan.js';
 
@@ -140,12 +141,12 @@ export function applyChestOption(registries, run, option, { collectArmament = nu
         return true;
       }
       if (!registries.cards.has(option.cardId)) return false;
-      run.deck.push({ instanceId: freshInstanceId(run, 'chest', option.cardId), cardId: option.cardId, upgraded: true });
+      joinDeck(registries, run, { instanceId: freshInstanceId(run, 'chest', option.cardId), cardId: option.cardId, upgraded: true });
       return true;
     case 'armament':
       if (option.weaponArtId) {
         if (!registries.cards.has(option.weaponArtId)) return false;
-        run.deck.push({ instanceId: freshInstanceId(run, 'chest-art', option.weaponArtId), cardId: option.weaponArtId, upgraded: false });
+        joinDeck(registries, run, { instanceId: freshInstanceId(run, 'chest-art', option.weaponArtId), cardId: option.weaponArtId, upgraded: false });
         return true;
       }
       return collectArmament ? collectArmament(option.armamentId) !== false : false;

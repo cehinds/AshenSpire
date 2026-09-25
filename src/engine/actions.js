@@ -39,6 +39,7 @@ import { propertyMountsOf } from './properties.js';
 import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
+import { joinDeck } from '../model/skills.js';
 import { applyGraceRefill } from './encounters.js';
 
 // ---------------------------------------------------------------------------
@@ -851,7 +852,7 @@ function runRunOpcode(ctx, action, eff) {
     }
     case 'addCardToDeck': {
       ctx.registries.cards.get(eff.card); // throws on dangling id
-      run.deck.push({ instanceId: ctx.nextInstanceId(), cardId: eff.card, upgraded: false });
+      joinDeck(ctx.registries, run, { instanceId: ctx.nextInstanceId(), cardId: eff.card, upgraded: false });
       break;
     }
     case 'removeCardFromDeck': {

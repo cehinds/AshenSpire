@@ -19,6 +19,7 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
+import { joinDeck } from '../src/model/skills.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { wrapEmit } from '../src/engine/busHooks.js';
@@ -1070,7 +1071,7 @@ export function createSession({ registries, seedString, endless = false, restore
       claimed.chest = true;
     }
     if (!claimed.card && cardId && offer.cardIds.includes(cardId)) {
-      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+      joinDeck(registries, m.run, { instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
       claimed.card = true;
     }
     const relic = claimed.relic ? null : pickedRelic(offer, { relicId, takeRelic });
@@ -1475,7 +1476,7 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
-        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
+        joinDeck(registries, m.run, { instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
       if (chosen) {
         const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, substituteRarities(offer)) : chosen;

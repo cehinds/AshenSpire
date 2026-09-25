@@ -25,7 +25,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks, spendSkillDraft, skillUpgradesCards, skillLevel, classSkillId, reconcileSkillUpgrades } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, skillUpgradesCards, skillLevel, classSkillId, joinDeck } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier } from '../src/model/seats.js';
@@ -116,13 +116,6 @@ function fingerprint(run) {
 const stripSavedAt = (json) => json.replace(/"savedAt":"[^"]*"/, '');
 
 function checkpoint(ctx, node) {
-  // KNOWN GAP, mirrored rather than hidden: a card that joins the deck while a
-  // track sits past balance.skill.upgradeAt (a card row, another track's draft,
-  // a purchase) is NOT upgraded at grant time, but the load door's
-  // reconcileSkillUpgrades upgrades it — so a reload changes the deck. Both
-  // climbs apply the load door's standing rule at every checkpoint, so the
-  // comparison below measures everything else.
-  ctx.stats.reconciled += Object.values(reconcileSkillUpgrades(REG, ctx.run)).flat().length;
   ctx.saves.saveRun(ctx.run, ctx.rng);
   ctx.saveCount++;
   if (ctx.reload) {
@@ -379,7 +372,7 @@ function applyRow(ctx, row, cp) {
   switch (row.kind) {
     case 'cinders': run.cinders += row.amount; return true;
     case 'card':
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      joinDeck(REG, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       cp.chosenCardId = row.cardId; return true;
     case 'classDraft':
       if (!pickClassNode(REG, run, row.nodeId)) return false;
@@ -387,7 +380,7 @@ function applyRow(ctx, row, cp) {
       cp.chosenDraftNodeIds[row.key] = row.nodeId; return true;
     case 'skillDraft':
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(REG, skillLevel(run, row.skillId)) });
+      joinDeck(REG, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(REG, skillLevel(run, row.skillId)) });
       cp.chosenDraftCardIds[row.key] = row.cardId; return true;
     case 'flask': run.flasks.push({ flaskId: row.flaskId }); return true;
     case 'relic':
@@ -545,7 +538,7 @@ function enterNode(ctx, id) {
     const buy = stock.cards.find((c) => c.cost <= ctx.run.cinders);
     if (buy) {
       ctx.run.cinders -= buy.cost;
-      ctx.run.deck.push({ instanceId: `r${ctx.run.deck.length}_${buy.id}`, cardId: buy.id, upgraded: false });
+      joinDeck(REG, ctx.run, { instanceId: `r${ctx.run.deck.length}_${buy.id}`, cardId: buy.id, upgraded: false });
       ctx.stats.purchases++;
     }
     delete ctx.run.shopStock;
@@ -630,7 +623,7 @@ test('solo run scenario: seeded solo climbs through acts 1-3 stay valid across s
   const stats = {
     runs: 0, victories: 0, maxAct: 1, fights: 0, bosses: 0, bossChoices: 0, chests: 0, chestsTaken: 0, relicsTaken: 0,
     graces: 0, events: 0, purchases: 0, levelUps: 0, shrineLevelUps: 0, statusOnEnemy: 0, statusOnPlayer: 0,
-    artMeters: 0, smithed: 0, reconciled: 0, artCharged: 0, saves: 0, legacy: 0,
+    artMeters: 0, smithed: 0, artCharged: 0, saves: 0, legacy: 0,
   };
   const classes = REG.classes.all().map((c) => c.id);
   assert.ok(classes.length >= 3, 'every playable class is in the scenario');
