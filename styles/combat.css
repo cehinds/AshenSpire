@@ -1284,6 +1284,15 @@
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
 }
 .victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
+/* "Click to skip" under the ribbon while a paced enemy turn plays (SPEC §7.4):
+   small and dim, never a control — the click lands anywhere. */
+.skip-hint {
+  position: absolute; top: calc(30px / var(--ui-zoom,1)); left: 50%; transform: translateX(-50%); z-index: 40;
+  pointer-events: none; white-space: nowrap; opacity: .72;
+  font: italic calc(12px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .04em; color: #e9d9b8;
+  text-shadow: 0 1px 2px #000;
+}
+.skip-hint[hidden] { display: none; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @media (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }

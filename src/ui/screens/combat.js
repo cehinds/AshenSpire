@@ -38,7 +38,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN, getAnimSpeed } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
@@ -154,6 +154,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
+        <div class="skip-hint" aria-hidden="true" hidden>${esc(t('combat.skipHint'))}</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
@@ -1571,6 +1572,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
     combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
     $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+    // A paced enemy turn is skippable by any click (fx.js playTimeline); say so,
+    // quietly. Instant speed and Reduced motion have nothing to skip.
+    $('.skip-hint').hidden = !(enemyPlayback && busy && getAnimSpeed() !== 'instant' && !reducedMotionRequested());
     $('.hand').inert = busy || enemyPlayback || !!combat.result;
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.

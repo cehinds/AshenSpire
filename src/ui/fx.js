@@ -24,12 +24,28 @@ const STEP_MS = 80;
 // classic fast-float behavior — also forced by reducedMotion).
 // ---------------------------------------------------------------------------
 
+// enemyBreathMs: the pause after an enemy's move before the next one starts
+// (SPEC §7.4 pacing). Enemy moves chain; the player's own beats keep beatMs.
 export const ANIM_SPEEDS = {
-  slow: { beatMs: 700, stepMs: 140, lungeMs: 340 },
-  normal: { beatMs: 400, stepMs: 90, lungeMs: 260 },
-  fast: { beatMs: 180, stepMs: 45, lungeMs: 160 },
+  slow: { beatMs: 700, stepMs: 140, lungeMs: 340, enemyBreathMs: 260 },
+  normal: { beatMs: 400, stepMs: 90, lungeMs: 260, enemyBreathMs: 150 },
+  fast: { beatMs: 180, stepMs: 45, lungeMs: 160, enemyBreathMs: 70 },
   instant: null,
 };
+
+/** The breath after a beat: short between enemy moves, beatMs otherwise. */
+export function beatBreathMs(beat, speed) {
+  return beat && beat.actorId && beat.actorId !== 'player' ? speed.enemyBreathMs : speed.beatMs;
+}
+
+/**
+ * How long a turn banner beat holds the timeline. Solo draws its turn in the
+ * permanent `.turn-ribbon`, so no banner is drawn and the beat costs nothing;
+ * a drawn banner leads by one step and then plays over the first wind-up.
+ */
+export function bannerHoldMs(drawn, speed) {
+  return drawn ? speed.stepMs : 0;
+}
 
 let animSpeed = 'normal';
 export function setAnimSpeed(v) {
@@ -866,9 +882,14 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
-      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
+      let drawn = false;
+      safe(() => {
+        if (ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) return;
+        banner(ctx.layer, beat.banner, 'turn');
+        drawn = true;
+      });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      schedule(nextBeat, Math.max(260, speed.beatMs));
+      schedule(nextBeat, bannerHoldMs(drawn, speed));
       return;
     }
 
@@ -951,7 +972,7 @@ export function playTimeline(events, ctx, done) {
           // the sprite host; ordinary CSS lunges update immediately as before.
           cancelActorAnimation();
           safe(() => ctx.onBeatApplied && ctx.onBeatApplied(paid.length ? { ...beat, events: rest } : beat));
-          schedule(nextBeat, speed.beatMs);
+          schedule(nextBeat, beatBreathMs(beat, speed));
         };
         const recovery = actorAnimation
           ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
