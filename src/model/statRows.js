@@ -312,29 +312,6 @@ function withoutLegacyMirrors(settings, legacyRows) {
 const round2 = (n) => Math.round(n * 100) / 100;
 
 /**
- * fitHandRow(group) → the ruleset-7 row closest to a tuned legacy group over
- * the attribute values a character can have (1–30), searching whole bases and
- * two-decimal weights. Ties keep the smaller weight.
- */
-export function fitHandRow(group) {
-  const legacy = legacyHandRow(group);
-  const want = (points) => statRowCount(legacy, { [group.stat]: points });
-  const fields = { min: group.minimum, max: group.maximum };
-  if (!group.statEnabled) return { base: group.base, ...fields };
-  let best = null;
-  for (let base = Math.max(0, group.base - 10); base <= group.base + 10; base += 1) {
-    for (let step = 0; step <= 100; step += 1) {
-      const weight = step / 100;
-      const row = { base, [group.stat]: weight, ...fields };
-      let error = 0;
-      for (let points = 1; points <= 30; points += 1) error += Math.abs(statRowCount(row, { [group.stat]: points }) - want(points));
-      if (!best || error < best.error) best = { error, row };
-    }
-  }
-  return best.row;
-}
-
-/**
  * migrateLegacyStatSettings(settings, warnings) → a NEW settings object with
  * every retired stat key restated as a row key. Unchanged input is returned
  * as is.
@@ -370,6 +347,10 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
       for (const field of ['base', ...STAT_ROW_ATTRIBUTE_IDS]) {
         const own = Object.hasOwn(settings, `gameConfig.combatRatings.ratings.${id}.${field}`);
         if (!own && !scaled) continue;
+        // A field still at its old shipped number is no tuning: an export and
+        // a stored profile write every value, and pinning it would override
+        // the ruleset-7 row (Poise's WIS 0.3 and INT 0.2) with the retired one.
+        if (!scaled && formula.ratings[id][field] === LEGACY_RATING_FORMULA.ratings[id][field]) continue;
         const value = field === 'base' ? formula.ratings[id].base : round2(formula.ratings[id][field] * formula.multiplier);
         setIfAbsent(id, field, value);
       }
@@ -405,20 +386,26 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
         fitted.push('opening hand');
       }
     }
+    // The turn draw and the hand size convert EXACTLY the same way.
     for (const [group, id] of Object.entries(HAND_GROUP_ROWS)) {
       if (group === 'starting') continue;
       if (!handKeys.some((k) => k.startsWith(`gameConfig.handRules.${group}.`))) continue;
       const rule = groups[group];
       if (HAND_GROUP_FIELDS.every((field) => rule[field] === LEGACY_HAND_GROUPS[group][field])) continue;
-      const row = fitHandRow(rule);
-      for (const field of ['base', ...STAT_ROW_ATTRIBUTE_IDS, 'min', 'max']) {
-        setIfAbsent(id, field, row[field] ?? 0);
-      }
-      fitted.push(id === 'openingHand' ? 'opening hand' : id === 'handSize' ? 'hand size' : 'turn draw');
+      const weight = rule.statEnabled ? 1 / rule.pointsPerCard : 0;
+      const row = {
+        base: rule.base,
+        ...Object.fromEntries(STAT_ROW_ATTRIBUTE_IDS.map((attr) => [attr, attr === rule.stat ? weight : 0])),
+        attributeBaseline: rule.statEnabled ? rule.baseline : 0,
+        min: rule.minimum,
+        max: rule.maximum,
+      };
+      for (const [field, value] of Object.entries(row)) setIfAbsent(id, field, value);
+      fitted.push(id === 'handSize' ? 'hand size' : 'turn draw');
     }
     for (const k of handKeys) delete next[k];
     if (fitted.length && Array.isArray(warnings)) {
-      warnings.push(`The hand rules' "attribute used / points before bonuses / points per card" dials were replaced by attribute weights, like every other stat. Your tuned ${fitted.join(', ')} ${fitted.length === 1 ? 'was' : 'were'} converted to the closest weight row; check Stats → Draw & hand. Everything else in the file was imported.`);
+      warnings.push(`The hand rules' "attribute used / points before bonuses / points per card" dials were replaced by attribute weights, like every other stat. Your tuned ${fitted.join(', ')} ${fitted.length === 1 ? 'was' : 'were'} converted exactly, as a weight counted from its attribute points before bonuses; check Stats → Draw & hand. Everything else in the file was imported.`);
     }
   }
   if (Object.hasOwn(next, LEGACY_HAND_MAX_KEY)) {

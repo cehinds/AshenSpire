@@ -251,18 +251,38 @@ const OPENING = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 
 const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
 // #1294's formula, written out: the numbers the row must match exactly.
 const shippedOpening = (base, primary) => Math.min(6, Math.max(4, base + Math.floor(Math.max(0, primary - 1) / 2)));
+// ...and #1294's own code, frozen verbatim from dev at 3e1bedca
+// (content/handRules.js defaults, model/handRules.js `handRulesForClass` and
+// `scaledCardsReceipt`), so the row is checked against what #1294 RAN, not
+// only against a restatement of it.
+const PR1294 = Object.freeze({
+  starting: { base: 4, statEnabled: true, stat: 'intelligence', baseline: 1, pointsPerCard: 2, minimum: 4, maximum: 6 },
+  startingByClass: { reaver: { base: 3, stat: 'strength' }, rogue: { base: 4, stat: 'dexterity' }, herald: { base: 4, stat: 'wisdom' }, starseer: { base: 5, stat: 'intelligence' } },
+});
+function handRulesForClass1294(rules, classId = null) {
+  const { startingByClass, ...fight } = structuredClone(rules);
+  const own = classId && startingByClass ? startingByClass[classId] : null;
+  if (own) fight.starting = { ...fight.starting, base: own.base, stat: own.stat };
+  return fight;
+}
+function scaledCards1294(rule, attributes = {}) {
+  const points = Number(attributes?.[rule.stat]) || 0;
+  const bonus = rule.statEnabled ? Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard) : 0;
+  return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
+}
 const classRow = (classId, reg = registries) => statRow(reg, { class: classId }, 'openingHand');
 
-test('each class opens on #1294\'s hand exactly, at every primary from 1 to 12', () => {
+test('each class opens on #1294\'s hand exactly, at every primary from 1 to 20', () => {
   for (const [classId, [base, stat]] of Object.entries(OPENING)) {
     const row = classRow(classId);
     assert.equal(row.byClass, undefined, 'the per-class form does not ride into a fight');
     assert.equal(row.base, base);
     assert.deepEqual(Object.entries(row).filter(([key, value]) => allOnes[key] !== undefined && value), [[stat, 0.5]], `${classId} answers to ${stat} alone`);
-    for (let primary = 1; primary <= 12; primary += 1) {
-      for (const others of [1, 5, 12]) {
+    for (let primary = 1; primary <= 20; primary += 1) {
+      for (const others of [1, 5, 12, 20]) {
         const attributes = { ...Object.fromEntries(Object.keys(allOnes).map((id) => [id, others])), [stat]: primary };
         assert.equal(scaledCards(row, attributes), shippedOpening(base, primary), `${classId}, ${stat} ${primary}, others ${others}`);
+        assert.equal(scaledCards(row, attributes), scaledCards1294(handRulesForClass1294(PR1294, classId).starting, attributes), `${classId}: #1294's own code, ${stat} ${primary}`);
       }
     }
   }
@@ -271,8 +291,9 @@ test('each class opens on #1294\'s hand exactly, at every primary from 1 to 12',
   assert.deepEqual(Object.keys(OPENING).map(classId => scaledCards(classRow(classId), attributeRules.presets.lean[classId])), [4, 5, 5, 6]);
   // A class with no row, or no class at all, keeps the shared row (#1294's fallback).
   for (const run of [{ class: 'nobody' }, null]) {
-    for (let intelligence = 1; intelligence <= 12; intelligence += 1) {
+    for (let intelligence = 1; intelligence <= 20; intelligence += 1) {
       assert.equal(scaledCards(statRow(registries, run, 'openingHand'), { ...allOnes, intelligence }), shippedOpening(4, intelligence));
+      assert.equal(scaledCards(statRow(registries, run, 'openingHand'), { ...allOnes, intelligence }), scaledCards1294(handRulesForClass1294(PR1294, run?.class).starting, { ...allOnes, intelligence }));
     }
   }
 });

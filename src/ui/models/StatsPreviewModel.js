@@ -233,7 +233,11 @@ function handExample(ctx) {
     // A row counted from a baseline (the opening hand counts points above 1)
     // shows the points it counted, so the product equals the term.
     const from = Number(handRow(rules, id).attributeBaseline) || 0;
-    const points = (attributeId) => (from ? `(${subject.attributes[attributeId] || 0} − ${from})` : subject.attributes[attributeId] || 0);
+    const points = (attributeId) => {
+      const value = subject.attributes[attributeId] || 0;
+      if (!from) return value;
+      return value > from ? `(${value} − ${from})` : `${value} (none above ${from})`;
+    };
     const terms = used.map(([attributeId, weight]) => termText(subject.shortLabel[attributeId] || attributeId, points(attributeId), weight, receipt.terms[attributeId]));
     let expression = `${num(receipt.base)} base`
       + (terms.length ? (tiered ? ` + ${plural(receipt.tier, 'extra card')} (${terms.join(' + ')})` : ` + ${terms.join(' + ')}`) : '')

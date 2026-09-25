@@ -664,7 +664,7 @@ export function startingStatRows(bundle) {
       add(`gameConfig.derivedStatRules.rules.${id}.attributeBaseline`, rule.attributeBaseline, `${label} — Attribute points before bonuses`, 'Stats & resources', {
         min: 0, step: 1, integer: true, advancedGroup: 'Stats', derivedStatId: id, statField: 'attributeBaseline', settingSection: 'Formula',
         configPath: ['derivedStatRules', 'rules', id, 'attributeBaseline'],
-        note: `Only attribute points above this count toward ${label}: a weight of 0.5 counted from 1 adds a card at 3, 5, 7…${derivedRowNote(id)} Applies to a new run.`,
+        note: `Only attribute points above this count toward ${label}: a weight of 0.5 counted from 1 adds one at 3, 5, 7…, a weight of 0.2 counted from 4 one at 9, 14, 19…${derivedRowNote(id)} Applies to a new run.`,
       });
     }
     // ONE EDITOR PER CLASS for a row with a per-class form (the opening hand:

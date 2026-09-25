@@ -758,10 +758,10 @@ test('the worked example recomputes from the edited values and shows the whole s
   // turn row IS the draw, so the topic shows the one hand example.
   assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
   assert.equal(hand.examples[0].lines[1].label, 'Each turn, at most', 'filling to capacity is a ceiling, not a promise');
-  // Fill's ceiling is the Hand size row: 7 base + floor(INT 9 × 0.19) = 8.
-  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor(9 * 0.19));
+  // Fill's ceiling is the Hand size row: 7 base + floor((INT 9 − 1) × 0.2) = 8.
+  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor((9 - 1) * 0.2));
   assert.equal(hand.examples[0].lines[2].label, 'Hand size');
-  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT 9 × 0\.19 → 1$/);
+  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT \(9 − 1\) × 0\.2 → 1$/);
   assert.match(statsTopicPreview({ 'gameConfig.handRules.reshuffle': false }, 'Draw & hand').examples[0].lines[1].expression, /not reshuffled/);
   const fixed = statsTopicPreview({
     'gameConfig.handRules.drawMode': 'fixed',
@@ -891,7 +891,7 @@ test('the example shows what a run is born with at the edges', async () => {
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
   assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
   const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  // Stock Draw / turn at INT 1, level 9: 2 base + floor(1 × 0.1) + floor(8 × 0.125) = 3.
+  // Stock Draw / turn at INT 1, level 9: 2 base + nothing above 4 + floor(8 × 0.125) = 3.
   assert.equal(drawGrowth.examples[0].lines[1].total, 3);
-  assert.match(drawGrowth.examples[0].lines[1].expression, /^2 base \+ INT 1 × 0\.1 → 0 \+ 1 from level/);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^2 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });

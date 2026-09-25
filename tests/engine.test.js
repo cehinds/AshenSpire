@@ -280,7 +280,9 @@ const REG_CHARM = {
  * spread of attributes, not one, so "30 + 4 × CON" is no longer the whole row.
  */
 function attributeTerms(row, attributes) {
-  return REG.attributes.ids().reduce((sum, id) => sum + Math.floor((attributes[id] || 0) * (row[id] || 0) + 1e-9), 0);
+  // A hand row counts only the points above its `attributeBaseline` (ruleset 7).
+  const from = Number(row.attributeBaseline) || 0;
+  return REG.attributes.ids().reduce((sum, id) => sum + Math.floor(Math.max(0, (attributes[id] || 0) - from) * (row[id] || 0) + 1e-9), 0);
 }
 
 // `handMax` pins the hand cap for a fixture whose mechanic needs room past the

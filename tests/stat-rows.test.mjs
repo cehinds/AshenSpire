@@ -28,13 +28,14 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   const ids = ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw', 'handSize', 'ar', 'dr', 'pr', 'ward', 'poise'];
   assert.deepEqual(Object.keys(table.rules).sort(), [...ids].sort());
   assert.deepEqual([...DERIVED_STAT_IDS].sort(), [...ids].sort());
-  // The opening hand alone adds its per-class form and the baseline it
-  // counts from (#1294's "class base 3–5, +1 from stats"); each class entry
-  // is a smaller row of the same shape.
+  // The three hand rows count from a baseline (the retired groups' "points
+  // before bonuses", restated exactly), and the opening hand alone adds its
+  // per-class form (#1294's "class base 3–5, +1 from stats"); each class
+  // entry is a smaller row of the same shape.
   const legal = new Set(['base', ...ATTRIBUTES, 'perLevel', 'min', 'max']);
   for (const [id, row] of Object.entries(table.rules)) {
     for (const key of Object.keys(row)) {
-      assert(legal.has(key) || (id === 'openingHand' && ['attributeBaseline', 'byClass'].includes(key)), `${id}.${key} is outside the one row shape`);
+      assert(legal.has(key) || (['openingHand', 'draw', 'handSize'].includes(id) && key === 'attributeBaseline') || (id === 'openingHand' && key === 'byClass'), `${id}.${key} is outside the one row shape`);
     }
     assert(Number.isInteger(row.base), `${id}.base is whole`);
     for (const [classId, classRow] of Object.entries(row.byClass || {})) {
@@ -200,10 +201,19 @@ test('legacy settings keys convert on import and on load: ratings, multiplier, h
   for (const key of Object.keys(converted)) assert(!/combatRatings\.ratings|handRules\.(starting|turn|capacity)|balance\.handMax/.test(key), `${key} left in a retired home`);
   assert.equal(converted['gameConfig.derivedStatRules.rules.handSize.base'] !== undefined, true, 'a tuned capacity becomes the hand-size row');
   assert.equal(converted['gameConfig.derivedStatRules.rules.openingHand.base'], undefined, 'an untuned group keeps the new defaults');
-  // The fitted capacity counts what the tuned group counted at the creation baseline.
-  const fitted = Object.fromEntries(['base', ...ATTRIBUTES, 'min', 'max'].map((f) => [f, converted[`gameConfig.derivedStatRules.rules.handSize.${f}`]]));
+  // The converted capacity counts exactly what the tuned group counted, at every INT.
+  const fitted = Object.fromEntries(['base', ...ATTRIBUTES, 'attributeBaseline', 'min', 'max'].map((f) => [f, converted[`gameConfig.derivedStatRules.rules.handSize.${f}`]]));
   const legacy = legacyHandRow({ ...LEGACY_HAND_GROUPS.capacity, base: 9 });
-  for (const n of [3, 5, 8, 12]) assert.equal(statRowCount(fitted, { intelligence: n }), statRowCount(legacy, { intelligence: n }), `INT ${n}`);
+  for (let n = 0; n <= 40; n += 1) assert.equal(statRowCount(fitted, { intelligence: n }), statRowCount(legacy, { intelligence: n }), `INT ${n}`);
+  // So does a tuned turn draw (review, #1296: the old fit was off by a card at INT 7).
+  const turn = migrateLegacyStatSettings({ 'gameConfig.handRules.turn.base': 3, 'gameConfig.handRules.turn.pointsPerCard': 3 });
+  const turnRow = Object.fromEntries(['base', ...ATTRIBUTES, 'attributeBaseline', 'min', 'max'].map((f) => [f, turn[`gameConfig.derivedStatRules.rules.draw.${f}`]]));
+  const turnLegacy = legacyHandRow({ ...LEGACY_HAND_GROUPS.turn, base: 3, pointsPerCard: 3 });
+  for (let n = 0; n <= 40; n += 1) assert.equal(statRowCount(turnRow, { intelligence: n }), statRowCount(turnLegacy, { intelligence: n }), `turn at INT ${n}`);
+  // Rating keys still at their old shipped numbers are no tuning (an export
+  // writes every value): they leave the ruleset-7 rows alone (review, #1296).
+  const stock = migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.wisdom': 0.2, 'gameConfig.combatRatings.ratings.poise.intelligence': 0.1, 'gameConfig.combatRatings.ratings.ar.strength': 0.75 });
+  assert.deepEqual(Object.keys(stock).filter((k) => k.startsWith('gameConfig.derivedStatRules.')), []);
   assert(warnings.some((line) => /hand size|hand capacity/i.test(line)));
   // A multiplier folds into the weights, and says so.
   const scaledWarnings = [];
@@ -373,12 +383,12 @@ const ruleset6Run = (classId, registries, overrides = null) => {
   return run;
 };
 
-test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at every primary 1–12", () => {
+test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at every primary 1–20", () => {
   const registries = createRegistries(configuredContentBundle(contentBundle, {}));
   for (const [classId, [base, stat]] of Object.entries(CLASS_HAND)) {
     const run = ruleset6Run(classId, registries);
     assert(readsLegacyStatHomes(run));
-    for (let primary = 1; primary <= 12; primary += 1) {
+    for (let primary = 1; primary <= 20; primary += 1) {
       const attributes = { ...at(1), [stat]: primary };
       assert.equal(statRowCount(statRow(registries, run, 'openingHand'), attributes), hand1294(base, primary), `${classId} ${stat} ${primary}`);
     }
@@ -395,7 +405,7 @@ test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at 
     'gameConfig.handRules.starting.maximum': 15,
     'gameConfig.handRules.starting.minimum': 3,
   });
-  for (let primary = 1; primary <= 12; primary += 1) {
+  for (let primary = 1; primary <= 20; primary += 1) {
     assert.equal(statRowCount(statRow(registries, tunedRun, 'openingHand'), { ...at(1), constitution: primary }), hand1294(5, primary));
   }
 });
@@ -411,7 +421,7 @@ test("#1294's opening-hand settings convert exactly onto the opening-hand row", 
   const registries = createRegistries(configuredContentBundle(contentBundle, converted));
   const expected = { reaver: [5, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'intelligence'], starseer: [5, 'intelligence'] };
   for (const [classId, [base, stat]] of Object.entries(expected)) {
-    for (let primary = 1; primary <= 12; primary += 1) {
+    for (let primary = 1; primary <= 20; primary += 1) {
       const attributes = { ...at(1), [stat]: primary };
       assert.equal(statRowCount(statRow(registries, { class: classId }, 'openingHand'), attributes), hand1294(base, primary, { maximum: 7 }), `${classId} ${stat} ${primary}`);
     }
