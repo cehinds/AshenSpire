@@ -31,6 +31,9 @@ test('the dodge term follows the mode: lean centres on 3, an older mode on 10', 
   const standard = framework.dodgeRoll({ roll: 10, dexterity: 7, attributeMode: 'standard', weightClass });
   assert.equal(lean.check, 12, 'lean DEX 7 reads +2');
   assert.equal(standard.check, 8, 'standard DEX 7 reads -2, as it always did');
+  // Assign points is the same 1–4 scale as Standard (lean), so it centres on 3 too.
+  const assign = framework.dodgeRoll({ roll: 10, dexterity: 7, attributeMode: 'assign', weightClass });
+  assert.equal(assign.check, 12, 'assign DEX 7 reads +2, like lean');
 });
 
 test('the mode rides a mid-fight save; an older snapshot reads the run', () => {

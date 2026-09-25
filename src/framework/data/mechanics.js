@@ -64,7 +64,8 @@ export const mechanics = {
     "baseDifficulty": 10,
     "dexterityCentre": 10,
     "dexterityCentreByMode": {
-      "lean": 3
+      "lean": 3,
+      "assign": 3
     },
     "dexterityPerModifier": 2,
     "temporaryGuardBase": 3,
