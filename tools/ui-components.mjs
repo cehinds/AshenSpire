@@ -137,7 +137,10 @@ export function catalogDisagreement(md, html) {
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
-    if (quote) { cur += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
+    // A backslash escapes the next character, in or out of a string.
+    if (escaped) { cur += ch; escaped = false; continue; }
+    if (ch === '\\') { cur += ch; escaped = true; continue; }
+    if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
     if (ch === '(' || ch === '[') depth++;
     if (ch === ')' || ch === ']') depth--;
@@ -154,7 +157,7 @@ function splitTop(text, sep) {
 const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/i;
 
 function parseBlock(src, parent, rules, conditional = false, scopeBlock = false) {
-  let depth = 0; let quote = null; let escaped = false; let text = ''; let openAt = -1; let prelude = '';
+  let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
   const decls = [];
   const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
     const at = d.indexOf(':');
@@ -162,8 +165,8 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
   });
   for (let j = 0; j < src.length; j++) {
     const ch = src[j];
-    // A backslash escapes the next character, so `"\""` is one string.
-    if (quote) { if (depth === 0) text += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
+    if (ch === '\\') { if (depth === 0) text += src.slice(j, j + 2); j++; continue; }
+    if (quote) { if (depth === 0) text += ch; if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; if (depth === 0) text += ch; continue; }
     if (ch === '{') {
       if (depth++ === 0) {
@@ -222,18 +225,11 @@ function scopeRoot(prelude) {
   return null;
 }
 
-// Comments removed outside strings only: `content: "/*"` is text, not the
-// start of a comment.
+// Comments are dropped only outside strings (and escapes), so `content: "/*"`
+// is a string, not the start of a comment that swallows the rules after it.
 function stripComments(css) {
-  let out = ''; let quote = null; let escaped = false;
-  for (let i = 0; i < css.length; i++) {
-    const ch = css[i];
-    if (quote) { out += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
-    if (ch === '/' && css[i + 1] === '*') { const end = css.indexOf('*/', i + 2); i = end < 0 ? css.length : end + 1; continue; }
-    if (ch === '"' || ch === "'") quote = ch;
-    out += ch;
-  }
-  return out;
+  return css.replace(/\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|\/\*[\s\S]*?(?:\*\/|$)/g,
+    (m) => (m.startsWith('/*') ? '' : m));
 }
 
 export function cssRules(css) {
@@ -326,7 +322,11 @@ export function railInFlow(css) {
       // Placement too: a rail rule that sets grid-area keeps it `rail`, and
       // none re-places it by line (grid-row / grid-column and their longhands).
       || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
-      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop)));
+      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
+      // Display too: none or contents takes the rail out of the grid. Only a
+      // rule whose subject is `:empty` may hide it (a rail with no relics).
+      || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
+        && !splitTop(rule.selector, /,/).every((part) => /:empty(?![\w-])/i.test(subjectOf(part)))));
 }
 
 export function receipt() {
@@ -866,6 +866,9 @@ function selftest() {
     ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
     ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
     ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
+    ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
+    ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
+    ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
     ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],

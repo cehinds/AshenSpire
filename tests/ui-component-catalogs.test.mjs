@@ -362,3 +362,37 @@ test('a later .hud-bottom rule that hangs the relic rail again fails C12', () =>
   const kit = `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n`;
   assert.equal(c12({ ...r, kit }).length, 1);
 });
+
+// Codex on #1316: a string may hold an escaped delimiter or comment markers;
+// neither may swallow the rules that follow it.
+test('escaped quotes and comment markers inside strings do not hide a rail rule', () => {
+  const r = receipt();
+  const hung = '.shared-hud .hud-bottom.x { position: absolute; }';
+  for (const kit of [
+    `${r.kit}\n.a::before { content: "\\""; }\n${hung}\n`,
+    `${r.kit}\n.a::before { content: '\\''; }\n${hung}\n`,
+    `${r.kit}\n.a::before { content: "/*"; }\n${hung}\n.b::before { content: "*/"; }\n`,
+  ]) assert.equal(c12({ ...r, kit }).length, 1, kit.slice(r.kit.length));
+  // A real comment is still stripped.
+  assert.equal(c12({ ...r, kit: `${r.kit}\n/* ${hung} */\n` }).length, 0);
+});
+
+// Codex on #1316: CSS keywords are ASCII case-insensitive.
+test('an upper-case static base position is still in flow', () => {
+  const r = receipt();
+  const kit = r.kit.replace('position: static; grid-area: rail;', 'position: STATIC; grid-area: rail;');
+  assert.notEqual(kit, r.kit);
+  assert.equal(c12({ ...r, kit }).length, 0);
+});
+
+// Codex on #1316: display: none (or contents) takes the rail out of the grid.
+// The shipped `:empty` rule hides a rail with no relics on purpose, so a rule
+// whose subject is `:empty` may do it; no other rail rule may.
+test('a rail rule that stops displaying the rail fails C12', () => {
+  const r = receipt();
+  for (const extra of ['.shared-hud .hud-bottom.expanded { display: none; }', '@media (width < 1px) { .shared-hud .hud-bottom { display: CONTENTS; } }']) {
+    assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 1, extra);
+  }
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: flex; }\n` }).length, 0);
+  assert.match(r.kit, /\.shared-hud \.hud-bottom:empty \{[^}]*display: none/);
+});
