@@ -268,6 +268,20 @@ export function computeTokenBindings(effects) {
   return out;
 }
 
+/**
+ * cardTokenEffects(card) → the effect list a card's text template binds to:
+ * its play `effects`, then its `onTurnEndInHand` hook (Guilt's HP loss). The
+ * hook is appended AFTER the play effects so a play effect's token never
+ * changes; a hook op sharing a base binds as `{base.2}`. Shared by the
+ * validator and the static token projection (model/playingCard.js), so the
+ * number a card shows is the number its hook fires.
+ */
+export function cardTokenEffects(card) {
+  const effects = card && Array.isArray(card.effects) ? card.effects : [];
+  const hook = card && Array.isArray(card.onTurnEndInHand) ? card.onTurnEndInHand : [];
+  return hook.length ? [...effects, ...hook] : effects;
+}
+
 export function extractTemplateTokens(template) {
   const tokens = [];
   const re = tokenRe();
@@ -1381,6 +1395,24 @@ function collectContentProblems(bundle, errors = []) {
           if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
         }
       }
+      // balance.bossTiers (§13.3): one { hp, damage } per tier, both positive.
+      const bossTable = b.balance.bossTiers;
+      if (!isPlainObject(bossTable)) {
+        err('balance.bossTiers', 'must be an object keyed by tier (1..actsPerCycle), each { hp, damage } with positive multipliers');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const row = bossTable[tier];
+          if (!isPlainObject(row)) { err(`balance.bossTiers.${tier}`, `tier ${tier} needs a { hp, damage } row`); continue; }
+          for (const field of ['hp', 'damage']) {
+            if (typeof row[field] !== 'number' || !(row[field] > 0)) err(`balance.bossTiers.${tier}.${field}`, `needs a positive multiplier (got ${JSON.stringify(row[field])})`);
+          }
+          for (const field of Object.keys(row)) if (field !== 'hp' && field !== 'damage') err(`balance.bossTiers.${tier}.${field}`, 'unknown field (a tier row is { hp, damage })');
+        }
+        for (const key of Object.keys(bossTable)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.bossTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
+      }
     }
   }
   // balance.ui.holdConfirm — THE DIAL THAT DISABLES A SAFETY FEATURE WHEN IT IS
@@ -2477,12 +2509,13 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
-  checkTemplate(card.textTemplate, card.effects, `${path}.textTemplate`, err);
+  checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;
     if (typeof upTemplate === 'string' && Array.isArray(upEffects)) {
-      checkTemplate(upTemplate, upEffects, `${path}.upgrade.textTemplate`, err);
+      // The upgrade cannot override the in-hand hook, so it inherits the base's.
+      checkTemplate(upTemplate, cardTokenEffects({ effects: upEffects, onTurnEndInHand: card.onTurnEndInHand }), `${path}.upgrade.textTemplate`, err);
     }
   }
 }

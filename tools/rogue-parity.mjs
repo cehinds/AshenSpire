@@ -36,7 +36,19 @@ const rogue = bundle.classes.find((row) => row.id === 'rogue');
 const rogueCards = bundle.cards.filter((row) => row.class === 'rogue');
 const rewardCards = rogue ? rogue.cardPool.map((id) => rogueCards.find((card) => card.id === id)).filter(Boolean) : [];
 check(!!rogue, 'Rogue class is registry-authored');
-check(rogueCards.length === 39, 'Rogue authors exactly 39 cards', `got ${rogueCards.length}`);
+// Every Rogue card is exactly one of: a reward-pool card, a class grant (the
+// starter signature, and the §13.4f ability card), or a special (combat-made)
+// card. The total is that partition, read off the class row, not a literal.
+const classGrants = [rogue?.startingSignatureCard, rogue?.abilityCard].filter(Boolean);
+const specialCards = rogueCards.filter((card) => card.rarity === 'special');
+const unaccounted = rogueCards.filter((card) => !rogue?.cardPool?.includes(card.id)
+  && !classGrants.includes(card.id) && card.rarity !== 'special').map((card) => card.id);
+const expectedRogueCards = (rogue?.cardPool?.length || 0) + classGrants.length + specialCards.length;
+check(classGrants.length === 2 && unaccounted.length === 0 && rogueCards.length === expectedRogueCards,
+  `Rogue authors exactly ${expectedRogueCards} cards (reward pool + signature + ability + ${specialCards.length} special)`,
+  `got ${rogueCards.length}; grants ${classGrants.join(', ')}; unaccounted ${unaccounted.join(', ')}`);
+check(rogue?.abilityCard === 'prepare' && rogueCards.some((card) => card.id === 'prepare' && card.rarity === 'starter'),
+  'Prepare is the Rogue starter ability card (SPEC §13.4f)');
 check(rogue?.cardPool?.length === 36 && rewardCards.length === 36,
   'Rogue reward pool has exactly 36 reachable cards', `pool ${rogue?.cardPool?.length || 0}, found ${rewardCards.length}`);
 check(JSON.stringify(rewardCards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
@@ -48,8 +60,16 @@ check(rogue?.startingSignatureCard === 'ambush' && rogueCards.some((card) => car
   'Ambush is the Rogue starter signature');
 check(rogue?.startingRelic === 'cutpursesCoin' && bundle.relics.some((row) => row.id === 'cutpursesCoin' && row.rarity === 'starter'),
   "Cutpurse's Coin is the Rogue starter relic");
-check(JSON.stringify(rogue?.startingFlaskAllocation) === JSON.stringify({ hp: 3, mana: 1 }),
-  'Rogue starts with 3 Crimson / 1 Azure charge');
+// The split is the class row's; the pool it must fill is balance.flaskCapacity.
+// Both are tunable content, so neither is a literal here.
+const flaskCapacity = bundle.balance.flaskCapacity;
+const flaskSplit = rogue?.startingFlaskAllocation;
+check(Number.isSafeInteger(flaskCapacity) && flaskCapacity > 0
+  && Number.isSafeInteger(flaskSplit?.hp) && flaskSplit.hp >= 0
+  && Number.isSafeInteger(flaskSplit?.mana) && flaskSplit.mana >= 0
+  && flaskSplit.hp + flaskSplit.mana === flaskCapacity,
+  `Rogue starts with ${flaskSplit?.hp} Crimson / ${flaskSplit?.mana} Azure, filling the ${flaskCapacity}-charge flask pool`,
+  `allocation ${JSON.stringify(flaskSplit)}; flaskCapacity ${flaskCapacity}`);
 
 const tuned = bundle.attributeRules?.presets?.tuned?.rogue;
 check(JSON.stringify(tuned) === JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }),
@@ -81,17 +101,26 @@ check(effects.every((effect) => legal.has(effect.op)), 'Rogue uses only the exis
 check(Object.keys(bundle.scripts || {}).length === 1, 'Rogue adds no script escape hatch');
 
 const kits = bundle.equipment.startingKits.filter((row) => row.classId === 'rogue');
-const outfits = bundle.equipment.armour.filter((row) => row.classId === 'rogue');
+// Class outfits only: a sharedSet row is a shared armour set worn by the class, not its own outfit.
+const outfits = bundle.equipment.armour.filter((row) => row.classId === 'rogue' && !row.sharedSet);
 check(kits.length === 2 && kits.filter((row) => row.baseline).length === 1, 'Rogue has two kits and one baseline kit');
-check(outfits.length === 4 && outfits.filter((row) => row.unlock === '').length === 1, 'Rogue has four outfits and one free baseline outfit');
+// SPEC's parity slice fixes a floor of four outfits; later content drops add
+// more (waywatcher), so the count is a lower bound. What keeps a stray row out
+// is the data: exactly one free baseline, and every other outfit gated by a
+// registered outfit unlock.
+const outfitUnlocks = new Set((bundle.unlocks || []).filter((row) => row.kind === 'outfit').map((row) => row.id));
+const ungated = outfits.filter((row) => row.unlock !== '' && !outfitUnlocks.has(row.unlock));
+check(outfits.length >= 4 && outfits.filter((row) => row.unlock === '').length === 1 && ungated.length === 0,
+  `Rogue has ${outfits.length} class outfits: one free baseline, the rest behind registered outfit unlocks`,
+  `outfits ${outfits.map((row) => `${row.id}:${row.unlock || 'free'}`).join(', ')}; unregistered ${ungated.map((row) => row.id).join(', ')}`);
 check(kits.every((kit) => ['dagger', 'shortbow'].includes(kit.rightHand)
   && ['', 'buckler', 'parryDagger'].includes(kit.leftHand)), 'Rogue kits reuse registered armament kinds');
 
 for (const tint of ['ember', 'frost', 'gold', 'grace', 'rot']) {
   check(existsSync(resolve(ROOT, `assets/sprites/rogue_${tint}.webp`)), `Rogue ${tint} stage sprite exists`);
 }
-for (const outfit of ['default', 'nightveil', 'duelist', 'shadow']) {
-  check(existsSync(resolve(ROOT, `assets/equipment/body_rogue_${outfit}.webp`)), `Rogue ${outfit} body layer exists`);
+for (const artKey of [...new Set(outfits.map((row) => row.artKey || row.id))]) {
+  check(existsSync(resolve(ROOT, `assets/equipment/body_rogue_${artKey}.webp`)), `Rogue ${artKey} body layer exists`);
 }
 
 let run = null;
@@ -99,10 +128,15 @@ let runError = '';
 try { run = createRunState({ seed: 0x704, classId: 'rogue', registries: createRegistries(bundle) }); }
 catch (error) { runError = error.message; }
 check(!!run, 'Rogue creates through the real run-state door', runError);
-check(run?.deck?.length === 10 && run.deck.filter((card) => card.cardId === 'ambush').length === 1,
-  'Rogue starts with the registry-derived 10-card deck and one Ambush');
-check(run?.flaskCharges?.capacity === 4 && run.flaskCharges.hp === 3 && run.flaskCharges.mana === 1,
-  'Rogue run carries the authored 4-charge 3/1 split', JSON.stringify(run?.flaskCharges));
+const deckSize = bundle.balance.startingDeckSize;
+check(Number.isSafeInteger(deckSize) && run?.deck?.length === deckSize
+  && run.deck.filter((card) => card.cardId === rogue?.startingSignatureCard).length === 1
+  && run.deck.filter((card) => card.cardId === rogue?.abilityCard).length === 1,
+  `Rogue starts with the startingDeckSize ${deckSize}-card deck, one Ambush and one Prepare`,
+  `deck ${run?.deck?.length}: ${(run?.deck || []).map((card) => card.cardId).join(', ')}`);
+check(run?.flaskCharges?.capacity === flaskCapacity
+  && run.flaskCharges.hp === flaskSplit?.hp && run.flaskCharges.mana === flaskSplit?.mana,
+  `Rogue run carries the authored ${flaskCapacity}-charge ${flaskSplit?.hp}/${flaskSplit?.mana} split`, JSON.stringify(run?.flaskCharges));
 
 console.log(`\nrogue-parity: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
