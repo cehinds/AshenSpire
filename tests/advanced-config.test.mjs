@@ -598,6 +598,148 @@ test('a v1 file carrying rewardMultiplier 20 imports without it, with a warning'
     'the new key still imports beside it');
 });
 
+// THE SHARED OPENING HAND IS RETIRED (owner, 2026-09-24; Codex, on #1294).
+// Every class opens on its own base and attribute, so the shared
+// `handRules.starting.base` / `.stat` — which an older profile, run or file may
+// carry — are dropped at each door the Cinder key is, never migrated onto
+// every class. A non-stock value warns; the stock value was never a
+// customisation and is dropped quietly.
+const OPEN_BASE = 'gameConfig.handRules.starting.base';
+const OPEN_STAT = 'gameConfig.handRules.starting.stat';
+const OPENING = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
+
+test('the shared opening-hand base and attribute have no row and move no class', async () => {
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { statRow } = await import('../src/model/statRows.js');
+  const keys = advancedConfigRows(contentBundle).map((row) => row.key);
+  assert.ok(!keys.includes(OPEN_BASE) && !keys.includes(OPEN_STAT), 'neither key has a row');
+  // Ruleset 7: the shared pair is DROPPED, never converted onto the
+  // opening-hand row (#1318) — only the limit beside it converts.
+  const shared = { [OPEN_BASE]: 9, [OPEN_STAT]: 'constitution', 'gameConfig.handRules.starting.maximum': 10 };
+  const converted = normalizeAdvancedSettings({ ...shared }, contentBundle);
+  assert.ok(Object.keys(converted).every((key) => !key.startsWith('gameConfig.handRules.')), JSON.stringify(converted));
+  assert.notEqual(converted['gameConfig.derivedStatRules.rules.openingHand.base'], 9, 'the shared base is not carried onto the row');
+  assert.ok(!converted['gameConfig.derivedStatRules.rules.openingHand.constitution'], 'nor the shared attribute');
+  assert.equal(converted['gameConfig.derivedStatRules.rules.openingHand.max'], 10, 'the limit is kept');
+  const registries = createRegistries(configuredContentBundle(contentBundle, converted));
+  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+    const row = statRow(registries, { class: classId }, 'openingHand');
+    assert.equal(row.base, base, `${classId} opens on its own base`);
+    assert.equal(row[stat], 0.5, `${classId} grows with its own attribute`);
+    assert.ok(!row.constitution, `${classId} does not read the shared attribute`);
+  }
+  assert.equal(statRow(registries, null, 'openingHand').base, contentBundle.derivedStatRules.rules.openingHand.base,
+    'a fight with no class keeps the authored fallback');
+});
+
+test('a stored profile carrying the shared opening hand drops it, warns once when customised, and is saved', () => {
+  const restored = { settings: { [OPEN_BASE]: 6, [OPEN_STAT]: 'wisdom', 'gameConfig.handRules.startingByClass.rogue.base': 5 } };
+  const saved = [];
+  const warnings = [];
+  const settings = bringProfileForward(restored, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
+  // The per-class row is kept — as the opening-hand row's own key (ruleset 7).
+  assert.equal(settings['gameConfig.derivedStatRules.rules.openingHand.byClass.rogue.base'], 5, 'the per-class row is kept');
+  assert.ok(!Object.hasOwn(settings, OPEN_BASE) && !Object.hasOwn(settings, OPEN_STAT));
+  assert.deepEqual(saved, [restored]);
+  const opening = warnings.filter((line) => /^Opening hand/.test(line));
+  assert.equal(opening.length, 1);
+  assert.match(opening[0], /^Opening hand: the shared base cards and attribute are retired and were left out/);
+  assert.match(opening[0], /Stats → Draw & hand/);
+
+  // The stock value is dropped too, and saved, but was never a customisation.
+  const stock = { settings: { [OPEN_BASE]: 4, [OPEN_STAT]: 'intelligence' } };
+  const quiet = [];
+  let resaved = 0;
+  bringProfileForward(stock, contentBundle, () => { resaved += 1; }, quiet);
+  assert.deepEqual(stock.settings, {});
+  assert.equal(resaved, 1);
+  assert.deepEqual(quiet, []);
+
+  // Beside the retired 3–15 limits, the two drops share one warning.
+  const both = [];
+  bringProfileForward({ settings: { [OPEN_BASE]: 6, 'gameConfig.handRules.starting.maximum': 15 } }, contentBundle, () => {}, both);
+  assert.equal(both.length, 1);
+  assert.match(both[0], /old limit of 15 cards was left out.*; the shared base cards and attribute are retired/);
+});
+
+test('a profile holding only the settings.-prefixed shared opening hand or cap of 15 is brought forward (Codex, on #1318)', () => {
+  for (const [key, value, said] of [[`settings.${OPEN_BASE}`, 6, /shared base cards and attribute are retired/],
+    [`settings.${OPEN_STAT}`, 'wisdom', /shared base cards and attribute are retired/],
+    ['settings.gameConfig.handRules.starting.maximum', 15, /old limit of 15 cards was left out/]]) {
+    const profile = { settings: { [key]: value, 'gameConfig.handRules.turn.base': 3 } };
+    const warnings = [];
+    let saves = 0;
+    const settings = bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
+    assert.equal(settings, profile.settings, 'rewritten in place');
+    assert.ok(!Object.hasOwn(profile.settings, key), `${key} is deleted from the profile`);
+    // The tuned turn draw beside it converts onto the Draw / turn row (ruleset 7).
+    assert.ok(Object.keys(profile.settings).every((k) => !k.startsWith('gameConfig.handRules.') && !k.startsWith('settings.')), JSON.stringify(profile.settings));
+    assert.ok(Object.keys(profile.settings).some((k) => k.startsWith('gameConfig.derivedStatRules.rules.draw.')));
+    assert.equal(saves, 1, `${key} is saved once`);
+    const opening = warnings.filter((line) => /^Opening hand/.test(line));
+    assert.equal(opening.length, 1);
+    assert.match(opening[0], said);
+  }
+});
+
+test('every stock shared opening value ever shipped is dropped quietly, loosely compared', () => {
+  for (const settings of [{ [OPEN_BASE]: 3 }, { [OPEN_BASE]: 4 }, { [OPEN_BASE]: '3' }, { [`settings.${OPEN_BASE}`]: '4' },
+    { [OPEN_STAT]: 'intelligence' }, { [OPEN_BASE]: 3, [OPEN_STAT]: 'intelligence' }]) {
+    const profile = { settings: { ...settings } };
+    const warnings = [];
+    let saves = 0;
+    bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
+    assert.deepEqual(profile.settings, {}, `${JSON.stringify(settings)} is dropped`);
+    assert.equal(saves, 1);
+    assert.deepEqual(warnings, [], `${JSON.stringify(settings)} was never a customisation`);
+  }
+  const warnings = [];
+  bringProfileForward({ settings: { [OPEN_BASE]: 5 } }, contentBundle, () => {}, warnings);
+  assert.equal(warnings.length, 1, 'a base of 5 was a choice');
+});
+
+test('a resumed run whose snapshot carries the shared opening hand drops it, warns once and is saved once', () => {
+  const run = { seed: 7, advancedConfigSnapshot: Object.freeze({ schemaVersion: 1, overrides: Object.freeze({
+    [OPEN_BASE]: 2, [`settings.${OPEN_BASE}`]: 2, [OPEN_STAT]: 'dexterity', [CINDER]: 2 }) }) };
+  const saved = [];
+  const warnings = bringRunSnapshotForward(run, (brought) => saved.push(structuredClone(brought)));
+  assert.deepEqual(run.advancedConfigSnapshot, { schemaVersion: 1, overrides: { [CINDER]: 2 } }, 'every spelling gone, the rest kept');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /shared base cards and attribute are retired/);
+  assert.deepEqual(saved, [run]);
+  // A snapshot's opening-hand LIMITS stay: a run keeps the hand it began with.
+  const limits = { advancedConfigSnapshot: { schemaVersion: 1, overrides: { 'gameConfig.handRules.starting.maximum': 15, [OPEN_BASE]: 4 } } };
+  assert.deepEqual(bringRunSnapshotForward(limits, () => {}), []);
+  assert.deepEqual(limits.advancedConfigSnapshot.overrides, { 'gameConfig.handRules.starting.maximum': 15 });
+
+  // Beside the retired Cinder key, each warns once.
+  const both = { advancedConfigSnapshot: { schemaVersion: 1, overrides: { [OPEN_BASE]: 2, [OLD_CINDER]: 20 } } };
+  assert.equal(bringRunSnapshotForward(both, () => {}).length, 2);
+  // A stock value is dropped and saved without a warning.
+  const stock = { advancedConfigSnapshot: { schemaVersion: 1, overrides: { [OPEN_BASE]: 4 } } };
+  let resaved = 0;
+  assert.deepEqual(bringRunSnapshotForward(stock, () => { resaved += 1; }), []);
+  assert.deepEqual(stock.advancedConfigSnapshot.overrides, {});
+  assert.equal(resaved, 1);
+});
+
+test('a v1 file carrying the shared opening hand imports without it, with a warning only when customised', () => {
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(v1File({ [OPEN_BASE]: 5, [`settings.${OPEN_STAT}`]: 'strength', 'gameConfig.handRules.startingByClass.herald.base': 3 }),
+    contentBundle, {}, advancedConfigRows(contentBundle), warnings);
+  // The rest of the file lands — #1294's per-class row as the opening-hand row's own key.
+  assert.equal(changes['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.base'], 3, 'the rest of the file lands');
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.handRules.')));
+  const opening = warnings.filter((line) => /^Opening hand/.test(line));
+  assert.equal(opening.length, 1);
+  assert.match(opening[0], /each class opens on its own/);
+  const quiet = [];
+  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OPEN_BASE]: 4, [OPEN_STAT]: 'intelligence' }), contentBundle, {}, [], quiet), {});
+  assert.deepEqual(quiet, [], 'a stock value was never a customisation');
+  // The configured bundle ignores them too, so a snapshot read before it is brought forward is harmless.
+  assert.doesNotThrow(() => configuredContentBundle(contentBundle, { overrides: { [OPEN_BASE]: 99, [OPEN_STAT]: 'nonsense' }, ratingsVersion: 1 }));
+});
+
 test('a file written on the old, higher defaults still imports', () => {
   const old = {
     'gameConfig.balance.level.xp.base': 100,
@@ -649,7 +791,12 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
   // are stat rows; their keys (and their `settings.` mirrors) convert or drop.
   assert.ok(Object.keys(changes).every((key) => !/handRules\.(starting|turn|capacity)|balance\.handMax|combatRatings\.ratings/.test(key)), 'no retired key is brought back');
   assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
-  assert.ok(warnings.some((line) => /old limits of 3–15 cards were left out, so the current 4–6 applies/.test(line)));
+  // One opening-hand warning: the retired 3–15 limits. Its shared base is the
+  // stock 4, never a customisation, so it is dropped without a word.
+  const opening = warnings.filter((line) => /^Opening hand/.test(line));
+  assert.equal(opening.length, 1);
+  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current 4–6 applies/);
+  assert.doesNotMatch(opening[0], /shared base/);
   // "start with 4-6 cards": the imported configuration opens every class there.
   const registries = createRegistries(configuredContentBundle(contentBundle, changes));
   const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };

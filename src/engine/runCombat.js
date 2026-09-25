@@ -14,8 +14,8 @@
 // onCombatEnd does, so the next fight opens where this one ended.
 
 import { createCombat } from './combat.js';
-import { resolveHandRules } from '../model/handRules.js';
-import { handStatRows, ratingsConfigFor } from '../model/statRows.js';
+import { runHandRules } from '../model/handRules.js';
+import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 
@@ -85,7 +85,7 @@ export function createRunCombat({
     // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
-    handRules: resolveHandRules(settings || {}, handStatRows(registries, run, { settings: settings || {} })),
+    handRules: runHandRules(registries, run, settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

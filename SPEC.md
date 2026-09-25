@@ -802,6 +802,13 @@ between #1294 and ruleset 7 (ruleset 6) opens on #1294's class hand exactly, its
 `handRules.startingByClass` tuning included; #1294's settings keys convert exactly onto the
 row on import, boot and restore, and a stored or imported opening-hand maximum of exactly 15
 (the retired default cap, with a minimum of 3 beside it) is dropped with a warning first.
+#1294's shared opening base and attribute (`gameConfig.handRules.starting.base|stat`) are
+**retired, not migrated** (#1318): nothing reads them, and each key (plain or
+`settings.`-prefixed) is dropped wherever a profile, run snapshot or imported file carries it —
+with one warning naming the per-class rows when its value was not a stock one (base 3 or 4,
+Intelligence). Copying one shared value onto every class would flatten the four openings into
+one. A run snapshot keeps its limits; both drops share one door (`withoutRetiredOpeningHand`,
+`model/statRows.js`) and say so in one warning.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to
@@ -984,7 +991,9 @@ faucet) is gone with the purse.
 `cinderMultiplier` row scales that table and defaults to 1. The owner's exported
 `progression.rewardMultiplier: 20` is **retired, not a default** (owner, 2026-09-24: "I hate
 the 20x cinder, that needs to die"): the old key is dropped with a warning wherever a
-profile, run snapshot or imported file carries it.
+profile, run snapshot or imported file carries it. The retired shared opening-hand
+`gameConfig.handRules.starting.base|stat` are dropped at the same three doors (§4.1),
+warned when not the stock value.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 

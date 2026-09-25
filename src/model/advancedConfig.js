@@ -13,7 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningLimits, migrateLegacyStatSettings, withoutRetiredOpeningLimits } from './statRows.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -117,7 +117,9 @@ const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was
 /**
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
- * old key (either spelling), and the run handed to `save(run)` once.
+ * old key (either spelling) — and the opening-hand warning when it held a
+ * non-stock shared `handRules.starting.base` / `.stat` (model/statRows.js
+ * `withoutRetiredOpeningHand`) — and the run handed to `save(run)` once.
  *
  * A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). `configuredContentBundle`
  * already leaves the key out of a snapshot, so the payouts were right — but a
@@ -129,13 +131,16 @@ const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was
 export function bringRunSnapshotForward(run, save, warnings = []) {
   const overrides = run?.advancedConfigSnapshot?.overrides;
   if (!overrides || typeof overrides !== 'object') return warnings;
-  const retired = LEGACY_CINDER_KEYS.filter((key) => Object.hasOwn(overrides, key));
-  if (!retired.length) return warnings;
+  const entries = Object.entries(overrides);
+  const withoutCinder = withoutRetiredCinderKey(entries);
+  if (withoutCinder.length !== entries.length) warnings.push(LEGACY_CINDER_WARNING);
+  // The shared opening base and attribute go too (nothing reads them); the
+  // snapshot's opening-hand LIMITS stay — a run keeps the hand it began with.
+  const kept = withoutRetiredOpeningHand(withoutCinder, warnings, { limits: false });
+  if (kept.length === entries.length) return warnings;
   // The snapshot is frozen when a run begins in this session; one read back
   // from storage is a plain object. Either way the run gets a clean copy.
-  const kept = Object.fromEntries(withoutRetiredCinderKey(Object.entries(overrides)));
-  run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides: kept };
-  warnings.push(LEGACY_CINDER_WARNING);
+  run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides: Object.fromEntries(kept) };
   save(run);
   return warnings;
 }
@@ -144,7 +149,7 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
 export function hasLegacyAdvancedSettings(settings = {}) {
   // An unmarked profile holding a `draw` or `poise` row is one of them
   // (model/statRows.js hasLegacyStatSettings).
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningLimits(settings) || hasLegacyStatSettings(settings);
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -172,10 +177,11 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
   }
-  // #1294's retired 3–15 opening-hand limits go first, so they are never
-  // converted into the opening-hand row below.
-  if (hasRetiredOpeningLimits(settings)) {
-    const kept = new Set(withoutRetiredOpeningLimits(Object.entries(settings), warnings).map(([key]) => key));
+  // #1294's retired 3–15 opening-hand limits and the retired shared opening
+  // base and attribute go first (#1318), so they are never converted into the
+  // opening-hand row below.
+  if (hasRetiredOpeningHand(settings)) {
+    const kept = new Set(withoutRetiredOpeningHand(Object.entries(settings), warnings).map(([key]) => key));
     for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
   // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
@@ -203,7 +209,9 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  * The retired `progression.rewardMultiplier` (the ×20 Cinders, #1294) is
  * DROPPED with a warning — never converted — and the profile saved, so the
  * Advanced Settings row and `configuredContentBundle` both read the authored
- * table (or the profile's own `cinderMultiplier`, kept as it was). Saved, not
+ * table (or the profile's own `cinderMultiplier`, kept as it was). The
+ * retired opening-hand keys go through `withoutRetiredOpeningHand` the same
+ * way (model/statRows.js). Saved, not
  * only rewritten, because `loadMeta` re-reads the stored bytes on every call:
  * a profile left un-saved would hand the next reader the retired key again.
  */
@@ -1270,11 +1278,13 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
   // converted into the opening-hand row.
   const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
-  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningLimits(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
+  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningHand(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
-  // before an unknown key could refuse the file; said here, once.
+  // before an unknown key could refuse the file; said here, once. The retired
+  // opening-hand limits and shared opening base/attribute (which have no row)
+  // are dropped by withoutRetiredOpeningHand, before the same check.
   if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
-  const entries = withoutRetiredOpeningLimits(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
+  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);

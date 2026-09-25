@@ -1,6 +1,6 @@
 import { handRulesDefaults } from '../content/handRules.js';
 import { HAND_STAT_IDS, statRowValue, storedStatRowProblems } from './derivedStats.js';
-import { HAND_GROUP_ROWS, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
+import { HAND_GROUP_ROWS, handStatRows, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
@@ -123,6 +123,17 @@ export function resolveHandRules(settings = {}, rows = null) {
   }
   if (rows) rules.rows = structuredClone(rows);
   return rules;
+}
+
+/**
+ * runHandRules(registries, run, settings) → the hand rules this run's next
+ * fight is handed: the behaviour options from `settings` and the run's own
+ * three rows (its class's opening hand among them). The ONE door —
+ * engine/runCombat.js snapshots it, and the attribute cards on the creation,
+ * Armoury and Shrine screens read it — so a card states the hand a fight deals.
+ */
+export function runHandRules(registries, run, settings = {}) {
+  return resolveHandRules(settings || {}, handStatRows(registries, run, { settings: settings || {} }));
 }
 
 /** The settings-level problems the hand rows can have (none since ruleset 7: a row's own min/max is checked with the row). */

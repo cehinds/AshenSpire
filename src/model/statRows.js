@@ -115,7 +115,7 @@ export function legacyRatingFormulaFromSettings(settings = {}) {
  * (#1294's `startingByClass`), exactly as `handRulesForClass` resolved it.
  */
 export function legacyHandGroupsFromSettings(settings = {}, classId = null) {
-  settings = Object.fromEntries(withoutRetiredOpeningLimits(Object.entries(settings || {})));
+  settings = Object.fromEntries(withoutRetiredOpeningHand(Object.entries(settings || {})));
   const groups = structuredClone(LEGACY_HAND_GROUPS);
   for (const [group, rule] of Object.entries(groups)) {
     for (const field of HAND_GROUP_FIELDS) {
@@ -153,31 +153,68 @@ export function legacyStartingByClassFromSettings(settings = {}) {
 // that retired default, so it is DROPPED with a warning and the current
 // default applies; the `starting.minimum` of 3 riding beside it is the other
 // half of the same pair and goes with it. A lone minimum of 3 is somebody's
-// choice and stays. (Moved here from model/handRules.js with the hand groups.)
+// choice and stays. Run snapshots keep their limits: a run keeps the hand it
+// was born with.
+//
+// THE SHARED OPENING BASE AND ATTRIBUTE ARE RETIRED TOO (owner, 2026-09-24:
+// every class opens on its own — Reaver 3 STR, Rogue 4 DEX, Herald 4 WIS,
+// Starseer 5 INT; #1318). `starting.base` / `.stat` used to be accepted and
+// then overwritten by every class's own row, so an imported customisation
+// "succeeded" and the next fight ignored it (Codex, #1294). They are DROPPED
+// at every entrance — profile, run snapshot and imported file, in either
+// spelling — never converted onto the opening-hand row or copied onto every
+// class, which would flatten the four openings into one. The warning is said
+// only when the value was not a stock one (base 3 or 4, attribute INT): an
+// export writes every value, and a stock value was never a customisation.
+// Both drops share ONE warning. (Moved here from model/handRules.js with the
+// hand groups; #1318's `withoutRetiredOpeningHand`.)
 const OPENING_MAXIMUM_KEY = 'gameConfig.handRules.starting.maximum';
 const OPENING_MINIMUM_KEY = 'gameConfig.handRules.starting.minimum';
 const RETIRED_OPENING_MAXIMUM = 15;
 const RETIRED_OPENING_MINIMUM = 3;
+/** The shared opening-hand fields every class sets for itself: no setting reaches them. */
+export const RETIRED_SHARED_OPENING_FIELDS = Object.freeze(['base', 'stat']);
+const SHARED_OPENING_KEYS = Object.freeze(RETIRED_SHARED_OPENING_FIELDS.map((field) => `gameConfig.handRules.starting.${field}`));
+const STOCK_SHARED_OPENING_BASES = Object.freeze([3, 4]);
 const bareKey = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+const sharedOpening = ([key]) => SHARED_OPENING_KEYS.includes(bareKey(key));
+const stockSharedOpening = ([key, value]) => (bareKey(key).endsWith('.base')
+  ? STOCK_SHARED_OPENING_BASES.includes(Number(value))
+  : String(value) === 'intelligence');
 
-/** True when a stored profile pins the retired opening-hand cap of 15. */
-export function hasRetiredOpeningLimits(settings = {}) {
-  return settings?.[OPENING_MAXIMUM_KEY] === RETIRED_OPENING_MAXIMUM;
+/**
+ * True when a stored profile pins the retired opening-hand cap of 15, or holds
+ * the retired shared opening base or attribute — each in either spelling.
+ */
+export function hasRetiredOpeningHand(settings = {}) {
+  return Object.entries(settings || {}).some(([key, value]) => sharedOpening([key])
+    || (bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM));
 }
 
 /**
- * withoutRetiredOpeningLimits(entries, warnings) → entries without the retired
- * 3–15 opening-hand limits, in either spelling (plain or `settings.`-prefixed).
+ * withoutRetiredOpeningHand(entries, warnings, { limits }) → entries without
+ * the retired 3–15 opening-hand limits (unless `limits` is false: a run
+ * snapshot) and without the shared opening base and attribute, each in either
+ * spelling (plain or `settings.`-prefixed), with at most one warning.
  */
-export function withoutRetiredOpeningLimits(entries, warnings = null) {
+export function withoutRetiredOpeningHand(entries, warnings = null, { limits = true } = {}) {
   const retiredMaximum = ([key, value]) => bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM;
-  if (!entries.some(retiredMaximum)) return entries;
   const retiredMinimum = ([key, value]) => bareKey(key) === OPENING_MINIMUM_KEY && value === RETIRED_OPENING_MINIMUM;
-  const dropsMinimum = entries.some(retiredMinimum);
+  const dropsLimits = limits && entries.some(retiredMaximum);
+  const shared = entries.filter(sharedOpening);
+  if (!dropsLimits && !shared.length) return entries;
   if (Array.isArray(warnings)) {
-    warnings.push(`Opening hand: the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${LEGACY_HAND_GROUPS.starting.minimum}–${LEGACY_HAND_GROUPS.starting.maximum} applies. Everything else was kept.`);
+    const said = [];
+    if (dropsLimits) {
+      const dropsMinimum = entries.some(retiredMinimum);
+      said.push(`the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${LEGACY_HAND_GROUPS.starting.minimum}–${LEGACY_HAND_GROUPS.starting.maximum} applies`);
+    }
+    if (shared.some((entry) => !stockSharedOpening(entry))) {
+      said.push('the shared base cards and attribute are retired and were left out: each class opens on its own. Use Stats → Draw & hand → each class\'s Opening hand base and attribute weights');
+    }
+    if (said.length) warnings.push(`Opening hand: ${said.join('; ')}. Everything else was kept.`);
   }
-  return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
+  return entries.filter((entry) => !sharedOpening(entry) && !(dropsLimits && (retiredMaximum(entry) || retiredMinimum(entry))));
 }
 
 // ---- WHICH ROWS -------------------------------------------------------------

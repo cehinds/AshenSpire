@@ -322,3 +322,15 @@ export function handResourceRows(registries, run, settings = {}) {
 export function withHandResources(derived, handRows) {
   return derived.flatMap((row) => (row.id === 'draw' ? handRows : row.id === 'openingHand' ? [] : [row]));
 }
+
+/**
+ * startingResourceRows(rows) → the class preview's starting resources: every
+ * row of `withHandResources` up to and including its hand chips — HP, Mana,
+ * Stamina, Actions, Hand, Draw — and not Poise after them. A fixed
+ * `.slice(0, 5)` did this while the legacy Draw row was one chip; it became
+ * two (Hand + Draw) and the slice silently dropped Draw (Codex, #1294).
+ */
+export function startingResourceRows(rows) {
+  const last = rows.findLastIndex((row) => row.id === 'draw' || row.id === 'openingHand');
+  return last < 0 ? rows.filter((row) => row.id !== 'poise') : rows.slice(0, last + 1);
+}

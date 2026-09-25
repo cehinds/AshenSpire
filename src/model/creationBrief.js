@@ -53,7 +53,8 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
-import { isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { HAND_STAT_IDS, isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { handRow } from './handRules.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -185,7 +186,7 @@ function attributeCycle(weight, perIncrease) {
  * time; every authored label, sentence, rule and equipment gate still comes
  * from its owning registry row.
  */
-export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
@@ -193,9 +194,15 @@ export function attributeCardModels(registries, attributes, { projection = null,
   // A RUN'S HAND ROWS ITS SNAPSHOT NEVER HAD (born before ruleset 7) are its
   // retired hand groups restated as rows; any other row a run's projection
   // lacks is not the run's, so its card does not name it (Codex, #1296).
-  for (const [id, row] of Object.entries((projection && projection.handRows) || {})) {
+  // THE HAND A FIGHT DEALS, when the caller has it (`hand`: a fight's own
+  // snapshot mid-combat, or `runHandRules` for the next fight — #1318): its
+  // three rows are the ones a card must state, over the projection's.
+  const handRows = hand
+    ? Object.fromEntries(HAND_STAT_IDS.map((id) => { try { return [id, handRow(hand, id)]; } catch { return [id, null]; } }))
+    : ((projection && projection.handRows) || {});
+  for (const [id, row] of Object.entries(handRows)) {
     if (row) {
-      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1 });
+      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1, max: row.max });
     }
   }
   // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
