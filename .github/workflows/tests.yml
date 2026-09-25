@@ -1,26 +1,15 @@
-# .github/workflows/tests.yml — every test in the repository, on every PR into dev.
+# .github/workflows/tests.yml — the test suite and the build-integrity gate.
 #
-# WHY THIS FILE EXISTS. ci.yml holds the whole suite but has been dispatch-only
-# since 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
-# pull requests but carries a hand-picked handful of test files. So on a PR,
-# most of tests/ ran nowhere, and eighteen test files had never run in any job;
-# four of those had gone red unseen.
+# Two jobs, Linux only, on every PR into dev and every push to dev:
+#   tests  — `node --test "tests/*.test.mjs"`: the five scenario tests
+#            (solo run, combat rules, co-op, content integrity, UI screens).
+#   build  — the shipped artifact is this source: release series, one derived
+#            version, shipped files carry their art, mobile twin tree, then a
+#            fresh build (the bundler's parse gate runs inside it) that must
+#            equal what is committed.
 #
-# WHAT IT COSTS, and why the triggers are these. Linux only, no LFS (no test
-# here reads an LFS-tracked artifact; they are the built HTML files), and 50
-# commits of history plus origin/dev, which zoomunits needs for its merge-base.
-# `pull_request` into dev plus `push` to dev: a feature branch is
-# covered by its PR, and the push covers the post-merge tree. The two events
-# never share a ref, so no commit runs twice — the defect ci.yml's header
-# measured for `push: ['**']` + `pull_request`. ci.yml's own triggers are left
-# exactly as the owner set them.
-#
-# TWO JOBS, ONE RUNNER (tests/run-node.mjs), so a slow corpus cannot hold the
-# fast answer hostage and neither job reads a tree the other is mutating:
-#   core       — the engine suite, every discovered *.test.mjs, and each tool's
-#                verdict on the tree as it stands
-#   selftests  — every tool's `--selftest` known-bad corpus, plus the bundler's
-#                parse-gate fixtures (tools/bundle.test.mjs, minutes long)
+# The browser smoke lives in dev-preview.yml; receipts and the About-changelog
+# projection are process gates in receipts.yml.
 
 name: tests
 
@@ -39,40 +28,47 @@ permissions:
   contents: read
 
 jobs:
-  core:
-    name: core suite
+  tests:
+    name: node test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      - uses: ./.github/actions/setup-node
+
+      - name: The five scenario tests
+        run: node --test "tests/*.test.mjs"
+
+  build:
+    name: build integrity
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
-
-      - name: The base branch, for the tools that measure against it
-        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
+          lfs: true
 
       - uses: ./.github/actions/setup-node
 
-      - name: Engine suite, every discovered test file, and each tool's verdict on the tree
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
+      - name: Current builds use the 0.7.x.x release series
+        run: node tools/release-series.mjs
 
-  selftests:
-    name: tool self-tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
+      - name: One version, derived, and it belongs to this tree
+        run: node tools/buildversion.mjs --check
 
-      - name: The base branch, for the tools that measure against it
-        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
+      - name: Root + dist carry their art, and ARE the build
+        run: node tools/verify-shipped.mjs
 
-      - uses: ./.github/actions/setup-node
+      - name: The mobile art twin tree mirrors assets/ and fits its budget
+        run: node tools/mobile-art.mjs --check
 
-      - name: Every tool check still catches its own known-bad corpus
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
+      - name: Rebuild the standalone (the bundler refuses a bundle that does not parse)
+        run: node tools/launch.mjs --build-only
 
-      - name: Parse gate — the bundler's own known-bad fixtures
-        if: always() # independent of the step above; a red there must not hide this
-        run: node tools/bundle.test.mjs
+      - name: The committed artifact equals the fresh build
+        run: |
+          git --no-pager diff --stat -- AshenSpire.html AshenSpire-mobile.html build dist
+          git diff --exit-code -- AshenSpire.html AshenSpire-mobile.html build dist

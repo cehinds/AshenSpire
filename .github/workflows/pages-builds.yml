@@ -187,12 +187,10 @@ jobs:
       # release and main all read `Expected release 0.6.x, received 0.5.5` and
       # exit 1, which would have taken the ASSEMBLE step down on three of the
       # four — the step that produces the artifact a publication needs. The
-      # gate belongs where current builds are made: dev-preview runs it on
-      # every push to dev and every PR into dev, and ci.yml on dispatch.
+      # gate belongs where current builds are made: tests.yml's build job runs
+      # it on every push to dev and every PR into dev.
       - name: Assemble the site from git history — every listed build proven byte-identical
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
-      - name: The generator's own drift plant is still caught
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
