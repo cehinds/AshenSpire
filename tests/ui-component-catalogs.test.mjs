@@ -180,6 +180,36 @@ test('an override inside @media is judged too', () => {
   assert.equal(railUnderMeters(kit), false);
 });
 
+test('a rule inside @scope, @starting-style or any grouping at-rule is judged', () => {
+  const r = receipt();
+  for (const wrap of ['@scope (.shared-hud)', '@starting-style', '@layer hud']) {
+    const kit = `${r.kit}\n${wrap} { .shared-hud .hud-bottom { position: absolute; } }\n`;
+    assert.equal(c12({ ...r, kit }).length, 1, wrap);
+  }
+});
+
+test('a subject written through :is() or :where() is judged', () => {
+  const r = receipt();
+  for (const sel of ['.shared-hud :is(.hud-bottom)', '.shared-hud :where(.hud-bottom.expanded)']) {
+    const kit = `${r.kit}\n${sel} { position: absolute; }\n`;
+    assert.equal(c12({ ...r, kit }).length, 1, sel);
+  }
+  const grid = `${r.kit}\n.shared-hud > :is(.hud-top) { grid-template-areas: "info actions" "rail actions"; }\n`;
+  assert.equal(railUnderMeters(grid), false);
+});
+
+test('a nested rule (CSS nesting) is judged under its parent', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud .hud-bottom { &.expanded { position: absolute; } }\n`;
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
+test(':not() and :has() arguments are not the subject', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud .relic:not(.hud-bottom) { position: absolute; }\n.shared-hud .x:has(.hud-bottom) { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit }).length, 0);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {

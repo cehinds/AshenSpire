@@ -129,8 +129,11 @@ export function catalogDisagreement(md, html) {
 // honours quotes and parentheses, descends into @media/@supports/@container
 // blocks, and yields each style rule as { selector, decls } where decls lists
 // { prop, value } in source order (a last declaration without `;` counts).
-// BOUNDARY: it does not model the cascade (specificity, !important, @layer)
-// or custom-property substitution; a var() value is judged as unreadable.
+// Nested rules (CSS nesting) are judged as `:is(parent) child`.
+// BOUNDARY: it does not model the cascade (specificity, !important, @layer
+// order, @scope limits) or custom-property substitution; a var() value is
+// judged as unreadable. A further CSS form is fixed here only if the shipped
+// CSS uses it; otherwise this note is the answer.
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = '';
   for (const ch of text) {
@@ -145,48 +148,71 @@ function splitTop(text, sep) {
   return out;
 }
 
-export function cssRules(css) {
-  const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const rules = [];
-  let i = 0;
-  const block = (from) => { // returns index just past the matching }
-    let depth = 0; let quote = null;
-    for (let j = from; j < src.length; j++) {
-      const ch = src[j];
-      if (quote) { if (ch === quote) quote = null; continue; }
-      if (ch === '"' || ch === "'") { quote = ch; continue; }
-      if (ch === '{') depth++;
-      if (ch === '}' && --depth === 0) return j + 1;
+// At-rules whose blocks hold no style rules; every other block at-rule
+// (@media, @supports, @container, @layer, @scope, @starting-style, and any
+// new one) is descended into, so an unknown grouping rule is judged, not lost.
+const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/;
+
+function parseBlock(src, parent, rules) {
+  let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
+  const decls = [];
+  const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
+    const at = d.indexOf(':');
+    if (at > 0) decls.push({ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).trim() });
+  });
+  for (let j = 0; j < src.length; j++) {
+    const ch = src[j];
+    if (quote) { if (depth === 0) text += ch; if (ch === quote) quote = null; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; if (depth === 0) text += ch; continue; }
+    if (ch === '{') {
+      if (depth++ === 0) {
+        // The nested prelude is what follows the last top-level `;`; what
+        // precedes it is this block's own declarations (or bare statements).
+        const parts = splitTop(text, /;/);
+        prelude = parts.pop().trim();
+        if (parent !== null) flushDecls(parts.join(';'));
+        text = ''; openAt = j + 1;
+      }
+      continue;
     }
-    return src.length;
-  };
-  while (i < src.length) {
-    const open = src.indexOf('{', i);
-    if (open < 0) break;
-    const prelude = src.slice(i, open).replace(/^[\s;}]+/, '').trim();
-    const close = block(open);
-    const body = src.slice(open + 1, close - 1);
-    if (prelude.startsWith('@')) {
-      if (/^@(media|supports|container|layer|document)\b/.test(prelude)) rules.push(...cssRules(body));
-    } else {
-      const decls = splitTop(body, /;/).map((d) => d.trim()).filter(Boolean).flatMap((d) => {
-        const at = d.indexOf(':');
-        return at < 0 ? [] : [{ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).trim() }];
-      });
-      rules.push({ selector: prelude, decls });
+    if (ch === '}' && depth > 0) {
+      if (--depth === 0) {
+        const body = src.slice(openAt, j);
+        if (prelude.startsWith('@')) {
+          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules);
+        } else if (prelude) {
+          const selector = parent === null ? prelude
+            : splitTop(prelude, /,/).map((part) => (part.includes('&') ? part.replace(/&/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
+          parseBlock(body, selector, rules);
+        }
+      }
+      continue;
     }
-    i = close;
+    if (depth === 0) text += ch;
+  }
+  if (parent !== null) {
+    flushDecls(text);
+    rules.push({ selector: parent, decls });
   }
   return rules;
 }
 
-// The subject of one selector (no commas): its last top-level compound, with
-// functional-pseudo arguments dropped, so `.hud-bottom:has(> .x)` has subject
-// `.hud-bottom:has` and `.hud-bottom .relic` has subject `.relic`.
+export function cssRules(css) {
+  return parseBlock(css.replace(/\/\*[\s\S]*?\*\//g, ''), null, []);
+}
+
+// The subject of one selector (no commas): its last top-level compound, so
+// `.hud-bottom:has(> .x)` has subject `.hud-bottom` and `.hud-bottom .relic`
+// has subject `.relic`; `:is(.hud-bottom)` has subject `.hud-bottom`.
 function subjectOf(part) {
   const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
   let subject = compounds.at(-1) || '';
-  while (/\([^()]*\)/.test(subject)) subject = subject.replace(/\([^()]*\)/g, '');
+  // :is() / :where() / :matches() match the element itself, so their
+  // arguments are part of the subject; any other functional pseudo's
+  // arguments (:has, :not, :nth-child) are not.
+  for (let guard = 0; guard < 20 && /\([^()]*\)/.test(subject); guard++) {
+    subject = subject.replace(/:(?:is|where|matches|-webkit-any)\(([^()]*)\)/g, ' $1 ').replace(/\([^()]*\)/g, '');
+  }
   return subject;
 }
 const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
@@ -741,6 +767,10 @@ function selftest() {
     ['drop meters in a semicolon-less final declaration', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions" }\n` })],
     ['drop meters through the grid-template shorthand', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template: "info actions" auto "rail actions" auto / 1fr auto; }\n` })],
     ['drop meters inside an @media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (max-width: 1px) { .shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
+    ['hang the rail inside @scope', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .shared-hud .hud-bottom { position: absolute; } }\n` })],
+    ['hang the rail inside @starting-style', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@starting-style { .shared-hud .hud-bottom { position: absolute; } }\n` })],
+    ['hang the rail through :is()', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud :is(.hud-bottom) { position: absolute; }\n` })],
+    ['hang the rail from a nested & rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom { &.expanded { position: absolute; } }\n` })],
     ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
