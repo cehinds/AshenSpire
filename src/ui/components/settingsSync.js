@@ -97,8 +97,12 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
   // leave the sha unrecorded, so the next start loads it.
   if (!stillWanted()) return { applied: 0, reason: 'late' };
   const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeys(rows, { includeDevice: includeDeviceEnabled() }));
-  const applied = applyProfile(settings, onChange, parsed);
-  write(SYNC_STORAGE.lastSha, remote.sha || '');
+  // Load once per version: if this device cannot record the version, loading
+  // it now would load it again on every start and overwrite edits made here.
+  const previous = read(SYNC_STORAGE.lastSha);
+  if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) return { applied: 0, reason: 'unrecorded' };
+  let applied;
+  try { applied = applyProfile(settings, onChange, parsed); } catch (error) { write(SYNC_STORAGE.lastSha, previous); throw error; }
   write(SYNC_STORAGE.lastAt, new Date().toISOString());
   return { applied, reason: 'loaded' };
 }

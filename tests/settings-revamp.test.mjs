@@ -457,7 +457,7 @@ test('navigate() reads its own cursor, and a refused token write is reported', a
   const { readFileSync } = await import('node:fs');
   const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
   const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
-  assert.match(body, /const cur = current\(\);/, 'navigate is module-level, so it must fetch the cursor itself');
+  assert.match(body, /function navigate\(dir, on = null\)/, 'navigate is module-level, so each caller hands it the control');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, value\)\) \{/);
 });
@@ -479,4 +479,32 @@ test('a profile location is adopted only once storage kept it', async () => {
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   const guarded = panel.match(/if \(!write\(SYNC_STORAGE\.config, JSON\.stringify\(next\)\)\) \{ status\(STORAGE_REFUSED\); return; \}\s*cfg = next;/g) || [];
   assert.equal(guarded.length, 2, 'both the named-profile picker and Use these');
+});
+
+test('auto-load leaves a profile alone when this device cannot record its version', async () => {
+  const { autoLoadProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SYNC_STORAGE } = await import('../src/model/settingsSync.js');
+  const store = new Map([[SYNC_STORAGE.auto, '1']]);
+  const saved = globalThis.localStorage;
+  // Reads work; every write is refused (a full or locked store).
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: () => { throw new Error('QuotaExceeded'); }, removeItem: () => {} };
+  try {
+    const rows = settingsRows();
+    const text = profileText({ screenShake: false }, profileKeys(rows));
+    const fetch = async () => ({ status: 200, ok: true, json: async () => ({ content: toBase64(text), sha: 'p1' }) });
+    const settings = {};
+    const changes = [];
+    const result = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch });
+    assert.equal(result.reason, 'unrecorded');
+    assert.deepEqual(changes, [], 'nothing applied that would be re-applied on every start');
+  } finally { globalThis.localStorage = saved; }
+});
+
+test('each input steers the control it is on', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  assert.match(input, /navigate\(\{ ArrowUp[^}]*\}\[ev\.key\], ev\.target\);/, 'keys act on the keyboard target');
+  for (const d of ['up', 'down', 'left', 'right']) assert.match(input, new RegExp(`navigate\\('${d}', current\\(\\)\\);`), `D-pad ${d} acts on the game cursor`);
+  const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
+  assert.doesNotMatch(body, /document\.activeElement|current\(\)/, 'navigate uses only the control it is given');
 });

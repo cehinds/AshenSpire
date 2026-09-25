@@ -728,22 +728,21 @@ function pressEnd(cancelled = false) {
 
 // Left/right on a focused slider nudges its value (keyboard + pad parity).
 /**
- * navigate(dir, target) — one direction from the keyboard, the D-pad or the
- * stick. Left/right on a Settings stepper's − or + presses − or + (the pad
- * drives the game cursor; a mouse or Tab leaves DOM focus there), and on a
- * focused slider tunes it; anything else moves focus.
+ * navigate(dir, on) — one direction from the keyboard, the D-pad or the stick.
+ * `on` is the control that input is on: the keyboard event's target for keys,
+ * the game cursor for the pad (a click or Tab can leave the two apart, and
+ * each input acts on its own). Left/right on a Settings stepper's − or +
+ * presses − or +, and on a slider tunes it; anything else moves focus.
  */
-function navigate(dir, target = null) {
-  if (dir === 'left' || dir === 'right') {
-    const cur = current();
-    const stepButton = [cur, document.activeElement, target].find((el) => el?.matches?.('.set-step'));
-    const stepper = stepButton?.closest('[data-stepper]');
+function navigate(dir, on = null) {
+  if ((dir === 'left' || dir === 'right') && on?.matches) {
+    const stepper = on.matches('.set-step') ? on.closest('[data-stepper]') : null;
     if (stepper) {
       stepper.querySelector(`.set-step[data-step="${dir === 'right' ? 1 : -1}"]`)?.click();
       return;
     }
-    if (cur && cur.matches('input[type="range"]')) {
-      nudgeRange(cur, dir === 'right' ? 1 : -1);
+    if (on.matches('input[type="range"]')) {
+      nudgeRange(on, dir === 'right' ? 1 : -1);
       return;
     }
   }
@@ -1058,10 +1057,10 @@ function pollPads() {
       // live, so a set pressEl here was set by THIS call.
       if (a) { doAction(a.id, 'pad'); if (pressEl) padPressBtn = i; }
       // D-pad (12–15) navigates regardless of rebinds.
-      else if (i === 12) navigate('up');
-      else if (i === 13) navigate('down');
-      else if (i === 14) navigate('left');
-      else if (i === 15) navigate('right');
+      else if (i === 12) navigate('up', current());
+      else if (i === 13) navigate('down', current());
+      else if (i === 14) navigate('left', current());
+      else if (i === 15) navigate('right', current());
     }
     padPrev[pad.index] = pressed;
 
@@ -1072,8 +1071,8 @@ function pollPads() {
       gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
-        if (Math.abs(ax) > Math.abs(ay)) navigate(ax > 0 ? 'right' : 'left');
-        else navigate(ay > 0 ? 'down' : 'up');
+        if (Math.abs(ax) > Math.abs(ay)) navigate(ax > 0 ? 'right' : 'left', current());
+        else navigate(ay > 0 ? 'down' : 'up', current());
       }
     }
   }
