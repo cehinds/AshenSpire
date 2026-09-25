@@ -717,7 +717,6 @@ test('the worked example recomputes from the edited values and shows the whole s
 
   // Hand rules: every term of the opening hand is on the line.
   const hand = statsTopicPreview({
-    'gameConfig.handRules.starting.base': 4,
     'gameConfig.handRules.starting.baseline': 5,
     'gameConfig.handRules.starting.pointsPerCard': 2,
     // Fill mode, set here: the stock draw is now a fixed count, and the line
@@ -793,7 +792,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // says that too (Codex, #1252).
   const badHand = statsTopicPreview({ 'gameConfig.handRules.starting.minimum': 9, 'gameConfig.handRules.starting.maximum': 2 }, 'Draw & hand');
   assert.match(badHand.refused, /refused uses its defaults/);
-  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.starting.maximum': 10, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
+  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.minimum': 8, 'gameConfig.handRules.starting.maximum': 10, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
   assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);

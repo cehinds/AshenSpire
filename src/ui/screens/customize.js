@@ -29,7 +29,7 @@ import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
-import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources } from '../../model/statProjection.js';
+import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources, startingResourceRows } from '../../model/statProjection.js';
 import { classHandRules } from '../../model/handRules.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
@@ -106,6 +106,9 @@ export function mountCustomize(app, {
   // Draw chips read from the class's own hand rules under these settings,
   // through the door (`classHandRules`) engine/runCombat.js snapshots.
   const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
+  // The class preview's starting resources (model/statProjection.js
+  // `startingResourceRows`): HP through the Hand and Draw chips, not Poise.
+  const classPreviewResources = (run, projection) => startingResourceRows(creationResources(run, projection));
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -637,7 +640,7 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const resources = classResourceGrid(creationResources(run, projection).slice(0, 5));
+    const resources = classResourceGrid(classPreviewResources(run, projection));
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -1538,12 +1541,12 @@ export function mountCustomize(app, {
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
       sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5)),
+      resources: classResourceGrid(classPreviewResources(specimenRun, specimenProjection)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5));
+    const classResourceSpecimen = classResourceGrid(classPreviewResources(specimenRun, specimenProjection));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
