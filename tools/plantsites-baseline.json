@@ -134,7 +134,7 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "2cae8cf11c778d97"
+      "digest": "18d86ea31ac4eaac"
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
@@ -198,7 +198,7 @@
     },
     "tools/gesture-cancel.mjs": {
       "count": 2,
-      "digest": "6d9bdbd6b5dc8b74"
+      "digest": "92bb0583dd59c2c0"
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,

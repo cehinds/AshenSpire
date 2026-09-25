@@ -98,11 +98,14 @@ if (process.argv.includes('--selftest')) {
         // Vira's F3, the defect the FIRST fix introduced: suppressClick armed
         // ABOVE the cancelled-return eats exactly one tap — on the very
         // gesture the fix exists to make safe. Swapping the two lines back is
-        // that known-bad, entering where it originally shipped.
+        // that known-bad, entering where it originally shipped. The decision
+        // itself moved to finishCardDrag (src/ui/cardDragEnd.js, #1298); the
+        // plant enters at combat.js's teardown, which still owns the card's
+        // selection state, and fires on exactly a cancelled drag.
         name: 'F3 returns: a cancelled card cannot receive its next tap',
         file: 'src/ui/screens/combat.js',
-        find: "          if (cancelled) return;",
-        replace: "          if (cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; return; } // planted: cancelled card cannot receive its next tap",
+        find: "            return wasDragging;",
+        replace: "            if (wasDragging && info?.cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; } // planted: cancelled card cannot receive its next tap\n            return wasDragging;",
         expectRed: /FAIL F3: ONE tap after a cancel selects the card/,
       },
     ],

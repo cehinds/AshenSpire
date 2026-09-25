@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1298",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: leaving the game in the background is now tested",
+    "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
+    "build": "0.7.1.515",
+    "pullRequest": 1298,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1298"
+  },
+  {
     "id": "pr-1277",
     "date": "2026-09-25",
     "group": "2026-09-25",
