@@ -642,7 +642,9 @@ export function startingStatRows(bundle) {
       if (!Number.isFinite(value)) continue;
       add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
         // A hand holds at least one card (model/derivedStats.js).
-        min: id === 'handSize' && (field === 'min' || field === 'max') ? 1 : min, step,
+        // ...and a run holds at least one Mana (`validateRunShape`), so its
+        // ceiling cannot be set under 1 (Codex, #1296).
+        min: (id === 'handSize' && (field === 'min' || field === 'max')) || (id === 'mana' && field === 'max') ? 1 : min, step,
         // Filed under this row's own topic of Advanced → Stats
         // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
         advancedGroup: 'Stats', derivedStatId: id, statField: field,

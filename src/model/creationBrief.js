@@ -256,16 +256,19 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
         if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
-        // The opening hand's cap is part of its fact (#1294: a Starseer at
-        // base 5 has one card of room before the cap of 6).
-        const cap = id === 'openingHand' && Number.isFinite(row?.max) ? row.max : null;
+        // A ROW'S CAP IS PART OF ITS FACT (#1294: a Starseer at base 5 has one
+        // card of room before the cap of 6). Since ruleset 7 every row may
+        // carry a Max, so every bounded fact says where its points stop paying
+        // (Codex, #1296): the run's own row, or the table's when there is none.
+        const bound = row ? row.max : rule.max;
+        const cap = Number.isFinite(bound) ? bound : null;
         return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
     const scaling = ratingFacts.map(({ line }) => line);
-    const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
-      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
+    const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
       : `${label} scales with ${def.label}`));
     // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
     // flavor text instead of useful information"). The flavour is still the
