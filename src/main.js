@@ -326,15 +326,17 @@ let activeSettings = bringStoredProfileForward(activeMeta);
 // tools/settings-defaults.mjs). A key the player never set starts there, and a
 // key still at an earlier promotion's value follows a new one; a key the
 // player chose is theirs. Applied before anything reads the profile.
-{
-  const seeded = seedSettingsDefaults(activeSettings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
-  if (Object.keys(seeded).length) {
-    for (const [key, value] of Object.entries(seeded)) {
-      if (value === undefined) delete activeSettings[key]; else activeSettings[key] = value;
-    }
-    saves.saveMeta(activeMeta);
+// The same step runs again when a restored profile replaces this one.
+function seedPromotedDefaults(meta, settings) {
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  if (!Object.keys(seeded).length) return;
+  for (const [key, value] of Object.entries(seeded)) {
+    if (value === undefined) delete settings[key]; else settings[key] = value;
   }
+  meta.settings = settings;
+  saves.saveMeta(meta);
 }
+seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
@@ -1431,7 +1433,14 @@ function showProfile() {
     saves,
     // Through boot's door first: a restored profile from before a key was
     // renamed must reach the rows, the bundle and storage already rewritten.
-    onRestored: () => applyRestoredSettings(bringStoredProfileForward(saves.loadMeta())),
+    onRestored: () => {
+      // Through boot's promotion step too: an archive from before the current
+      // promotion must start at its values, in play and in storage.
+      const meta = saves.loadMeta();
+      const settings = bringStoredProfileForward(meta);
+      seedPromotedDefaults(meta, settings);
+      applyRestoredSettings(settings);
+    },
   });
 }
 

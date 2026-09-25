@@ -613,3 +613,35 @@ test('a row\'s Reset sits beside its label, never inside the ellipsised label', 
   assert.ok(html.indexOf('set-row-reset') > label.index + label[0].length, 'the Reset follows the closed label, inside the label stack');
   assert.match(html, /<button type="button" class="as-btn set-row-reset[^>]*>Reset<\/button>/, 'a changed row shows its Reset');
 });
+
+test('a profile load hands omitted promoted keys back to the promotion', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 55, screenShake: false, [SEED_KEY]: { screenShake: false } };
+  const seen = [];
+  const moved = applyProfile(settings, (c) => { seen.push(c); return { ok: true }; },
+    { changes: { screenShake: true }, cleared: ['musicVolume'] }, { musicVolume: 40, screenShake: false });
+  assert.equal(moved, 2);
+  assert.deepEqual(seen[0][SEED_KEY], { musicVolume: 40 }, 'the cleared key is the promotion\'s again; the one moved off it is not');
+  assert.deepEqual(settings, { musicVolume: 40, screenShake: true, [SEED_KEY]: { musicVolume: 40 } });
+  const refused = { musicVolume: 55 };
+  const calls = [];
+  assert.throws(() => applyProfile(refused, (c) => { calls.push(c); return calls.length === 1 ? { ok: false } : { ok: true }; },
+    { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 }), /could not be saved/);
+  assert.deepEqual(refused, { musicVolume: 55 }, 'a refused load leaves no seed record behind');
+  assert.ok(Object.hasOwn(calls[1], SEED_KEY) && calls[1][SEED_KEY] === undefined, 'and clears the one it sent');
+});
+
+test('a refused Undo is rolled back; a restored profile is seeded like boot; a dotted name is refused', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(onChange\(restore\)\?\.ok === false\) \{[\s\S]*?onChange\(now\);/, 'Undo puts the state it replaced back when the save is refused');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /onRestored: \(\) => \{[\s\S]*?seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/, 'a restore runs the promotion step');
+  assert.match(main, /^seedPromotedDefaults\(activeMeta, activeSettings\);/m, 'boot runs the same step');
+  const { validProfileName, normalizeProfileName } = await import('../src/model/settingsSync.js');
+  for (const name of ['desk.', '.', '.hidden', 'a.']) assert.equal(validProfileName(name), false, name);
+  assert.equal(normalizeProfileName('desk.'), null);
+  assert.equal(normalizeProfileName('desk..json'), null);
+  assert.equal(validProfileName('v1.2_test'), true);
+});

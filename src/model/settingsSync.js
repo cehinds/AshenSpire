@@ -49,7 +49,9 @@ const PROFILE_NAME = /^[A-Za-z0-9._-]{1,40}$/;
 
 /** validProfileName(name) → true for a bare name that is safe as one path segment. */
 export function validProfileName(name) {
-  return typeof name === 'string' && PROFILE_NAME.test(name) && !name.includes('..');
+  // No leading or trailing dot: `desk.` would make `desk..json`, which
+  // syncConfig refuses and silently swaps for the default profile's path.
+  return typeof name === 'string' && PROFILE_NAME.test(name) && !name.includes('..') && !name.startsWith('.') && !name.endsWith('.');
 }
 
 /** normalizeProfileName(text) → the typed name without spaces or a trailing `.json`, or null when unsafe. */

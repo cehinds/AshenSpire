@@ -2536,12 +2536,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
     bar.querySelector('[data-undo]').onclick = () => {
       const restore = {};
+      // The seed record too, even when the Undo does not carry it: the save
+      // path may prune it for the keys this Undo moves.
+      const now = { [SEED_KEY]: settings[SEED_KEY] };
       for (const [key, value] of Object.entries(offer.snapshot)) {
+        now[key] = settings[key];
         if (value === undefined) delete settings[key]; else settings[key] = value;
         restore[key] = value;
       }
       undoOffer = null;
-      onChange(restore);
+      if (onChange(restore)?.ok === false) {
+        // Not saved, so not undone: put the state the Undo replaced back, here
+        // and through onChange, so the live display and audio follow it.
+        for (const [key, value] of Object.entries(now)) {
+          if (value === undefined) delete settings[key]; else settings[key] = value;
+        }
+        onChange(now);
+      }
       repaintPanel({ keepScroll: true });
     };
     container.insertBefore(bar, container.querySelector(':scope > .set-railed') || container.firstChild);

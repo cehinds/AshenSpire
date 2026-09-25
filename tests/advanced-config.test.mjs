@@ -559,7 +559,8 @@ test('boot and profile restore both come through the one door', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.equal(main.match(/bringProfileForward\(/g)?.length, 1, 'main.js calls the model door once, from its helper');
   assert.match(main, /let activeSettings = bringStoredProfileForward\(activeMeta\);/);
-  assert.match(main, /onRestored: \(\) => applyRestoredSettings\(bringStoredProfileForward\(saves\.loadMeta\(\)\)\)/);
+  assert.match(main, /onRestored: \(\) => \{[^}]*?const meta = saves\.loadMeta\(\);\s*const settings = bringStoredProfileForward\(meta\);\s*seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/,
+    'a restore comes through the same door as boot, promotion step included');
 });
 
 test('a v1 file carrying rewardMultiplier 20 imports as cinderMultiplier 1, with a warning', () => {

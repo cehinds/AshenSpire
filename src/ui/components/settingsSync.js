@@ -63,6 +63,18 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     had[key] = Object.hasOwn(settings, key) ? { value: settings[key] } : null;
     if (to === undefined) delete settings[key]; else settings[key] = to;
   }
+  // A key the profile leaves out goes back to the promotion, and is the
+  // promotion's again (as a Reset makes it): say so in the seed record, and
+  // prune it as the save path would, since sending the record overrides that.
+  const toPromotion = (parsed.cleared || []).filter((key) => Object.hasOwn(promoted, key));
+  if (toPromotion.length) {
+    const record = seedBefore && typeof seedBefore === 'object' ? seedBefore : {};
+    const next = { ...record };
+    for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
+    for (const key of toPromotion) next[key] = promoted[key];
+    settings[SEED_KEY] = next;
+    changed[SEED_KEY] = next;
+  }
   const result = onChange(changed);
   if (result?.ok === false) {
     // Not saved, so not applied: put every value back as it was — here, and
@@ -74,7 +86,10 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
       if (before) settings[key] = before.value; else delete settings[key];
     }
     // The save path dropped the moved keys from the seed record; hand it back.
-    if (seedBefore !== undefined) { back[SEED_KEY] = seedBefore; settings[SEED_KEY] = seedBefore; }
+    if (seedBefore !== undefined || Object.hasOwn(changed, SEED_KEY)) {
+      back[SEED_KEY] = seedBefore;
+      if (seedBefore === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = seedBefore;
+    }
     onChange(back);
     throw new Error('Settings could not be saved on this device.');
   }
