@@ -10,6 +10,8 @@
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here
 // changes what the mobile bundle carries, so it moves build identity.
 
+import { createHash } from 'node:crypto';
+
 /** Where the shrunken twins live, mirroring assets/ path for path. */
 export const MOBILE_ASSET_DIR = 'assets-mobile';
 
@@ -67,12 +69,41 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 30_000_000;
  * Where the mobile art itself has to land for the bundle to fit: the budget
  * less the code (~9.4 MB at 0.7.1.451) and base64 growth (4/3). A twin tree over
  * this is caught by --check before anyone builds with it.
+ *
+ * Counted as the bundle inlines it: each distinct image once
+ * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
 export const MOBILE_ART_INLINED_BUDGET_BYTES = 20_000_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
   return Math.ceil(n / 3) * 4;
+}
+
+/**
+ * distinctAssetId(buf, ext) → the identity tools/bundle.mjs aliases on: the
+ * bytes AND the file type, so two files never share a data URI of the wrong MIME.
+ */
+export function distinctAssetId(buf, ext = '') {
+  return `${String(ext).toLowerCase()}:${createHash('sha1').update(buf).digest('hex')}`;
+}
+
+/**
+ * distinctInlinedBytes(files) → what a set of files costs the bundle when each
+ * distinct content is inlined once (the bundler aliases byte-identical files of
+ * the same type). `files` are buffers or { buf, ext }.
+ */
+export function distinctInlinedBytes(files, hash = distinctAssetId) {
+  const seen = new Set();
+  let total = 0;
+  for (const file of files) {
+    const buf = Buffer.isBuffer(file) ? file : file.buf;
+    const id = hash(buf, Buffer.isBuffer(file) ? '' : file.ext);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    total += inlinedBytes(buf.length);
+  }
+  return total;
 }
 
 /**

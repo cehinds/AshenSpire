@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: leaving the game in the background is now tested",
     "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
-    "build": "0.7.1.513",
+    "build": "0.7.1.515",
     "pullRequest": 1298,
     "url": "https://github.com/cehinds/AshenSpire/pull/1298"
+  },
+  {
+    "id": "pr-1277",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Settings open faster, search everything, and every value has − / + and a slider",
+    "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once. A Changed button lists every setting you have changed, and any Reset can be undone. A one-time tip explains search and Reset, and a gamepad presses − and + directly. Development builds can keep named profiles (desk, phone and so on); screen-size settings stay with each device unless you choose to share them. The owner can also promote a profile to be every new player's defaults.",
+    "build": "0.7.1.512",
+    "pullRequest": 1277,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1277"
   },
   {
     "id": "pr-1317",
