@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `155044d2a10dff4abfdccf949016686eaa2b7c2f`
+- Source commit: `e1579b4ab7d73ca9e171188e4a6c6aee1f5935e3`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 97 |
+| Domain models and contracts | `src/model/` | 99 |
 | Headless simulation/services | `src/engine/` | 21 |
 | Screen presenters/hosts | `src/ui/screens/` | 29 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 72 |
-| DOM components and observer adapters | `src/ui/components/` | 85 |
-| Code-side content adapters | `src/content/` | 106 |
+| DOM components and observer adapters | `src/ui/components/` | 87 |
+| Code-side content adapters | `src/content/` | 107 |
 | Authoritative JSON/CSV content | `content/source/` | 31 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 188 |
-| Architecture/tooling | `tools/` | 369 |
+| Tests | `tests/` | 192 |
+| Architecture/tooling | `tools/` | 370 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **19194**.
-Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.css` 31, `.csv` 27, `.gitattributes` 1, `.gitignore` 10, `.html` 76, `.jpg` 4, `.js` 525, `.json` 414, `.log` 23, `.md` 180, `.mjs` 513, `.mp3` 2, `.nojekyll` 1, `.png` 2298, `.ps1` 3, `.py` 40, `.sh` 4, `.sql` 1, `.svg` 20, `.txt` 44, `.webp` 14917, `.woff2` 30, `.yml` 9, `(none)` 1.
+Tracked files: **19206**.
+Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.css` 31, `.csv` 27, `.gitattributes` 1, `.gitignore` 10, `.html` 76, `.jpg` 4, `.js` 531, `.json` 414, `.log` 23, `.md` 181, `.mjs` 518, `.mp3` 2, `.nojekyll` 1, `.png` 2298, `.ps1` 3, `.py` 40, `.sh` 4, `.sql` 1, `.svg` 20, `.txt` 44, `.webp` 14917, `.woff2` 30, `.yml` 9, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
