@@ -99,13 +99,24 @@ function check(ok, code, detail) {
   else { failures += 1; console.error(`RED ${code} - ${detail}`); }
 }
 
+// A missing instrument measures nothing: exit 2 (unknown), never 1 (a check
+// ran and failed) — .github/actions/which-browser and tools/verdict.mjs.
+if (!browserPath) {
+  console.error('UNKNOWN slot-load-door - no supported Chrome or Edge binary found; set CHROME.');
+  process.exit(2);
+}
+
 let server;
 let cdp;
 let closeBrowser = async () => {};
+// Until the fight has booted nothing has been measured, so a harness death
+// before then (serve, launch, the combat boot) is unknown, not red.
+let measuring = false;
 try {
-  if (!browserPath) throw new Error('no supported Chrome or Edge binary found');
-  const served = await serve({ root: ROOT, port: 8263, open: false });
+  // Port 0: the OS picks a free one, so this never collides with another tool.
+  const served = await serve({ root: ROOT, port: 0, open: false });
   server = served.server;
+  const port = server.address().port;
   const launched = await launchBrowser({ prefix: 'slot-load-door-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);
@@ -168,28 +179,33 @@ try {
     }
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${served.port}/?shot=combat&shotNewerSlot=2` }, sessionId);
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot');
+  measuring = true;
   const opening = await pose();
   check(opening.turn === 1 && opening.hand.length > 0, 'SLOT-LOAD-OPENING',
     `the fight opens on turn ${opening.turn} with ${opening.hand.length} cards at HP ${opening.playerHp}`);
 
   // ---- NEWER: refused up front, the run survives -------------------------
+  // Marks this fight's combat object, so RESTART can wait for a new one.
   await ev('window.__combat.__slotLoadProbe = true');
   try {
     await openLoadSlot(2);
     const notice = await ev(`document.querySelector('#confirmation-modal-title')?.textContent || ''`);
     // The player's next move on whatever opened: press its way forward if it has one.
     await confirmIfAsked();
+    // The live run itself: __spoils reads main.js's `run`, which is null
+    // (an empty deck here) once resumeRun has dropped it. window.__combat
+    // outlives that drop, so it is no witness on its own.
     const after = await ev(`({
-      probe: window.__combat?.__slotLoadProbe === true,
       board: !!document.querySelector('.end-turn'),
       title: !!document.querySelector('.title-menu, [data-title-action="load"]'),
-      liveDeck: (window.__spoils().liveDeck || []).length,
+      liveDeck: window.__spoils().liveDeck || [],
     })`);
+    const keptDeck = JSON.stringify(after.liveDeck) === JSON.stringify(opening.liveDeck) && after.liveDeck.length > 0;
     check(/newer version/i.test(notice), 'SLOT-LOAD-NEWER-NOTICE', `the newer-save notice opens (${JSON.stringify(notice)})`);
-    check(after.probe && after.board && !after.title && after.liveDeck === opening.liveDeck.length, 'SLOT-LOAD-NEWER-KEEPS-RUN',
-      `the live run and its fight are still standing and the title never mounted (${JSON.stringify(after)})`);
+    check(keptDeck && after.board && !after.title, 'SLOT-LOAD-NEWER-KEEPS-RUN',
+      `the live run and its fight are still standing and the title never mounted (${JSON.stringify({ ...after, liveDeck: after.liveDeck.length, keptDeck })})`);
   } catch (error) {
     check(false, 'SLOT-LOAD-NEWER-KEEPS-RUN', error.message);
   }
@@ -203,6 +219,23 @@ try {
   try {
     const veils = await ev(`[...document.querySelectorAll('.modal-veil, .quick-nav-veil')].map((v) => v.className)`);
     if (veils.length) throw new Error(`a veil is still over the board after the notice closed: ${JSON.stringify(veils)}`);
+    // Play an attack on the first living enemy before ending the turn, so
+    // enemy HP and the piles differ at the abandon point: the enemies and
+    // cards checks below then catch a reload that skipped the reset, the way
+    // the HP and hand checks already do.
+    const struck = await ev(`window.__combat.enemies.map((e) => e.hp)`);
+    const hand = await ev(`window.__combat.piles.hand.map((card) => card.instanceId)`);
+    let played = null;
+    for (const instanceId of hand) {
+      await click(`.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`);
+      const target = await ev(`(() => { const e=document.querySelector('.enemy.targetable:not(.dead)'); return !!e; })()`);
+      if (!target) { await ev(`document.querySelector('.hand .card.selected')?.click()`); await wait(180); continue; }
+      await click('.enemy.targetable:not(.dead)');
+      await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'the attack to settle');
+      await wait(300);
+      if (JSON.stringify(await ev(`window.__combat.enemies.map((e) => e.hp)`)) !== JSON.stringify(struck)) { played = instanceId; break; }
+    }
+    if (!played) throw new Error(`no card in the opening hand [${hand}] struck an enemy`);
     await click('.end-turn');
     // End Turn is a held beat; a tap asks first. Answer the way forward.
     await wait(750);
@@ -213,7 +246,9 @@ try {
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil')`, 'a clear board');
     await wait(300);
     const abandoned = await pose();
-    check(abandoned.turn > 1, 'SLOT-LOAD-MIDCOMBAT-POSE', `the fight moved on to turn ${abandoned.turn} (hand ${abandoned.hand.join(',')})`);
+    const moved = abandoned.turn > 1 && JSON.stringify(abandoned.enemies) !== JSON.stringify(opening.enemies);
+    check(moved, 'SLOT-LOAD-MIDCOMBAT-POSE',
+      `the fight moved on to turn ${abandoned.turn} after ${played} struck (enemies ${JSON.stringify(opening.enemies.map((e) => e.hp))} -> ${JSON.stringify(abandoned.enemies.map((e) => e.hp))}, hand ${abandoned.hand.join(',')})`);
     await openLoadSlot(1);
     await confirmIfAsked();
     await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the reloaded fight');
@@ -233,8 +268,13 @@ try {
   }
   await cdp.send('Target.closeTarget', { targetId });
 } catch (error) {
-  failures += 1;
-  console.error(`RED SLOT-LOAD-DOOR - ${error.stack || error.message}`);
+  if (measuring) {
+    failures += 1;
+    console.error(`RED SLOT-LOAD-DOOR - ${error.stack || error.message}`);
+  } else {
+    console.error(`UNKNOWN slot-load-door - the harness died before anything was measured: ${error.stack || error.message}`);
+    process.exitCode = 2;
+  }
 } finally {
   try { cdp?.close(); } catch { /* best effort socket close */ }
   try { await closeBrowser(); } catch (error) { console.error(`BROWSER CLEANUP WARNING ${error.message}`); }
@@ -242,4 +282,4 @@ try {
 }
 
 console.log(`slot-load-door: ${checks - failures}/${checks} checks passed; ${failures} failed`);
-process.exit(failures ? 1 : 0);
+process.exit(process.exitCode === 2 ? 2 : failures ? 1 : 0);
