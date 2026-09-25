@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1299",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: every art and sound folder has a credits row",
+    "detail": "Nothing you play changes. A new check fails when any shipped asset folder lacks a row in CREDITS.md naming its source and rights, or when the README's legal section stops quoting the AI disclosure's summary sentence word for word; CREDITS.md gains the eleven rows it was missing.",
+    "build": "0.7.1.503",
+    "pullRequest": 1299,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1299"
+  },
+  {
     "id": "pr-1311",
     "date": "2026-09-25",
     "group": "2026-09-25",
