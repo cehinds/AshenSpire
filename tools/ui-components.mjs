@@ -132,8 +132,11 @@ export function catalogDisagreement(md, html) {
 export function railUnderMeters(css) {
   // Each rule is judged by its LAST grid-template-areas, the one CSS honours.
   const grids = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
-    .map((m) => ({ selector: m[1].trim(), rows: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1].match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
-    .filter((g) => g.rows);
+    .map((m) => ({ selector: m[1].trim(), decl: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1] }))
+    // A rule that sets the property is judged by its effective value; a value
+    // that yields no quoted rows (none, var(...)) is a failing grid, not a skip.
+    .filter((g) => g.decl !== undefined)
+    .map((g) => ({ ...g, rows: g.decl.match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) ?? [] }));
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
     && grids.every(({ rows }) => rows.some((row) => row.includes('meters'))
       && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
@@ -146,7 +149,9 @@ export function railUnderMeters(css) {
 export function railInFlow(css) {
   const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]*)\{([^{}]*)\}/g)]
     .map((m) => ({ selector: m[1].trim(), body: m[2] }))
-    .filter((rule) => rule.selector.split(',').some((part) => /\.hud-bottom(?:[:[][^\s>+~]*)?\s*$/.test(part)));
+        // The subject is the last compound selector; any compound carrying the
+    // .hud-bottom class counts, whatever classes, pseudos or attributes ride with it.
+    .filter((rule) => rule.selector.split(',').some((part) => /\.hud-bottom(?![\w-])/.test(part.trim().split(/\s*[\s>+~]\s*/).at(-1))));
   const base = rules.find((rule) => rule.selector === '.shared-hud .hud-bottom');
   const lastPosition = base && [...base.body.matchAll(/(?:^|[;\s])position:\s*([a-z-]+)/g)].at(-1)?.[1];
   return lastPosition === 'static'
@@ -665,6 +670,8 @@ function selftest() {
     ['drop the meters row from a map-header override', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";') })],
     ['single-quote a map-header grid that drops meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', "'info actions' 'rail actions';") })],
     ['drop the authored dungeon title from the map route strip', 'C12 ', (r) => ({ ...r, map: r.map.replace('title: mapAdapter?.title || actTitle(', 'title: actTitle(') })],
+    ['end a map-header grid on an unparseable grid-template-areas', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: none;') })],
+    ['hang the rail again from a class-qualified .hud-bottom state', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { position: absolute; }\n` })],
     ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],

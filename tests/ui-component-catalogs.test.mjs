@@ -137,6 +137,23 @@ test('dropping the authored map title fails C12', () => {
   assert.equal(c12({ ...r, map }).length, 1);
 });
 
+// Codex on #1316: an effective declaration the check cannot read as rows
+// (none, a custom property) fails; it is never skipped.
+test('an unparseable final grid-template-areas fails C12', () => {
+  const r = receipt();
+  const kit = r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: none;');
+  assert.notEqual(kit, r.kit);
+  assert.equal(railUnderMeters(kit), false);
+});
+
+// Codex on #1316: a rule whose subject is .hud-bottom with another class
+// (a state such as .expanded) that hangs the rail again fails.
+test('a class-qualified .hud-bottom rule that hangs the rail fails C12', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud .hud-bottom.expanded { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {
