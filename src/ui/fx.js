@@ -668,25 +668,38 @@ export function animateEvents(events, ctx, done) {
 // Turn boundaries become banner beats. Click skips to the end state.
 // ---------------------------------------------------------------------------
 
+// A card's price is paid BEFORE it is announced (engine/combat.js doPlayCard
+// emits energySpent/manaSpent/staminaSpent, then cardPlayed). Played as its own
+// actor-less beat, the payment cost stepMs + beatMs (≈490 ms at normal) of
+// nothing before the swing began. These receipts ride the NEXT actor's beat
+// instead, as its `paid` prelude: playTimeline shows them (orb pulse, HUD cost)
+// the moment that beat starts, and the swing starts with them.
+export const RESOURCE_PAYMENT_EVENTS = Object.freeze(new Set(['energySpent', 'manaSpent', 'staminaSpent']));
+const isPaymentOnly = (beat) => !beat.actorId && !beat.banner && !beat.kind && beat.events.length > 0
+  && beat.events.every((e) => RESOURCE_PAYMENT_EVENTS.has(e.type));
+
 export function groupBeats(events) {
   const beats = [];
   let cur = { actorId: null, banner: null, kind: null, events: [] };
   const push = () => {
     if (cur.events.length || cur.banner || cur.actorId) beats.push(cur);
   };
+  // Start an actor's beat; a pending payment-only beat becomes its prelude.
+  const actor = (actorId, kind, e) => {
+    const paid = isPaymentOnly(cur) ? cur.events : [];
+    if (!paid.length) push();
+    cur = { actorId, banner: null, kind, events: [...paid, e], ...(paid.length ? { paid } : {}) };
+  };
   for (const e of events) {
     switch (e.type) {
       case 'cardPlayed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: e.cardType === 'attack' ? 'attack' : 'act', events: [e] };
+        actor('player', e.cardType === 'attack' ? 'attack' : 'act', e);
         break;
       case 'flaskUsed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: 'act', events: [e] };
+        actor('player', 'act', e);
         break;
       case 'enemyMoveStarted':
-        push();
-        cur = { actorId: e.sourceId, banner: null, kind: e.kind === 'attack' ? 'attack' : 'act', events: [e] };
+        actor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
         break;
       case 'enemyTurnStart':
         push();
@@ -859,6 +872,19 @@ export function playTimeline(events, ctx, done) {
       return;
     }
 
+    // 0) the price, paid as the actor moves: the payment receipts merged into
+    // this beat (groupBeats `paid`) pulse the orb and reach the HUD NOW, not
+    // after the swing, and the rest of the beat applies at its end as before.
+    const paid = beat.paid || [];
+    const rest = paid.length ? beat.events.filter((e) => !paid.includes(e)) : beat.events;
+    if (paid.length) {
+      for (const e of paid) {
+        const v = visualFor(e, beat.kind);
+        if (v) safe(() => v(vctx));
+      }
+      safe(() => ctx.onBeatApplied && ctx.onBeatApplied({ ...beat, events: paid }));
+    }
+
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     //
     // A figure drawn in the animated style also changes pose for the beat. Asking
@@ -891,7 +917,7 @@ export function playTimeline(events, ctx, done) {
     heldMs = 0;
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    const visuals = rest.map((e) => visualFor(e, beat.kind)).filter(Boolean);
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
@@ -924,7 +950,7 @@ export function playTimeline(events, ctx, done) {
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
           cancelActorAnimation();
-          safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+          safe(() => ctx.onBeatApplied && ctx.onBeatApplied(paid.length ? { ...beat, events: rest } : beat));
           schedule(nextBeat, speed.beatMs);
         };
         const recovery = actorAnimation
