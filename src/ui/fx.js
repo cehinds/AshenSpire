@@ -893,6 +893,10 @@ export function playTimeline(events, ctx, done) {
       return;
     }
 
+    // The card-play sound starts WITH the play's own beat — the swing, not the
+    // dispatch it used to fire at, ~1.2 s ahead of the impact (SPEC §7.4).
+    if (beat.events.some((e) => e.type === 'cardPlayed')) safe(() => sfx.play('cardPlay'));
+
     // 0) the price, paid as the actor moves: the payment receipts merged into
     // this beat (groupBeats `paid`) pulse the orb and reach the HUD NOW, not
     // after the swing, and the rest of the beat applies at its end as before.
@@ -900,7 +904,7 @@ export function playTimeline(events, ctx, done) {
     const rest = paid.length ? beat.events.filter((e) => !paid.includes(e)) : beat.events;
     if (paid.length) {
       for (const e of paid) {
-        const v = visualFor(e, beat.kind);
+        const v = visualFor(e, beat.kind, { paced: true });
         if (v) safe(() => v(vctx));
       }
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied({ ...beat, events: paid }));
@@ -938,7 +942,7 @@ export function playTimeline(events, ctx, done) {
     heldMs = 0;
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = rest.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    const visuals = rest.map((e) => visualFor(e, beat.kind, { paced: true })).filter(Boolean);
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
@@ -986,8 +990,8 @@ export function playTimeline(events, ctx, done) {
   nextBeat();
 }
 
-function visualFor(e, beatKind) {
-  const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
+function visualFor(e, beatKind, { paced = false } = {}) {
+  const base=baseVisualFor(e,beatKind,paced),effect=combatEffectForEvent(e);
   if(!effect)return base;
   return ctx=>{
     const hold=base?.(ctx);
@@ -997,8 +1001,12 @@ function visualFor(e, beatKind) {
   };
 }
 
-function baseVisualFor(e, beatKind) {
+function baseVisualFor(e, beatKind, paced = false) {
   switch (e.type) {
+    case 'cardPlayed':
+      // Paced playback sounds the play when its beat starts (playTimeline);
+      // the fast-float path has no beats, so the play's own step sounds it.
+      return paced ? null : () => { sfx.play('cardPlay'); };
     case 'dodgeRolled':
       // The following blockGained event owns the numeric gain.
       return (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.sourceId), dodgeReceipt(e).outcome, 'small');

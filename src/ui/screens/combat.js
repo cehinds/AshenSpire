@@ -2407,7 +2407,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
-    sfx.play('cardPlay');
+    // The card-play sound is fx.js's now: it fires as the play's own beat
+    // starts, with the swing (SPEC §7.4), not here at dispatch.
     busy = true;
     afterDispatch(out.events);
   }
