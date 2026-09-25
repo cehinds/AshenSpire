@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Every stat is set the same way, in one place, and read from one table",
     "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your opening hand stays your class's own 4 to 6 cards, now set per class in the same editor; your turn draw, hand size, HP, Actions, AR, DR, PR and Ward read as before at the starting attributes; Poise is a point or two higher. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
-    "build": "0.7.1.515",
+    "build": "0.7.1.517",
     "pullRequest": 1296,
     "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1298",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: leaving the game in the background is now tested",
+    "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
+    "build": "0.7.1.515",
+    "pullRequest": 1298,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1298"
   },
   {
     "id": "pr-1277",
