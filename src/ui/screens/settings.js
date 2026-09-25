@@ -1810,6 +1810,15 @@ export function settingsRow(key) {
   return row;
 }
 
+/**
+ * settingsImportRows() → the rows the import door is handed as
+ * `additionalRows`, the same array both import buttons pass. Exported so a
+ * test imports a real exported file through exactly what the screen uses.
+ */
+export function settingsImportRows() {
+  return ROWS;
+}
+
 export function resolveLevelUpValue(settings) {
   return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
 }
@@ -2170,16 +2179,16 @@ export function compactAdvancedRow(row, groupId, subgroupId) {
 // paints the panel and the refresh that follows it compute it once.
 let lastStatsPreview = { key: null, html: '' };
 
-export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null) {
-  const key = JSON.stringify([topic, previewAttributes, previewLevel, settings]);
+export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null, previewClassId = null) {
+  const key = JSON.stringify([topic, previewAttributes, previewLevel, previewClassId, settings]);
   if (key === lastStatsPreview.key) return lastStatsPreview.html;
-  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel);
+  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId);
   lastStatsPreview = { key, html };
   return html;
 }
 
-function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel) {
-  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel);
+function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId) {
+  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel, previewClassId);
   if (!preview) return '';
   if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
   const classes = statsExampleClasses();
@@ -2232,7 +2241,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   const words = q ? q.split(/\s+/) : [];
   const hiddenByRules = new Set();
   if (settings && resolveHandRules(settings, contentBundle.attributes).drawMode !== 'fixed') {
-    for (const row of handRulesRows(contentBundle.attributes)) if (row.fixedOnly) hiddenByRules.add(row.key);
+    for (const row of handRulesRows(contentBundle.attributes, contentBundle.classes)) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
     if (hiddenByRules.has(row.key)) return false;
@@ -2277,7 +2286,7 @@ function searchResultsHtml(settings, query, changedOnly = false) {
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
-export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, query = '', changedOnly = false) {
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false) {
   if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
@@ -2330,7 +2339,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
-          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel)}</div>` : '')
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel, previewClassId)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
             : sub.rows.map((row, rowIndex) => {
               // A Stats topic reads as short subsections (Formula, Level
@@ -2375,7 +2384,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
  * its place in the ring all follow from that one list.
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   panelSettings = settings;
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
@@ -2441,7 +2450,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, searchQuery(), changedOnly())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly())}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
@@ -2510,11 +2519,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // the pane it lives in is rebuilt, or stay put when it cannot be applied.
     if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
-    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel }); return; }
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, searchQuery(), changedOnly());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
     panel.dataset.searching = String(filtering());
     const groupReset = headerTools.querySelector('[data-reset-config="group"]');
@@ -2623,13 +2632,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -2656,7 +2665,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
     container.querySelectorAll('[data-stats-preview]').forEach((node) => {
       const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
-      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel) : '';
+      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel, previewClassId) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
       drawnPreviews.set(node, html);
@@ -2693,7 +2702,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // The whole pane, not just Stats: a search result lists these rows too.
     const section = container;
     if (section) {
-      for (const row of handRulesRows(contentBundle.attributes)) {
+      for (const row of handRulesRows(contentBundle.attributes, contentBundle.classes)) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
@@ -2856,7 +2865,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       resetKeys(settings, onChange, keys, label);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     };
   });
 
@@ -2920,7 +2929,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -2977,7 +2986,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -3160,7 +3169,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -3622,7 +3631,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -3639,7 +3648,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); },
     secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
@@ -3658,7 +3667,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

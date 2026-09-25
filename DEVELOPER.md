@@ -715,8 +715,9 @@ Starting Equip, and Seed sections together as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
-verifies the catalog at desktop and 390×844 mobile sizes alongside the player
-flow.
+drives the player flow's stats step at desktop and 390×844 mobile sizes:
+Standard and Assign points for every class, with the Hand and Draw chips
+checked against the hand a solo fight deals. It does not visit the catalog.
 
 ## Standalone build (`build/AshenSpire.html`)
 

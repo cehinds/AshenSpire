@@ -54,7 +54,7 @@ test('categoryHtml puts the strip above the rows of Display and Accessibility on
     assert.doesNotMatch(categoryHtml('General', { settingsGeneralCategory: group }, null), new RegExp(STRIP), `General › ${group}`);
   }
   assert.doesNotMatch(categoryHtml('Advanced', {}, null), new RegExp(STRIP), 'Advanced');
-  assert.doesNotMatch(categoryHtml('General', { settingsGeneralCategory: 'Display' }, null, null, null, 'text size'), new RegExp(STRIP), 'search results');
+  assert.doesNotMatch(categoryHtml('General', { settingsGeneralCategory: 'Display' }, null, null, null, null, 'text size'), new RegExp(STRIP), 'search results');
 });
 
 test('no single row carries the strip', () => {

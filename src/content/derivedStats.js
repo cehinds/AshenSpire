@@ -89,7 +89,7 @@ export const derivedStatRules = {
     // when it drifted, and it reached him. A spread worth watching gets a
     // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
-    draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
+    draw: { label: 'Draw / turn (co-op)', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
     poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
   },
 };
