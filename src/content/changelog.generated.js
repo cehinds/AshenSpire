@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1300",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the release checklist is written down",
+    "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
+    "build": "0.7.1.501",
+    "pullRequest": 1300,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1300"
+  },
+  {
     "id": "pr-1301",
     "date": "2026-09-25",
     "group": "2026-09-25",
