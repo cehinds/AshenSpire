@@ -251,7 +251,7 @@ test('a volume slider takes every whole percent, and a compact slider widens for
 test('a profile that already matches is recorded as loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{\s*write\(SYNC_STORAGE\.lastSha, remote\.sha/);
+  assert.match(panel, /if \(!diff\.length\) \{\s*if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
 });
 
 test('the dev-preview standalone files are named so they open as dev builds', async () => {
@@ -528,5 +528,28 @@ test('a Reset goes back to the promotion this build applies, never hidden tuning
   const { resetKeys } = await import('../src/ui/screens/settings.js');
   const settings = { shrineMultiUse: true, screenShake: true };
   resetKeys(settings, () => ({ ok: true }), ['shrineMultiUse', 'screenShake'], 'all', { promoted: { screenShake: false } });
-  assert.deepEqual(settings, { screenShake: false }, 'a key the promotion leaves out is cleared');
+  const { settingsDefaultsSeed: _seed, ...values } = settings;
+  assert.deepEqual(values, { screenShake: false }, 'a key the promotion leaves out is cleared');
+});
+
+test('moving off a promoted value makes it the player\'s; a Reset hands it back', async () => {
+  const { seedAfterChange, seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40, screenShake: false } };
+  const away = seedAfterChange(settings, { musicVolume: 55 });
+  assert.deepEqual(away, { screenShake: false }, 'moved off: no longer the promotion\'s');
+  Object.assign(settings, { musicVolume: 55, [SEED_KEY]: away });
+  assert.equal(seedAfterChange(settings, { musicVolume: 40 }), undefined, 'coming back changes nothing in the record');
+  settings.musicVolume = 40;
+  assert.equal(Object.hasOwn(seedSettingsDefaults(settings, { digest: 'b', values: { musicVolume: 50, screenShake: false } }), 'musicVolume'), false,
+    'a later promotion leaves the player\'s 40 alone');
+  assert.equal(seedAfterChange(settings, { musicVolume: 50, [SEED_KEY]: {} }), undefined, 'a change that carries the record is not pruned');
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const seen = [];
+  resetKeys(settings, (c) => seen.push(c), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.equal(seen[0][SEED_KEY].musicVolume, 40, 'Reset marks the key as the promotion\'s again');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{\s*status\('This device already matches/);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /const seed = seedAfterChange\(activeSettings, changed\);/);
 });

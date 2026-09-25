@@ -39,6 +39,7 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { SEED_KEY } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
@@ -1260,6 +1261,17 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     else { delete settings[key]; changed[key] = undefined; }
   }
   const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
+  // A key reset to its promoted value is the promotion's again: say so in the
+  // seed record, so a later promotion may move it along.
+  const back = keys.filter((key) => Object.hasOwn(promoted, key));
+  if (back.length) {
+    const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+    const next = { ...record };
+    for (const key of back) next[key] = promoted[key];
+    for (const key of keys) if (!Object.hasOwn(promoted, key)) delete next[key];
+    settings[SEED_KEY] = next;
+    changed[SEED_KEY] = next;
+  }
   onChange(changed);
   offerUndo(label, Object.fromEntries(moved.map((key) => [key, snapshot[key]])));
   return snapshot;

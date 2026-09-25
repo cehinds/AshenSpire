@@ -86,7 +86,7 @@ import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults } from './model/settingsDefaults.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug } from './ui/buildChannel.js';
 import { openSettings, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
@@ -1440,7 +1440,10 @@ function persistSettingsChange(changed) {
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
+  // A value the player moves off a promoted one is theirs from now on.
+  const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
+  if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
   const res = saves.saveMeta(activeMeta);
   applyDisplaySettings(activeSettings);

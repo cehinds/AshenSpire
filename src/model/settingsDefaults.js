@@ -37,3 +37,22 @@ export function seedSettingsDefaults(settings = {}, defaults = { digest: 'none',
   if (recordChanged) changes[SEED_KEY] = Object.keys(nextRecord).length ? nextRecord : undefined;
   return changes;
 }
+
+/**
+ * seedAfterChange(settings, changed) → the next seed record, or undefined when
+ * it does not change. A key the player moves off the value a promotion gave
+ * stops being the promotion's: coming back to that value later is then their
+ * own choice, and a later promotion leaves it alone. (A Reset re-marks its keys
+ * by sending the record itself — `changed[SEED_KEY]` wins over this pruning.)
+ */
+export function seedAfterChange(settings = {}, changed = {}) {
+  if (Object.hasOwn(changed, SEED_KEY)) return undefined;
+  const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : null;
+  if (!record) return undefined;
+  const next = { ...record };
+  let moved = false;
+  for (const [key, value] of Object.entries(changed)) {
+    if (Object.hasOwn(next, key) && next[key] !== value) { delete next[key]; moved = true; }
+  }
+  return moved ? next : undefined;
+}
