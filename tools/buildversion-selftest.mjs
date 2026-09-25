@@ -264,6 +264,15 @@ const PLANTS = [
       (t) => t.replace('</head>', '  <link rel="stylesheet" href="vendor/theme.css" />\n</head>')),
   },
   {
+    // A protocol-relative stylesheet href is a PATH to the bundler, not a URL:
+    // resolve(ROOT, '//etc/x.css') reads /etc/x.css. Skipping it as "remote"
+    // would let a read outside the roots through the containment row.
+    name: 'a protocol-relative stylesheet href that the bundler reads as an absolute path',
+    row: 'D CONTAINMENT',
+    plant: (root) => edit(root, 'index.html',
+      (t) => t.replace('</head>', '  <link rel="stylesheet" href="//etc/theme.css" />\n</head>')),
+  },
+  {
     name: 'a source edit that never reached the bundle — the shipped stamp goes stale',
     row: 'E SHIPPED STAMP',
     plant: (root) => appendFileSync(resolve(root, 'src/content/balance.js'), '\n// a real edit nobody rebuilt\n'),
