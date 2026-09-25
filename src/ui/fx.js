@@ -333,6 +333,13 @@ export function placeAnchored(el, anchor, {
 }
 
 /**
+ * Where a float is born on its anchor, as a fraction of the sprite's height.
+ * Mid-body (55%), clear of the intent badge that sits over an enemy's head —
+ * at 25% the number landed on the badge and read as part of the intent.
+ */
+export const FLOAT_ANCHOR_Y = 0.55;
+
+/**
  * Spawn a floating number over an anchor element.
  *
  * EXPORTED so an instrument can drive the SHIPPED function with the exact
@@ -369,7 +376,7 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   // `transform`, and a `transform: translateX(-50%)` here would be overwritten
   // by the first keyframe. The two compose.
   const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
-  const top = b.top + b.height * 0.25 + y;
+  const top = b.top + b.height * FLOAT_ANCHOR_Y + y;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
   layer.appendChild(el);
