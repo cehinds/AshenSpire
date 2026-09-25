@@ -11,7 +11,7 @@ import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { SEED_KEY } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
-  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff,
+  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff, promotedValue,
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
@@ -83,13 +83,14 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
     for (const key of toPromotion) next[key] = promoted[key];
     if (listed) {
-      for (const [key, value] of Object.entries(parsed.changes || {})) {
-        // Owned by a promotion on the saving device, even an older one: record
-        // the value as the promotion's, so boot's seeding moves it on to the
-        // current promoted value — or back to the code default when the
-        // current promotion dropped the key — exactly as it would have there.
-        if (listed.has(key)) next[key] = value;
-        else delete next[key];
+      for (const key of Object.keys(parsed.changes || {})) {
+        // Owned by a promotion on the saving device, even an older one: it is
+        // this build's promotion's now, at this build's value (profileDiff
+        // applied it) — or the code default, owned by no one, when this build
+        // no longer promotes the key. What seeding would do, but now: seeding
+        // ran before this load and does not run again this session.
+        const to = listed.has(key) ? promotedValue(key, promoted) : undefined;
+        if (to === undefined) delete next[key]; else next[key] = to;
       }
     }
     // Only when it changes: a load that moves nothing and owns nothing new

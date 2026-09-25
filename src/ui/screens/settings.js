@@ -3206,7 +3206,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         }
         if (!container.isConnected) return;
         // A sync profile loaded by hand keeps the ownership it records.
-        const saved = { ...changes, ...importOwnership(text, changes, settings) };
+        const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
         const result = onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
@@ -3709,7 +3709,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const text = await file.text();
       const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
       // A sync profile loaded by hand keeps the ownership it records.
-      const saved = { ...changes, ...importOwnership(text, changes, settings) };
+      const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
       if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from

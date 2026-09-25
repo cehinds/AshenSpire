@@ -163,18 +163,25 @@ export function profileText(settings, keys, build = {}) {
  * from before it) changes nothing here: the save path's pruning applies.
  * An import only merges, so keys the file leaves out keep their ownership.
  */
-export function importOwnership(text, changes, settings) {
+export function importOwnership(text, changes, settings, promoted = {}) {
   let listed = null;
   try { listed = JSON.parse(text)?.promotionOwned; } catch { return {}; }
   if (!Array.isArray(listed)) return {};
   const owned = new Set(listed.filter((key) => typeof key === 'string'));
   const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
   const next = { ...record };
-  for (const [key, value] of Object.entries(changes || {})) {
-    if (owned.has(key)) next[key] = value; else delete next[key];
+  const values = {};
+  for (const key of Object.keys(changes || {})) {
+    if (!owned.has(key)) { delete next[key]; continue; }
+    // The promotion's value is THIS build's: one saved under an older
+    // promotion lands at the current one, or at the code default if this build
+    // no longer promotes the key — what seeding would do at the next start.
+    const to = promotedValue(key, promoted);
+    if (changes[key] !== to) values[key] = to;
+    if (to === undefined) delete next[key]; else next[key] = to;
   }
   const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(record).sort());
-  return same ? {} : { [SEED_KEY]: next };
+  return same ? values : { ...values, [SEED_KEY]: next };
 }
 
 /**
@@ -204,14 +211,29 @@ export function profileChanges(text, bundle, settings, rows, keys) {
 }
 
 /**
- * profileDiff(settings, { changes, cleared }, promoted) → [{ key, from, to }]
+ * promotedValue(key, promoted) → what a promotion-owned key holds in this
+ * build: its current promoted value, or undefined (the code default) when this
+ * build no longer promotes it. A profile saved under an older promotion is
+ * applied at the current one straight away, not only at the next start's
+ * seeding (seedSettingsDefaults), which has already run by then.
+ */
+export function promotedValue(key, promoted = {}) {
+  return Object.hasOwn(promoted, key) ? promoted[key] : undefined;
+}
+
+/**
+ * profileDiff(settings, { changes, cleared, promotionOwned }, promoted) → [{ key, from, to }]
  * that would actually move. A key the profile leaves out goes back to the
  * owner's promoted default when there is one (what Reset and boot use), and is
- * cleared otherwise.
+ * cleared otherwise. A key the profile lists in `promotionOwned` takes this
+ * build's promoted value, not the one it was saved with.
  */
-export function profileDiff(settings, { changes, cleared }, promoted = {}) {
+export function profileDiff(settings, { changes, cleared, promotionOwned }, promoted = {}) {
   const out = [];
-  for (const [key, to] of Object.entries(changes)) {
+  const listed = new Set(Array.isArray(promotionOwned) ? promotionOwned : []);
+  for (const [key, value] of Object.entries(changes)) {
+    // A promotion-owned value lands at this build's promotion (see promotedValue).
+    const to = listed.has(key) ? promotedValue(key, promoted) : value;
     if (settings?.[key] !== to) out.push({ key, from: settings?.[key], to });
   }
   for (const key of cleared) {

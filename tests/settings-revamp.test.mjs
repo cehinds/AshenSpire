@@ -730,11 +730,17 @@ test('ownership survives a promotion that moved on, and an ownership-only load c
   const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
   const { applyProfile } = await import('../src/ui/components/settingsSync.js');
   // Saved when the promotion was 40; this build promotes 50.
+  // It takes this build's promotion on load, not at the next start: boot's
+  // seeding has already run by the time a profile loads.
+  const { profileDiff } = await import('../src/model/settingsSync.js');
+  const parsed = { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] };
   const device = { musicVolume: 55, [SEED_KEY]: {} };
-  applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, { musicVolume: 50 });
-  assert.deepEqual(device[SEED_KEY], { musicVolume: 40 }, 'the old promoted value is recorded as the promotion\'s');
-  const next = seedSettingsDefaults(device, { digest: 'b', values: { musicVolume: 50 } });
-  assert.equal(next.musicVolume, 50, 'so the next seeding moves it on');
+  assert.deepEqual(profileDiff(device, parsed, { musicVolume: 50 }), [{ key: 'musicVolume', from: 55, to: 50 }], 'the preview shows the current promotion');
+  const moved = applyProfile(device, () => ({ ok: true }), parsed, { musicVolume: 50 });
+  assert.equal(moved, 1);
+  assert.equal(device.musicVolume, 50, 'the current promoted value is live straight away');
+  assert.deepEqual(device[SEED_KEY], { musicVolume: 50 }, 'and is the promotion\'s');
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'b', values: { musicVolume: 50 } }), {}, 'nothing left for the next start to fix');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
@@ -760,11 +766,12 @@ test('ownership covers gameConfig.* overrides and keys the current promotion dro
   const text = profileText({ [key]: 1.5, [SEED_KEY]: { [key]: 1.5 } }, keys);
   assert.deepEqual(JSON.parse(text).promotionOwned, [key], 'an advanced override can be promotion-owned');
   // Promoted 40 on the saving device; this build's promotion dropped the key.
-  const device = { musicVolume: 55 };
+  // It lands at the code default now, owned by no one — what seeding would do.
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
   applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, {});
-  assert.deepEqual(device[SEED_KEY], { musicVolume: 40 });
-  const next = seedSettingsDefaults(device, { digest: 'c', values: {} });
-  assert.ok(Object.hasOwn(next, 'musicVolume') && next.musicVolume === undefined, 'seeding clears it back to the code default');
+  assert.equal(device.musicVolume, undefined, 'back to the code default on load');
+  assert.deepEqual(device[SEED_KEY], {});
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'c', values: {} }), {}, 'nothing left for the next start to fix');
 });
 
 test('a promoted advanced gameConfig value stays the promotion\'s on a loading device', async () => {
@@ -817,17 +824,30 @@ test('a sync profile loaded by hand with Load settings keeps the ownership it re
   // Device B: the same musicVolume, but still the promotion's there; sfxVolume the player's.
   const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40 } };
   const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
-  const saved = { ...changes, ...importOwnership(text, changes, deviceB) };
+  // This build promotes sfxVolume 30 (and musicVolume 40).
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { musicVolume: 40, sfxVolume: 30 }) };
   Object.assign(deviceB, saved); // what the import door saves
   assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'ownership follows the file, as on A');
   const next = seedSettingsDefaults(deviceB, { digest: 'd', values: { musicVolume: 50, sfxVolume: 35 } });
   assert.equal(next.musicVolume, undefined, 'a later promotion leaves the player\'s value alone');
   assert.equal(next.sfxVolume, 35, 'and moves the promotion\'s on');
+  // Saved under an older promotion: a hand load takes this build's value now,
+  // or the code default when this build no longer promotes the key.
+  const old = JSON.stringify({ ...JSON.parse(text), overrides: { ...JSON.parse(text).overrides, 'settings.sfxVolume': 20 } });
+  const deviceC = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const oldChanges = parseAdvancedConfigFile(old, contentBundle, deviceC, rows, []);
+  Object.assign(deviceC, { ...oldChanges, ...importOwnership(old, oldChanges, deviceC, { sfxVolume: 35 }) });
+  assert.equal(deviceC.sfxVolume, 35, 'the current promotion, not the file\'s older one');
+  assert.equal(deviceC[SEED_KEY].sfxVolume, 35);
+  const deviceD = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  Object.assign(deviceD, { ...oldChanges, ...importOwnership(old, oldChanges, deviceD, {}) });
+  assert.equal(deviceD.sfxVolume, undefined, 'a dropped promotion lands at the code default');
+  assert.equal(Object.hasOwn(deviceD[SEED_KEY], 'sfxVolume'), false);
   // An ordinary export carries no ownership: the import leaves it to the save path.
   const plain = advancedConfigExport({ musicVolume: 40 }, {}, keys);
   assert.deepEqual(importOwnership(plain, { musicVolume: 40 }, deviceB), {});
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings\) \};/g) || []).length, 2, 'both Load settings doors apply it');
+  assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings, buildPromotion\(\)\) \};/g) || []).length, 2, 'both Load settings doors apply it');
   assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'and still start a new Undo generation');
 });
