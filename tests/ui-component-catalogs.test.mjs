@@ -264,6 +264,25 @@ test('a rail override that moves grid-area off rail fails C12', () => {
   assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { grid-area: rail; }\n` }).length, 0);
 });
 
+// Codex on #1316: CSS drops a grid-template-areas whose rows differ in width
+// or whose named areas are not rectangles, so such a grid is broken, not read.
+test('an invalid grid-template-areas fails C12', () => {
+  const r = receipt();
+  for (const bad of ['"info info" "meters actions" "rail actions" "route";', '"info actions" "meters actions" "rail info";']) {
+    const kit = r.kit.replace('"info actions" "meters actions" "rail actions";', bad);
+    assert.notEqual(kit, r.kit);
+    assert.equal(railUnderMeters(kit), false, bad);
+  }
+});
+
+// Codex on #1316: a shared-HUD top rule that switches off grid display takes
+// the areas with it.
+test('a shared-HUD top rule with a non-grid display fails C12', () => {
+  const r = receipt();
+  assert.equal(railUnderMeters(`${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n`), false);
+  assert.equal(railUnderMeters(`${r.kit}\n.shared-hud[data-x] > .hud-top { display: grid; }\n`), true);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.

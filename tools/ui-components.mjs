@@ -262,14 +262,31 @@ const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop)).
 // grid-template / grid shorthands (which reset areas); a value with no quoted
 // rows (none, var(), a shorthand without areas) is a failing grid, not a skip.
 export function railUnderMeters(css) {
-  const grids = cssRules(css)
-    .filter((rule) => splitTop(rule.selector, /,/).some((part) => part.includes('.shared-hud') && hasClass(subjectOf(part), 'hud-top')))
+  const tops = cssRules(css)
+    .filter((rule) => splitTop(rule.selector, /,/).some((part) => part.includes('.shared-hud') && hasClass(subjectOf(part), 'hud-top')));
+  const grids = tops
     .map((rule) => ({ selector: rule.selector, decl: lastValue(rule.decls, ['grid-template-areas', 'grid-template', 'grid']) }))
     .filter((g) => g.decl !== undefined)
     .map((g) => ({ ...g, rows: g.decl.match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) ?? [] }));
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
-    && grids.every(({ rows }) => rows.some((row) => row.includes('meters'))
+    // A top rule that switches display off grid takes the areas with it.
+    && tops.every((rule) => /^(?:inline-)?grid$/.test(lastValue(rule.decls, ['display']) ?? 'grid'))
+    && grids.every(({ rows }) => validAreas(rows) && rows.some((row) => row.includes('meters'))
       && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
+}
+
+// CSS drops a grid-template-areas whose rows differ in width or whose named
+// areas are not filled rectangles; such a template places nothing.
+function validAreas(rows) {
+  if (!rows.length || rows.some((row) => row.length !== rows[0].length)) return false;
+  const boxes = new Map();
+  rows.forEach((row, y) => row.forEach((name, x) => {
+    if (/^\.+$/.test(name)) return;
+    const b = boxes.get(name) || { x0: x, x1: x, y0: y, y1: y, n: 0 };
+    boxes.set(name, { x0: Math.min(b.x0, x), x1: Math.max(b.x1, x), y0: Math.min(b.y0, y), y1: Math.max(b.y1, y), n: b.n + 1 });
+  }));
+  return [...boxes].every(([name, b]) => b.n === (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1)
+    && rows.slice(b.y0, b.y1 + 1).every((row) => row.slice(b.x0, b.x1 + 1).every((cell) => cell === name)));
 }
 
 // The relic rail is in flow: the base `.shared-hud .hud-bottom` rule's
@@ -828,6 +845,8 @@ function selftest() {
     ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
     ['hang the rail from declarations straight in a nested @scope', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @scope { position: absolute; }') })],
     ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
+    ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
+    ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
