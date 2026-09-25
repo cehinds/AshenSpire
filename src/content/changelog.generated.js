@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1322",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Synced settings keep which values you chose, and a mistyped sync location is refused",
+    "detail": "A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).",
+    "build": "0.7.1.528",
+    "pullRequest": 1322,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1322"
+  },
+  {
+    "id": "pr-1325",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the 1.0 checklist catches up",
+    "detail": "Docs only. docs/FINISH.md ticks what the last merges finished: loading a newer save mid-climb, a real-menu reload that restarts the fight, the map keeping your picked destination on a resize, background and resume, the credits check, the UI component checks, pull-request receipts and the version note. It also lists what those merges left open, such as other ways a failed load can still drop the climb in hand.",
+    "build": "0.7.1.526",
+    "pullRequest": 1325,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1325"
+  },
+  {
     "id": "pr-1316",
     "date": "2026-09-25",
     "group": "2026-09-25",
