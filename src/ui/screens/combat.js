@@ -38,7 +38,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN, getAnimSpeed } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
@@ -61,7 +61,7 @@ import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
-import { resourceBars } from '../components/resbars.js';
+import { resourceBars, resetGhostBars } from '../components/resbars.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -114,6 +114,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Ghost-bar trails belong to the fight that drew them (resbars.js): a loss
+  // between fights must not draw on this fight's first render.
+  resetGhostBars();
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
@@ -154,6 +157,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
+        <div class="skip-hint" aria-hidden="true" hidden>${esc(t('combat.skipHint'))}</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
@@ -972,7 +976,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (host) {
       host.innerHTML = '';
       const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player'), ghost: 'hud:player' }));
       host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
     // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
@@ -1198,7 +1202,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, ghost: `model:${entity.id}` });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -1571,6 +1575,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
     combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
     $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+    // A paced enemy turn is skippable by any click (fx.js playTimeline); say so,
+    // quietly. Instant speed and Reduced motion have nothing to skip.
+    $('.skip-hint').hidden = !(enemyPlayback && busy && getAnimSpeed() !== 'instant' && !reducedMotionRequested());
     $('.hand').inert = busy || enemyPlayback || !!combat.result;
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
@@ -2403,7 +2410,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
-    sfx.play('cardPlay');
+    // The card-play sound is fx.js's now: it fires as the play's own beat
+    // starts, with the swing (SPEC §7.4), not here at dispatch.
     busy = true;
     afterDispatch(out.events);
   }
@@ -2643,6 +2651,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         handStrip.teardown();
+        resetGhostBars();
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();

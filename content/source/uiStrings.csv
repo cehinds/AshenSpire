@@ -472,6 +472,7 @@ creation.catalog.portrait,,Live portrait (W1c head),The head portrait as the cat
 combat.art.charge,,Weapon Art charge,How close each weapon's Art is to its unleashed form.,
 combat.art.unleash,,Unleash,The next Weapon Art from this weapon fires unleashed.,
 combat.art.unleashed,,Unleashed,This Weapon Art fires its unleashed form.,
+combat.skipHint,,Click to skip,Click or tap anywhere to skip to the end of the enemy turn.,
 rest.levelUp.preview,,What the pending points change,The stats the pending attribute points would change.,
 settings.killCam,,Kill cam,"A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.",
 coop.intentRefused,,The host refused that choice: {reason},The host did not take the choice you sent; your door stays open to choose again.,

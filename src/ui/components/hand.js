@@ -67,6 +67,12 @@ const ZOOM_SUPPORTED = typeof CSS !== 'undefined' && typeof CSS.supports === 'fu
 // out of this file rather than typing it, so a rename cannot leave a check
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
+// SPEC §7.4.1 hover lift. A card's inline transform is ONE composed expression:
+// its fan pose (--card-fan-transform, written per card below) followed by the
+// lift a hover or a selection asks for (--lift, --lift-scale, set by the
+// stylesheet). A state rule therefore sets variables, never `transform`, and
+// a hovered or selected card keeps its fan angle instead of snapping upright.
+export const CARD_FAN_TRANSFORM = 'var(--card-fan-transform) translateY(var(--lift, 0px)) scale(var(--lift-scale, 1))';
 
 export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
@@ -120,7 +126,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         }
         el.style.setProperty('--card-fan-transform', 'rotate(' + slot.angle + 'deg)');
         el.style.marginLeft = '0px';
-        el.style.transform = 'rotate(' + slot.angle + 'deg)';
+        el.style.transform = CARD_FAN_TRANSFORM;
       });
       return;
     }
@@ -272,8 +278,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // against the same 12 and the phone's scroller starts clipping the card it
       // is meant to feature. A number that is only right for today's hand size.
       const mid = (n - 1) / 2;
-      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
-      el.style.setProperty('--card-fan-transform', el.style.transform);
+      el.style.setProperty('--card-fan-transform', `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`);
+      el.style.transform = CARD_FAN_TRANSFORM;
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
         el.classList.add('card-drawn');

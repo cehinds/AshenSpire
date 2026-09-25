@@ -1,5 +1,5 @@
 {
-  "frames": ["STANCE-READY", "ATK-01", "ATK-02", "ATK-03", "ATK-04", "ATK-05", "ATK-06", "ATK-07", "STANCE-READY"],
-  "frameMs": 100,
-  "impactIndex": 5
+  "frames": ["ATK-01", "ATK-02", "ATK-03", "ATK-04", "ATK-05", "ATK-05", "ATK-06", "ATK-07", "STANCE-READY"],
+  "frameMs": 60,
+  "impactIndex": 4
 }

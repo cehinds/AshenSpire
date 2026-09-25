@@ -28,7 +28,7 @@
 // source content/config/ui/presentation/combatJuiceModel.json c900049ceb988347
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 5f145ed3602bc65f
+// source content/config/ui/presentation/equipmentAnimations.json 0b9cf2fcb37396d9
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -33824,18 +33824,18 @@ export const uiConfig = deepFreeze({
               },
               "greatswordAttack": {
                 "frames": [
-                  "STANCE-READY",
                   "ATK-07",
                   "ATK-04",
                   "ATK-02",
                   "ATK-03",
                   "ATK-05",
+                  "ATK-05",
                   "ATK-01",
                   "ATK-04",
                   "STANCE-READY"
                 ],
-                "frameMs": 100,
-                "impactIndex": 5
+                "frameMs": 60,
+                "impactIndex": 4
               },
               "enterStance": {
                 "frames": [
@@ -33959,20 +33959,18 @@ export const uiConfig = deepFreeze({
               },
               "swordShieldAttack": {
                 "frames": [
-                  "STANCE-READY",
-                  "DEFEND",
                   "ATK-07",
-                  "BUFF-NO-AURA",
                   "ATK-02",
                   "ATK-03",
                   "ATK-04",
                   "ATK-05",
                   "ATK-05",
+                  "ATK-05",
                   "STANCE-DEFENSIVE",
                   "STANCE-READY"
                 ],
-                "frameMs": 100,
-                "impactIndex": 7
+                "frameMs": 60,
+                "impactIndex": 4
               },
               "enterStance": {
                 "frames": [
@@ -34072,18 +34070,19 @@ export const uiConfig = deepFreeze({
               },
               "physicalAttack": {
                 "frames": [
-                  "STANCE-READY",
                   "ATK-01",
                   "ATK-02",
                   "ATK-03",
                   "ATK-04",
                   "ATK-05",
+                  "ATK-05",
                   "ATK-06",
+                  "ATK-07",
                   "ATK-07",
                   "STANCE-READY"
                 ],
-                "frameMs": 140,
-                "impactIndex": 5
+                "frameMs": 60,
+                "impactIndex": 4
               },
               "physicalDefend": {
                 "frames": [
@@ -34157,18 +34156,18 @@ export const uiConfig = deepFreeze({
               },
               "magicChannel": {
                 "frames": [
-                  "MAGIC-STANCE-READY",
                   "MAGIC-ATK-01",
                   "MAGIC-ATK-02",
                   "MAGIC-ATK-03",
                   "MAGIC-ATK-04",
                   "MAGIC-ATK-05",
+                  "MAGIC-ATK-05",
                   "MAGIC-ATK-06",
                   "MAGIC-ATK-07",
                   "MAGIC-STANCE-READY"
                 ],
-                "frameMs": 160,
-                "impactIndex": 5
+                "frameMs": 60,
+                "impactIndex": 4
               },
               "magicStanceReady": {
                 "frames": [
@@ -34386,18 +34385,18 @@ export const uiConfig = deepFreeze({
               },
               "twinSwordAttack": {
                 "frames": [
-                  "STANCE-READY",
                   "ATK-01",
                   "ATK-02",
                   "ATK-03",
+                  "ATK-04",
                   "ATK-04",
                   "ATK-05",
                   "ATK-06",
                   "ATK-07",
                   "STANCE-READY"
                 ],
-                "frameMs": 120,
-                "impactIndex": 4
+                "frameMs": 65,
+                "impactIndex": 3
               },
               "enterStance": {
                 "frames": [
@@ -34535,18 +34534,18 @@ export const uiConfig = deepFreeze({
               },
               "daggerAttack": {
                 "frames": [
-                  "STANCE-READY",
                   "ATK-01",
                   "ATK-02",
                   "ATK-03",
                   "ATK-04",
                   "ATK-05",
+                  "ATK-05",
                   "ATK-06",
                   "ATK-07",
                   "STANCE-READY"
                 ],
-                "frameMs": 100,
-                "impactIndex": 5
+                "frameMs": 60,
+                "impactIndex": 4
               },
               "conversation": {
                 "frames": [

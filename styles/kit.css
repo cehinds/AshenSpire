@@ -4682,11 +4682,19 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   width: var(--hand-card-width); min-width: var(--hand-card-width); max-width: var(--hand-card-width);
   height: var(--hand-card-height); min-height: var(--hand-card-height); max-height: var(--hand-card-height);
   aspect-ratio: var(--card-ratio); transform-origin: center center;
-  transform: rotate(var(--hand-card-angle)) !important;
+  /* SPEC §7.4.1: fan angle then lift, one expression (hand.js
+     CARD_FAN_TRANSFORM writes the same inline). States set --lift only, so a
+     lifted card keeps its angle. */
+  transform: var(--card-fan-transform, rotate(var(--hand-card-angle))) translateY(var(--lift, 0px)) scale(var(--lift-scale, 1));
   z-index: auto !important;
 }
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
-  transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
+/* The state lifts without scaling: the hit lane below undoes lift and angle
+   only, so a scaled card would grow its lane over its neighbours and hover
+   would stick (SPEC §7.4.1). --lift-scale is pinned here because combat.css's
+   generic and co-op hover rules (1.32 / 1.1 / 1.04) would otherwise reach
+   this hand in co-op. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(:hover,.selected,.inspection-selected) {
+  --lift: calc(-1 * var(--hand-selection-lift)); --lift-scale: 1;
   z-index: 50 !important;
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art {
@@ -4959,10 +4967,9 @@ button[data-button-size] {
   pointer-events: auto; position: absolute; left: 0; top: 0;
   width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
-  transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
-}
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
-  transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
+  /* The lane undoes the card's lift and angle, so the hit area stays put
+     while its card rises (no hover flicker at the lane's edge). */
+  transform: translateY(calc(-1 * var(--lift, 0px))) rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
 }
 
 /* ═══ W1 WORKSPACE — W1f Compendium, W1g Profile ═══════════════════════════ */

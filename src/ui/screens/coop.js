@@ -69,7 +69,7 @@ import { chestOptionView } from '../components/chestOption.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { resourceBars } from '../components/resbars.js';
+import { resourceBars, resetGhostBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -483,7 +483,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
+    // Out of a fight, its ghost-bar trails go with it, so the next fight's
+    // first render starts clean (resbars.js; the solo screen does the same).
+    else { resetGhostBars(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -533,7 +535,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model' });
+    const bars = resourceBars(plan, { surface: 'model', ghost: `coop-model:${isEnemy ? 'e' : 'p'}:${ent.id}` });
     wrap.classList.add('as-meters', 'tight');
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (isEnemy) {
@@ -711,7 +713,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const mainHost = app.querySelector('.topbar .resbars-host');
     if (mainHost && meP) {
       const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
-      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
+      mainHost.appendChild(resourceBars(mainPlan, { surface: 'main', ghost: `coop-hud:${meP.id}` }));
     }
 
     // Player seats (all party members in the fight).
