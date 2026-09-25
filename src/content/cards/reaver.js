@@ -58,7 +58,7 @@ export const reaverCards = [
     flavor: "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
-    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 2 Stamina, 1 Energy. Heavy: 3 Stamina, 2 Energy.',
+    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 1 Stamina, 1 Energy. Heavy: 2 Stamina, 1 Energy.',
     // No `upgrade`: the pure dodge has nothing of its own to improve — its
     // check is Dexterity and the Weight Class, its guard is the framework
     // rule's, its price is the class's. An upgrade that changed none of them

@@ -406,6 +406,11 @@ title.slots.saved,,Saved {when},When this slot was last written.,
 title.slots.seed,,Seed {seed},,
 title.slots.start.occupied,,Start in slot {slot}?,,
 title.slots.start.occupied.prompt,,This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.,,
+# A run saved by a NEWER build is refused and kept (SPEC §3.12): the slot says so, and Continue explains instead of silently returning to the title.
+title.slots.newer,,Saved by a newer build. Update to continue.,This slot holds a climb saved by a newer build of Ashen Spire. It is kept exactly as it is; update the game to continue it.,
+save.newer.title,,This climb is from a newer version,,
+save.newer.message,,Slot {slot} was saved by a newer build of Ashen Spire. It has been left exactly as it is; nothing was changed or deleted. Update Ashen Spire to continue it.,,
+save.newer.close,,Keep it and close,,
 # W2b / W2c / W2d: the save reviews name the save and say exactly what happens to it.
 save.review.delete,,Delete slot {slot}?,,
 save.review.delete.message,,The saved climb in slot {slot} is removed. It is not kept anywhere and cannot be recovered. Your profile stays as it is.,,
