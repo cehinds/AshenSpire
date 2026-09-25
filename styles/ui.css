@@ -1202,7 +1202,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-unit { color: var(--muted); margin-left: -.25rem; }
 .set-mod-dot { display: none; width: .5rem; height: .5rem; margin-right: .45rem; border-radius: 50%; background: var(--accent, #c9a45c); vertical-align: middle; }
 .set-row[data-modified='true'] .set-mod-dot { display: inline-block; }
-.set-row-reset { align-self: flex-start; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; }
+/* The label and its Reset share one line, so showing or hiding the Reset
+   never changes the row's height. The label keeps its own ellipsis. */
+.set-label-line { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.set-label-line > .ls-label { flex: 0 1 auto; min-width: 0; }
+.set-row-reset { flex: 0 0 auto; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; }
+/* Hidden, a Reset keeps its height (the tap floor) but no width: the row is
+   the same height changed or not, and the label keeps the whole line. */
+[data-settings-host] .set-label-line > .set-row-reset[hidden] { display: inline-flex !important; visibility: hidden; width: 0; min-width: 0; padding: 0; margin: 0; border: 0; overflow: hidden; }
 .set-row-reset[hidden] { display: none; }
 .set-search-where { margin-top: 1.1rem; }
 /* The Changed filter, the Undo bar and the first-open tip. */

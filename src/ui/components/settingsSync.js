@@ -20,6 +20,9 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+// A status that must outlive a repaint (Apply repaints Settings mid-handler).
+let carriedStatus = '';
+
 // The version marker could not be written: say what that costs, never claim it.
 const UNNOTED = 'This device could not note that version (storage is off or full here), so a later start may load it again over changes you make here.';
 const STORAGE_REFUSED = 'This browser would not save that choice (storage is off or full here), so it is unchanged.';
@@ -54,7 +57,6 @@ const PROMOTED = SETTINGS_DEFAULTS.values || {};
  */
 export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   const diff = profileDiff(settings, parsed, promoted);
-  if (!diff.length) return 0;
   const changed = {};
   const had = {};
   const seedBefore = settings[SEED_KEY];
@@ -72,9 +74,15 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     const next = { ...record };
     for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
     for (const key of toPromotion) next[key] = promoted[key];
-    settings[SEED_KEY] = next;
-    changed[SEED_KEY] = next;
+    // Only when it changes: a load that moves nothing and owns nothing new
+    // writes nothing.
+    if (JSON.stringify(next) !== JSON.stringify(record) || seedBefore === undefined) {
+      settings[SEED_KEY] = next;
+      changed[SEED_KEY] = next;
+    }
   }
+  // Nothing visible moved and no ownership changed: nothing to save.
+  if (!Object.keys(changed).length) return 0;
   const result = onChange(changed);
   if (result?.ok === false) {
     // Not saved, so not applied: put every value back as it was — here, and
@@ -306,8 +314,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
           pending = null;
+          // afterApply repaints Settings and mounts a new panel: carry the
+          // warning across so the panel the player sees shows it.
+          if (!noted) carriedStatus = UNNOTED;
           afterApply(moved, before);
-          if (!noted) status(UNNOTED);
+          if (!noted && mount.isConnected) { status(UNNOTED); carriedStatus = ''; }
         } catch (error) { status(error.message); }
       });
       box.querySelector('[data-sync="cancel"]')?.addEventListener('click', () => { pending = null; box.hidden = true; box.innerHTML = ''; });
@@ -416,6 +427,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
   }
 
   draw();
+  // A warning a previous panel could not show before Settings repainted.
+  if (carriedStatus) { status(carriedStatus); carriedStatus = ''; }
   // Listed once on open, without holding the panel up.
   refreshProfiles();
 }

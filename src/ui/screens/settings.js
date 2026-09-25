@@ -1395,7 +1395,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // The row's Reset sits beside the label, not inside it: the label ellipsises
   // (kit.css nowrap/overflow), and a long tuning label would clip the button.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}${note ? `
+        <span class="set-label-line"><span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}</span>${note ? `
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const modified = rowModified(settings, r);
@@ -2547,11 +2547,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       undoOffer = null;
       if (onChange(restore)?.ok === false) {
         // Not saved, so not undone: put the state the Undo replaced back, here
-        // and through onChange, so the live display and audio follow it.
+        // and through onChange, so the live display and audio follow it — and
+        // keep the offer, so the player can try again.
         for (const [key, value] of Object.entries(now)) {
           if (value === undefined) delete settings[key]; else settings[key] = value;
         }
         onChange(now);
+        undoOffer = offer;
       }
       repaintPanel({ keepScroll: true });
     };

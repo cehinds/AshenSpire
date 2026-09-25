@@ -557,7 +557,7 @@ test('moving off a promoted value makes it the player\'s; a Reset hands it back'
 test('every version marker and the token removal report a refused write', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, pending\.sha \|\| ''\);[\s\S]*?if \(!noted\) status\(UNNOTED\);/, 'Apply');
+  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, pending\.sha \|\| ''\);[\s\S]*?if \(!noted\) carriedStatus = UNNOTED;/, 'Apply');
   assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, result\.sha \|\| ''\);[\s\S]*?\(noted \? '' : ` \$\{UNNOTED\}`\)/, 'Save');
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, null\)\) \{ status\('The token could not be removed/, 'Forget');
   assert.doesNotMatch(panel, /^\s*write\(SYNC_STORAGE\.(lastSha|token), (remote|pending|result)\.sha/m, 'no unchecked version write is left');
@@ -644,4 +644,24 @@ test('a refused Undo is rolled back; a restored profile is seeded like boot; a d
   assert.equal(normalizeProfileName('desk.'), null);
   assert.equal(normalizeProfileName('desk..json'), null);
   assert.equal(validProfileName('v1.2_test'), true);
+});
+
+test('a no-op load still records promotion ownership; the unrecorded warning survives the repaint; a refused Undo keeps its offer', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 40 };
+  const seen = [];
+  const moved = applyProfile(settings, (c) => { seen.push(c); return { ok: true }; }, { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 });
+  assert.equal(moved, 0, 'no visible setting moved');
+  assert.deepEqual(seen, [{ [SEED_KEY]: { musicVolume: 40 } }], 'but ownership was saved');
+  const again = [];
+  applyProfile(settings, (c) => { again.push(c); return { ok: true }; }, { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 });
+  assert.deepEqual(again, [], 'nothing new to own: nothing saved');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before\);/);
+  assert.match(panel, /if \(carriedStatus\) \{ status\(carriedStatus\); carriedStatus = ''; \}/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
+  assert.match(screen, /<span class="set-label-line"><span class="ls-label">/, 'label and Reset share one line');
 });
