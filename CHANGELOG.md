@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-25
+
+- **Behind the scenes: the two component catalogs are checked against each other** ([#1297](https://github.com/cehinds/AshenSpire/pull/1297), `0.7.1.493`). Nothing you play changes. The interface-component check now fails when the written component catalog and the interactive one disagree about which components exist, the Armoury's asset family included, so neither can drift out of date.
+
 ## 2026-09-24
 
 - **Developer notes that had gone out of date now point at where the fact lives** ([#1283](https://github.com/cehinds/AshenSpire/pull/1283), `0.7.1.492`). Nothing you play changes. The developer guide no longer quotes a hand-counted test total but gives the command that lists the tests; its list of known gaps drops Frostbite, which was cut rather than postponed, and marks the Goreblood gap resolved, since Goreblood freezes only Poise and its card already says so. The versioning notes stop quoting an old release number and name the file that holds the current one, the licence names AshenSpire instead of the project's old name, and the finishing checklist names the Guilt and Warrior's Vow gaps instead of numbering them. A new test fails if any of the old wording comes back.
