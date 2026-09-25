@@ -747,20 +747,24 @@ base-3 class that puts nothing in its primary, so no class opens below 4:
 
 Levelling a primary attribute can never take the opening hand past 6. The
 class's row is resolved INTO the fight's hand-rules snapshot at combat start
-(`handRulesForClass`, called by `createRunCombat`): the snapshot carries the
+(`classHandRules`, called by `createRunCombat`, which resolves the settings and
+applies the class row through `handRulesForClass`): the snapshot carries the
 merged `starting` rule and not the per-class table, so a saved fight deals from
 exactly what it was born with, and a snapshot written before this change keeps
 its own `starting` rule unchanged. A fight with no class row (a headless
-fixture) uses the shared rule. Advanced → Stats → Draw & hand exposes each
+fixture) uses the authored fallback. Advanced → Stats → Draw & hand exposes each
 class's base and attribute as its own pair of rows (`gameConfig.handRules.
-startingByClass.<class>.base|stat`); the shared opening base and stat rows are
-retired — an exported configuration carrying their keys (plain or
-`settings.`-prefixed) still imports, and they are skipped with a warning
-because no shipped class reads them. A stored or imported opening-hand maximum
-of exactly 15 (the retired default cap) is dropped with a warning so the
+startingByClass.<class>.base|stat`). The shared opening base and stat
+(`gameConfig.handRules.starting.base|stat`) are **retired, not migrated**: they
+have no row and nothing reads them, and each key (plain or `settings.`-prefixed)
+is dropped wherever a profile, run snapshot or imported file carries it — with a
+warning naming the per-class rows when its value was not the stock one (a stock
+value was never a customisation). Copying one shared value onto every class would
+flatten the four openings above into one. A stored or imported opening-hand
+maximum of exactly 15 (the retired default cap) is dropped with a warning so the
 current cap applies, together with a minimum of 3 riding beside it (the retired
-default floor); run snapshots are untouched. Turn draws and hand capacity are
-unchanged.
+default floor); run snapshots keep their limits. Both drops share one door and say
+so in one warning. Turn draws and hand capacity are unchanged.
 
 The opening draw is also bounded by hand capacity. Unplayed cards are retained
 by default. Later turns draw a **fixed** number by default — the turn draw, never
@@ -957,7 +961,9 @@ faucet) is gone with the purse.
 `cinderMultiplier` row scales that table and defaults to 1. The owner's exported
 `progression.rewardMultiplier: 20` is **retired, not a default** (owner, 2026-09-24: "I hate
 the 20x cinder, that needs to die"): the old key is dropped with a warning wherever a
-profile, run snapshot or imported file carries it.
+profile, run snapshot or imported file carries it. The retired shared opening-hand
+`gameConfig.handRules.starting.base|stat` are dropped at the same three doors (§4.1),
+warned when not the stock value.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 

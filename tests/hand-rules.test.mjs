@@ -23,11 +23,20 @@ const LEGACY_RULES = {
   'turn.base': 2, 'turn.statEnabled': false, 'turn.baseline': 10, 'turn.pointsPerCard': 10, 'turn.minimum': 0, 'turn.maximum': 10,
   'capacity.base': 10, 'capacity.statEnabled': false, 'capacity.baseline': 10, 'capacity.pointsPerCard': 10, 'capacity.minimum': 1, 'capacity.maximum': 30,
 };
+// The shared `starting.base` / `.stat` are no longer settings (each class
+// opens on its own row, and the keys are dropped at every door), so a fixture
+// that pins them sets them on the resolved rule directly.
+const SHARED_OPENING = ['starting.base', 'starting.stat'];
 const settingsOf = (overrides = {}, base = LEGACY_RULES) =>
-  Object.fromEntries(Object.entries({ ...base, ...overrides }).map(([k, v]) => [prefix + k, v]));
+  Object.fromEntries(Object.entries({ ...base, ...overrides }).filter(([k]) => !SHARED_OPENING.includes(k)).map(([k, v]) => [prefix + k, v]));
+function rulesOf(overrides = {}, base = LEGACY_RULES) {
+  const merged = { ...base, ...overrides };
+  const rules = resolveHandRules(settingsOf(overrides, base), contentBundle.attributes);
+  for (const key of SHARED_OPENING) if (merged[key] !== undefined) rules.starting[key.split('.')[1]] = merged[key];
+  return rules;
+}
 function fight(overrides = {}, attributes = { intelligence: 10 }, base = LEGACY_RULES) {
-  const settings = settingsOf(overrides, base);
-  return createCombat({ registries, rng: createRng(2309), handRules: resolveHandRules(settings, contentBundle.attributes),
+  return createCombat({ registries, rng: createRng(2309), handRules: rulesOf(overrides, base),
     player: { classId: 'reaver', maxHp: 10000, hp: 10000, maxMana: 0, energyMax: 3, drawPerTurn: 5, attributes,
       deck: Array.from({ length: 25 }, (_, i) => ({ instanceId: `c${i}`, cardId: 'strike', upgraded: false })), relicIds: [] },
     enemyIds: ['wanderingSoldier'],
@@ -51,7 +60,7 @@ test('the default opening follows the shipped starting rule; unplayed cards surv
 });
 
 test('stat selection, baseline, whole intervals, bounds and scaling off', () => {
-  const rules = resolveHandRules(settingsOf({ 'starting.stat': 'strength', 'starting.pointsPerCard': 3 }), contentBundle.attributes);
+  const rules = rulesOf({ 'starting.stat': 'strength', 'starting.pointsPerCard': 3 });
   assert.equal(scaledCards(rules.starting, { strength: 18 }), 5);
   assert.equal(scaledCards(rules.starting, { strength: 1 }), 3);
   rules.starting.statEnabled = false;
@@ -129,10 +138,12 @@ test('combat snapshot keeps rules and resumes deterministically', () => {
 test('configuration export preserves stat and draw-mode choices', () => {
   const settings = { [prefix + 'drawMode']: 'fixed', [prefix + 'turn.stat']: 'wisdom', [prefix + 'turn.base']: 3 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
-  // The retired shared opening base and stat still import — skipped, by name.
+  // The retired shared opening base and stat still import — skipped, with a
+  // warning that says where each class sets its own (Codex, #1294).
   const warnings = [];
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...settings, [prefix + 'starting.stat']: 'wisdom', [prefix + 'starting.base']: 3 }), contentBundle, {}, [], warnings), settings);
-  assert.match(warnings.join(' '), /Opening hand — Base cards, Opening hand — Attribute used: these settings are no longer used and were skipped/);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /^Opening hand: the shared base cards and attribute are retired and were left out: each class opens on its own\. Use Stats → Draw & hand/);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [prefix + 'starting.pointsPerCard']: 0 }), contentBundle));
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [prefix + 'starting.minimum']: 9, [prefix + 'starting.maximum']: 2 }), contentBundle));
 });
@@ -236,8 +247,10 @@ test('each class\'s opening hand is its own pair of settings rows, and the share
     assert.equal(baseRow.settingSection, 'Starting hand');
     assert.match(baseRow.label, /Opening hand base cards$/);
   }
-  assert.ok(rows.find(row => row.key === `${prefix}starting.base`).retired, 'the shared base moves nothing a class can reach');
-  assert.ok(rows.find(row => row.key === `${prefix}starting.stat`).retired);
+  assert.ok(!rows.some(row => row.key === `${prefix}starting.base`), 'the shared base has no row: it moves nothing a class can reach');
+  assert.ok(!rows.some(row => row.key === `${prefix}starting.stat`));
+  const shared = handRulesForClass(resolveHandRules({ [`${prefix}starting.base`]: 9, [`${prefix}starting.stat`]: 'constitution' }, contentBundle.attributes), 'reaver');
+  assert.deepEqual([shared.starting.base, shared.starting.stat], [3, 'strength'], 'a stale shared key changes no class (Codex, #1294)');
   const tuned = handRulesForClass(resolveHandRules({ [`${prefix}startingByClass.reaver.base`]: 5, [`${prefix}startingByClass.reaver.stat`]: 'constitution' }, contentBundle.attributes), 'reaver');
   assert.equal(tuned.starting.base, 5);
   assert.equal(tuned.starting.stat, 'constitution');

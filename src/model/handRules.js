@@ -1,6 +1,8 @@
 import { handRulesDefaults } from '../content/handRules.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
+/** The shared opening-hand fields every class now sets for itself: no row, no setting. */
+export const RETIRED_SHARED_OPENING_FIELDS = Object.freeze(['base', 'stat']);
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
 
 export function handRulesProblems(rules) {
@@ -63,11 +65,13 @@ export function handRulesRows(attributes = [], classes = []) {
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
       if (group === 'turn') extra.fixedOnly = true;
       // EVERY SHIPPED CLASS OPENS ON ITS OWN BASE AND ATTRIBUTE (owner,
-      // 2026-09-24), set by the per-class rows below, so the shared pair moved
-      // nothing a player can reach. The keys stay so an exported configuration
-      // still imports; the rows leave the screen (`retired`), the way a
-      // retired creation mode's dials do.
-      if (group === 'starting' && ['base', 'stat'].includes(field)) Object.assign(extra, { retired: true, inert: true });
+      // 2026-09-24), set by the per-class rows below, so the shared pair has
+      // no row: nothing a player can reach reads it. A profile, run snapshot
+      // or imported file that still carries either key has it DROPPED, with
+      // a warning when it was not the stock value (`withoutRetiredOpeningHand`
+      // below) — never migrated onto every class, which would flatten the
+      // four openings into one (Codex, #1294).
+      if (group === 'starting' && RETIRED_SHARED_OPENING_FIELDS.includes(field)) continue;
       if (field === 'base') extra.note = `The ${subject} before any attribute bonus.`;
       if (field === 'statEnabled') extra.note = `On: the attribute below adds cards to the ${subject}. Off: only the base and the limits apply.`;
       if (field === 'stat') extra.note = `The attribute that adds cards to the ${subject}.`;
@@ -79,7 +83,7 @@ export function handRulesRows(attributes = [], classes = []) {
     }
   };
   addGroupRows('starting');
-  // ONE ROW PAIR PER CLASS, beside the shared opening-hand rows they refine.
+  // ONE ROW PAIR PER CLASS, beside the shared opening-hand limits they sit within.
   const classNames = Object.fromEntries((classes || []).map((row) => [row.id, row.name || row.id]));
   for (const [classId, def] of Object.entries(handRulesDefaults.startingByClass || {})) {
     const name = classNames[classId] || classId[0].toUpperCase() + classId.slice(1);
@@ -144,11 +148,14 @@ export function resolveHandRules(settings = {}, attributes = []) {
 /**
  * handRulesForClass(rules, classId) → the rules one fight is handed.
  *
- * The class's own opening-hand row replaces `starting.base` and
+ * The class's own opening-hand row supplies `starting.base` and
  * `starting.stat`; the per-class table itself does not ride into the fight,
  * so the combat snapshot states exactly the opening hand that fight was born
  * with and a saved fight keeps it whatever the table later becomes. A class
- * with no row (or no class at all: a headless fixture) keeps the shared rule.
+ * with no row (or no class at all: a headless fixture) keeps the authored
+ * fallback in `handRulesDefaults.starting` — no setting reaches it, because
+ * the shared `starting.base` / `starting.stat` keys are retired and
+ * `resolveHandRules` no longer reads them (Codex, #1294).
  */
 export function handRulesForClass(rules, classId = null) {
   const { startingByClass, ...fight } = structuredClone(rules);
@@ -168,32 +175,71 @@ export function handRulesForClass(rules, classId = null) {
 // 3). A lone minimum of 3, with no 15 beside it, is somebody's choice and
 // stays; once the 15 is gone the check never fires again. A deliberate 15 is
 // indistinguishable from the old default and is dropped too — the price of
-// reading intent from a value. Run snapshots are never touched: a fight keeps
+// reading intent from a value. Run snapshots keep their limits: a fight keeps
 // the hand it was born with.
+//
+// THE SHARED OPENING BASE AND ATTRIBUTE ARE RETIRED TOO (owner, 2026-09-24:
+// every class opens on its own — Reaver 3 STR, Rogue 4 DEX, Herald 4 WIS,
+// Starseer 5 INT). `starting.base` / `.stat` have no row (RETIRED_SHARED_
+// OPENING_FIELDS); they used to be accepted and then overwritten by every
+// class's row, so an imported customisation "succeeded" and the next fight
+// ignored it (Codex, #1294). They are DROPPED through this same door at every
+// entrance — profile, run snapshot (nothing reads them there either) and
+// imported file — never migrated onto every class, which would flatten the
+// four openings into one. The warning is said only when the value was not a
+// stock one: an export writes every value, and a stock value was never a
+// customisation. Stock is any default the shared pair ever shipped with — base
+// 3 (before b9bdfcd7) or 4 (now), attribute INT — compared loosely, so a "4"
+// typed into a hand-edited file is as quiet as a 4. Both drops share ONE
+// warning.
 const OPENING_MAXIMUM_KEY = `${HAND_RULES_PREFIX}starting.maximum`;
 const OPENING_MINIMUM_KEY = `${HAND_RULES_PREFIX}starting.minimum`;
 const RETIRED_OPENING_MAXIMUM = 15;
 const RETIRED_OPENING_MINIMUM = 3;
+const SHARED_OPENING_DEFAULTS = Object.freeze(Object.fromEntries(RETIRED_SHARED_OPENING_FIELDS
+  .map((field) => [`${HAND_RULES_PREFIX}starting.${field}`, handRulesDefaults.starting[field]])));
 const bareKey = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+const sharedOpening = ([key]) => Object.hasOwn(SHARED_OPENING_DEFAULTS, bareKey(key));
+const STOCK_SHARED_OPENING_BASES = Object.freeze([3, handRulesDefaults.starting.base]);
+const stockSharedOpening = ([key, value]) => (bareKey(key).endsWith('.base')
+  ? STOCK_SHARED_OPENING_BASES.includes(Number(value))
+  : String(value) === String(SHARED_OPENING_DEFAULTS[bareKey(key)]));
 
-/** True when a stored profile pins the retired opening-hand cap of 15. */
-export function hasRetiredOpeningLimits(settings = {}) {
-  return settings?.[OPENING_MAXIMUM_KEY] === RETIRED_OPENING_MAXIMUM;
+/**
+ * True when a stored profile pins the retired opening-hand cap of 15, or holds
+ * the retired shared opening base or attribute — each in either spelling
+ * (plain or `settings.`-prefixed), the same keys `withoutRetiredOpeningHand`
+ * drops (Codex, on #1318).
+ */
+export function hasRetiredOpeningHand(settings = {}) {
+  return Object.entries(settings || {}).some(([key, value]) => sharedOpening([key])
+    || (bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM));
 }
 
 /**
- * withoutRetiredOpeningLimits(entries, warnings) → entries without the retired
- * 3–15 opening-hand limits, in either spelling (plain or `settings.`-prefixed).
+ * withoutRetiredOpeningHand(entries, warnings, { limits }) → entries without
+ * the retired 3–15 opening-hand limits (unless `limits` is false: a run
+ * snapshot) and without the shared opening base and attribute, each in either
+ * spelling (plain or `settings.`-prefixed), with at most one warning.
  */
-export function withoutRetiredOpeningLimits(entries, warnings = null) {
+export function withoutRetiredOpeningHand(entries, warnings = null, { limits = true } = {}) {
   const retiredMaximum = ([key, value]) => bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM;
-  if (!entries.some(retiredMaximum)) return entries;
   const retiredMinimum = ([key, value]) => bareKey(key) === OPENING_MINIMUM_KEY && value === RETIRED_OPENING_MINIMUM;
-  const dropsMinimum = entries.some(retiredMinimum);
+  const dropsLimits = limits && entries.some(retiredMaximum);
+  const shared = entries.filter(sharedOpening);
+  if (!dropsLimits && !shared.length) return entries;
   if (Array.isArray(warnings)) {
-    warnings.push(`Opening hand: the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${handRulesDefaults.starting.minimum}–${handRulesDefaults.starting.maximum} applies. Everything else was kept.`);
+    const said = [];
+    if (dropsLimits) {
+      const dropsMinimum = entries.some(retiredMinimum);
+      said.push(`the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${handRulesDefaults.starting.minimum}–${handRulesDefaults.starting.maximum} applies`);
+    }
+    if (shared.some((entry) => !stockSharedOpening(entry))) {
+      said.push('the shared base cards and attribute are retired and were left out: each class opens on its own. Use Stats → Draw & hand → each class\'s Opening hand base cards and Opening hand attribute');
+    }
+    if (said.length) warnings.push(`Opening hand: ${said.join('; ')}. Everything else was kept.`);
   }
-  return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
+  return entries.filter((entry) => !sharedOpening(entry) && !(dropsLimits && (retiredMaximum(entry) || retiredMinimum(entry))));
 }
 
 /**
