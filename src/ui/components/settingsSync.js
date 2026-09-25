@@ -19,6 +19,8 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+// The version marker could not be written: say what that costs, never claim it.
+const UNNOTED = 'This device could not note that version (storage is off or full here), so a later start may load it again over changes you make here.';
 const STORAGE_REFUSED = 'This browser would not save that choice (storage is off or full here), so it is unchanged.';
 
 /** write(key, value) → true when storage now holds exactly that (or nothing, for a clear). */
@@ -280,10 +282,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           // What every key held before, so Settings can offer Undo.
           const before = Object.fromEntries(profileDiff(settings, pending.parsed, PROMOTED).map(({ key, from }) => [key, from]));
           const moved = applyProfile(settings, onChange, pending.parsed);
-          write(SYNC_STORAGE.lastSha, pending.sha || '');
+          const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
           pending = null;
           afterApply(moved, before);
+          if (!noted) status(UNNOTED);
         } catch (error) { status(error.message); }
       });
       box.querySelector('[data-sync="cancel"]')?.addEventListener('click', () => { pending = null; box.hidden = true; box.innerHTML = ''; });
@@ -310,9 +313,10 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         const mine = generation;
         const result = await pushProfile(target, text, { token: read(SYNC_STORAGE.token), message: `Update settings profile ${profileName(target)} (${Object.keys(JSON.parse(text).overrides).length} settings)` });
         if (mine !== generation || target !== cfg) return;
-        write(SYNC_STORAGE.lastSha, result.sha || '');
-        status(result.unchanged ? 'The profile on GitHub already matches this device.'
-          : `Saved the “${profileName(target)}” profile${result.branchCreated ? ` — created the ${target.branch} branch` : ''}. Other devices can load it now.`);
+        const noted = write(SYNC_STORAGE.lastSha, result.sha || '');
+        status((result.unchanged ? 'The profile on GitHub already matches this device.'
+          : `Saved the “${profileName(target)}” profile${result.branchCreated ? ` — created the ${target.branch} branch` : ''}. Other devices can load it now.`)
+          + (noted ? '' : ` ${UNNOTED}`));
         if (profiles && !profiles.includes(profileName(target))) { profiles = [...profiles, profileName(target)].sort((a, b) => a.localeCompare(b)); fillPicker(); }
       } catch (error) { status(error.message); } finally { busy(btn, false, 'Save my settings to GitHub'); }
     });
@@ -353,7 +357,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       draw();
       status('Token stored on this device.');
     });
-    on('forget', () => { write(SYNC_STORAGE.token, null); draw(); status('Token removed from this device.'); });
+    on('forget', () => {
+      if (!write(SYNC_STORAGE.token, null)) { status('The token could not be removed: this browser refused to change its storage. Clear this site\'s data in the browser to remove it.'); return; }
+      draw();
+      status('Token removed from this device.');
+    });
     on('copy', async (btn) => {
       const text = profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version });
       try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { console.log(text); btn.textContent = 'In console'; }

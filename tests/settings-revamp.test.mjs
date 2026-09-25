@@ -372,7 +372,7 @@ test('a profile save that finishes after the location changed is not recorded', 
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /const target = cfg;\s*const mine = generation;\s*const result = await pushProfile\(target,/);
-  assert.match(panel, /if \(mine !== generation \|\| target !== cfg\) return;\s*write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(mine !== generation \|\| target !== cfg\) return;\s*const noted = write\(SYNC_STORAGE\.lastSha/);
 });
 
 test('a resolved row set to its promoted default is not changed', async () => {
@@ -552,4 +552,13 @@ test('moving off a promoted value makes it the player\'s; a Reset hands it back'
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{\s*status\('This device already matches/);
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /const seed = seedAfterChange\(activeSettings, changed\);/);
+});
+
+test('every version marker and the token removal report a refused write', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, pending\.sha \|\| ''\);[\s\S]*?if \(!noted\) status\(UNNOTED\);/, 'Apply');
+  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, result\.sha \|\| ''\);[\s\S]*?\(noted \? '' : ` \$\{UNNOTED\}`\)/, 'Save');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, null\)\) \{ status\('The token could not be removed/, 'Forget');
+  assert.doesNotMatch(panel, /^\s*write\(SYNC_STORAGE\.(lastSha|token), (remote|pending|result)\.sha/m, 'no unchecked version write is left');
 });
