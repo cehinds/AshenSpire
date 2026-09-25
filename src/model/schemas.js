@@ -726,6 +726,9 @@ export const SCHEMAS = Object.freeze({
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
+    // Effects fired at the player's turn end for each copy still in hand
+    // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
+    onTurnEndInHand: opt(effects),
     textTemplate: str,
     upgrade: opt(
       obj({
