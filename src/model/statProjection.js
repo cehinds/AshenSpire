@@ -266,10 +266,11 @@ export function statProjection(registries, run) {
   // The rating rows this run reads (its own, or its retired formula restated),
   // so an attribute card names the weights its fights actually use.
   // A RUN BORN BEFORE RULESET 7 has no openingHand/handSize rows in its
-  // snapshot: its fights deal by its retired hand groups, restated as rows
-  // here so its attribute cards name the scaling combat uses (Codex, #1296).
+  // snapshot, and its `draw` row is the co-op draw: its solo fights deal by
+  // its retired hand groups — all three — restated as rows here so its
+  // attribute cards name the scaling combat uses (Codex, #1296).
   const handRows = readsLegacyStatHomes(run)
-    ? { openingHand: statRow(registries, run, 'openingHand'), handSize: statRow(registries, run, 'handSize') }
+    ? Object.fromEntries(['openingHand', 'draw', 'handSize'].map((id) => [id, statRow(registries, run, id)]))
     : null;
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows };
 }

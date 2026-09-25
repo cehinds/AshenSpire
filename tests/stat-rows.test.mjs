@@ -347,10 +347,12 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
   const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules)
     .filter(([id]) => id !== 'openingHand' && id !== 'handSize'));
   run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
-  run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3 } };
+  run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3, 'gameConfig.handRules.turn.pointsPerCard': 4 } };
   const lines = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
     .find((card) => card.id === 'intelligence').reveal.lines;
   assert(lines.includes('Opening hand +1 every 3 points'), lines.join(' | '));
+  // Its solo turn draw is its tuned `turn` group, not the snapshot's co-op draw row.
+  assert(lines.includes('Draw / turn +1 every 4 points'), lines.join(' | '));
   assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points`), lines.join(' | '));
   assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
 });
