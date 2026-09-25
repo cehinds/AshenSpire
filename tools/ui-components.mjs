@@ -151,14 +151,14 @@ function splitTop(text, sep) {
 // At-rules whose blocks hold no style rules; every other block at-rule
 // (@media, @supports, @container, @layer, @scope, @starting-style, and any
 // new one) is descended into, so an unknown grouping rule is judged, not lost.
-const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/;
+const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/i;
 
 function parseBlock(src, parent, rules, conditional = false, scopeBlock = false) {
   let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
   const decls = [];
   const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
     const at = d.indexOf(':');
-    if (at > 0) decls.push({ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).trim() });
+    if (at > 0) decls.push({ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).replace(/!\s*important\s*$/i, '').trim() });
   });
   for (let j = 0; j < src.length; j++) {
     const ch = src[j];
@@ -178,19 +178,19 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
     if (ch === '}' && depth > 0) {
       if (--depth === 0) {
         const body = src.slice(openAt, j);
-        if (/^@scope\b/.test(prelude)) {
+        if (/^@scope\b/i.test(prelude)) {
           // @scope (root): the root is every inner rule's ancestor, `:scope`
           // inside is the root itself, and declarations written straight in
           // the block apply to the root. A prelude-less nested @scope's root
           // is its parent rule. The limit (`to (…)`) is not modelled.
           const root = scopeRoot(prelude);
-          const scope = !root ? parent : parent === null ? root : `:is(${parent}) ${root}`;
+          const scope = !root ? parent : parent === null ? root : `:is(${parent}) :is(${root})`;
           parseBlock(body, scope, rules, conditional, scope === null);
         } else if (prelude.startsWith('@')) {
           // A grouping rule applies only under its condition, so its rules
           // (and a nested copy of `parent`) are marked conditional. @layer
           // is an ordering, not a condition.
-          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, conditional || !/^@layer\b/.test(prelude));
+          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, conditional || !/^@layer\b/i.test(prelude));
         } else if (prelude) {
           const selector = parent === null ? prelude
             : splitTop(prelude, /,/).map((part) => (/&|:scope(?![\w-])/.test(part) ? part.replace(/&|:scope(?![\w-])/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
@@ -303,7 +303,7 @@ export function railInFlow(css) {
   return base.length > 0
     && lastValue(base, ['position']) === 'static'
     && lastValue(base, ['grid-area']) === 'rail'
-    && !rules.some((rule) => /^(?:absolute|fixed)\b/.test(lastValue(rule.decls, ['position']) || '')
+    && !rules.some((rule) => /^(?:absolute|fixed)\b/i.test(lastValue(rule.decls, ['position']) || '')
       // Placement too: a rail rule that sets grid-area keeps it `rail`, and
       // none re-places it by line (grid-row / grid-column and their longhands).
       || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'

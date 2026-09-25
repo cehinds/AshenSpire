@@ -283,6 +283,16 @@ test('a shared-HUD top rule with a non-grid display fails C12', () => {
   assert.equal(railUnderMeters(`${r.kit}\n.shared-hud[data-x] > .hud-top { display: grid; }\n`), true);
 });
 
+// Review of #1316: at-rule names and keywords are case-insensitive, and
+// !important does not change which area a rule names.
+test('case and !important do not hide a hung rail', () => {
+  const r = receipt();
+  for (const extra of ['@SCOPE (.shared-hud .hud-bottom) { position: absolute; }', '.shared-hud .hud-bottom.x { position: ABSOLUTE; }', '.shared-hud { @scope (.x, .hud-bottom) { position: absolute; } }']) {
+    assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 1, extra);
+  }
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.x { grid-area: rail !important; }\n` }).length, 0);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
