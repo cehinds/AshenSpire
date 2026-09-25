@@ -86,9 +86,7 @@ function walk(dir, out = []) {
 // once it is fixed, the stale entry is itself red until it is deleted here.
 //   reward.kind.chest has no `tip` cell, so hovering an elite-chest reward row
 //   throws "has no tip form" from the tooltip builder.
-const KNOWN_COPY_DEFECTS = new Set([
-  "src/ui/screens/reward.js: tTip('reward.kind.chest') asks for the tip form, which the row does not author",
-]);
+const KNOWN_COPY_DEFECTS = new Set([]);
 
 function clone(bundle, edit) {
   const b = { ...bundle, balance: { ...bundle.balance, rewards: { ...bundle.balance.rewards } } };
