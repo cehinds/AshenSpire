@@ -229,6 +229,21 @@ export function reconcileSkillUpgrades(registries, run) {
  * balance.skill.upgradeAt is upgraded at grant time — not only by the load
  * door's reconcile, which would change the deck across a reload.
  */
+/**
+ * deckInstanceId(run, prefix, cardId) → `${prefix}${n}_${cardId}` with `n` the
+ * deck's length, or the next free `n` when a card that shrank the deck left
+ * that id taken (a card removed, then the same card taken again): a deck's
+ * instance ids are unique.
+ */
+export function deckInstanceId(run, prefix, cardId) {
+  const deck = Array.isArray(run && run.deck) ? run.deck : [];
+  const taken = new Set(deck.map((card) => card && card.instanceId));
+  let n = deck.length;
+  let id = `${prefix}${n}_${cardId}`;
+  while (taken.has(id)) id = `${prefix}${++n}_${cardId}`;
+  return id;
+}
+
 export function joinDeck(registries, run, ...cards) {
   if (!Array.isArray(run.deck)) run.deck = [];
   run.deck.push(...cards);

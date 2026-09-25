@@ -26,6 +26,7 @@
 import * as F from './combatRules.js';
 import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
+import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
@@ -661,9 +662,14 @@ function runOpcode(ctx, action, eff) {
       const p = ctx.player;
       if (!action.source || action.source.id !== p.id) break;
       const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
-      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      // No sheet reads as no Dexterity term (framework weight.js), never as
+      // a number from the retired d20 scale.
+      const dexterity = ctx.attributes ? ctx.attributes.dexterity : undefined;
       const stance = playerWeightClass(ctx);
-      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
+      // The run's creation mode picks the Dexterity centre, so a sheet from an
+      // older scale keeps its dodge (mechanics.dodgeRoll.dexterityCentreByMode).
+      const attributeMode = ctx.attributeMode || undefined;
+      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, attributeMode, weightClass: stance.weightClass });
       ctx.emit('dodgeRolled', {
         ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(p) } : {}),
         sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
@@ -1030,7 +1036,8 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     player: facade,
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
-    handMax: registries.balance.handMax,
+    // The run context never draws; the retired fallback keeps the field a number.
+    handMax: LEGACY_HAND_MAX,
     queue: [],
     eventLog: events,
     _buffer: null,
@@ -1052,8 +1059,14 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     enqueue(a) {
       ctx.queue.push(a);
     },
+    // A run context is opened per visit and its counter starts at 0, so an id
+    // an earlier visit already put in the deck (a second event's curse) is
+    // skipped: a deck's instance ids are unique.
     nextInstanceId() {
-      return `run${++ctx._idCounter}`;
+      let id;
+      do id = `run${++ctx._idCounter}`;
+      while (Array.isArray(run.deck) && run.deck.some((card) => card && card.instanceId === id));
+      return id;
     },
   };
   return ctx;

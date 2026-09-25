@@ -235,11 +235,12 @@ export const balance = {
   },
   energy: 3,
   draw: 5,
-  handMax: 10,
+  // (`handMax` retired in ruleset 7: every fight's hand size is the
+  // derivedStatRules `handSize` row; validate.js refuses it by name.)
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
-  flaskCapacity: 4,
-  // The approved base is four; future unlocks may still grow the total. The
+  flaskCapacity: 3,
+  // The approved base is three (owner, 2026-09-24; four before); future unlocks may still grow the total. The
   // first live growth rung is data: Golden Sprout
   // is the Golden Seed homage, and carrying it grows the pool by one Crimson
   // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
@@ -251,14 +252,13 @@ export const balance = {
     { source: 'relic', id: 'goldenSprout', kind: 'hp', amount: 1 },
   ],
   flaskSlots: 3,
-  startingCinders: 0,
+  startingCinders: 20,
   // 11 since plan phase 5a: the class ability card joins the kit beside the
   // signature (roleCopies.ability below; the composed plan grants it first).
   startingDeckSize: 11,
   [NOTE]: {
     energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
-    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Stats → Draw & hand is where it is set.', inert: true },
-    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Stats → Draw & hand → Hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
+    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from its Draw / turn stat row, and Stats → Draw & hand is where it is set.', inert: true },
     flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.',
     flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
     startingCinders: 'Cinders a new run opens with.',
@@ -363,7 +363,7 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      base: 5, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
         growth: 'Those tracks: how much dearer each level step is than the one before it.',
@@ -381,7 +381,7 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 60, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      xp: { base: 5, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
       [NOTE]: {
         'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
         'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
@@ -707,7 +707,7 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, growth: 1.15, roundTo: 10,
+      base: 5, growth: 1.15, roundTo: 10,
       [NOTE]: {
         base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
         growth: 'The character level curve: how much dearer each step is than the one before it.',
@@ -718,9 +718,9 @@ export const balance = {
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
-    combatWin: 50,
+    combatWin: 15,
     kill: {
-      normal: 25, elite: 75, boss: 200,
+      normal: 5, elite: 75, boss: 200,
       [NOTE]: {
         '{kind}': 'Character XP for killing an enemy out of the roster {pool} draws from.',
       },
@@ -787,7 +787,7 @@ export const balance = {
   // the run. The allocation may be redistributed but always sums to capacity.
   // This legacy table remains empty so old debug readers fail harmlessly.
   graceRefill: [],
-  graceRefillAtRunStart: false,
+  graceRefillAtRunStart: true,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
@@ -841,12 +841,34 @@ export const balance = {
   // what keeps every existing seed's fights byte-identical (§13.6). The values
   // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
   // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
-  // bosses weighted together). Tier 1 is 1 by definition and the validator
-  // holds it there.
+  // bosses weighted together, as authored). Tier 1 is 1 by definition and the
+  // validator holds it there. A BOSS fight reads bossTiers below instead: the
+  // same ratio on HP and move damage, × the tier's boss row.
   seatTiers: {
     1: 1, 2: 1.5, 3: 1.9,
     [NOTE]: {
       '{tier}': 'Enemy HP multiplier for a tier-{tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1.',
+    },
+  },
+  // BOSSES BY THE TIER THEY ARE MET AT (SPEC §13.3). Seats are drawn in a
+  // random order per run (§13.4), so a boss's difficulty cannot be authored
+  // into its roster row: the Marches boss is a run's first boss in a third of
+  // climbs and its second in another third. A boss fight at tier T takes the
+  // seatTiers ratio against ITS OWN seat's baseline on HP AND on every move's
+  // damage (engine: enemyDamageMult), then × bossTiers[T].hp / .damage — an
+  // absolute row per tier, not a ratio (model/seats.js bossTierScale). Only
+  // 'boss'-pool fights read it; World Journey has no seat and is untouched.
+  // TUNED (#1284) with `node tools/runsim.mjs <n> --seeded-seats`, the order a
+  // real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
+  // Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
+  // order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
+  bossTiers: {
+    1: { hp: 0.8, damage: 0.8 },
+    2: { hp: 2.2, damage: 1.5 },
+    3: { hp: 2.2, damage: 1.5 },
+    [NOTE]: {
+      '{tier}.hp': 'Boss HP multiplier when a boss is met at tier {tier} (whichever seat holds it), on top of the seat-tier ratio.',
+      '{tier}.damage': 'Boss move-damage multiplier when a boss is met at tier {tier} (whichever seat holds it).',
     },
   },
   customMods: {
@@ -904,7 +926,8 @@ export const balance = {
     // It is OFF under the character models, and that is a call worth stating
     // rather than burying: he assigned that surface its CONTENTS ("really just
     // health and poise"), not a scaling rule. Turning it on there is defensible
-    // and informative — the act-3 boss carries 250 HP against a 12 HP wisp —
+    // and informative — the act-3 boss is authored at 250 HP (550 met at tier 3,
+  // balance.bossTiers) against a 12 HP wisp —
     // but the under-model track is 84.6 px at 390x844, so most of the roster
     // lands on the 16 px floor and stops encoding anything.
     //

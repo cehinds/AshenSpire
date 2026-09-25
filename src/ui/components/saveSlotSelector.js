@@ -33,6 +33,9 @@ let activeSelector = null;
  * describe why. The title's doors can offer a new climb instead.
  */
 export function slotFacts(summary, { canStart = true } = {}) {
+  // A climb saved by a newer build is kept, not offered: its facts are the
+  // reason it will not open here (SPEC §3.12, the run twin of profile 'newer').
+  if (summary?.newer) return t('title.slots.newer');
   if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
   return canStart ? 'Start a new climb here' : 'No climb saved here';
 }
@@ -51,7 +54,8 @@ export function slotMeta(summary) {
  * The same facts as words. The printed line leans on `·` and `34/50`, which a
  * screen reader either swallows or spells out; this is what it should hear.
  */
-function slotFactsSpoken(summary, options) {
+export function slotFactsSpoken(summary, options) {
+  if (summary?.newer) return t('title.slots.newer');
   return summary
     ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
     : slotFacts(null, options);
@@ -575,4 +579,22 @@ export function openReplaceSaveReview({ slot, existing, replacement, tone, onCon
 // Kept for the title screen's string renderer: the same card, serialised.
 export function saveSlotCopyHtml({ slot, summary }) {
   return html(slotOption({ slot, summary }).querySelector('.title-slot-copy'));
+}
+
+/**
+ * openNewerSaveNotice({ slot }) → the notice a Continue on a slot saved by a
+ * NEWER build lands on (SPEC §3.12: refused and kept). The run-side twin of
+ * the profile's 'newer' notice (ui/screens/profileNotice.js): the bytes are
+ * fine, just from the future, so the one way on is to leave them be. There is
+ * no confirm, only the way out; Delete stays the slot's own confirmed act.
+ */
+export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
+  openConfirmationModal({
+    title: t('save.newer.title'),
+    message: t('save.newer.message', { slot }),
+    cancelLabel: t('save.newer.close'),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
 }

@@ -5,6 +5,7 @@
 //
 //   node tools/coop-combat-smoke.mjs
 
+import { statRow, statRowCount } from '../src/model/statRows.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
@@ -25,8 +26,8 @@ function players() {
   const starseer = createRunState({ seed: 1, classId: 'starseer', registries: REG });
   const reaver = createRunState({ seed: 1, classId: 'reaver', registries: REG });
   return [
-    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, energyMax: starseer.energyMax, drawPerTurn: starseer.drawPerTurn, deck: deckOf('starseer'), relicIds: [], flasks: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, energyMax: reaver.energyMax, drawPerTurn: reaver.drawPerTurn, deck: deckOf('reaver'), relicIds: [], flasks: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', maxHp: 72, hp: 72, energyMax: starseer.energyMax, drawPerTurn: starseer.drawPerTurn, attributes: starseer.attributes, derivedStatRuleSnapshot: starseer.derivedStatRuleSnapshot, deck: deckOf('starseer'), relicIds: [], flasks: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', maxHp: 84, hp: 84, energyMax: reaver.energyMax, drawPerTurn: reaver.drawPerTurn, attributes: reaver.attributes, derivedStatRuleSnapshot: reaver.derivedStatRuleSnapshot, deck: deckOf('reaver'), relicIds: [], flasks: [] },
   ];
 }
 
@@ -64,7 +65,13 @@ try {
   ok(Math.abs(coopHpMult(2) - 1.6) < 1e-9, 'coopHpMult(2) = 1.6');
   ok(C.enemies[0].maxHp === Math.max(1, Math.round(baseHp[0] * 1.6)), '2-player enemy HP = base roll ×1.6');
   ok(C.players.size === 2 && C.phase === 'player', 'both players enter the shared player phase');
-  ok(C.players.get('p1').piles.hand.length === 5 && C.players.get('p2').piles.hand.length === 5, 'each player drew their own 5-card hand');
+  // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): each seat's opening hand is
+  // its own run's openingHand row at its own attributes.
+  const opening = (p) => statRowCount(statRow(REG, p, 'openingHand'), p.attributes);
+  const [w, f] = players();
+  ok(C.players.get('p1').piles.hand.length === opening(w) && C.players.get('p2').piles.hand.length === opening(f),
+    `each player drew their own opening hand from their own row (${opening(w)} / ${opening(f)})`);
+  ok(C.players.get('p1').handMax === statRowCount(statRow(REG, w, 'handSize'), w.attributes), 'each seat\'s hand size is its own handSize row');
 
   // --- run a full fight, both players bot-piloted ---
   let rounds = 0;

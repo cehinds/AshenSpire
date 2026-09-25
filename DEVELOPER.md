@@ -16,16 +16,30 @@ stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
 CI hydrates these files, and historical build readers verify their content hashes.
 
 
-Hand management lives in `src/content/handRules.js` (defaults),
-`src/model/handRules.js` (settings and stat formula), and
-`src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
-per-fight snapshot from profile settings; legacy snapshots omit it. `tests/combat-rules.test.mjs` covers the hand rules. Advanced → Stats →
-Draw & hand keeps the starting-hand, turn-draw, capacity and discard controls
-together, under a live worked example.
+Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
+searches every section; `src/ui/buildChannel.js` decides whether the debug-only
+sections (tuning, layout, import/export, Defaults & sync) are shown — dev and
+test builds only, never main or release; `src/model/settingsSync.js` keeps a
+settings profile on GitHub. Review, design and next steps are in
+[docs/SETTINGS-REVAMP.md](docs/SETTINGS-REVAMP.md).
+
+Every stat — HP, Mana, Stamina, Actions, opening hand, draw per turn, hand
+size, AR, DR, PR, Ward, Poise — is one row of `src/content/derivedStats.js`
+(ruleset 7, SPEC §3.5), priced by `statRowValue` in `src/model/derivedStats.js`.
+`src/model/statRows.js` decides which rows a run, fight or preview reads (the
+run's snapshot, the retired homes restated exactly for a pre-ruleset-7 run, or
+the live table) and converts the retired settings keys. Hand behaviour options
+live in `src/content/handRules.js` (defaults), `src/model/handRules.js`
+(settings and the fight's rows), and `src/engine/handRules.js`
+(draw/retention/discard planning). Solo combat takes a per-fight snapshot from
+profile settings; legacy snapshots omit it. `tests/combat-rules.test.mjs` covers
+the hand and stat rows. Advanced → Stats →
+Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
+discard controls, under a live worked example.
 
 `node tools/launch.mjs --build-only` produces the standalone aliases — the full
 single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
-its art from the committed `assets-mobile/` twin tree, held under 50 MB) — and an
+its art from the committed `assets-mobile/` twin tree, held under 30 MB) — and an
 external-art web edition in `build/web/`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
@@ -253,15 +267,20 @@ repository.
 ```
 node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
 node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt
+node tools/receipts.mjs --check --pr auto    # the same, N from GITHUB_EVENT_PATH / GITHUB_REF
 node tools/receipts.mjs --selftest           # the known-bad corpus
 ```
 
-`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
-at the promotion target on purpose: the question is never "does every merge in
-history have a receipt" — the changelog's own header records which stretch is
-deliberately unreconstructed — but "is *this* promotion complete", asked while
-the answer can still be acted on. It does not run on pull requests, where the
-answer would be about merges the author did not make.
+`.github/workflows/receipts.yml` runs the selftest and the range check on every
+push to `dev`. The range is bounded at the promotion target on purpose: the
+question is never "does every merge in history have a receipt" — the
+changelog's own header records which stretch is deliberately unreconstructed —
+but "is *this* promotion complete", asked while the answer can still be acted
+on. On a pull request into `dev` it runs the selftest and `--check --pr auto`
+instead, which judges only that pull request's own number: the range there
+would be about merges the author did not make, but a pull request with no
+receipt of its own is the author's to fix, before merge.
 
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable, and
@@ -376,6 +395,16 @@ node tools/startup-gate.mjs
 node tools/startup-gate.mjs --selftest
 ```
 
+Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
+Quick Menu → Load path: a newer-build slot must be refused with the run kept,
+and a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck:
+
+```bash
+node tools/slot-load-door.mjs
+node tools/slot-load-door.mjs --selftest
+```
+
 Exact combat-save changes additionally run the real Save / Save and Quit /
 Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
@@ -452,6 +481,11 @@ should appear in rewards. Notes:
   `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `onTurnEndInHand` (optional effect list) fires at the player's turn end for
+  each copy still in hand, before the hand is discarded — Guilt's
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in solo and co-op
+  combat. Its numbers bind to the card's text template after `effects`
+  (Guilt's text says `{loseHp}`).
 
 ## Add a status (one file: `src/content/statuses.js`)
 
@@ -649,8 +683,9 @@ Starting Equip, and Seed sections together as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
-verifies the catalog at desktop and 390×844 mobile sizes alongside the player
-flow.
+drives the player flow's stats step at desktop and 390×844 mobile sizes:
+Standard and Assign points for every class, with the Hand and Draw chips
+checked against the hand a solo fight deals. It does not visit the catalog.
 
 ## Standalone build (`build/AshenSpire.html`)
 
@@ -682,26 +717,42 @@ empirical Act-1 win-rate pass (the naive bot). The **Run History** screen
 the live win-rate telemetry the balance pass is tuned against. Re-run the harness
 after any content or tuning change to catch regressions.
 
+Every simulator fight is the live fight: `src/main.js` and the simulators
+(`runsim`, `balance`, `measure-classes`) build a run's combat through
+`src/engine/runCombat.js` (`createRunCombat` — hand rules, rating rules, swap
+price and equipment start statuses from the profile's settings, `{}` for a fresh
+profile) and settle it through `runCombatEnd`, which carries HP, Mana, Stamina
+and flasks into the next fight. The bots choose from `tools/simbot.mjs`
+(`affordableCards`: playable and affordable in Actions, Mana and Stamina, priced
+by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
+concede a fight still open after 150 turns as a stalemate.
+`node tools/balance.mjs --check` fails when docs/BALANCE.md is stale (run it
+by hand; it is not part of the five-test suite); regenerate with
+`node tools/balance.mjs > docs/BALANCE.md`.
+
 `node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
 path → encounters → combats → rewards → shrines/events/ambushes → act bosses,
 Acts 1–3) with the same greedy bot plus a simple pilot. Any crash is a real
 integration bug; the win rate is a completability **floor**, not a balance
-target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
-zero crashes, and the Herald completes full 3-act runs even naively.
+target (the bot can't pilot combos or curate a deck). Baseline at 100
+runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reaver
+12, Starseer 1, Rogue 54, Herald 58 wins; zero crashes.
 
 ## M1 known deviations (tracked for M2/M3)
 
-1. **Frostbite** is specced (SPEC §4.4) but not shipped — its
-   "next big hit +30%, then consumed" needs a conditional-consume hook no M1
-   content uses. Lands with the M2 flask that applies it.
-2. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
-   while in hand" needs an in-hand card hook (engine seam planned with M2's
-   event system, which is the first thing that can grant Guilt).
-3. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
+Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
+falsifier), not deferred.
+
+1. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
    a generic choose-one UI primitive is an M2/M3 feature.
-4. **Goreblood** freezes Poise thresholds as well as Bleed (the
-   `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
-   card text says so honestly).
+
+Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
+thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
+only Poise, and the card text and tooltip say Poise only.
+
+Resolved: **Guilt** is no longer inert. Since #1286 it loses its HP at the end
+of each of your turns while in hand, solo and in co-op, through the card's
+`onTurnEndInHand` hook (see *Add a card* above); the card text binds the amount.
 
 ## Dodge outcome presentation
 
@@ -781,4 +832,4 @@ runs snapshot the effective overrides in the existing advanced-config snapshot.
 Old saves bypass the opening. The completion callback persists before revealing
 the map.
 ### Ratings and starting pools
-Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its formula (base, a weight per attribute, growth per level), rating formula and constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup.
+Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test "tests/*.test.mjs".

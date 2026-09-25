@@ -42,8 +42,11 @@ import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { attachArtCharge, endArtChargeResolution, takeArtUnleash } from './artCharge.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
 import { refreshCombatRatings } from './combatRatings.js';
+import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
+import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
+import { turnDrawCount, endTurnCardFate } from './handRules.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -55,12 +58,12 @@ export function coopHpMult(headcount, factor = 0.6) {
 }
 
 /**
- * createCoopCombat({ registries, rng, players, enemyIds, extraHpMult?, enemyStatuses? })
+ * createCoopCombat({ registries, rng, players, enemyIds, extraHpMult?, enemyDamageMult?, enemyStatuses? })
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
- * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom).
+ * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
+ * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
-  const bal = registries.balance || {};
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -69,7 +72,9 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended' | 'suspended'
     result: null,
-    handMax: bal.handMax != null ? bal.handMax : 10,
+    // Pointed at the active seat's own hand size (setActive): each seat counts
+    // cards by its own stat rows, exactly as a solo fight does.
+    handMax: LEGACY_HAND_MAX,
     enemies: [],
     eventLog: [],
     queue: [],
@@ -118,6 +123,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
       instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
       arcaneExposure: def.arcaneExposure,
       damageResistanceBySchool: def.damageResistanceBySchool,
+      damageMult: enemyDamageMult,
     }));
   });
   if (C.ratingsRules) {
@@ -200,8 +206,22 @@ function addPlayerState(C, p, { initial = false } = {}) {
   for (const card of shuffled) {
     (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
   }
+  // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
+  // the shipped behaviour options plus its own opening-hand, draw and
+  // hand-size rows, and its ratings its own rating rows. A seat born before
+  // ruleset 7 keeps what co-op always gave it — a fresh hand of its derived
+  // draw each turn, capped by the retired fallback hand size.
+  const legacy = readsLegacyStatHomes(p);
+  const handRules = legacy ? null : resolveHandRules({}, handStatRows(C.registries, p));
+  const level = Number.isInteger(p.level) && p.level >= 1 ? p.level : 1;
+  const ratingRows = C.ratingsRules ? ratingStatRows(C.registries, p) : null;
   const P = {
     id: p.id,
+    level,
+    handRules,
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), p.attributes || {}, level) : LEGACY_HAND_MAX,
+    ratingRows: ratingRows && Object.values(ratingRows).every(Boolean) ? ratingRows : null,
+    derivedStatRuleSnapshot: p.derivedStatRuleSnapshot || null,
     name: p.name || p.id,
     classId: p.classId,
     attributeMode: p.attributeMode,
@@ -240,7 +260,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
-      A.drawCards(C, P.entity.drawPerTurn);
+      A.drawCards(C, P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
+      P.opened = true;
     }
     rescaleEnemies(C);
   }
@@ -254,6 +275,7 @@ function setActive(C, P) {
   // class-priced cost read `attributes` / `loadout` off it, so the active
   // seat's own are exposed here — the same fields the solo engine carries.
   C.attributes = P ? P.attributes : null;
+  C.attributeMode = P ? P.attributeMode || null : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
   C.skills = P ? P.skills : {};
@@ -262,6 +284,13 @@ function setActive(C, P) {
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
   C.playerKey = P ? P.id : null;
+  // The seat's own stat rows: the hand rules and hand size its draws obey,
+  // the level its rows read, and the rating rows its ratings are priced by.
+  C.handRules = P ? P.handRules : null;
+  C.handMax = P ? P.handMax : LEGACY_HAND_MAX;
+  C.characterLevel = P ? P.level : undefined;
+  C.derivedStatRuleSnapshot = P ? P.derivedStatRuleSnapshot : null;
+  if (P && P.ratingRows && C.ratingsRules) C.ratingsRules.ratings = P.ratingRows;
 }
 
 function firstLiving(C) {
@@ -364,7 +393,10 @@ function startPlayerPhase(C) {
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
-    A.drawCards(C, e.drawPerTurn);
+    // A seat's FIRST hand is its opening hand, whichever turn it arrives on (a
+    // seat that joins during the enemy phase opens on the next player turn).
+    A.drawCards(C, P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn);
+    P.opened = true;
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);
@@ -592,6 +624,22 @@ function endOnePlayerTurn(C, P) {
   fireOwnerHooks(C, p, 'ownerTurnEnd');
   drainQueue(C);
   if (C.result) return;
+  // Each card still in this seat's hand fires its authored `onTurnEndInHand`
+  // list (Guilt: lose 1 HP, SPEC §5.2) — the solo engine's rule, same order:
+  // after owner hooks, before status decay and the hand discard.
+  let inHandFired = false;
+  for (const card of [...C.piles.hand]) {
+    const hook = resolveCard(C.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      C.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(C);
+    if (C.result) return;
+  }
   S.decayAtTurnEnd(C, p);
   // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
   // recovers, a spending turn does not — the same rule and door as the solo
@@ -610,11 +658,15 @@ function endOnePlayerTurn(C, P) {
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
     const def = resolveCard(C.registries, card);
-    const fate = C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
+    const fate = P.handRules ? endTurnCardFate(C, card)
+      : C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
+  // Kept cards past the seat's hand size go to the discard, as a solo fight's
+  // overflow does (co-op has no turn-end discard prompt).
+  if (P.handRules && P.handRules.overflow === 'discard' && keep.length > C.handMax) toDiscard.push(...keep.splice(C.handMax));
   C.piles.hand = keep;
   for (const card of toExhaust) { C.piles.exhaust.push(card); C.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' }); }
   for (const card of toDiscard) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
@@ -698,7 +750,7 @@ function executeMove(C, enemy, move, moveId) {
     if (C.result) return;
     setActive(C, P);
     if (move.damage != null) {
-      C.enqueue({ effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
+      C.enqueue({ effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
       drainQueue(C);
       if (C.result) return;
     }
@@ -734,7 +786,7 @@ function rollIntents(C, isFirstTurn = false) {
     else moveId = weightedMovePick(C, enemy, def);
     if (moveId == null) { enemy.intent = { kind: 'unknown', moveId: null }; continue; }
     enemy.movesHistory.push(moveId);
-    enemy.intent = buildIntent(def.moves[moveId], moveId);
+    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
   }
 }
 
@@ -755,10 +807,10 @@ function weightedMovePick(C, enemy, def) {
   return pool[pool.length - 1][0];
 }
 
-function buildIntent(move, moveId) {
+function buildIntent(move, moveId, enemy = null) {
   return {
     kind: move.intent, moveId,
-    damage: move.damage != null ? move.damage : null,
+    damage: enemyMoveDamage(enemy, move),
     hits: move.damage != null ? (move.hits != null ? move.hits : 1) : null,
     block: move.block != null ? move.block : null,
     delayed: !!move.delay, pending: false,

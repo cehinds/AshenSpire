@@ -4,7 +4,8 @@ import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
-import { defaultRatingFormula, effectiveEquipmentRating, ratingIds, weaponScalingProblems } from './ratingFormula.js';
+import { effectiveEquipmentRating, ratingIds, weaponScalingProblems } from './ratingFormula.js';
+import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -1134,13 +1135,16 @@ export function equipmentKitPlan(registries, loadout, classId) {
   return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
 }
 
-function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot) {
+function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot, run = null) {
   const profile = row.profile;
   const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
   if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  const ratingConfig = registries.balance?.combatRatings || defaultRatingFormula;
+  // THE RUN'S OWN RATING ROWS (ruleset 7, model/statRows.js): a card's rating
+  // is priced by the rows the run was born with, or the live table for a
+  // preview with no run behind it.
+  const ratingConfig = ratingsConfigFor(registries, run) || LEGACY_RATING_FORMULA;
   // The run's own grade table (SPEC §13.4o) prices the ATTACK role only — the
   // strike the weapon throws; its guard and technique cards keep the flat
   // rating. A snapshot born before the table has none, and every weapon it
@@ -1148,9 +1152,9 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   // the strike off the player's own ratings (engine/combatRatings.js), which
   // the grades do not touch (SPEC §13.4o), so the stamp reads flat there too —
   // otherwise the card and the Level-up preview promise damage the fight never
-  // deals.
+  // deals. The graded terms are priced on the same stat row as the flat ones.
   const scaling = row.role === 'attack' && !ratingConfig.enabled ? (equipmentProfileRuleSnapshot.weaponScaling || null) : null;
-  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, scaling);
+  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, { level: run?.level?.level, scaling });
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
   const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
@@ -1191,9 +1195,9 @@ export function deckCardReceipt(registries, run, inst, attributes = run.attribut
 }
 
 /** Calculation receipts for card base + source-equipment rating + rarity. */
-export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
+export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot, run = null) {
   const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
-  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot, run) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -3014,7 +3018,7 @@ export function stampDeck(registries, run, cards, {
   // BEFORE the stamping loop (in place — list IS run.deck here) means a
   // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
@@ -3025,7 +3029,7 @@ export function stampDeck(registries, run, cards, {
         ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
         : null;
       row = { role: inst.kitRole || 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot);
+      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot, run);
     }
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];

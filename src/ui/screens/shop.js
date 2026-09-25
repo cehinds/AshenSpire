@@ -16,7 +16,7 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
-import { joinDeck } from '../../model/skills.js';
+import { joinDeck, deckInstanceId } from '../../model/skills.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal, modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
@@ -223,7 +223,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         ...purchaseReview({ kind: 'card', name: def.name, cost: item.cost, cinders: run.cinders }),
         onConfirm: () => {
           run.cinders -= item.cost;
-          joinDeck(registries, run, { instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
+          joinDeck(registries, run, { instanceId: deckInstanceId(run, 's', item.id), cardId: item.id, upgraded: false });
           stock.cards.splice(i, 1);
           sfx.play('buy');
           onChanged();

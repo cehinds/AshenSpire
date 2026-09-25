@@ -136,6 +136,14 @@ export const PROLOGUE_STAGE_FIELDS = Object.freeze([
   { key: 'textBoxVisible', topic: 'Text', label: 'Container is visible', note: 'Off keeps the container’s spacing but draws nothing behind the words.' },
   { key: 'textBoxOpacity', topic: 'Text', label: 'Container opacity', min: 0, max: 1, step: .01 },
   { key: 'textBoxColor', topic: 'Text', label: 'Container colour', type: 'colorSwatch' },
+  { key: 'captionFixedHeight', topic: 'Text', label: 'Use a fixed caption height',
+    note: 'Keeps the text panel the same height while the artwork fills the remaining space.' },
+  { key: 'captionHeightVh', topic: 'Text', label: 'Caption height (scene vh)', min: 8, max: 60, step: 1, integer: true,
+    note: 'Height as a percentage of the scene viewport. Long text scrolls inside the panel.' },
+  { key: 'bannerBox', topic: 'Text', label: 'Title banner has a container',
+    note: 'Places the title on a separate shaded strip over the artwork.' },
+  { key: 'bannerBoxColor', topic: 'Text', label: 'Title banner container colour', type: 'colorSwatch' },
+  { key: 'bannerBoxOpacity', topic: 'Text', label: 'Title banner container opacity', min: 0, max: 1, step: .01 },
   { key: 'textOutline', topic: 'Text', label: 'Outline the text',
     note: 'Draws a contrasting edge around every letter so words stay legible over bright artwork.' },
   { key: 'textOutlineColor', topic: 'Text', label: 'Outline colour', type: 'colorSwatch' },
@@ -309,6 +317,9 @@ export function prologueRows() {
   add(['presentation', 'tintSource'], 'Artwork tint follows', 'Motif', choice(['accent','character','custom'], {accent:'Interface accent',character:'Character tint',custom:'Custom colour'}));
   add(['presentation', 'customTint'], 'Custom artwork colour', 'Motif', {type:'color'});
   add(['presentation', 'shadowStrength'], 'Character shadow strength', 'Motif', number(0,1,.05));
+  add(['presentation', 'editorGrid'], 'Show scene editor grid', 'Stage');
+  add(['presentation', 'editorSnap'], 'Snap scene editor drags to grid', 'Stage');
+  add(['presentation', 'editorGridStep'], 'Scene editor grid interval (%)', 'Stage', whole(2, 25));
   // The house style: what a scene is staged in unless it answers for itself.
   for (const field of PROLOGUE_STAGE_FIELDS) {
     add(['presentation', field.key], field.label, field.topic, {
@@ -343,7 +354,10 @@ export function prologueRows() {
     add([...path,'effect'], 'Transition effect', scene.name, choice(['fade','dip','push','ash','still'], {fade:'Crossfade',dip:'Fade through black',push:'Slow push',ash:'Ash reveal',still:'Still'}));
     if ('location' in scene) add([...path,'location'], 'Location caption', scene.name, {...text(160),note:'Use {location} to show the actual starting destination.'});
     if (scene.actor) for (const layout of ['desktop','mobile']) for (const axis of ['x','y','height']) {
-      add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, number(axis === 'height' ? 10 : 0,100,1));
+      const note = axis === 'x' ? '0 is the left edge, 50 is center, and 100 is the right edge of the painting.'
+        : axis === 'y' ? 'The point where the traveller’s feet touch the ground: 0 at the top, 100 at the bottom.'
+          : 'Traveller size as a percentage of the artwork height.';
+      add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, {...number(axis === 'height' ? 10 : 0,100,1), note});
     }
     // ONE TOGGLE, THEN THE SCENE'S OWN COPY OF THE WHOLE STAGING.
     add([...path,'ownStaging'], 'Use its own staging', scene.name, {note:'Off follows the opening’s Stage and Text settings. On, the rows below decide this scene alone — one scene may letterbox while the rest fill the frame.'});
@@ -657,16 +671,17 @@ export function prologueTint(config, settings = {}, customization = {}) {
   return accent;
 }
 
-// Resolve the real destination NAME without drawing gameplay RNG or assigning a
-// class a region. It used to resolve a painting too; the final scene no longer
-// swaps its artwork for the destination's, and nothing in src/ read `art` — the
-// only thing keeping it alive was a test asserting it. A branch whose sole
-// consumer is its own test is not a feature, it is a claim about behaviour that
-// does not happen.
+// The last painting follows the actual starting region, independently of class.
+// World Journey currently starts at Crownfall; resolve the atlas region so a
+// later profile can use the same selection without consuming any gameplay RNG.
 export function prologueDestination(run = {}) {
   const start = run.journey?.anchors?.start;
-  if (start) return {name: ATLAS.nodes[start]?.displayName || start};
-  return {name: SEATS.find(s=>s.id===run.seatOrder?.[0])?.name || 'Crownfall'};
+  if (start) {
+    const art = { 'hollow-weald': 'weald', 'pale-marches': 'marches', 'cinder-reach': 'reach' }[ATLAS.regionOf(start)] || 'crownfall';
+    return {name: ATLAS.nodes[start]?.displayName || start, art};
+  }
+  const seat = SEATS.find(s=>s.id===run.seatOrder?.[0]);
+  return {name: seat?.name || 'Crownfall', art: seat?.id || 'crownfall'};
 }
 
 export function shouldPlayPrologue(settings = {}, seen = false) {

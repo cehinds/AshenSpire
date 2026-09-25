@@ -49,7 +49,7 @@ function revealSteps(text, stage) {
 
 // One renderer serves both the real opening and the settings preview. Its only
 // writes are explicit callbacks; previewing cannot create a run or consume RNG.
-export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, preview = false, audio = null, onScene = () => {}, onFinish = () => {}, onSettings} = {}) {
+export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, preview = false, editorPreview = false, forceLayout = null, audio = null, onScene = () => {}, onFinish = () => {}, onSettings} = {}) {
   const config = prologueConfig(settings), p = config.presentation;
   const classId = run.class || p.previewClass;
   const destination = prologueDestination(run);
@@ -83,6 +83,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // `skip` doubles as the preview's Close, which is not the player-facing skip
   // the setting is about.
   skip.hidden = !preview && p.showSkip === false;
+  if (editorPreview) {
+    root.classList.add('prologue-editor-still');
+    controls.hidden = true;
+    progress.hidden = true;
+  }
   host.replaceChildren(root);
   // THE STAGING IS WRITTEN AS CSS CUSTOM PROPERTIES, and written again for each
   // scene: a scene that keeps its own staging (prologueStaging) answers every
@@ -105,10 +110,16 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     caption.dataset.position = String(stage.textPosition || 'bottom-center');
     root.classList.toggle('prologue-has-box', stage.textBox !== false);
     root.classList.toggle('prologue-box-hidden', stage.textBox !== false && stage.textBoxVisible === false);
+    root.classList.toggle('prologue-fixed-caption', stage.captionFixedHeight === true);
+    root.classList.toggle('prologue-banner-box', stage.bannerBox !== false);
     root.classList.toggle('prologue-outlined', stage.textOutline === true && Number(stage.textOutlineWidth) > 0);
     root.style.setProperty('--prologue-text-scale', String(stage.textScale ?? 1));
     root.style.setProperty('--prologue-text-align', stage.textAlign || 'center');
     root.style.setProperty('--prologue-box', prologueBoxBackground(stage));
+    root.style.setProperty('--prologue-caption-vh', String(Number(stage.captionHeightVh) || 18));
+    const bannerHex = /^#([0-9a-f]{6})$/i.exec(stage.bannerBoxColor || '#100e0c')?.[1] || '100e0c';
+    const bannerRgb = [0, 2, 4].map(index => parseInt(bannerHex.slice(index, index + 2), 16));
+    root.style.setProperty('--prologue-banner-box', `rgba(${bannerRgb.join(',')},${Math.max(0, Math.min(1, Number(stage.bannerBoxOpacity ?? 1)))})`);
     root.style.setProperty('--prologue-outline-color', stage.textOutlineColor || '#100e0c');
     root.style.setProperty('--prologue-outline-width', `${Number(stage.textOutlineWidth) || 0}px`);
     // BARE NUMBERS, because a percentage margin measures the container's WIDTH
@@ -141,7 +152,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     dial(root, '--prologue-box-backdrop', stage.boxBlur, 'boxBlur', value => `blur(${value}px)`);
     title.hidden = stage.titleVisible === false;
     speaker.hidden = stage.speakerVisible === false;
-    progress.hidden = stage.progressStyle === 'hidden';
+    progress.hidden = editorPreview || stage.progressStyle === 'hidden';
   }
   // THE PICTURE IS THE PLATE'S, and it is written on the plate rather than on
   // the frame: the two plates overlap for the length of a crossfade, and a
@@ -168,14 +179,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // The scenes play in the configured ORDER, over the configured SUBSET; the
   // numbers below stay indices into the authored list, which is what a paused
   // run recorded and what every setting key is named for.
-  const order = prologueSequence(config);
+  const order = editorPreview ? [Math.max(0, Math.min(config.scenes.length - 1, startScene))] : prologueSequence(config);
   // A run paused on a scene since switched off resumes on the next scene still
   // in the opening (prologueResumePosition), rather than on one it has watched.
-  let position = prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
+  let position = editorPreview ? 0 : prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
   let sceneIndex = order[position], elapsed = 0;
   let stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
   let animations = [], previous = null, reveal = null, delayMs = 0;
-  const reduced = () => p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
+  const reduced = () => editorPreview || p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
   const ownerVeil = root.closest('.modal-veil');
   const blocked = () => document.hidden || (topVeil() && topVeil() !== ownerVeil);
   const transitionMs = (scene,stage) => prologueTransitionMs(scene,stage,reduced());
@@ -223,7 +234,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   async function showScene(at,{resumeAt = 0,notify = true} = {}) {
     const token = ++serial; loading = true; next.disabled = true;
     position = Math.max(0,Math.min(order.length-1,at)); sceneIndex = order[position]; elapsed = resumeAt; last = 0;
-    const scene = config.scenes[sceneIndex], layout = portrait.matches ? 'mobile' : 'desktop';
+    const scene = config.scenes[sceneIndex], layout = forceLayout || (portrait.matches ? 'mobile' : 'desktop');
     const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
     if (notify) onScene(sceneIndex);
     const stage_ = prologueStaging(config,scene);
@@ -236,7 +247,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const art = prologueSceneArt(scene);
     const images = [];
     if (art) {
-      const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(art,layout,{classId})});
+      const background = el('img',{class:'prologue-background',alt:'',src:prologueArtwork(art,layout,{classId,destinationArt:scene.id === 'step' ? destination.art : 'crownfall'})});
       images.push(background); plate.append(background);
     } else {
       plate.classList.add('prologue-plate-bare');
@@ -338,13 +349,13 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       if (reveal) reveal(Math.max(0,elapsed-delayMs),reduced());
       // A scene may HOLD: the owner marks it, and it waits for Continue however
       // the opening is otherwise paced.
-      if (p.autoAdvance && !scene.waitForInput && elapsed >= prologueSceneMs(scene) && position < order.length-1) showScene(position+1);
+      if (!editorPreview && p.autoAdvance && !scene.waitForInput && elapsed >= prologueSceneMs(scene) && position < order.length-1) showScene(position+1);
     }
     last = now; raf = requestAnimationFrame(tick);
   }
   // The whole picture can be the Continue button, for a reader who would rather
   // not aim at one.
-  if (p.advanceOnClick === true) {
+  if (!editorPreview && p.advanceOnClick === true) {
     stage.style.cursor = 'pointer';
     stage.addEventListener('click',()=>{ if (!loading && !paused) next.click(); });
   }
@@ -363,14 +374,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     settingsButton.onclick = () => { if (!paused && !pause.hidden) togglePause(); onSettings(); };
     controls.insertBefore(settingsButton,skip);
   }
-  portrait.addEventListener('change',rotate);
+  if (!forceLayout) portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);
   // THE FRAME IS UP BEFORE THE ARTWORK IS. `showScene` applies the staging when
   // it appends the plate, which waits on the painting decoding (up to eight
   // seconds when the file is missing) — so the opening used to draw its first
   // scene in the shipped caption layout and jump into the chosen one later.
   applyStaging(prologueStaging(config,config.scenes[sceneIndex]));
-  showScene(position); raf = requestAnimationFrame(tick); next.focus({preventScroll:true});
+  showScene(position); raf = requestAnimationFrame(tick); if (!editorPreview) next.focus({preventScroll:true});
   return cleanup;
 }
 

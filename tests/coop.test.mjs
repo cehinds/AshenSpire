@@ -21,6 +21,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
+import { statRow } from '../src/model/statRows.js';
+import { statRowValue } from '../src/model/derivedStats.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createCoopCombat, playCard as coopPlayCard, endTurn as coopEndTurn, coopHpMult } from '../src/engine/coopCombat.js';
 import { seatOrderProblems } from '../src/model/seats.js';
@@ -559,5 +561,22 @@ test('co-op: a seeded party plays the shared run through the host and the LAN do
     assert.ok(solo.enemies[0].hp < 999, 'the solo strike lands');
     assert.equal(coop.enemies[0].hp, solo.enemies[0].hp, 'the same strike deals the same damage in co-op');
     assert.deepEqual(P.artCharge, solo.artCharge, 'and charges the same Art meter');
+  }
+
+  // ---- each seat counts its hand by its own run's stat rows (ruleset 7) ----------------------
+  {
+    const seats = ['starseer', 'reaver'].map((classId, index) => {
+      const run = createRunState({ seed: 20 + index, classId, registries: REG });
+      return { id: `p${index + 1}`, classId, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+        attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot, deck: run.deck, relicIds: [], flasks: [], level: 1 };
+    });
+    const C = createCoopCombat({ registries: REG, rng: createRng(9), players: seats, enemyIds: ['wanderingSoldier'] });
+    for (const seat of seats) {
+      const P = C.players.get(seat.id);
+      const own = (id) => statRowValue(statRow(REG, seat, id), { attributes: seat.attributes, level: 1, lenientAttributes: true }).value;
+      assert.equal(P.handMax, own('handSize'), `${seat.classId} seat: Hand size is its own row`);
+      assert.equal(P.piles.hand.length, Math.min(own('openingHand'), own('handSize')), `${seat.classId} seat: opening hand is its own row`);
+      assert.equal(P.entity.drawPerTurn, own('draw'), `${seat.classId} seat: Draw / turn is its own row`);
+    }
   }
 });

@@ -21,6 +21,13 @@
 
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 
+// THE SHIPPED SCORE. The repo's music/ folder (music/manifest.json, filled from
+// music/PROMPTS.md) is served beside every hosted and preview build. With the
+// Custom music folder setting blank, a page served over http(s) reads it from
+// here; a context it leaves empty, a missing file or a file:// page (browsers
+// block the fetch) keeps the procedural beds below.
+export const SHIPPED_MUSIC_FOLDER = 'music';
+
 // A real build can point these at files; missing/failed loads fall back to synth.
 export const MUSIC_MANIFEST = {
   // combat: 'assets/music/combat.ogg',
@@ -101,3 +108,22 @@ export const BEDS = {
     { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
   ] },
 };
+
+// THE MAP SOUNDS LIKE WHERE YOU ARE. Each region the map can stand in has its
+// own context, `map-<region id>` (ids from content/config/ui/presentation/
+// environments.json). They share the map's procedural bed, so a region with no
+// recorded track sounds exactly as the map always has; the music folder can
+// name tracks per region, and a region it leaves empty falls back to the
+// folder's plain `map` list (MUSIC_TRACK_FALLBACK) before the synth.
+export const MAP_REGIONS = ['hollow-weald', 'pale-marches', 'cinder-reach', 'drowned-coast', 'ashen-crown'];
+export const MUSIC_TRACK_FALLBACK = {};
+for (const id of MAP_REGIONS) {
+  BEDS[`map-${id}`] = BEDS.map;
+  MUSIC_TRACK_FALLBACK[`map-${id}`] = 'map';
+}
+
+// The context the map screen asks for: its region's, or plain `map` when the
+// region is unknown.
+export function mapMusicContext(regionId) {
+  return MAP_REGIONS.includes(regionId) ? `map-${regionId}` : 'map';
+}

@@ -19,7 +19,11 @@ import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '.
 import { computeAttackDamage, computeBlockGain, drawCards, dealPoiseDamage, executeAction } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { resolveHandRules, scaledCards, HAND_RULES_PREFIX } from '../src/model/handRules.js';
+import { resolveHandRules, handRow, scaledCards, HAND_RULES_PREFIX } from '../src/model/handRules.js';
+import { handStatRows, ratingStatRows } from '../src/model/statRows.js';
+import { resolvedRuleRow, statRowValue } from '../src/model/derivedStats.js';
+import { attributeRatingReceipt, gradedAttributeRatingReceipt } from '../src/model/ratingFormula.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
 import { discardChoicePlan } from '../src/engine/handRules.js';
 import { resolveCombatRatings, attackImpact } from '../src/model/combatRatings.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
@@ -135,9 +139,21 @@ const protoPlay = (c, cardId, targetId = 'e1') => dispatch(c, { type: 'playCard'
 const frozen = (c) => JSON.stringify({ snapshot: serializeCombatSnapshot(c), counters: c.rng.getCounters() });
 
 // The hand-rules fight: the shipped bundle, 25 Strikes, rules from settings.
-function handFight(overrides = {}, attributes = { intelligence: 10 }) {
-  const settings = Object.fromEntries(Object.entries(overrides).map(([k, v]) => [HAND_RULES_PREFIX + k, v]));
-  return createCombat({ registries: SHIPPED, rng: createRng(2309), handRules: resolveHandRules(settings, contentBundle.attributes),
+// Since ruleset 7 the three counts are stat rows (content/derivedStats.js) and
+// only the behaviour options are settings. LEGACY_ROWS pin the mechanics these
+// rows were written against (open 3 + INT/10, draw 2, hand 10) whatever the
+// shipped defaults become; SHIPPED_ROWS are the table the game ships.
+const LEGACY_RULES = { drawMode: 'fill', overflow: 'keep' };
+const LEGACY_ROWS = {
+  openingHand: { base: 2, intelligence: 0.1, min: 3, max: 10 },
+  draw: { base: 2, min: 0, max: 10 },
+  handSize: { base: 10, min: 1, max: 30 },
+};
+const SHIPPED_ROWS = handStatRows(SHIPPED, null);
+const rowsWith = (patch = {}, rows = LEGACY_ROWS) => Object.fromEntries(Object.entries(rows).map(([id, row]) => [id, { ...row, ...patch[id] }]));
+const handSettings = (overrides = {}, base = LEGACY_RULES) => Object.fromEntries(Object.entries({ ...base, ...overrides }).map(([k, v]) => [HAND_RULES_PREFIX + k, v]));
+function handFight(overrides = {}, attributes = { intelligence: 10 }, base = LEGACY_RULES, rows = LEGACY_ROWS) {
+  return createCombat({ registries: SHIPPED, rng: createRng(2309), handRules: resolveHandRules(handSettings(overrides, base), rows),
     player: { classId: 'reaver', maxHp: 10000, hp: 10000, maxMana: 0, energyMax: 3, drawPerTurn: 5, attributes, relicIds: [],
       deck: Array.from({ length: 25 }, (_, i) => ({ instanceId: `c${i}`, cardId: 'strike', upgraded: false })) },
     enemyIds: ['wanderingSoldier'] });
@@ -270,10 +286,13 @@ const ROWS = [
     expect: { same: true, reshuffled: true, drawn: 15 } },
   // One handFull receipt: the one card left in the draw pile overflows, and a
   // full hand never reshuffles the discard to overflow it again.
-  { name: 'draws past the 10-card hand go to discard as handFull, never reshuffling for the overflow',
+  // A fight with no hand rows (a pre-ruleset-7 co-op seat) keeps the retired
+  // 5-card fallback; with hand rows a full hand draws nothing (the hand-rule
+  // rows below).
+  { name: 'draws past the 5-card fallback hand go to discard as handFull, never reshuffling for the overflow',
     setup: () => makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] }),
-    actions: (c) => { play(c, 'tBigDraw'); return { hand: c.piles.hand.length, handFull: log(c, 'cardDiscarded', (e) => e.reason === 'handFull').length }; },
-    expect: { hand: 10, handFull: 1 } },
+    actions: (c) => { play(c, 'tBigDraw'); return { hand: c.piles.hand.length, handFull: log(c, 'cardDiscarded', (e) => e.reason === 'handFull').length, draw: c.piles.draw.length, shuffled: log(c, 'deckShuffled').length }; },
+    expect: { hand: 5, handFull: 6, draw: 0, shuffled: 0 } },
   { name: 'Exhaust on play, Ethereal exhausts at turn end, Retain stays in hand',
     setup: () => makeCombat({ stamina: 4, deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] }),
     actions: (c) => {
@@ -482,11 +501,13 @@ const ROWS = [
     expect: { first: { value: 2, max: 3 }, second: { value: 1, max: 4 } } },
 
   // ---- Combat Ratings: AR/DR/PR, Ward, Poise meters --------------------------------
-  { name: 'ratings: STR/DEX/INT 10 → AR 5 DR 5 PR 10, Poise = Ward = 16; +AR/+PR/+DR once',
+  // The rating rows (ruleset 7): every attribute 10 → AR 7+5+2+2+2, DR 5+7+2+3+1,
+  // PR 2+5+5+7, Poise 1+5+10+3+2, Ward 1+2+3+10+5 — one floor per term.
+  { name: 'ratings: all attributes 10 → AR 18 DR 18 PR 19, Poise = Ward = 21 on the stat rows; +AR/+PR/+DR once',
     setup: () => ratingsFight(),
     actions: (c) => ({ ratings: c.player.ratings, phys: computeAttackDamage(c, c.player, null, 10, [], physical), magic: computeAttackDamage(c, c.player, null, 10, [], magical),
       skillBlock: computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), bareBlock: computeBlockGain(c, c.player, 10) }),
-    expect: { ratings: { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 }, phys: 15, magic: 20, skillBlock: 15, bareBlock: 10 } },
+    expect: { ratings: { ar: 18, dr: 18, pr: 19, poise: 21, ward: 21 }, phys: 28, magic: 29, skillBlock: 28, bareBlock: 10 } },
   { name: 'ratings: physical resisted by Poise 100 (20 → 10), magic unresisted at Ward 0 (20)',
     setup: () => { const c = ratingsFight(); c.player.ratings.poise = 100; c.player.ratings.ward = 0; return c; },
     actions: (c) => ({ phys: computeAttackDamage(c, c.enemies[0], c.player, 20, [], physical), magic: computeAttackDamage(c, c.enemies[0], c.player, 20, [], magical) }),
@@ -578,16 +599,38 @@ const ROWS = [
       const filled = c.piles.hand.length; const kept = ids.every((id) => c.piles.hand.some((x) => x.instanceId === id));
       const draw = c.piles.draw.length; endTurn(c); return { opening, filled, kept, drawUnchanged: c.piles.draw.length === draw }; },
     expect: { opening: 3, filled: 10, kept: true, drawUnchanged: true } },
-  { name: 'hand rules scaling: STR 18 / 3 per card → 5, floor 3, off → 3, capacity 2, INT 30 opens 5',
-    setup: () => resolveHandRules({ [HAND_RULES_PREFIX + 'starting.stat']: 'strength', [HAND_RULES_PREFIX + 'starting.pointsPerCard']: 3 }, contentBundle.attributes),
-    actions: (rules) => { const strong = scaledCards(rules.starting, { strength: 18 }); const weak = scaledCards(rules.starting, { strength: 1 });
-      rules.starting.statEnabled = false;
-      return { strong, weak, off: scaledCards(rules.starting, { strength: 99 }), cap2: handFight({ 'capacity.base': 2 }).piles.hand.length, int30: handFight({}, { intelligence: 30 }).piles.hand.length }; },
+  { name: 'hand rows scaling: STR 0.3/pt → 18 opens 5, floor 3, weight 0 → 3, Hand size 2, INT 30 opens 5',
+    setup: () => resolveHandRules(handSettings(), rowsWith({ openingHand: { base: 0, intelligence: 0, strength: 0.3 } })),
+    actions: (rules) => { const opening = handRow(rules, 'openingHand'); const strong = scaledCards(opening, { strength: 18 }); const weak = scaledCards(opening, { strength: 1, intelligence: 30 });
+      opening.strength = 0;
+      return { strong, weak, off: scaledCards(opening, { strength: 99 }), cap2: handFight({}, undefined, undefined, rowsWith({ handSize: { base: 2 } })).piles.hand.length, int30: handFight({}, { intelligence: 30 }).piles.hand.length }; },
     expect: { strong: 5, weak: 3, off: 3, cap2: 2, int30: 5 } },
-  { name: 'fixed draw mode: +2 a turn (3 → 5); scaled base 1 + INT 20 / 5 → 3 + 4 = 7',
+  { name: 'shipped hand rows: INT 10 opens 6 (kept within 4–6); fixed mode at INT 4 opens 5 and fills to the Hand size 7',
+    setup: () => null,
+    actions: () => { const a = handFight({}, { intelligence: 10 }, {}, SHIPPED_ROWS); const b = handFight({}, { intelligence: 4 }, {}, SHIPPED_ROWS); const opened = b.piles.hand.length; endTurn(b);
+      return { int10: a.piles.hand.length, int10Row: scaledCards(SHIPPED_ROWS.openingHand, { intelligence: 10 }), int4: [opened, b.piles.hand.length] }; },
+    expect: { int10: 6, int10Row: 6, int4: [5, 7] } },
+  { name: 'one row prices every stat: each class\'s fight hand, Hand size, turn draw and rating attribute parts equal statRowValue',
+    setup: () => null,
+    actions: () => Object.fromEntries(SHIPPED.classes.all().map((cls) => {
+      const run = createRunState({ seed: 7, classId: cls.id, registries: SHIPPED });
+      const own = (id) => statRowValue(resolvedRuleRow(run.derivedStatRuleSnapshot.rules, id), { attributes: run.attributes, level: 1, lenientAttributes: true }).value;
+      const c = createRunCombat({ registries: SHIPPED, rng: createRng(1), run, enemyIds: ['wanderingSoldier'] });
+      const ratings = ['ar', 'dr', 'pr', 'ward', 'poise'].every((id) => attributeRatingReceipt({ ratings: ratingStatRows(SHIPPED, run) }, run.attributes, id).value === own(id));
+      return [cls.id, { draw: run.drawPerTurn === own('draw'), handSize: c.handMax === own('handSize'), opening: c.piles.hand.length === Math.min(own('openingHand'), own('handSize')), ratings }];
+    })),
+    expect: Object.fromEntries(SHIPPED.classes.all().map((cls) => [cls.id, { draw: true, handSize: true, opening: true, ratings: true }])) },
+  { name: 'a graded weapon rating is priced on its stat row: flat at or below the anchor, the grade above it, an unweighted attribute counted',
+    setup: () => ({ config: { ratings: { ar: { base: 1, strength: 0.5 } } }, scaling: { anchor: 10, grades: { A: 1, C: 0.25 } } }),
+    actions: ({ config, scaling }) => {
+      const at = (strength, dexterity) => gradedAttributeRatingReceipt(config, { strength, dexterity }, 'ar', { strength: 'A', dexterity: 'C' }, scaling).value;
+      return { flat: attributeRatingReceipt(config, { strength: 10 }, 'ar').value, atAnchor: at(10, 0), above: at(14, 0), dex: at(10, 18) };
+    },
+    expect: { flat: 6, atAnchor: 6, above: 10, dex: 8 } },
+  { name: 'fixed draw mode: +2 a turn (3 → 5); Draw row base 1 + INT 20 × 0.1 → 4 + 3 = 7',
     setup: () => null,
     actions: () => { const a = handFight({ drawMode: 'fixed' }); endTurn(a);
-      const b = handFight({ drawMode: 'fixed', 'turn.base': 1, 'turn.statEnabled': true, 'turn.pointsPerCard': 5 }, { intelligence: 20 }); endTurn(b);
+      const b = handFight({ drawMode: 'fixed' }, { intelligence: 20 }, undefined, rowsWith({ draw: { base: 1, intelligence: 0.1 } })); endTurn(b);
       return { fixed: a.piles.hand.length, scaled: b.piles.hand.length }; },
     expect: { fixed: 5, scaled: 7 } },
   { name: 'retention off discards the hand (2 drawn, 3 discarded); discard choice validates atomically',
@@ -605,7 +648,7 @@ const ROWS = [
   { name: 'overflow discard requires the selected excess (2); empty draw respects the reshuffle toggle',
     setup: () => null,
     actions: () => {
-      const c = handFight({ overflow: 'discard' }); c.handRules.capacity.base = 1; const plan = discardChoicePlan(c);
+      const c = handFight({ overflow: 'discard' }); c.handRules.rows.handSize.base = 1; const plan = discardChoicePlan(c);
       const bare = refusal(() => endTurn(c)) !== null; endTurn(c, plan.cards.slice(0, 2).map((x) => x.instanceId)); const hand = c.piles.hand.length;
       const r = handFight({ reshuffle: false }); r.piles.discard.push(...r.piles.draw.splice(0)); drawCards(r, 2); const noShuffle = r.piles.hand.length;
       r.handRules.reshuffle = true; drawCards(r, 2);
@@ -627,6 +670,22 @@ const ROWS = [
       return { rules, piles: JSON.stringify(r.piles) === JSON.stringify(c.piles), legacy: [legacy.piles.hand.length, legacy.piles.discard.length] };
     },
     expect: { rules: true, piles: true, legacy: [5, 3] } },
+
+  { name: 'Guilt costs 1 HP per copy in hand at turn end, before the hand is discarded; in the draw pile nothing',
+    setup: () => null,
+    actions: () => {
+      const loss = (piles) => {
+        const c = makeCombat({ deck: [...piles.map(() => 'guilt'), ...Array(8).fill('strike')], enemies: ['tDummy'] });
+        piles.forEach((pile, i) => { const id = `c${i + 1}`; for (const p of ['hand', 'draw', 'discard']) { const at = c.piles[p].findIndex((x) => x.instanceId === id); if (at >= 0) c.piles[p].splice(at, 1); }
+          c.piles[pile].push({ instanceId: id, cardId: 'guilt', upgraded: false }); });
+        const from = c.eventLog.length; endTurn(c); const ev = c.eventLog.slice(from); const stop = ev.findIndex((e) => e.type === 'enemyTurnStart');
+        const window = ev.slice(0, stop < 0 ? ev.length : stop);
+        return { hp: window.filter((e) => e.type === 'hpLost' && e.cause === 'curse:guilt').reduce((n, e) => n + e.amount, 0),
+          order: piles[0] === 'hand' ? window.findIndex((e) => e.type === 'hpLost') < window.findIndex((e) => e.type === 'cardDiscarded' && e.cardInstanceId === 'c1') : null };
+      };
+      return { one: loss(['hand']), two: loss(['hand', 'hand']).hp, draw: loss(['draw']).hp };
+    },
+    expect: { one: { hp: 1, order: true }, two: 2, draw: 0 } },
 
   // ---- Weapon Art charge ---------------------------------------------------------------------
   { name: 'Art meter: empty at start, greatsword max 3, +1 per own hit, Art below full never charges, cap holds',

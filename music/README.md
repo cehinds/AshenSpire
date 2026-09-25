@@ -1,8 +1,12 @@
 # Music folder
 
-Drop your own tracks here to replace the built-in generated score. Everything is
-optional — any context you leave empty keeps the procedural music, so you can
-override just the battle music if you like.
+This folder ships the game's recorded score (generated from
+[PROMPTS.md](PROMPTS.md)). Hosted and preview builds copy it beside the game, and
+with **Custom music folder** blank a page served over http(s) plays it; any
+context left empty keeps the procedural music. You can also drop your own tracks
+here, or point the setting at another folder.
+
+Generation prompts for every context: [PROMPTS.md](PROMPTS.md).
 
 ## Setup
 
@@ -10,7 +14,8 @@ override just the battle music if you like.
 2. List them in [`manifest.json`](manifest.json) under the matching context.
 3. In-game: **Settings → Audio → Music folder**, enter the path/URL to this
    folder (e.g. `music/` when the game is served from the project root, or a full
-   `https://…` URL). Leave it blank to use the built-in generated score.
+   `https://…` URL). Leave it blank to use this folder beside the page (or the
+   built-in generated score where it cannot be fetched, e.g. `file://`).
 
 The game fetches `<folder>/manifest.json`, then for each screen plays a **random
 track** from that context's list, picking a fresh one each time the track ends —
@@ -23,7 +28,10 @@ playback error falls back to the generated score for that context.
 music/
   manifest.json
   title/     one or more menu themes
-  map/       overworld / act-map ambience
+  map/       overworld ambience (fallback for every region)
+             region keys map-hollow-weald, map-pale-marches, map-cinder-reach,
+             map-drowned-coast, map-ashen-crown: the map's music where you stand;
+             a region left empty plays the plain `map` list
   combat/    normal battle tracks
   elite/     elite battle tracks
   boss/      boss battle tracks

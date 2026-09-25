@@ -23,13 +23,13 @@ import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { dispatch } from '../src/engine/combat.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks, spendSkillDraft, skillUpgradesCards, skillLevel, classSkillId, joinDeck } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, skillUpgradesCards, skillLevel, classSkillId, joinDeck, deckInstanceId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier } from '../src/model/seats.js';
-import { createRunState, validateRunShape } from '../src/model/state.js';
+import { createRunState, validateRunShape, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
@@ -48,8 +48,8 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 import { rewardPlan, resolveContinue } from '../src/model/rewardplan.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from '../src/model/smithing.js';
-import { stampDeck, resolveSwapCostRule } from '../src/model/loadout.js';
-import { resolveHandRules } from '../src/model/handRules.js';
+import { stampDeck } from '../src/model/loadout.js';
+import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { artChargeView } from '../src/model/artCharge.js';
 
 const REG = createRegistries(contentBundle);
@@ -209,24 +209,17 @@ function fight(ctx, nodeId, encounterId) {
   checkpoint(ctx, `${nodeId}:enter:${encounterId}`);
   const run = ctx.run;
   const deckIds = run.deck.map((c) => c.instanceId);
-  let combat = createCombat({
-    ratingsRules: REG.balance.combatRatings || null,
-    handRules: resolveHandRules({}, contentBundle.attributes),
-    registries: REG, rng: ctx.rng,
-    player: {
-      classId: run.class, attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
-      skills: run.skills, coreTags: run.coreTags,
-      maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
-      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: run.equipmentAttackSlotCount,
-      removedAttackSlotIds: run.removedAttackSlotIds, equipmentPoolDeficits: run.equipmentPoolDeficits,
-      itemUpgradeLevels: run.itemUpgradeLevels, itemMounts: run.itemMounts, armamentLevels: run.armamentLevels,
-      deck: run.deck, relicIds: run.relics, flasks: run.flasks, flaskCharges: run.flaskCharges, loadout: run.loadout,
-    },
-    enemyIds: enc.enemies,
-    swapCostRule: resolveSwapCostRule(REG, ctx.saves.loadMeta()),
+  // The one door a run's fight is built through (engine/runCombat.js): the
+  // live game and every simulator open it, so the hand and rating rows are
+  // this run's own (ruleset 7) and the Stamina entry rule applies.
+  let combat = createRunCombat({
+    registries: REG, rng: ctx.rng, run, enemyIds: enc.enemies,
+    settings: (ctx.saves.loadMeta() || {}).settings || {},
   });
   const at = () => where(ctx, `${nodeId}:${encounterId}:turn ${combat.turn}`);
+  // The shipped Stamina entry rule is full: every fight opens on full Stamina
+  // whatever the last one drained (plan A2).
+  assert.equal(combat.player.stamina, combat.player.maxStamina, `${at()} the fight did not open on full Stamina`);
   checkCombat(ctx, combat, deckIds, at());
   let guard = 0;
   let snapshotted = false;
@@ -266,14 +259,7 @@ function fight(ctx, nodeId, encounterId) {
 
   // onCombatEnd (src/main.js): write back, pay every ledger, stamp the deck.
   const r = ctx.run;
-  r.flasks = combat.player.flasks;
-  r.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : r.flaskCharges;
-  for (const field of ['hp', 'mana', 'stamina']) {
-    r[field] = combat.player[field];
-    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    r[maxField] = combat.player[maxField];
-  }
-  r.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  runCombatEnd(r, combat);
   const receipt = skillXpReceipt(combat);
   applySkillXp(REG, r, receipt);
   const classAward = awardClassXp(REG, r, { victory: combat.result === 'victory', pool: enc.pool });
@@ -372,7 +358,7 @@ function applyRow(ctx, row, cp) {
   switch (row.kind) {
     case 'cinders': run.cinders += row.amount; return true;
     case 'card':
-      joinDeck(REG, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      joinDeck(REG, run, { instanceId: deckInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       cp.chosenCardId = row.cardId; return true;
     case 'classDraft':
       if (!pickClassNode(REG, run, row.nodeId)) return false;
@@ -380,7 +366,7 @@ function applyRow(ctx, row, cp) {
       cp.chosenDraftNodeIds[row.key] = row.nodeId; return true;
     case 'skillDraft':
       if (!spendSkillDraft(run, row.skillId)) return false;
-      joinDeck(REG, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(REG, skillLevel(run, row.skillId)) });
+      joinDeck(REG, run, { instanceId: deckInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(REG, skillLevel(run, row.skillId)) });
       cp.chosenDraftCardIds[row.key] = row.cardId; return true;
     case 'flask': run.flasks.push({ flaskId: row.flaskId }); return true;
     case 'relic':
@@ -471,12 +457,15 @@ function shrine(ctx, node) {
     }
   }
   leaveLocation(visit);
+  // The guard counts THIS visit's loop: the shared tally spans every climb,
+  // and the ruleset-7 curve (10 XP a step) spends far more points per climb.
+  let spent = 0;
   for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
     const attrs = { ...run.attributes };
     applyLevelUp(REG, run, 'constitution');
     assert.ok(run.attributes.constitution >= attrs.constitution, `${where(ctx, node.id)} level-up lowered constitution`);
     ctx.stats.shrineLevelUps++;
-    if (ctx.stats.shrineLevelUps > 500) assert.fail(`${where(ctx, node.id)} level-up loop does not converge`);
+    if (++spent > 500) assert.fail(`${where(ctx, node.id)} level-up loop does not converge`);
   }
 }
 
@@ -686,6 +675,21 @@ test('solo run scenario: seeded solo climbs through acts 1-3 stay valid across s
     checkpoint(ctx, 'legacy:loaded');
     playOn(ctx, 6);
     stats.legacy++;
+  }
+
+  // A save from a NEWER build is refused by name and kept byte for byte: the
+  // slot stays occupied and nothing is archived (#1304).
+  {
+    const ctx = newCtx('newer', 0, true, { ...stats });
+    const current = JSON.parse(JSON.stringify(createRunState({ seed: 11, classId: classes[0], registries: REG })));
+    ctx.saves.saveRun(current, createRng(11));
+    const saved = JSON.parse(ctx.storage.getItem(RUN_KEY));
+    const bytes = JSON.stringify({ ...saved, schemaVersion: RUN_SCHEMA_VERSION + 1, fieldOnlyTheNewerBuildKnows: { kept: true } });
+    ctx.storage.setItem(RUN_KEY, bytes);
+    assert.equal(ctx.saves.loadRun(REG), null, 'a newer-schema save is refused');
+    assert.equal(ctx.saves.runStatus().state, 'newer', 'the refusal is named as a newer save, not a corrupt one');
+    assert.equal(ctx.storage.getItem(RUN_KEY), bytes, 'the slot still holds the newer build\'s exact bytes');
+    assert.equal(ctx.storage.getItem(RUN_ARCHIVE_KEY), null, 'nothing was archived');
   }
 
   // The boss relic door when the pool is exhausted: nothing is offered, and the

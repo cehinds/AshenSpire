@@ -28,27 +28,77 @@ export const derivedStatRules = {
   // (the same rate, arriving each level rather than in lumps); Mana, Stamina
   // and draw land on exactly the levels they always did. Ruleset 5 and earlier
   // are restored exactly as they were saved; only new runs read this.
-  rulesetVersion: 6,
+  // RULESET 7 — EVERY STAT IN THIS TABLE (owner, 2026-09-24).
+  //
+  // "mana should be derived but mostly comes from about 4 points in wisdom
+  // with some from constitution strength and intelligence … I'd like all
+  // features, handsize, draw amount, actions, ar, dr, pr, ward, poise, stamina,
+  // mana, hp settings to have a similiar interface and be driven by only that
+  // interface. default should equal about 2 when adding all partials values as
+  // the budget per with mana and stamina budget is about 1."
+  //
+  // So the combat ratings (AR, DR, PR, Ward, Poise — formerly model/
+  // ratingFormula.js) and the hand (opening hand, per-turn draw, hand size —
+  // formerly content/handRules.js and the balance fallback hand size) are rows here, in the
+  // row every pool already used:
+  //
+  //   base         before a single point is spent (whole points)
+  //   <attribute>  that attribute's decimal contribution per point, floored
+  //                on its own: 0.125 gives nothing until the attribute is 8
+  //   perLevel     decimal growth per character level after the first
+  //   min / max    optional bounds the value never leaves
+  //
+  // THE BUDGET: a row's weights sum to about 2, Mana's and Stamina's to 1.
+  // HP, Actions and the three hand rows are PRESERVED rather than re-budgeted
+  // — a literal sum of 2 would hand out some ten extra Actions at creation —
+  // and read what ruleset 6 read at every attribute 5 and at 12 in the lead
+  // stat. Rulesets 1–6 are restored exactly as they were saved; only new runs
+  // read this.
+  rulesetVersion: 7,
   defaults: {
     perLevel: 0,
-    cap: null,
   },
   rules: {
-    // One more action every five points of Dexterity.
-    energy: { base: 3, dexterity: 0.2 },
-    // One more card every five points of Intelligence, and one at level 11
-    // and every ten after.
-    draw: { base: 3, intelligence: 0.2, perLevel: 0.1 },
-    // 30 + 4 x CON, and a point per level.
-    hp: { base: 30, constitution: 4, perLevel: 1 },
-    // The body's own reserve: the pool IS Constitution.
-    stamina: { base: 1, constitution: 1, perLevel: 0.2 },
-    // WIS is the only authored Mana authority — classes carry no second base
-    // pool that can drift from this row.
-    mana: { base: 1, wisdom: 1, perLevel: 0.2 },
-    // The Poise vessel. Armour and relics remain the two external addends,
-    // exactly as HP's equipment bonus is.
-    poise: { base: 1, constitution: 1 },
+    // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
+    // pool reads a spread of attributes, not one.
+    energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
+    // The hand. Draw / turn and Hand size were single-attribute rules on INT,
+    // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
+    // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
+    // (`attributeBaseline`), so every INT reads what it read before.
+    //
+    // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
+    // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
+    // each class opens on its own base, plus one card for every two points of
+    // its primary attribute above 1 —
+    //   clamp(base + floor(max(0, primary − 1) / 2), 4, 6)
+    // — which is a weight of 0.5 counted from 1 (`attributeBaseline`). The
+    // Standard presets (primary 3) open 4 / 5 / 5 / 6; all 1s open 4 / 4 / 4 / 5.
+    // The shared base and Intelligence weight are the fallback for a fight
+    // with no class (a headless fixture); every shipped class has its own row.
+    openingHand: {
+      base: 4, intelligence: 0.5, attributeBaseline: 1, min: 4, max: 6,
+      byClass: {
+        reaver: { base: 3, strength: 0.5 },
+        rogue: { base: 4, dexterity: 0.5 },
+        herald: { base: 4, wisdom: 0.5 },
+        starseer: { base: 5, intelligence: 0.5 },
+      },
+    },
+    draw: { base: 2, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
+    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
+    hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    // Budget 1 each, the owner's own sums.
+    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
+    mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },
+    // The combat ratings, budget 2. Equipment, relics and statuses add on top.
+    ar: { base: 0, strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 },
+    dr: { base: 0, strength: 0.5, dexterity: 0.75, constitution: 0.25, wisdom: 0.35, intelligence: 0.15 },
+    pr: { base: 0, dexterity: 0.25, constitution: 0.5, wisdom: 0.5, intelligence: 0.75 },
+    ward: { base: 1, dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 },
+    // ONE Poise: the rating and the pool were two rows for one number. Armour
+    // and relics remain its external addends, exactly as HP's equipment bonus.
+    poise: { base: 1, strength: 0.5, constitution: 1, wisdom: 0.3, intelligence: 0.2 },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //
@@ -92,7 +142,13 @@ export const derivedStatRules = {
     // when it drifted, and it reached him. A spread worth watching gets a
     // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
-    draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
+    draw: { label: 'Draw / turn', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you draw at the start of each turn.' },
     poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
+    openingHand: { label: 'Opening hand', order: 7, disclosure: 'reveal', sense: 'How many cards you hold when a fight begins.' },
+    handSize: { label: 'Hand size', order: 8, disclosure: 'reveal', sense: 'The most cards you can hold at once.' },
+    ar: { label: 'AR', order: 9, disclosure: 'reveal', sense: 'How hard your physical attacks land.' },
+    dr: { label: 'DR', order: 10, disclosure: 'reveal', sense: 'How much your guard holds.' },
+    pr: { label: 'PR', order: 11, disclosure: 'reveal', sense: 'How hard your spells land.' },
+    ward: { label: 'Ward', order: 12, disclosure: 'reveal', sense: 'How well you shrug off magic and disruption.' },
   },
 };

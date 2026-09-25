@@ -33,7 +33,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import {
   MOBILE_ASSET_DIR, POLICY, MOBILE_ART_INLINED_BUDGET_BYTES,
-  inlinedBytes, webpDimensions, twinDimensions,
+  inlinedBytes, distinctInlinedBytes, webpDimensions, twinDimensions, policyFor,
 } from './mobileart-policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -76,6 +76,7 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
   let checks = 0;
   let rawBytes = 0;
   let inlined = 0;
+  const inlinedFiles = [];
   const wanted = runtimeArt(srcDir);
   if (!wanted.length) findings.push(`no runtime art found under ${posix(relative(TREE, srcDir) || srcDir)} — nothing to twin`);
   const twins = new Set(walk(twinDir).map((abs) => posix(relative(twinDir, abs))));
@@ -87,14 +88,17 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
     const src = readFileSync(abs);
     const out = readFileSync(resolve(twinDir, rel));
     rawBytes += out.length;
-    inlined += inlinedBytes(out.length);
+    // Fonts reach the page through CSS, which inlines every face as it is, so
+    // they are never aliased and always count in full.
+    if (rel.startsWith('fonts/')) inlined += inlinedBytes(out.length);
+    else inlinedFiles.push({ buf: out, ext: extname(rel) });
     if (extname(rel).toLowerCase() === '.webp') {
       const s = webpDimensions(src);
       const t = webpDimensions(out);
       if (!s) findings.push(`source is not a WebP the policy can size: assets/${rel}`);
       else if (!t) findings.push(`twin is not a WebP: ${name(rel)}`);
       else {
-        const want = twinDimensions(s, policy);
+        const want = twinDimensions(s, policyFor(rel, policy));
         if (t.width !== want.width || t.height !== want.height) {
           findings.push(`twin is ${t.width}×${t.height}, the policy wants ${want.width}×${want.height} of a ${s.width}×${s.height} source: ${name(rel)}`);
         }
@@ -119,6 +123,9 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
   findings.push(...stray.slice(0, listAtMost).map((s) => `stray file with no source under assets/: ${name(s)}`));
   if (stray.length > listAtMost) findings.push(`… and ${stray.length - listAtMost} more stray files`);
   checks += 1;
+  // The bundle inlines each distinct image once (duplicates are aliased), so
+  // the budget is held to that, not to the sum of every path.
+  inlined += distinctInlinedBytes(inlinedFiles);
   if (inlined > budget) findings.push(`the twin tree inlines to ${inlined} bytes, over the ${budget}-byte budget — tighten tools/mobileart-policy.mjs or cut art`);
   return { findings, checks, files: wanted.length, rawBytes, inlined };
 }
@@ -128,7 +135,8 @@ export function verify(srcDir, twinDir, { budget = MOBILE_ART_INLINED_BUDGET_BYT
 // ---------------------------------------------------------------------------
 const run = promisify(execFile);
 
-async function encodeOne(srcAbs, destAbs, policy) {
+async function encodeOne(srcAbs, destAbs, rel, basePolicy) {
+  const policy = policyFor(rel, basePolicy);
   const src = readFileSync(srcAbs);
   mkdirSync(dirname(destAbs), { recursive: true });
   if (extname(srcAbs).toLowerCase() !== '.webp') { writeFileSync(destAbs, src); return; }
@@ -164,7 +172,7 @@ async function generate(srcDir, twinDir, policy = POLICY) {
   const worker = async () => {
     while (next < wanted.length) {
       const item = wanted[next++];
-      await encodeOne(item.abs, resolve(twinDir, item.rel), policy);
+      await encodeOne(item.abs, resolve(twinDir, item.rel), item.rel, policy);
       done += 1;
       if (done % 500 === 0) console.log(`  ${done}/${wanted.length}`);
     }
@@ -194,15 +202,21 @@ function selftest() {
   const src = resolve(dir, 'assets');
   const twin = resolve(dir, MOBILE_ASSET_DIR);
   const put = (base, rel, bytes) => { const p = resolve(base, rel); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, bytes); };
+  // The fixture's twins are sized by the live policy, so retuning it does not
+  // turn the control red.
+  const big = twinDimensions({ width: 512, height: 512 }, POLICY);
+  const backdrop = twinDimensions({ width: 1536, height: 1024 }, policyFor('environments/', POLICY));
   const good = () => {
     rmSync(src, { recursive: true, force: true });
     rmSync(twin, { recursive: true, force: true });
     put(src, 'animations/x/ATK-01.webp', fakeWebp(512, 512, 4000));
     put(src, 'poses/small.webp', fakeWebp(200, 100, 900));
     put(src, 'bg/mask.svg', Buffer.from('<svg/>\r\n'));
+    put(src, 'environments/wide.webp', fakeWebp(1536, 1024, 9000));
     put(src, 'equipment/components/experiment.webp', fakeWebp(512, 512, 4000)); // authoring-only: no twin wanted
     put(src, 'animations/README.md', Buffer.from('not art\n'));                 // no MIME: no twin wanted
-    put(twin, 'animations/x/ATK-01.webp', fakeWebp(256, 256, 800));
+    put(twin, 'animations/x/ATK-01.webp', fakeWebp(big.width, big.height, 800));
+    put(twin, 'environments/wide.webp', fakeWebp(backdrop.width, backdrop.height, 2000));
     put(twin, 'poses/small.webp', fakeWebp(200, 100, 700));
     put(twin, 'bg/mask.svg', Buffer.from('<svg/>\n'));
   };
@@ -210,7 +224,8 @@ function selftest() {
     ['control: a complete twin tree passes', () => {}, null],
     ['a twin is missing', () => rmSync(resolve(twin, 'poses/small.webp')), /missing twin: assets-mobile\/poses\/small\.webp/],
     ['a twin nothing sources', () => put(twin, 'poses/ghost.webp', fakeWebp(10, 10)), /stray file .*assets-mobile\/poses\/ghost\.webp/],
-    ['a big source was not shrunk', () => put(twin, 'animations/x/ATK-01.webp', fakeWebp(512, 512, 800)), /twin is 512×512, the policy wants 256×256/],
+    ['a big source was not shrunk', () => put(twin, 'animations/x/ATK-01.webp', fakeWebp(512, 512, 800)), new RegExp(`twin is 512×512, the policy wants ${big.width}×${big.height}`)],
+    ['a backdrop held to the general rule, not its override', () => put(twin, 'environments/wide.webp', fakeWebp(480, 320, 2000)), new RegExp(`twin is 480×320, the policy wants ${backdrop.width}×${backdrop.height}`)],
     ['a small source was shrunk anyway', () => put(twin, 'poses/small.webp', fakeWebp(100, 50, 700)), /twin is 100×50, the policy wants 200×100/],
     ['a twin grew past its source', () => put(twin, 'poses/small.webp', fakeWebp(200, 100, 901)), /larger than its source \(901 > 900 bytes\)/],
     ['a verbatim copy that is not verbatim', () => put(twin, 'bg/mask.svg', Buffer.from('<svg id="x"/>\n')), /differs from a source the policy copies verbatim/],
