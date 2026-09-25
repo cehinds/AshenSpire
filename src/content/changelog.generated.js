@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1297",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the two component catalogs are checked against each other",
+    "detail": "Nothing you play changes. The interface-component check now fails when the written component catalog and the interactive one disagree about which components exist, the Armoury's asset family included, so neither can drift out of date.",
+    "build": "0.7.1.493",
+    "pullRequest": 1297,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1297"
+  },
+  {
     "id": "pr-1283",
     "date": "2026-09-24",
     "group": "2026-09-24",
