@@ -18,7 +18,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
-import { classHandRules } from '../../model/handRules.js';
+import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
@@ -2523,9 +2523,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The attribute cards state THIS fight's hand: its snapshot, which the
       // synthetic `meta` above cannot resolve (Codex, #1294). A fight from
       // before hand rules has no `combat.handRules` and deals from the legacy
-      // Draw / handMax; this fallback shows the class's CURRENT rules for it —
-      // an approximation for an old save, not a regression.
-      handRules: combat.handRules || classHandRules(readSettings(), registries.attributes.all(), run.class),
+      // Draw / handMax; this fallback shows the run's own rows under the
+      // current settings — an approximation for an old save, not a regression.
+      handRules: combat.handRules || runHandRules(registries, run, readSettings()),
       destination,
       inCombat: true,
       onSwap: (slotId, setIndex) => {

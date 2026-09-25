@@ -45,18 +45,39 @@ import { disclosureProblem } from './disclosure.js';
 // their own validator) and normalized ONCE, here, so no consumer downstream
 // carries a second vocabulary — which is the whole of "they are way too
 // separated" said in code.
-export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana', 'poise']);
+export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina', 'mana', 'poise',
+  'openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward']);
+// ---- RULESET 7: EVERY STAT IS A ROW OF THIS TABLE (owner, 2026-09-24) -------
+//
+// "I'd like all features, handsize, draw amount, actions, ar, dr, pr, ward,
+// poise, stamina, mana, hp settings to have a similiar interface and be driven
+// by only that interface."
+//
+// Ruleset 7 adds the hand (opening hand, per-turn draw, hand size) and the
+// combat ratings (AR, DR, PR, Ward) to the table the pools already lived in, so
+// there is ONE row shape, ONE formula (`statRowValue` below) and ONE settings
+// editor for all twelve. The three homes this retires — the rating formula's
+// `ratings.<id>` + global `multiplier`, the hand rules' single-stat
+// `{ statEnabled, stat, baseline, pointsPerCard, minimum, maximum }` groups, and
+// the balance fallback hand size — survive only as LEGACY ADAPTERS (model/statRows.js) that
+// turn a ruleset 1–6 run's own numbers into rows with carrier fields, so an old
+// save is priced exactly as it always was.
+export const HAND_STAT_IDS = Object.freeze(['openingHand', 'draw', 'handSize']);
+export const RATING_STAT_IDS = Object.freeze(['ar', 'dr', 'pr', 'poise', 'ward']);
+export const STAT_ROW_RULESET_VERSION = 7;
+const RULESET_7_ONLY = new Set(['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward']);
 // POISE BECAME A DERIVED ROW IN RULESET 5 (plan phase 9). Every ruleset before
 // it snapshotted five rows, and those snapshots are restored through this same
 // door, so the required set is a function of the version rather than a
 // constant: asking a version-4 save for a Poise row would archive it.
 export function derivedStatIdsFor(rulesetVersion) {
-  return DERIVED_STAT_IDS.filter((id) => id !== 'poise' || (Number(rulesetVersion) || 0) >= 5);
+  const version = Number(rulesetVersion) || 0;
+  return DERIVED_STAT_IDS.filter((id) => (id !== 'poise' || version >= 5) && (!RULESET_7_ONLY.has(id) || version >= 7));
 }
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6]);
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 /** The first ruleset written in the one format above. */
 export const UNIFIED_RULESET_VERSION = 6;
 export const DERIVED_STAT_SNAPSHOT_VERSION = 3;
@@ -71,11 +92,28 @@ const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'roun
 // validator is handed the legal set so a typo is still refused by name.
 const UNIFIED_DEFAULT_FIELDS = ['perLevel', 'cap'];
 const UNIFIED_RULE_FIELDS = ['base', 'perLevel', 'cap'];
-// Legal only on a snapshot row or an override layer — see the header.
-const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery'];
+// Ruleset 7 states its bounds as `min` / `max` on the row itself (the hand
+// rows carried them as `minimum` / `maximum`), and `cap` retires into `max`.
+const STAT_ROW_DEFAULT_FIELDS = ['perLevel'];
+const STAT_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline', 'byClass'];
+// A ROW MAY STATE A PER-CLASS FORM (owner, 2026-09-24, on #1294 and #1296:
+// "give the openingHand stat row a per-class form"). `byClass.<classId>` holds
+// that class's base and attribute weights (and, optionally, its own perLevel,
+// min, max or attributeBaseline); everything it does not state is the row's.
+// A class with no entry — or no class at all: a fixture, a preview — reads the
+// shared row. `attributeBaseline` is the attribute points a row counts from:
+// each term is floor(max(0, attribute − attributeBaseline) × weight), so the
+// opening hand's `floor((primary − 1) / 2)` is a weight of 0.5 from 1.
+const CLASS_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline'];
+// Legal only on a snapshot row or an override layer — see the header. The last
+// two carry the retired hand and rating arithmetic (model/statRows.js):
+// `pointsBaseline` is the hand rules' "points before bonuses", subtracted from
+// the attribute total before the tier; `multiplier` is the rating formula's
+// global multiplier, applied to the floored attribute total.
+const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery', 'cap', 'pointsBaseline', 'multiplier'];
 // Every key a row may carry that is NOT an attribute weight — the legacy
 // spellings included, because a normalized row is built by stripping these.
-const NON_WEIGHT_FIELDS = Object.freeze([...new Set([...RULE_FIELDS, ...UNIFIED_RULE_FIELDS, ...CARRIER_FIELDS])]);
+const NON_WEIGHT_FIELDS = Object.freeze([...new Set([...RULE_FIELDS, ...UNIFIED_RULE_FIELDS, ...STAT_ROW_FIELDS, ...CARRIER_FIELDS])]);
 const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
 const BASE_FIELDS = ['strategy', 'field'];
@@ -87,6 +125,11 @@ const EPSILON = 1e-9;
 /** True for a table (or snapshot envelope) written in the one format. */
 export function isUnifiedRuleset(rulesetVersion) {
   return (Number(rulesetVersion) || 0) >= UNIFIED_RULESET_VERSION;
+}
+
+/** True for a table written with `min` / `max` bounds and the twelve rows. */
+export function isStatRowRuleset(rulesetVersion) {
+  return (Number(rulesetVersion) || 0) >= STAT_ROW_RULESET_VERSION;
 }
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const own = (v, key) => Object.hasOwn(v, key);
@@ -160,13 +203,13 @@ function validatePerLevel(out, value, path) {
   if (!Number.isFinite(value.gain) || value.gain < 0) problem(out, `${path}.gain`, 'must be a finite number >= 0');
 }
 
-function validateDefaults(out, value, path, { partial, unified, carriers = false }) {
+function validateDefaults(out, value, path, { partial, unified, carriers = false, statRows = false }) {
   if (!plainObject(value)) {
     problem(out, path, 'must be a plain object');
     return;
   }
-  const fields = unified ? UNIFIED_DEFAULT_FIELDS : DEFAULT_FIELDS;
-  unknownFields(out, value, unified && carriers ? [...fields, ...CARRIER_FIELDS] : fields, path);
+  const fields = statRows ? STAT_ROW_DEFAULT_FIELDS : unified ? UNIFIED_DEFAULT_FIELDS : DEFAULT_FIELDS;
+  unknownFields(out, value, unified && carriers ? [...new Set([...fields, ...UNIFIED_DEFAULT_FIELDS, ...CARRIER_FIELDS])] : fields, path);
   for (const key of fields) if (!partial && !own(value, key)) problem(out, `${path}.${key}`, 'missing');
   if (unified) {
     validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, !partial);
@@ -177,7 +220,7 @@ function validateDefaults(out, value, path, { partial, unified, carriers = false
     validatePoints(out, value.pointsPerTier, `${path}.pointsPerTier`, !partial);
     validateRounding(out, value.rounding, `${path}.rounding`, !partial);
   }
-  validateCap(out, value.cap, `${path}.cap`, !partial);
+  validateCap(out, value.cap, `${path}.cap`, !partial && !statRows);
 }
 
 /**
@@ -201,7 +244,7 @@ function validateUnifiedRule(out, value, path, options, partial) {
     problem(out, path, 'must be a plain object');
     return;
   }
-  unknownFields(out, value, [...UNIFIED_RULE_FIELDS, ...options.attributeIds,
+  unknownFields(out, value, [...(options.statRows ? STAT_ROW_FIELDS : UNIFIED_RULE_FIELDS), ...options.attributeIds,
     // Only a snapshot row or a layer may carry these; an authored ruleset-6
     // table that spells one is refused by name (see the header).
     ...(options.carriers ? CARRIER_FIELDS : [])], path);
@@ -223,10 +266,54 @@ function validateUnifiedRule(out, value, path, options, partial) {
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
   validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, false);
+  for (const bound of ['min', 'max']) {
+    if (value[bound] !== undefined && value[bound] !== null && (!Number.isInteger(value[bound]) || value[bound] < 0)) {
+      problem(out, `${path}.${bound}`, 'must be null or a whole number >= 0');
+    }
+  }
+  if (Number.isInteger(value.min) && Number.isInteger(value.max) && value.min > value.max) {
+    problem(out, `${path}.min`, `must not exceed max (${value.max})`);
+  }
+  if (value.pointsBaseline !== undefined && (!Number.isFinite(value.pointsBaseline) || value.pointsBaseline < 0)) {
+    problem(out, `${path}.pointsBaseline`, 'must be a finite number >= 0');
+  }
+  if (value.attributeBaseline !== undefined && (!Number.isFinite(value.attributeBaseline) || value.attributeBaseline < 0)) {
+    problem(out, `${path}.attributeBaseline`, 'must be a finite number >= 0');
+  }
+  if (value.byClass !== undefined) validateByClass(out, value.byClass, `${path}.byClass`, options);
+  if (value.multiplier !== undefined && (!Number.isFinite(value.multiplier) || value.multiplier < 0)) {
+    problem(out, `${path}.multiplier`, 'must be a finite number >= 0');
+  }
   for (const id of options.attributeIds) {
     if (value[id] === undefined) continue;
     if (!Number.isFinite(value[id]) || value[id] < 0) {
       problem(out, `${path}.${id}`, 'must be a finite number >= 0 — the contribution of one point of this attribute');
+    }
+  }
+}
+
+/** A row's per-class form: one partial row per class id (see CLASS_ROW_FIELDS). */
+function validateByClass(out, value, path, options) {
+  if (!plainObject(value)) { problem(out, path, 'must be a plain object of class id → row'); return; }
+  for (const [classId, row] of Object.entries(value)) {
+    const at = `${path}.${classId}`;
+    if (!plainObject(row)) { problem(out, at, 'must be a plain object'); continue; }
+    unknownFields(out, row, [...CLASS_ROW_FIELDS, ...options.attributeIds], at);
+    if (row.base !== undefined && (!Number.isInteger(row.base) || row.base < 0)) problem(out, `${at}.base`, 'must be a whole number >= 0');
+    validatePerLevelGrowth(out, row.perLevel, `${at}.perLevel`, false);
+    for (const bound of ['min', 'max']) {
+      if (row[bound] !== undefined && row[bound] !== null && (!Number.isInteger(row[bound]) || row[bound] < 0)) {
+        problem(out, `${at}.${bound}`, 'must be null or a whole number >= 0');
+      }
+    }
+    if (Number.isInteger(row.min) && Number.isInteger(row.max) && row.min > row.max) problem(out, `${at}.min`, `must not exceed max (${row.max})`);
+    if (row.attributeBaseline !== undefined && (!Number.isFinite(row.attributeBaseline) || row.attributeBaseline < 0)) {
+      problem(out, `${at}.attributeBaseline`, 'must be a finite number >= 0');
+    }
+    for (const id of options.attributeIds) {
+      if (row[id] !== undefined && (!Number.isFinite(row[id]) || row[id] < 0)) {
+        problem(out, `${at}.${id}`, 'must be a finite number >= 0 — the contribution of one point of this attribute');
+      }
     }
   }
 }
@@ -271,6 +358,9 @@ function normalizedOptions(options = {}) {
     // this: the version says it, and a snapshot envelope says it for a snapshot
     // whose rows were normalized before they were saved.
     unified: !!options.unified,
+    // Whether the table is ruleset 7 or later: `min` / `max` on the row, no
+    // `cap`. Read off the version like `unified`, never set by a caller.
+    statRows: !!options.statRows,
     // Whether the carrier fields (header) are legal: on a snapshot row and an
     // override layer, never on an authored table.
     carriers: !!options.carriers,
@@ -338,10 +428,27 @@ function normalizeRulePatch(patch, attributeIds) {
  * reader in the retired vocabulary; every reader goes through here instead of
  * indexing `rules` itself.
  */
-export function resolvedRuleRow(table, statId) {
+export function resolvedRuleRow(table, statId, classId = null) {
   const row = table && table.rules && table.rules[statId];
   if (!plainObject(row)) return null;
-  return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row });
+  return rowForClass(normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row }), classId);
+}
+
+/**
+ * rowForClass(row, classId) → the row one class reads: a row with a per-class
+ * form (`byClass`, see CLASS_ROW_FIELDS) answers with that class's base and
+ * weights over the shared bounds; the form itself never rides along, so a
+ * snapshot or a fight states exactly the row it was priced by.
+ */
+export function rowForClass(row, classId = null) {
+  if (!plainObject(row) || !Object.hasOwn(row, 'byClass')) return row;
+  const { byClass, ...shared } = row;
+  const own = classId && plainObject(byClass) ? byClass[classId] : null;
+  if (!plainObject(own)) return shared;
+  // The class's weights REPLACE the shared ones: a Reaver's opening hand
+  // answers to Strength alone, not Strength on top of the shared Intelligence.
+  const bounds = Object.fromEntries(Object.entries(shared).filter(([key]) => NON_WEIGHT_FIELDS.includes(key)));
+  return { ...bounds, ...structuredClone(own) };
 }
 
 /** Every attribute this row answers to, as `[id, weight]`, weight non-zero. */
@@ -361,12 +468,13 @@ export function derivedStatRuleProblems(source, options = {}) {
   const opts = normalizedOptions({
     ...options,
     unified: options.unified === undefined ? isUnifiedRuleset(source.rulesetVersion) : options.unified,
+    statRows: isStatRowRuleset(source.rulesetVersion),
   });
   unknownFields(out, source, ROOT_FIELDS, 'derivedStatRules');
   if (!Number.isInteger(source.rulesetVersion) || !DERIVED_STAT_RULESET_VERSIONS.includes(source.rulesetVersion)) {
     problem(out, 'rulesetVersion', `must be one of ${DERIVED_STAT_RULESET_VERSIONS.join(', ')}`);
   }
-  validateDefaults(out, source.defaults, 'defaults', { partial: false, unified: opts.unified, carriers: opts.carriers });
+  validateDefaults(out, source.defaults, 'defaults', { partial: false, unified: opts.unified, carriers: opts.carriers, statRows: opts.statRows });
   if (!plainObject(source.rules)) {
     problem(out, 'rules', 'must be a plain object');
     return out;
@@ -383,6 +491,14 @@ export function derivedStatRuleProblems(source, options = {}) {
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
+  }
+  // A HAND HOLDS AT LEAST ONE CARD. The retired capacity group refused a floor
+  // or ceiling under 1; the row that replaced it keeps that refusal, or a
+  // fight could open with nothing to play.
+  const hand = opts.statRows && plainObject(source.rules.handSize) ? source.rules.handSize : null;
+  if (hand) {
+    if (!Number.isInteger(hand.min) || hand.min < 1) problem(out, 'rules.handSize.min', 'must be a whole number >= 1: a hand holds at least one card');
+    if (hand.max !== undefined && hand.max !== null && (!Number.isInteger(hand.max) || hand.max < 1)) problem(out, 'rules.handSize.max', 'must be a whole number >= 1: a hand holds at least one card');
   }
   return out;
 }
@@ -440,7 +556,7 @@ function overrideProblems(value, path, options) {
   const out = [];
   if (!plainObject(value)) return [{ path, msg: 'must be a plain object' }];
   unknownFields(out, value, OVERRIDE_FIELDS, path);
-  const unifiedOptions = { ...options, unified: true, carriers: true };
+  const unifiedOptions = { ...options, unified: true, carriers: true, statRows: true };
   if (value.defaults !== undefined) {
     validateDefaults(out, normalizeDefaultsPatch(value.defaults), `${path}.defaults`, { partial: true, unified: true, carriers: true });
   }
@@ -463,7 +579,7 @@ export function resolveDerivedStatRules(source, options = {}) {
   // The TABLE's own version decides its vocabulary, so the caller's options go
   // through untouched and `derivedStatRuleProblems` reads it off the source.
   // Normalizing first would have pinned every table to `unified: false`.
-  const opts = normalizedOptions({ ...options, unified: isUnifiedRuleset(source && source.rulesetVersion) });
+  const opts = normalizedOptions({ ...options, unified: isUnifiedRuleset(source && source.rulesetVersion), statRows: isStatRowRuleset(source && source.rulesetVersion) });
   throwProblems('derivedStatRules', derivedStatRuleProblems(source, opts));
   const layers = [
     ['modeModifiers', options.modeModifiers],
@@ -625,14 +741,23 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
   for (const [id, weight] of weights) {
     const value = attributes && attributes[id];
     if (!Number.isFinite(value)) throw new Error(`attribute '${id}' is not a finite number`);
-    terms[id] = Math.floor(value * weight + EPSILON);
+    // Counted from `attributeBaseline` when the row states one (0 otherwise).
+    const counted = Number.isFinite(row.attributeBaseline) && row.attributeBaseline > 0 ? Math.max(0, value - row.attributeBaseline) : value;
+    terms[id] = Math.floor(counted * weight + EPSILON);
     points += terms[id];
   }
   const gain = row.gain === undefined ? 1 : gainValue(row.gain, classDef, statId);
   const rounding = row.rounding === undefined ? 'floor' : row.rounding;
   const round = Math[rounding];
   if (typeof round !== 'function') throw new Error(`rounding '${rounding}' is not executable`);
-  const tier = pointsPerIncrease === 1 ? points : round(points / pointsPerIncrease);
+  // THE TWO RETIRED HOMES' ARITHMETIC, as carriers (model/statRows.js). A
+  // ruleset-7 row states neither, and both are the identity when absent: the
+  // hand rules counted only the points above a baseline, and the rating
+  // formula scaled the floored total by one global multiplier.
+  const counted = Number.isFinite(row.pointsBaseline) && row.pointsBaseline > 0
+    ? Math.max(0, points - row.pointsBaseline) : points;
+  const scaled = Number.isFinite(row.multiplier) ? Math.floor(counted * row.multiplier + EPSILON) : counted;
+  const tier = pointsPerIncrease === 1 ? scaled : round(scaled / pointsPerIncrease);
   return {
     weights: Object.fromEntries(weights),
     terms,
@@ -651,14 +776,44 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
  * leaves it out and reads the attribute term alone.
  */
 export function deriveStat(resolved, statId, { attributes, classDef, level = undefined } = {}) {
-  const row = resolvedRuleRow(resolved, statId);
+  const row = resolvedRuleRow(resolved, statId, classDef && classDef.id);
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
-  const increase = deriveStatIncrease(row, { attributes, classDef, statId });
+  return statRowValue(row, { attributes, classDef, level, statId });
+}
+
+/**
+ * statRowValue(row, { attributes, level }) → the receipt of ONE row.
+ *
+ * THE ONE FORMULA (ruleset 7). Every stat — HP, Mana, Stamina, Actions, the
+ * opening hand, the per-turn draw, the hand size, AR, DR, PR, Ward and Poise —
+ * is priced by this function and nothing else:
+ *
+ *   value = clamp(base + Σ floor(attribute × weight)
+ *                      + floor(perLevel × (level − 1)), min, max)
+ *
+ * Each attribute term is floored ON ITS OWN, so a weight of 0.125 adds
+ * nothing until that attribute reaches 8. Equipment, relics and statuses are
+ * added by their own receipts on top, exactly as before.
+ *
+ * `lenientAttributes` reads a missing attribute as 0 — the rating and hand
+ * readers always did (a headless fixture carries none) — where the pool door
+ * refuses one by name.
+ */
+export function statRowValue(row, { attributes, classDef, level = undefined, statId = 'derivedStat', lenientAttributes = false } = {}) {
+  if (!plainObject(row)) throw new Error(`Derived stat '${statId}' has no row`);
+  const read = lenientAttributes
+    ? Object.fromEntries(ruleWeights(row).map(([id]) => [id, Number.isFinite(Number(attributes && attributes[id])) ? Number(attributes[id]) : 0]))
+    : attributes;
+  const increase = deriveStatIncrease(row, { attributes: read, classDef, statId });
   const base = baseValue(row.base, classDef, statId);
   const bonus = levelBonus(row, level);
   const raw = base + increase.value + bonus;
   const cap = row.cap === undefined ? null : row.cap;
-  const value = cap === null ? raw : Math.min(raw, cap);
+  const min = Number.isFinite(row.min) ? row.min : null;
+  const max = Number.isFinite(row.max) ? row.max : null;
+  let value = cap === null ? raw : Math.min(raw, cap);
+  if (min !== null) value = Math.max(min, value);
+  if (max !== null) value = Math.min(max, value);
   return {
     id: statId,
     // EVERY TERM THE VALUE HAS, in the one vocabulary: which attributes the row
@@ -677,6 +832,8 @@ export function deriveStat(resolved, statId, { attributes, classDef, level = und
     levelBonus: bonus,
     raw,
     cap,
+    min,
+    max,
     value,
   };
 }
@@ -747,6 +904,9 @@ export function relicAttributeTierFoldProblems(term, rule) {
 function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
   if (!classDef) throw new Error('Host snapshot creation requires a classDef');
   const out = structuredClone(rules);
+  // A RUN SNAPSHOTS ITS OWN CLASS'S ROW: the per-class form resolves here,
+  // with the class-field bases, so a save states the one row it is priced by.
+  for (const [statId, row] of Object.entries(out.rules)) out.rules[statId] = rowForClass(row, classDef.id);
   for (const [statId, row] of Object.entries(out.rules)) {
     row.base = baseValue(row.base, classDef, statId);
     if (row.gain !== undefined) row.gain = gainValue(row.gain, classDef, statId);
@@ -867,4 +1027,26 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
     rules,
     ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
   };
+}
+
+/**
+ * storedStatRowProblems(row, path) → what is wrong with one stat row read
+ * back from a saved fight: a field no row carries, or a row the one formula
+ * cannot price. A saved fight is refused at the save door rather than
+ * resumed into a throw on its next draw or rating (Codex, #1296).
+ */
+const STORED_ROW_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+export function storedStatRowProblems(row, path) {
+  if (!plainObject(row)) return [`${path} is missing`];
+  const known = new Set([...STORED_ROW_ATTRIBUTES, 'base', 'perLevel', 'min', 'max', 'attributeBaseline', ...CARRIER_FIELDS]);
+  const unknown = Object.keys(row).filter((key) => !known.has(key));
+  if (unknown.length) return [`${path} has unknown field(s): ${unknown.join(', ')}`];
+  try {
+    const probe = Object.fromEntries(STORED_ROW_ATTRIBUTES.map((id) => [id, 7]));
+    const { value } = statRowValue(row, { attributes: probe, level: 3, statId: path, lenientAttributes: true });
+    if (!Number.isFinite(value)) return [`${path} does not price to a number`];
+  } catch (error) {
+    return [`${path}: ${error.message}`];
+  }
+  return [];
 }

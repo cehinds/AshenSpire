@@ -1,10 +1,10 @@
-import { handDrawCount, scaledCards } from '../model/handRules.js';
+import { handDrawCount, handRow, scaledCards } from '../model/handRules.js';
 import { resolveCard } from '../model/registries.js';
 
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
   const rules = ctx.handRules;
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
-  const draw = handDrawCount(rules, ctx.attributes, { handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0 });
+  const draw = handDrawCount(rules, ctx.attributes, { handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel });
   ctx.handMax = draw.capacity;
   ctx.pendingDiscardDraw = 0;
   return draw.value;
@@ -19,7 +19,7 @@ export function endTurnCardFate(ctx, card) {
 export function discardChoicePlan(ctx) {
   if (!ctx.handRules) return { cards: [], minimum: 0, maximum: 0, prompt: false };
   const cards = ctx.piles.hand.filter(card => endTurnCardFate(ctx, card) === 'keep');
-  const capacity = scaledCards(ctx.handRules.capacity, ctx.attributes);
+  const capacity = scaledCards(handRow(ctx.handRules, 'handSize'), ctx.attributes, ctx.characterLevel);
   const minimum = ctx.handRules.overflow === 'discard' ? Math.max(0, cards.length - capacity) : 0;
   const optional = ctx.handRules.retain && ctx.handRules.promptDiscard;
   const maximum = Math.min(cards.length, Math.max(minimum, optional ? ctx.handRules.discardLimit : 0));

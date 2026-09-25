@@ -26,7 +26,7 @@ import { createRegistries } from './src/model/registries.js';
 
 const bundle = {
   version: '1',                       // becomes registries.contentVersion
-  balance: { energy: 3, draw: 5, handMax: 5, flaskSlots: 3,
+  balance: { energy: 3, draw: 5, flaskSlots: 3,
              startingCinders: 20,
              poise: { growthMult: 1.25, onFill: [/* effects */] },
              /* ...every other tuning constant */ },
@@ -67,7 +67,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 |---|---|
 | `energy` (3) | player energy at turn start |
 | `draw` (5) | cards drawn at player turn start |
-| `handMax` (5; 10 before 2026-09-24) | fallback hand limit for a fight created without hand rules (co-op, headless); overflow draws go to discard. A solo fight's limit is its hand rules' capacity (`content/handRules.js`, SPEC §4.1) |
+| (`handMax` — retired in derived-stat ruleset 7) | the hand limit is the `handSize` stat row (`content/derivedStats.js`, SPEC §3.5, §4.1) in every fight; `combat.handMax` holds its value. A fight created without hand rules (an old headless fixture) keeps the retired fallback of 5; overflow draws go to discard |
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
 | `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |

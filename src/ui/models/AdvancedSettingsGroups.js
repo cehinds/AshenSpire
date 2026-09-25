@@ -41,8 +41,15 @@ export const DRAW_FALLBACK = 'Co-op & legacy fallback';
 // Draw, Stats & Defence, Progression → Stats & resources and the Combat
 // constants. They are one Advanced → Stats tab: a topic per trait, each with
 // every row that decides it, drawn in short subsections.
-const DERIVED_TOPICS = Object.freeze({ energy: 'Actions', draw: 'Draw & hand', hp: 'HP', stamina: 'Stamina', mana: 'Mana', poise: 'Poise' });
+// Ruleset 7: every stat is a row of one table, so the hand rows and the
+// combat ratings are filed by their row id exactly as the pools are.
 const RATING_TOPICS = Object.freeze({ ar: 'Attack rating (AR)', dr: 'Defence rating (DR)', pr: 'Power rating (PR)', poise: 'Poise', ward: 'Ward' });
+const DERIVED_TOPICS = Object.freeze({
+  energy: 'Actions', openingHand: 'Draw & hand', draw: 'Draw & hand', handSize: 'Draw & hand',
+  hp: 'HP', stamina: 'Stamina', mana: 'Mana', ...RATING_TOPICS,
+});
+// The hand rows each head the subsection their behaviour options sit in.
+const HAND_ROW_SECTIONS = Object.freeze({ openingHand: 'Starting hand', draw: 'Turn draws', handSize: 'Hand capacity' });
 
 /** The Stats topics, in reading order: resources first, then the ratings, then the tables. */
 export const STATS_TOPICS = Object.freeze([
@@ -64,7 +71,7 @@ const statsPath = (row) => row.key.replace(/^gameConfig\.(balance\.)?/, '');
 function statsTopic(row) {
   const path = statsPath(row);
   if (row.derivedStatId) return DERIVED_TOPICS[row.derivedStatId] || words(row.derivedStatId);
-  if (row.handTopic || path === 'handMax') return 'Draw & hand';
+  if (row.handTopic) return 'Draw & hand';
   if (/^(poise|stagger)\./.test(path)) return 'Poise';
   if (/^mana\./.test(path)) return 'Mana';
   const rating = /^combatRatings\.ratings\.(\w+)\./.exec(path);
@@ -81,8 +88,8 @@ function statsTopic(row) {
  */
 export function statsSection(row) {
   const path = statsPath(row);
-  if (row.derivedStatId === 'poise' || /^(poise|stagger)\./.test(path)) return WITHOUT_RATINGS;
-  if (row.derivedStatId === 'draw' || path === 'handMax') return DRAW_FALLBACK;
+  if (/^(poise|stagger)\./.test(path)) return WITHOUT_RATINGS;
+  if (HAND_ROW_SECTIONS[row.derivedStatId]) return HAND_ROW_SECTIONS[row.derivedStatId];
   if (row.settingSection) return row.settingSection;
   if (/^mana\./.test(path)) return 'Mana cards';
   if (/^combatRatings\.(enabled|multiplier)$/.test(path)) return 'Ratings';

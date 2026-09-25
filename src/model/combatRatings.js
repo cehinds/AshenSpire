@@ -2,16 +2,19 @@ import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { evaluate } from './formulas.js';
 import { cardIsMagical } from './attackCardDamage.js';
-import { attributeRatingReceipt, defaultRatingFormula, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
+import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
+import { LEGACY_RATING_FORMULA, STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX, legacyRatingFormulaFromSettings } from './statRows.js';
+import { resolvedRuleRow } from './derivedStats.js';
 
 export { ratingIds };
 const attributes = ratingAttributeIds;
 export const combatRatingDefaults = {
   enabled: true,
-  // One rating formula: base + global multiplier times the sum of attribute
-  // terms floored independently. Equipment, relic and status bonuses are
-  // added afterward by their owning receipts.
-  ...defaultRatingFormula,
+  // THE FIVE FORMULAS ARE NOT HERE (ruleset 7). AR, DR, PR, Poise and Ward
+  // are rows of the derived-stat table (content/derivedStats.js), edited under
+  // Advanced → Stats with every other stat, and `ratings` is filled with the
+  // rows a run reads (model/statRows.js ratingsConfigFor). Equipment, relic
+  // and status bonuses are added afterward by their owning receipts.
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
     lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
@@ -257,25 +260,11 @@ export function combatRatingRows(bundle) {
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
   add('enabled', true, 'Enable ratings, Poise & Ward', 'General', {
-    note: 'On: AR, DR, PR, Poise and Ward come from the rating formulas under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
+    note: 'On: AR, DR, PR, Poise and Ward come from their stat rows under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
   });
-  add('multiplier', combatRatingDefaults.multiplier, 'All ratings — multiplier', 'General', {
-    note: 'Scales the attribute part of every rating at once, before each base is added. 1 leaves the formulas as written.',
-  });
-  // THE FIVE FORMULAS SIT WITH THE POOLS (owner, 2026-09-21: "I'd like all
-  // the resources and stats to be in the same format … they are way too
-  // separated"). HP, Mana, Stamina, Actions, draw and Poise are written the way
-  // these are — a base and a decimal weight per attribute (content/
-  // derivedStats.js, ruleset 6) — and every one of them is a topic of Advanced
-  // → Stats (models/AdvancedSettingsGroups.js), so a rating's formula sits
-  // beside the trait it rates.
-  for (const [id, values] of Object.entries(combatRatingDefaults.ratings)) {
-    for (const [field, value] of Object.entries(values)) add(`ratings.${id}.${field}`, value,
-      field === 'base' ? `${ratingLabel(id)} — Base` : `${ratingLabel(id)} per ${words(field)} point`, `${ratingLabel(id)} formula`, {
-        note: field === 'base' ? 'Added after the attribute total and the multiplier; equipment and other bonuses add on top.'
-          : 'How much each point of this attribute is worth. Each attribute is rounded down on its own: 0.5 gives 1 per 2 points, 0.25 gives nothing until 4. Set 0 to ignore it.',
-      });
-  }
+  // (The per-rating formulas and the global multiplier moved to the stat rows
+  // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
+  // keys convert on import: model/statRows.js migrateLegacyStatSettings.)
   for (const group of ['resistance', 'impact', 'breaks']) {
     for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || phrase(field), words(group), {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
@@ -374,6 +363,22 @@ export function resolveCombatRatings(rawSettings, bundle) {
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   config.itemRatings = {};
+  // What a run born before ruleset 7 was priced by: the frozen formula, with
+  // whatever its own configuration snapshot tuned (model/statRows.js).
+  config.legacyRatings = legacyRatingFormulaFromSettings(rawSettings || {});
+  // The rating rows a caller with no run reads: the table's AR, DR, PR, Poise
+  // and Ward rows with their own settings keys over them (Stats → each rating).
+  // A run reads its own snapshot's instead (model/statRows.js ratingsConfigFor).
+  config.ratings = Object.fromEntries(ratingIds.map((id) => {
+    const authored = resolvedRuleRow(bundle?.derivedStatRules, id);
+    const row = authored ? { ...authored } : { ...LEGACY_RATING_FORMULA.ratings[id] };
+    for (const field of ['base', ...attributes, 'perLevel', 'min', 'max']) {
+      const value = Number(settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`]);
+      if (settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`] !== undefined && Number.isFinite(value) && value >= 0) row[field] = value;
+    }
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
+    return [id, row];
+  }));
   for (const row of combatRatingRows(bundle)) {
     const raw = settings[row.key] ?? (row.type === 'choice' || row.key.includes('.enemyRatings.') ? row.def : undefined);
     if (raw === undefined) continue;
@@ -420,9 +425,12 @@ export function combatRatingProblems(config) {
   // before it existed — the run would not resume. Absent reads as 1, exactly
   // as `ratingReceipt` reads it; a WRITTEN one is still held to its domain.
   if (config.multiplier !== undefined && (!Number.isFinite(config.multiplier) || config.multiplier < 0)) problems.push('Invalid rating multiplier');
-  for (const id of ratingIds) {
+  // `ratings` is filled per run (statRows.js); a config that carries rows —
+  // every saved fight does — must carry sound ones. An attribute a row does
+  // not name weighs 0.
+  if (config.ratings !== undefined) for (const id of ratingIds) {
     const r = config.ratings?.[id];
-    if (!r || [...attributes, 'base'].some(k => !Number.isFinite(r[k]) || r[k] < 0)) problems.push(`Invalid ${id} formula`);
+    if (!r || !Number.isFinite(r.base) || r.base < 0 || attributes.some(k => r[k] !== undefined && (!Number.isFinite(r[k]) || r[k] < 0))) problems.push(`Invalid ${id} formula`);
   }
   if (!config.resistance || ['physicalK', 'magicalK', 'statusK'].some(k => !(config.resistance[k] > 0)) || !(config.resistance.maximum >= 0 && config.resistance.maximum < 1)) problems.push('Invalid resistance curve');
   const impact = config.impact;
@@ -437,6 +445,14 @@ export function combatRatingProblems(config) {
   if (Object.values(config.enemyAttackType || {}).some(v => !['auto', 'physical', 'magic'].includes(v))) problems.push('Invalid enemy attack type');
   for (const values of Object.values(config.enemyRatings || {})) if (!values || ['poise', 'ward'].some(id => !Number.isInteger(values[id]) || values[id] < 0 || values[id] > 999)) problems.push('Invalid enemy defences');
   return problems;
+}
+
+// The character level a rating row's `perLevel` reads: a run's level, or the
+// level a fight was opened at (engine/combat.js stamps `characterLevel`).
+function ratingLevelOf(run) {
+  if (Number.isInteger(run?.level?.level)) return run.level.level;
+  if (Number.isInteger(run?.characterLevel)) return run.characterLevel;
+  return undefined;
 }
 
 export function ratingReceipt(registries, run, config) {
@@ -462,7 +478,7 @@ export function ratingReceipt(registries, run, config) {
   // formulas entirely; a smaller pool now means smaller ratings, which is what
   // shrinking it says.
   for (const id of ratingIds) {
-    attributeReceipts[id] = attributeRatingReceipt(config, run.attributes, id);
+    attributeReceipts[id] = attributeRatingReceipt(config, run.attributes, id, ratingLevelOf(run));
     stat[id] = attributeReceipts[id].value;
   }
   add('Attributes', stat, 'attribute');
