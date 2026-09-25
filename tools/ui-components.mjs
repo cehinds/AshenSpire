@@ -248,8 +248,8 @@ function subjectOf(part) {
       if (compound[close] === ')' && --depth === 0) break;
     }
     const head = compound.slice(i, open);
-    const matchesSelf = /:(?:is|where|matches|-webkit-any)$/.test(head);
-    out += head.replace(/:(?:is|where|matches|-webkit-any)$/, '');
+    const matchesSelf = /:(?:is|where|matches|-webkit-any)$/i.test(head);
+    out += head.replace(/:(?:is|where|matches|-webkit-any)$/i, '');
     if (matchesSelf) out += ` ${splitTop(compound.slice(open + 1, close), /,/).map(subjectOf).join(' ')} `;
     i = close + 1;
   }
@@ -274,7 +274,7 @@ export function railUnderMeters(css) {
     .map((g) => ({ ...g, rows: g.decl.match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) ?? [] }));
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
     // A top rule that switches display off grid takes the areas with it.
-    && tops.every((rule) => /^(?:inline-)?grid$/.test(lastValue(rule.decls, ['display']) ?? 'grid'))
+    && tops.every((rule) => /^(?:inline-grid|(?:(?:block|inline)\s+)?grid|grid\s+(?:block|inline))$/i.test(lastValue(rule.decls, ['display']) ?? 'grid'))
     && grids.every(({ rows }) => validAreas(rows) && rows.some((row) => row.includes('meters'))
       && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
 }
