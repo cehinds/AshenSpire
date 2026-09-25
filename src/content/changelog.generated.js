@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "The map keeps your chosen destination in view when the screen changes shape",
     "detail": "With a node picked and its tray open, a change to the map's size, such as the window resizing or a toolbar appearing, used to jump the view back to where you stand. The picked node now stays centred in the part of the map the tray leaves visible.",
-    "build": "0.7.1.502",
+    "build": "0.7.1.505",
     "pullRequest": 1314,
     "url": "https://github.com/cehinds/AshenSpire/pull/1314"
+  },
+  {
+    "id": "pr-1299",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: every art and sound folder has a credits row",
+    "detail": "Nothing you play changes. A new check fails when any shipped asset folder lacks a row in CREDITS.md naming its source and rights, or when the README's legal section stops quoting the AI disclosure's summary sentence word for word; CREDITS.md gains the eleven rows it was missing.",
+    "build": "0.7.1.503",
+    "pullRequest": 1299,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1299"
+  },
+  {
+    "id": "pr-1311",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the finishing checklist matches the development line again",
+    "detail": "Nothing you see changes. The checklist that tracks the road to 1.0 now ticks what tonight's merges finished, each checked against the code or a test: Guilt's turn-end cost, the card hotkeys, the save-migration corpus, the spec reconcile, the card door and more. It marks what is only part done, among them the mid-combat restart and the map re-fit, which still want a test through the real path, and says what is left, and it adds the follow-ups found on the way: seven cards with no route in, two interface checks that are red, review findings that have not been fixed, and the slow test job.",
+    "build": "0.7.1.501",
+    "pullRequest": 1311,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1311"
   },
   {
     "id": "pr-1301",
