@@ -199,6 +199,21 @@ export function watchViewport(el, {
 }
 
 /**
+ * refitCamera({ look, centerOnCurrent, centerOnNode }) — what a re-fit DOES,
+ * kept apart from when one happens. The frame is always solved first (zoom and
+ * `data-camera-viewport` are functions of the viewport); then, while a host's
+ * tray has the camera looking at one node (`look`, left by `centerOnNode` and
+ * cleared by `resetFraming`), that same look is taken again at the same inset.
+ * Without the second step a scrollport change under an open destination tray
+ * re-centred on the current node and the selected one slid out of the band the
+ * tray leaves visible.
+ */
+export function refitCamera({ look, centerOnCurrent, centerOnNode }) {
+  centerOnCurrent();
+  if (look) centerOnNode(look.id, { inset: look.inset });
+}
+
+/**
  * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
@@ -1154,10 +1169,14 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // the part the player can see. THE FRAMING IS NOT TOUCHED: this is a look, not
   // a hand on the ladder, so ⊙, the zoom ladder and the saved camera still mean
   // exactly what they meant before the tray opened.
+  // The tray's look, remembered so a re-fit can take it again (refitCamera).
+  let look = null;
+  const refit = () => refitCamera({ look, centerOnCurrent, centerOnNode });
   function centerOnNode(id, { inset = 0, glideMs = 0 } = {}) {
     const n = byId[id];
     if (!n) return;
     insetBottom = Math.max(0, inset);
+    look = { id, inset: insetBottom };
     sizeSvg();
     // WHAT THE TRAY COVERS OF THE MAP, not of the frame. The reveal panel is
     // absolutely positioned against the foot of the map frame (styles/map.css:
@@ -1187,6 +1206,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // wherever the ladder, the wheel, the saved setting or an open tray left us.
   function resetFraming({ glideMs = 0 } = {}) {
     insetBottom = 0;
+    look = null;
     framing = 'fit';
     if (!(glideMs > 0)) { centerOnCurrent(); emitViewState(true); return; }
     // SOLVE THE FRAME FIRST, then glide to it from where we stand: the target is
@@ -1315,7 +1335,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
       onChange: () => {
         if (!scroll.isConnected) return;
-        centerOnCurrent();
+        refit();
         emitViewState(false);
       },
     });
@@ -1341,7 +1361,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         reportEntrance(currentNode || !box ? null : entranceFrame(fs, box));
         reportTapSize();
       } else {
-        centerOnCurrent();
+        refit();
       }
       emitViewState(false);
       startRefitWatch();
