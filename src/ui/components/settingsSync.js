@@ -20,6 +20,9 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+// A seed record's content, comparable across objects and key order.
+const seedShape = (record) => JSON.stringify(Object.entries(record || {}).sort());
+
 // A status that must outlive a repaint (Apply repaints Settings mid-handler).
 let carriedStatus = '';
 
@@ -81,7 +84,10 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     for (const key of toPromotion) next[key] = promoted[key];
     if (listed) {
       for (const [key, value] of Object.entries(parsed.changes || {})) {
-        if (listed.has(key) && Object.hasOwn(promoted, key) && promoted[key] === value) next[key] = value;
+        // Owned by a promotion on the saving device, even an older one: record
+        // the value as the promotion's, so boot's seeding moves it on to the
+        // current promoted value exactly as it would have on that device.
+        if (listed.has(key) && Object.hasOwn(promoted, key)) next[key] = value;
         else delete next[key];
       }
     }
@@ -149,6 +155,7 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
 }
 
 export function renderSettingsSync(mount, { settings, onChange, rows, afterApply = () => {} }) {
+  // afterApply(moved, before, seedMoved): Settings offers Undo and repaints.
   // Read at each use: the per-device toggle changes which keys a profile owns.
   const profileKeysNow = () => profileKeys(rows, { includeDevice: includeDeviceEnabled() });
   const labelOf = new Map(rows.map((row) => [row.key, String(row.label || row.key).replace(/<[^>]*>/g, '')]));
@@ -303,12 +310,22 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       if (!diff.length) {
         // Nothing visible moves, but a key the profile leaves out may still go
         // back to the promotion: save that ownership before calling it loaded.
+        const seedBefore = settings[SEED_KEY];
         try { applyProfile(settings, onChange, parsed); } catch (error) { status(error.message); return; }
+        const seedMoved = seedShape(seedBefore) !== seedShape(settings[SEED_KEY]);
         if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) {
+          if (seedMoved) { carriedStatus = UNNOTED; afterApply(0, { [SEED_KEY]: seedBefore }, true); }
           status('This device already matches the profile, but it could not note that (storage is off or full here), so a later start may load it again over changes you make.');
           return;
         }
         write(SYNC_STORAGE.lastAt, new Date().toISOString());
+        // Only which values follow the promoted defaults changed: that is a
+        // saved change like any other, so it gets the profile load's Undo.
+        if (seedMoved) {
+          carriedStatus = 'This device already matches the profile; which settings follow the promoted defaults was updated to match it.';
+          afterApply(0, { [SEED_KEY]: seedBefore }, true);
+          return;
+        }
       }
       const box = mount.querySelector('[data-sync-preview]');
       box.hidden = false;
@@ -326,13 +343,14 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           // …and which of them the promotion owned, so Undo hands those back too.
           before[SEED_KEY] = settings[SEED_KEY];
           const moved = applyProfile(settings, onChange, pending.parsed);
+          const seedMoved = seedShape(before[SEED_KEY]) !== seedShape(settings[SEED_KEY]);
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
           pending = null;
           // afterApply repaints Settings and mounts a new panel: carry the
           // warning across so the panel the player sees shows it.
           if (!noted) carriedStatus = UNNOTED;
-          afterApply(moved, before);
+          afterApply(moved, before, seedMoved);
           if (!noted && mount.isConnected) { status(UNNOTED); carriedStatus = ''; }
         } catch (error) { status(error.message); }
       });

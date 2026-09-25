@@ -2748,8 +2748,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
-  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before) => {
-    if (moved) offerUndo(`Profile loaded (${moved} setting${moved === 1 ? '' : 's'})`, before, settings);
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
+    if (moved || seedMoved) {
+      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', before, settings);
+    }
     repaintPanel({ keepScroll: true });
   } });
 

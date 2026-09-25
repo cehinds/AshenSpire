@@ -552,7 +552,7 @@ test('moving off a promoted value makes it the player\'s; a Reset hands it back'
   assert.equal(seen[0][SEED_KEY].musicVolume, 40, 'Reset marks the key as the promotion\'s again');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{\s*status\('This device already matches/);
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{[\s\S]*?status\('This device already matches/);
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /const seed = seedAfterChange\(activeSettings, changed\);/);
 });
@@ -662,7 +662,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
   assert.deepEqual(again, [], 'nothing new to own: nothing saved');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before\);/);
+  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before, seedMoved\);/);
   assert.match(panel, /if \(carriedStatus\) \{ status\(carriedStatus\); carriedStatus = ''; \}/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
@@ -672,7 +672,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
 test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}\s*if \(!write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
 });
 
 test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {
@@ -725,4 +725,21 @@ test('a mistyped sync location is refused by name, never swapped for the default
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /const problems = syncConfigProblems\(raw\);\s*if \(problems\.length\) \{ status\(`Not saved: check/);
+});
+
+test('ownership survives a promotion that moved on, and an ownership-only load can be undone', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  // Saved when the promotion was 40; this build promotes 50.
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
+  applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, { musicVolume: 50 });
+  assert.deepEqual(device[SEED_KEY], { musicVolume: 40 }, 'the old promoted value is recorded as the promotion\'s');
+  const next = seedSettingsDefaults(device, { digest: 'b', values: { musicVolume: 50 } });
+  assert.equal(next.musicVolume, 50, 'so the next seeding moves it on');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
+  assert.match(panel, /if \(seedMoved\) \{\s*carriedStatus = '[^']*';\s*afterApply\(0, \{ \[SEED_KEY\]: seedBefore \}, true\);/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(moved \|\| seedMoved\) \{\s*offerUndo\(/);
 });
