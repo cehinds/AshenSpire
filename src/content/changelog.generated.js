@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1301",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Shared links to the web edition show a proper title, description and icon",
+    "detail": "The web edition's page now carries a description, link-preview tags, an icon and a theme colour, so a shared link shows the game's name and a short description instead of a bare address, and the browser tab shows an icon. Nothing in play changes.",
+    "build": "0.7.1.500",
+    "pullRequest": 1301,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1301"
+  },
+  {
     "id": "pr-1303",
     "date": "2026-09-25",
     "group": "2026-09-25",
