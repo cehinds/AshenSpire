@@ -57,7 +57,7 @@ The `twinSword` profile covers all 35 armor entries with 32 appearances. It sele
 
 All appearances share `STANCE-READY → ATK-01 → ATK-02 → ATK-03 → ATK-04 → ATK-05 → ATK-06 → ATK-07 → STANCE-READY`, 120ms steps, impact at 480ms. Sixteen poses include separate conversation and portrait art; all full-body poses retain two swords without baked effects. Change the profile to update every outfit. The [workshop](../art/twin-sword-reference-2026-09-19/index.html) edits sequence candidates and compares class/armor appearances.
 
-Validation: `node tests/twin-sword-animation.test.mjs`, `node tools/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
+Validation: `node tools/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
 
 ## Unarmed bindings
 
@@ -67,7 +67,7 @@ The physical fragment owns idle, attack, defense, hurt, stances and noncombat vi
 
 Solo and co-op derive the selected clip before dispatch and use its duration for stage playback. Solo's presentation timeline uses the selected impact time; co-op retains its existing authoritative receipt handling. Combat speed scales clip duration and impact together. This presentation routing changes no engine damage, card behavior, equipment or save data.
 
-Source masters, labeled sheets, editable synchronized preview, provenance and export scripts are in `art/unarmed-reference-2026-09-19/`. Run `node --test tests/unarmed-animation.test.mjs` for importer ownership, routing, timing and complete runtime asset coverage.
+Source masters, labeled sheets, editable synchronized preview, provenance and export scripts are in `art/unarmed-reference-2026-09-19/`.
 
 ## Runtime and review boundaries
 
@@ -77,8 +77,8 @@ The shared `unarmed` profile composes physical and magic art in the same 32 appe
 
 Both hands must be empty. Resolved casting intent routes attack-kind spells into the cast clip; ordinary attacks remain physical, including a magic-damage attack whose authored presentation explicitly resolves as physical. Powers use the buff reference. Selection never infers choreography from class or damage type alone and changes no spell legality or combat values. Existing effects remain independent of the effect-free body artwork.
 
-The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) covers all appearances, aliases and 16 poses. [Runtime verification](../art/unarmed-magic-2026-09-19/runtime-check.html) runs the shipped action resolver and painted stage for all four classes. `node --test tests/unarmed-magic.test.mjs` verifies the two actual fragments in either import order and checks every shipped selector and role.
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) covers all appearances, aliases and 16 poses. [Runtime verification](../art/unarmed-magic-2026-09-19/runtime-check.html) runs the shipped action resolver and painted stage for all four classes.
 
 The greatsword suites for all class/armor entries are activated. The catalog currently reports the legacy `one` grip for a lone native greatsword; its two-handed visual does not alter that mechanical rule. Both native and prototype two-handed grips select the suite, while an occupied opposite hand does not. New art and synchronized previews are in `art/greatsword-outfits-2026-09-19/`. The four-class review pack at `art/webp-pack-2026-09-19/` remains available for labeled pose feedback. Its other combinations are not implicitly approved or activated. Starseer ATK-02/ATK-03 have a separate known anatomy/staff-occlusion review.
 
-Unit checks: `node tests/equipment-animation.test.mjs` (also in `tests/run-node.mjs`). Browser checks: serve the repository, set `ART_TEST_URL` if needed, then run `node tools/equipment-animation-browser.mjs` with Playwright available (or `PLAYWRIGHT_MODULE` pointing to an installed module) and `CHROME` if the browser is not detected.
+Browser checks: serve the repository, set `ART_TEST_URL` if needed, then run `node tools/equipment-animation-browser.mjs` with Playwright available (or `PLAYWRIGHT_MODULE` pointing to an installed module) and `CHROME` if the browser is not detected.

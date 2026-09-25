@@ -196,7 +196,7 @@ export function buildReplacementCandidate(bundle, options = {}) {
     [...failuresBy('assertEveryInteractiveComponentHasAccessibleName'), ...failuresBy('assertEveryTooltipHasAccessibleFallback'), ...failuresBy('assertReadableText'), ...failuresBy('assertEveryDestructiveActionHasExactlyOneConfirmationPolicy')]);
   gate('full regression suite',
     options.regressionSuite === true ? 'PASS' : options.regressionSuite === false ? 'FAIL' : 'NOT_RUN',
-    'node tests/run-node.mjs + tests/framework.test.mjs');
+    'node --test "tests/*.test.mjs"');
   gate('proof that legacy runtime authority is unreachable',
     options.legacyAuthorityCheck === true ? 'PASS' : 'FAIL',
     'legacy engine/UI consumers still read src/content + src/engine directly; cutover has not been performed');

@@ -44,7 +44,8 @@ escape starts combat; successful escape retreats without resolving the node.
 Decisions, escape rolls, combat checkpoints and reward claims persist in normal
 saves. Boss victory clears the fog and enables leaving to resume progression.
 
-Validation completed on 2026-09-19:
+Validation completed on 2026-09-19 (the two `tests/` scripts named here were
+retired in the suite cut; today the game suite is `node --test "tests/*.test.mjs"`):
 
 - `node tests/legacy-dungeon.mjs`: all three graphs, encounter references,
   24 layer assets, save round trips, escape boundaries, one-time rewards,

@@ -604,8 +604,8 @@ archiving). Also exports `createPlayerCombatEntity` / `createEnemyCombatEntity`
 5. Stop when `combat.result` is set (`'victory'` → rewards, `'defeat'` → death
    screen). Persist `rng.getCounters()` with the run after committed choices.
 
-**Headless in Node** (`tests/engine.test.js` and `tests/index.html` both work —
-same imports, no UI modules):
+**Headless in Node** (`tests/combat-rules.test.mjs` and `tests/solo-run.test.mjs` work this
+way — same imports, no UI modules):
 
 ```js
 import { createRegistries } from '../src/model/registries.js';

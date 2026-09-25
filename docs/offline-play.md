@@ -44,8 +44,7 @@ normal game-version compatibility; an older release may reject newer saves.
 
 ## Verification
 
-Run `node tests/offline-play.test.mjs` for transfer validation and storage failure
-cases. `node tools/offline-play-qa.mjs` exercises the real generated HTML with a
+`node tools/offline-play-qa.mjs` exercises the real generated HTML with a
 local release-feed fixture in an isolated browser profile. It downloads actual
 files, compares game bytes, exports/imports a real run, disables the network,
 opens the downloaded file, and captures desktop and phone-size screenshots in

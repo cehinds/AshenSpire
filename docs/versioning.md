@@ -224,7 +224,7 @@ milestone by itself; it never carries unrelated work.
 
 `1.0.0` is not a size judgement — it is the release-governance event: the
 separately-governed release status leaving RED, with whatever checklist that
-decision carries (the CI matrix question in `.github/workflows/ci.yml`
+decision carries (the CI matrix question in `.github/workflows/tests.yml`
 included). After 1.0.0, MAJOR moves only for a save-compatibility break or
 the removal of a shipped gameplay system.
 

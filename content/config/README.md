@@ -11,7 +11,7 @@ node tools/config-build.mjs            # compile: content/config → src/config/
 node tools/config-build.mjs --check    # gate: fail if the generated module is stale
 ```
 
-`tests/run-node.mjs` runs `--check`, and `tools/launch.mjs` compiles before every
+`tests/content.test.mjs` runs `--check`, and `tools/launch.mjs` compiles before every
 build. `tools/content-build.mjs` refuses any JSON here, by name, that the
 generated module was not compiled from. Never edit `src/config/generated/ui.js`
 by hand.
@@ -38,9 +38,9 @@ A scene file's key is the text before its first `-`: `w4a-combat.json` is
 A `presentation/` file is named for the module that reads it —
 `presentation/mapPresentation.json` is read by `src/content/mapPresentation.js` —
 so the JSON and its shim are findable from either end. Those modules keep their
-exports and their reasoning and hold no numbers of their own;
-`tests/config-migration.test.mjs` proves both, against a fixture captured before
-the tables moved.
+exports and their reasoning and hold no numbers of their own.
+`tests/content.test.mjs` runs `config-build --check`, which keeps the generated
+module in step with this JSON.
 
 `components/dialogueFrame.json` holds the two pre-W4c dialogue numbers
 (`portraitShare`, `sceneMinRem`) that `DialogueModel` still reads through
@@ -109,8 +109,9 @@ Files in `scenes/` also have to satisfy the W4 contract:
 }
 ```
 
-Rules `tests/card-presentation-levels.test.mjs` enforces, each of which would
-otherwise fail silently:
+Rules the presentation-level solver keeps, each of which would otherwise fail
+silently (no scenario test pins them; `tests/ui-screens.test.mjs` only mounts the
+screens that draw these cards):
 
 - Region keys are exactly the keys of `balance.ui.equipmentCard.regions`. A key
   that drifts out of that set is a row the face loses with nothing to say so.

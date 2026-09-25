@@ -34,5 +34,5 @@ actually enter focus drafts. Existing school tags are retained. School-based
 synergies and skill upgrades also recognize these cards.
 
 These are initial balance targets, not a claim about measured full-run win rates.
-The census and combat payment tests live in `tests/card-rarity-costs.test.mjs`;
-reward selection is checked by `tests/caster-reward-rarity.test.mjs`.
+Combat payment is covered by the rows in `tests/combat-rules.test.mjs`; the
+census and caster reward selection are not pinned by a scenario test.

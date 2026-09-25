@@ -267,7 +267,7 @@ The rules this boundary holds:
   `document.querySelectorAll` reconciliation this would otherwise grow back is
   what the selection store was extracted to delete.
 
-`tests/card-presentation-levels.test.mjs` is the gate: every manifest region
+The rules (no scenario test pins them since the suite cut): every manifest region
 exists in `balance.ui.equipmentCard.regions`, the solver honours its declared
 floors with regions omitted (at the sparsest level *and* at the fullest), and
 `glance ⊆ focus ⊆ inspect` holds at the base and on every patched surface.

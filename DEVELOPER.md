@@ -132,7 +132,8 @@ node --test "tests/*.test.mjs"
 ```
 
 The suite is five files in `tests/`, each a single scenario test: `solo-run`
-(every class through seeded acts 1–3 with save/load at every step),
+(every class's seeded climbs toward act 3, through save/load at every step
+and replayed for determinism),
 `combat-rules` (the engine's exact numbers as one table), `coop` (a seeded
 party through the host and the LAN door), `content` (bundle validity,
 content/config drift, linkcheck, statusreach, closedsets, asset paths) and

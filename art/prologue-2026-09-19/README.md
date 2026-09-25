@@ -37,7 +37,7 @@ The hamlet paintings show the Hollow Weald departure. The final scene keeps its 
 
 `content/config/ui/screens/prologue.json` is the authored game sequence; `node tools/config-build.mjs` produces the generated configuration. `src/model/prologue.js` supplies validated settings, tokens and destinations. `src/ui/screens/prologue.js` renders both new games and Settings preview. The studio retains `sequence.json` as its standalone initial script.
 
-Focused verification: `node --test tests/prologue.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs tests/ui-config.test.mjs art/prologue-2026-09-19/model.test.mjs`. Browser checks cover multiline edits, preview, phone art/controls, class item loading, final-map arrival, and reduced motion. Only solo new games show the opening; LAN startup is unchanged.
+Verification: `node --test "tests/*.test.mjs"` (`ui-screens` mounts every screen from a real game state; `content` checks the config drift). Browser checks cover multiline edits, preview, phone art/controls, class item loading, final-map arrival, and reduced motion. Only solo new games show the opening; LAN startup is unchanged.
 
 ## Combined build packaging
 

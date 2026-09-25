@@ -64,7 +64,7 @@ Run with Python, Pillow and NumPy from the repository root:
 python art/twin-sword-reference-2026-09-19/export.py
 python art/twin-sword-reference-2026-09-19/bind.py
 node tools/config-build.mjs
-node tests/twin-sword-animation.test.mjs
+node --test "tests/*.test.mjs"
 ```
 
 The component extractor is adapted from the existing sword/shield pipeline,

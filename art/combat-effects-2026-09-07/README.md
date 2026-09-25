@@ -52,8 +52,8 @@ co-op redraw clear active effects. Every sprite also expires independently.
 These changes affect presentation only: damage, costs, statuses, stances and
 the approved character outline colors are unchanged.
 
-Validation: tests/combatEffects.test.mjs covers six distinct files per effect,
-card routing, subtle presentation, co-op stance ownership and aim geometry.
+Validation: the game suite (`node --test "tests/*.test.mjs"`) has no test
+specific to this pack.
 playtest.mjs decodes all 336 frames, checks every phase and all 224 directional
 variants, cancellation, reduced motion, desktop/phone layout, and actual spell,
 melee, shield, parry, binding and subtle card plays in the standalone game.
