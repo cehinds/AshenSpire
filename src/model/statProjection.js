@@ -276,10 +276,14 @@ export function handResourceRows(registries, run, settings = {}) {
   const terms = (receipt) => `${receipt.base} base${receipt.statEnabled ? ` + ${receipt.bonus} ${short(receipt.stat)}` : ''}`;
   const limits = (receipt) => (receipt.raw < receipt.minimum ? `, raised to the minimum ${receipt.minimum}`
     : receipt.raw > receipt.maximum ? `, limited to the maximum ${receipt.maximum}` : '');
-  const openingFormula = `${terms(opening)}${limits(opening)}${Math.min(opening.raw, opening.maximum) > opening.capacity ? `, limited to hand capacity ${opening.capacity}` : ''} = ${opening.value}`;
+  // Both values are `handDrawCount` into an empty hand (the formula combat's
+  // `turnDrawCount` deals), so a stated rule above capacity reads the capped
+  // count on the chip and at the end of its arithmetic.
+  const capped = (receipt) => (receipt.stated > receipt.capacity ? `, limited to hand capacity ${receipt.capacity}` : '');
+  const openingFormula = `${terms(opening)}${limits(opening)}${capped(opening)} = ${opening.value}`;
   const turnFormula = turn.fill
     ? `draw until the hand holds ${turn.capacity}`
-    : `${terms(turn)}${limits(turn)} = ${turn.value}, never past hand capacity ${turn.capacity}`;
+    : `${terms(turn)}${limits(turn)}${capped(turn)} = ${turn.value}${capped(turn) ? '' : `, never past hand capacity ${turn.capacity}`}`;
   return [
     {
       id: 'openingHand', label: 'Opening hand', faceLabel: 'Hand', disclosure: 'face', order: 4.5,

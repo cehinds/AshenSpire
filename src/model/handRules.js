@@ -169,19 +169,39 @@ export function classHandRules(settings = {}, attributes = [], classId = null) {
 }
 
 /**
+ * handDrawCount(rules, attributes, { handSize, opening, replacements }) → how
+ * many cards one draw puts into a hand already holding `handSize`: the
+ * starting rule on the opening draw, otherwise the fixed turn rule (plus any
+ * replacements for chosen discards) or a fill to capacity — never more than
+ * the room capacity leaves. The ONE formula: combat's `turnDrawCount`
+ * (engine/handRules.js) deals it and creation's Hand and Draw chips
+ * (`handSizeReceipts`) preview it for an empty hand, so a turn draw of 2 into
+ * a capacity of 1 reads 1 on both (Codex, #1294).
+ */
+export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = false, replacements = 0 } = {}) {
+  const capacity = scaledCards(rules.capacity, attributes);
+  const room = Math.max(0, capacity - handSize);
+  const wanted = opening ? scaledCards(rules.starting, attributes)
+    : rules.drawMode === 'fill' ? room : scaledCards(rules.turn, attributes) + replacements;
+  return { capacity, room, wanted, value: Math.min(room, wanted) };
+}
+
+/**
  * handSizeReceipts(rules, attributes) → the opening hand, the most one turn
- * draws, and the capacity, each with the terms `scaledCards` used. The
- * opening hand is what `turnDrawCount` (engine/handRules.js) deals into an
- * empty hand on turn 1: the starting rule, limited by capacity. A fill draw
- * tops the hand up to capacity; a fixed draw states the turn rule.
+ * draws, and the capacity, each with the terms `scaledCards` used. Both
+ * values are `handDrawCount` into an empty hand — what `turnDrawCount`
+ * (engine/handRules.js) deals: the stated rule (`stated`), limited by
+ * capacity. A fill draw tops the hand up to capacity.
  */
 export function handSizeReceipts(rules, attributes = {}) {
   const capacity = scaledCardsReceipt(rules.capacity, attributes);
   const starting = scaledCardsReceipt(rules.starting, attributes);
-  const opening = { ...starting, capacity: capacity.value, value: Math.min(capacity.value, starting.value) };
+  const opening = { ...starting, stated: starting.value, capacity: capacity.value, value: handDrawCount(rules, attributes, { opening: true }).value };
+  const most = handDrawCount(rules, attributes).value;
+  const turnRule = scaledCardsReceipt(rules.turn, attributes);
   const turn = rules.drawMode === 'fill'
-    ? { fill: true, capacity: capacity.value, value: capacity.value }
-    : { ...scaledCardsReceipt(rules.turn, attributes), fill: false, capacity: capacity.value };
+    ? { fill: true, capacity: capacity.value, value: most }
+    : { ...turnRule, stated: turnRule.value, fill: false, capacity: capacity.value, value: most };
   return { opening, turn, capacity };
 }
 

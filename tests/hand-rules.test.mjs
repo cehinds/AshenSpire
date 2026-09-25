@@ -264,3 +264,25 @@ test('character creation\'s Hand chip is the opening hand combat deals, for ever
     }
   }
 });
+
+// A fixed turn draw of 2 into a hand capacity of 1 draws one card, not two:
+// `turnDrawCount` deals min(room, wanted). The Draw chip said 2 (Codex,
+// #1294), so it now reads `handDrawCount` into an empty hand — the same
+// formula combat deals — and its arithmetic ends on the capped count.
+test('character creation\'s Draw chip is capped by hand capacity when the turn draw exceeds it', () => {
+  const settings = settingsOf({ drawMode: 'fixed', retain: false, 'turn.base': 2, 'capacity.base': 1 });
+  for (const classDef of contentBundle.classes) {
+    const run = createRunState({ seed: 7, classId: classDef.id, registries });
+    const rows = handResourceRows(registries, run, settings);
+    const draw = rows.find(row => row.id === 'draw');
+    const hand = rows.find(row => row.id === 'openingHand');
+    assert.equal(draw.value, 1, `${classDef.id}: at most capacity cards are drawn into an empty hand`);
+    assert.match(draw.formula, /2 base, limited to hand capacity 1 = 1$/);
+    assert.equal(hand.value, 1);
+    assert.match(hand.formula, /limited to hand capacity 1 = 1$/);
+    const combat = createRunCombat({ registries, rng: createRng(7), run, settings, enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.piles.hand.length, hand.value, `${classDef.id}: the Hand chip is the opening hand dealt`);
+    dispatch(combat, { type: 'endTurn' });
+    if (combat.turn === 2) assert.equal(combat.piles.hand.length, draw.value, `${classDef.id}: the Draw chip is the turn draw dealt`);
+  }
+});
