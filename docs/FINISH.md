@@ -26,9 +26,9 @@ linked. Update this file after every PR.
 
 ## 1. Spec coverage
 
-- [ ] **Guilt deals its in-hand turn-end HP loss** (SPEC §5.2, DEVELOPER "M1 known deviations" #2). Test: an engine test where Guilt in hand at turn end costs exactly the row's value (1 HP) and Guilt in draw or discard costs nothing. *Owner decision D2.*
-- [ ] **Warrior's Vow lets you choose a stance** (SPEC §5.2, deviation #3). Test: an engine test where the card offers a pending choice of every class stance, and the chosen stance is the one entered. *D2.*
-- [ ] **Remove the stale Frostbite deviation**: SPEC §4.4 marks Frostbite CUT, with Frost and `frostExposed` carrying it. Test: DEVELOPER.md "M1 known deviations" no longer lists Frostbite, and the SPEC falsifier `statuses.some(s=>s.id==='frostbite')` prints `false`.
+- [ ] **Guilt deals its in-hand turn-end HP loss** (SPEC §5.2, DEVELOPER "M1 known deviations", Guilt). Test: an engine test where Guilt in hand at turn end costs exactly the row's value (1 HP) and Guilt in draw or discard costs nothing. *Owner decision D2.*
+- [ ] **Warrior's Vow lets you choose a stance** (SPEC §5.2, DEVELOPER "M1 known deviations", Warrior's Vow). Test: an engine test where the card offers a pending choice of every class stance, and the chosen stance is the one entered. *D2.*
+- [~] **Remove the stale Frostbite deviation** ([#1283](https://github.com/cehinds/AshenSpire/pull/1283)): SPEC §4.4 marks Frostbite CUT, with Frost and `frostExposed` carrying it. Test: DEVELOPER.md "M1 known deviations" no longer numbers Frostbite among its rows (only a note that it is CUT, not deferred), and the SPEC falsifier `statuses.some(s=>s.id==='frostbite')` prints `false`.
 - [ ] **Card hotkeys 1–9 have a test**. They already ship in `src/ui/screens/combat.js` (`cardIdx`): 1–9 select a card, and with a card selected a number picks the enemy. Test: a test covers SPEC §7.3, where pressing N selects hand card N, a key past the hand size does nothing, and with a hostile card selected N targets living enemy N. The code needs no new input path.
 - [ ] **Abandoning mid-combat restarts that combat** (SPEC §9 M2), as a named test. Test: a headless test with seed S plays 2 cards, then reloads through the real load path; the combat is back at turn 1 with the same HP rolls, the same opening hand and the deck unchanged.
 - [ ] **Every card, relic and event is reachable** (SPEC §9 M3). Test: `node tools/contentreach.mjs` exits 0 with 0 orphans across 195 cards, 63 relics and 25 events, and its `--selftest` goes red on a planted orphan of each kind.
