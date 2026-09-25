@@ -125,7 +125,9 @@ export function gradedAttributeRatingReceipt(config, attributes, id, grades, sca
     const grade = grades?.[attributeId];
     if (grade == null) return [attributeId, weights[attributeId]];
     if (!Number.isFinite(scaling.grades[grade])) throw new Error(`weapon scaling grade '${grade}' is not in the run's grade table`);
-    return [attributeId, scaling.grades[grade]];
+    // A grade never pays less than the row's own weight (SPEC §13.4o): the
+    // stat rows moved some weights above the lowest grades (AR STR 0.75 vs D 0.5).
+    return [attributeId, Math.max(scaling.grades[grade], weights[attributeId])];
   }));
   const graded = Object.fromEntries(Object.keys(grades || {}).filter((a) => ratingAttributeIds.includes(a)).map((a) => [a, coefficients[a]]));
   const receipt = statRowValue(row, { attributes, level, statId: id, lenientAttributes: true, graded: { anchor, coefficients: graded } });
