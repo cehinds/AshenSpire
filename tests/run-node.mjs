@@ -939,6 +939,41 @@ if (CORE) {
     if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
     else zoomPassed++;
   }
+
+  // 94/95 — reusable UI component contracts (tools/ui-components.mjs, #1316).
+  // C5 and C12 sat red on dev because nothing ran this tool. 94 is the check's
+  // own integrity against its planted corpus; 95 is the tree's state (the
+  // same verdict tests/ui-component-catalogs.test.mjs asserts, quoted here in
+  // the suite's ledger).
+  const runUiComponents = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/ui-components.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const uiSelf = runUiComponents(['--selftest']);
+    const uiSelfV = quote(uiSelf.out);
+    console.log(
+      `${uiSelf.code === 0 && uiSelfV.text ? 'PASS' : 'FAIL'}  94. the UI component check still catches its own known-bad corpus` +
+        ` — ${uiSelfV.text || `ui-components --selftest (exit ${uiSelf.code}): ${uiSelfV.why}`}`
+    );
+    if (uiSelf.code !== 0 || !uiSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
+
+  if (CORE) {
+    const uiTree = runUiComponents([]);
+    const uiTreeV = quote(uiTree.out);
+    console.log(
+      `${uiTree.code === 0 && uiTreeV.text ? 'PASS' : 'FAIL'}  95. every reusable UI component contract holds` +
+        ` — ${uiTreeV.text || `ui-components (exit ${uiTree.code}): ${uiTreeV.why}`}` +
+        ` (\`node tools/ui-components.mjs\` names each broken contract)`
+    );
+    if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
