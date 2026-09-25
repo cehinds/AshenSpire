@@ -1128,12 +1128,12 @@ export function compactRowLabel(label, topic) {
 // changed — the same keys, the same commit path, the same refusals.
 
 /**
- * wireStepper(wrap, { read, commit, min, max, step }) — the − and + buttons and
+ * wireStepper(wrap, { read, commit, min, max, step, stepFor }) — the − and + buttons and
  * the slider of one stepper. A press steps once; holding repeats and speeds up.
  * The slider shows its value in the field while dragging and saves at most
  * every 120 ms, then once more when released, so a drag is not a save per pixel.
  */
-function wireStepper(wrap, { read, commit, min, max, step }) {
+function wireStepper(wrap, { read, commit, min, max, step, stepFor = null }) {
   const slider = wrap.querySelector('input[type="range"]');
   const field = wrap.querySelector('input[type="number"]');
   // Only floating-point noise is removed (0.1 + 0.2 → 0.3). A value off the
@@ -1158,11 +1158,13 @@ function wireStepper(wrap, { read, commit, min, max, step }) {
   const locked = () => !!field?.disabled;
   const stepOnce = (b, times = 1) => {
     if (locked()) return;
-    const by = Number(b.dataset.stepBy) || step;
     // Step from what the field shows: a number typed but not yet committed
     // (a press does not blur the field) is the one the player means.
     const typed = field && field.value.trim() !== '' ? Number(field.value) : NaN;
     const base = Number.isFinite(typed) ? typed : read();
+    // A row whose button step scales with its value (buttonStep) asks again
+    // for the value it steps from, not the one it was drawn with.
+    const by = (stepFor ? stepFor(base) : Number(b.dataset.stepBy)) || step;
     const next = Math.min(max, Math.max(min, round(base + Number(b.dataset.step) * by * times)));
     commit(next);
     sync();
@@ -3007,7 +3009,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // clamp on every keypress would rewrite the value under his fingers.
     field.addEventListener('change', () => commit(field.value));
     field.addEventListener('blur', () => commit(field.value));
-    wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1 });
+    wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1, stepFor: (v) => buttonStep(row, v) });
   });
 
   mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);

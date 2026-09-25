@@ -508,3 +508,14 @@ test('each input steers the control it is on', async () => {
   const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
   assert.doesNotMatch(body, /document\.activeElement|current\(\)/, 'navigate uses only the control it is given');
 });
+
+test('−/+ ask for the button step of the value they step from', async () => {
+  const { buttonStep } = await import('../src/ui/screens/settings.js');
+  const row = settingsRow('gameConfig.combatRatings.multiplier');
+  assert.equal(buttonStep(row, 1), 0.05);
+  assert.equal(buttonStep(row, 40), 1, 'a typed 40 steps by 1, not the 0.05 it was drawn with');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const by = \(stepFor \? stepFor\(base\) : Number\(b\.dataset\.stepBy\)\) \|\| step;/);
+  assert.match(screen, /stepFor: \(v\) => buttonStep\(row, v\)/);
+});
