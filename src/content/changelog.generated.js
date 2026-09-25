@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1319",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: five broad tests replace about eleven hundred narrow ones",
+    "detail": "The automated checks now play whole seeded runs, solo and co-op, save and reload at every step, open every screen and check every piece of content, instead of pinning each detail on its own. One thing you can see: hovering an elite-chest reward no longer breaks its tooltip.",
+    "build": "0.7.1.492",
+    "pullRequest": 1319,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1319"
+  },
+  {
     "id": "pr-1313",
     "date": "2026-09-24",
     "group": "2026-09-24",

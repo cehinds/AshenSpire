@@ -294,7 +294,7 @@ export const uiStrings = [
     "extends": "",
     "short": "Elite chest",
     "full": "A chest of big rewards: choose one, the rest stay shut.",
-    "tip": ""
+    "tip": "Elite chest"
   },
   {
     "id": "reward.chest.chooseOne",

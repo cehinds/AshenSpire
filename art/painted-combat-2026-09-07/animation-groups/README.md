@@ -71,8 +71,7 @@ The galleries expose resource choices and the three Power phases for inspection.
 
 ## Checks
 
-    node --test tests/combatAura.test.mjs tests/combatAnimation.test.mjs tests/actionAnimation.test.mjs
-    node art/painted-combat-2026-09-07/animation-groups/controller.test.mjs
+    node --test "tests/*.test.mjs"
     node art/painted-combat-2026-09-07/animation-groups/playtest.mjs
     node art/painted-combat-2026-09-07/animation-groups/game-playtest.mjs
 

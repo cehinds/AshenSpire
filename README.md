@@ -126,7 +126,7 @@ src/model/       schemas, registries, formula evaluator, validation
 src/engine/      generic interpreters + procedural generators — no DOM access
 src/content/     ALL game data: cards, statuses, enemies, relics, events, tuning
 src/ui/          rendering and input
-tests/           headless engine tests (open tests/index.html, expect all green)
+tests/           five scenario tests (node --test "tests/*.test.mjs")
 DEVELOPER.md     how to add a card/relic/enemy/event
 docs/            design, component, and development-coordination documentation
 CREDITS.md       every asset's source and license

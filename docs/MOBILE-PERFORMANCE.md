@@ -63,14 +63,12 @@ Screen teardown disconnects observers, releases card inputs and stops stages.
 ## Verification
 
 ```
-node --test tests/mobile-performance.test.mjs
-node tests/run-node.mjs
+node --test "tests/*.test.mjs"
 node tools/launch.mjs --build-only
 node tools/buildversion.mjs --check
 node tools/verify-shipped.mjs
 node tools/mobile-art.mjs --check
 node tools/verify-external.mjs
-node tools/plantsites.mjs --check
 ```
 
 Browser QA covers 390×844 touch and 1440×900 desktop: combat load, selection

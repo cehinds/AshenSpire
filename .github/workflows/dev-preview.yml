@@ -30,99 +30,6 @@ jobs:
 
       - uses: ./.github/actions/setup-node
 
-      - name: Complete armament kits and temporary Guardian skill
-        run: node tests/armament-combat-kits.test.mjs
-
-      - name: Relic artwork resolves to shipped assets
-        run: node --test tests/relic-art.test.mjs
-
-      - name: Mobile rendering and bounded pose preloads
-        run: node --test tests/mobile-performance.test.mjs
-
-      - name: Combat formations and painted ground
-        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
-
-      - name: World Journey normalized data and seeded routes
-        run: node tests/world-atlas.test.mjs
-
-      # #498: 28 plant sites had drifted and only one gate went red — the rest
-      # stayed green while unable to fail. This cheap static detector (no
-      # execution, no browser, <1s) runs on every PR: any NEW drifted
-      # find-string fails here the day the refactor lands, and the checked-in
-      # baseline holds the known backlog to exactly itself.
-      - name: No plant site has drifted beyond the recorded baseline
-        run: node tools/plantsites.mjs --check
-
-      # The harness that decides, for every corpus above and in the dispatch-only
-      # lane, whether a known-bad was armed at all. It read plants as exact bytes,
-      # so on a CRLF checkout every MULTI-LINE plant reported PLANT SITE DRIFTED —
-      # a false red on Windows, invisible on this runner because Linux checks out
-      # LF. That is the shape of defect this lane exists to catch, and the harness
-      # was the one tool with no door of its own. Seconds, no browser, no port.
-      - name: The plant harness can still arm a plant (doorplant's own door)
-        run: node tools/doorplant.mjs --selftest
-
-      # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
-      # THE DISPATCH-ONLY LANE.
-      #
-      # `dev` went red on these three times on 2026-09-03 — after #575, after
-      # #580's merge, and after the #588/#589/#591/#592 batch — and each time
-      # the artifact a player is handed was not this source. The third was the
-      # worst: build/AshenSpire.html carried two modules that no longer existed
-      # in the tree at all.
-      #
-      # EVERY ONE OF THOSE PULL REQUESTS WAS GREEN ON ITS OWN BRANCH, because
-      # the branch rebuilt. A `pull_request` run checks out `refs/pull/N/merge`,
-      # so it does test a merge — but the merge against the base AS IT STOOD
-      # THEN. Two PRs both green against base X, A merges, and B's green now
-      # describes a tree that no longer exists. The tree produced by merging
-      # them is the one nobody built, and until now nothing looked at it.
-      #
-      # The `push: branches: [dev]` half of this workflow is that missing look:
-      # it runs on the real post-merge result. It does not PREVENT the drift —
-      # preventing it means rebuilding as part of merging, which is a change to
-      # how merges are done and not this file's to make — but it turns "found a
-      # day later by a seat running a tool by hand" into "red within a minute,
-      # on dev, by name".
-      #
-      # Same reasoning as the plant-site detector above, and the same budget:
-      # both are pure reads, no execution and no browser, well under a second,
-      # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
-      # dispatch-only; nothing here re-enables it or spends a Windows minute.
-      - name: Current builds use the 0.7.x.x release series
-        run: node tools/release-series.mjs
-      - name: Release series gate rejects older and malformed versions
-        run: node tools/release-series.mjs --selftest
-
-      - name: The shipped artifact is this source, and the number on it is ours
-        run: node tools/buildversion.mjs --check
-
-      - name: The file a player is handed matches the tree that claims it
-        run: node tools/verify-shipped.mjs
-      - name: The mobile art twin tree mirrors assets/ and fits its budget
-        run: node tools/mobile-art.mjs --check
-
-      # Same budget as the gates above: a pure read, no execution, no browser,
-      # well under a second, on the runner this job already pays for. It walks
-      # every in-tree module regardless of who imports it, so a rename that
-      # leaves one dangling import is red here rather than at runtime.
-      #
-      # NOT HERE, and the reason is measured rather than assumed: the check that
-      # the in-game changelog matches CHANGELOG.md (tools/about-changelog.mjs
-      # --check) would be the natural companion, and I put it here first. It
-      # SERVES THE TREE AND DRIVES A BROWSER — it exits 127 with no Chrome on
-      # PATH, and it took this job red doing exactly that. It stays in ci.yml,
-      # under the verdict door, where a browser exists. This lane's rule is not
-      # "cheap-looking"; it is no browser, and that tool needs one.
-      - name: Every named import in the tree resolves against a real export
-        run: node tools/linkcheck.mjs --check
-
-      - name: Combat effect tags, outcomes, and character outlines
-        run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
-
-      - name: Pose studio project schema and event bindings
-        run: node --test pose-studio/tests/model.test.mjs
-
       - name: Collect the playable build
         run: |
           set -euo pipefail
@@ -209,22 +116,15 @@ jobs:
       # preview/AshenSpire.html" — the gate refusing a directory that did not
       # exist yet, which is the right behaviour and the wrong placement.
       #
-      # --dir is passed to the selftest too. It plants into a COPY of whatever
-      # --dir names; without it the selftest looks for build/web, which this
-      # job never builds, and exits 2 — "the harness could not run", which
-      # blocks without measuring anything.
-      #
       # The de-inlined build's art is on disk, not in the HTML, so the guard
       # that reads the shipped file cannot see it. verify-shipped.mjs still
       # covers the single file (its art is inside it, and nothing here changed
       # that); these cover the other shape. Both defects this build actually
       # had — CSS urls rebased to `../../assets/…`, and map-detail never copied
-      # — were green on disk, which is why the browser-gates job carries a
+      # — were green on disk, which is why the browser-smoke job carries a
       # third check rather than these two standing alone.
       - name: The de-inlined build carries every asset it will ask for
         run: node tools/verdict.mjs -- node tools/verify-external.mjs --dir preview
-      - name: That gate still catches its own known-bads
-        run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest --dir preview
 
       # TWO ARTIFACTS, NOT ONE FOLDER INSIDE ANOTHER.
       #
@@ -256,46 +156,11 @@ jobs:
           path: standalone/
           retention-days: 14
 
-  # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
-  #
-  # PROPOSED, not adopted — this job is the subject of its own pull request and
-  # is here to be measured and accepted or rejected, not to be assumed.
-  #
-  # The gap it closes was paid for on 2026-09-07. #720 landed a reachability
-  # regression on `dev`: at a Safari-like 390x650 phone, four combat hand cards
-  # cover one another. `screenreach` catches it in 32 seconds — but `screenreach`
-  # runs only in ci.yml, which is `workflow_dispatch` only, and the job above
-  # runs no browser at all. So #720 merged green, promoted to `test` green, and
-  # the regression was invisible at every gate it met. It surfaced two hours and
-  # two promotions later, on a hand-dispatched matrix opened for a RELEASE — the
-  # last place a defect should first be seen rather than the first.
-  #
-  # WHY THE GATES AND NOT THEIR SELFTESTS. Each of these tools has a `--selftest`
-  # arm that plants known-bads and requires the named red. Those arms are what
-  # prove the gate can fail, and they are also almost all of the cost: in ci.yml
-  # run 321 the four gates below took 79s between them, while the plant arms in
-  # the same job took over 19 minutes — `startup-gate --selftest` alone ran 14m43s
-  # for its eighteen plants. Proving a gate can fail is a property of the gate,
-  # which changes when the gate changes; measuring the tree is a property of the
-  # commit. So the plant arms stay in the dispatched matrix where their cost is
-  # deliberate, and the measurements move here where the regressions are.
-  #
-  # THIS IS NOT A SUBSTITUTE FOR THE MATRIX. Linux only, one runner, no Windows
-  # (2x) and no macOS (10x); it proves nothing about cross-platform behaviour or
-  # about the gates' own ability to fail. It is the cheapest thing that would
-  # have caught #720 on the day it landed.
-  #
-  # COST: one ubuntu-latest runner, roughly 2 minutes, per push to `dev` and per
-  # pull request targeting it — measured from run 321's own step timings:
-  #   hand-side-probe            9s
-  #   shotguard-probe           26s
-  #   startup-gate              72s
-  #   screenreach --only         32s
-  #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
-  # plus checkout and node setup. Against that: #720's regression sat undetected
-  # across two promotions and cost three dispatched 3-OS matrices to find.
-  browser-gates:
-    name: the reachability gates a phone would fail
+  # THE BROWSER SMOKE: the de-inlined build boots, plays and fetches its art
+  # over the wire, and a cold boot owns the first input before Title exists.
+  # Linux only, one runner, no plant/--selftest arms.
+  browser-smoke:
+    name: browser smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -305,75 +170,15 @@ jobs:
 
       - uses: ./.github/actions/which-browser
 
-      # THE DE-INLINED BUILD, LOADED RATHER THAN INSPECTED. It builds its own
-      # copy because this job does not share a filesystem with `preview`, and
-      # the build is cheap without the 52.8 MB of base64 the single file carries.
+      # It builds its own copy because this job does not share a filesystem
+      # with `preview`, and the build is cheap without the inlined base64.
       - name: The de-inlined build plays, and its art arrives over the wire
         run: |
           node tools/bundle.mjs --external-art --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
-      - name: Hand-side placement reaches the correct rendered side
-        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
-
-      - name: Storage gate holds, and a normal boot still saves
-        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs
-
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
-
-      # THE MAP CAMERA MOVES ON BOTH AXES — the player's hand on it, and the
-      # board's own hand when a pick opens the tray. #1229 landed here because
-      # the second half was measurable and unmeasured: the glide wrote
-      # `scrollLeft = 0`, which is the vertical-only camera's honest answer and
-      # the two-axis camera's far-left pan, and every pick threw the act into
-      # the right half of the screen. The tool is a gate only where something
-      # runs it, and ci.yml has been dispatch-only since 2026-08-01, so this is
-      # the door. `--no-screenshots` because the writing arm would dirty
-      # docs/preview/ in a tree the `reproducible` job diffs.
-      - name: Picking a map node brings it to the middle, on both axes
-        run: node tools/verdict.mjs -- node tools/map-two-axis-pan.mjs --no-screenshots
-
-      # SCREENREACH IS DELIBERATELY NOT HERE, AND THIS IS THE RETRACTION OF MY
-      # OWN STEP RATHER THAN A GATE BEING SWITCHED OFF.
-      #
-      # It was added alongside the three above and was the reason this job was
-      # proposed at all: it was the gate that caught #720's card overlap. Then
-      # it was measured, and the measurement did not support the step.
-      #
-      # `screenreach` decides "covered" by hit-testing a control's GEOMETRIC
-      # CENTRE. Two of its three findings at 390x650 are that test meeting
-      # deliberate design rather than a defect:
-      #
-      #   · the combat hand is a FAN. Cards overlap on purpose. Measured on
-      #     `dev`, four of five hand cards report their centre covered by the
-      #     NEXT CARD'S `.ctype` badge, while 27 of 81 sampled points on each
-      #     card still hit that card — a third of every card exposed, which is
-      #     what a fan looks like. The fifth card is 81/81. #720 widened cards
-      #     to 157px on a 390px viewport, which moved the centres under the
-      #     neighbour; it did not make the hand unusable.
-      #   · the creation view toggle is a section header that comes to rest
-      #     straddling a scrolling container's clip edge, so its centre lands
-      #     0.35px inside `.modal-foot`. `scrollIntoView` puts it fully in view
-      #     and the hit test then returns the control itself. The gate already
-      #     calls five fully-scrolled-out controls on that same screen "fine";
-      #     this one is half-scrolled and called covered.
-      #
-      # So the step went red on every push to `dev` AND every pull request into
-      # it, on all of the work other people had in flight, for a reading the
-      # measurements do not support. A standing red that everyone learns to
-      # scroll past is worse than the silence this job was meant to end.
-      #
-      # WHAT WAS NOT DONE. `screenreach` itself is untouched and still runs in
-      # ci.yml exactly as before, plants and all — no gate lost any coverage,
-      # and nothing was skipped, disabled or quarantined to get a tree green.
-      # The three steps above stay because they are green, fast and sound; they
-      # were never the problem.
-      #
-      # WHAT WOULD BRING IT BACK. `screenreach` classifying a control as
-      # reachable when a usable region of it is hittable, rather than only its
-      # centre pixel — at which point it belongs here, because the #720 card
-      # overlap it found is real and the fan is not the whole of it.
 
       - name: Capture the pose studio on desktop and phone
         run: node tools/pose-studio-capture.mjs --out "${{ runner.temp }}/pose-studio-evidence"

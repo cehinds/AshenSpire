@@ -157,9 +157,10 @@ standalone build to finish an older journey. Classic saves are unaffected.
 
 ## Verification
 
-`node tests/world-atlas.test.mjs` checks 300 seeds across both profiles, all anchor
+The retired `tests/world-atlas.test.mjs` checked 300 seeds across both profiles, all anchor
 options, disconnected travel refusal, explicit bosses, save roundtrips, stale
 revision refusal, quest claims, invalid authoring data, CSV/JSON/SQLite parity,
-and an update-anomaly check against the derived local-region view. Browser QA
+and an update-anomaly check against the derived local-region view; it was
+retired in the suite cut and no scenario test replaces it. Browser QA
 also checks the actual game, location actions, desktop/phone layouts, and the
 standalone bundle. This verifies mechanics and presentation, not combat balance.

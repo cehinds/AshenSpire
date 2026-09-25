@@ -12,7 +12,7 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
 const commands = {
   content: [['tools/content-build.mjs'], ['tools/framework-data-build.mjs']],
   build: [['tools/launch.mjs', '--build-only']],
-  validate: [['tests/run-node.mjs'], ['tools/buildversion.mjs', '--check'], ['tools/verify-shipped.mjs']],
+  validate: [['--test', 'tests/*.test.mjs'], ['tools/buildversion.mjs', '--check'], ['tools/verify-shipped.mjs']],
 };
 export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable } = {}) {
   root = await fs.realpath(root);

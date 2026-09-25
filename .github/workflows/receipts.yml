@@ -22,8 +22,17 @@ name: receipts
 # merges the author did not make, and a gate that goes red at somebody else for
 # work they cannot see is a gate people learn to ignore.
 
+#
+# ABOUT-CHANGELOG is the second process gate: the in-game changelog must be an
+# exact projection of CHANGELOG.md, read through the real Settings -> About
+# route (it serves the tree and drives a browser, so it has its own job).
+# It runs on pull requests too, because a PR that edits CHANGELOG.md without
+# regenerating the projection is the author's own drift.
+
 on:
   push:
+    branches: [dev]
+  pull_request:
     branches: [dev]
   workflow_dispatch:
 
@@ -36,6 +45,7 @@ permissions:
 
 jobs:
   receipts:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       # Full history: the check walks `origin/test..HEAD` for merge subjects.
@@ -51,8 +61,20 @@ jobs:
       - name: Fetch the promotion target so the range is the real one
         run: git fetch --no-tags origin test:refs/remotes/origin/test || echo "no test branch yet; the tool will say so"
 
-      - name: The corpus still catches its own known-bads
-        run: node tools/verdict.mjs -- node tools/receipts.mjs --selftest
-
       - name: Every pull request merged since the last promotion has a receipt
         run: node tools/verdict.mjs -- node tools/receipts.mjs --check
+
+  about-changelog:
+    name: about changelog matches CHANGELOG.md
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      - uses: ./.github/actions/setup-node
+
+      - uses: ./.github/actions/which-browser
+
+      - name: About changelog projects CHANGELOG.md through the real Settings route
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs

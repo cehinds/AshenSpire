@@ -273,19 +273,6 @@ export async function run({ root = REPO_ROOT, out = resolve(REPO_ROOT, 'tools/re
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const args = process.argv.slice(2);
 
-  // Spawned, never imported: the corpus imports run() from this file, and an
-  // in-process dynamic import of a module that imports this one back is an ESM
-  // cycle with a top-level await in it — that hangs rather than throws, and a
-  // tool that hangs instead of ruling is the silent bucket in a new coat.
-  if (args.includes('--selftest')) {
-    const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs')], { stdio: 'inherit' });
-    process.exit(r.status == null ? 2 : r.status);
-  }
-  if (args.includes('--source-selftest')) {
-    const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs'), '--source-selftest'], { stdio: 'inherit' });
-    process.exit(r.status == null ? 2 : r.status);
-  }
-
   const at = (flag, def) => { const i = args.indexOf(flag); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
   const root = resolve(at('--root', REPO_ROOT));
   const out = resolve(at('--out', resolve(REPO_ROOT, 'tools/results')));

@@ -332,7 +332,7 @@ async function main() {
   // tools/screen-census.mjs and is pointed at rather than copied, because a
   // second screen count is the defect that census exists to kill.
   console.log(`  · it is about the ${ROUTE.length} routes listed above and no others.`);
-  console.log('    How many screens the game HAS is not this tool\'s number: node tools/screen-census.mjs.');
+  console.log('    How many screens the game HAS is not this tool\'s number.');
   console.log('    The Smith — where he hit both bugs — is not among them.');
   console.log('  · "says why" means a reason is ATTACHED and readable. Nothing here read it aloud,');
   console.log('    measured whether it fits on screen, or judged whether the sentence is any good.');

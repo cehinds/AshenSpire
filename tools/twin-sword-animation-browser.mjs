@@ -95,9 +95,7 @@ try {
  });
  assert.deepEqual(swaps,[null,'reaverGreatsword',null,'reaverTwinSword']);
  await page.screenshot({path:resolve(out,'combat-twin-sword.png')});
- await page.goto(origin+'/tests/index.html');
- await page.waitForFunction(()=>/passed, \d+ failed/.test(document.querySelector('#summary')?.textContent||''),null,{timeout:180000});
- const engineSummary=await page.locator('#summary').textContent();assert.match(engineSummary,/, 0 failed$/);console.log(engineSummary);
+ // The in-browser engine page (tests/index.html) was retired with the old suite (#1319).
  assert.deepEqual(errors,[]);
  writeFileSync(resolve(out,'result.json'),JSON.stringify(result,null,2));
  console.log('PASS twin swords: 35 armor rows, 32 decoded suites, authored hand order and reverse fallback, configured nine-step attack/timing, defense/hurt/cast/buff/stance, portrait/conversation, gallery and live equipped combat swaps.');

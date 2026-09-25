@@ -71,7 +71,7 @@ reward.classDraft.spent,,"This class pick is no longer open. Go Back; the row st
 reward.kind.flask,,Flask,,
 reward.kind.armament,,Armament,,
 reward.kind.relic,,Relic,,
-reward.kind.chest,,Elite chest,"A chest of big rewards: choose one, the rest stay shut.",
+reward.kind.chest,,Elite chest,"A chest of big rewards: choose one, the rest stay shut.",Elite chest
 reward.chest.chooseOne,,Choose one of {count}.,,
 reward.chest.took,,<b>{name}</b> taken from the chest.,,
 reward.chest.eyebrow,,Open the chest,"Pick one reward; the others stay in the chest.",

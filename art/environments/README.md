@@ -41,6 +41,6 @@ the host snapshot does not yet transmit the explored path needed for fog.
 
 Rebuild textures with `node tools/environment-art-build.mjs` (requires sharp),
 then rebuild the standalone game with `node tools/launch.mjs --build-only`.
-Validate with `node --test tests/environment-art.test.mjs` and the normal game
-checks. Source boards and maps were produced with the built-in image generator;
+Validate with the normal game checks (`node --test "tests/*.test.mjs"`; its
+`content` test checks that every asset path the game builds is a file on disk). Source boards and maps were produced with the built-in image generator;
 no third-party game map or screenshot is shipped.

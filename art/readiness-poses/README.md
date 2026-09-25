@@ -25,7 +25,7 @@ and Herald payment/healing glows through the production stage renderer.
 
 Build the game with `node tools/launch.mjs --build-only`. Build a portable review
 page and copy the game with `node tools/readiness-preview-build.mjs <output-dir>`.
-Run the unit checks with `node --test tests/combatPose.test.mjs` and the desktop,
+Run the game suite with `node --test "tests/*.test.mjs"` and the desktop,
 phone, source-game, and standalone browser checks with
 `node art/readiness-poses/playtest.mjs`. The combat captures use isolated shot
 fixtures and real card clicks; they are not full-run balance playtests.

@@ -10,4 +10,4 @@ Rebuild with Python and Pillow: `python assemble.py --export --require-complete`
 
 The importer validates all live armor selectors. Physical owns attack/ready/defense/hurt/stances and noncombat views. Cast/buff are safe empty-hand stills until the separate magic fragment replaces those two references and adds MAGIC-prefixed frames to the same sets. Both fragments share the unarmed profile and compose idempotently in either order, preserving unrelated profiles and settings. Spell-tagged unarmed attack cards cast; ordinary physical attacks punch; powers use buff. Equipped attacks keep their existing behavior.
 
-Validation: `node --test tests/unarmed-animation.test.mjs tests/actionAnimation.test.mjs tests/combatAnimation.test.mjs`. See ../../docs/EQUIPMENT-ANIMATION-REFERENCES.md for the runtime contract.
+Validation: `node --test "tests/*.test.mjs"` (the game suite; no test is specific to this pack). See ../../docs/EQUIPMENT-ANIMATION-REFERENCES.md for the runtime contract.
