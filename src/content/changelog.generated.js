@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1325",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the 1.0 checklist catches up",
+    "detail": "Docs only. docs/FINISH.md ticks what the last merges finished: loading a newer save mid-climb, a real-menu reload that restarts the fight, the map keeping your picked destination on a resize, background and resume, the credits check, the UI component checks, pull-request receipts and the version note. It also lists what those merges left open, such as other ways a failed load can still drop the climb in hand.",
+    "build": "0.7.1.526",
+    "pullRequest": 1325,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1325"
+  },
+  {
     "id": "pr-1316",
     "date": "2026-09-25",
     "group": "2026-09-25",
