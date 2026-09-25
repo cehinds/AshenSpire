@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1296",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Every stat is set the same way, in one place, and read from one table",
+    "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your opening hand stays your class's own 4 to 6 cards, now set per class in the same editor; your turn draw, hand size, HP, Actions, AR, DR, PR and Ward read as before at the starting attributes; Poise is a point or two higher. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
+    "build": "0.7.1.512",
+    "pullRequest": 1296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1317",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: a missing changelog entry is caught before merge",
+    "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check's title-screen Continue row now names the highlighted, enabled entry it already measured, so it fails loudly instead of measuring a greyed-out one if the screenshot ever stops seeding a save. Two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
+    "build": "0.7.1.510",
+    "pullRequest": 1317,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1317"
+  },
+  {
     "id": "pr-1300",
     "date": "2026-09-25",
     "group": "2026-09-25",
@@ -31,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.503",
     "pullRequest": 1299,
     "url": "https://github.com/cehinds/AshenSpire/pull/1299"
+  },
+  {
+    "id": "pr-1312",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The opening scene list in Settings lays out cleanly",
+    "detail": "The list of opening scenes in Settings now uses the full width of its row, with each scene's name and position side by side and its buttons on their own row beneath, so long names wrap instead of crowding the controls. This entry was written after the change merged without one.",
+    "build": "0.7.1.502",
+    "pullRequest": 1312,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1312"
   },
   {
     "id": "pr-1311",
