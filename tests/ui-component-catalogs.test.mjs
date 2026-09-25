@@ -154,6 +154,32 @@ test('a class-qualified .hud-bottom rule that hangs the rail fails C12', () => {
   assert.equal(c12({ ...r, kit }).length, 1);
 });
 
+// Codex on #1316: C12 reads CSS through a small parser, so these valid forms
+// are judged like any other, not missed by a line pattern.
+test('a :has() state on .hud-bottom that hangs the rail fails C12', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud .hud-bottom:has(> .icon-tray.expanded) { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
+test('a final grid-template-areas with no semicolon that drops meters fails C12', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions" }\n`;
+  assert.equal(railUnderMeters(kit), false);
+});
+
+test('a grid-template shorthand that drops meters fails C12', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template: "info actions" auto "rail actions" auto / 1fr auto; }\n`;
+  assert.equal(railUnderMeters(kit), false);
+});
+
+test('an override inside @media is judged too', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n@media (max-width: 1px) { .shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n`;
+  assert.equal(railUnderMeters(kit), false);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {

@@ -124,17 +124,84 @@ export function catalogDisagreement(md, html) {
   return { markdownOnly, htmlOnly, empty: emptyFamilies.length > 0, emptyFamilies };
 }
 
+// A small CSS reader for C12, so the checks judge what the browser applies and
+// not what a line pattern happens to match (Codex, #1316). It strips comments,
+// honours quotes and parentheses, descends into @media/@supports/@container
+// blocks, and yields each style rule as { selector, decls } where decls lists
+// { prop, value } in source order (a last declaration without `;` counts).
+// BOUNDARY: it does not model the cascade (specificity, !important, @layer)
+// or custom-property substitution; a var() value is judged as unreadable.
+function splitTop(text, sep) {
+  const out = []; let depth = 0; let quote = null; let cur = '';
+  for (const ch of text) {
+    if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+    if (ch === '(' || ch === '[') depth++;
+    if (ch === ')' || ch === ']') depth--;
+    if (depth === 0 && sep.test(ch)) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+export function cssRules(css) {
+  const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = [];
+  let i = 0;
+  const block = (from) => { // returns index just past the matching }
+    let depth = 0; let quote = null;
+    for (let j = from; j < src.length; j++) {
+      const ch = src[j];
+      if (quote) { if (ch === quote) quote = null; continue; }
+      if (ch === '"' || ch === "'") { quote = ch; continue; }
+      if (ch === '{') depth++;
+      if (ch === '}' && --depth === 0) return j + 1;
+    }
+    return src.length;
+  };
+  while (i < src.length) {
+    const open = src.indexOf('{', i);
+    if (open < 0) break;
+    const prelude = src.slice(i, open).replace(/^[\s;}]+/, '').trim();
+    const close = block(open);
+    const body = src.slice(open + 1, close - 1);
+    if (prelude.startsWith('@')) {
+      if (/^@(media|supports|container|layer|document)\b/.test(prelude)) rules.push(...cssRules(body));
+    } else {
+      const decls = splitTop(body, /;/).map((d) => d.trim()).filter(Boolean).flatMap((d) => {
+        const at = d.indexOf(':');
+        return at < 0 ? [] : [{ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).trim() }];
+      });
+      rules.push({ selector: prelude, decls });
+    }
+    i = close;
+  }
+  return rules;
+}
+
+// The subject of one selector (no commas): its last top-level compound, with
+// functional-pseudo arguments dropped, so `.hud-bottom:has(> .x)` has subject
+// `.hud-bottom:has` and `.hud-bottom .relic` has subject `.relic`.
+function subjectOf(part) {
+  const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
+  let subject = compounds.at(-1) || '';
+  while (/\([^()]*\)/.test(subject)) subject = subject.replace(/\([^()]*\)/g, '');
+  return subject;
+}
+const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
+const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop)).at(-1)?.value;
+
 // Every shared-HUD grid (the base band, the compact and wide map headers, the
-// narrow phone band) that sets grid-template-areas lays out a `meters` row and
-// puts a `rail` row directly beneath it, in the same column, and the base band
-// has such a grid. A grid that drops `meters` is judged, not skipped: Vitals
-// would fall into an implicit area (Codex, #1316).
+// narrow phone band) that sets its areas lays out a `meters` row and puts a
+// `rail` row directly beneath it, in the same column, and the base band has
+// such a grid. The effective value is the last of grid-template-areas and the
+// grid-template / grid shorthands (which reset areas); a value with no quoted
+// rows (none, var(), a shorthand without areas) is a failing grid, not a skip.
 export function railUnderMeters(css) {
-  // Each rule is judged by its LAST grid-template-areas, the one CSS honours.
-  const grids = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
-    .map((m) => ({ selector: m[1].trim(), decl: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1] }))
-    // A rule that sets the property is judged by its effective value; a value
-    // that yields no quoted rows (none, var(...)) is a failing grid, not a skip.
+  const grids = cssRules(css)
+    .filter((rule) => splitTop(rule.selector, /,/).some((part) => part.includes('.shared-hud') && hasClass(subjectOf(part), 'hud-top')))
+    .map((rule) => ({ selector: rule.selector, decl: lastValue(rule.decls, ['grid-template-areas', 'grid-template', 'grid']) }))
     .filter((g) => g.decl !== undefined)
     .map((g) => ({ ...g, rows: g.decl.match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) ?? [] }));
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
@@ -142,21 +209,19 @@ export function railUnderMeters(css) {
       && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
 }
 
-// The relic rail is in flow: the base `.shared-hud .hud-bottom` rule's LAST
-// position declaration is static and it takes the `rail` area, and no rule
-// whose subject is `.hud-bottom` (the rail itself, in any layout or media
-// override; not its children) hangs it again with absolute or fixed.
+// The relic rail is in flow: the base `.shared-hud .hud-bottom` rule's
+// effective position is static and its effective grid-area is `rail`, and no
+// rule whose subject compound carries `.hud-bottom` (the rail itself, in any
+// state, layout or media override; not its children) hangs it again with an
+// effective absolute or fixed position.
 export function railInFlow(css) {
-  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]*)\{([^{}]*)\}/g)]
-    .map((m) => ({ selector: m[1].trim(), body: m[2] }))
-        // The subject is the last compound selector; any compound carrying the
-    // .hud-bottom class counts, whatever classes, pseudos or attributes ride with it.
-    .filter((rule) => rule.selector.split(',').some((part) => /\.hud-bottom(?![\w-])/.test(part.trim().split(/\s*[\s>+~]\s*/).at(-1))));
+  const rules = cssRules(css)
+    .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
   const base = rules.find((rule) => rule.selector === '.shared-hud .hud-bottom');
-  const lastPosition = base && [...base.body.matchAll(/(?:^|[;\s])position:\s*([a-z-]+)/g)].at(-1)?.[1];
-  return lastPosition === 'static'
-    && /grid-area:\s*rail;/.test(base.body)
-    && !rules.some((rule) => /(?:^|[;\s])position:\s*(?:absolute|fixed)\b/.test(rule.body));
+  return Boolean(base)
+    && lastValue(base.decls, ['position']) === 'static'
+    && lastValue(base.decls, ['grid-area']) === 'rail'
+    && !rules.some((rule) => /^(?:absolute|fixed)\b/.test(lastValue(rule.decls, ['position']) || ''));
 }
 
 export function receipt() {
@@ -672,6 +737,10 @@ function selftest() {
     ['drop the authored dungeon title from the map route strip', 'C12 ', (r) => ({ ...r, map: r.map.replace('title: mapAdapter?.title || actTitle(', 'title: actTitle(') })],
     ['end a map-header grid on an unparseable grid-template-areas', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: none;') })],
     ['hang the rail again from a class-qualified .hud-bottom state', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { position: absolute; }\n` })],
+    ['hang the rail from a :has() state on .hud-bottom', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom:has(> .icon-tray.expanded) { position: absolute; }\n` })],
+    ['drop meters in a semicolon-less final declaration', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions" }\n` })],
+    ['drop meters through the grid-template shorthand', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template: "info actions" auto "rail actions" auto / 1fr auto; }\n` })],
+    ['drop meters inside an @media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (max-width: 1px) { .shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
     ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
