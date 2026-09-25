@@ -48,7 +48,7 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { primaryStatCards } from '../components/creationCards.js';
-import { classHandRules } from '../../model/handRules.js';
+import { runHandRules } from '../../model/handRules.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
@@ -1831,8 +1831,9 @@ export function mountEquipment(host, {
       // The hand a solo fight deals: mid-fight, that fight's own snapshot
       // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
       // holds no hand settings, Codex #1294); otherwise the next fight's,
-      // read from the profile the way engine/runCombat.js reads it.
-      hand: handRules || classHandRules(meta.settings || {}, registries.attributes.all(), run.class),
+      // read from the run's rows and the profile the way engine/runCombat.js
+      // reads them (`runHandRules`).
+      hand: handRules || runHandRules(registries, run, meta.settings || {}),
     });
     for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
     attributeHost.replaceChildren(...primaryStatCards(attributeRows));

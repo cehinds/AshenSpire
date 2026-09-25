@@ -16,8 +16,9 @@ import { contentBundle } from '../../content/index.js';
 import { advancedConfigStructuralProblems, configuredContentBundle } from '../../model/advancedConfig.js';
 import { validateContent } from '../../model/validate.js';
 import { playerPoiseThresholdReceipt } from '../../model/statProjection.js';
-import { deriveStat, levelBonus, resolveDerivedStatRules } from '../../model/derivedStats.js';
-import { resolveHandRules, handRulesForClass, scaledCardsReceipt } from '../../model/handRules.js';
+import { deriveStat, levelBonus, resolveDerivedStatRules, statRowValue } from '../../model/derivedStats.js';
+import { handRow, resolveHandRules } from '../../model/handRules.js';
+import { handStatRows, ratingsConfigFor } from '../../model/statRows.js';
 import { ratingReceipt, resolveCombatRatings } from '../../model/combatRatings.js';
 import { attributeRatingReceipt, ratingAttributeIds } from '../../model/ratingFormula.js';
 import { createRegistries } from '../../model/registries.js';
@@ -26,7 +27,7 @@ import { createRunState } from '../../model/state.js';
 /** The settings key that remembers which class the out-of-run examples use. */
 export const STATS_EXAMPLE_CLASS_KEY = 'settingsStatsExampleClass';
 
-const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'energy', 'Draw & hand': 'draw', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
+const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'energy', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
 const RATING_BY_TOPIC = Object.freeze({ 'Attack rating (AR)': 'ar', 'Defence rating (DR)': 'dr', 'Power rating (PR)': 'pr', Poise: 'poise', Ward: 'ward' });
 const RATING_LABELS = Object.freeze({ ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward' });
 
@@ -124,11 +125,14 @@ function previewContext(settings, previewAttributes, previewLevel, forcedRefusal
     // configuration falls back to the authored content, which carries none,
     // so the fight runs with ratings off and so does the example — never the
     // rejected overrides (Codex, on #1252).
-    ratings: lazy(() => configured.balance?.combatRatings || { ...resolveCombatRatings({}, configured), enabled: false }),
+    // The rating rows the subject reads: the new character's own snapshot
+    // rows, or the configured table's (model/statRows.js).
+    ratings: lazy(() => ratingsConfigFor(registries, newRun, configured.balance?.combatRatings || { ...resolveCombatRatings({}, configured), enabled: false })),
     newRun: () => newRun,
-    // The subject's class opens on its own hand (content/handRules.js
-    // `startingByClass`), exactly as `createRunCombat` hands a fight.
-    hand: lazy(() => handRulesForClass(resolveHandRules(settings, configured.attributes), subject.classId)),
+    // The subject's class opens on its own hand (the opening-hand row's
+    // per-class form), exactly as `createRunCombat` hands a fight.
+    hand: lazy(() => resolveHandRules(settings, handStatRows(registries,
+      subject.classId && subject.classId !== newRun?.class ? { class: subject.classId } : newRun, { settings }))),
   };
 }
 
@@ -220,16 +224,29 @@ function derivedExample(ctx, statId) {
 function handExample(ctx) {
   const { subject } = ctx;
   const rules = ctx.hand();
-  const line = (label, rule) => {
-    const receipt = scaledCardsReceipt(rule, subject.attributes);
-    const short = subject.shortLabel[receipt.stat] || receipt.stat;
-    const expression = receipt.statEnabled
-      ? `${receipt.base} base + ${plural(receipt.bonus, 'extra card')} (${short} ${receipt.points} − ${receipt.baseline}, ÷ ${receipt.pointsPerCard}, whole cards only), kept within ${receipt.minimum}–${receipt.maximum}`
-      : `${receipt.base} base, kept within ${receipt.minimum}–${receipt.maximum}`;
+  // THE SAME ROW, THE SAME WORDS (ruleset 7): each hand count is a stat row,
+  // shown term by term exactly as a pool or a rating is.
+  const line = (label, id) => {
+    const receipt = statRowValue(handRow(rules, id), { attributes: subject.attributes, level: subject.level || 1, statId: id, lenientAttributes: true });
+    const used = Object.entries(receipt.weights).filter(([, weight]) => weight);
+    const tiered = receipt.pointsPerIncrease !== 1 || receipt.gain !== 1;
+    // A row counted from a baseline (the opening hand counts points above 1)
+    // shows the points it counted, so the product equals the term.
+    const from = Number(handRow(rules, id).attributeBaseline) || 0;
+    const points = (attributeId) => {
+      const value = subject.attributes[attributeId] || 0;
+      if (!from) return value;
+      return value > from ? `(${value} − ${from})` : `${value} (none above ${from})`;
+    };
+    const terms = used.map(([attributeId, weight]) => termText(subject.shortLabel[attributeId] || attributeId, points(attributeId), weight, receipt.terms[attributeId]));
+    let expression = `${num(receipt.base)} base`
+      + (terms.length ? (tiered ? ` + ${plural(receipt.tier, 'extra card')} (${terms.join(' + ')})` : ` + ${terms.join(' + ')}`) : '')
+      + (receipt.levelBonus ? ` + ${num(receipt.levelBonus)} from level` : '');
+    if (receipt.raw !== receipt.value) expression += `, kept within ${receipt.min ?? 0}–${receipt.max ?? receipt.value}`;
     return { label, expression, total: receipt.value };
   };
-  const capacity = line('Hand capacity', rules.capacity);
-  const opening = line('Opening hand', rules.starting);
+  const capacity = line('Hand size', 'handSize');
+  const opening = line('Opening hand', 'openingHand');
   if (opening.total > capacity.total) {
     opening.expression += `, then limited to capacity ${capacity.total}`;
     opening.total = capacity.total;
@@ -257,7 +274,7 @@ function handExample(ctx) {
     // Replacements for optional discards ride on top of the fixed amount
     // (`pendingDiscardDraw`), still within capacity.
     const replacing = rules.retain && rules.promptDiscard && rules.replaceDiscards;
-    turn = line(replacing ? 'Cards drawn each turn, before replacements' : 'Cards drawn each turn, at most', rules.turn);
+    turn = line(replacing ? 'Cards drawn each turn, before replacements' : 'Cards drawn each turn, at most', 'draw');
     if (turn.total > capacity.total) {
       turn.expression += `, then limited to capacity ${capacity.total}`;
       turn.total = capacity.total;
@@ -280,7 +297,7 @@ function handExample(ctx) {
 function ratingExample(ctx, id) {
   const { subject } = ctx;
   const config = ctx.ratings();
-  const receipt = attributeRatingReceipt(config, subject.attributes, id);
+  const receipt = attributeRatingReceipt(config, subject.attributes, id, subject.level || 1);
   const used = ratingAttributeIds.filter((attributeId) => receipt.weights[attributeId]);
   const terms = used.map((attributeId) => termText(subject.shortLabel[attributeId] || attributeId, receipt.values[attributeId], receipt.weights[attributeId], receipt.terms[attributeId]));
   // A NEW CHARACTER'S STARTING RELICS, as combat adds them (`ratingReceipt`'s
@@ -292,7 +309,7 @@ function ratingExample(ctx, id) {
     .filter((source) => source.kind === 'relic' && Number(source[id])) : [];
   const relicTotal = relics.reduce((sum, source) => sum + Number(source[id]), 0);
   const expression = `${num(receipt.base)} base + ${terms.join(' + ') || 'no attributes'}`
-    + (receipt.multiplier !== 1 ? `, sum ${receipt.weighted} × ${num(receipt.multiplier)} all ratings → ${receipt.attribute}` : '')
+    + (receipt.levelBonus ? ` + ${num(receipt.levelBonus)} from level` : '')
     + relics.map((source) => ` + ${num(source[id])} from ${source.name}`).join('');
   return {
     kind: 'rating', id, title: `${RATING_LABELS[id]} rating`,
@@ -319,6 +336,8 @@ function overviewExample(ctx) {
         return { label: example.lines[0].label, expression: example.lines[0].expression, total: example.lines[0].total };
       })
       : [(({ lines: [first] }) => ({ label: 'Poise', expression: first.expression, total: first.total }))(derivedExample(ctx, 'poise'))]),
+    { label: 'Draw / turn', expression: hand.lines[1].expression, total: hand.lines[1].total },
+    { label: 'Hand size', expression: hand.lines[2].expression, total: hand.lines[2].total },
   ];
   return { kind: 'overview', id: 'overview', title: 'Stat block', lines, hint: ctx.subject.current
     ? 'At your current level, under these settings; your run in progress keeps the rules it started with. Not included: relics, equipment, and permanent changes from events.'
@@ -334,7 +353,7 @@ function overviewExample(ctx) {
 export function statsTopicPreview(settings = {}, topic, previewAttributes = null, previewLevel = null, previewClassId = null) {
   const derivedId = DERIVED_BY_TOPIC[topic];
   const ratingId = RATING_BY_TOPIC[topic];
-  if (!derivedId && !ratingId && topic !== 'Overview') return null;
+  if (!derivedId && !ratingId && topic !== 'Overview' && topic !== 'Draw & hand') return null;
   let ctx;
   try {
     ctx = previewContext(settings, previewAttributes, previewLevel, null, previewClassId);
@@ -350,11 +369,10 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
   if (topic === 'Overview') attempt(() => overviewExample(ctx));
   if (topic === 'Draw & hand') attempt(() => handExample(ctx));
   if (ratingId && (ratingsOn || topic !== 'Poise')) attempt(() => ratingExample(ctx, ratingId));
-  if (derivedId) attempt(() => {
+  if (derivedId && (derivedId !== 'poise' || !ratingsOn)) attempt(() => {
     const example = derivedExample(ctx, derivedId);
-    if (derivedId === 'draw') example.legacy = 'Used by LAN co-op and older saved fights. Solo fights use the hand rules above.';
     if (derivedId === 'poise') {
-      example.legacy = ratingsOn ? 'Used only when ratings are off.' : 'Ratings are off: combat uses this, plus worn armour and relic Poise.';
+      example.legacy = 'Ratings are off: combat uses this row, plus worn armour and relic Poise.';
       // What combat stamps is the whole threshold (`playerPoiseThresholdReceipt`):
       // this row, the body armour worn and the relics' Poise (Codex, #1252).
       if (!ratingsOn && ctx.newRun()) {
@@ -377,6 +395,6 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
     // Hand rules are read from the settings at every fight (`main.js`
     // `enterCombat`), not from the content bundle, so a refusal leaves them in
     // force and the notice says so (Codex, on #1252).
-    refused: ctx.refused ? `These settings are refused (${ctx.refused}), so a new run keeps the authored stat and rating rules until they are corrected, and the example shows those. Hand rules are applied on their own: a valid group applies as set, and a group whose limits are refused uses its defaults.` : null,
+    refused: ctx.refused ? `These settings are refused (${ctx.refused}), so a new run keeps the authored stat rows until they are corrected, and the example shows those. The hand's behaviour options (retain, draw mode, discards) are applied on their own.` : null,
   };
 }

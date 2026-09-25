@@ -108,6 +108,8 @@ const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !
   // class ships its own value or a profile already pinned one.
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
+// The Draw / turn stat row's editors, which only a fixed draw reads.
+const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -2240,8 +2242,8 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   if (!q && !changedOnly) return [];
   const words = q ? q.split(/\s+/) : [];
   const hiddenByRules = new Set();
-  if (settings && resolveHandRules(settings, contentBundle.attributes).drawMode !== 'fixed') {
-    for (const row of handRulesRows(contentBundle.attributes, contentBundle.classes)) if (row.fixedOnly) hiddenByRules.add(row.key);
+  if (settings && resolveHandRules(settings).drawMode !== 'fixed') {
+    for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
     if (hiddenByRules.has(row.key)) return false;
@@ -2696,13 +2698,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
-    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const rules = resolveHandRules(settings);
     // The Stats → Draw & hand worked example states the hand these rules deal
     // (`refreshStatsPreviews`); what is left here is which rows apply.
     // The whole pane, not just Stats: a search result lists these rows too.
     const section = container;
     if (section) {
-      for (const row of handRulesRows(contentBundle.attributes, contentBundle.classes)) {
+      for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])

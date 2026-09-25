@@ -5,13 +5,15 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
-import { handRulesRows, handRulesSettingsProblems, hasRetiredOpeningHand, withoutRetiredOpeningHand } from './handRules.js';
+import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
+import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -116,7 +118,7 @@ const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
  * old key (either spelling) — and the opening-hand warning when it held a
- * non-stock shared `handRules.starting.base` / `.stat` (model/handRules.js
+ * non-stock shared `handRules.starting.base` / `.stat` (model/statRows.js
  * `withoutRetiredOpeningHand`) — and the run handed to `save(run)` once.
  *
  * A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). `configuredContentBundle`
@@ -145,7 +147,9 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
 
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings);
+  // An unmarked profile holding a `draw` or `poise` row is one of them
+  // (model/statRows.js hasLegacyStatSettings).
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -173,14 +177,24 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
   }
+  // #1294's retired 3–15 opening-hand limits and the retired shared opening
+  // base and attribute go first (#1318), so they are never converted into the
+  // opening-hand row below.
   if (hasRetiredOpeningHand(settings)) {
     const kept = new Set(withoutRetiredOpeningHand(Object.entries(settings), warnings).map(([key]) => key));
     for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
-  const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
-  if (migrated === settings) return settings;
-  for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
-  Object.assign(settings, migrated);
+  // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
+  // fallback hand size are stat rows now; their old keys become row keys.
+  // A profile whose stat rows were read here is marked as read by a ruleset-7
+  // build, so its `draw` and `poise` rows are never re-read as the old ones.
+  const readStatRows = hasLegacyStatSettings(settings);
+  const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
+  if (migrated !== settings) {
+    for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
+    Object.assign(settings, migrated);
+  }
+  if (readStatRows) settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   return settings;
 }
 
@@ -197,7 +211,7 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  * Advanced Settings row and `configuredContentBundle` both read the authored
  * table (or the profile's own `cinderMultiplier`, kept as it was). The
  * retired opening-hand keys go through `withoutRetiredOpeningHand` the same
- * way (model/handRules.js). Saved, not
+ * way (model/statRows.js). Saved, not
  * only rewritten, because `loadMeta` re-reads the stored bytes on every call:
  * a profile left un-saved would hand the next reader the retired key again.
  */
@@ -306,7 +320,7 @@ function withoutSupersededLegacy(entries) {
 //   - how a run is built — rest, the atlas, seats, run modifiers, gauntlet,
 //     co-op, endless — is World.
 function balanceGroup(path) {
-  if (/^(poise|stagger|mana)\./.test(path) || path === 'handMax') return 'Stats';
+  if (/^(poise|stagger|mana)\./.test(path)) return 'Stats';
   if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
@@ -365,7 +379,7 @@ const RETIRED_BALANCE_PATHS = new Set([
 // new run." — the same five words under most of 325 rows. Every sentence it
 // held now sits beside its own number, with the facts it established kept:
 // the legacy poise and stagger rows are live only while combat ratings are
-// off; `handMax` is a fallback a solo fight never reads; each class's flasks
+// off; each class's flasks
 // must add up to `flaskCapacity`; and the swap-cost numbers belong to the
 // rule the "Weapon swap cost" picker chooses, not to the `gear` flags.
 
@@ -444,7 +458,6 @@ function labelSegment(part, sentence = false) {
 // they say what they do rather than spell their key; "Poise · On Fill · 0 —
 // Stacks" named an array index. Everything else keeps its key-derived label.
 const BALANCE_LABELS = Object.freeze({
-  handMax: 'Fallback hand capacity',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
@@ -787,8 +800,10 @@ const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights
 function enableGates(key, swapRuleIds = []) {
   const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
   if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
-  // The older poise meter, and the derived Poise rule, run only with ratings off.
-  if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  // The older poise meter runs only with ratings off; the AR, DR, PR and Ward
+  // rows only with them on. The one Poise row is in force either way.
+  if (/^gameConfig\.balance\.(poise|stagger)\./.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  if (/^gameConfig\.derivedStatRules\.rules\.(ar|dr|pr|ward)\./.test(key)) return [{ key: RATINGS_SWITCH }];
   // Formation movement's own rules do nothing while movement is off: a move is
   // refused before cost, selection or activation is read (formationMovement.js).
   // The shared selection colour stays live — it also marks cards and menus.
@@ -837,7 +852,7 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes, bundle.classes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
 }
 
 /**
@@ -937,6 +952,10 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       : configured;
     setPath(root, row.configPath, value);
   }
+  // A Max left at the editor's "no ceiling" value is no bound at all (Codex, #1296).
+  for (const row of Object.values(configured.derivedStatRules?.rules || {})) {
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
+  }
   const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
   if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
     const xp = configured.balance.xp;
@@ -989,6 +1008,12 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
+  // it — creation, a headless fixture — reads these; a run reads its own
+  // snapshot's through model/statRows.js ratingsConfigFor.
+  configured.balance.combatRatings.ratings = Object.fromEntries(RATING_STAT_IDS
+    .filter((id) => configured.derivedStatRules?.rules?.[id])
+    .map((id) => [id, resolvedRuleRow(configured.derivedStatRules, id)]));
   // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
   // switched on. Written HERE, after that decision, for two reasons: the
   // requirement pass above restates both equipment arrays, so columns written
@@ -1015,6 +1040,9 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
 // rows, so both ends are addressed. Anything that is not a balance path — the
 // hand rules, the combat ratings — keeps the banner alone.
 function structuralKeys(message) {
+  // A stat row's bounds: the message names the row, and both ends are its keys.
+  const row = /^(derivedStatRules\.rules\.[A-Za-z]+)\.min /.exec(message)?.[1];
+  if (row) return [`${ADVANCED_CONFIG_PREFIX}${row}.min`, `${ADVANCED_CONFIG_PREFIX}${row}.max`];
   const path = /^(balance\.[A-Za-z0-9_.]+)/.exec(message)?.[1];
   if (!path) return [];
   const base = `${ADVANCED_CONFIG_PREFIX}${path}`;
@@ -1142,6 +1170,18 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
     }
   };
   walk(configured.balance, ['balance']);
+  // A STAT ROW'S MIN MAY NOT EXCEED ITS MAX. The row door refuses it when the
+  // registries are built, so it is refused here first — at import and on the
+  // row — rather than as a boot that falls back to authored content.
+  const hand = configured.derivedStatRules?.rules?.handSize;
+  if (hand && !(Number.isInteger(hand.min) && hand.min >= 1 && (!Number.isFinite(hand.max) || hand.max >= 1))) {
+    problems.push(`derivedStatRules.rules.handSize.min (${hand.min}) and max (${hand.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
+  }
+  for (const [id, row] of Object.entries(configured.derivedStatRules?.rules || {})) {
+    if (Number.isFinite(row.min) && Number.isFinite(row.max) && row.min > row.max) {
+      problems.push(`derivedStatRules.rules.${id}.min (${row.min}) must stay at or below derivedStatRules.rules.${id}.max (${row.max}).`);
+    }
+  }
   return problems;
 }
 
@@ -1170,6 +1210,9 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     game: 'Ashen Spire',
     build,
+    // Written by a ruleset-7 build: its `draw` and `poise` rows mean what they
+    // mean now (model/statRows.js).
+    statRows: STAT_ROWS_VERSION,
     overrides: advancedConfigSettings(settings, additionalKeys),
   }, null, 2) + '\n';
 }
@@ -1231,7 +1274,11 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
-  const overrides = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  // A file exported before ruleset 7 carries no `statRows` stamp. #1294's
+  // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
+  // converted into the opening-hand row.
+  const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningHand(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once. The retired
   // opening-hand limits and shared opening base/attribute (which have no row)

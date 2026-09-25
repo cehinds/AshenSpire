@@ -138,12 +138,12 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | twinPatrol (normal) | 99.7 | 16.1 / 49 |
 | Reaver | bruiser (normal) | 100 | 19.9 / 49 |
 | Reaver | eliteWyrm (elite) | 23 | 47.2 / 49 |
-| Reaver | bossOmen (boss) | 40.3 | 45.6 / 49 |
+| Reaver | bossOmen (boss) | 42 | 45.5 / 49 |
 | Reaver | lanternFlight (normal) | 100 | 6.2 / 49 |
 | Reaver | briarRefuge (normal) | 100 | 2.9 / 49 |
 | Reaver | chainAmbush (normal) | 100 | 1.6 / 49 |
-| Reaver | bossBellKeeper (boss) | 53.7 | 43.7 / 49 |
-| Reaver | bossThornMatriarch (boss) | 29 | 46.6 / 49 |
+| Reaver | bossBellKeeper (boss) | 54 | 43.7 / 49 |
+| Reaver | bossThornMatriarch (boss) | 31.3 | 46.4 / 49 |
 | Starseer | loneSoldier (normal) | 100 | 0.4 / 48 |
 | Starseer | patrol (normal) | 100 | 4.3 / 48 |
 | Starseer | packHunt (normal) | 100 | 4.1 / 48 |

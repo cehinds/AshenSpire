@@ -1,9 +1,9 @@
 // The creation screen's hand numbers are the hand a solo fight deals, read
-// through the one door (`classHandRules`, model/handRules.js) combat
-// snapshots — not the derived Draw row, which feeds co-op only. The Hand and
-// Draw chips' parity with the dealt hand under the shipped and legacy rules
-// lives in tests/hand-rules.test.mjs; this file covers what it does not: a
-// per-class Settings override, fill mode, and the attribute cards' facts.
+// off the run's own hand rows (`handStatRows`, model/statRows.js) — the rows
+// engine/runCombat.js snapshots, the class's opening hand among them. The Hand
+// and Draw chips' parity with the dealt hand under the shipped and legacy
+// rules lives in tests/hand-rules.test.mjs; this file covers what it does not:
+// a per-class Settings override, fill mode, and the attribute cards' facts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -13,59 +13,51 @@ import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { statProjection, handResourceRows } from '../src/model/statProjection.js';
-import { classHandRules, handRuleFacts, HAND_RULES_PREFIX } from '../src/model/handRules.js';
+import { HAND_RULES_PREFIX, runHandRules } from '../src/model/handRules.js';
+import { statRow } from '../src/model/statRows.js';
+import { configuredContentBundle } from '../src/model/advancedConfig.js';
 
 const registries = createRegistries(contentBundle);
 const CLASSES = ['reaver', 'rogue', 'herald', 'starseer'];
-const rulesFor = (classId, settings = {}) => classHandRules(settings, registries.attributes.all(), classId);
-const chip = (run, settings, id) => handResourceRows(registries, run, settings).find((row) => row.id === id);
+const PRIMARY = { reaver: 'strength', rogue: 'dexterity', herald: 'wisdom', starseer: 'intelligence' };
+const chip = (reg, run, settings, id) => handResourceRows(reg, run, settings).find((row) => row.id === id);
 
-function dealt(run, settings = {}) {
-  return createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'], settings }).piles.hand.length;
+function dealt(reg, run, settings = {}) {
+  return createRunCombat({ registries: reg, rng: createRng(7), run, enemyIds: ['wanderingSoldier'], settings }).piles.hand.length;
 }
 
 test('the Hand chip follows a per-class Settings override the way the fight does', () => {
-  const settings = { [`${HAND_RULES_PREFIX}startingByClass.reaver.base`]: 5 };
-  const run = createRunState({ seed: 7, classId: 'reaver', registries });
-  const hand = chip(run, settings, 'openingHand');
-  assert.notEqual(hand.value, chip(run, {}, 'openingHand').value, 'the override moves the chip');
-  assert.equal(Math.min(hand.value, run.deck.length), dealt(run, settings));
+  const settings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 5 };
+  const tuned = createRegistries(configuredContentBundle(contentBundle, settings));
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: tuned });
+  const stock = createRunState({ seed: 7, classId: 'reaver', registries });
+  const hand = chip(tuned, run, settings, 'openingHand');
+  assert.notEqual(hand.value, chip(registries, stock, {}, 'openingHand').value, 'the override moves the chip');
+  assert.equal(Math.min(hand.value, run.deck.length), dealt(tuned, run, settings));
 });
 
 test('in fill mode the Draw chip tops the hand up to capacity', () => {
   const settings = { [`${HAND_RULES_PREFIX}drawMode`]: 'fill' };
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 7, classId, registries });
-    const draw = chip(run, settings, 'draw');
+    const draw = chip(registries, run, settings, 'draw');
     assert.match(draw.formula, /draw until the hand holds (\d+)$/);
     assert.equal(draw.value, Number(draw.formula.match(/holds (\d+)$/)[1]), `${classId}: fill draws capacity into an empty hand`);
   }
 });
 
-test('the primary stat card states the opening-hand effect; no card claims Draw sets it', () => {
+test('the primary stat card states the opening-hand effect, and no other card does', () => {
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 7, classId, registries });
-    const hand = rulesFor(classId);
-    const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run), hand });
-    const primary = cards.find((card) => card.id === hand.starting.stat);
-    const per = hand.starting.pointsPerCard;
-    assert.ok(primary.face.summary.includes(`+1 Opening hand per ${per === 1 ? 'pt' : `${per} pts`} (max ${hand.starting.maximum})`),
-      `${classId}: ${primary.face.summary}`);
-    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every')), `${classId}: the fold says it too`);
+    const row = statRow(registries, run, 'openingHand');
+    const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
+    const primary = cards.find((card) => card.id === PRIMARY[classId]);
+    assert.ok(primary.face.summary.includes(`+1 Opening hand per 2 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
+    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 2 points')), `${classId}: the fold says it too`);
     for (const card of cards) {
-      assert.ok(!/opening hand/i.test(card.face.summary.replace('Opening hand per', '')), `${classId} ${card.id}: ${card.face.summary}`);
-      assert.ok(!/\bDraw\b/.test(card.face.summary), `${classId} ${card.id}: the co-op Draw row stays off the solo face`);
-      if (card.id !== hand.starting.stat) assert.ok(!card.face.summary.includes('Opening hand'), `${classId} ${card.id}`);
+      if (card.id !== PRIMARY[classId]) assert.ok(!/Opening hand/.test(`${card.face.summary} ${card.reveal.lines.join(' ')}`), `${classId} ${card.id}`);
     }
   }
-  // Without solo rules (co-op / headless readers) the Draw row still reads,
-  // and it no longer claims the opening hand.
-  const run = createRunState({ seed: 7, classId: 'starseer', registries });
-  const plain = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
-  const intelligence = plain.find((card) => card.id === 'intelligence');
-  assert.ok(intelligence.reveal.lines.some((line) => line.startsWith('Draw / turn (co-op)')), intelligence.reveal.lines.join(' | '));
-  assert.ok(!plain.some((card) => /opening hand/i.test(`${card.face.summary} ${card.reveal.lines.join(' ')}`)));
-  assert.equal(handRuleFacts(rulesFor('reaver'), 'strength')[0].label, 'Opening hand');
 });
 
 // EVERY SCREEN THAT SPENDS OR SHOWS A POINT STATES THE SOLO HAND (Codex, #1294).
@@ -78,14 +70,23 @@ test('the primary stat card states the opening-hand effect; no card claims Draw 
 import { readFileSync } from 'node:fs';
 const source = (path) => readFileSync(new URL(`../src/ui/screens/${path}`, import.meta.url), 'utf8');
 
+// Since ruleset 7 the class's opening hand is its row; a tuned class row is
+// set through the row's own keys, and `runHandRules` (model/handRules.js) is
+// the door both the Shrine and the Armoury read — as #1318 made them read
+// `classHandRules` before the hand became rows.
+const tunedReaver = () => createRegistries(configuredContentBundle(contentBundle, {
+  'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.strength': 0,
+  'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.constitution': 0.5,
+}));
+
 test('the Shrine level-up cards read the solo hand the next fight deals', () => {
   const rest = source('rest.js');
   const call = rest.slice(rest.indexOf('const cards = new Map(attributeCardModels(registries, values, {'));
-  assert.match(call.slice(0, call.indexOf('}).map(')), /hand: classHandRules\(meta\?\.settings \|\| \{\}, registries\.attributes\.all\(\), run\.class\)/);
+  assert.match(call.slice(0, call.indexOf('}).map(')), /hand: runHandRules\(registries, run, meta\?\.settings \|\| \{\}\)/);
   // What those rules put on the face: a per-class override moves the primary card.
-  const settings = { [`${HAND_RULES_PREFIX}startingByClass.reaver.stat`]: 'constitution' };
-  const run = createRunState({ seed: 7, classId: 'reaver', registries });
-  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run), hand: rulesFor('reaver', settings) });
+  const tuned = tunedReaver();
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: tuned });
+  const cards = attributeCardModels(tuned, run.attributes, { projection: statProjection(tuned, run), hand: runHandRules(tuned, run, {}) });
   assert.ok(cards.find((card) => card.id === 'constitution').face.summary.includes('Opening hand'), 'the override reaches the level-up card');
   assert.ok(!cards.find((card) => card.id === 'strength').face.summary.includes('Opening hand'));
 });
@@ -93,16 +94,19 @@ test('the Shrine level-up cards read the solo hand the next fight deals', () => 
 test('the in-combat Armoury cards read the running fight\'s own hand rules', () => {
   const combat = source('combat.js');
   const mount = combat.slice(combat.indexOf('const panel = mountEquipment(document.body, {'));
-  assert.match(mount.slice(0, mount.indexOf('inCombat: true')), /handRules: combat\.handRules \|\| classHandRules\(readSettings\(\), registries\.attributes\.all\(\), run\.class\)/);
+  assert.match(mount.slice(0, mount.indexOf('inCombat: true')), /handRules: combat\.handRules \|\| runHandRules\(registries, run, readSettings\(\)\)/);
   const equipment = source('equipment.js');
-  assert.match(equipment, /hand: handRules \|\| classHandRules\(meta\.settings \|\| \{\}, registries\.attributes\.all\(\), run\.class\)/);
-  // The fight's snapshot carries the override its profile set, so the cards do too.
-  const settings = { [`${HAND_RULES_PREFIX}startingByClass.starseer.stat`]: 'wisdom' };
-  const run = createRunState({ seed: 7, classId: 'starseer', registries });
-  const fight = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'], settings });
-  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run), hand: fight.handRules });
-  assert.ok(cards.find((card) => card.id === 'wisdom').face.summary.includes('Opening hand'));
-  assert.ok(!cards.find((card) => card.id === 'intelligence').face.summary.includes('Opening hand'), 'not the authored default the synthetic meta resolved');
+  assert.match(equipment, /hand: handRules \|\| runHandRules\(registries, run, meta\.settings \|\| \{\}\)/);
+  // The fight's own hand wins over whatever else the screen could resolve:
+  // a fight dealt from the tuned Reaver row names Constitution, even beside a
+  // projection read off the stock table.
+  const tuned = tunedReaver();
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: tuned });
+  const fight = createRunCombat({ registries: tuned, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
+  const stockRun = createRunState({ seed: 7, classId: 'reaver', registries });
+  const cards = attributeCardModels(registries, stockRun.attributes, { projection: statProjection(registries, stockRun), hand: fight.handRules });
+  assert.ok(cards.find((card) => card.id === 'constitution').face.summary.includes('Opening hand'));
+  assert.ok(!cards.find((card) => card.id === 'strength').face.summary.includes('Opening hand'), 'not the stock row a synthetic meta would resolve');
 });
 
 // The class chooser's per-class preview sliced the resource rows to five; the

@@ -43,6 +43,9 @@ import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
 import { refreshCombatRatings } from './combatRatings.js';
+import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
+import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
+import { turnDrawCount, endTurnCardFate } from './handRules.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -60,7 +63,6 @@ export function coopHpMult(headcount, factor = 0.6) {
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
 export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
-  const bal = registries.balance || {};
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -69,7 +71,9 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended' | 'suspended'
     result: null,
-    handMax: bal.handMax != null ? bal.handMax : 10,
+    // Pointed at the active seat's own hand size (setActive): each seat counts
+    // cards by its own stat rows, exactly as a solo fight does.
+    handMax: LEGACY_HAND_MAX,
     enemies: [],
     eventLog: [],
     queue: [],
@@ -197,8 +201,22 @@ function addPlayerState(C, p, { initial = false } = {}) {
   for (const card of shuffled) {
     (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
   }
+  // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
+  // the shipped behaviour options plus its own opening-hand, draw and
+  // hand-size rows, and its ratings its own rating rows. A seat born before
+  // ruleset 7 keeps what co-op always gave it — a fresh hand of its derived
+  // draw each turn, capped by the retired fallback hand size.
+  const legacy = readsLegacyStatHomes(p);
+  const handRules = legacy ? null : resolveHandRules({}, handStatRows(C.registries, p));
+  const level = Number.isInteger(p.level) && p.level >= 1 ? p.level : 1;
+  const ratingRows = C.ratingsRules ? ratingStatRows(C.registries, p) : null;
   const P = {
     id: p.id,
+    level,
+    handRules,
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), p.attributes || {}, level) : LEGACY_HAND_MAX,
+    ratingRows: ratingRows && Object.values(ratingRows).every(Boolean) ? ratingRows : null,
+    derivedStatRuleSnapshot: p.derivedStatRuleSnapshot || null,
     name: p.name || p.id,
     classId: p.classId,
     attributeMode: p.attributeMode,
@@ -234,7 +252,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
-      A.drawCards(C, P.entity.drawPerTurn);
+      A.drawCards(C, P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
+      P.opened = true;
     }
     rescaleEnemies(C);
   }
@@ -256,6 +275,13 @@ function setActive(C, P) {
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
   C.playerKey = P ? P.id : null;
+  // The seat's own stat rows: the hand rules and hand size its draws obey,
+  // the level its rows read, and the rating rows its ratings are priced by.
+  C.handRules = P ? P.handRules : null;
+  C.handMax = P ? P.handMax : LEGACY_HAND_MAX;
+  C.characterLevel = P ? P.level : undefined;
+  C.derivedStatRuleSnapshot = P ? P.derivedStatRuleSnapshot : null;
+  if (P && P.ratingRows && C.ratingsRules) C.ratingsRules.ratings = P.ratingRows;
 }
 
 function firstLiving(C) {
@@ -358,7 +384,10 @@ function startPlayerPhase(C) {
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
-    A.drawCards(C, e.drawPerTurn);
+    // A seat's FIRST hand is its opening hand, whichever turn it arrives on (a
+    // seat that joins during the enemy phase opens on the next player turn).
+    A.drawCards(C, P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn);
+    P.opened = true;
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);
@@ -608,11 +637,15 @@ function endOnePlayerTurn(C, P) {
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
     const def = resolveCard(C.registries, card);
-    const fate = C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
+    const fate = P.handRules ? endTurnCardFate(C, card)
+      : C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
+  // Kept cards past the seat's hand size go to the discard, as a solo fight's
+  // overflow does (co-op has no turn-end discard prompt).
+  if (P.handRules && P.handRules.overflow === 'discard' && keep.length > C.handMax) toDiscard.push(...keep.splice(C.handMax));
   C.piles.hand = keep;
   for (const card of toExhaust) { C.piles.exhaust.push(card); C.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' }); }
   for (const card of toDiscard) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }

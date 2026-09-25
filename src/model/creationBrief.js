@@ -53,9 +53,8 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
-import { defaultRatingFormula } from './ratingFormula.js';
-import { ruleWeights } from './derivedStats.js';
-import { handRuleFacts } from './handRules.js';
+import { HAND_STAT_IDS, isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { handRow } from './handRules.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -139,16 +138,24 @@ function foldedSummary(sense) {
   return sentence || text;
 }
 
-function ratingWeightFacts(registries, attributeId) {
-  const config = registries.balance?.combatRatings || defaultRatingFormula;
+// The combat ratings are rows of the derived-stat table (ruleset 7) and read
+// the same way; they are listed as scaling rather than as a pool a point buys.
+const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
+const FEED_EXCLUDED = new Set(RATING_ROWS);
+
+// THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
+// ruleset 7 fights by its retired formula, and its card must say so.
+function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING_ROWS) {
+  const table = registries.derivedStatRules;
   const short = registries.attributes.get(attributeId).shortLabel;
-  if (!config?.ratings) return [];
-  return Object.entries(config.ratings)
-    .filter(([, rule]) => Number(rule[attributeId]) > 0)
+  if (!runRows && !table?.rules) return [];
+  return ids
+    .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
+    .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short}), then × ${config.multiplier ?? 1} global`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}`,
         summary: `${label} weight ${rule[attributeId]}`,
       };
     });
@@ -184,12 +191,34 @@ export function attributeCardModels(registries, attributes, { projection = null,
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  // A RUN'S HAND ROWS ITS SNAPSHOT NEVER HAD (born before ruleset 7) are its
+  // retired hand groups restated as rows; any other row a run's projection
+  // lacks is not the run's, so its card does not name it (Codex, #1296).
+  // THE HAND A FIGHT DEALS, when the caller has it (`hand`: a fight's own
+  // snapshot mid-combat, or `runHandRules` for the next fight — #1318): its
+  // three rows are the ones a card must state, over the projection's.
+  const handRows = hand
+    ? Object.fromEntries(HAND_STAT_IDS.map((id) => { try { return [id, handRow(hand, id)]; } catch { return [id, null]; } }))
+    : ((projection && projection.handRows) || {});
+  for (const [id, row] of Object.entries(handRows)) {
+    if (row) {
+      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1, max: row.max });
+    }
+  }
+  // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
+  // its rating formula's Poise, not its pool row, so that is the one its cards
+  // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
+  const legacyPoise = !!projection?.ratingRows && !isStatRowRuleset(projection.rulesetVersion)
+    && !!registries.balance?.combatRatings?.enabled;
+  const ratingIds = legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS;
   return orderedAttributes(registries).map((authored) => {
     const def = { ...authored, value: attributes?.[authored.id] };
     // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
     // the fold's line and the face's summary are the same numbers — the rules
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
+      .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
+      .filter(([id]) => !projection || projected.has(id))
       // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single
@@ -227,10 +256,13 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
         if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
-        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
+        // The opening hand's cap is part of its fact (#1294: a Starseer at
+        // base 5 has one card of room before the cap of 6).
+        const cap = id === 'openingHand' && Number.isFinite(row?.max) ? row.max : null;
+        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
-    const ratingFacts = ratingWeightFacts(registries, def.id);
+    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
     const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
@@ -244,26 +276,15 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // divisor sat at the end. `per N pts`, not `/N`, because a label may
     // already hold a slash ("Actions / turn") and two would read as one rate.
     const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
-    // A SOLO FIGHT'S HAND IS THE HAND RULES', NOT THE DERIVED DRAW ROW
-    // (model/handRules.js `classHandRules`). Given the rules this character's
-    // solo fight is handed, the face states what a point buys there — the class's opening
-    // hand first — and the derived Draw row, which only co-op and headless
-    // fights read, leaves the face for the fold.
-    const handFacts = hand ? handRuleFacts(hand, def.id) : [];
-    const faceFacts = [
-      // The opening hand's cap is part of the fact (a Starseer at base 5 has
-      // one card of room); the turn draw's and capacity's caps are far away.
-      ...handFacts.map(({ label, points, maximum }, index) => `+1 ${label} ${cadence(points)}${index === 0 && label === 'Opening hand' ? ` (max ${maximum})` : ''}`),
-      ...feedFacts
-        .filter(({ perTier }) => Number.isFinite(perTier))
-        .filter(({ id }) => !(hand && id === 'draw'))
-        .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`),
-    ];
+    // The hand is three rows of the same table (ruleset 7), the class's own
+    // opening hand among them, so it is listed like every other feed.
+    const faceFacts = feedFacts
+      .filter(({ perTier }) => Number.isFinite(perTier))
+      .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
     const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
-    const handLines = handFacts.map(({ label, points, baseline, maximum }) => `${label} +1 every ${points} ${points === 1 ? 'point' : 'points'} above ${baseline} (at most ${maximum})`);
-    const lines = [...handLines, ...feeds, ...scaling, ...unlocks];
+    const lines = [...feeds, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,

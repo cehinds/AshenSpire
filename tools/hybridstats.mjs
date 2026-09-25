@@ -71,20 +71,24 @@ check('shipping content and registries expose one derived-rules object', () => {
 
 check('a standard Reaver run owns the versioned snapshot and all approved derived outputs', () => {
   const run = fresh();
-  // Ruleset 6 (#1253), worked by hand from src/content/derivedStats.js for the
-  // lean Reaver (STR 3, DEX 1, CON 2, WIS 1, INT 1):
-  //   HP      30 + floor(2 x 4) = 38, plus the Forsaken Medallion's flat 10
-  //   Mana     1 + floor(1 x 1) = 2      Stamina  1 + floor(2 x 1) = 3
-  //   Actions  3 + floor(1 x 0.2) = 3    draw     3 + floor(1 x 0.2) = 3
-  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 6, 'ruleset version');
-  equal(run.maxHp, 48, 'CON-derived max HP plus the starter relic');
-  equal(run.hp, 48, 'new run HP starts full');
-  equal(run.maxMana, 2, 'WIS-derived max Mana has no class base');
-  equal(run.mana, 2, 'new run Mana starts full');
-  equal(run.maxStamina, 3, 'CON-derived max Stamina');
-  equal(run.stamina, 3, 'new run Stamina starts full');
-  equal(run.energyMax, 3, 'DEX-derived Energy');
-  equal(run.drawPerTurn, 3, 'INT-derived draw');
+  // Ruleset 7, worked by hand from src/content/derivedStats.js for the lean
+  // Reaver (STR 3, DEX 1, CON 2, WIS 1, INT 1). Every term floors on its own:
+  //   HP      30 + floor(3 x 0.35) + floor(2 x 4) + floor(1 x 0.1)
+  //           = 30 + 1 + 8 + 0 = 39, plus the Forsaken Medallion's flat 10
+  //   Mana     1 + floor(3 x 0.125) + floor(2 x 0.25) + floor(1 x 0.5)
+  //           + floor(1 x 0.125) = 1
+  //   Stamina  1 + floor(3 x 0.25) + floor(1 x 0.25) + floor(2 x 0.5) = 2
+  //   Actions  3 + floor(3 x 0.1) + floor(1 x 0.2) + 0 + 0 = 3
+  //   draw     2 + floor(1 x 0.1) = 2, inside its min 2
+  equal(run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rulesetVersion, 7, 'ruleset version');
+  equal(run.maxHp, 49, 'attribute-derived max HP plus the starter relic');
+  equal(run.hp, 49, 'new run HP starts full');
+  equal(run.maxMana, 1, 'attribute-derived max Mana has no class base');
+  equal(run.mana, 1, 'new run Mana starts full');
+  equal(run.maxStamina, 2, 'attribute-derived max Stamina');
+  equal(run.stamina, 2, 'new run Stamina starts full');
+  equal(run.energyMax, 3, 'attribute-derived Energy');
+  equal(run.drawPerTurn, 2, 'INT-derived draw');
   assert(validateRunShape(run).length === 0, `run shape: ${validateRunShape(run).join('; ')}`);
 });
 
@@ -92,22 +96,27 @@ check('explicit global/debug overrides are resolved once and remain uncapped', (
   const run = fresh({ derivedStatOptions: { explicitOverride: { rules: {
     energy: { base: 4, cap: null },
     draw: { base: 7, cap: null },
-    // Ruleset 6 (#1253): Stamina's coefficient is its Constitution weight.
+    // Ruleset 7: Stamina's Constitution coefficient is its weight.
     stamina: { constitution: 2, cap: null },
   } } } });
-  // The lean Reaver opens DEX 1, INT 1, CON 2: 4 + floor(1 x 0.2), 7 +
-  // floor(1 x 0.2), and Stamina's base 1 + floor(2 x 2).
+  // The lean Reaver opens STR 3, DEX 1, CON 2, WIS 1, INT 1: Energy 4 +
+  // floor(3 x 0.1) + floor(1 x 0.2) = 4, Draw 7 + floor(1 x 0.1) = 7, and
+  // Stamina 1 + floor(3 x 0.25) + floor(1 x 0.25) + floor(2 x 2) = 5.
   equal(run.energyMax, 4, 'override Energy');
   equal(run.drawPerTurn, 7, 'override Draw');
   equal(run.maxStamina, 5, 'override Stamina');
   equal(run.derivedStatRuleSnapshot.rules.rules.energy.cap, null, 'snapshot Energy remains uncapped');
-  equal(run.derivedStatRuleSnapshot.rules.rules.draw.cap, null, 'snapshot Draw remains uncapped');
+  equal(run.derivedStatRuleSnapshot.rules.rules.draw.cap, null, 'snapshot Draw carries no cap');
+  // A null carrier cap lifts no bound the row states: Draw keeps its own max.
+  equal(run.derivedStatRuleSnapshot.rules.rules.draw.max, 10, 'snapshot Draw keeps its row max');
 });
 
 check('pre-derived save migrates real pools and preserves full/deficit truth', () => {
   const storage = createMemoryStorage();
   const saves = createSaveManager(storage);
-  const old = fresh();
+  // WIS 3 in place of STR 3, so the migrated Mana pool is 2 and a half-full
+  // legacy pool has a half to keep (the shipped lean Reaver's pool is 1).
+  const old = fresh({ attributes: { strength: 1, dexterity: 1, constitution: 2, wisdom: 3, intelligence: 1 } });
   delete old.derivedStatRuleSnapshot;
   delete old.maxStamina;
   delete old.stamina;
@@ -119,23 +128,28 @@ check('pre-derived save migrates real pools and preserves full/deficit truth', (
   old.mana = 20; // a half-full legacy pool remains half-full in small units.
   saves.saveRun(old);
   const run = saves.loadRun(REG);
+  // Ruleset 7 at STR 1, DEX 1, CON 2, WIS 3, INT 1:
+  //   HP 30 + 0 + floor(2 x 4) + floor(3 x 0.1) = 38, plus the Medallion's 10
+  //   Mana 1 + 0 + floor(2 x 0.25) + floor(3 x 0.5) + 0 = 2
+  //   Stamina 1 + 0 + 0 + floor(2 x 0.5) = 2
   equal(run.maxHp, 48, 'migrated max HP under the Constitution weight');
   equal(run.hp, 38, 'HP deficit of 10 preserved across the migration');
   equal(run.maxMana, 2, 'migrated max Mana');
   equal(run.mana, 1, 'legacy Mana proportion preserved');
-  equal(run.maxStamina, 3, 'Stamina created from real attributes');
-  equal(run.stamina, 3, 'new Stamina pool starts full');
-  equal(run.derivedStatRuleSnapshot.rulesetVersion, 6, 'migration stamps ruleset');
+  equal(run.maxStamina, 2, 'Stamina created from real attributes');
+  equal(run.stamina, 2, 'new Stamina pool starts full');
+  equal(run.derivedStatRuleSnapshot.rulesetVersion, 7, 'migration stamps ruleset');
 });
 
 check('solo combat consumes run Energy/Draw and transports real Stamina without inventing spend', () => {
   const run = fresh({ derivedStatOptions: { explicitOverride: { rules: { energy: { base: 4 }, draw: { base: 7 } } } } });
   const combat = createCombat({ registries: REG, rng: createRng(99), player: playerInput(run), enemyIds: ['blightHound'] });
-  // Override base 4 + floor(DEX 1 x 0.2) = 4 (ruleset 6, lean Reaver).
+  // Override base 4 + floor(STR 3 x 0.1) + floor(DEX 1 x 0.2) = 4 (ruleset 7,
+  // lean Reaver); Stamina 2 as worked above.
   equal(combat.player.energyMax, 4, 'combat Energy max');
-  equal(combat.drawPerTurn, 7, 'opening/per-turn draw (override base 7 + floor(INT 1 x 0.2))');
-  equal(combat.player.maxStamina, 3, 'combat Stamina max');
-  equal(combat.player.stamina, 3, 'combat Stamina current');
+  equal(combat.drawPerTurn, 7, 'opening/per-turn draw (override base 7 + floor(INT 1 x 0.1))');
+  equal(combat.player.maxStamina, 2, 'combat Stamina max');
+  equal(combat.player.stamina, 2, 'combat Stamina current');
   assert(combat.piles.hand.length <= combat.handMax, 'derived draw overflowed handMax');
 });
 
@@ -144,12 +158,13 @@ check('host session snapshot is authoritative for derived rules and every curren
   S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
   S.start();
   const party = S.snapshot().party[0];
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 6, 'party ruleset');
-  equal(party.maxStamina, 3, 'party Stamina max');
-  equal(party.stamina, 3, 'party Stamina current');
-  equal(party.maxMana, 2, 'party derived Mana max');
+  // The lean Reaver again, ruleset 7: the numbers worked in the second check.
+  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 7, 'party ruleset');
+  equal(party.maxStamina, 2, 'party Stamina max');
+  equal(party.stamina, 2, 'party Stamina current');
+  equal(party.maxMana, 1, 'party derived Mana max');
   equal(party.energyMax, 3, 'party derived Energy');
-  equal(party.drawPerTurn, 3, 'party derived draw');
+  equal(party.drawPerTurn, 2, 'party derived draw');
 });
 
 check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trough', () => {
@@ -158,17 +173,23 @@ check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trou
   const plan = resourceBarPlan(REG, 'main', run, run, resourceDomains(REG));
   const mana = plan.find((row) => row.id === 'mana');
   const stamina = plan.find((row) => row.id === 'stamina');
-  equal(mana && mana.cur, 2, 'Mana current');
-  equal(mana && mana.max, 2, 'Mana max');
-  equal(stamina && stamina.cur, 3, 'Stamina current');
-  equal(stamina && stamina.max, 3, 'Stamina max');
+  // Lean Reaver, ruleset 7: Mana 1 and Stamina 2, both full.
+  equal(mana && mana.cur, 1, 'Mana current');
+  equal(mana && mana.max, 1, 'Mana max');
+  equal(stamina && stamina.cur, 2, 'Stamina current');
+  equal(stamina && stamina.max, 2, 'Stamina max');
 });
 
-check('Mana authority is WIS data and gameplay uses small-unit costs/restores', () => {
-  // Ruleset 6 restated the bases: Mana opens on 1 (src/content/derivedStats.js).
-  equal(derivedStatRules.rules.mana.base, 1, 'Mana base');
-  equal(derivedStatRules.rules.mana.wisdom, 1, 'Mana source (ruleset 6: a weight on wisdom)');
-  equal(derivedStatRules.rules.mana.cap ?? derivedStatRules.defaults.cap, null, 'Mana cap');
+check('Mana authority is mostly WIS data and gameplay uses small-unit costs/restores', () => {
+  // Ruleset 7: Mana opens on 1 and "mostly comes from about 4 points in
+  // wisdom with some from constitution strength and intelligence".
+  const mana = derivedStatRules.rules.mana;
+  equal(mana.base, 1, 'Mana base');
+  equal(mana.wisdom, 0.5, 'Mana source (ruleset 7: half a point per wisdom)');
+  equal(`${mana.strength}/${mana.constitution}/${mana.intelligence}`, '0.125/0.25/0.125', 'Mana STR/CON/INT shares');
+  equal(mana.dexterity, undefined, 'Dexterity is not a Mana source');
+  // Unbounded: no row min/max, and no global cap in ruleset 7.
+  equal(`${mana.min}/${mana.max}/${mana.cap}/${derivedStatRules.defaults.cap}`, 'undefined/undefined/undefined/undefined', 'Mana bounds');
   for (const id of ['gorefireSlash', 'starstonePebble', 'urgentHeal']) {
     equal(contentBundle.cards.find((card) => card.id === id)?.manaCost, 1, `${id} Mana cost`);
   }
@@ -224,7 +245,10 @@ check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () =
   assert(/hybridStatsPlan\s*\(/.test(overlay), 'overlay Stats still hard-codes its rows');
   assert(/run\.stats[\s\S]*Fights won[\s\S]*Damage dealt[\s\S]*Damage taken/.test(equipment),
     'Armoury Stats does not preserve the active run telemetry removed from the menu');
-  assert(/Legacy draw value for LAN and older saved fights/.test(projection), 'projection does not state the current shared draw meaning');
+  // Ruleset 7 made the draw row the one per-turn draw, solo and co-op alike;
+  // only a run born before it still reads two meanings, and says which.
+  assert(/This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value\./.test(projection),
+    'projection does not state the pre-ruleset-7 draw meaning');
   assert(/resourceBarPlan\s*\(registries,\s*['"]main['"]/.test(coop), 'co-op never calls the shared main-HUD plan');
   assert(/resourceBars\s*\(/.test(coop), 'co-op never renders the shared resource plan');
 });
