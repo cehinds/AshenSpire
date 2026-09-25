@@ -74,3 +74,31 @@ test('no ResizeObserver means no watch and no throw', () => {
   assert.equal(typeof stop, 'function');
   stop();
 });
+
+// While the destination tray is open on a selected node the camera is a LOOK at
+// that node (map.js: `centerOnNode(selection.selectedId, { inset })`). A later
+// scrollport change re-fits the frame and must then look at the same node again
+// with the same inset — re-centring on the current node dropped the selection's
+// framing out from under an open tray.
+import { refitCamera } from '../src/ui/components/mapboard.js';
+
+function spyCamera() {
+  const calls = [];
+  return {
+    calls,
+    centerOnCurrent: () => calls.push('current'),
+    centerOnNode: (id, opts) => calls.push(`node:${id}:${opts.inset}`),
+  };
+}
+
+test('no look: a re-fit centres on the current node', () => {
+  const c = spyCamera();
+  refitCamera({ look: null, ...c });
+  assert.deepEqual(c.calls, ['current']);
+});
+
+test('an open tray: a re-fit solves the frame, then keeps the selected node framed', () => {
+  const c = spyCamera();
+  refitCamera({ look: { id: 'f3c2', inset: 188 }, ...c });
+  assert.deepEqual(c.calls, ['current', 'node:f3c2:188']);
+});
