@@ -48,6 +48,7 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { primaryStatCards } from '../components/creationCards.js';
+import { soloHandRules } from '../../model/soloHand.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
@@ -1826,6 +1827,8 @@ export function mountEquipment(host, {
     const attributeRows = attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      // The next fight's hand, read the way engine/runCombat.js reads it.
+      hand: soloHandRules(registries, run.class, meta.settings),
     });
     for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
     attributeHost.replaceChildren(...primaryStatCards(attributeRows));
