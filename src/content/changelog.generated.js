@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1318",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Opening-hand settings say what they do, everywhere",
+    "detail": "An older setting that gave every class the same opening hand is no longer accepted and then quietly ignored: it is set aside wherever it was saved, and when it held something other than the default a note points you to each class's own opening-hand settings under Stats → Draw & hand. The Shrine's level-up cards and the Armoury opened mid-fight now say what a point buys in your opening hand under your own settings, and the class chooser's preview shows both the Hand and the Draw chips.",
+    "build": "0.7.1.516",
+    "pullRequest": 1318,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1318"
+  },
+  {
     "id": "pr-1277",
     "date": "2026-09-25",
     "group": "2026-09-25",
