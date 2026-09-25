@@ -254,6 +254,16 @@ test('a base rail rule inside @layer is still the base', () => {
   assert.equal(c12({ ...r, kit }).length, 0);
 });
 
+// Codex on #1316: any rail rule that sets grid-area must keep it `rail`; an
+// override that moves it out of the rail row fails, in flow or not.
+test('a rail override that moves grid-area off rail fails C12', () => {
+  const r = receipt();
+  for (const extra of ['@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }', '.shared-hud .hud-bottom.expanded { grid-area: meters; }']) {
+    assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 1, extra);
+  }
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { grid-area: rail; }\n` }).length, 0);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.

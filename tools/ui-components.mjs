@@ -276,7 +276,7 @@ export function railUnderMeters(css) {
 // effective position is static and its effective grid-area is `rail`, and no
 // rule whose subject compound carries `.hud-bottom` (the rail itself, in any
 // state, layout or media override; not its children) hangs it again with an
-// effective absolute or fixed position.
+// effective absolute or fixed position or moves it out of the `rail` area.
 export function railInFlow(css) {
   const rules = cssRules(css)
     .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
@@ -286,7 +286,11 @@ export function railInFlow(css) {
   return base.length > 0
     && lastValue(base, ['position']) === 'static'
     && lastValue(base, ['grid-area']) === 'rail'
-    && !rules.some((rule) => /^(?:absolute|fixed)\b/.test(lastValue(rule.decls, ['position']) || ''));
+    && !rules.some((rule) => /^(?:absolute|fixed)\b/.test(lastValue(rule.decls, ['position']) || '')
+      // Placement too: a rail rule that sets grid-area keeps it `rail`, and
+      // none re-places it by line (grid-row / grid-column and their longhands).
+      || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
+      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop)));
 }
 
 export function receipt() {
@@ -823,6 +827,7 @@ function selftest() {
     ['drop meters from a scoped HUD grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
     ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
     ['hang the rail from declarations straight in a nested @scope', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @scope { position: absolute; }') })],
+    ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
