@@ -381,13 +381,16 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
       // A Poise rating edited while ratings were off never moved a thing, and
       // the one Poise row is live either way: leave it retired (Codex, #1296).
       if (id === 'poise' && settings['gameConfig.combatRatings.enabled'] === false) continue;
-      for (const field of ['base', ...STAT_ROW_ATTRIBUTE_IDS]) {
-        const own = Object.hasOwn(settings, `gameConfig.combatRatings.ratings.${id}.${field}`);
-        if (!own && !scaled) continue;
-        // A field still at its old shipped number is no tuning: an export and
-        // a stored profile write every value, and pinning it would override
-        // the ruleset-7 row (Poise's WIS 0.3 and INT 0.2) with the retired one.
-        if (!scaled && formula.ratings[id][field] === LEGACY_RATING_FORMULA.ratings[id][field]) continue;
+      // A ROW STILL AT ITS OLD SHIPPED NUMBERS IS NO TUNING: an export and a
+      // stored profile write every value, and pinning it would override the
+      // ruleset-7 row (Poise's WIS 0.3 and INT 0.2) with the retired one. A
+      // TUNED row is written WHOLE, its unstated fields at their legacy
+      // numbers, so a sparse edit keeps the formula it was made against
+      // rather than inheriting ruleset-7 weights beside it (Codex, #1296).
+      const fields = ['base', ...STAT_ROW_ATTRIBUTE_IDS];
+      const tuned = fields.some((field) => formula.ratings[id][field] !== LEGACY_RATING_FORMULA.ratings[id][field]);
+      if (!tuned && !scaled) continue;
+      for (const field of fields) {
         const value = field === 'base' ? formula.ratings[id].base : round2(formula.ratings[id][field] * formula.multiplier);
         setIfAbsent(id, field, value);
       }

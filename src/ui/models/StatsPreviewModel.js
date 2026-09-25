@@ -152,6 +152,14 @@ function nextStep(points, weight) {
 // attribute as the sheet shows it, its weight, and what it rounds down to.
 const termText = (short, points, weight, value) => `${short} ${points} × ${num(weight)} → ${value}`;
 
+// A row's own Min / Max, said when it moved the sum (Codex, #1296): the terms
+// shown then add up to the total shown.
+function boundText(entry) {
+  if (entry.min !== null && entry.min !== undefined && entry.raw < entry.min && entry.value === entry.min) return `, raised to its minimum ${num(entry.min)}`;
+  if (entry.max !== null && entry.max !== undefined && entry.raw > entry.max && entry.value === entry.max) return `, held to its maximum ${num(entry.max)}`;
+  return '';
+}
+
 function derivedExample(ctx, statId) {
   const { configured, subject } = ctx;
   const presentation = configured.derivedStatRules.presentation?.[statId] || {};
@@ -195,7 +203,7 @@ function derivedExample(ctx, statId) {
   // a formula that sums to less says so instead of showing a 0 no run has.
   const floor = (entry) => (statId === 'hp' && entry.value < 1 ? 1 : entry.value);
   const floorNote = (entry) => (floor(entry) !== entry.value ? `, raised to 1 (a character always has at least 1 HP)` : '');
-  const lines = [{ label: `${label} at level ${now}`, expression: expression + floorNote(receipt), total: floor(receipt), capped: capped(receipt) }];
+  const lines = [{ label: `${label} at level ${now}`, expression: expression + boundText(receipt) + floorNote(receipt), total: floor(receipt), capped: capped(receipt) }];
   // The next level at which the floored level term moves, if it ever does.
   if (perLevel > 0) {
     let next = null;
@@ -204,7 +212,7 @@ function derivedExample(ctx, statId) {
     }
     if (next) {
       const later = at(next);
-      lines.push({ label: `${label} at level ${next}`, expression: `${num(later.raw - later.levelBonus)}${levelTerm(later)}${floorNote(later)}`, total: floor(later), capped: capped(later) });
+      lines.push({ label: `${label} at level ${next}`, expression: `${num(later.raw - later.levelBonus)}${levelTerm(later)}${boundText(later)}${floorNote(later)}`, total: floor(later), capped: capped(later) });
     }
   }
   const steps = tiered ? [] : used
@@ -308,8 +316,12 @@ function ratingExample(ctx, id) {
   const relics = run ? ratingReceipt(ctx.registries, run, config).sources
     .filter((source) => source.kind === 'relic' && Number(source[id])) : [];
   const relicTotal = relics.reduce((sum, source) => sum + Number(source[id]), 0);
+  // A row bound that moved the attribute part is said, so the terms shown sum
+  // to the total shown (Codex, #1296).
+  const unbounded = receipt.base + used.reduce((sum, attributeId) => sum + receipt.terms[attributeId], 0) + (receipt.levelBonus || 0);
   const expression = `${num(receipt.base)} base + ${terms.join(' + ') || 'no attributes'}`
     + (receipt.levelBonus ? ` + ${num(receipt.levelBonus)} from level` : '')
+    + boundText({ raw: unbounded, value: receipt.value, min: receipt.min, max: receipt.max })
     + relics.map((source) => ` + ${num(source[id])} from ${source.name}`).join('');
   return {
     kind: 'rating', id, title: `${RATING_LABELS[id]} rating`,
