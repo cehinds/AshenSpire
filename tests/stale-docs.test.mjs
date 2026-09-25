@@ -23,6 +23,7 @@ const BANNED = [
   ['DEVELOPER.md', /\*\*Frostbite\*\* is specced/, 'Frostbite is CUT (SPEC §4.4), not a deferred deviation'],
   ['docs/versioning.md', /currently `\d+\.\d+\.\d+/, 'the release triple lives only in src/content/index.js (contentBundle.version)'],
   ['docs/versioning.md', /contentBundle\.version` holds `\d/, 'a present-tense release triple; it lives only in src/content/index.js (contentBundle.version)'],
+  ['DEVELOPER.md', /does not run on pull requests/, 'receipts.yml runs on pull_request into dev (--check --pr auto) since #1317'],
   ['DEVELOPER.md', /\*\*Guilt\*\* ships as an inert/, 'Guilt costs its HP at turn end in hand since #1286 (onTurnEndInHand), so it is resolved, not a deviation'],
   ['DEVELOPER.md', /freezes Poise thresholds as well as Bleed/, 'Bleed thresholds are constant (#61), so Goreblood freezes only Poise'],
   ['LICENSE', /eldenspire/i, 'the project is AshenSpire (docs/FINISH.md: grep -ri eldenspire LICENSE README.md)'],

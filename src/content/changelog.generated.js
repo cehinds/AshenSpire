@@ -7,17 +7,27 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-25",
     "group": "2026-09-25",
     "summary": "Behind the scenes: a missing changelog entry is caught before merge",
-    "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check now measures the highlighted Continue on the title screen rather than a greyed-out one, and two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
-    "build": "0.7.1.503",
+    "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check's title-screen Continue row now names the highlighted, enabled entry it already measured, so it fails loudly instead of measuring a greyed-out one if the screenshot ever stops seeding a save. Two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
+    "build": "0.7.1.504",
     "pullRequest": 1317,
     "url": "https://github.com/cehinds/AshenSpire/pull/1317"
+  },
+  {
+    "id": "pr-1299",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: every art and sound folder has a credits row",
+    "detail": "Nothing you play changes. A new check fails when any shipped asset folder lacks a row in CREDITS.md naming its source and rights, or when the README's legal section stops quoting the AI disclosure's summary sentence word for word; CREDITS.md gains the eleven rows it was missing.",
+    "build": "0.7.1.503",
+    "pullRequest": 1299,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1299"
   },
   {
     "id": "pr-1312",
     "date": "2026-09-25",
     "group": "2026-09-25",
     "summary": "The opening scene list in Settings lays out cleanly",
-    "detail": "The list of opening scenes in Settings now uses the full width of its row, with each scene's name, its position and its buttons in their own columns, so long names wrap instead of crowding the controls. This entry was written after the change merged without one.",
+    "detail": "The list of opening scenes in Settings now uses the full width of its row, with each scene's name and position side by side and its buttons on their own row beneath, so long names wrap instead of crowding the controls. This entry was written after the change merged without one.",
     "build": "0.7.1.502",
     "pullRequest": 1312,
     "url": "https://github.com/cehinds/AshenSpire/pull/1312"

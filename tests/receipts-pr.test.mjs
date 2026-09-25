@@ -69,3 +69,28 @@ test('--check --pr auto reads the event payload, and exits 2 when there is none'
     assert.equal(none.status, 2, none.stdout + none.stderr);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// The workflow wiring (review on #1317): the tool tests above cannot see
+// whether receipts.yml actually runs the --pr path on a pull request, so pin
+// the trigger, the event split, and the event-conditional clone here.
+test('receipts.yml runs --check --pr auto on pull_request into dev, and the range check on push', () => {
+  const yml = readFileSync(join(ROOT, '.github', 'workflows', 'receipts.yml'), 'utf8');
+  const on = /\non:\n([\s\S]*?)\n\S/.exec(yml)?.[1] || '';
+  assert.match(on, /(^|\n) {2}pull_request:\n {4}branches: \[dev\]/, 'pull_request into dev must trigger the job');
+  assert.match(on, /(^|\n) {2}push:\n {4}branches: \[dev\]/, 'push to dev must still trigger the job');
+  const step = (name) => {
+    const at = yml.indexOf(`- name: ${name}`);
+    assert.ok(at >= 0, `step "${name}" missing`);
+    const next = yml.indexOf('\n      - ', at + 1);
+    return yml.slice(at, next < 0 ? undefined : next);
+  };
+  const pr = step('This pull request has a receipt of its own');
+  assert.match(pr, /if: github\.event_name == 'pull_request'/);
+  assert.match(pr, /receipts\.mjs --check --pr auto/);
+  const range = step('Every pull request merged since the last promotion has a receipt');
+  assert.match(range, /if: github\.event_name != 'pull_request'/);
+  assert.match(range, /receipts\.mjs --check\s*$/m);
+  // --pr reads no history: the full clone and the origin/test fetch serve the range only.
+  assert.match(yml, /fetch-depth: \$\{\{ github\.event_name == 'pull_request' && 1 \|\| 0 \}\}/);
+  assert.match(step('Fetch the promotion target so the range is the real one'), /if: github\.event_name != 'pull_request'/);
+});

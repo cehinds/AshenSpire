@@ -1010,6 +1010,26 @@ if (CORE) {
     zoomExtra++;
   }
 }
+// FINISH §10: every asset directory has a CREDITS.md row, and README §Legal
+// names the same AI vendors as the AI disclosure. The selftest is in memory
+// (fixture text only, no copies of the tree), so it is cheap in either lane.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runCredits = (args) => execFileSync(process.execPath, ['tools/credits-check.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+  const lanes = [];
+  if (CORE) lanes.push({ args: [], label: 'credits-check: every asset directory has a CREDITS row; README §Legal agrees with the AI disclosure' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'credits-check --selftest: each rule still goes red on its plant' });
+  for (const lane of lanes) {
+    try {
+      const out = runCredits(lane.args).trim().split('\n').pop();
+      console.log(`PASS  ${lane.label} — ${out}`);
+      zoomPassed++;
+    } catch (error) {
+      console.log(`FAIL  ${lane.label} — ${String(error.stdout || error.message).slice(0, 800)}`);
+      zoomExtra++;
+    }
+  }
+}
 // The third authored tree: content/config/**.json compiles to
 // src/config/generated/ui.js. A hand edit to the generated module, or a JSON
 // edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).

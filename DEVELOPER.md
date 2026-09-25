@@ -305,15 +305,20 @@ repository.
 ```
 node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
 node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt
+node tools/receipts.mjs --check --pr auto    # the same, N from GITHUB_EVENT_PATH / GITHUB_REF
 node tools/receipts.mjs --selftest           # the known-bad corpus
 ```
 
-`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
-at the promotion target on purpose: the question is never "does every merge in
-history have a receipt" — the changelog's own header records which stretch is
-deliberately unreconstructed — but "is *this* promotion complete", asked while
-the answer can still be acted on. It does not run on pull requests, where the
-answer would be about merges the author did not make.
+`.github/workflows/receipts.yml` runs the selftest and the range check on every
+push to `dev`. The range is bounded at the promotion target on purpose: the
+question is never "does every merge in history have a receipt" — the
+changelog's own header records which stretch is deliberately unreconstructed —
+but "is *this* promotion complete", asked while the answer can still be acted
+on. On a pull request into `dev` it runs the selftest and `--check --pr auto`
+instead, which judges only that pull request's own number: the range there
+would be about merges the author did not make, but a pull request with no
+receipt of its own is the author's to fix, before merge.
 
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable, and

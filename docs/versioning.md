@@ -107,10 +107,10 @@ So the stamp is `<MAJOR>.<MINOR>.<CANDIDATE>.<BUILD>`. The candidate number
 moves into the third component and the tail counts builds WITHIN that
 candidate, restarting at `0` when the candidate advances. `0.5.3.1` is the
 second build of the third 0.5 candidate. The triple's one home is still
-`contentBundle.version` in `src/content/index.js` (it read `0.5.4` when this
-was written — the same fact in his notation; read the file for today's), so the
-one home and the one composition are unchanged; only what the components MEAN
-moved.
+`contentBundle.version` in `src/content/index.js`. When this was written it
+read `0.5.4`, the same fact in his notation; that file holds today's value. So
+the one home and the one composition are unchanged; only what the components
+MEAN moved.
 
 What this changes, each with the check that carries it:
 

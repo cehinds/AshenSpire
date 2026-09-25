@@ -16,7 +16,9 @@ name: receipts
 # reads merge history, so it needs the full log AND the promotion target ref.
 # dev-preview's job is deliberately a shallow, sub-second, no-browser lane and
 # putting a `fetch-depth: 0` on it would tax every pull request for a check that
-# only means something on `dev`.
+# only means something on `dev`. Here too the full clone and the `origin/test`
+# fetch are for the push range only: on a pull request the job reads just the
+# event payload and CHANGELOG.md, so it takes a depth-1 clone and skips the fetch.
 #
 # On push to `dev` it judges the whole promotion range. On a pull request into
 # `dev` it judges ONLY that pull request's own number (`--pr auto`, read from
@@ -43,10 +45,11 @@ jobs:
   receipts:
     runs-on: ubuntu-latest
     steps:
-      # Full history: the check walks `origin/test..HEAD` for merge subjects.
+      # Full history on push: the range check walks `origin/test..HEAD` for merge
+      # subjects. `--pr` reads no history, so a pull request gets a depth-1 clone.
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
 
       - uses: ./.github/actions/setup-node
 
@@ -54,6 +57,7 @@ jobs:
       # fixed window and SAYS SO rather than quietly widening to all of history,
       # but the bounded answer is the one worth having, so fetch the ref.
       - name: Fetch the promotion target so the range is the real one
+        if: github.event_name != 'pull_request'
         run: git fetch --no-tags origin test:refs/remotes/origin/test || echo "no test branch yet; the tool will say so"
 
       - name: The corpus still catches its own known-bads
