@@ -360,10 +360,10 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
   run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3, 'gameConfig.handRules.turn.pointsPerCard': 4 } };
   const lines = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
     .find((card) => card.id === 'intelligence').reveal.lines;
-  assert(lines.some((line) => line === 'Opening hand +1 every 3 points' || line.startsWith('Opening hand +1 every 3 points' + ' (at most ')), lines.join(' | '));
+  assert(lines.includes(`Opening hand +1 every 3 points (at most ${LEGACY_HAND_GROUPS.starting.maximum})`), lines.join(' | '));
   // Its solo turn draw is its tuned `turn` group, not the snapshot's co-op draw row.
-  assert(lines.some((line) => line === 'Draw / turn +1 every 4 points' || line.startsWith('Draw / turn +1 every 4 points' + ' (at most ')), lines.join(' | '));
-  assert(lines.some((line) => line === `Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points` || line.startsWith(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points` + ' (at most ')), lines.join(' | '));
+  assert(lines.includes(`Draw / turn +1 every 4 points (at most ${LEGACY_HAND_GROUPS.turn.maximum})`), lines.join(' | '));
+  assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points (at most ${LEGACY_HAND_GROUPS.capacity.maximum})`), lines.join(' | '));
   assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
 });
 
