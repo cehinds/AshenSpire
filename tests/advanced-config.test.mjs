@@ -590,3 +590,77 @@ test('a file written on the old, higher defaults still imports', () => {
   const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
 });
+
+// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294) ----------------
+// tests/fixtures/owner-config-0.7.1.json is the file the owner exported from
+// 0.7.1. Retiring the shared opening base/stat rows took them out of the
+// screen's ROWS, and with them the `settings.`-prefixed mirror each export
+// writes, so this exact file refused: "Unknown setting:
+// settings.gameConfig.handRules.starting.base. Nothing was imported." It is
+// imported here through the REAL rows the screen hands the import door.
+test("the owner's exported 0.7.1 configuration imports through the screen's own rows", async () => {
+  const { settingsImportRows } = await import('../src/ui/screens/settings.js');
+  const { resolveHandRules, handRulesForClass, scaledCards } = await import('../src/model/handRules.js');
+  const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
+  assert.ok(Object.keys(changes).length > 100, 'everything else in the file lands');
+  assert.equal(changes['gameConfig.handRules.capacity.base'], 7);
+  assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
+  for (const key of ['starting.base', 'starting.stat', 'starting.maximum', 'starting.minimum']) {
+    assert.ok(!Object.hasOwn(changes, `gameConfig.handRules.${key}`), `${key} is not brought back`);
+  }
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
+  assert.ok(warnings.some((line) => /Opening hand — Base cards: this setting is no longer used and was skipped/.test(line)));
+  assert.ok(warnings.some((line) => /old limits of 3–15 cards were left out, so the current 4–6 applies/.test(line)));
+  // "start with 4-6 cards": the imported configuration opens every class there.
+  const rules = resolveHandRules(changes, contentBundle.attributes);
+  const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
+  for (const classId of Object.keys(contentBundle.attributeRules.presets.lean)) {
+    const starting = handRulesForClass(rules, classId).starting;
+    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [starting.stat]: 40 }]) {
+      const cards = scaledCards(starting, attributes);
+      assert.ok(cards >= 4 && cards <= 6, `${classId} opens on ${cards}`);
+    }
+  }
+});
+
+test('a retired row keeps both spellings importable: inert skipped, live mirror read as its row', () => {
+  const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
+  const base = 'gameConfig.handRules.starting.base';
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${base}`]: 4, 'gameConfig.handRules.turn.base': 3 }), contentBundle, {}, [], warnings),
+    { 'gameConfig.handRules.turn.base': 3 });
+  assert.equal(warnings.length, 1);
+  // A hidden creation mode's pool still applies; its mirror alone reads as it.
+  const pool = 'gameConfig.startingStats.tuned2.bonusPool';
+  assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
+  assert.deepEqual(parseAdvancedConfigFile(file({ [pool]: 9, [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
+  // A key no row ever had still refuses the file.
+  assert.throws(() => parseAdvancedConfigFile(file({ 'settings.gameConfig.handRules.starting.bogus': 1 }), contentBundle, {}, [], []), /Unknown setting/);
+});
+
+test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 applies', () => {
+  const MAX = 'gameConfig.handRules.starting.maximum';
+  const MIN = 'gameConfig.handRules.starting.minimum';
+  const profile = { settings: { [MAX]: 15, [MIN]: 3, 'gameConfig.handRules.turn.base': 3 } };
+  const saved = [];
+  const warnings = [];
+  const settings = bringProfileForward(profile, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
+  assert.deepEqual(settings, { 'gameConfig.handRules.turn.base': 3 });
+  assert.equal(saved.length, 1, 'written back');
+  assert.match(warnings.join(' '), /3–15/);
+  // Only the retired values go: a chosen cap stays, and a lone floor of 3 is a choice.
+  const chosen = { [MAX]: 5, [MIN]: 3 };
+  normalizeAdvancedSettings(chosen, contentBundle);
+  assert.deepEqual(chosen, { [MAX]: 5, [MIN]: 3 });
+  const capOnly = { [MAX]: 15, [MIN]: 5 };
+  normalizeAdvancedSettings(capOnly, contentBundle);
+  assert.deepEqual(capOnly, { [MIN]: 5 });
+  // The import door drops it too, in either spelling.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3 } });
+  const importWarnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings), { 'gameConfig.handRules.starting.pointsPerCard': 3 });
+  assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
+  assert.deepEqual(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle), { [MAX]: 5 });
+});

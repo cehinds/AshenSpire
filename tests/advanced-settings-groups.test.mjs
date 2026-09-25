@@ -479,9 +479,14 @@ test('a setting that moves nothing is off the screen and still imports', async (
   }
   // Retired, not deleted: parseAdvancedConfigFile aborts a whole file on one
   // unknown key, so removing the row would refuse every configuration that
-  // still names it.
+  // still names it. The file lands; the dead keys are skipped by name (review
+  // of #1294), since nothing would ever read them back.
   const legacy = { 'gameConfig.balance.energy': 3, 'gameConfig.balance.draw': 5 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy);
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...legacy, 'gameConfig.balance.handMax': 6 }), contentBundle, {}, [], warnings),
+    { 'gameConfig.balance.handMax': 6 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /no longer used and were skipped\. Everything else in the file was imported\./);
 
   // The row that IS read keeps its place and says what it actually governs.
   const handMax = rows.find(candidate => candidate.key === 'gameConfig.balance.handMax');
@@ -559,8 +564,10 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   }
   assert.ok(!shown.has('mapHeaderSeed'), 'the seed toggle the header never honoured is off the screen');
   const legacy = { 'gameConfig.balance.levelUp.pointsPerLevelMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
-    'an exported file naming a retired key still imports');
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy, {}, Object.keys(legacy)), contentBundle, {}, [], warnings), {},
+    'an exported file naming a retired key still imports, in either spelling, the dead keys skipped');
+  assert.match(warnings.join(' '), /Reaver — Base HP/);
 
   // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
   // land in the bundle and refuse the whole configuration over a row no longer

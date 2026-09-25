@@ -1474,6 +1474,15 @@ export function settingsRow(key) {
   return row;
 }
 
+/**
+ * settingsImportRows() → the rows the import door is handed as
+ * `additionalRows`, the same array both import buttons pass. Exported so a
+ * test imports a real exported file through exactly what the screen uses.
+ */
+export function settingsImportRows() {
+  return ROWS;
+}
+
 export function resolveLevelUpValue(settings) {
   return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
 }

@@ -361,14 +361,17 @@ export function applyEquipmentRequirementConfig(configured, authored, settings =
  * startingStatBounds(bundle, modeId) → { min, max }
  *
  * The lowest total a character can carry and still put on the kit its class
- * starts in. validate.js applies the kit rule to the DEFAULT mode only, so the
- * retired modes keep the bare "one point per attribute" floor they always had.
+ * starts in. EVERY OFFERED MODE is held to it (review of #1294): Assign points
+ * opens on all 1s, so a pool below what the Starseer's staff asks (INT 3 → a
+ * pool of 2) would seat a character who cannot wear the kit it starts in. The
+ * retired modes — nobody can choose them — keep the bare "one point per
+ * attribute" floor they always had, so no save made under them changes verdict.
  */
 export function startingStatBounds(bundle, modeId) {
   const ids = (bundle.attributes || []).map((attribute) => attribute.id);
   let min = ids.length;
   let because = null;
-  if (modeId === bundle.attributeRules?.defaultMode) {
+  if (offersKitFloor(bundle, modeId)) {
     for (const [classId, need] of Object.entries(kitAttributeMinimums(bundle))) {
       const floor = ids.reduce((sum, id) => sum + Math.max(1, need[id]?.minimum || 0), 0);
       if (floor <= min) continue;
@@ -377,6 +380,11 @@ export function startingStatBounds(bundle, modeId) {
     }
   }
   return { min, max: TOTAL_MAX, because };
+}
+
+/** True for a mode a player can pick: the kit floor binds it. */
+function offersKitFloor(bundle, modeId) {
+  return modeId === bundle.attributeRules?.defaultMode || visibleCreationModes(bundle).some((mode) => mode.id === modeId);
 }
 
 /** One sentence naming the class and kit that set the floor, or ''. */
@@ -762,7 +770,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       pool = rawPool;
       baseline = mode.baseline;
       total = baseline * ids.length + pool;
-    } else refuse('bonusPool', rawPool, { min: poolFloor, max: poolCeiling }, pool);
+    } else refuse('bonusPool', rawPool, { min: poolFloor, max: poolCeiling }, pool, { kitBounds: bounds });
   } else {
     if (rawTotal !== undefined) {
       if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;
@@ -776,7 +784,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
     }
   }
 
-  const needs = mode.id === authored.attributeRules?.defaultMode ? kitAttributeMinimums(authored) : {};
+  const needs = offersKitFloor(authored, mode.id) ? kitAttributeMinimums(authored) : {};
   const kitCeiling = Math.max(0, ...Object.values(needs).flatMap((need) => Object.values(need).map((entry) => entry.minimum)));
   const ratio = total / oldTotal;
   const resolvedBaseline = baseline ?? Math.max(1, Math.floor((total - pool) / ids.length));
@@ -912,7 +920,7 @@ export function startingStatPoolProblems(bundle, settings = {}) {
   for (const mode of visibleCreationModes(source)) {
     for (const refusal of resolveStartingStatMode(source, mode, settings).refusals) {
       const label = dialLabel(refusal.key);
-      const sizes = /\.(total|baseline)$/.test(refusal.key);
+      const sizes = /\.(total|baseline|bonusPool)$/.test(refusal.key);
       // Two shapes, because they are two different refusals and one wording
       // for both would be a lie in one of them: a number OUTSIDE the row's
       // range, and a number inside it that no set of class tables can fit.

@@ -5,7 +5,7 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
-import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
+import { handRulesRows, handRulesSettingsProblems, hasRetiredOpeningLimits, withoutRetiredOpeningLimits } from './handRules.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
@@ -114,7 +114,7 @@ const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was
 
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY);
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningLimits(settings);
 }
 
 /**
@@ -141,6 +141,10 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
+  }
+  if (hasRetiredOpeningLimits(settings)) {
+    const kept = new Set(withoutRetiredOpeningLimits(Object.entries(settings), warnings).map(([key]) => key));
+    for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
   const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
   if (migrated === settings) return settings;
@@ -205,6 +209,40 @@ function withoutRetired(entries, warnings) {
   if (kept.length !== entries.length) {
     warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
   }
+  return kept;
+}
+
+// A ROW THIS BUILD RETIRED BUT KEPT, so its key is still known (review of
+// #1294). `retired` rows keep their key in advancedConfigRows and leave the
+// screen — and the screen's ROWS, which is what the import door is handed as
+// `additionalRows`, so the `settings.`-prefixed mirror an export writes beside
+// each gameConfig key stopped resolving and the owner's own file refused
+// ("Unknown setting: settings.gameConfig.handRules.starting.base").
+//   · `retired` + `inert`: nothing reads the value any more, so both spellings
+//     are SKIPPED with one named warning — the file lands, the dead key does
+//     not come back into the profile.
+//   · `retired` alone (a creation mode the screen no longer offers): the value
+//     still applies, so the mirror reads as the row it mirrors, and is dropped
+//     as a duplicate when the plain key rides beside it.
+function withoutRetiredRows(entries, rows, warnings) {
+  const present = new Set(entries.map(([key]) => key));
+  const skipped = [];
+  const kept = [];
+  for (const [key, raw] of entries) {
+    let target = key;
+    if (!rows.has(key) && key.startsWith('settings.') && rows.get(key.slice('settings.'.length))?.retired) {
+      target = key.slice('settings.'.length);
+      if (present.has(target) && !rows.get(target).inert) continue;
+    }
+    const row = rows.get(target);
+    if (row?.retired && row.inert) {
+      const label = row.label || target;
+      if (!skipped.includes(label)) skipped.push(label);
+      continue;
+    }
+    kept.push([target, raw]);
+  }
+  if (skipped.length) warnings.push(`${skipped.join(', ')}: ${skipped.length === 1 ? 'this setting is' : 'these settings are'} no longer used and ${skipped.length === 1 ? 'was' : 'were'} skipped. Everything else in the file was imported.`);
   return kept;
 }
 
@@ -1163,7 +1201,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once.
   if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
-  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
+  const entries = withoutRetiredOpeningLimits(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
+  for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;

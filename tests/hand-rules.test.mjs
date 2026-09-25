@@ -38,7 +38,7 @@ test('the default opening follows the shipped starting rule; unplayed cards surv
   const intelligence = { intelligence: 10 };
   const shipped = fight({}, intelligence, {});
   assert.equal(shipped.piles.hand.length, scaledCards(handRulesDefaults.starting, intelligence));
-  assert.equal(shipped.piles.hand.length, 6); // 4 + floor((10 − 1) ÷ 2) = 8, kept within 3–6 (owner, 2026-09-24)
+  assert.equal(shipped.piles.hand.length, 6); // 4 + floor((10 − 1) ÷ 2) = 8, kept within 4–6 (owner, 2026-09-24)
   const c = fight();
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
@@ -127,8 +127,12 @@ test('combat snapshot keeps rules and resumes deterministically', () => {
 });
 
 test('configuration export preserves stat and draw-mode choices', () => {
-  const settings = { [prefix + 'drawMode']: 'fixed', [prefix + 'starting.stat']: 'wisdom', [prefix + 'starting.base']: 3 };
+  const settings = { [prefix + 'drawMode']: 'fixed', [prefix + 'turn.stat']: 'wisdom', [prefix + 'turn.base']: 3 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
+  // The retired shared opening base and stat still import — skipped, by name.
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...settings, [prefix + 'starting.stat']: 'wisdom', [prefix + 'starting.base']: 3 }), contentBundle, {}, [], warnings), settings);
+  assert.match(warnings.join(' '), /Opening hand — Base cards, Opening hand — Attribute used: these settings are no longer used and were skipped/);
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [prefix + 'starting.pointsPerCard']: 0 }), contentBundle));
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [prefix + 'starting.minimum']: 9, [prefix + 'starting.maximum']: 2 }), contentBundle));
 });
@@ -172,8 +176,9 @@ test('the hand receipt is the arithmetic scaledCards does', () => {
 });
 
 // ---- PER-CLASS OPENING HAND (owner, 2026-09-24) -----------------------------
-// "Class base 3–5, +1 from stats": base + floor(max(0, primary − 1) ÷ 2),
-// kept within [base, 6], each class reading its own primary attribute.
+// "Class base 3–5, +1 from stats" and "start with 4-6 cards":
+// clamp(base + floor(max(0, primary − 1) ÷ 2), 4, 6), each class reading its
+// own primary attribute.
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { attributeRules } from '../src/content/attributes.js';
@@ -181,18 +186,21 @@ import { attributeRules } from '../src/content/attributes.js';
 const OPENING = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
 const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
 
-test('each class opens on its own base and primary attribute, capped at six', () => {
+test('each class opens on its own base and primary attribute, between four and six', () => {
   const rules = resolveHandRules({}, contentBundle.attributes);
   for (const [classId, [base, stat]] of Object.entries(OPENING)) {
     const fightRules = handRulesForClass(rules, classId);
     assert.equal(fightRules.startingByClass, undefined, 'the per-class table does not ride into the fight');
     assert.equal(fightRules.starting.base, base);
     assert.equal(fightRules.starting.stat, stat);
-    assert.equal(scaledCards(fightRules.starting, allOnes), base, `${classId} on all 1s opens on its base`);
+    assert.equal(scaledCards(fightRules.starting, allOnes), Math.max(4, base), `${classId} on all 1s opens on its base, never below four`);
     assert.equal(scaledCards(fightRules.starting, attributeRules.presets.lean[classId]), base + 1, `${classId}'s Standard preset (primary 3) opens base + 1`);
     assert.equal(scaledCards(fightRules.starting, { ...allOnes, [stat]: 40 }), 6, `${classId} never opens above six`);
     assert.equal(scaledCards(fightRules.starting, { ...allOnes, [stat]: 4 }), Math.min(6, base + 1), 'one point short of the next card adds nothing');
   }
+  // The owner's "4-6 cards": all 1s opens 4/4/4/5, the Standard presets 4/5/5/6.
+  assert.deepEqual(Object.keys(OPENING).map(classId => scaledCards(handRulesForClass(rules, classId).starting, allOnes)), [4, 4, 4, 5]);
+  assert.deepEqual(Object.keys(OPENING).map(classId => scaledCards(handRulesForClass(rules, classId).starting, attributeRules.presets.lean[classId])), [4, 5, 5, 6]);
   // A class with no row, or no class at all, keeps the shared rule.
   assert.deepEqual(handRulesForClass(rules, 'nobody').starting, rules.starting);
   assert.deepEqual(handRulesForClass(rules).starting, rules.starting);
@@ -215,7 +223,7 @@ test('a run fight deals the class opening hand and snapshots it', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries, attributeMode: 'assign',
     attributes: { strength: 1, dexterity: 1, constitution: 4, wisdom: 1, intelligence: 1 } });
   const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.piles.hand.length, 3, 'a Reaver with Strength 1 opens on its base of 3');
+  assert.equal(combat.piles.hand.length, 4, 'a Reaver with Strength 1 is lifted from its base of 3 to the floor of 4');
 });
 
 test('each class\'s opening hand is its own pair of settings rows, and the shared base is retired', () => {

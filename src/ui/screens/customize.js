@@ -658,6 +658,10 @@ export function mountCustomize(app, {
     modes.addEventListener('change', () => {
         const mode = visibleModes.find(mode => mode.id === modes.value);
         if (!mode) return;
+        // What was chosen BEFORE this change, so Cancel on a fresh Assign
+        // points puts it back (review of #1294): Standard → Assign points →
+        // Cancel used to land on unchosen, the Standard preset thrown away.
+        const previous = { mode: state.attributeMode, attributes: state.attributes ? { ...state.attributes } : null };
         state.attributeMode = mode.id;
         if (opensOnPreset(mode.id)) {
           // STANDARD SEATS THE CLASS PRESET (owner, 2026-09-24: "standard (pre
@@ -671,7 +675,7 @@ export function mountCustomize(app, {
           // allocation: the whole authored pool comes back rather than the
           // class-biased preset (or a previous edit) with points already
           // spent. Reopening it from "Edit points" is a revision instead.
-          openPointBuy({ fresh: true });
+          openPointBuy({ fresh: true, previous });
         } else {
           closePointBuy();
         }
@@ -746,7 +750,7 @@ export function mountCustomize(app, {
    * cancelling puts back exactly what was there, because a player who opens
    * their own stats to look at them must not lose them by pressing Cancel.
    */
-  function openPointBuy({ fresh = true } = {}) {
+  function openPointBuy({ fresh = true, previous = null } = {}) {
     closePointBuy({ restoreFocus: false });
     // Taken BEFORE the reset below, which fills a null allocation in: read
     // after it, a revision opened on no allocation (the catalogue's
@@ -859,9 +863,15 @@ export function mountCustomize(app, {
         // over. A REVISION puts back the allocation it opened, so looking at
         // your own stats and changing your mind costs nothing (review,
         // #1217).
+        // A fresh allocation entered FROM ANOTHER CHOSEN MODE (Standard →
+        // Assign points) puts that choice back, preset and all: Cancel undoes
+        // the switch, it does not also undo the answer given before it.
         if (!fresh) {
           state.attributeMode = priorMode;
           state.attributes = priorAttributes;
+        } else if (previous?.mode && previous.attributes) {
+          state.attributeMode = previous.mode;
+          state.attributes = previous.attributes;
         } else {
           state.attributeMode = '';
           state.attributes = null;

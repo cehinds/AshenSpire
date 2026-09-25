@@ -686,8 +686,9 @@ test('creation offers Standard (lean, on the class preset) and Assign points (al
   'an unspent pool is not a character');
 });
 
-test('the Assign points pool is its own dial, and typing it alone moves it', () => {
-  for (const pool of [0, 3, 5, 10]) {
+test('the Assign points pool is its own dial, and typing it alone moves it', async () => {
+  const { startingStatPoolProblems } = await import('../src/model/startingStatConfig.js');
+  for (const pool of [2, 3, 5, 10]) {
     const configured = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.assign.bonusPool': pool });
     const mode = configured.creationModes.find(row => row.id === 'assign');
     assert.equal(mode.baseline, 1, 'every attribute still opens at 1');
@@ -704,6 +705,16 @@ test('the Assign points pool is its own dial, and typing it alone moves it', () 
   assert.equal(lean.creationModes.find(row => row.id === 'lean').bonusPool, 4);
   const refused = configuredContentBundle(contentBundle, { 'gameConfig.startingStats.lean.bonusPool': 1 });
   assert.equal(refused.creationModes.find(row => row.id === 'lean').bonusPool, 3, 'a pool below the kit floor is refused');
+  // Assign points is held to the same kit floor (review of #1294): it opens on
+  // all 1s, so a pool of 0 or 1 could not dress the Starseer in its staff.
+  for (const pool of [0, 1]) {
+    const settings = { 'gameConfig.startingStats.assign.bonusPool': pool };
+    const low = configuredContentBundle(contentBundle, settings);
+    assert.equal(low.creationModes.find(row => row.id === 'assign').bonusPool, 3, `an Assign pool of ${pool} is refused`);
+    const problem = startingStatPoolProblems(contentBundle, settings).find(row => row.keys.includes('gameConfig.startingStats.assign.bonusPool'));
+    assert.ok(problem, 'and the refusal is said');
+    assert.match(problem.message, /is outside 2–\d+ and was refused\. 7 is the least a character can carry: the Starseer's .+ kit asks 3 Intelligence, and every other attribute needs at least 1\./);
+  }
 });
 
 test('with two modes offered, every pool row names its mode', async () => {

@@ -157,6 +157,45 @@ export function handRulesForClass(rules, classId = null) {
   return fight;
 }
 
+// THE OPENING-HAND LIMITS BEFORE 2026-09-24 WERE 3–15 (owner, 2026-09-24:
+// "start with 4-6 cards"). The Advanced panel stores — and an export writes —
+// every value it holds, so a profile or file from before the change pins the
+// old default cap of 15, and with it every opening hand above the 4–6 he asked
+// for. A stored or imported `starting.maximum` of exactly 15 is that retired
+// default, so it is DROPPED with a warning and the current default applies;
+// the `starting.minimum` of 3 riding beside it is the other half of the same
+// retired pair and goes with it (a floor of 3 would open an all-1s Reaver on
+// 3). A lone minimum of 3, with no 15 beside it, is somebody's choice and
+// stays; once the 15 is gone the check never fires again. A deliberate 15 is
+// indistinguishable from the old default and is dropped too — the price of
+// reading intent from a value. Run snapshots are never touched: a fight keeps
+// the hand it was born with.
+const OPENING_MAXIMUM_KEY = `${HAND_RULES_PREFIX}starting.maximum`;
+const OPENING_MINIMUM_KEY = `${HAND_RULES_PREFIX}starting.minimum`;
+const RETIRED_OPENING_MAXIMUM = 15;
+const RETIRED_OPENING_MINIMUM = 3;
+const bareKey = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+
+/** True when a stored profile pins the retired opening-hand cap of 15. */
+export function hasRetiredOpeningLimits(settings = {}) {
+  return settings?.[OPENING_MAXIMUM_KEY] === RETIRED_OPENING_MAXIMUM;
+}
+
+/**
+ * withoutRetiredOpeningLimits(entries, warnings) → entries without the retired
+ * 3–15 opening-hand limits, in either spelling (plain or `settings.`-prefixed).
+ */
+export function withoutRetiredOpeningLimits(entries, warnings = null) {
+  const retiredMaximum = ([key, value]) => bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM;
+  if (!entries.some(retiredMaximum)) return entries;
+  const retiredMinimum = ([key, value]) => bareKey(key) === OPENING_MINIMUM_KEY && value === RETIRED_OPENING_MINIMUM;
+  const dropsMinimum = entries.some(retiredMinimum);
+  if (Array.isArray(warnings)) {
+    warnings.push(`Opening hand: the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${handRulesDefaults.starting.minimum}–${handRulesDefaults.starting.maximum} applies. Everything else was kept.`);
+  }
+  return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
+}
+
 export function handRulesSettingsProblems(settings = {}) {
   return Object.entries(groups).flatMap(([group, label]) => {
     const min = settings[HAND_RULES_PREFIX + group + '.minimum'] ?? handRulesDefaults[group].minimum;
