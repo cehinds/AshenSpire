@@ -14,7 +14,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
-import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
+import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
+import { headMetaTags } from './head-meta.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -121,7 +122,7 @@ function idOf(absPath) {
 // same `assets/…` keys, but every art payload is read from assets-mobile/ — the
 // committed twin tree tools/mobile-art.mjs shrinks from assets/ under the
 // policy in tools/mobileart-policy.mjs. It runs from file:// like the default
-// and is held under MOBILE_BUNDLE_BUDGET_BYTES (50 MB): a build over that is
+// and is held under MOBILE_BUNDLE_BUDGET_BYTES (30 MB): a build over that is
 // refused, not written. Owner's ask, 2026-09-20: the full file had grown to
 // 253 MB, which on a phone is the whole cost of starting; two downloads now,
 // the full one and this one, and the site offers both.
@@ -332,6 +333,7 @@ let mapEntries = 0;
 let mapBytes = 0;
 let copiedAssets = 0;
 let copiedDetail = 0;
+let copiedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
 if (MOBILE) {
@@ -357,6 +359,12 @@ if (MOBILE) {
 }
 if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
+  // ONE DATA URI PER DISTINCT IMAGE. ~50 images are byte-identical to another
+  // path (an outfit's menu and detail plate, a portrait shared by two sets);
+  // inlining each copy cost the mobile file ~410 KB. A repeat becomes an alias
+  // line after the map, pointing at the first key with the same bytes.
+  const firstKeyOf = new Map();
+  const aliases = [];
   for (const abs of walkAssets(ART_DIR)) {
     const assetPath = relative(ART_DIR, abs);
     if (!runtimeAsset(assetPath)) {
@@ -403,6 +411,13 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       // CSS url points at that copy.
       continue;
     } else {
+      const id = distinctAssetId(buf, extname(abs));
+      if (firstKeyOf.has(id)) {
+        aliases.push([key, firstKeyOf.get(id)]);
+        mapEntries += 1;
+        continue;
+      }
+      firstKeyOf.set(id, key);
       pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
     }
     mapEntries += 1;
@@ -418,9 +433,13 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   // run is a worse day than finding it here.
   if (!EXTERNAL_ART) sources.set(
     ASSET_MAP_ID,
+    // A replacer FUNCTION: a string replacement would read `$&`, `$1`… in an
+    // asset path as a pattern.
     src.replace(
       /\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//,
-      `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n/* ASSET_MAP_END */`
+      () => `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n`
+        + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) ASSET_MAP[alias] = ASSET_MAP[key];\n` : '')
+        + '/* ASSET_MAP_END */'
     )
   );
 }
@@ -845,6 +864,9 @@ ${entries}
 const runtime = assembleRuntime(moduleEntries, entryId);
 
 const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire'])[1].trim();
+// Web/share metadata (description, og:*, icon, theme-color) — copied from index.html.
+let headMeta;
+try { headMeta = headMetaTags(indexHtml); } catch (e) { fail(e.message); }
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -854,6 +876,7 @@ const html = `<!DOCTYPE html>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>${title}</title>
+${headMeta.map((tag) => '  ' + tag).join('\n')}
 ${styleBlocks.join('\n')}
 </head>
 <body>
@@ -1039,6 +1062,15 @@ if (EXTERNAL_ART) {
     cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
     copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
   }
+  // The shipped score, same contract: a served page with the music-folder
+  // setting blank fetches music/manifest.json from beside itself
+  // (content/music.js SHIPPED_MUSIC_FOLDER), so a hosted build without it
+  // 404s on boot and falls back to the synth.
+  const musicSrc = resolve(ROOT, 'music');
+  if (existsSync(musicSrc)) {
+    cpSync(musicSrc, resolve(OUT_DIR, 'music'), { recursive: true });
+    copiedMusic = walkCount(resolve(OUT_DIR, 'music'));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1060,6 +1092,7 @@ if (EXTERNAL_ART) {
   console.log('  css assets linked: ' + externalCssUrls + ' (rebased onto the output HTML)');
   console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
     + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
+  console.log('  shipped score    : ' + copiedMusic + ' files → ' + idOf(resolve(OUT_DIR, 'music')));
 } else {
   console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
   console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');

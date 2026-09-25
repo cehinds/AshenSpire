@@ -50,14 +50,18 @@ jobs:
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. --external-art writes
           # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
-          # pass, so the copies that used to place those by hand are gone with it.
+          # pass (and the shipped score, music/), so the copies that used to place
+          # those by hand are gone with it.
           node tools/bundle.mjs --external-art --out preview
           cp preview/AshenSpire.html preview/index.html
           # The standalone is uploaded as its OWN artifact rather than nested
           # here — see the two upload steps below for why.
           mkdir -p standalone
-          cp AshenSpire.html standalone/AshenSpire.html
-          cp AshenSpire-mobile.html standalone/AshenSpire-mobile.html
+          # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
+          # a saved file's name to open the dev-only settings, and a plain
+          # AshenSpire.html is an unknown file with them locked.
+          cp AshenSpire.html standalone/AshenSpire-dev-preview.html
+          cp AshenSpire-mobile.html standalone/AshenSpire-mobile-dev-preview.html
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -104,7 +108,7 @@ jobs:
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the dev-standalone artifact from"
             echo "this same run: AshenSpire.html is the full game (~250 MB) and"
-            echo "AshenSpire-mobile.html the same build with its art shrunk under 50 MB."
+            echo "AshenSpire-mobile.html the same build with its art shrunk under 30 MB."
             echo
             echo "This is an inspection artifact, not a deployment. Pages serves main;"
             echo "dev has no hosted URL."

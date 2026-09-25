@@ -66,7 +66,7 @@ const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gi
 // THE SECOND DOWNLOAD. The mobile single file (tools/bundle.mjs --mobile) has the
 // same three homes as the full one and is held to the same chain — carries art,
 // IS the build — plus one claim of its own: it fits the budget the owner set
-// (under 50 MB, tools/mobileart-policy.mjs), and it is smaller than the full file,
+// (under 30 MB, tools/mobileart-policy.mjs), and it is smaller than the full file,
 // or it is not a mobile edition at all but the full one under a second name.
 const MOBILE_BUILD = 'build/AshenSpire-mobile.html';
 const MOBILE_SHIPPED = 'dist/AshenSpire-mobile.html';
@@ -374,7 +374,7 @@ if (SELFTEST) {
     checkMobileFits('synthetic-mobile.html', Buffer.alloc(201), full, 1000), false, 'MOBILE_BUDGET');
   expect('control: exactly at the budget, smaller than full, passes',
     checkMobileFits('synthetic-mobile.html', Buffer.alloc(100), full, 100), true, 'MOBILE_BUDGET');
-  expect('control: the real budget is the owner\'s number', { ok: MOBILE_BUNDLE_BUDGET_BYTES === 50_000_000, code: 'MOBILE_BUDGET', detail: '' }, true, 'MOBILE_BUDGET');
+  expect('control: the real budget is the owner\'s number', { ok: MOBILE_BUNDLE_BUDGET_BYTES === 30_000_000, code: 'MOBILE_BUDGET', detail: '' }, true, 'MOBILE_BUDGET');
 
   boundary([
     'nothing about the working tree — --selftest checks the CHECKS, not the repo',
@@ -384,7 +384,7 @@ if (SELFTEST) {
     ' never "one asset short". An exact count would be two values kept equal by hand',
     'the allowlist is a claim about NAMES tracked in dist/, not about their contents:',
     ' a tracked README.md full of the wrong prose passes here and always will',
-    'the mobile budget is bytes: a file under 50 MB that looks terrible passes here',
+    'the mobile budget is bytes: a file under 30 MB that looks terrible passes here',
   ]);
   if (bad.length) {
     console.error(`\nverify-shipped --selftest: ${bad.length} case(s) landed on the wrong verdict:`);

@@ -139,6 +139,14 @@ test('shipped content is valid, current, reachable, and every path it names exis
     ['eliteChest.cinders with lo above hi', (b) => { b.balance.rewards.eliteChest.cinders = [9, 3]; }, 'balance.rewards.eliteChest.cinders'],
     ['eliteChest.cinders not a pair', (b) => { b.balance.rewards.eliteChest.cinders = 'lots'; }, 'balance.rewards.eliteChest.cinders'],
     ['schoolBuildupMultipliers missing', (b) => { b.balance = { ...b.balance, arcaneExposure: { ...b.balance.arcaneExposure, schoolBuildupMultipliers: null } }; }, 'balance.arcaneExposure.schoolBuildupMultipliers'],
+    // Ruleset 7: every stat is one row of derivedStatRules, and each retired
+    // home of a stat is refused by name, never read as a second copy.
+    ['retired balance.handMax', (b) => { b.balance = { ...b.balance, handMax: 5 }; }, 'balance.handMax'],
+    ['retired combatRatings.multiplier', (b) => { b.balance = { ...b.balance, combatRatings: { multiplier: 1 } }; }, 'balance.combatRatings.multiplier'],
+    ['retired handRules.starting', (b) => { b.handRules = { starting: {} }; }, 'handRules.starting'],
+    ['retired handRules.turn', (b) => { b.handRules = { turn: {} }; }, 'handRules.turn'],
+    ['retired handRules.capacity', (b) => { b.handRules = { capacity: {} }; }, 'handRules.capacity'],
+    ['retired handRules.startingByClass', (b) => { b.handRules = { startingByClass: {} }; }, 'handRules.startingByClass'],
   ];
   for (const [label, edit, path] of refusals) {
     const r = validateContent(clone(contentBundle, edit));

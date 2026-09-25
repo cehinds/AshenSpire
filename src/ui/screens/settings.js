@@ -1,4 +1,5 @@
 import { previewPrologue } from './prologue.js';
+import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -14,6 +15,7 @@ import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
 import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
+import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
@@ -35,8 +37,13 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
+import { pageDebug } from '../buildChannel.js';
+import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
+import { renderSettingsSync } from '../components/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -101,6 +108,8 @@ const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !
   // class ships its own value or a profile already pinned one.
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
+// The Draw / turn stat row's editors, which only a fixed draw reads.
+const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -185,6 +194,62 @@ function graceRefillRows() {
     note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
   }));
 }
+
+/**
+ * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
+ * every row of a debug-only section (tuning or not — `shrineMultiUse`, say),
+ * and any `gameConfig.*` key no shown row carries. On a release build these
+ * still apply, but nothing on screen can see or reset them — so the options
+ * menu offers to clear them.
+ */
+export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
+  if (debug) return [];
+  const hidden = releaseHidden();
+  return Object.keys(settings).filter((key) => settings[key] !== undefined && hidden(key));
+}
+
+/** releaseHidden() → key => true when a release build shows no row for it. */
+function releaseHidden() {
+  const shown = new Set();
+  const debugOnly = new Set();
+  const advanced = categoryHandler('Advanced')?.rows || [];
+  const releaseGroups = new Set(visibleAdvancedGroups(false).map((group) => group.id));
+  for (const group of visibleAdvancedGroups(true)) {
+    if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
+    const into = releaseGroups.has(group.id) ? shown : debugOnly;
+    for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) into.add(row.key);
+  }
+  for (const row of ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
+  return (key) => !shown.has(key) && (debugOnly.has(key) || key.startsWith('gameConfig.'));
+}
+
+/**
+ * promotionFor(defaults, debug) → the promotion this build applies. A release
+ * build never applies a value it has no row for (the player could neither see
+ * nor reset it), so those keys are left out there — and a value an earlier
+ * promotion seeded for one is withdrawn by the seed's own "dropped key" rule.
+ */
+export function promotionFor(defaults, debug = pageDebug()) {
+  if (debug) return defaults;
+  const hidden = releaseHidden();
+  const values = Object.fromEntries(Object.entries(defaults?.values || {}).filter(([key]) => !hidden(key)));
+  return { ...defaults, values };
+}
+
+/**
+ * buildPromotion(debug) → the promoted values this build applies: what a
+ * Reset goes back to. On a release build that leaves out every row it does
+ * not show, as boot does, so no Reset reinstalls hidden tuning.
+ */
+function buildPromotion(debug = pageDebug()) {
+  return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
+}
+
+/** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
+const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
+
+/** settingsRows() → every row this screen draws (the sync profile's key list). */
+export function settingsRows() { return ROWS; }
 
 const ROWS = [
   ...tooltipSettingsRows(),
@@ -370,7 +435,7 @@ const ROWS = [
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
     note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
@@ -412,7 +477,7 @@ const ROWS = [
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
-    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
+    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = the score shipped in music/ beside the game, or the built-in generated score where that is unavailable.' },
 
   { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Card flick to play',
     note: 'Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.' },
@@ -693,9 +758,28 @@ const ADVANCED_GROUPS = Object.freeze([
   // every "how big and where" answer in one place.
   { id: 'Wireframes', label: 'Layout', tip: 'How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.' },
   { id: 'Export', label: 'Import, export & debug', tip: 'Load or save game configuration as a portable JSON file, and diagnostics.' },
+  { id: 'Sync', label: 'Defaults & sync', tip: 'Save your settings as your defaults on GitHub and load them on any device.' },
   { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
   { id: 'About', label: 'About', tip: 'Version and credits.' },
 ]);
+
+// ---- DEBUG-ONLY SECTIONS (owner, 2026-09-24) --------------------------------
+// "most of the advanced features probably should be locked behind a debug flag
+// that should only appear in dev and test builds. main should not have them."
+// A release build keeps the player-facing parts of Advanced — how the map, HUD,
+// cards and lore text look and confirm — plus Changelog and About. Every
+// tuning, rules, layout, import/export, diagnostics and sync section is shown
+// only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
+// Stored values are untouched either way: hiding a section changes what is
+// drawn, never what a profile holds.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Interface', 'Text', 'Changelog', 'About']);
+/** Groups with their own mounted panel instead of rows. */
+const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
+
+/** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
+export function visibleAdvancedGroups(debug = pageDebug()) {
+  return debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+}
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
@@ -740,7 +824,8 @@ export function activeAdvancedGroup(settings) {
   const raw = settings?.[ADVANCED_CAT_KEY];
   const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
   const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
-  return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+  const shown = visibleAdvancedGroups();
+  return shown.some((group) => group.id === stored) ? stored : shown[0].id;
 }
 
 // The Stats topic a migrated profile lands on: where the rows it was last
@@ -839,7 +924,7 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return pageDebug() ? 'Optional gameplay rules, tuning, diagnostics, sync, and the changelog.' : 'Map, HUD and card appearance, lore text, the changelog and About.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -1047,6 +1132,259 @@ export function compactRowLabel(label, topic) {
   return leaf.trim() || text;
 }
 
+// ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) -------------------------
+//
+// Owner: "easier to edit values with sliders direct input and buttons to
+// increase and decrease. make it so that options are consistent for all
+// buttons and have the standard expected options."
+//
+// Every number is now − · slider · field · + , and every row that holds a
+// value carries the same two affordances: a dot when it differs from its
+// default, and a Reset that puts that one row back. Nothing else about a row
+// changed — the same keys, the same commit path, the same refusals.
+
+/**
+ * wireStepper(wrap, { read, commit, min, max, step, stepFor }) — the − and + buttons and
+ * the slider of one stepper. A press steps once; holding repeats and speeds up.
+ * The slider shows its value in the field while dragging and saves at most
+ * every 120 ms, then once more when released, so a drag is not a save per pixel.
+ */
+function wireStepper(wrap, { read, commit, min, max, step, stepFor = null }) {
+  const slider = wrap.querySelector('input[type="range"]');
+  const field = wrap.querySelector('input[type="number"]');
+  // Only floating-point noise is removed (0.1 + 0.2 → 0.3). A value off the
+  // step grid (0.01 on a 0.05 step) steps from where it is, not to the grid.
+  const round = (v) => Number(v.toFixed(10));
+  const buttons = [...wrap.querySelectorAll('.set-step')];
+  // A compact slider (sliderSpan) widens to hold any value committed outside
+  // it — typed, stepped or loaded — so thumb and field never disagree.
+  const fit = (v) => {
+    if (!slider || !Number.isFinite(v)) return;
+    if (v > Number(slider.max)) slider.max = String(Math.min(max, niceCeil(v * 1.5)));
+    if (v < Number(slider.min)) slider.min = String(Math.max(min, -niceCeil(Math.abs(v) * 1.5)));
+    slider.value = String(v);
+  };
+  const sync = () => {
+    const v = read();
+    fit(v);
+    for (const b of buttons) b.disabled = Number(b.dataset.step) < 0 ? v <= min : v >= max;
+  };
+  // A gate or a hand rule disables the FIELD (it carries the key); the
+  // buttons and slider follow it rather than keeping a second lock.
+  const locked = () => !!field?.disabled;
+  const stepOnce = (b, times = 1) => {
+    if (locked()) return;
+    // Step from what the field shows: a number typed but not yet committed
+    // (a press does not blur the field) is the one the player means.
+    const typed = field && field.value.trim() !== '' ? Number(field.value) : NaN;
+    const base = Number.isFinite(typed) ? typed : read();
+    // A row whose button step scales with its value (buttonStep) asks again
+    // for the value it steps from, not the one it was drawn with.
+    const by = (stepFor ? stepFor(base) : Number(b.dataset.stepBy)) || step;
+    const next = Math.min(max, Math.max(min, round(base + Number(b.dataset.step) * by * times)));
+    commit(next);
+    sync();
+  };
+  for (const b of buttons) {
+    let timer = null;
+    let count = 0;
+    const stop = () => { clearTimeout(timer); timer = null; count = 0; };
+    b.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || b.disabled) return;
+      event.preventDefault();
+      stepOnce(b);
+      const repeat = () => {
+        count += 1;
+        stepOnce(b, count > 15 ? 5 : 1);
+        if (!b.disabled) timer = setTimeout(repeat, count > 5 ? 50 : 90);
+      };
+      timer = setTimeout(repeat, 380);
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) b.addEventListener(type, stop);
+    // Keyboard and switch access arrive as a click with no pointer (detail 0).
+    b.addEventListener('click', (event) => { if (event.detail === 0) stepOnce(b); });
+  }
+  if (slider) {
+    let pending = null;
+    slider.addEventListener('input', () => {
+      if (locked()) { slider.value = field.value; return; }
+      if (field) field.value = slider.value;
+      if (pending) return;
+      pending = setTimeout(() => { pending = null; commit(slider.value); sync(); }, 120);
+    });
+    slider.addEventListener('change', () => { clearTimeout(pending); pending = null; if (!locked()) { commit(slider.value); sync(); } });
+  }
+  field?.addEventListener('change', sync);
+}
+
+/** markModified(container, settings, changes) — the dot and Reset follow each save. */
+function markModified(container, settings, changes) {
+  for (const [key, value] of Object.entries(changes || {})) {
+    const row = rowByKey(key);
+    if (!row) continue;
+    const probe = { ...settings, [key]: value === undefined ? undefined : value ?? settings[key] };
+    const on = rowModified(probe, row);
+    container.querySelectorAll(`[data-row-key="${CSS.escape(key)}"]`).forEach((el) => {
+      if (on) el.dataset.modified = 'true'; else delete el.dataset.modified;
+      const reset = el.querySelector('.set-row-reset');
+      if (reset) reset.hidden = !on;
+    });
+  }
+}
+
+/**
+ * rowDefault(row) → the value Reset restores: the owner's promoted default
+ * (src/content/settingsDefaults.js) when there is one, else the row's own.
+ */
+export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
+  if (row && Object.hasOwn(promoted, row.key)) return promoted[row.key];
+  return row?.def;
+}
+
+// ---- UNDO for anything that changes many values at once ---------------------
+// A row Reset, a group or results reset, Reset all, clearing hidden tuning and
+// a profile load each leave one "… · Undo" bar for UNDO_MS. The snapshot is the
+// value every touched key held before (undefined = was not stored).
+const UNDO_MS = 8000;
+let undoOffer = null;
+/** offerUndo(label, snapshot) — the next paint shows "label · Undo". */
+export function offerUndo(label, snapshot) {
+  if (!snapshot || !Object.keys(snapshot).length) return;
+  undoOffer = { label, snapshot, until: Date.now() + UNDO_MS };
+}
+
+/**
+ * resetKeys(settings, onChange, keys, label) → the snapshot taken. Each key goes
+ * back to its promoted default when there is one, else is cleared so the row's
+ * own default applies; an Undo is offered.
+ */
+export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) {
+  const snapshot = {};
+  const changed = {};
+  const seedBefore = settings[SEED_KEY];
+  for (const key of keys) {
+    snapshot[key] = settings[key];
+    if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
+    else { delete settings[key]; changed[key] = undefined; }
+  }
+  const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
+  // A key reset to its promoted value is the promotion's again: say so in the
+  // seed record, so a later promotion may move it along.
+  const back = keys.filter((key) => Object.hasOwn(promoted, key));
+  if (back.length) {
+    const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+    const next = { ...record };
+    for (const key of back) next[key] = promoted[key];
+    for (const key of keys) if (!Object.hasOwn(promoted, key)) delete next[key];
+    settings[SEED_KEY] = next;
+    changed[SEED_KEY] = next;
+  }
+  const result = onChange(changed);
+  if (result?.ok === false) {
+    // Not saved, so not reset: put every value (and the seed record) back —
+    // here and, through the same onChange, in the game and its live state.
+    const back = {};
+    for (const [key, value] of Object.entries(snapshot)) {
+      back[key] = value;
+      if (value === undefined) delete settings[key]; else settings[key] = value;
+    }
+    if (Object.hasOwn(changed, SEED_KEY)) {
+      back[SEED_KEY] = seedBefore;
+      if (seedBefore === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = seedBefore;
+    }
+    onChange(back);
+    return snapshot;
+  }
+  const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
+  // Undo puts back which values the promotion owned, as well as the values.
+  if (moved.length && Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore;
+  offerUndo(label, undo);
+  return snapshot;
+}
+
+const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
+
+/** rowModified(settings, row) → true when the stored value differs from the default. */
+export function rowModified(settings, row, promoted = PROMOTED_DEFAULTS) {
+  if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
+  const stored = settings?.[row.key];
+  if (stored === undefined) return false;
+  // A resolved row (Music, the "uses its own" switches) is changed when
+  // setting its key back to its default (the promoted one if there is one,
+  // else cleared) would change what it resolves to.
+  if (row.resolve) {
+    const base = Object.hasOwn(promoted, row.key) ? promoted[row.key] : undefined;
+    return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: base });
+  }
+  const def = rowDefault(row, promoted);
+  if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
+  return stored !== def;
+}
+
+function resetButtonHtml(settings, r) {
+  if (!VALUE_ROW_TYPES.has(r.type) || r.type === 'action') return '';
+  const on = rowModified(settings, r);
+  return `<button type="button" class="as-btn set-row-reset${r.type === 'number' ? ' set-num-reset' : ''}" data-reset-key="${esc(r.key)}"`
+    + ` aria-label="Reset ${esc(stripTags(r.label))} to default" title="Reset to default"${on ? '' : ' hidden'}>Reset</button>`;
+}
+
+function stripTags(text) { return String(text ?? '').replace(/<[^>]*>/g, ''); }
+
+/**
+ * sliderSpan(row, value) → [min, max] for the slider. A row whose declared
+ * range is huge (most tuning rows allow 0–999) gets a slider around its value
+ * and default instead, so a drag moves in useful steps; the field and the
+ * buttons still reach the whole declared range.
+ */
+export function sliderSpan(row, value) {
+  const min = Number.isFinite(row.min) ? row.min : 0;
+  const max = Number.isFinite(row.max) ? row.max : 100;
+  const step = row.step ?? 1;
+  // An authored design range wins: `sliderRange: [lo, hi]` on the row.
+  if (Array.isArray(row.sliderRange) && row.sliderRange.length === 2) {
+    const lo = Math.max(min, Math.min(Number(row.sliderRange[0]), Number(value)));
+    const hi = Math.min(max, Math.max(Number(row.sliderRange[1]), Number(value)));
+    if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo) return [lo, hi];
+  }
+  if (row.slider || (max - min) / step <= 400) return [min, max];
+  const anchor = Math.max(Math.abs(Number(value) || 0), Math.abs(Number(row.def) || 0), step * 10);
+  const reach = niceCeil(anchor * 3);
+  // A signed domain (−999…999) is centred too: both ends come in around the
+  // value, each clamped to the declared range.
+  const low = Math.max(min, -reach);
+  return [low, Math.max(low + step, Math.min(max, reach))];
+}
+
+/** niceCeil(x) → the smallest 1, 2 or 5 × 10ⁿ at or above x. */
+export function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const power = 10 ** Math.floor(Math.log10(x));
+  const lead = x / power;
+  return (lead <= 1 ? 1 : lead <= 2 ? 2 : lead <= 5 ? 5 : 10) * power;
+}
+
+/** buttonStep(row, value) → how far − / + move one press. */
+export function buttonStep(row, value = row.def) {
+  const step = row.step ?? 1;
+  if (row.buttonStep) return row.buttonStep;
+  if (step >= 1 || row.integer) return Math.max(1, step);
+  const size = Math.abs(Number(value) || Number(row.def) || 0);
+  const coarse = size >= 20 ? 1 : size >= 2 ? 0.1 : 0.05;
+  return Math.max(step, coarse);
+}
+
+function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep, sliderStep = step }) {
+  const name = esc(stripTags(label));
+  const sliderValue = Math.min(Math.max(Number(value), span[0]), span[1]);
+  return `<span class="set-stepper" data-stepper>`
+    + `<button type="button" class="as-btn set-step" data-step="-1" data-step-by="${bStep}" aria-label="Decrease ${name}"${value <= min ? ' disabled' : ''}>−</button>`
+    + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${sliderStep}" value="${sliderValue}" aria-label="${name} slider">`
+    + `<input type="number" class="${fieldClass}" data-key="${esc(key)}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="${inputMode}" aria-label="${name}">`
+    + (unit ? `<span class="set-unit" aria-hidden="true">${esc(unit)}</span>` : '')
+    + `<button type="button" class="as-btn set-step" data-step="1" data-step-by="${bStep}" aria-label="Increase ${name}"${value >= max ? ' disabled' : ''}>+</button>`
+    + `</span>`;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // W1a: help only where the effect is not obvious. Condition and status lines
   // are feedback, and settingsRowShowsHelp always keeps them.
@@ -1060,11 +1398,14 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // THE ROW IS THE KIT'S Row·setting: a LabelStack (what the setting does, and
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
+  // The row's Reset sits beside the label, not inside it: the label ellipsises
+  // (kit.css nowrap/overflow), and a long tuning label would clip the button.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>${note ? `
+        <span class="set-label-line"><span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}</span>${note ? `
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
-  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  const modified = rowModified(settings, r);
+  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}" data-row-key="${esc(r.key)}"${modified ? ' data-modified="true"' : ''}${attrs}>`;
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
@@ -1103,6 +1444,8 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
           <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
           <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
           <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(scene.id)}" aria-label="Edit ${esc(scene.name)} with live preview">Edit & preview</button>
+          ${scene.character && scene.actor ? `<button type="button" class="as-btn set-scene-edit" data-scene-place="${esc(scene.id)}" aria-label="Place traveller in ${esc(scene.name)}">Place traveller</button>` : ''}
           <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
           ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
         </span>
@@ -1116,6 +1459,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <ol class="set-scene-list" data-scene-list>${list}</ol>
         <div class="set-scene-tools">
           <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(config.scenes[staged[0]]?.id || 'warmth')}">Open live scene editor</button>
           <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
           ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
         </div>
@@ -1175,24 +1519,23 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const val = resolveNumberRow(settings, r);
     const step = r.step ?? 1;
     const inputMode = r.integer === false ? 'decimal' : 'numeric';
-    return `${rowOpen(r.slider ? 'set-row-wide' : '')}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
-          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
-                 min="${r.min}" max="${r.max}" step="${step}" inputmode="${inputMode}"
-                 aria-label="${r.label}">
-          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="${step}" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: r.min, max: r.max, step, span: sliderSpan(r, val), fieldClass: 'set-num', sliderClass: 'set-num-slider', inputMode, bStep: buttonStep(r, val), unit: r.unit || '',
+            // A fractional row's authored values need not sit on its step grid
+            // (0.01 on a 0.05 step); `any` lets the thumb stand where the value is.
+            sliderStep: r.integer === false || !Number.isInteger(step) ? 'any' : step })}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
-    return `${rowOpen()}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack()}
-        <span class="as-status range-val" data-for="${r.key}">${val}</span>
         <span class="r-trail range-wrap">
-          <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: 0, max: 100, step: 1, span: [0, 100], fieldClass: 'set-range-num', sliderClass: 'set-range', keyOnSlider: true, unit: '%', bStep: 5 })}
         </span>
       </div>`;
   }
@@ -1471,6 +1814,15 @@ export function settingsRow(key) {
   const row = ROWS.find((r) => r.key === key);
   if (!row) throw new Error(`settingsRow: no settings row named '${key}'`);
   return row;
+}
+
+/**
+ * settingsImportRows() → the rows the import door is handed as
+ * `additionalRows`, the same array both import buttons pass. Exported so a
+ * test imports a real exported file through exactly what the screen uses.
+ */
+export function settingsImportRows() {
+  return ROWS;
 }
 
 export function resolveLevelUpValue(settings) {
@@ -1833,16 +2185,16 @@ export function compactAdvancedRow(row, groupId, subgroupId) {
 // paints the panel and the refresh that follows it compute it once.
 let lastStatsPreview = { key: null, html: '' };
 
-export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null) {
-  const key = JSON.stringify([topic, previewAttributes, previewLevel, settings]);
+export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null, previewClassId = null) {
+  const key = JSON.stringify([topic, previewAttributes, previewLevel, previewClassId, settings]);
   if (key === lastStatsPreview.key) return lastStatsPreview.html;
-  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel);
+  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId);
   lastStatsPreview = { key, html };
   return html;
 }
 
-function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel) {
-  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel);
+function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId) {
+  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel, previewClassId);
   if (!preview) return '';
   if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
   const classes = statsExampleClasses();
@@ -1859,7 +2211,89 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
-function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null) {
+function visibleAdvancedSubgroups(rows, groupId) {
+  const groups = advancedSubgroups(rows, groupId);
+  // The scene editor owns per-scene values and shows their actual effect beside
+  // the painting. Keeping another 70-plus controls under each scene tab meant
+  // the inactive private staging looked editable while changing nothing.
+  if (groupId !== 'Opening') return groups;
+  return groups.filter(group => !group.rows.some(row => row.prologuePath?.[0] === 'scenes'));
+}
+
+// ---- search: EVERY section at once (2026-09-24 revamp) ----------------------
+//
+// Find used to filter the rows of the Advanced section already open, so a
+// setting under another tab answered "0 of 212" — and to have anything to
+// filter, every one of Advanced's ~3,000 rows had to be in the page, hidden.
+// That page was the slowness: opening Advanced built and wired all of them.
+// Now a query draws its matches, from every section this build shows, and
+// nothing else; a section draws only the topic that is open.
+const SEARCH_LIMIT = 120;
+const subgroupCache = new Map();
+function cachedSubgroups(rows, groupId) {
+  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, visibleAdvancedSubgroups(rows, groupId));
+  return subgroupCache.get(groupId);
+}
+
+/**
+ * settingsSearchHits(query, debug, settings) → [{ row, where }] across every
+ * shown section. With `settings`, a row the hand rules currently hide (the
+ * fixed-draw rows while drawing to a hand size) is not a hit: it would be
+ * counted, and reset, without being on screen.
+ */
+export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false } = {}) {
+  const q = String(query || '').trim().toLocaleLowerCase();
+  if (!q && !changedOnly) return [];
+  const words = q ? q.split(/\s+/) : [];
+  const hiddenByRules = new Set();
+  if (settings && resolveHandRules(settings).drawMode !== 'fixed') {
+    for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
+  }
+  const hit = (row) => {
+    if (hiddenByRules.has(row.key)) return false;
+    if (changedOnly && !rowModified(settings, row)) return false;
+    const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
+    return words.every((word) => hay.includes(word));
+  };
+  const hits = [];
+  for (const row of ROWS) {
+    if (row.retired || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
+    if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
+  }
+  const advanced = categoryHandler('Advanced')?.rows || [];
+  for (const group of visibleAdvancedGroups(debug)) {
+    if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
+    for (const sub of cachedSubgroups(advanced, group.id)) {
+      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
+    }
+  }
+  return hits;
+}
+
+function searchResultsHtml(settings, query, changedOnly = false) {
+  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly });
+  if (!hits.length) {
+    return `<p class="set-note set-search-empty" data-search-results="0">${changedOnly
+      ? (query ? `No changed setting matches “${esc(query)}”.` : 'Nothing is changed: every setting is at its default.')
+      : `No setting matches “${esc(query)}”.`}</p>`;
+  }
+  let where = null;
+  const shown = hits.slice(0, SEARCH_LIMIT);
+  const body = shown.map(({ row, where: at }) => {
+    const heading = at !== where ? `<h4 class="set-subsection-heading set-search-where">${esc(at)}</h4>` : '';
+    where = at;
+    return heading + settingsRowHtml(settings, row);
+  }).join('');
+  const more = hits.length > shown.length ? `<p class="set-note">${hits.length - shown.length} more — add a word to narrow the search.</p>` : '';
+  const lead = changedOnly ? 'Every setting you have changed, from every section.' : 'Results from every section.';
+  const noun = changedOnly ? `${hits.length} changed` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`;
+  return `<div class="set-group-summary"><span>${lead}</span><output data-config-count aria-live="polite">${noun}</output></div>`
+    + `<div class="set-card-list" data-search-results="${hits.length}">${body}</div>${more}`;
+}
+
+/** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false) {
+  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
@@ -1869,7 +2303,7 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div><div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
   }
   const h = categoryHandler(cat);
   if (!h) {
@@ -1886,28 +2320,32 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
+    const shownGroups = visibleAdvancedGroups();
     const active = activeAdvancedGroup(settings);
-    const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
+    const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
-    const groups = ADVANCED_GROUPS.map((group) => {
-      const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog' || group.id === 'About') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
+    // ONLY THE OPEN SECTION, AND ONLY ITS OPEN TOPIC, IS DRAWN. The others are
+    // empty shells marked `data-lazy`; choosing one repaints the panel.
+    const groups = shownGroups.map((group) => {
+      if (group.id !== active) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}" data-lazy hidden></section>`;
       }
-      const subgroups = advancedSubgroups(h.rows, group.id);
+      if (MOUNTED_ADVANCED_GROUPS[group.id]) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+          + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
+      }
+      const subgroups = cachedSubgroups(h.rows, group.id);
       const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
-      const picker = '';
-      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
-        + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          // Only the topic on screen computes its example; the others fill in
-          // when opened (`refreshStatsPreviews`), so an edit costs one example.
-          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${sub === activeSub && group.id === active ? statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel) : ''}</div>` : '')
+      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + subgroups.map((sub, index) => sub !== activeSub
+          ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
+          : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel, previewClassId)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
             : sub.rows.map((row, rowIndex) => {
               // A Stats topic reads as short subsections (Formula, Level
@@ -1921,7 +2359,7 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
-      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
+      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${shownGroups.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
@@ -1951,11 +2389,33 @@ function categoryHtml(cat, settings, saves, previewAttributes = null, previewLev
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null }) {
+const MARKS_MODIFIED = Symbol('marks modified rows');
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   panelSettings = settings;
+  if (!onChange[MARKS_MODIFIED]) {
+    const report = onChange;
+    onChange = Object.assign((changes) => {
+      // The save path prunes the seed record in ITS bag (src/main.js); mirror
+      // that here, so a reset or an Undo snapshot built from this bag sees the
+      // record as it is stored, not as it was when the panel opened.
+      const seed = seedAfterChange(settings, changes);
+      if (seed) settings[SEED_KEY] = seed;
+      const out = report(changes);
+      markModified(container, settings, changes);
+      syncHeaderState();
+      return out;
+    }, { [MARKS_MODIFIED]: true });
+  }
   let html = '';
   let cats = [];
   let current = null;
+  if (!headerTools) {
+    headerTools = settingsHeaderTools();
+    headerTools.dataset.inlineSettings = 'true';
+  }
+  const searchQuery = () => (grouped ? headerTools.querySelector('[data-advanced-search]')?.value.trim() || '' : '');
+  const changedOnly = () => grouped && headerTools.dataset.changedOnly === '1';
+  const filtering = () => !!searchQuery() || changedOnly();
   if (grouped) {
     cats = shownCategories(saves);
     // A stored category that no longer exists must not blank the screen. Fail
@@ -1996,16 +2456,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel)}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly())}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
-  if (!headerTools) {
-    headerTools = settingsHeaderTools();
-    headerTools.dataset.inlineSettings = 'true';
-  }
   container.setAttribute('data-settings-host', '');
   // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
   // in-run overlay has no head to hang them in, so they used to be prepended
@@ -2060,8 +2516,100 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (vertical) container.querySelector('.set-tabs [data-member="Advanced"]')?.after(sections);
     else container.querySelector('.set-panel')?.prepend(sections);
   };
+  // ONE REPAINT for everything that changes what the pane shows — a category,
+  // an Advanced section or topic, a search, a row reset. Only the pane is
+  // rebuilt; the rail, the header tools and the page-level listeners stay.
+  let searchTimer = null;
+  function repaintPanel({ keepScroll = false } = {}) {
+    // The formation editor holds an unapplied draft in its DOM; apply it before
+    // the pane it lives in is rebuilt, or stay put when it cannot be applied.
+    if (!applyPendingFormationSettings(container)) return;
+    const panel = container.querySelector('.set-panel');
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
+    const scroll = keepScroll ? panel.scrollTop : 0;
+    const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
+    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
+    panel.setAttribute('aria-labelledby', `set-tab-${current}`);
+    panel.dataset.searching = String(filtering());
+    const groupReset = headerTools.querySelector('[data-reset-config="group"]');
+    if (groupReset) groupReset.textContent = filtering() ? 'Reset these results' : 'Reset this group';
+    paintUndo();
+    wire();
+    panel.scrollTop = scroll;
+    if (panel.parentElement) panel.parentElement.scrollTop = outer;
+  }
+  // ---- the Undo bar, the first-open tip, the Changed toggle --------------
+  let undoTimer = null;
+  function paintUndo() {
+    container.querySelector(':scope > .set-undo')?.remove();
+    if (!undoOffer || Date.now() > undoOffer.until) { undoOffer = null; return; }
+    const offer = undoOffer;
+    const bar = document.createElement('div');
+    bar.className = 'set-undo';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
+    bar.querySelector('[data-undo]').onclick = () => {
+      const restore = {};
+      // The seed record too, even when the Undo does not carry it: the save
+      // path may prune it for the keys this Undo moves.
+      const now = { [SEED_KEY]: settings[SEED_KEY] };
+      for (const [key, value] of Object.entries(offer.snapshot)) {
+        now[key] = settings[key];
+        if (value === undefined) delete settings[key]; else settings[key] = value;
+        restore[key] = value;
+      }
+      undoOffer = null;
+      if (onChange(restore)?.ok === false) {
+        // Not saved, so not undone: put the state the Undo replaced back, here
+        // and through onChange, so the live display and audio follow it — and
+        // keep the offer, so the player can try again.
+        for (const [key, value] of Object.entries(now)) {
+          if (value === undefined) delete settings[key]; else settings[key] = value;
+        }
+        onChange(now);
+        undoOffer = offer;
+      }
+      repaintPanel({ keepScroll: true });
+    };
+    container.insertBefore(bar, container.querySelector(':scope > .set-railed') || container.firstChild);
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(() => { if (undoOffer === offer) { undoOffer = null; bar.remove(); } }, Math.max(0, offer.until - Date.now()));
+  }
+  function paintTip() {
+    if (!grouped || settings.settingsTipSeen || container.querySelector(':scope > .set-tip')) return;
+    const tip = document.createElement('div');
+    tip.className = 'set-tip';
+    tip.setAttribute('role', 'note');
+    tip.innerHTML = '<span><b>Tip:</b> the magnifier finds any setting in every section. A dot marks a setting you changed, and its Reset puts it back. <b>Changed</b> lists all of them.</span>'
+      + '<button type="button" class="as-btn" data-tip-dismiss>Got it</button>';
+    tip.querySelector('[data-tip-dismiss]').onclick = () => {
+      settings.settingsTipSeen = true;
+      onChange({ settingsTipSeen: true });
+      tip.remove();
+    };
+    container.insertBefore(tip, container.querySelector(':scope > .set-railed') || container.firstChild);
+  }
+  function syncHeaderState() {
+    const toggle = headerTools.querySelector('[data-changed-toggle]');
+    if (toggle) {
+      // The rows Changed can show: on a release build, hidden tuning is
+      // counted by Clear hidden tuning instead.
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true }).length;
+      toggle.textContent = count ? `Changed · ${count}` : 'Changed';
+      toggle.setAttribute('aria-pressed', String(changedOnly()));
+      toggle.classList.toggle('on', changedOnly());
+    }
+    const clear = headerTools.querySelector('[data-clear-tuning]');
+    if (clear) {
+      const hidden = hiddenTuningKeys(settings);
+      clear.hidden = !hidden.length;
+      clear.textContent = `Clear hidden tuning (${hidden.length})`;
+    }
+  }
   const wire = () => {
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
+  mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -2069,18 +2617,34 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     headerTools.classList.toggle('search-open', !input.hidden);
     headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
     if (!input.hidden) input.focus();
-    else { input.value = ''; input.dispatchEvent(new Event('input')); }
+    else if (input.value) { input.value = ''; repaintPanel(); }
   };
+  const changedToggle = headerTools.querySelector('[data-changed-toggle]');
+  if (changedToggle) changedToggle.onclick = () => {
+    if (changedOnly()) delete headerTools.dataset.changedOnly; else headerTools.dataset.changedOnly = '1';
+    repaintPanel();
+  };
+  const clearTuning = headerTools.querySelector('[data-clear-tuning]');
+  if (clearTuning) clearTuning.onclick = () => {
+    const keys = hiddenTuningKeys(settings);
+    if (!keys.length) return;
+    // Cleared, not reset: a promoted value for hidden tuning is not this
+    // build's default either (promotionFor leaves it out at boot).
+    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
+    headerTools.querySelector('details').open = false;
+    repaintPanel({ keepScroll: true });
+  };
+  syncHeaderState();
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -2107,7 +2671,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
     container.querySelectorAll('[data-stats-preview]').forEach((node) => {
       const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
-      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel) : '';
+      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel, previewClassId) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
       drawnPreviews.set(node, html);
@@ -2138,12 +2702,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
-    const rules = resolveHandRules(settings, contentBundle.attributes);
+    const rules = resolveHandRules(settings);
     // The Stats → Draw & hand worked example states the hand these rules deal
     // (`refreshStatsPreviews`); what is left here is which rows apply.
-    const section = container.querySelector('[data-advanced-panel="Stats"]');
+    // The whole pane, not just Stats: a search result lists these rows too.
+    const section = container;
     if (section) {
-      for (const row of handRulesRows(contentBundle.attributes)) {
+      for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
@@ -2177,6 +2742,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (aboutMount) renderAboutSection(aboutMount);
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
+  const syncMount = container.querySelector('.set-sync-mount');
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before) => {
+    if (moved) offerUndo(`Profile loaded (${moved} setting${moved === 1 ? '' : 's'})`, before);
+    repaintPanel({ keepScroll: true });
+  } });
 
   container.querySelectorAll('.set-subtab').forEach((button) => {
     button.classList.add('as-railitem');
@@ -2190,8 +2760,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (!target) return;
       event.preventDefault();
       event.stopPropagation();
+      const id = target.dataset.advancedGroup;
       target.click();
-      target.focus();
+      container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(id)}"]`)?.focus();
     });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
@@ -2199,6 +2770,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const picker = container.querySelector('.set-section-select');
       if (picker) picker.value = group;
       onChange({ [ADVANCED_CAT_KEY]: group });
+      // A section not yet drawn is drawn now — the whole panel, once.
+      if (container.querySelector(`.set-advanced-group[data-advanced-panel="${CSS.escape(group)}"][data-lazy]`)) {
+        repaintPanel();
+        container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(group)}"]`)?.focus({ preventScroll: true });
+        return;
+      }
       container.querySelectorAll('.set-subtab').forEach((candidate) => {
         const selected = candidate.dataset.advancedGroup === group;
         candidate.classList.toggle('on', selected);
@@ -2217,39 +2794,29 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   const advancedSearch = headerTools.querySelector('[data-advanced-search]');
+  // Rows are no longer filtered in place: a query repaints the panel with its
+  // matches from every section (`searchResultsHtml`). What is left here is the
+  // open topic's own bookkeeping — rows the hand rules hide, the count.
   const filterAdvancedRows = () => {
-    if (!advancedSearch) return;
-    const query = advancedSearch.value.trim().toLocaleLowerCase();
-    let shown = 0;
-    let total = 0;
     const section = container.querySelector('.set-advanced-group:not([hidden])');
-    if (!section) {
-      container.querySelectorAll('.set-row').forEach(row => {
-        row.hidden = !!query && !row.textContent.toLocaleLowerCase().includes(query);
+    if (section) {
+      let total = 0;
+      section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
+        total += 1;
+        row.hidden = row.dataset.handHidden === 'true';
       });
-      return;
+      const count = section.querySelector('[data-config-count]');
+      if (count) count.textContent = `${total} settings`;
     }
-    const selected = section.querySelector('[data-topic][aria-selected="true"]')?.dataset.topic;
-    section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !query && !!selected && panel.dataset.topicPanel !== selected;
-      panel.dataset.searching = String(!!query);
-    });
-    section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
-      total += 1;
-      const match = !query || row.textContent.toLocaleLowerCase().includes(query)
-        || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
-      row.hidden = !match || row.dataset.handHidden === 'true';
-      if (match) shown += 1;
-    });
-    if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !panel.querySelector('.set-row:not([hidden])');
-    });
-    const count = section.querySelector('[data-config-count]');
-    if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
     syncSubsectionHeadings();
     refreshStatsPreviews();
   };
-  if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
+  if (advancedSearch) {
+    advancedSearch.oninput = () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { if (lifecycleSentinel.isConnected) repaintPanel(); }, 160);
+    };
+  }
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
@@ -2260,12 +2827,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         tab.setAttribute('aria-selected', String(active));
         tab.classList.toggle('on', active);
       });
-      const picker = section.querySelector('.set-topic-select');
-      if (picker) picker.value = topic;
-      syncTopicPicker();
       if (advancedSearch) advancedSearch.value = '';
-      filterAdvancedRows();
-      refreshStatsPreviews();
+      repaintPanel();
+      container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2278,7 +2842,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         event.preventDefault();
         event.stopPropagation();
         next.click();
-        next.focus();
       });
     });
     section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
@@ -2288,11 +2851,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings);
-      const groups = advancedSubgroups(ROWS, currentGroup);
+      const groups = visibleAdvancedSubgroups(ROWS, currentGroup);
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
+      // While a search is open the pane shows its matches, so "this group" IS
+      // the matches — every one the pane counts, not only the page it draws —
+      // and never the section that was open behind the search.
+      const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
@@ -2300,19 +2868,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
-      const changed = {};
-      for (const key of keys) {
-        delete settings[key];
-        changed[key] = undefined;
-      }
-      onChange(changed);
+      const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
+      resetKeys(settings, onChange, keys, label);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     };
   });
 
   container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('[data-scene-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.sceneEdit }));
+  });
+  container.querySelectorAll('[data-scene-place]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.scenePlace, tab: 'Traveller' }));
   });
   container.querySelectorAll('.set-prologue-text').forEach(input => {
     input.addEventListener('input', () => {
@@ -2320,7 +2890,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({[input.dataset.key]:input.value});
     });
   });
-  container.querySelectorAll('.set-text').forEach((input) => {
+  // `[data-key]`: only a control that names a setting saves one. The Defaults &
+  // sync panel's token field and switch carry no key and are its own to wire.
+  container.querySelectorAll('.set-text[data-key]').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
     const commit = () => {
@@ -2363,7 +2935,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -2420,7 +2992,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -2513,24 +3085,36 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // clamp on every keypress would rewrite the value under his fingers.
     field.addEventListener('change', () => commit(field.value));
     field.addEventListener('blur', () => commit(field.value));
-    wrap.querySelector('.set-num-slider')?.addEventListener('input', event => commit(event.target.value));
-    wrap.querySelector('.set-num-reset')?.addEventListener('click', () => commit(row.def));
-    // Part B's slider commits on `input`, because dragging IS the gesture:
-    //   slider.addEventListener('input', () => commit(slider.value));
+    wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1, stepFor: (v) => buttonStep(row, v) });
   });
 
   mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);
 
-  container.querySelectorAll('.set-range').forEach((slider) => {
-    const updateVolume = () => {
-      const val = Number(slider.value);
-      const out = container.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
-      if (out) out.textContent = val;
-      settings[slider.dataset.key] = val;
-      onChange({ [slider.dataset.key]: val });
+  container.querySelectorAll('.range-wrap').forEach((wrap) => {
+    const slider = wrap.querySelector('.set-range');
+    const field = wrap.querySelector('.set-range-num');
+    const key = slider.dataset.key;
+    const commit = (raw) => {
+      const val = Math.min(100, Math.max(0, Math.round(Number(raw)) || 0));
+      slider.value = String(val);
+      field.value = String(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+      refreshConditionNotes(container, settings);
     };
-    slider.addEventListener('input', updateVolume);
-    slider.addEventListener('change', updateVolume);
+    field.addEventListener('change', () => commit(field.value));
+    wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 1 });
+  });
+
+  container.querySelectorAll('[data-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.resetKey;
+      if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
+      typedRefusals.delete(key);
+      resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+      repaintPanel({ keepScroll: true });
+      container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
+    });
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
@@ -2591,7 +3175,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const result = onChange(changes);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2842,7 +3426,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('.toggle').forEach((btn) => {
+  container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
         const result = await toggleFullscreen();
@@ -2866,6 +3450,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
+  paintTip();
+  paintUndo();
 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
@@ -2933,7 +3519,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   function selectCategory(cat) {
-    if (!cats.includes(cat) || cat === current) return;
+    const searching = !!searchQuery();
+    if (!cats.includes(cat) || (cat === current && !searching)) return;
+    if (searching) headerTools.querySelector('[data-advanced-search]').value = '';
     current = cat;
     settings[CAT_KEY] = cat;
     // Persisted through the same free bag every other setting rides in
@@ -2948,16 +3536,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
-    const panel = container.querySelector('.set-panel');
-    if (!panel) return;
-    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(cat, settings, saves, previewAttributes, previewLevel);
-    panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
-    // A tab switch is a new screenful. Start it at the top, or the player lands
-    // mid-way down a section they have never seen.
-    panel.scrollTop = 0;
-    if (panel.parentElement) panel.parentElement.scrollTop = 0;
-    wire();
+    // A tab switch is a new screenful: repaintPanel starts it at the top, or
+    // the player lands mid-way down a section they have never seen.
+    repaintPanel();
   }
 
   // Selection is the nav's `choose`; a pick from the opened selector list
@@ -3034,11 +3615,16 @@ function settingsHeaderTools() {
   const tools = document.createElement('div');
   tools.className = 'set-header-tools';
   tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
+    + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
     + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
     + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
     + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
-    + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
-  tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
+    + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>'
+      : '<button type="button" class="as-btn" data-clear-tuning hidden>Clear hidden tuning</button>') + '</div></details>';
+  const exportItem = tools.querySelector('[data-export-settings]');
+  // Import and export are debug tools (owner, 2026-09-24): a release build has
+  // neither the menu item, the Load button, nor the export prompt on Done.
+  if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
     build: { contentVersion: contentBundle.version },
     includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
   });
@@ -3051,7 +3637,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -3068,8 +3654,8 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel }); },
-    secondary: [load],
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); },
+    secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
   });
@@ -3087,13 +3673,13 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
       if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {
     if (!applyPendingFormationSettings(door.body)) return;
-    if (settings.promptSettingsExport === false) { door.close(); return; }
+    if (!pageDebug() || settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });
     const body = document.createElement('div');

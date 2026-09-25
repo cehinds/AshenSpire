@@ -67,7 +67,7 @@ import { reducedMotionRequested } from '../motion.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { chestOptionView as sharedChestOptionView } from '../components/chestOption.js';
-import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, joinDeck } from '../../model/skills.js';
+import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, joinDeck, deckInstanceId } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { nodeTokens } from '../../model/tree.js';
 import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
@@ -214,7 +214,7 @@ export function mountRewards(app, {
     // and begins in Taken state; reaching this function would be a contract bug.
     smithingStone() { return false; },
     card(row) {
-      joinDeck(registries, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      joinDeck(registries, run, { instanceId: deckInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       return true;
     },
@@ -232,7 +232,7 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      joinDeck(registries, run, { instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      joinDeck(registries, run, { instanceId: deckInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },

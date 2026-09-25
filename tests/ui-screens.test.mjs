@@ -1252,9 +1252,7 @@ async function runSmoke(clock, dom) {
   }
 
   // ---- combat: paced playback of a real card play and a real enemy turn --------------
-  const { createCombat } = await load('engine/combat.js');
-  const { resolveHandRules } = await load('model/handRules.js');
-  const { runMods, resolveSwapCostRule } = await load('model/loadout.js');
+  const { createRunCombat } = await load('engine/runCombat.js');
   const { rollEncounter } = await load('engine/encounters.js');
   const { mountCombat } = await load('ui/screens/combat.js');
   const { reducedMotionRequested } = await load('ui/motion.js');
@@ -1262,22 +1260,9 @@ async function runSmoke(clock, dom) {
     const { run, rng } = newRun('reaver', seed);
     const seat = seatAtTier(run.seatOrder, run.actNumber);
     const enc = registries.encounters.get(rollEncounter(registries, rng, { pool, seat }));
-    const combat = createCombat({
-      ratingsRules: registries.balance.combatRatings || null,
-      handRules: resolveHandRules(meta.settings, contentBundle.attributes),
-      registries, rng,
-      player: {
-        classId: run.class, attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot, skills: run.skills, coreTags: run.coreTags,
-        maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
-        energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, damageBySchoolAdd: run.damageBySchoolAdd,
-        equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: run.equipmentAttackSlotCount,
-        removedAttackSlotIds: run.removedAttackSlotIds, equipmentPoolDeficits: run.equipmentPoolDeficits, itemUpgradeLevels: run.itemUpgradeLevels,
-        itemMounts: run.itemMounts, armamentLevels: run.armamentLevels, deck: run.deck, relicIds: run.relics,
-        flasks: [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }], flaskCharges: run.flaskCharges, loadout: run.loadout,
-      },
-      enemyIds: enc.enemies, hpMult: 1, enemyStatuses: [],
-      swapCostRule: resolveSwapCostRule(registries, meta),
-      playerStatuses: [...runMods(registries, run.loadout, run.class).startStatuses],
+    const combat = createRunCombat({
+      registries, rng, run, enemyIds: enc.enemies, settings: meta.settings || {},
+      player: { flasks: [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }] },
     });
     if (enemyHp != null) for (const enemy of combat.enemies) if (enemy.alive) enemy.hp = Math.min(enemy.hp, enemyHp);
     return { run, combat, enc };

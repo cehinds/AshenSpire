@@ -298,3 +298,59 @@ Rebased and re-run on one Linux runner. **Nothing rendered:** I did not run
 `release-shots.mjs` or open a browser, so §8's description of it is read from its source and
 its own header, not watched. The disclosure gate I *did* run (`--check`, exit 0, 8 texts × 2
 bundles). The profile-recovery gap named in stage 2 is still open and still not mine.
+
+---
+
+# Stage 3: SPEC true about what 1.0 ships
+
+*2026-09-24, at `dev` = `e4fe8d33a`. Spec-only pass (CONTRIBUTING: spec changes land alone),
+carrying the owner's delegated rulings D2, D3 and D4 of 2026-09-24. Stages 1, 2 and 2b above
+are unchanged. The rule is stage 2's: a sentence that restated a value which has a home and
+then drifted is rewritten to the shipped truth, and a sentence that names a contract keeps it.*
+
+## §5.1 and §5.2: two content rows
+
+| # | SPEC claim (before) | Verdict | Shipped truth | Falsifying command |
+|---|---|---|---|---|
+| C1 | §5.1 "39 authored Rogue cards, of which exactly 36 are in its ordinary reward pool" | **rewritten to shipped** | **40** authored: 36 in the class row's `cardPool`, signature `ambush`, ability card `prepare` (added by §13.4f, which is what made 39 stale), and the two generated cards `rogueShiv` / `smokePellet`. Every one carries an `upgrade`. The starting deck is 11 cards (`balance.startingDeckSize`, signature and ability included) | `node -e "import('./src/content/cards/rogue.js').then(m=>{const a=m.rogueCards;console.log(a.length,a.filter(c=>!c.upgrade).length)})"` → `40 0`; `node -e "import('./src/content/index.js').then(m=>console.log(m.contentBundle.classes.find(c=>c.id==='rogue').cardPool.length))"` → `36`; `grep -c '39 authored' SPEC.md` → `0` |
+| C2 | §5.2 row "Lord's Blood: Bleed thresholds no longer increase after bursting" | **rewritten to shipped** (name and text) | Card `goreblood` (`src/content/cards/reaver.js`, the `id: 'goreblood'` row): "Poise thresholds no longer increase after filling.", cost 3, upgrade cost 2. Its status keeps `meterMaxGrowthDisabled`; since #61 made Bleed thresholds constant (stage 2, §4.4), that freeze binds only Poise. The old row described a mechanic that cannot happen, and stage 2 set the precedent for rewriting such a row (the §4.4 Bleed threshold). The name moved as well because the row was being rewritten anyway. The table's other pre-scrub names stay under the one rename act (stage 2, standing debt 1) | `grep -n "id: 'goreblood'" -A5 src/content/cards/reaver.js`; `grep -c "Lord's Blood" SPEC.md` → `0` |
+
+## §12: the header said "planned, not shipped"; per-item verdicts
+
+The header now points here instead of restating status. Each row names the gate that would go
+red if the claim stopped being true. The node suite was run at this tree. The browser-only
+clauses were not (see the boundary below).
+
+| # | §12 item | Verdict | Artifact | Falsifying command |
+|---|---|---|---|---|
+| P1 | 12.1 Dodge keeps the framework roll; the `dodgeRolled` receipt reports success or failure, check, difficulty and guard | **shipped** ⚠ | `src/framework/weight.js` `dodgeRollCheck`; `src/ui/components/dodgeReceipt.js` (the text), shown by `fx.js` (float) and `combat.js` (`.dodge-announcement`) | `node --test tests/framework.test.mjs` (dodge check math, temporary guard, Weight-Class costs, pure vs. guard pricing); `node --test tests/combatEffectIntegration.test.mjs` (a failed roll shows no dodge sprite). ⚠ No test asserts the receipt *text*: `grep -rln dodgeReceipt tests` → nothing |
+| P2 | 12.2 Trader armaments and weapon arts; transactions; sales keep tier and mount ledgers; legacy shop saves | **shipped** | `src/model/armamentTrading.js`; shelves `armamentStock` / `weaponArtStock` in `buildShopStock` (`src/engine/encounters.js`) | `node --test tests/armamentTrading.test.mjs` (8 cases: seeded stock survives reload, single spend, refusals without mutation, sale keeps ledgers, equipped or stale sale refused, legacy stock not rerolled, weapon arts seated through the smith, save manager round trip) |
+| P3 | 12.3 One Discard-with-Exhaust entry with separate views; potions in the far-right action-row slot; selection is inert and only Use spends | **shipped** | `combat.js` action row (Actions · Draw · End Turn · Discard · Potions) and `openSpentPileModal` (`src/ui/components/piles.js`); potion rows through `PotionContentsModel` / `RunPotionModel` | `node --test tests/wireframe-pile-viewer.test.mjs tests/wireframe-potion-inspection.test.mjs`; `grep -n "combat-potions tall" src/ui/screens/combat.js` → the last button in the row |
+| P4 | 12.4 Multiple terminal bosses per act; every route reachable with a pre-boss rest; legacy saves keep the original boss with no RNG draw | **shipped** | `src/engine/actmap.js` `bossEncounterForNode`; `src/content/bossDestinations.js` | `node --test tests/branchingBosses.test.mjs tests/bossDestinationLabels.test.mjs tests/legacyBossReferences.test.mjs` |
+| P5 | 12.4 Roster target: 20 regular enemies and 10 bosses, elites not counted | **shipped** | `contentBundle.enemies`: 33 = 20 regular + 10 boss + 3 elite | `node --test tests/expandedRoster.test.mjs` ("roster has exactly 20 regular enemies, 10 bosses, and 3 elites"; "live pools expose all 20 regular enemies and 10 bosses through seeded legal encounters") |
+| P6 | 12.4 Elites for 1.0: **two per seat** (D4, added in this stage) | **to-build** | One elite encounter per seat ships: `eliteWyrm` (weald), `a2_eliteDuelist` (marches), `a3_eliteWyrmLord` (reach). The target needs three more. The "3 elites" count in `tests/expandedRoster.test.mjs` has to move with that content PR | `node -e "import('./src/content/index.js').then(m=>{const c={};for(const e of m.contentBundle.encounters)if(e.pool==='elite')c[e.seat]=(c[e.seat]\|\|0)+1;console.log(c)})"`: today `{ weald: 1, marches: 1, reach: 1 }`; built when every seat reads at least 2 |
+| P7 | 12.4 Enemy card movesets over the seeded weighted selector; no parallel picker | **shipped** | `src/model/enemyMoveCards.js` (presentation only; the move picker is unchanged) | `node tests/enemyMoveCards.test.mjs` (every move gets a card, inputs not mutated); `node --test tests/expandedRoster.test.mjs` ("seeded weighted plans replay exactly and respect move locks and repeat limits") |
+| P8 | 12.5 Player animation groups (attack / Power glow / guard / cast; shield bash, guard, parry); the **guard** resting stance (guard, shield guard, parry) held until the next turn; payment auras; enemy precedence override → tag → intent → neutral | **shipped** ⚠ | the `actionAnimation`, `combatAnimation` and `combatAura` resolvers | `node --test tests/actionAnimation.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs`. ⚠ The clauses that ask for real browser playtests (timing, handler cleanup, multi-enemy performance, reduced motion) are not node cases. `tests/mobile-performance.test.mjs` and the `tools/*-animation-browser.mjs` gates cover part of that, and none of it was watched in this pass |
+| P8b | 12.5 Powers replace the visual resting stance until that character's next turn begins | **to-build** | `resolveCombatAnimation` (`src/model/combatAnimation.js`) records `rest: 'cast'` for a Power, but `resolveCombatPose` (`src/model/combatPose.js`, last line) keeps only `guard` / `shieldGuard` / `parry` and returns `idle` for anything else, so the player drops back to idle when the Power frames finish. `content/config/ui/presentation/combatPoseStates.json` has no Power resting pose yet. The existing tests assert only the intermediate `rest` value, not the pose | `node -e "import('./src/model/combatPose.js').then(m=>console.log(m.resolveCombatPose({hp:1},'cast',[])))"`: today prints `idle`; built when it prints a Power resting pose |
+| P9 | §12 "Approved poker equipment cards (#784)" and the item and combat presentation paragraphs after it | **shipped** | `equipmentCardModel`; `item-cards-preview.html` and `weapon-cards-preview.html` at the repo root | `node --test tests/equipmentCard.test.mjs`; `ls item-cards-preview.html weapon-cards-preview.html` |
+
+**Counts, stage 3: 2 content rows rewritten. §12: 10 items, 8 shipped (2 with a named ⚠
+boundary) and 2 to-build (P6, added by D4; P8b).**
+
+## Owner rulings recorded (2026-09-24, delegated)
+
+| Ruling | SPEC effect | Where |
+|---|---|---|
+| **D2** Build Guilt's in-hand turn-end hook and Warrior's Vow's stance choice | **No SPEC change.** The §5.2 text ("Guilt … at turn end in hand: lose 1 HP"; "Warrior's Vow … Enter a Stance of your choice") is the contract and will be implemented as written. Frostbite stays **CUT** (stage 2, §4.4) | §5.2, unchanged |
+| **D3** The COMBAT-EQUIPMENT-RULES prototype gate and the 36 → 50 card pool expansion are post-1.0 | Scope note added under "Combat and equipment revision: implementation contract". The linked contract itself is unchanged | SPEC header note |
+| **D4** Two elites per seat for 1.0 | Target added to §12.4 beside the 20/10 roster target; verdict P6, **to-build** | §12.4 |
+
+No contractual formula, ordering or state shape changed in this stage.
+
+## Boundary of stage 3
+
+Checked on one Linux runner against source and the node suite. **Nothing rendered and nothing
+played.** The §12.3 and §12.5 presentation claims are verified as code plus wireframe and model
+tests, not as pixels. Not checked: that a Rogue deck is exactly 11 cards in a live browser run
+(the number is read from `balance.startingDeckSize` and the loadout tests); Guilt and Warrior's
+Vow behaviour (D2 is to-build and outside a spec PR); the balance of any row.

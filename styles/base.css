@@ -19,7 +19,7 @@
      docs/proposal-45-atmospheric-map-structure.md (R2). */
   --map-structure: #7a6b54;
   --parchment: #e8dcc0;
-  --muted: #7a6f5a;
+  --muted: #8e826a;
   --gold: #c9a227;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   --blood: #8a1a1a;
@@ -35,7 +35,7 @@
   --rot: #b5541c;
   --frost: #7fa8c9;
   --grace: #9fc3e8;
-  --ember: #c9502e;
+  --ember: #e46a44;
   --green: #7fd97f;
   /* THE KEYWORD TINT CARD TEXT USES, and it is a token because it is a fact
      about a WORD, not about a container. It had no token, so the one palette

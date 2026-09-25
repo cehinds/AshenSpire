@@ -21,8 +21,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  group: tests-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -64,6 +64,9 @@ jobs:
 
       - name: The mobile art twin tree mirrors assets/ and fits its budget
         run: node tools/mobile-art.mjs --check
+
+      - name: Every asset directory has a CREDITS row and README Legal agrees with the AI disclosure
+        run: node tools/credits-check.mjs
 
       - name: Rebuild the standalone (the bundler refuses a bundle that does not parse)
         run: node tools/launch.mjs --build-only

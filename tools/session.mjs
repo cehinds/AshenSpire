@@ -32,7 +32,7 @@ import {
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
-import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult } from '../src/model/seats.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
@@ -56,6 +56,7 @@ import {
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
+import { staminaAtCombatStart } from '../src/framework/resources.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
 // story before driving the real LAN intent/event/render path. Keep that setup
@@ -623,8 +624,10 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
-      maxStamina: m.run.maxStamina, stamina: m.run.stamina,
+      maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      // The level every stat row's `perLevel` reads (ruleset 7).
+      level: m.run.level?.level,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
@@ -642,7 +645,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
       // upgraded armour's threshold bought at the Shrine did nothing here
       // while its weight still priced the seat's dodge (Codex, #528).
-      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot }).value,
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot, level: m.run.level }).value,
     };
   }
 
@@ -660,12 +663,15 @@ export function createSession({ registries, seedString, endless = false, restore
     const loop = loopCount();
     // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; 1 at the
     // seat's own baseline). Headcount is handled by the runner.
-    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * seatTierHpMult(registries, currentSeat(), contentAct());
+    // A boss scales by the tier it is met at instead (balance.bossTiers).
+    const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
+    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       extraHpMult,
+      enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
     // Co-op player entities intentionally share the engine id `player`; the
@@ -786,6 +792,10 @@ export function createSession({ registries, seedString, endless = false, restore
         // the whole of every fight. An empty array is a real answer and a
         // missing field is not; that distinction is the section's whole point.
         performedMoves: Array.isArray(e.performedMoves) ? e.performedMoves.slice() : [],
+        // A boss's tier scale (balance.bossTiers) rides on the entity; the
+        // client's move cards read it through enemyMoveDamage, as solo's do,
+        // so an inactive move shows the damage it will really deal.
+        ...(Number.isFinite(e.damageMult) ? { damageMult: e.damageMult } : {}),
         arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),

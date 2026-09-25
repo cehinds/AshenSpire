@@ -11,6 +11,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { handRulesDefaults } from '../content/handRules.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -269,6 +270,20 @@ export function computeTokenBindings(effects) {
     }
   });
   return out;
+}
+
+/**
+ * cardTokenEffects(card) → the effect list a card's text template binds to:
+ * its play `effects`, then its `onTurnEndInHand` hook (Guilt's HP loss). The
+ * hook is appended AFTER the play effects so a play effect's token never
+ * changes; a hook op sharing a base binds as `{base.2}`. Shared by the
+ * validator and the static token projection (model/playingCard.js), so the
+ * number a card shows is the number its hook fires.
+ */
+export function cardTokenEffects(card) {
+  const effects = card && Array.isArray(card.effects) ? card.effects : [];
+  const hook = card && Array.isArray(card.onTurnEndInHand) ? card.onTurnEndInHand : [];
+  return hook.length ? [...effects, ...hook] : effects;
 }
 
 export function extractTemplateTokens(template) {
@@ -615,6 +630,23 @@ function collectContentProblems(bundle, errors = []) {
     else {
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
       if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
+    }
+    // RULESET 7 RETIRED THREE HOMES FOR ONE NUMBER EACH. A copy returning to
+    // any of them is refused by name, as `playerPerConstitution` is above:
+    // the hand size, the rating formula and its multiplier, and the hand
+    // rules' counts are rows of derivedStatRules now.
+    if (b.balance.handMax !== undefined) err('balance.handMax', 'was retired in derived-stat ruleset 7: the hand size is derivedStatRules.rules.handSize, and a copy here is a second home for one number');
+    if (b.balance.combatRatings !== undefined && b.balance.combatRatings !== null && typeof b.balance.combatRatings === 'object') {
+      if (b.balance.combatRatings.multiplier !== undefined) err('balance.combatRatings.multiplier', 'was retired in derived-stat ruleset 7: each rating is a derivedStatRules row whose weights are the whole formula');
+    }
+    // The hand's shipped behaviour options (content/handRules.js) are the
+    // other place a count could creep back; a bundle may carry its own too.
+    // #1294's per-class opening hand (`startingByClass`) is the openingHand
+    // row's per-class form (`byClass`) since ruleset 7.
+    const retiredHand = { starting: 'openingHand', startingByClass: 'openingHand.byClass', turn: 'draw', capacity: 'handSize' };
+    for (const [group, row] of Object.entries(retiredHand)) {
+      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
+      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
@@ -1239,6 +1271,14 @@ function collectContentProblems(bundle, errors = []) {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
+  // A row's per-class form names shipped classes only: a misspelt class id
+  // would silently open that class on the shared row.
+  const classIds = new Set((b.classes || []).map((row) => row.id));
+  for (const [id, row] of Object.entries(b.derivedStatRules?.rules || {})) {
+    for (const classId of Object.keys((row && typeof row.byClass === 'object' && row.byClass) || {})) {
+      if (!classIds.has(classId)) err(`derivedStatRules.rules.${id}.byClass.${classId}`, `unknown class '${classId}'`);
+    }
+  }
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.
@@ -1396,6 +1436,24 @@ function collectContentProblems(bundle, errors = []) {
         for (const key of Object.keys(table)) {
           const tier = Number(key);
           if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
+      }
+      // balance.bossTiers (§13.3): one { hp, damage } per tier, both positive.
+      const bossTable = b.balance.bossTiers;
+      if (!isPlainObject(bossTable)) {
+        err('balance.bossTiers', 'must be an object keyed by tier (1..actsPerCycle), each { hp, damage } with positive multipliers');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const row = bossTable[tier];
+          if (!isPlainObject(row)) { err(`balance.bossTiers.${tier}`, `tier ${tier} needs a { hp, damage } row`); continue; }
+          for (const field of ['hp', 'damage']) {
+            if (typeof row[field] !== 'number' || !(row[field] > 0)) err(`balance.bossTiers.${tier}.${field}`, `needs a positive multiplier (got ${JSON.stringify(row[field])})`);
+          }
+          for (const field of Object.keys(row)) if (field !== 'hp' && field !== 'damage') err(`balance.bossTiers.${tier}.${field}`, 'unknown field (a tier row is { hp, damage })');
+        }
+        for (const key of Object.keys(bossTable)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.bossTiers.${key}`, `tier keys must be 1..${cycle}`);
         }
       }
     }
@@ -2606,12 +2664,13 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
-  checkTemplate(card.textTemplate, card.effects, `${path}.textTemplate`, err);
+  checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;
     if (typeof upTemplate === 'string' && Array.isArray(upEffects)) {
-      checkTemplate(upTemplate, upEffects, `${path}.upgrade.textTemplate`, err);
+      // The upgrade cannot override the in-hand hook, so it inherits the base's.
+      checkTemplate(upTemplate, cardTokenEffects({ effects: upEffects, onTurnEndInHand: card.onTurnEndInHand }), `${path}.upgrade.textTemplate`, err);
     }
   }
 }

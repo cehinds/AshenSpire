@@ -11,7 +11,9 @@ export const mechanics = {
   },
   "stamina": {
     "idleRecoveryPerTurn": 1,
-    "refundErasesSpend": false
+    "refundErasesSpend": false,
+    "combatStartRefill": "full",
+    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
   },
   "weight": {
     "capacityBase": 0,
@@ -38,7 +40,7 @@ export const mechanics = {
         "temporaryGuardModifier": 1,
         "extraEligibleDexterityCards": 0,
         "extraPhysicalAttacks": 0,
-        "dodgeStaminaCost": 2,
+        "dodgeStaminaCost": 1,
         "dodgeActionCost": 1
       },
       {
@@ -49,8 +51,9 @@ export const mechanics = {
         "temporaryGuardModifier": 0,
         "extraEligibleDexterityCards": 0,
         "extraPhysicalAttacks": 1,
-        "dodgeStaminaCost": 3,
-        "dodgeActionCost": 2
+        "dodgeStaminaCost": 2,
+        "dodgeActionCost": 1,
+        "dodgeCostNote": "Plan A3, 2026-09-24: Medium 2 Stamina / 1 Action -> 1 / 1, Heavy 3 / 2 -> 2 / 1. Under the derived-stat rows of #1273 the class presets open on 1 Stamina (Starseer) or 2 (the rest), so Heavy's 3 was more than any preset's whole pool and Medium's 2 more than the Starseer's. Now Light and Medium fit every preset's pool and Heavy fits every pool but the Starseer's; the three still rank Light 1/0, Medium 1/1, Heavy 2/1, with Heavy's -3 evasion and 0 guard as the rest of its cost. Measured with node tools/runsim.mjs 240 --seeded-seats: putting Medium back to 2 Stamina costs the Reaver (the one class the bot plays Medium) 3 wins of 240; the bot never plays Heavy, so the Heavy row is not measured there."
       }
     ],
     "itemWeightScaleNote": "Owner's call, 2026-09-24: rescale item weights, not capacity, after the lean attribute rebase (2026-09-20) cut capacity (2*CON + STR) to 3-12 while authored weights stayed on the old scale, so every creatable start was Heavy. Every piece weight (an armament's authored weight, an armour's poise threshold) is multiplied by this and kept to a tenth. Chosen with tools/weightclass-census.mjs over 0.15-0.25: at 0.2 the class-preset starts are 84 Light and 28 Medium with none Heavy, and every class still reaches Heavy with its heaviest kit (Reaver 94%, Rogue and Herald 116%, Starseer 193%). 0.18 is the lowest scale at which the Reaver reaches Heavy; above 0.22 preset starts turn Heavy. The min-capacity allocation (Constitution and Strength at their minimum) has 14 Heavy starts of 76 at 0.2; no scale both keeps those off Heavy and lets the Reaver reach Heavy.",
@@ -59,7 +62,14 @@ export const mechanics = {
   "dodgeRoll": {
     "die": 20,
     "baseDifficulty": 10,
-    "temporaryGuardBase": 3
+    "dexterityCentre": 10,
+    "dexterityCentreByMode": {
+      "lean": 3,
+      "assign": 3
+    },
+    "dexterityPerModifier": 2,
+    "temporaryGuardBase": 3,
+    "retuneNote": "Plan A3, 2026-09-24. The Dexterity term was floor((DEX - 10) / 2), a d20-scale habit: on the lean scale (1 at baseline, 4 at the creation ceiling) it read -3 to -5 for every creatable character (-4 or -5 for every class preset), so a preset's guard 3 + term + class guard was 2 at best when Light, 0 when Medium and negative when Heavy, and a landed dodge usually granted nothing. The term is now floor((DEX - dexterityCentre) / dexterityPerModifier) = floor((DEX - 3) / 2) for a run made on the lean scale (dexterityCentreByMode.lean): 0 at a class's primary 3, -1 at the baseline 1, +1 at 5, +2 at 7. With the Dexterity minimum of 1 a landed dodge now guards at least 2 (Heavy at DEX 1), so no floor row is needed. Measured with node tools/runsim.mjs 240 --seeded-seats --deep (class presets): dodges landed 35-44% of plays for 0.6 (Reaver) to 2.0 (Rogue) guard each before, 57-65% for 4.4-6.0 after; wins went Reaver 105 -> 112, Starseer 103 -> 104, Rogue 135 -> 141, Herald 135 -> 136 of 240 with the Medium price row, spread 13.3 -> 15.4 points. A run made under an older creation mode (tuned2, tuned, standard, pointbuy, an admitted in-flight save) keeps the d20-scale centre dexterityCentre 10, so an update never moves its dodge. The assign creation mode (#1294) opens on the same all-1s baseline, so it shares the lean centre 3 (dexterityCentreByMode.assign): DEX 1 reads -1 and DEX 3 reads 0, as on lean."
   },
   "unarmedPackage": {
     "strikeCardId": "framework.unarmedStrike",

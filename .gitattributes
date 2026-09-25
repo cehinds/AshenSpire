@@ -6,7 +6,7 @@ build/AshenSpire.html filter=lfs diff=lfs merge=lfs -text
 dist/AshenSpire.html filter=lfs diff=lfs merge=lfs -text
 AshenSpire.html filter=lfs diff=lfs merge=lfs -text
 # The mobile single file (tools/bundle.mjs --mobile): the same art shrunk under
-# tools/mobileart-policy.mjs, held under 50 MB. Same three homes, same rule.
+# tools/mobileart-policy.mjs, held under 30 MB. Same three homes, same rule.
 build/AshenSpire-mobile.html filter=lfs diff=lfs merge=lfs -text
 dist/AshenSpire-mobile.html filter=lfs diff=lfs merge=lfs -text
 AshenSpire-mobile.html filter=lfs diff=lfs merge=lfs -text

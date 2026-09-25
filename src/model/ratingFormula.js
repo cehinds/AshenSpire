@@ -1,36 +1,43 @@
+import { statRowValue } from './derivedStats.js';
+
 export const ratingIds = Object.freeze(['ar', 'dr', 'pr', 'poise', 'ward']);
 export const ratingAttributeIds = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
-const rule = (weights, base = 0) => ({ base, ...Object.fromEntries(ratingAttributeIds.map(id => [id, weights[id] || 0])) });
 
-export const defaultRatingFormula = Object.freeze({
-  multiplier: 1,
-  ratings: Object.freeze({
-    ar: Object.freeze(rule({ strength: 0.5 })),
-    dr: Object.freeze(rule({ dexterity: 0.5 })),
-    pr: Object.freeze(rule({ wisdom: 0.5, intelligence: 0.5 })),
-    poise: Object.freeze(rule({ constitution: 1, strength: 0.5 }, 1)),
-    ward: Object.freeze(rule({ wisdom: 1, intelligence: 0.5 }, 1)),
-  }),
-});
+// THE RATING FORMULA IS A STAT ROW (ruleset 7, owner 2026-09-24). AR, DR, PR,
+// Poise and Ward are rows of the derived-stat table, priced by the one row
+// formula (`statRowValue`), and `config.ratings` holds the rows THIS run reads
+// (model/statRows.js ratingsConfigFor). The frozen ruleset-6 formula and its
+// global multiplier live on only as the legacy adapter there, so a fight saved
+// under them — whose rules still say `multiplier` — is priced as it was.
 
-export function attributeRatingReceipt(config, attributes, id) {
+/**
+ * attributeRatingReceipt(config, attributes, id, level) → the attribute part of
+ * one rating: `{ base, weights, terms, weighted, attribute, value, … }`.
+ */
+export function attributeRatingReceipt(config, attributes, id, level = undefined) {
   const rule = config?.ratings?.[id];
   if (!rule) throw new Error(`Missing ${id} rating formula`);
-  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    attributes?.[attributeId] || 0,
-  ]));
-  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    rule[attributeId],
-  ]));
-  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    Math.floor(values[attributeId] * weights[attributeId] + 1e-9),
-  ]));
-  const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
-  const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
-  return { id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute, value: rule.base + attribute };
+  // A saved fight from before ruleset 7 states one multiplier for every row.
+  const legacyMultiplier = Number.isFinite(config.multiplier) && config.multiplier !== 1 && rule.multiplier === undefined;
+  const row = legacyMultiplier ? { ...rule, multiplier: config.multiplier } : rule;
+  const receipt = statRowValue(row, { attributes, level, statId: id, lenientAttributes: true });
+  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, Number(attributes?.[attributeId]) || 0]));
+  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, row[attributeId] || 0]));
+  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, receipt.terms[attributeId] || 0]));
+  return {
+    id,
+    base: receipt.base,
+    multiplier: Number.isFinite(row.multiplier) ? row.multiplier : 1,
+    values,
+    weights,
+    terms,
+    weighted: receipt.points,
+    levelBonus: receipt.levelBonus,
+    attribute: receipt.value - receipt.base,
+    min: receipt.min,
+    max: receipt.max,
+    value: receipt.value,
+  };
 }
 
 // ---- WEAPON SCALING GRADES (SPEC §13.4o) ------------------------------------
@@ -97,37 +104,51 @@ export function pieceIsGraded(piece, id, scaling) {
 }
 
 /**
- * gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) → the
- * attributeRatingReceipt shape, each term priced
+ * gradedAttributeRatingReceipt(config, attributes, id, grades, scaling, level)
+ * → the attributeRatingReceipt shape, priced by the SAME stat row
+ * (`statRowValue`, SPEC §13.4o on the ruleset-7 row model) with each graded
+ * attribute's term
  *   floor(w × min(v, anchor) + c × max(0, v − anchor))
- * with `w` the rule's weight and `c` the grade's coefficient; an ungraded
- * attribute is the flat term floor(w × v). Carries `grades`, `anchor` and `coefficients`.
+ * — `w` the row's weight (0 when the row does not weigh it), `c` the grade's
+ * coefficient; an ungraded attribute is the row's own flat term. The row's
+ * base, multiplier, level bonus and bounds apply exactly as for the flat
+ * rating. Carries `grades`, `anchor` and `coefficients`.
  */
-export function gradedAttributeRatingReceipt(config, attributes, id, grades, scaling) {
+export function gradedAttributeRatingReceipt(config, attributes, id, grades, scaling, level = undefined) {
   const rule = config?.ratings?.[id];
   if (!rule) throw new Error(`Missing ${id} rating formula`);
+  const legacyMultiplier = Number.isFinite(config.multiplier) && config.multiplier !== 1 && rule.multiplier === undefined;
+  const row = legacyMultiplier ? { ...rule, multiplier: config.multiplier } : rule;
   const anchor = scaling.anchor;
-  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, attributes?.[attributeId] || 0]));
-  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, rule[attributeId]]));
+  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, Number.isFinite(row[attributeId]) ? row[attributeId] : 0]));
   const coefficients = Object.fromEntries(ratingAttributeIds.map((attributeId) => {
     const grade = grades?.[attributeId];
     if (grade == null) return [attributeId, weights[attributeId]];
     if (!Number.isFinite(scaling.grades[grade])) throw new Error(`weapon scaling grade '${grade}' is not in the run's grade table`);
-    return [attributeId, scaling.grades[grade]];
+    // A grade never pays less than the row's own weight (SPEC §13.4o): the
+    // stat rows moved some weights above the lowest grades (AR STR 0.75 vs D 0.5).
+    return [attributeId, Math.max(scaling.grades[grade], weights[attributeId])];
   }));
-  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => {
-    const v = values[attributeId];
-    // An ungraded attribute is the flat term exactly; a graded one is floored
-    // ONCE over the whole sum, so the half the anchor's own share leaves over
-    // is never thrown away (a graded weapon never reads below the flat one).
-    if (grades?.[attributeId] == null) return [attributeId, Math.floor(v * weights[attributeId] + 1e-9)];
-    return [attributeId, Math.floor(Math.min(v, anchor) * weights[attributeId] + Math.max(0, v - anchor) * coefficients[attributeId] + 1e-9)];
-  }));
-  const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
-  const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
+  const graded = Object.fromEntries(Object.keys(grades || {}).filter((a) => ratingAttributeIds.includes(a)).map((a) => [a, coefficients[a]]));
+  const receipt = statRowValue(row, { attributes, level, statId: id, lenientAttributes: true, graded: { anchor, coefficients: graded } });
+  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, Number(attributes?.[attributeId]) || 0]));
+  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, receipt.terms[attributeId] || 0]));
   return {
-    id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute,
-    value: rule.base + attribute, grades: { ...grades }, anchor, coefficients,
+    id,
+    base: receipt.base,
+    multiplier: Number.isFinite(row.multiplier) ? row.multiplier : 1,
+    values,
+    weights,
+    terms,
+    weighted: receipt.points,
+    levelBonus: receipt.levelBonus,
+    attribute: receipt.value - receipt.base,
+    min: receipt.min,
+    max: receipt.max,
+    value: receipt.value,
+    grades: { ...grades },
+    anchor,
+    coefficients,
   };
 }
 
@@ -140,15 +161,22 @@ export function equipmentRatingBase(piece, id, profile = null) {
   return 0;
 }
 
-export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId, scaling = null) {
+/**
+ * effectiveEquipmentRating(config, attributes, piece, profile, id, { level, scaling })
+ * — `level` is the character level the rating row's per-level term reads;
+ * `scaling` the run's weapon-scaling snapshot (SPEC §13.4o). A bare number in
+ * place of the options is read as the level.
+ */
+export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId, options = {}) {
+  const { level = undefined, scaling = null } = (typeof options === 'number' || options == null) ? { level: options ?? undefined } : options;
   if (!ratingIds.includes(id)) throw new Error(`Unknown equipment rating '${id}'`);
   // A graded piece's attack rating reads its grades (SPEC §13.4o) — but only
   // under a scaling table the caller hands in (the run's own snapshot). No
   // table, or no grades on the piece, is the flat receipt, byte for byte.
   const graded = pieceIsGraded(piece, id, scaling);
   const attribute = graded
-    ? gradedAttributeRatingReceipt(config, attributes, id, pieceGrades(piece, scaling), scaling)
-    : attributeRatingReceipt(config, attributes, id);
+    ? gradedAttributeRatingReceipt(config, attributes, id, pieceGrades(piece, scaling), scaling, level)
+    : attributeRatingReceipt(config, attributes, id, level);
   // THE ITEM'S RATING IS ITS OWN NUMBER, NOT A PLUS ON TOP OF IT (#1242). A
   // rating the item has a column for was written onto the piece by
   // `applyItemRatingConfig`, so `equipmentRatingBase` already reads it; one it

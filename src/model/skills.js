@@ -221,6 +221,21 @@ export function reconcileSkillUpgrades(registries, run) {
 }
 
 /**
+ * deckInstanceId(run, prefix, cardId) → `${prefix}${n}_${cardId}` with `n` the
+ * deck's length, or the next free `n` when a card that shrank the deck left
+ * that id taken (a card removed, then the same card taken again): a deck's
+ * instance ids are unique.
+ */
+export function deckInstanceId(run, prefix, cardId) {
+  const deck = Array.isArray(run && run.deck) ? run.deck : [];
+  const taken = new Set(deck.map((card) => card && card.instanceId));
+  let n = deck.length;
+  let id = `${prefix}${n}_${cardId}`;
+  while (taken.has(id)) id = `${prefix}${++n}_${cardId}`;
+  return id;
+}
+
+/**
  * joinDeck(registries, run, ...cards) → reconcileSkillUpgrades' receipt. THE
  * ONE DOOR A CARD JOINS THE RUN'S DECK BY (a reward row, a track's draft, a
  * chest, an event's addCardToDeck, a shop purchase, a co-op grant): the
