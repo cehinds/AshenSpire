@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: the interface-component check is green again and runs with the tests",
     "detail": "Nothing you see changes. The check that the two component catalogs name the same pieces now compares each family on its own, so a piece moved from one list to the other on one side is caught, and an emptied list says which one it was. Its two red rungs were out of date rather than the game: they still expected the relic rail to hang below the HUD, where it now sits inside it beneath Vitals as the spec says, and they did not know that authored dungeons title their own map or that the Armoury reads a weapon's icon through its one shared lookup. The rail rung now also goes red if any later rule hangs the rail again, or if a HUD layout drops its Vitals row. The test suite now runs the check's verdict, and its self-test runs with the other tools' self-tests.",
-    "build": "0.7.1.520",
+    "build": "0.7.1.521",
     "pullRequest": 1316,
     "url": "https://github.com/cehinds/AshenSpire/pull/1316"
   },
