@@ -42,15 +42,14 @@ console.log('framework cutover gate\n');
 // baseline the candidate must not disturb) run first — real invocations, not
 // assumptions.
 const dataInSync = run('generated framework data in sync', ['tools/framework-data-build.mjs', '--check']);
-const frameworkSuite = run('framework suite (tests/framework.test.mjs)', ['tests/framework.test.mjs']);
-const legacySuite = run('legacy suite untouched (tests/run-node.mjs)', ['tests/run-node.mjs']);
+const suite = run('node test suite (node --test "tests/*.test.mjs")', ['--test', 'tests/*.test.mjs']);
 
 const { contentBundle } = await import('../src/content/index.js');
 const { buildReplacementCandidate } = await import('../src/framework/candidate.js');
 
 const result = buildReplacementCandidate(contentBundle, {
   assetExists: (rel) => existsSync(resolve(root, rel)),
-  regressionSuite: frameworkSuite && legacySuite,
+  regressionSuite: suite,
 });
 
 console.log('');
@@ -59,7 +58,7 @@ for (const gate of result.gates) {
 }
 
 const machineCheckable = result.gates.filter((g) => !['approved new-mechanics acceptance', 'proof that legacy runtime authority is unreachable'].includes(g.name));
-const machineOk = dataInSync && frameworkSuite && legacySuite && machineCheckable.every((g) => g.status === 'PASS');
+const machineOk = dataInSync && suite && machineCheckable.every((g) => g.status === 'PASS');
 
 console.log('');
 if (result.status === 'SUCCESS') {

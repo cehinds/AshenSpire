@@ -34,6 +34,21 @@ import { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } from '../src/content/p
 import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../src/content/poseEffectArt.js';
 import { prologueArtwork } from '../src/ui/assets.js';
+import { BOARD_STATES } from '../src/ui/models/QuestBoardModel.js';
+import { COMBAT_LAYOUT } from '../src/ui/models/CombatFormationModel.js';
+import { CONTROL_EXCEPTIONS } from '../src/ui/models/ControlAppearance.js';
+import { GENERIC_REVIEW_WORDS } from '../src/ui/models/ConfirmationReviewModel.js';
+import { IDENTITY_PARTS } from '../src/ui/models/IdentityModel.js';
+import { OWNERSHIP_GATES } from '../src/model/loadout.js';
+import { PRESENT_STATES } from '../src/model/unlocks.js';
+import { TOOLTIP_ARROW_EDGES } from '../src/ui/models/TooltipPlacementModel.js';
+import { TOOLTIP_INPUT_RULES } from '../src/framework/presentation/tooltip.js';
+
+// Closed vocabularies whose only readers were the retired unit tests (check 6).
+const CLOSED_SETS = {
+  BOARD_STATES, COMBAT_LAYOUT, CONTROL_EXCEPTIONS, GENERIC_REVIEW_WORDS, IDENTITY_PARTS,
+  OWNERSHIP_GATES, PRESENT_STATES, TOOLTIP_ARROW_EDGES, TOOLTIP_INPUT_RULES,
+};
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const onDisk = (path) => existsSync(resolve(ROOT, path));
@@ -241,6 +256,14 @@ test('shipped content is valid, current, reachable, and every path it names exis
     if (!onDisk(POSE_DIR + row.f)) fail(`pose ${c}/${pose}/${tint}: ${row.f} missing`);
     if (!(row.g > row.y)) fail(`pose ${c}/${pose}/${tint}: floor ${row.g} is not below the crop top ${row.y}`);
     if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) fail(`pose ${c}/${pose}/${tint}: crop runs off the canvas`);
+  }
+
+  // 6. Each closed vocabulary in CLOSED_SETS is frozen and non-empty, and a
+  //    list names no member twice.
+  for (const [name, set] of Object.entries(CLOSED_SETS)) {
+    const members = Array.isArray(set) ? set : Object.keys(set ?? {});
+    if (!Object.isFrozen(set) || !members.length) fail(`${name} is not a frozen, non-empty closed set`);
+    if (new Set(members).size !== members.length) fail(`${name} names a member twice`);
   }
 
   // 2. The tools' verdicts.
