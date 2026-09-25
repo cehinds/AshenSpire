@@ -21,6 +21,7 @@ import {
   validateContent,
   extractTemplateTokens,
   computeTokenBindings,
+  cardTokenEffects,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
@@ -1422,9 +1423,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           assert(bound.has(tok), `${label}: token {${tok}} unbound`);
         }
       };
-      check(card.textTemplate, card.effects, card.id);
+      // A card's template binds its play effects, then its in-hand hook.
+      check(card.textTemplate, cardTokenEffects(card), card.id);
       if (card.upgrade) {
-        check(card.upgrade.textTemplate ?? card.textTemplate, card.upgrade.effects ?? card.effects, `${card.id}+`);
+        check(card.upgrade.textTemplate ?? card.textTemplate, cardTokenEffects({ effects: card.upgrade.effects ?? card.effects, onTurnEndInHand: card.onTurnEndInHand }), `${card.id}+`);
       }
     }
     const c = makeCombat({ deck: Array(5).fill('strike') });

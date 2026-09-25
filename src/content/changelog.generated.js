@@ -4,13 +4,103 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1303",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
-    "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305, #1307 and #1310, which landed without entries, get their receipts below.",
-    "build": "0.7.1.491",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: three changes that landed without a changelog entry now have one",
+    "detail": "Nothing you see changes. #1305, #1307 and #1310 were merged straight to the development line without an entry here; their receipts are written after the fact under 2026-09-24, each stamped at the first build that contains it.",
+    "build": "0.7.1.498",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1282",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the design spec matches the shipped game",
+    "detail": "Nothing you play changes. The design spec now counts the Rogue's 40 cards, names Goreblood as it ships, and says item by item what from its polish list is shipped and what is still to build.",
+    "build": "0.7.1.497",
+    "pullRequest": 1282,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1282"
+  },
+  {
+    "id": "pr-1286",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Guilt costs its HP at the end of your turn, in co-op too",
+    "detail": "Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.",
+    "build": "0.7.1.497",
+    "pullRequest": 1286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1286"
+  },
+  {
+    "id": "pr-1291",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Text is easier to read in the colour-blind-safe and dark palettes",
+    "detail": "Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.",
+    "build": "0.7.1.497",
+    "pullRequest": 1291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1291"
+  },
+  {
+    "id": "pr-1288",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Reading a card no longer hides behind other panels",
+    "detail": "Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.",
+    "build": "0.7.1.497",
+    "pullRequest": 1288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1288"
+  },
+  {
+    "id": "pr-1289",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The map re-centres when your screen changes size",
+    "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
+    "build": "0.7.1.497",
+    "pullRequest": 1289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1289"
+  },
+  {
+    "id": "pr-1278",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the combat card hotkeys are tested",
+    "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
+    "build": "0.7.1.497",
+    "pullRequest": 1278,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1278"
+  },
+  {
+    "id": "pr-1279",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
+    "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
+    "build": "0.7.1.497",
+    "pullRequest": 1279,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1297",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the two component catalogs are checked against each other",
+    "detail": "Nothing you play changes. The interface-component check now fails when the written component catalog and the interactive one disagree about which components exist, the Armoury's asset family included, so neither can drift out of date.",
+    "build": "0.7.1.493",
+    "pullRequest": 1297,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1297"
+  },
+  {
+    "id": "pr-1283",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Developer notes that had gone out of date now point at where the fact lives",
+    "detail": "Nothing you play changes. The developer guide no longer quotes a hand-counted test total but gives the command that lists the tests; its list of known gaps drops Frostbite, which was cut rather than postponed, and marks the Goreblood gap resolved, since Goreblood freezes only Poise and its card already says so. The versioning notes stop quoting an old release number and name the file that holds the current one, the licence names AshenSpire instead of the project's old name, and the finishing checklist names the Guilt and Warrior's Vow gaps instead of numbering them. A new test fails if any of the old wording comes back.",
+    "build": "0.7.1.492",
+    "pullRequest": 1283,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1283"
   },
   {
     "id": "pr-1276",
