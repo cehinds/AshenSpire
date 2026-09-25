@@ -154,9 +154,13 @@ function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING
     .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      // A rating row's Max is where its points stop paying, as for every
+      // other bounded fact (Codex, #1321).
+      const cap = Number.isFinite(rule.max) ? rule.max : null;
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}`,
-        summary: `${label} weight ${rule[attributeId]}`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
+        summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
+        cap,
       };
     });
 }
@@ -255,18 +259,25 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // cycle is the fewest points after which every floor lands exactly;
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
-        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
-        // The opening hand's cap is part of its fact (#1294: a Starseer at
-        // base 5 has one card of room before the cap of 6).
-        const cap = id === 'openingHand' && Number.isFinite(row?.max) ? row.max : null;
+        // A ROW'S CAP IS PART OF ITS FACT (#1294: a Starseer at base 5 has one
+        // card of room before the cap of 6). Since ruleset 7 every row may
+        // carry a Max, so every bounded fact says where its points stop paying
+        // (Codex, #1296) — a weight with no exact cycle included (Codex,
+        // #1321): the run's own row, or the table's when there is none.
+        // A run saved under ruleset 1–6 states its bound as the retired
+        // `cap`, which prices exactly as a Max (Codex, #1321).
+        const source = row || rule;
+        const bound = Number.isFinite(source.max) ? source.max : source.cap;
+        const cap = Number.isFinite(bound) ? bound : null;
+        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1, cap };
         return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
     const scaling = ratingFacts.map(({ line }) => line);
-    const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
-      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
-      : `${label} scales with ${def.label}`));
+    const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
+      : `${label} scales with ${def.label}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`));
     // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
     // flavor text instead of useful information"). The flavour is still the
     // fold's opening sentence — it is colour, and colour is not what a player
@@ -281,8 +292,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
-    const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
-    const stated = [...faceFacts, ...scalingFacts];
+    // A row that only "scales" (no exact cycle) still says its cap on the face.
+    const scalingCaps = feedFacts
+      .filter(({ perTier, cap }) => !Number.isFinite(perTier) && cap !== null && cap !== undefined)
+      .map(({ label, cap }) => `${label} scales (max ${cap})`);
+    // A capped rating always reaches the face: its points stop paying at the
+    // cap, which the other feeds never say (Codex, #1321).
+    const scalingFacts = (faceFacts.length ? ratingFacts.filter(({ cap }) => cap !== null) : ratingFacts).map(({ summary }) => summary);
+    const stated = [...faceFacts, ...scalingCaps, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
     return {

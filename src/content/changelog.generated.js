@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Synced settings keep which values you chose, and a mistyped sync location is refused",
     "detail": "A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).",
-    "build": "0.7.1.528",
+    "build": "0.7.1.540",
     "pullRequest": 1322,
     "url": "https://github.com/cehinds/AshenSpire/pull/1322"
+  },
+  {
+    "id": "pr-1321",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Stat settings say where their limits stop a number",
+    "detail": "When a stat's Min or Max changes it, the worked examples in Advanced → Stats now say so, and each attribute card says where its points stop paying. Mana's Max can no longer be set below 1. A settings file from before the one-row stats that changed a single field of a combat rating keeps that rating's other old weights instead of picking up the new ones beside it (a profile a development build has already converted since #1296 keeps the conversion it got). A saved fight with an impossible character level is set aside instead of resumed wrong.",
+    "build": "0.7.1.538",
+    "pullRequest": 1321,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1321"
   },
   {
     "id": "pr-1325",

@@ -360,10 +360,10 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
   run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3, 'gameConfig.handRules.turn.pointsPerCard': 4 } };
   const lines = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
     .find((card) => card.id === 'intelligence').reveal.lines;
-  assert(lines.includes('Opening hand +1 every 3 points'), lines.join(' | '));
+  assert(lines.includes(`Opening hand +1 every 3 points (at most ${LEGACY_HAND_GROUPS.starting.maximum})`), lines.join(' | '));
   // Its solo turn draw is its tuned `turn` group, not the snapshot's co-op draw row.
-  assert(lines.includes('Draw / turn +1 every 4 points'), lines.join(' | '));
-  assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points`), lines.join(' | '));
+  assert(lines.includes(`Draw / turn +1 every 4 points (at most ${LEGACY_HAND_GROUPS.turn.maximum})`), lines.join(' | '));
+  assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points (at most ${LEGACY_HAND_GROUPS.capacity.maximum})`), lines.join(' | '));
   assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
 });
 
@@ -460,4 +460,81 @@ test('a saved fight with an unpriceable hand or rating row, or rating rules with
   assert(combatSnapshotProblems({ ...snapshot, ratingsRules: withoutRows }).some((line) => /missing rating rows/.test(line)));
   const badAr = { ...snapshot.ratingsRules, ratings: { ...ratings, ar: { ...ratings.ar, rounding: 'bogus' } } };
   assert(combatSnapshotProblems({ ...snapshot, ratingsRules: badAr }).some((line) => /Combat ratings: ar/.test(line)));
+});
+
+// Codex, #1296 (second round): a sparse legacy rating edit keeps its formula,
+// a saved level is a real level, Mana keeps a ceiling of at least 1, and a
+// bound that moves a number is said wherever the number is explained.
+test('legacy rating rows convert whole when tuned; bounds are said; saved levels and Mana ceilings are held', async () => {
+  // Only Poise CON stated: the row keeps its legacy WIS 0.2 / INT 0.1, not ruleset 7's 0.3 / 0.2.
+  const sparse = migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.constitution': 2 });
+  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.constitution'], 2);
+  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.wisdom'], LEGACY_RATING_FORMULA.ratings.poise.wisdom);
+  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.intelligence'], LEGACY_RATING_FORMULA.ratings.poise.intelligence);
+  // ...while a row left entirely at its shipped numbers still pins nothing.
+  assert.deepEqual(Object.keys(migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.constitution': 1 }))
+    .filter((key) => key.startsWith('gameConfig.derivedStatRules.')), []);
+
+  const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const run = createRunState({ seed: 6, classId: 'herald', registries });
+  const saved = serializeCombatSnapshot(createRunCombat({ registries, rng: createRng(6), run, enemyIds: ['wanderingSoldier'] }));
+  for (const characterLevel of [0, -2, 1.5, '3']) {
+    assert(combatSnapshotProblems({ ...saved, characterLevel }).some((line) => /characterLevel/.test(line)), String(characterLevel));
+  }
+  const { characterLevel: _level, ...legacy } = saved;
+  assert(!combatSnapshotProblems(legacy).some((line) => /characterLevel/.test(line)), 'absent stays legal');
+
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  assert.equal(advancedConfigRows(contentBundle).find((row) => row.key === 'gameConfig.derivedStatRules.rules.mana.max').min, 1);
+
+  const { statsTopicPreview } = await import('../src/ui/models/StatsPreviewModel.js');
+  const hp = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.max': 10 }, 'HP', { constitution: 5 });
+  assert.match(hp.examples[0].lines[0].expression, /held to its maximum 10$/);
+  assert.equal(hp.examples[0].lines[0].total, 10);
+  const ar = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.ar.max': 1 }, 'Attack rating (AR)', { strength: 5, dexterity: 5 });
+  const arLine = ar.examples.find((entry) => entry.kind === 'rating').lines[0];
+  assert.match(arLine.expression, /held to its maximum 1/);
+  assert.equal(arLine.total, 1);
+
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const capped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 40 }));
+  const cappedRun = createRunState({ seed: 6, classId: 'reaver', registries: capped });
+  const con = attributeCardModels(capped, cappedRun.attributes, { projection: statProjection(capped, cappedRun) }).find((card) => card.id === 'constitution');
+  assert.match(con.face.summary, /HP per pt \(max 40\)/);
+  // ...and a rating row's Max reaches its fact too (Codex, #1321).
+  const arCapped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.ar.max': 3 }));
+  const arRun = createRunState({ seed: 6, classId: 'reaver', registries: arCapped });
+  const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'strength');
+  assert(str.reveal.lines.some((line) => /^AR: floor\(0\.75 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
+  assert.match(str.face.summary, /AR weight 0\.75 \(max 3\)/, 'the cap reaches the face beside the other feeds');
+  assert.doesNotMatch(con.face.summary, /weight/, 'an uncapped rating stays off a face that has feeds');
+  // A weight with no exact cycle still says its cap (Codex, #1321).
+  const odd = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.strength': 0.3333, 'gameConfig.derivedStatRules.rules.hp.max': 40 }));
+  const oddRun = createRunState({ seed: 6, classId: 'reaver', registries: odd });
+  const oddStr = attributeCardModels(odd, oddRun.attributes, { projection: statProjection(odd, oddRun) }).find((card) => card.id === 'strength');
+  assert(oddStr.reveal.lines.includes('HP scales with Strength (at most 40)'), oddStr.reveal.lines.join(' | '));
+  assert.match(oddStr.face.summary, /HP scales \(max 40\)/);
+});
+
+// A run saved under ruleset 1–6 bounds a row with the retired `cap`; its
+// attribute cards say it as they say a Max (Codex, #1321).
+test("an old run's capped row states its cap on the attribute card", async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const old = { ...contentBundle };
+  const rules = structuredClone(RULESET_6);
+  rules.rules.hp.cap = 35;
+  old.derivedStatRules = { ...rules, presentation: Object.fromEntries(Object.entries(contentBundle.derivedStatRules.presentation).filter(([id]) => rules.rules[id])) };
+  const oldRegistries = createRegistries(old);
+  const run = createRunState({ seed: 11, classId: 'reaver', registries: oldRegistries });
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const restored = structuredClone(run);
+  initializeRunDerivedStats(restored, registries);
+  const projection = statProjection(registries, restored);
+  assert.equal(projection.derived.find((row) => row.id === 'hp').cap, 35, 'the projected row carries the legacy cap');
+  const con = attributeCardModels(registries, restored.attributes, { projection }).find((card) => card.id === 'constitution');
+  assert.match(con.face.summary, /HP per pt \(max 35\)/, con.face.summary);
+  assert(con.reveal.lines.some((line) => /^HP \+4 every 1 point \(at most 35\)$/.test(line)), con.reveal.lines.join(' | '));
 });

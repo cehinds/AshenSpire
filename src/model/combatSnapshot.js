@@ -74,6 +74,10 @@ export function combatSnapshotProblems(snapshot) {
     if (!Number.isInteger(snapshot[key]) || snapshot[key] < 0) problems.push(`${key} must be a non-negative integer`);
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
+  // Absent on a fight saved before ruleset 7 (its rows read no level); a
+  // present one prices every row's level term, so it must be a real level
+  // (Codex, #1296).
+  if (snapshot.characterLevel !== undefined && (!Number.isInteger(snapshot.characterLevel) || snapshot.characterLevel < 1)) problems.push('characterLevel must be a positive integer when present');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
   if (snapshot.ratingsRules !== undefined) {
     problems.push(...combatRatingProblems(snapshot.ratingsRules));
