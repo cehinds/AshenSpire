@@ -264,7 +264,10 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // carry a Max, so every bounded fact says where its points stop paying
         // (Codex, #1296) — a weight with no exact cycle included (Codex,
         // #1321): the run's own row, or the table's when there is none.
-        const bound = row ? row.max : rule.max;
+        // A run saved under ruleset 1–6 states its bound as the retired
+        // `cap`, which prices exactly as a Max (Codex, #1321).
+        const source = row || rule;
+        const bound = Number.isFinite(source.max) ? source.max : source.cap;
         const cap = Number.isFinite(bound) ? bound : null;
         if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1, cap };
         return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };

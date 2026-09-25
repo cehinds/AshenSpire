@@ -517,3 +517,24 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   assert(oddStr.reveal.lines.includes('HP scales with Strength (at most 40)'), oddStr.reveal.lines.join(' | '));
   assert.match(oddStr.face.summary, /HP scales \(max 40\)/);
 });
+
+// A run saved under ruleset 1–6 bounds a row with the retired `cap`; its
+// attribute cards say it as they say a Max (Codex, #1321).
+test("an old run's capped row states its cap on the attribute card", async () => {
+  const { attributeCardModels } = await import('../src/model/creationBrief.js');
+  const { statProjection } = await import('../src/model/statProjection.js');
+  const old = { ...contentBundle };
+  const rules = structuredClone(RULESET_6);
+  rules.rules.hp.cap = 35;
+  old.derivedStatRules = { ...rules, presentation: Object.fromEntries(Object.entries(contentBundle.derivedStatRules.presentation).filter(([id]) => rules.rules[id])) };
+  const oldRegistries = createRegistries(old);
+  const run = createRunState({ seed: 11, classId: 'reaver', registries: oldRegistries });
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  const restored = structuredClone(run);
+  initializeRunDerivedStats(restored, registries);
+  const projection = statProjection(registries, restored);
+  assert.equal(projection.derived.find((row) => row.id === 'hp').cap, 35, 'the projected row carries the legacy cap');
+  const con = attributeCardModels(registries, restored.attributes, { projection }).find((card) => card.id === 'constitution');
+  assert.match(con.face.summary, /HP per pt \(max 35\)/, con.face.summary);
+  assert(con.reveal.lines.some((line) => /^HP \+4 every 1 point \(at most 35\)$/.test(line)), con.reveal.lines.join(' | '));
+});
