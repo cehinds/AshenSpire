@@ -114,13 +114,19 @@ export function spriteMirror(artFaces, side = 'enemy') {
 // figure's painting a few px on the standalone `translate` property; the
 // period and the phase are per actor so a row of fighters never bobs in
 // unison. Derived from a stable key (the combatant id), so a re-render keeps
-// the same rhythm. Written on the figure's outer element and inherited.
+// the same rhythm. The phase is read off the wall clock: an animation restarts
+// when its element is rebuilt (co-op rebuilds the board on every snapshot), so
+// a fixed delay would snap each breath back to the same point; a delay of
+// -(now + offset) mod period lands the new element where the old one was.
+// Written on the figure's outer element and inherited.
 export const IDLE_PERIOD_MS = Object.freeze({ min: 2800, max: 3600 });
-export function idleRhythm(key) {
+const idleClock = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+export function idleRhythm(key, now = idleClock()) {
   let h = 2166136261;
   for (const ch of String(key ?? '')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
   const ms = IDLE_PERIOD_MS.min + (h % (IDLE_PERIOD_MS.max - IDLE_PERIOD_MS.min + 1));
-  return { ms, delay: -((h >>> 11) % ms) };
+  const offset = (h >>> 11) % ms;
+  return { ms, delay: -Math.round((now + offset) % ms) };
 }
 function applyIdleRhythm(el, key) {
   const { ms, delay } = idleRhythm(key);
