@@ -179,19 +179,21 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
       if (--depth === 0) {
         const body = src.slice(openAt, j);
         if (/^@scope\b/.test(prelude)) {
-          // @scope (root): the root is every inner rule's ancestor, and
-          // `:scope` inside is the root itself. Its own block holds rules,
-          // not declarations, so it is not pushed as a rule.
-          const root = prelude.match(/^@scope\s*\(([^)]*)\)/)?.[1].trim();
+          // @scope (root): the root is every inner rule's ancestor, `:scope`
+          // inside is the root itself, and declarations written straight in
+          // the block apply to the root. A prelude-less nested @scope's root
+          // is its parent rule. The limit (`to (…)`) is not modelled.
+          const root = scopeRoot(prelude);
           const scope = !root ? parent : parent === null ? root : `:is(${parent}) ${root}`;
-          parseBlock(body, scope, rules, conditional, true);
+          parseBlock(body, scope, rules, conditional, scope === null);
         } else if (prelude.startsWith('@')) {
           // A grouping rule applies only under its condition, so its rules
-          // (and a nested copy of `parent`) are marked conditional.
-          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, true);
+          // (and a nested copy of `parent`) are marked conditional. @layer
+          // is an ordering, not a condition.
+          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, conditional || !/^@layer\b/.test(prelude));
         } else if (prelude) {
           const selector = parent === null ? prelude
-            : splitTop(prelude, /,/).map((part) => (/&|:scope\b/.test(part) ? part.replace(/&|:scope\b/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
+            : splitTop(prelude, /,/).map((part) => (/&|:scope(?![\w-])/.test(part) ? part.replace(/&|:scope(?![\w-])/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
           parseBlock(body, selector, rules, conditional);
         }
       }
@@ -204,6 +206,19 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
     rules.push({ selector: parent, decls, conditional });
   }
   return rules;
+}
+
+// The root selector of an `@scope (root) [to (limit)]` prelude, read up to its
+// balanced closing paren; null when the prelude names none.
+function scopeRoot(prelude) {
+  const open = prelude.indexOf('(');
+  if (open < 0 || prelude.slice(6, open).trim()) return null;
+  let depth = 0;
+  for (let i = open; i < prelude.length; i++) {
+    if (prelude[i] === '(') depth++;
+    if (prelude[i] === ')' && --depth === 0) return prelude.slice(open + 1, i).trim() || null;
+  }
+  return null;
 }
 
 export function cssRules(css) {
@@ -807,6 +822,7 @@ function selftest() {
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
     ['drop meters from a scoped HUD grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
     ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
+    ['hang the rail from declarations straight in a nested @scope', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @scope { position: absolute; }') })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],

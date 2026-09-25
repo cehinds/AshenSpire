@@ -232,6 +232,28 @@ test('a rule inside @scope keeps its scope root', () => {
   assert.equal(railUnderMeters(fine), true);
 });
 
+// Review of #1316: declarations written straight into an @scope block apply
+// to the scope root, so they are judged as a rule on it.
+test('declarations directly in an @scope block are judged on its root', () => {
+  const r = receipt();
+  const base = 'position: static; grid-area: rail; min-width: 0; width: 100%;';
+  const nested = r.kit.replace(base, `${base}\n  @scope { position: absolute; }`);
+  assert.notEqual(nested, r.kit);
+  assert.equal(c12({ ...r, kit: nested }).length, 1);
+  const top = `${r.kit}\n@scope (.shared-hud .hud-bottom) { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit: top }).length, 1);
+});
+
+// Review of #1316: @layer is not a condition; a base rule in a layer is still
+// the base.
+test('a base rail rule inside @layer is still the base', () => {
+  const r = receipt();
+  const i = r.kit.indexOf('.shared-hud .hud-bottom {');
+  const j = r.kit.indexOf('}', i) + 1;
+  const kit = `${r.kit.slice(0, i)}@layer hud { ${r.kit.slice(i, j)} }${r.kit.slice(j)}`;
+  assert.equal(c12({ ...r, kit }).length, 0);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
