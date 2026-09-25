@@ -320,6 +320,21 @@ test('uppercase :IS() is a subject and two-keyword grid display is grid', () => 
   }
 });
 
+// Codex on #1316: strings are read as CSS reads them. An escaped quote does
+// not end one, and comment delimiters inside one are not a comment, so
+// neither can hide a later rail rule. Keywords are case-insensitive.
+test('strings, escapes and keyword case do not hide or fake a rail rule', () => {
+  const r = receipt();
+  const hung = '.shared-hud .hud-bottom.x { position: absolute; }';
+  for (const before of ['.a::before { content: "\\""; }', ".a::before { content: '\\''; }", '.a::before { content: "/*"; }']) {
+    const after = before.includes('/*') ? '\n.b::before { content: "*/"; }' : '';
+    assert.equal(c12({ ...r, kit: `${r.kit}\n${before}\n${hung}${after}\n` }).length, 1, before);
+  }
+  const kit = r.kit.replace('position: static; grid-area: rail;', 'position: STATIC; grid-area: rail;');
+  assert.notEqual(kit, r.kit);
+  assert.equal(c12({ ...r, kit }).length, 0);
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
