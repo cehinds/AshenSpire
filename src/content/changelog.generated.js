@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1316",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the interface-component check is green again and runs with the tests",
+    "detail": "Nothing you see changes. The check that the two component catalogs name the same pieces now compares each family on its own, so a piece moved from one list to the other on one side is caught, and an emptied list says which one it was. Its two red rungs were out of date rather than the game: they still expected the relic rail to hang below the HUD, where it now sits inside it beneath Vitals as the spec says, and they did not know that authored dungeons title their own map or that the Armoury reads a weapon's icon through its one shared lookup. The rail rung now also goes red if any later rule hangs the rail again, or if a HUD layout drops the meters grid area that holds Vitals. The test suite now runs the check's verdict, and its self-test runs with the other tools' self-tests.",
+    "build": "0.7.1.525",
+    "pullRequest": 1316,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1316"
+  },
+  {
     "id": "pr-1314",
     "date": "2026-09-25",
     "group": "2026-09-25",
@@ -28,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Loading a save from a newer version mid-climb no longer throws away the climb you're on",
     "detail": "Choosing Load from the in-game menu on a slot saved by a newer version of Ashen Spire now says straight away that it cannot be opened here and leaves your current climb exactly where it was. The same check runs again when you confirm, in case a newer version open in another tab saved to that slot while the question was on screen. Before, it asked you to confirm discarding unsaved changes, then closed the menu, failed to load, and dropped you on the title screen with the climb in hand gone. A new browser check also lands a hit and ends a turn, walks away from the fight without saving, and loads the slot through the real menu, and confirms the fight starts again at turn 1 with the same health, the same opening hand, the enemies back at full health and the same deck.",
-    "build": "0.7.1.518",
+    "build": "0.7.1.519",
     "pullRequest": 1315,
     "url": "https://github.com/cehinds/AshenSpire/pull/1315"
   },
