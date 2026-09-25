@@ -692,6 +692,7 @@ function inventoryReveal(registries, row, {
  */
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -1827,8 +1828,11 @@ export function mountEquipment(host, {
     const attributeRows = attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-      // The next fight's hand, read the way engine/runCombat.js reads it.
-      hand: classHandRules(meta.settings || {}, registries.attributes.all(), run.class),
+      // The hand a solo fight deals: mid-fight, that fight's own snapshot
+      // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
+      // holds no hand settings, Codex #1294); otherwise the next fight's,
+      // read from the profile the way engine/runCombat.js reads it.
+      hand: handRules || classHandRules(meta.settings || {}, registries.attributes.all(), run.class),
     });
     for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
     attributeHost.replaceChildren(...primaryStatCards(attributeRows));

@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Loading a save from a newer version mid-climb no longer throws away the climb you're on",
     "detail": "Choosing Load from the in-game menu on a slot saved by a newer version of Ashen Spire now says straight away that it cannot be opened here and leaves your current climb exactly where it was. The same check runs again when you confirm, in case a newer version open in another tab saved to that slot while the question was on screen. Before, it asked you to confirm discarding unsaved changes, then closed the menu, failed to load, and dropped you on the title screen with the climb in hand gone. A new browser check also lands a hit and ends a turn, walks away from the fight without saving, and loads the slot through the real menu, and confirms the fight starts again at turn 1 with the same health, the same opening hand, the enemies back at full health and the same deck.",
-    "build": "0.7.1.515",
+    "build": "0.7.1.518",
     "pullRequest": 1315,
     "url": "https://github.com/cehinds/AshenSpire/pull/1315"
+  },
+  {
+    "id": "pr-1318",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Opening-hand settings say what they do, everywhere",
+    "detail": "An older setting that gave every class the same opening hand is no longer accepted and then quietly ignored: it is set aside wherever it was saved, and when it held something other than the default a note points you to each class's own opening-hand settings under Stats → Draw & hand. The Shrine's level-up cards and the Armoury opened mid-fight now say what a point buys in your opening hand under your own settings, and the class chooser's preview shows both the Hand and the Draw chips.",
+    "build": "0.7.1.517",
+    "pullRequest": 1318,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1318"
   },
   {
     "id": "pr-1298",
