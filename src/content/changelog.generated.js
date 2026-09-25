@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: leaving the game in the background is now tested",
     "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
-    "build": "0.7.1.510",
+    "build": "0.7.1.511",
     "pullRequest": 1298,
     "url": "https://github.com/cehinds/AshenSpire/pull/1298"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: the release checklist is written down",
     "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
-    "build": "0.7.1.510",
+    "build": "0.7.1.509",
     "pullRequest": 1300,
     "url": "https://github.com/cehinds/AshenSpire/pull/1300"
   },
