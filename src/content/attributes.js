@@ -48,12 +48,20 @@ export const creationModes = [
   // door against the total of the mode it was created under, and save.js
   // ARCHIVES what fails there. tuned2 stays in this table, and leaves creation
   // through characterCreation.visibleModeIds.
-  // THE LABEL IS 'Assigned' (owner, 2026-09-24: "Standard isn't an option for
-  // stats and tuned should say assigned"). The id stays `lean`: saves and
-  // exported configurations key on it.
+  // THE LABEL IS 'Standard' (owner, 2026-09-24, second pass: creation "should
+  // have the option of standard (pre assigned class presets) and assign points
+  // (x points to assign but configurable in advanced settings)"). It briefly
+  // read 'Assigned' earlier that day. The id stays `lean`: every save and
+  // exported configuration keys on it, and every character made under it was
+  // made at exactly these presets, so Standard IS this mode — same total, same
+  // bounds, same presets — and no save validated against it can change verdict.
+  // `opensOn: 'preset'`: choosing it seats the class preset with nothing left
+  // to spend, so the player can continue at once; Edit points still reshapes
+  // the same fixed total.
   {
     id: 'lean',
-    label: 'Assigned',
+    label: 'Standard',
+    opensOn: 'preset',
     baseline: 1,
     bonusPool: 3,
     minimum: 1,
@@ -81,6 +89,23 @@ export const creationModes = [
     // restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
     // Poise and Ward → 1), which is why it is not the bare fifth the divisor
     // would have made it.
+  },
+  // ASSIGN POINTS ON THE LEAN SCALE (owner, 2026-09-24): every attribute at
+  // 1 and the whole pool unspent (`opensOn: 'baseline'`), the pool a dial of
+  // its own (`gameConfig.startingStats.assign.*`). A NEW ID, because `lean` is
+  // Standard's and saves key on it; NOT `pointbuy` or `standard`, whose
+  // 10-scale totals every save made under them is still validated against.
+  // Its numbers start equal to lean's, so both open on eight points.
+  {
+    id: 'assign',
+    label: 'Assign points',
+    opensOn: 'baseline',
+    baseline: 1,
+    bonusPool: 3,
+    minimum: 1,
+    maximum: 4,
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
   },
   // THE REBASED SCALE (plan phase 9). Ten was never a floor a player chose —
   // it was the middle of a d20 habit this game does not otherwise keep. Five
@@ -168,6 +193,17 @@ export const attributeRules = {
     // Focus staff 3 Intelligence, the Rogue's knife 2 Dexterity.
     // attributeContentProblems and validate.js refuse any row that fails either.
     lean: {
+      reaver: { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 },
+      starseer: { strength: 1, dexterity: 1, constitution: 1, wisdom: 2, intelligence: 3 },
+      herald: { strength: 1, dexterity: 1, constitution: 2, wisdom: 3, intelligence: 1 },
+      rogue: { strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 },
+    },
+    // ---- ASSIGN ----------------------------------------------------------
+    // The player never opens on these — Assign points opens on all 1s — but a
+    // mode needs a legal preset per class: it is what the creation preview
+    // shows before the pool is spent, and the load door's refill value. So
+    // they are lean's rows, the class's grain on the same eight points.
+    assign: {
       reaver: { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 },
       starseer: { strength: 1, dexterity: 1, constitution: 1, wisdom: 2, intelligence: 3 },
       herald: { strength: 1, dexterity: 1, constitution: 2, wisdom: 3, intelligence: 1 },

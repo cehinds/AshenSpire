@@ -20,7 +20,7 @@
 // them any more, and the settings keys that set them convert on import
 // (`migrateLegacyStatSettings`) into the rows' own keys.
 
-import { HAND_STAT_IDS, RATING_STAT_IDS, isStatRowRuleset, resolvedRuleRow, statRowValue } from './derivedStats.js';
+import { HAND_STAT_IDS, RATING_STAT_IDS, isStatRowRuleset, resolvedRuleRow, rowForClass, statRowValue } from './derivedStats.js';
 
 export const STAT_ROW_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
 export const STAT_ROW_FIELDS = Object.freeze(['base', ...STAT_ROW_ATTRIBUTE_IDS, 'perLevel', 'min', 'max']);
@@ -44,10 +44,22 @@ export const LEGACY_RATING_FORMULA = Object.freeze({
     ward: legacyRule({ dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 }, 1),
   }),
 });
+// THE HAND GROUPS AS #1294 LEFT THEM, which is what dev dealt every run born
+// before ruleset 7 by the time this ruleset landed: the opening hand is 4–6
+// cards, and each class opens on its own base and primary attribute
+// (`startingByClass`) over the shared baseline and points per card. A run
+// started between #1294 and ruleset 7 restores exactly that hand; so does an
+// older one, which #1294 had already moved onto it.
 export const LEGACY_HAND_GROUPS = Object.freeze({
-  starting: Object.freeze({ base: 4, statEnabled: true, stat: 'intelligence', baseline: 1, pointsPerCard: 2, minimum: 3, maximum: 15 }),
+  starting: Object.freeze({ base: 4, statEnabled: true, stat: 'intelligence', baseline: 1, pointsPerCard: 2, minimum: 4, maximum: 6 }),
   turn: Object.freeze({ base: 2, statEnabled: true, stat: 'intelligence', baseline: 4, pointsPerCard: 5, minimum: 2, maximum: 10 }),
   capacity: Object.freeze({ base: 7, statEnabled: true, stat: 'intelligence', baseline: 1, pointsPerCard: 5, minimum: 1, maximum: 30 }),
+});
+export const LEGACY_STARTING_BY_CLASS = Object.freeze({
+  reaver: Object.freeze({ base: 3, stat: 'strength' }),
+  rogue: Object.freeze({ base: 4, stat: 'dexterity' }),
+  herald: Object.freeze({ base: 4, stat: 'wisdom' }),
+  starseer: Object.freeze({ base: 5, stat: 'intelligence' }),
 });
 /** `balance.handMax` as it shipped: a co-op fight's hand size before ruleset 7. */
 export const LEGACY_HAND_MAX = 5;
@@ -97,8 +109,13 @@ export function legacyRatingFormulaFromSettings(settings = {}) {
   return formula;
 }
 
-/** The legacy hand-rule groups a (pre-ruleset-7) configuration states, frozen defaults under them. */
-export function legacyHandGroupsFromSettings(settings = {}) {
+/**
+ * The legacy hand-rule groups a (pre-ruleset-7) configuration states, frozen
+ * defaults under them. With a `classId`, the opening hand is that class's
+ * (#1294's `startingByClass`), exactly as `handRulesForClass` resolved it.
+ */
+export function legacyHandGroupsFromSettings(settings = {}, classId = null) {
+  settings = Object.fromEntries(withoutRetiredOpeningLimits(Object.entries(settings || {})));
   const groups = structuredClone(LEGACY_HAND_GROUPS);
   for (const [group, rule] of Object.entries(groups)) {
     for (const field of HAND_GROUP_FIELDS) {
@@ -112,7 +129,55 @@ export function legacyHandGroupsFromSettings(settings = {}) {
     }
     if (rule.minimum > rule.maximum) groups[group] = structuredClone(LEGACY_HAND_GROUPS[group]);
   }
+  const byClass = legacyStartingByClassFromSettings(settings);
+  if (classId && byClass[classId]) groups.starting = { ...groups.starting, ...byClass[classId] };
   return groups;
+}
+
+/** #1294's per-class opening-hand rows a (pre-ruleset-7) configuration states, frozen defaults under them. */
+export function legacyStartingByClassFromSettings(settings = {}) {
+  const byClass = structuredClone(LEGACY_STARTING_BY_CLASS);
+  for (const [classId, row] of Object.entries(byClass)) {
+    const base = Math.floor(Number(settings[`gameConfig.handRules.startingByClass.${classId}.base`]));
+    if (Number.isFinite(base)) row.base = Math.min(99, Math.max(0, base));
+    const stat = settings[`gameConfig.handRules.startingByClass.${classId}.stat`];
+    if (STAT_ROW_ATTRIBUTE_IDS.includes(stat)) row.stat = stat;
+  }
+  return byClass;
+}
+
+// THE OPENING-HAND LIMITS BEFORE #1294 WERE 3–15 (owner, 2026-09-24: "start
+// with 4-6 cards"). The Advanced panel stores — and an export writes — every
+// value it holds, so a profile or file from before that change pins the old
+// default cap of 15. A stored or imported `starting.maximum` of exactly 15 is
+// that retired default, so it is DROPPED with a warning and the current
+// default applies; the `starting.minimum` of 3 riding beside it is the other
+// half of the same pair and goes with it. A lone minimum of 3 is somebody's
+// choice and stays. (Moved here from model/handRules.js with the hand groups.)
+const OPENING_MAXIMUM_KEY = 'gameConfig.handRules.starting.maximum';
+const OPENING_MINIMUM_KEY = 'gameConfig.handRules.starting.minimum';
+const RETIRED_OPENING_MAXIMUM = 15;
+const RETIRED_OPENING_MINIMUM = 3;
+const bareKey = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+
+/** True when a stored profile pins the retired opening-hand cap of 15. */
+export function hasRetiredOpeningLimits(settings = {}) {
+  return settings?.[OPENING_MAXIMUM_KEY] === RETIRED_OPENING_MAXIMUM;
+}
+
+/**
+ * withoutRetiredOpeningLimits(entries, warnings) → entries without the retired
+ * 3–15 opening-hand limits, in either spelling (plain or `settings.`-prefixed).
+ */
+export function withoutRetiredOpeningLimits(entries, warnings = null) {
+  const retiredMaximum = ([key, value]) => bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM;
+  if (!entries.some(retiredMaximum)) return entries;
+  const retiredMinimum = ([key, value]) => bareKey(key) === OPENING_MINIMUM_KEY && value === RETIRED_OPENING_MINIMUM;
+  const dropsMinimum = entries.some(retiredMinimum);
+  if (Array.isArray(warnings)) {
+    warnings.push(`Opening hand: the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${LEGACY_HAND_GROUPS.starting.minimum}–${LEGACY_HAND_GROUPS.starting.maximum} applies. Everything else was kept.`);
+  }
+  return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
 }
 
 // ---- WHICH ROWS -------------------------------------------------------------
@@ -136,7 +201,10 @@ export function readsLegacyStatHomes(run) {
  */
 export function statRow(registries, run, id, { settings = {} } = {}) {
   const table = snapshotTable(run);
-  if (table && isStatRowRuleset(table.rulesetVersion)) return resolvedRuleRow(table, id);
+  // The class a row with a per-class form is read for (a run's `class`, a
+  // co-op seat's `classId`); a run's own snapshot already holds its class's row.
+  const classId = run?.class ?? run?.classId ?? null;
+  if (table && isStatRowRuleset(table.rulesetVersion)) return resolvedRuleRow(table, id, classId);
   if (table) {
     if (RATING_STAT_IDS.includes(id)) {
       const formula = registries?.balance?.combatRatings?.legacyRatings || LEGACY_RATING_FORMULA;
@@ -149,11 +217,11 @@ export function statRow(registries, run, id, { settings = {} } = {}) {
       // (migrateLegacyStatSettings), so reading only it would reset a tuned
       // hand to the shipped groups.
       const own = run?.advancedConfigSnapshot?.overrides || {};
-      return legacyHandRow(legacyHandGroupsFromSettings({ ...(settings || {}), ...own })[group]);
+      return legacyHandRow(legacyHandGroupsFromSettings({ ...(settings || {}), ...own }, classId)[group]);
     }
-    return resolvedRuleRow(table, id);
+    return resolvedRuleRow(table, id, classId);
   }
-  return resolvedRuleRow(registries?.derivedStatRules, id);
+  return resolvedRuleRow(registries?.derivedStatRules, id, classId);
 }
 
 /** The three hand rows a fight reads, keyed by row id. */
@@ -199,7 +267,7 @@ export function statRowCount(row, attributes, level) {
 //                                          group was tuned)
 //   balance.handMax                      → dropped: the handSize row replaced it
 const LEGACY_RATING_KEY = /^gameConfig\.combatRatings\.(?:multiplier|ratings\.(ar|dr|pr|poise|ward)\.(base|strength|dexterity|constitution|wisdom|intelligence))$/;
-const LEGACY_HAND_KEY = /^gameConfig\.handRules\.(starting|turn|capacity)\.(base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)$/;
+const LEGACY_HAND_KEY = /^gameConfig\.handRules\.(?:(starting|turn|capacity)\.(base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)|startingByClass\.[a-z]+\.(base|stat))$/;
 const LEGACY_HAND_MAX_KEY = 'gameConfig.balance.handMax';
 // TWO ROW KEYS CHANGED MEANING IN RULESET 7 without changing spelling: `draw`
 // was the draw only co-op and old fights read (solo drew by the hand rules),
@@ -213,10 +281,32 @@ const LEGACY_MEANING_KEY = /^gameConfig\.derivedStatRules\.rules\.(draw|poise)\.
 /** The row keys whose meaning changed in ruleset 7 (see STAT_ROWS_MARKER). */
 export const STAT_ROWS_CHANGED_MEANING = LEGACY_MEANING_KEY;
 
-/** Whether a stored profile still holds a key ruleset 7 retired. */
+const MIRROR = 'settings.';
+const bare = (key) => (key.startsWith(MIRROR) ? key.slice(MIRROR.length) : key);
+const isRetiredStatKey = (key) => LEGACY_RATING_KEY.test(key) || LEGACY_HAND_KEY.test(key) || key === LEGACY_HAND_MAX_KEY;
+
+/** Whether a stored profile (or file) still holds a key ruleset 7 retired, in either spelling. */
 export function hasLegacyStatSettings(settings = {}) {
-  return Object.keys(settings || {}).some((key) => LEGACY_RATING_KEY.test(key) || LEGACY_HAND_KEY.test(key) || key === LEGACY_HAND_MAX_KEY)
-    || (settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION && Object.keys(settings || {}).some((key) => LEGACY_MEANING_KEY.test(key)));
+  return Object.keys(settings || {}).some((key) => isRetiredStatKey(bare(key)))
+    || (settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION && Object.keys(settings || {}).some((key) => LEGACY_MEANING_KEY.test(bare(key))));
+}
+
+/**
+ * An exported file writes every value twice, plain and `settings.`-mirrored
+ * (#1294's owner export). A retired stat key's mirror is read as the plain key
+ * — dropped when the plain key is there, else moved onto it — so the
+ * conversion below sees one spelling and no mirror survives to be refused.
+ */
+function withoutLegacyMirrors(settings, legacyRows) {
+  const retired = (key) => isRetiredStatKey(key) || (legacyRows && LEGACY_MEANING_KEY.test(key));
+  const mirrors = Object.keys(settings).filter((key) => key.startsWith(MIRROR) && retired(bare(key)));
+  if (!mirrors.length) return settings;
+  const next = { ...settings };
+  for (const key of mirrors) {
+    delete next[key];
+    if (!Object.hasOwn(settings, bare(key))) next[bare(key)] = settings[key];
+  }
+  return next;
 }
 
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -251,6 +341,7 @@ export function fitHandRow(group) {
  */
 export function migrateLegacyStatSettings(settings = {}, warnings = null, { legacyRows = settings?.[STAT_ROWS_MARKER] !== STAT_ROWS_VERSION } = {}) {
   if (!hasLegacyStatSettings(settings)) return settings;
+  settings = withoutLegacyMirrors(settings, legacyRows);
   const next = { ...settings };
   // Written before ruleset 7: the old `draw` and `poise` rows go first, so the
   // converted hand and rating values below are what those rows now hold.
@@ -294,7 +385,28 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
   if (handKeys.length) {
     const groups = legacyHandGroupsFromSettings(settings);
     const fitted = [];
+    // THE OPENING HAND CONVERTS EXACTLY: its group and #1294's per-class rows
+    // are `base + floor(max(0, attribute − baseline) ÷ pointsPerCard)`, which
+    // is the row's weight 1 ÷ pointsPerCard counted from `attributeBaseline`.
+    const openingKeys = handKeys.filter((k) => /^gameConfig\.handRules\.starting(ByClass)?\./.test(k));
+    if (openingKeys.length) {
+      const rule = groups.starting;
+      const byClass = legacyStartingByClassFromSettings(settings);
+      const tuned = !HAND_GROUP_FIELDS.every((field) => rule[field] === LEGACY_HAND_GROUPS.starting[field])
+        || Object.entries(byClass).some(([classId, row]) => row.base !== LEGACY_STARTING_BY_CLASS[classId].base || row.stat !== LEGACY_STARTING_BY_CLASS[classId].stat);
+      if (tuned) {
+        const weight = rule.statEnabled ? 1 / rule.pointsPerCard : 0;
+        const weights = (stat) => Object.fromEntries(STAT_ROW_ATTRIBUTE_IDS.map((attr) => [attr, attr === stat ? weight : 0]));
+        const shared = { base: rule.base, ...weights(rule.stat), attributeBaseline: rule.baseline, min: rule.minimum, max: rule.maximum };
+        for (const [field, value] of Object.entries(shared)) setIfAbsent('openingHand', field, value);
+        for (const [classId, row] of Object.entries(byClass)) {
+          for (const [field, value] of Object.entries({ base: row.base, ...weights(row.stat) })) setIfAbsent('openingHand', `byClass.${classId}.${field}`, value);
+        }
+        fitted.push('opening hand');
+      }
+    }
     for (const [group, id] of Object.entries(HAND_GROUP_ROWS)) {
+      if (group === 'starting') continue;
       if (!handKeys.some((k) => k.startsWith(`gameConfig.handRules.${group}.`))) continue;
       const rule = groups[group];
       if (HAND_GROUP_FIELDS.every((field) => rule[field] === LEGACY_HAND_GROUPS[group][field])) continue;

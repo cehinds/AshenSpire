@@ -80,8 +80,10 @@ export function createRunCombat({
 }) {
   return createCombat({
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
-    // three hand rows are this run's own — its snapshot's, or for a run born
-    // before ruleset 7 the retired homes it was priced by (model/statRows.js).
+    // three hand rows are this run's own — its snapshot's (its class's opening
+    // hand among them), or for a run born before ruleset 7 the retired homes it
+    // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
+    // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
     handRules: resolveHandRules(settings || {}, handStatRows(registries, run, { settings: settings || {} })),
     registries,

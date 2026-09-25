@@ -237,7 +237,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
           : ruleWeights({ ...defaults, ...rule }).find(([attrId]) => attrId === def.id)?.[1];
         const perIncrease = Number.isFinite(row?.pointsPerIncrease) ? row.pointsPerIncrease : 1;
         const gain = Number.isFinite(row?.gain) ? row.gain : 1;
-        if (!Number.isFinite(weight) || weight <= 0) return { label: presentation[id].label, perTier: null, points: 1 };
+        if (!Number.isFinite(weight) || weight <= 0) return { id, label: presentation[id].label, perTier: null, points: 1 };
         // WHAT MY POINTS BUY, said as the CADENCE THE FLOORS ACTUALLY PAY. A
         // weight of 4 is "+4 every 1 point"; a weight of 0.2 is "+1 every 5
         // points", never "+0.2 per point" — the term is floored, so a fifth of
@@ -248,8 +248,11 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // cycle is the fewest points after which every floor lands exactly;
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
-        if (cycle === null) return { label: presentation[id].label, perTier: null, points: 1 };
-        return { label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
+        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
+        // The opening hand's cap is part of its fact (#1294: a Starseer at
+        // base 5 has one card of room before the cap of 6).
+        const cap = id === 'openingHand' && Number.isFinite(row?.max) ? row.max : null;
+        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
@@ -266,9 +269,11 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // divisor sat at the end. `per N pts`, not `/N`, because a label may
     // already hold a slash ("Actions / turn") and two would read as one rate.
     const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
+    // The hand is three rows of the same table (ruleset 7), the class's own
+    // opening hand among them, so it is listed like every other feed.
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
-      .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
+      .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
     const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);

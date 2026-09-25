@@ -1,5 +1,5 @@
 import { handRulesDefaults } from '../content/handRules.js';
-import { HAND_STAT_IDS } from './derivedStats.js';
+import { HAND_STAT_IDS, statRowValue } from './derivedStats.js';
 import { HAND_GROUP_ROWS, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
@@ -31,7 +31,7 @@ function rowProblems(rows, problems) {
     const row = rows[id];
     if (!row || typeof row !== 'object') { problems.push(`Hand rules: missing ${id} row`); continue; }
     if (!Number.isFinite(row.base) || row.base < 0) problems.push(`Hand rules: invalid ${id}.base`);
-    for (const key of [...ATTRIBUTE_IDS, 'perLevel']) {
+    for (const key of [...ATTRIBUTE_IDS, 'perLevel', 'attributeBaseline']) {
       if (row[key] !== undefined && (!Number.isFinite(row[key]) || row[key] < 0)) problems.push(`Hand rules: invalid ${id}.${key}`);
     }
     for (const key of ['min', 'max']) {
@@ -148,4 +148,50 @@ export function handRow(rules, id) {
  */
 export function scaledCards(rule, attributes = {}, level = undefined) {
   return statRowCount(isLegacyHandGroup(rule) ? legacyHandRow(rule) : rule, attributes, level);
+}
+
+/**
+ * scaledCardsReceipt(row, attributes, level) → the count a hand row states,
+ * with its terms: `base`, `bonus` (every attribute and level term), `raw`
+ * before the row's bounds, `min`, `max` and the `value`.
+ */
+export function scaledCardsReceipt(rule, attributes = {}, level = undefined) {
+  const row = isLegacyHandGroup(rule) ? legacyHandRow(rule) : rule;
+  const receipt = statRowValue(row, { attributes, level, lenientAttributes: true });
+  return { ...receipt, bonus: receipt.raw - receipt.base };
+}
+
+/**
+ * handDrawCount(rules, attributes, { handSize, opening, replacements, level })
+ * → how many cards one draw puts into a hand already holding `handSize`: the
+ * opening-hand row on the opening draw, otherwise the Draw / turn row (plus any
+ * replacements for chosen discards) or a fill to the hand size — never more
+ * than the room the hand size leaves. The ONE formula: combat's
+ * `turnDrawCount` (engine/handRules.js) deals it and character creation's Hand
+ * and Draw chips (`handSizeReceipts`) preview it for an empty hand (#1294).
+ */
+export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = false, replacements = 0, level = undefined } = {}) {
+  const capacity = scaledCards(handRow(rules, 'handSize'), attributes, level);
+  const room = Math.max(0, capacity - handSize);
+  const wanted = opening ? scaledCards(handRow(rules, 'openingHand'), attributes, level)
+    : rules.drawMode === 'fill' ? room : scaledCards(handRow(rules, 'draw'), attributes, level) + replacements;
+  return { capacity, room, wanted, value: Math.min(room, wanted) };
+}
+
+/**
+ * handSizeReceipts(rules, attributes, level) → the opening hand, the most one
+ * turn draws, and the hand size, each with its terms. Both draws are
+ * `handDrawCount` into an empty hand — what `turnDrawCount` deals: the stated
+ * row (`stated`), limited by the hand size. A fill draw tops the hand up.
+ */
+export function handSizeReceipts(rules, attributes = {}, level = undefined) {
+  const capacity = scaledCardsReceipt(handRow(rules, 'handSize'), attributes, level);
+  const starting = scaledCardsReceipt(handRow(rules, 'openingHand'), attributes, level);
+  const opening = { ...starting, stated: starting.value, capacity: capacity.value, value: handDrawCount(rules, attributes, { opening: true, level }).value };
+  const most = handDrawCount(rules, attributes, { level }).value;
+  const turnRule = scaledCardsReceipt(handRow(rules, 'draw'), attributes, level);
+  const turn = rules.drawMode === 'fill'
+    ? { fill: true, capacity: capacity.value, value: most }
+    : { ...turnRule, stated: turnRule.value, fill: false, capacity: capacity.value, value: most };
+  return { opening, turn, capacity };
 }

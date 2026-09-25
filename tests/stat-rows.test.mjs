@@ -14,7 +14,7 @@ import { attributeRatingReceipt } from '../src/model/ratingFormula.js';
 import { scaledCards } from '../src/model/handRules.js';
 import { validateContent } from '../src/model/validate.js';
 import {
-  LEGACY_HAND_GROUPS, LEGACY_RATING_FORMULA, legacyHandRow, legacyRatingRow, migrateLegacyStatSettings,
+  LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, legacyRatingRow, migrateLegacyStatSettings,
   statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes,
 } from '../src/model/statRows.js';
 import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile, hasLegacyAdvancedSettings } from '../src/model/advancedConfig.js';
@@ -28,10 +28,19 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   const ids = ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw', 'handSize', 'ar', 'dr', 'pr', 'ward', 'poise'];
   assert.deepEqual(Object.keys(table.rules).sort(), [...ids].sort());
   assert.deepEqual([...DERIVED_STAT_IDS].sort(), [...ids].sort());
+  // The opening hand alone adds its per-class form and the baseline it
+  // counts from (#1294's "class base 3–5, +1 from stats"); each class entry
+  // is a smaller row of the same shape.
   const legal = new Set(['base', ...ATTRIBUTES, 'perLevel', 'min', 'max']);
   for (const [id, row] of Object.entries(table.rules)) {
-    for (const key of Object.keys(row)) assert(legal.has(key), `${id}.${key} is outside the one row shape`);
+    for (const key of Object.keys(row)) {
+      assert(legal.has(key) || (id === 'openingHand' && ['attributeBaseline', 'byClass'].includes(key)), `${id}.${key} is outside the one row shape`);
+    }
     assert(Number.isInteger(row.base), `${id}.base is whole`);
+    for (const [classId, classRow] of Object.entries(row.byClass || {})) {
+      for (const key of Object.keys(classRow)) assert(legal.has(key), `${id}.byClass.${classId}.${key} is outside the one row shape`);
+      assert(Number.isInteger(classRow.base), `${id}.byClass.${classId}.base is whole`);
+    }
   }
 });
 
@@ -101,6 +110,7 @@ test('each retired home is refused by name at the content door', () => {
   refused((b) => { b.handRules = { starting: {} }; }, 'handRules.starting');
   refused((b) => { b.handRules = { turn: {} }; }, 'handRules.turn');
   refused((b) => { b.handRules = { capacity: {} }; }, 'handRules.capacity');
+  refused((b) => { b.handRules = { startingByClass: {} }; }, 'handRules.startingByClass');
   // A ruleset-7 row may not spell the retired single-stat or tier fields.
   const bundle = { ...contentBundle, derivedStatRules: structuredClone(contentBundle.derivedStatRules) };
   bundle.derivedStatRules.rules.draw.pointsPerCard = 5;
@@ -143,8 +153,9 @@ test('a ruleset-6 save restores identical values: pools, ratings and hand counts
     assert.equal(attributeRatingReceipt(config, restored.attributes, id).value, expected, id);
   }
   // Hand counts: the frozen hand-rule groups, exactly as the old formula.
+  // The opening hand is #1294's, per class: the Herald's base and Wisdom.
   const legacyCount = (group) => {
-    const rule = LEGACY_HAND_GROUPS[group];
+    const rule = group === 'starting' ? { ...LEGACY_HAND_GROUPS.starting, ...LEGACY_STARTING_BY_CLASS.herald } : LEGACY_HAND_GROUPS[group];
     const points = restored.attributes[rule.stat];
     return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard)));
   };
@@ -342,6 +353,74 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
   assert(lines.includes('Opening hand +1 every 3 points'), lines.join(' | '));
   assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points`), lines.join(' | '));
   assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
+});
+
+// ---- RUNS STARTED BETWEEN #1294 AND RULESET 7 --------------------------------
+// #1294 shipped each class's opening hand as hand rules read per fight:
+// clamp(classBase + floor(max(0, primary − 1) ÷ 2), 4, 6), tunable through
+// `handRules.startingByClass.<class>.base/stat`, with a stored 3–15 pair (the
+// retired default) dropped. A run born under ruleset 6 in that window restores
+// exactly that hand, and the profile keys it was tuned with convert exactly.
+const CLASS_HAND = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
+const hand1294 = (base, primary, { minimum = 4, maximum = 6 } = {}) => Math.min(maximum, Math.max(minimum, base + Math.floor(Math.max(0, primary - 1) / 2)));
+const ruleset6Run = (classId, registries, overrides = null) => {
+  const run = createRunState({ seed: 3, classId, registries });
+  const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules).filter(([id]) => !['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward'].includes(id)));
+  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
+  if (overrides) run.advancedConfigSnapshot = { schemaVersion: 1, ratingsVersion: 1, overrides };
+  return run;
+};
+
+test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at every primary 1–12", () => {
+  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
+  for (const [classId, [base, stat]] of Object.entries(CLASS_HAND)) {
+    const run = ruleset6Run(classId, registries);
+    assert(readsLegacyStatHomes(run));
+    for (let primary = 1; primary <= 12; primary += 1) {
+      const attributes = { ...at(1), [stat]: primary };
+      assert.equal(statRowCount(statRow(registries, run, 'openingHand'), attributes), hand1294(base, primary), `${classId} ${stat} ${primary}`);
+    }
+    // And the fight it opens deals it, and carries the class's group.
+    const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.piles.hand.length, Math.min(run.deck.length, hand1294(base, run.attributes[stat])), classId);
+    assert.deepEqual(combat.handRules.rows.openingHand, statRow(registries, run, 'openingHand'), 'the fight\'s hand rules carry it');
+  }
+  // Its own #1294 tuning restores too — and the retired 3–15 pair it may have
+  // pinned is read as #1294 read it: dropped.
+  const tunedRun = ruleset6Run('reaver', registries, {
+    'gameConfig.handRules.startingByClass.reaver.base': 5,
+    'gameConfig.handRules.startingByClass.reaver.stat': 'constitution',
+    'gameConfig.handRules.starting.maximum': 15,
+    'gameConfig.handRules.starting.minimum': 3,
+  });
+  for (let primary = 1; primary <= 12; primary += 1) {
+    assert.equal(statRowCount(statRow(registries, tunedRun, 'openingHand'), { ...at(1), constitution: primary }), hand1294(5, primary));
+  }
+});
+
+test("#1294's opening-hand settings convert exactly onto the opening-hand row", () => {
+  const legacy = {
+    'gameConfig.handRules.startingByClass.reaver.base': 5,
+    'gameConfig.handRules.startingByClass.herald.stat': 'intelligence',
+    'gameConfig.handRules.starting.maximum': 7,
+  };
+  const converted = normalizeAdvancedSettings({ ...legacy }, contentBundle);
+  assert(Object.keys(converted).every((key) => !key.startsWith('gameConfig.handRules.')), 'no hand-rule count key survives');
+  const registries = createRegistries(configuredContentBundle(contentBundle, converted));
+  const expected = { reaver: [5, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'intelligence'], starseer: [5, 'intelligence'] };
+  for (const [classId, [base, stat]] of Object.entries(expected)) {
+    for (let primary = 1; primary <= 12; primary += 1) {
+      const attributes = { ...at(1), [stat]: primary };
+      assert.equal(statRowCount(statRow(registries, { class: classId }, 'openingHand'), attributes), hand1294(base, primary, { maximum: 7 }), `${classId} ${stat} ${primary}`);
+    }
+  }
+  // An exported file from #1294 converts the same way, mirrors and all.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { ...legacy, ...Object.fromEntries(Object.entries(legacy).map(([k, v]) => [`settings.${k}`, v])) } });
+  const imported = parseAdvancedConfigFile(file, contentBundle);
+  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'], 5);
+  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.intelligence'], 0.5);
+  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.wisdom'], 0);
+  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.max'], 7);
 });
 
 test('a saved fight whose hand size can reach 0 is refused at the fight door', async () => {

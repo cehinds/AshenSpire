@@ -35,7 +35,8 @@ test('a run fight carries the rules a fresh profile gives the live game', () => 
   // run's are the shipped table's.
   assert.deepEqual(combat.handRules, resolveHandRules({}, handStatRows(registries, run)), 'default hand rules');
   for (const id of ['openingHand', 'draw', 'handSize']) {
-    assert.deepEqual(combat.handRules.rows[id], resolvedRuleRow(registries.derivedStatRules, id), `the shipped ${id} row`);
+    // The class's own opening hand (the row's per-class form, owner 2026-09-24).
+    assert.deepEqual(combat.handRules.rows[id], resolvedRuleRow(registries.derivedStatRules, id, 'starseer'), `the shipped ${id} row`);
   }
   assert.equal(combat.swapCostRule, resolveSwapCostRule(registries, { settings: {} }), 'default swap price');
   if (registries.balance.combatRatings?.enabled) assert.ok(combat.ratingsRules, 'rating rules applied');

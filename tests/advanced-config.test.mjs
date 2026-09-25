@@ -13,6 +13,7 @@ import {
   parseAdvancedConfigFile,
   normalizeAdvancedSettings,
   bringProfileForward,
+  bringRunSnapshotForward,
 } from '../src/model/advancedConfig.js';
 import { saveAdvancedConfigFile } from '../src/ui/services/saveJsonFile.js';
 
@@ -475,76 +476,70 @@ test('every relic and talent variable has a phrase in balanceWords', async () =>
   assert.deepEqual(missing, [], 'these variables have no phrase in balanceWords.effects');
 });
 
-// THE OWNER'S ×20 IS BAKED INTO THE AUTHORED TABLE (2026-09-24), so every
-// reader of `balance.rewards.cinders` pays the same, and the row is a new key,
-// `progression.cinderMultiplier`, at 1. The old `rewardMultiplier` scaled a
-// table twenty times smaller, so a stored or exported value is carried across
-// ÷ 20 and pays what it paid.
+// THE ×20 CINDERS ARE RETIRED (owner, 2026-09-24: "I hate the 20x cinder,
+// that needs to die"). The authored table pays ×1, the row is
+// `progression.cinderMultiplier` at 1, and the old `rewardMultiplier` — the key
+// his exported file carries at 20 — is dropped wherever it is met, with a
+// warning, so no profile, snapshot or file brings the ×20 back.
 const CINDER = 'gameConfig.progression.cinderMultiplier';
 const OLD_CINDER = 'gameConfig.progression.rewardMultiplier';
 const v1File = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', build: {}, overrides });
 
-test('the authored cinder table carries the owner\'s ×20 and the new row defaults to 1', () => {
-  assert.deepEqual(contentBundle.balance.rewards.cinders.normal, [900, 1500]);
-  assert.deepEqual(contentBundle.balance.rewards.cinders.elite, [2100, 3000]);
-  assert.deepEqual(contentBundle.balance.rewards.cinders.boss, [4500, 5400]);
+test('the authored cinder table pays ×1 and the new row defaults to 1', () => {
+  assert.deepEqual(contentBundle.balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.elite, [105, 150]);
+  assert.deepEqual(contentBundle.balance.rewards.cinders.boss, [225, 270]);
   const rows = advancedConfigRows(contentBundle);
   const row = rows.find((candidate) => candidate.key === CINDER);
   assert.equal(row.def, 1);
   assert.equal(row.label, 'Cinder gain multiplier');
   assert.equal(row.min, 0);
   assert.equal(row.max, 20);
-  assert.equal(row.integer, false);
   assert.ok(!rows.some((candidate) => candidate.key === OLD_CINDER), 'the old key has no row');
-  assert.deepEqual(configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal, [900, 1500]);
-  assert.deepEqual(configuredContentBundle(contentBundle, { [CINDER]: 0.5 }).balance.rewards.cinders.normal, [450, 750]);
+  assert.deepEqual(configuredContentBundle(contentBundle, {}).balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { [CINDER]: 2 }).balance.rewards.cinders.normal, [90, 150]);
 });
 
-test('a stored rewardMultiplier is carried across as ÷ 20 and pays what it paid', () => {
+test('a stored rewardMultiplier is dropped, never carried: the ×20 cannot come back', () => {
   const owner = { [OLD_CINDER]: 20 };
   const warnings = [];
   normalizeAdvancedSettings(owner, contentBundle, warnings);
-  assert.deepEqual(owner, { [CINDER]: 1 });
+  assert.deepEqual(owner, {});
   assert.equal(warnings.length, 1);
-  assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [900, 1500]);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(configuredContentBundle(contentBundle, owner).balance.rewards.cinders.normal, [45, 75]);
 
-  const two = { [OLD_CINDER]: 2 };
-  normalizeAdvancedSettings(two, contentBundle);
-  assert.equal(two[CINDER], 0.1);
-  assert.deepEqual(configuredContentBundle(contentBundle, two).balance.rewards.cinders.normal, [90, 150]);
+  // Un-normalized readers (an old run snapshot) ignore it too.
+  assert.deepEqual(configuredContentBundle(contentBundle, { [OLD_CINDER]: 20 }).balance.rewards.cinders.normal, [45, 75]);
+  assert.deepEqual(configuredContentBundle(contentBundle, { overrides: { [OLD_CINDER]: 20 }, ratingsVersion: 1 }).balance.rewards.cinders.normal, [45, 75]);
 
-  // Un-normalized readers (an old run snapshot) read it the same way.
-  assert.deepEqual(configuredContentBundle(contentBundle, { [OLD_CINDER]: 2 }).balance.rewards.cinders.normal, [90, 150]);
-  assert.deepEqual(configuredContentBundle(contentBundle, { overrides: { [OLD_CINDER]: 20 }, ratingsVersion: 1 }).balance.rewards.cinders.normal, [900, 1500]);
-
-  // Both present: the new key wins and the old is dropped.
+  // A new-key value set alongside it is kept.
   const both = { [OLD_CINDER]: 20, [CINDER]: 3 };
   normalizeAdvancedSettings(both, contentBundle);
   assert.deepEqual(both, { [CINDER]: 3 });
 
   // The export never writes the old key.
-  const exported = advancedConfigExport({ [OLD_CINDER]: 2 }, {}, [CINDER]);
+  const exported = advancedConfigExport({ [OLD_CINDER]: 20 }, {}, [CINDER]);
   assert.ok(!exported.includes('rewardMultiplier'));
-  assert.equal(JSON.parse(exported).overrides[CINDER], 0.1);
 });
 
 // A RESTORE IS A PROFILE ARRIVING FROM STORAGE, like boot (Codex, on #1273).
-// Boot brought the profile forward and restore did not, so a restored old
-// profile kept `rewardMultiplier` 2 — paid as 0.1 by the bundle — while the
-// Advanced Settings row opened on the new key's default of 1.
-test('a restored profile carrying rewardMultiplier comes forward as ÷ 20 and is saved', () => {
+// Boot brought the profile forward and restore did not. Since #1294 the old
+// `rewardMultiplier` is retired, so a restored profile drops it, is saved,
+// and pays the authored table the Advanced Settings row opens on.
+test('a restored profile carrying rewardMultiplier drops it and is saved', () => {
   const restored = { settings: { [OLD_CINDER]: 2, sfxVolume: 0.4 }, unlocks: ['reaver'] };
   const saved = [];
   const warnings = [];
   const settings = bringProfileForward(restored, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
   assert.equal(settings, restored.settings, 'rewritten in place, so the live profile is the one read');
-  assert.deepEqual(settings, { [CINDER]: 0.1, sfxVolume: 0.4 });
+  assert.deepEqual(settings, { sfxVolume: 0.4 });
   assert.ok(!Object.hasOwn(settings, OLD_CINDER), 'the old key is gone');
   assert.deepEqual(saved, [restored], 'and the rewrite is written back, whole profile included');
   assert.equal(warnings.length, 1);
   const row = advancedConfigRows(contentBundle).find((candidate) => candidate.key === CINDER);
-  assert.equal(settings[row.key] ?? row.def, 0.1, 'the row shows what the bundle pays');
-  assert.deepEqual(configuredContentBundle(contentBundle, settings).balance.rewards.cinders.normal, [90, 150]);
+  assert.equal(settings[row.key] ?? row.def, 1, 'the row shows what the bundle pays');
+  assert.deepEqual(configuredContentBundle(contentBundle, settings).balance.rewards.cinders.normal, [45, 75]);
 
   // A current profile is left alone and not re-saved; a bare one gains a settings object.
   const current = { settings: { [CINDER]: 0.5 } };
@@ -562,17 +557,44 @@ test('boot and profile restore both come through the one door', () => {
   assert.match(main, /onRestored: \(\) => applyRestoredSettings\(bringStoredProfileForward\(saves\.loadMeta\(\)\)\)/);
 });
 
-test('a v1 file carrying rewardMultiplier 20 imports as cinderMultiplier 1, with a warning', () => {
-  const warnings = [];
-  const changes = parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20 }), contentBundle, {},
-    advancedConfigRows(contentBundle), warnings);
-  assert.deepEqual(changes, { [CINDER]: 1 });
+// A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). SPEC §5.1 promises a
+// warning for a profile, a run snapshot or an imported file; a resumed run
+// used to lose the key in silence.
+test('a resumed run whose snapshot carries rewardMultiplier drops it, warns once and is saved once', () => {
+  const run = { seed: 7, advancedConfigSnapshot: Object.freeze({ schemaVersion: 1, overrides: Object.freeze({
+    [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20, [CINDER]: 2 }) }) };
+  const saved = [];
+  const warnings = bringRunSnapshotForward(run, (brought) => saved.push(structuredClone(brought)));
+  assert.deepEqual(run.advancedConfigSnapshot, { schemaVersion: 1, overrides: { [CINDER]: 2 } }, 'both spellings gone, the new key kept');
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /divided by 20/);
-  const newer = [];
-  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [CINDER]: 2 }), contentBundle, {}, [], newer), { [CINDER]: 2 },
-    'the new key wins when both are present');
-  assert.deepEqual(newer, []);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(saved, [run], 'the cleaned run is written back once');
+  assert.deepEqual(configuredContentBundle(contentBundle, run.advancedConfigSnapshot).balance.rewards.cinders.normal, [90, 150]);
+
+  // A clean snapshot, an empty one and a run with none are untouched and not re-saved.
+  for (const clean of [{ advancedConfigSnapshot: { schemaVersion: 1, overrides: { [CINDER]: 2 } } },
+    { advancedConfigSnapshot: { schemaVersion: 1, overrides: {} } }, { seed: 1 }]) {
+    const before = structuredClone(clean);
+    assert.deepEqual(bringRunSnapshotForward(clean, () => assert.fail('nothing to bring forward')), []);
+    assert.deepEqual(clean, before);
+  }
+});
+
+test('resumeRun brings a run snapshot forward on the [advanced-config] channel', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const resume = main.slice(main.indexOf('function resumeRun('), main.indexOf('function saveSlotRecords('));
+  assert.match(resume, /rng = createRng\(run\.seed, run\.streamCounters\);[\s\S]*bringRunSnapshotForward\(run, \(\) => persist\(\)\)\) console\.warn\('\[advanced-config\]', line\)/);
+});
+
+test('a v1 file carrying rewardMultiplier 20 imports without it, with a warning', () => {
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [`settings.${OLD_CINDER}`]: 20, 'gameConfig.balance.startingCinders': 20 }), contentBundle, {},
+    advancedConfigRows(contentBundle), warnings);
+  assert.deepEqual(changes, { 'gameConfig.balance.startingCinders': 20 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /retired/);
+  assert.deepEqual(parseAdvancedConfigFile(v1File({ [OLD_CINDER]: 20, [CINDER]: 2 }), contentBundle, {}, [], []), { [CINDER]: 2 },
+    'the new key still imports beside it');
 });
 
 test('a file written on the old, higher defaults still imports', () => {
@@ -603,4 +625,87 @@ test('a file written on the old, higher defaults still imports', () => {
   // And a larger tuning of the curves than either build shipped.
   const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
+});
+
+// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294) ----------------
+// tests/fixtures/owner-config-0.7.1.json is the file the owner exported from
+// 0.7.1. Retiring the shared opening base/stat rows took them out of the
+// screen's ROWS, and with them the `settings.`-prefixed mirror each export
+// writes, so this exact file refused: "Unknown setting:
+// settings.gameConfig.handRules.starting.base. Nothing was imported." It is
+// imported here through the REAL rows the screen hands the import door.
+test("the owner's exported 0.7.1 configuration imports through the screen's own rows", async () => {
+  const { settingsImportRows } = await import('../src/ui/screens/settings.js');
+  const { scaledCards } = await import('../src/model/handRules.js');
+  const { statRow } = await import('../src/model/statRows.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
+  assert.ok(Object.keys(changes).length > 80, 'everything else in the file lands');
+  assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
+  // Ruleset 7: the hand groups, the fallback hand size and the rating formula
+  // are stat rows; their keys (and their `settings.` mirrors) convert or drop.
+  assert.ok(Object.keys(changes).every((key) => !/handRules\.(starting|turn|capacity)|balance\.handMax|combatRatings\.ratings/.test(key)), 'no retired key is brought back');
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
+  assert.ok(warnings.some((line) => /old limits of 3–15 cards were left out, so the current 4–6 applies/.test(line)));
+  // "start with 4-6 cards": the imported configuration opens every class there.
+  const registries = createRegistries(configuredContentBundle(contentBundle, changes));
+  const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
+  for (const classId of Object.keys(contentBundle.attributeRules.presets.lean)) {
+    const row = statRow(registries, { class: classId }, 'openingHand');
+    const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
+    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
+      const cards = scaledCards(row, attributes);
+      assert.ok(cards >= 4 && cards <= 6, `${classId} opens on ${cards}`);
+    }
+  }
+});
+
+test('a retired row keeps both spellings importable: inert skipped, live mirror read as its row', () => {
+  const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
+  const base = 'gameConfig.balance.energy';
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${base}`]: 4, 'gameConfig.handRules.drawMode': 'fill' }), contentBundle, {}, [], warnings),
+    { 'gameConfig.handRules.drawMode': 'fill' });
+  assert.equal(warnings.length, 1);
+  // A hidden creation mode's pool still applies; its mirror alone reads as it.
+  const pool = 'gameConfig.startingStats.tuned2.bonusPool';
+  assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
+  assert.deepEqual(parseAdvancedConfigFile(file({ [pool]: 9, [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
+  // A key no row ever had still refuses the file.
+  assert.throws(() => parseAdvancedConfigFile(file({ 'settings.gameConfig.balance.bogus': 1 }), contentBundle, {}, [], []), /Unknown setting/);
+});
+
+test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 applies', () => {
+  const MAX = 'gameConfig.handRules.starting.maximum';
+  const MIN = 'gameConfig.handRules.starting.minimum';
+  const ROW = 'gameConfig.derivedStatRules.rules.openingHand.';
+  const profile = { settings: { [MAX]: 15, [MIN]: 3 } };
+  const saved = [];
+  const warnings = [];
+  const settings = bringProfileForward(profile, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
+  // The retired pair goes, nothing else was tuned, so the shipped row applies.
+  assert.deepEqual(settings, {});
+  assert.equal(saved.length, 1, 'written back');
+  assert.match(warnings.join(' '), /3–15/);
+  // Only the retired values go: a chosen cap stays, and a lone floor of 3 is a
+  // choice — each converted onto the opening-hand row (ruleset 7).
+  const chosen = { [MAX]: 5, [MIN]: 3 };
+  normalizeAdvancedSettings(chosen, contentBundle);
+  assert.equal(chosen[`${ROW}max`], 5);
+  assert.equal(chosen[`${ROW}min`], 3);
+  assert.ok(!Object.hasOwn(chosen, MAX) && !Object.hasOwn(chosen, MIN));
+  const capOnly = { [MAX]: 15, [MIN]: 5 };
+  normalizeAdvancedSettings(capOnly, contentBundle);
+  assert.equal(capOnly[`${ROW}min`], 5);
+  assert.equal(capOnly[`${ROW}max`], 6, 'the retired cap of 15 is not carried into the row');
+  // The import door drops it too, in either spelling.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3 } });
+  const importWarnings = [];
+  const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings);
+  assert.equal(imported[`${ROW}max`], 6);
+  assert.equal(imported[`${ROW}byClass.reaver.strength`], 1 / 3, 'a tuned points-per-card converts exactly, as its weight');
+  assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
+  assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
 });
