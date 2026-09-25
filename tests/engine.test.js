@@ -21,6 +21,7 @@ import {
   validateContent,
   extractTemplateTokens,
   computeTokenBindings,
+  cardTokenEffects,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
@@ -965,9 +966,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(loaded), JSON.stringify(run), 'round-trip identical');
     eq(loaded.streamCounters.shuffle, 1, 'rng counters persisted');
 
-    // Unknown schemaVersion → refused, archived, save slot cleared.
-    const tampered = { ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 };
-    storage.setItem(RUN_KEY, JSON.stringify(tampered));
+    // Newer schemaVersion → refused and PRESERVED: the slot keeps the bytes,
+    // nothing is archived (tests/save-migration.test.mjs covers it in full).
+    const tampered = JSON.stringify({ ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 });
+    storage.setItem(RUN_KEY, tampered);
+    eq(saves.loadRun(REG), null, 'newer schemaVersion refused');
+    eq(saves.runStatus().state, 'newer', 'refusal named as newer');
+    eq(storage.getItem(RUN_KEY), tampered, 'newer save left in the slot untouched');
+    eq(storage.getItem(RUN_ARCHIVE_KEY), null, 'newer save not archived');
+
+    // Unknown (non-newer) schemaVersion → refused, archived, save slot cleared.
+    storage.setItem(RUN_KEY, JSON.stringify({ ...run, schemaVersion: 0 }));
     eq(saves.loadRun(REG), null, 'unknown schemaVersion refused');
     assert(storage.getItem(RUN_ARCHIVE_KEY) != null, 'refused save was archived');
     eq(storage.getItem(RUN_KEY), null, 'save slot cleared after archive');
@@ -1414,9 +1423,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           assert(bound.has(tok), `${label}: token {${tok}} unbound`);
         }
       };
-      check(card.textTemplate, card.effects, card.id);
+      // A card's template binds its play effects, then its in-hand hook.
+      check(card.textTemplate, cardTokenEffects(card), card.id);
       if (card.upgrade) {
-        check(card.upgrade.textTemplate ?? card.textTemplate, card.upgrade.effects ?? card.effects, `${card.id}+`);
+        check(card.upgrade.textTemplate ?? card.textTemplate, cardTokenEffects({ effects: card.upgrade.effects ?? card.effects, onTurnEndInHand: card.onTurnEndInHand }), `${card.id}+`);
       }
     }
     const c = makeCombat({ deck: Array(5).fill('strike') });

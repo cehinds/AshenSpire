@@ -153,6 +153,8 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // The scale those attributes were made on: the dodge's Dexterity centre.
+    attributeMode: player.attributeMode || null,
     // Carried for the same reason the attributes are: every mid-fight
     // restamp of the Poise vessel must read the rule this run was born with.
     derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
@@ -352,6 +354,23 @@ function endPlayerTurn(combat, discardIds = []) {
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
   if (combat.result) return;
+
+  // …then each card still in hand fires its authored `onTurnEndInHand` effect
+  // list (e.g. Guilt: lose 1 HP, SPEC §5.2). Content owns the numbers; the
+  // engine only walks the hand, before the hand is discarded.
+  let inHandFired = false;
+  for (const card of [...combat.piles.hand]) {
+    const hook = resolveCard(combat.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      combat.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(combat);
+    if (combat.result) return;
+  }
 
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);

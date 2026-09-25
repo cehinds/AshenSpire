@@ -31,6 +31,7 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     attributes: run.attributes,
+    attributeMode: run.attributeMode, // the scale the dodge reads Dexterity on (plan A3)
     // The rule this run was born with, so the Poise vessel combat stamps
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,

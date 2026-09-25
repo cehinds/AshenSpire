@@ -31,6 +31,11 @@ Those sections continue to describe legacy behavior during migration. New code
 must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
 or card-only poise with the replacement rules.
 
+**Scope for 1.0 (owner ruling D3, 2026-09-24):** the linked contract's three-build
+prototype gate and the class reward-pool expansion from 36 to 50 cards are
+**post-1.0**. The 1.0 release ships the 36-card class pools of §5.1 and does not wait
+on the prototype gate; both remain the contract for the work after 1.0, unchanged.
+
 ---
 
 ## 1. Product overview
@@ -592,10 +597,15 @@ id only (§3.3).
   record restores it without replaying combat start, draws, or enemy rolls. A live action queue
   or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
-- An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
+- An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
+- A `schemaVersion` **newer** than this build is refused and **preserved**, as the profile is
+  (property 1 below): runStatus `newer`, nothing archived, the bytes left in their slot, so
+  opening an old build cannot eat a run a newer one wrote. Every older schema, v1 to the
+  current one, loads and migrates forward; `tests/save-migration.test.mjs` proves it over one
+  real save per version (`tests/fixtures/run-save-schema-versions.json`).
 - **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
   stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
   adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
@@ -951,8 +961,12 @@ profile, run snapshot or imported file carries it.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 39 authored Rogue cards, of which exactly 36 are in its ordinary reward pool, all with
-  upgrades and validation-clean player text;
+- 40 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 36 in its ordinary reward pool (the class row's
+  `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
+  two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
+  starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
+  is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
 - two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
   of each required kind and the same unlock/discovery rules as the existing classes;
@@ -991,7 +1005,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in energy. `+` col
 | Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: Retain 4 of it next turn. | 16 Block |
 | Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
-| Lord's Blood | R | 3 | Power | Bleed thresholds no longer increase after bursting. | cost 2 |
+| Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
 | Grafted Arms | R | 1 | Attack | X-cost: Deal 6 per energy spent, split randomly among enemies as 6-damage hits. | 8 per |
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
@@ -1759,7 +1773,7 @@ Three things this list once excluded have since shipped and are no longer non-go
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-**Status: planned, not shipped.** This section defines the proposed expansion requested in September 2026. It does not assert that the interfaces, content, migrations, or checks below already exist. Existing mechanics remain authoritative until their implementation is delivered and verified. Each implementation PR must identify the requirements it completes and any remaining limitations.
+**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The items still open are the elite count for 1.0 in §12.4 and the Power resting stance in §12.5 (stage 3 rows P6 and P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
 
 ### 12.1 Dodge and action feedback
 
@@ -1793,7 +1807,7 @@ New maps support multiple terminal boss destinations within an act, with distinc
 
 Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
 
-The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **two per seat** (owner ruling D4, 2026-09-24), counted separately from the other two totals. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
 
 Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
 
@@ -2004,8 +2018,9 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 His words: *"I'd like the default stats to be low, with everyone having a total pool of points starting off. the default stat for each stat is 1 and assign allows a user to assign 3 points … reduce equipment requirements accross the board for this low stat environment. Also, I'd like to have more stat customization options in general to be able to make this change in the settings."*
 
 - **Creation offers the `lean` mode** (labelled **Standard** since owner, 2026-09-24 — briefly **Assigned** earlier that day; the id stays `lean`, which saves and exported configurations key on). Baseline **1** across the five attributes, **3** points to place, floor 1 and ceiling 4, `belowBaseline: 'allow'`, `redistribution: 'fixedTotal'`, for a fixed total of **8**. `tuned2` joins `tuned`, `standard` and `pointbuy` in the table and out of creation (`characterCreation.visibleModeIds`) for the same reason they are there: every in-flight save was admitted against its own mode's total at the load door, and a mode that vanished would archive those runs. The ceiling still caps CREATION, not the character. Each class's preset is baseline 1 plus its three points: Reaver STR 3 / CON 2, Starseer INT 3 / WIS 2, Herald WIS 3 / CON 2, Rogue DEX 3 / CON 2.
-- **The pools are not the stats, and the mode says so.** `lean` carries `statConversionScale: 1/5` — the ratio of the two BASELINES, not of the two totals. Ruleset 5's coefficients are authored against the tuned2 span, so the run door divides every rule's `pointsPerTier` by five: **one lean point IS one tuned tier of five**. A character who assigns nothing therefore opens on exactly the pools tuned2 opened with (40 HP before class bonuses, 3 Actions, 5 draw, 5 Mana, 5 Stamina), and each of the three assignable points is worth a whole tier of the old scale. Using the ratio of the TOTALS (8/35) instead would hold the total steady and let the baseline drift, which cost a stock character a third of its action economy.
-- **The mode's scale is the LAST override layer, not the first.** It used to ride in `modeModifiers`, which `resolveDerivedStatRules` applies before `runModifiers` and `explicitOverride`; the Advanced *stat points per tier* dial arrives as an `explicitOverride` whose `defaults` is assigned onto every row, so turning that dial deleted the mode's scale. It is now read off the rules as they finally resolve and re-applied in the last layer, where a layer's `rules` beats its own `defaults`. A combat snapshot carries `derivedStatRuleSnapshot` for the same reason: the Poise vessel is re-derived on restore, and a resumed fight used to re-price it on the authored table.
+- **The pools are the stats; there is no conversion scale** (owner, 2026-09-21, superseding this bullet as first written). `lean` shipped with `statConversionScale: 1/5`, which divided every rule's tier by five so one lean point read as one tuned2 tier. It was removed with derived-stat ruleset 6: *"all calculations should be sum(floor(statmult*stat)) + equipment bonus"*. Every derived row now reads the attribute the character sheet shows, `base + Σ floor(weight × attribute) + floor(perLevel × (level − 1))` (the rows themselves are the owner's defaults of 2026-09-24, §3.5), and no creation mode converts an attribute on its way in. A run snapshotted under the scale restores its own rows.
+- **The Dodge Roll reads the lean scale** (plan A3, 2026-09-24). Its Dexterity term is `floor((DEX − 3) / 2)` (`mechanics.dodgeRoll.dexterityCentreByMode.lean`, `dexterityPerModifier`; no sheet reads as no term) for a run made on the lean scale, not the d20 habit `floor((DEX − 10) / 2)`, which was −3 to −5 for every creatable character (−4 or −5 for every class preset) and left a preset's landed dodge guarding 2 at best when Light, 0 when Medium and less than nothing when Heavy. A landed dodge's guard is `3 + DEX term + class guard`: 5 for Light at DEX 1, 2 for Heavy at DEX 1, the least a creatable sheet can land. The Weight Class prices the dodge at Light 1 Stamina / 0 Actions, Medium 1 / 1, Heavy 2 / 1 (Medium was 2 / 1 and Heavy 3 / 2, more than any class preset's opening Stamina of 1 or 2). Measured with `node tools/runsim.mjs 240 --seeded-seats`: dodges land 57–65% of plays for 4.4–6.0 guard (35–44% for 0.6–2.0 before), and wins stay inside the 35–65% band (Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240). A run made under an older creation mode (`tuned2`, `tuned`, `standard`, `pointbuy`) keeps the d20-scale centre (`mechanics.dodgeRoll.dexterityCentre` 10), so an update never moves its dodge; the mode rides the fight, the co-op seat and the mid-fight save (`combat.attributeMode`, the run's mode for an older snapshot).
+- **A combat snapshot carries `derivedStatRuleSnapshot`.** The Poise vessel is re-derived on restore, and a resumed fight used to re-price it on the authored table. (This bullet once described where the removed conversion scale sat among the override layers; with the scale gone there is nothing to re-apply.)
 - **Equipment minima are rebased again, onto 1–4.** `equipmentRequirements.csv` carries each old value through `round((old − 3) / 3) + 1`: the straight sword asks 2 Strength, the dagger 2 Dexterity, the greatsword 3, the Ash Focus staff 3, and every outfit 3. The kit floor (`startingStatBounds`) therefore puts the least a character can carry at **7** — the Starseer's 3 Intelligence plus a point in each of the other four.
 - **Everything above is a dial.** Advanced → Progression → *Assign points* exposes the starting value for every attribute, the points available to assign, the total, the floor, the creation ceiling and whether points may be taken back off a stat; *Equipment requirements* exposes one row per authored minimum plus an across-the-board multiplier. Baseline and total are the same fact said twice, so the baseline wins when it is set and the total drives when it is not — which is what keeps every configuration exported before the baseline row existed resolving to its own numbers.
 - **Two ways to make a character: Standard and Assign points (owner, 2026-09-24).** His words: creation *"should have the option of standard (pre assigned class presets) and assign points (x points to assign but configurable in advanced settings)"*. `characterCreation.visibleModeIds` is `["lean", "assign"]` and `attributeRules.defaultMode` stays `lean`.
@@ -2013,7 +2028,7 @@ His words: *"I'd like the default stats to be low, with everyone having a total 
   - **Assign points is a new mode, `assign`,** on the same scale (baseline 1, pool 3, floor 1, ceiling 4, `belowBaseline: 'allow'`, `fixedTotal` 8) with `opensOn: 'baseline'`: choosing it opens every attribute at 1 with the whole pool unspent. It is a new id because `lean` is Standard's, and it may not reuse `standard` or `pointbuy`, whose 10-scale totals the saves made under them are still validated against. Its presets (the class grain, equal to lean's) are what the creation preview shows before the pool is spent and the load door's refill value; the player never opens on them. `opensOn` is optional: a mode without it opens on the baseline, which is how every older mode always behaved.
   - **Each mode's dials are its own.** Advanced → Progression → *Starting stats* (the topic was *Assign points* while one mode was offered) carries six rows per offered mode, each labelled with its mode (*Standard — Points available to assign*, *Assign points — Points available to assign*). Typing *Points available to assign* alone now decides the total on the authored starting value (baseline × attributes + pool); before, with no starting value or total typed beside it, the row could not move the total that bounded it. The kit floor still bounds the default mode's pool (Standard: at least 2, the Starseer's staff). The Mana floor check prices the weakest character of every offered mode, not only the default's.
 
-*Falsify:* a bundle whose `lean` preset misses the mode total of 8 or falls outside 1–4 is refused by name, and one that cannot hold its class's baseline kit is refused naming the kit; a stock lean Reaver opens on 3 Actions and 5 draw; a total below 7 is refused naming the Starseer and the Ash Focus; a typed baseline decides the total while a typed total alone still derives the baseline; halving the equipment multiplier halves the table and the kit floor with it; an attribute card reads the run's own tier, not the authored row. Standard opens the Starseer on INT 3 with 0 to spend and Assign points opens it on all 1s with 3; an Assign points character with the pool unspent (total 5) is refused at the run door; setting *Assign points — Points available to assign* to 5 makes that mode total 10 and leaves Standard at 8; a stock Reaver, Rogue, Herald and Starseer open on 4, 5, 5 and 6 cards and never more than 6.
+*Falsify:* a bundle whose `lean` preset misses the mode total of 8 or falls outside 1–4 is refused by name, and one that cannot hold its class's baseline kit is refused naming the kit; a stock lean Reaver opens on 3 Actions and 5 draw; a landed Light dodge at DEX 1 guards 5 and a landed Heavy dodge at DEX 1 guards 2; a total below 7 is refused naming the Starseer and the Ash Focus; a typed baseline decides the total while a typed total alone still derives the baseline; halving the equipment multiplier halves the table and the kit floor with it; an attribute card reads the run's own tier, not the authored row. Standard opens the Starseer on INT 3 with 0 to spend and Assign points opens it on all 1s with 3; an Assign points character with the pool unspent (total 5) is refused at the run door; setting *Assign points — Points available to assign* to 5 makes that mode total 10 and leaves Standard at 8; a stock Reaver, Rogue, Herald and Starseer open on 4, 5, 5 and 6 cards and never more than 6.
 
 ### 13.4n The quest board: a place's service, spoken quests, the run's journal (plan phase 10b)
 

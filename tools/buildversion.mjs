@@ -167,6 +167,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
+  'tools/head-meta.mjs',
 ]);
 
 /**
@@ -914,8 +915,18 @@ export function check(root = REPO_ROOT) {
   //     without moving the string.
   const outside = [];
   const index = src('index.html');
-  const hrefs = [...index.matchAll(/<link\b[^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
-  for (const h of hrefs) {
+  // The quote that opens an href closes it (an inline data: icon carries the
+  // other quote inside it). Only a NON-stylesheet link with a data:/http(s):
+  // scheme is skipped: tools/bundle.mjs resolves every stylesheet href as a
+  // path, so a stylesheet href is always checked as one, and a protocol-relative
+  // `//x` is a path to the bundler (resolve(ROOT, '//etc/x.css') is /etc/x.css).
+  const links = [...index.matchAll(/<link\b[^>]*>/gi)].map((m) => m[0]);
+  for (const tag of links) {
+    const hm = /\bhref=(["'])(.+?)\1/i.exec(tag);
+    if (!hm) continue;
+    const h = hm[2];
+    const isStylesheet = /\brel=(["'])\s*stylesheet\s*\1/i.test(tag);
+    if (!isStylesheet && /^(data:|https?:)/i.test(h)) continue;
     const r = relative(root, resolve(root, h)).split('\\').join('/');
     if (!insideRoots(r)) outside.push(`index.html → ${h}`);
     else {
