@@ -751,3 +751,19 @@ test('a profile restore drops any pending Undo, since it refills the same settin
   const { dropUndoOffer } = await import('../src/ui/screens/settings.js');
   assert.equal(typeof dropUndoOffer, 'function');
 });
+
+test('ownership covers gameConfig.* overrides and keys the current promotion dropped', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const key = 'gameConfig.combatRatings.multiplier';
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const text = profileText({ [key]: 1.5, [SEED_KEY]: { [key]: 1.5 } }, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [key], 'an advanced override can be promotion-owned');
+  // Promoted 40 on the saving device; this build's promotion dropped the key.
+  const device = { musicVolume: 55 };
+  applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, {});
+  assert.deepEqual(device[SEED_KEY], { musicVolume: 40 });
+  const next = seedSettingsDefaults(device, { digest: 'c', values: {} });
+  assert.ok(Object.hasOwn(next, 'musicVolume') && next.musicVolume === undefined, 'seeding clears it back to the code default');
+});

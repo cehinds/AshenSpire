@@ -86,8 +86,9 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
       for (const [key, value] of Object.entries(parsed.changes || {})) {
         // Owned by a promotion on the saving device, even an older one: record
         // the value as the promotion's, so boot's seeding moves it on to the
-        // current promoted value exactly as it would have on that device.
-        if (listed.has(key) && Object.hasOwn(promoted, key)) next[key] = value;
+        // current promoted value — or back to the code default when the
+        // current promotion dropped the key — exactly as it would have there.
+        if (listed.has(key)) next[key] = value;
         else delete next[key];
       }
     }

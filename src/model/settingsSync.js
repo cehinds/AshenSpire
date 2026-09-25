@@ -143,7 +143,10 @@ export function profileText(settings, keys, build = {}) {
   // a later promotion moves exactly what it would have moved here.
   const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
   const file = JSON.parse(text);
-  const promotionOwned = [...new Set(keys)].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && record[key] === settings[key]).sort();
+  // Every key the file carries: the profile's own rows and the gameConfig.*
+  // overrides advancedConfigExport always writes.
+  const exported = new Set([...keys, ...Object.keys(settings || {}).filter((key) => key.startsWith(ADVANCED_CONFIG_PREFIX))]);
+  const promotionOwned = [...exported].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && record[key] === settings[key]).sort();
   return JSON.stringify({ ...file, promotionOwned }, null, 2) + '\n';
 }
 
