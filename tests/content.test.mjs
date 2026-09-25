@@ -77,7 +77,9 @@ async function linkcheck() {
       next += 64;
       const r = await run(['--experimental-vm-modules', 'tools/linkcheck.mjs', `--batch-start=${start}`]);
       const line = r.out.match(/^BATCH_RESULT: (.+)$/m);
-      if (r.code !== 0 || !line) { failures.push(`batch ${start} (exit ${r.code}): ${r.out.slice(-400)}`); continue; }
+      // A batch that cannot report stops every worker: with `total` still
+      // unknown, continuing would spawn batches at ever larger offsets forever.
+      if (r.code !== 0 || !line) { failures.push(`batch ${start} (exit ${r.code}): ${r.out.slice(-400)}`); total = Math.min(total, start); return; }
       const result = JSON.parse(line[1]);
       total = result.total;
       broken.push(...result.broken);
