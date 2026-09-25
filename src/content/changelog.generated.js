@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1316",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the interface-component check is green again and runs with the tests",
+    "detail": "Nothing you see changes. The check that the two component catalogs name the same pieces now compares each family on its own, so a piece moved from one list to the other on one side is caught. Its two red rungs were out of date rather than the game: they still expected the relic rail to hang below the HUD, where it now sits inside it beneath Vitals as the spec says, and they did not know that authored dungeons title their own map or that the Armoury reads a weapon's icon through its one shared lookup. The test suite now runs the whole check.",
+    "build": "0.7.1.503",
+    "pullRequest": 1316,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1316"
+  },
+  {
+    "id": "pr-1312",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The opening-scene list in Settings lays out cleanly",
+    "detail": "Each opening scene now sits on its own full-width row, its name beside its number and its time at the end, with its actions on a line below instead of wrapping into the name. This receipt was written after the fact in #1316, stamped at the build that merge carried.",
+    "build": "0.7.1.502",
+    "pullRequest": 1312,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1312"
+  },
+  {
     "id": "pr-1311",
     "date": "2026-09-25",
     "group": "2026-09-25",
