@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Behind the scenes: the changelog lists this day's entries in build order again",
     "detail": "Nothing you see changes. The prologue journey-scene entry moves up one line so each date's entries read newest build first, and #1305, #1307 and #1310, which landed without entries, get their receipts below.",
-    "build": "0.7.1.488",
+    "build": "0.7.1.491",
     "pullRequest": 1303,
     "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1276",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two content checks that had gone stale are fixed and now run with every test",
+    "detail": "Nothing you see in the game changes. The check that the Rogue is complete and the check that every enemy is reachable and grows stronger in order as you climb had both gone red unseen, because they counted cards, outfits, enemies and flask charges from an older roster and grouped fights by a retired act number. They now read those counts from the game's own data, group fights by the seat they belong to, and run in the test suite, so the next time either goes red a pull request fails instead of nobody noticing.",
+    "build": "0.7.1.490",
+    "pullRequest": 1276,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1276"
   },
   {
     "id": "pr-1309",
