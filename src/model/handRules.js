@@ -1,5 +1,5 @@
 import { handRulesDefaults } from '../content/handRules.js';
-import { HAND_STAT_IDS, statRowValue } from './derivedStats.js';
+import { HAND_STAT_IDS, statRowValue, storedStatRowProblems } from './derivedStats.js';
 import { HAND_GROUP_ROWS, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
@@ -38,6 +38,9 @@ function rowProblems(rows, problems) {
       if (row[key] !== undefined && row[key] !== null && (!Number.isInteger(row[key]) || row[key] < 0)) problems.push(`Hand rules: invalid ${id}.${key}`);
     }
     if (Number.isInteger(row.min) && Number.isInteger(row.max) && row.min > row.max) problems.push(`Hand rules: ${id} min must not exceed max`);
+    // Carrier fields (`rounding`, `pointsPerIncrease`, `multiplier`, …) are
+    // executable arithmetic: the row must price, or the next draw throws.
+    problems.push(...storedStatRowProblems(row, `Hand rules: ${id}`));
     // A hand holds at least one card, at the fight door as at the content and
     // settings doors (model/derivedStats.js), or a resumed fight deals nothing.
     if (id === 'handSize' && (!Number.isInteger(row.min) || row.min < 1 || (Number.isInteger(row.max) && row.max < 1))) {

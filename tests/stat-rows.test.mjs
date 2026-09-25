@@ -433,3 +433,21 @@ test('a saved fight whose hand size can reach 0 is refused at the fight door', a
     assert(handRulesProblems(resolveHandRules({}, { ...rows, handSize })).some((line) => /handSize min and max/.test(line)), JSON.stringify(handSize));
   }
 });
+
+test('a saved fight with an unpriceable hand or rating row, or rating rules without rows, is refused (Codex, #1296)', async () => {
+  const { handRulesProblems, resolveHandRules } = await import('../src/model/handRules.js');
+  const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
+  const rows = { openingHand: { base: 4 }, draw: { base: 2 }, handSize: { base: 7, min: 1, max: 30 } };
+  for (const draw of [{ base: 2, rounding: 'bogus' }, { base: 2, pointsPerIncrease: 0 }, { base: 2, mystery: 1 }]) {
+    assert(handRulesProblems(resolveHandRules({}, { ...rows, draw })).some((line) => /draw/.test(line)), JSON.stringify(draw));
+  }
+  const registries = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.combatRatings.enabled': true }));
+  const run = createRunState({ seed: 4, classId: 'reaver', registries });
+  const snapshot = serializeCombatSnapshot(createRunCombat({ registries, rng: createRng(4), run, enemyIds: ['wanderingSoldier'] }));
+  assert(snapshot.ratingsRules, 'the fight carries rating rules');
+  assert.deepEqual(combatSnapshotProblems(snapshot), []);
+  const { ratings, ...withoutRows } = snapshot.ratingsRules;
+  assert(combatSnapshotProblems({ ...snapshot, ratingsRules: withoutRows }).some((line) => /missing rating rows/.test(line)));
+  const badAr = { ...snapshot.ratingsRules, ratings: { ...ratings, ar: { ...ratings.ar, rounding: 'bogus' } } };
+  assert(combatSnapshotProblems({ ...snapshot, ratingsRules: badAr }).some((line) => /Combat ratings: ar/.test(line)));
+});

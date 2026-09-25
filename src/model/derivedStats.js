@@ -1028,3 +1028,25 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
     ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
   };
 }
+
+/**
+ * storedStatRowProblems(row, path) → what is wrong with one stat row read
+ * back from a saved fight: a field no row carries, or a row the one formula
+ * cannot price. A saved fight is refused at the save door rather than
+ * resumed into a throw on its next draw or rating (Codex, #1296).
+ */
+const STORED_ROW_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+export function storedStatRowProblems(row, path) {
+  if (!plainObject(row)) return [`${path} is missing`];
+  const known = new Set([...STORED_ROW_ATTRIBUTES, 'base', 'perLevel', 'min', 'max', 'attributeBaseline', ...CARRIER_FIELDS]);
+  const unknown = Object.keys(row).filter((key) => !known.has(key));
+  if (unknown.length) return [`${path} has unknown field(s): ${unknown.join(', ')}`];
+  try {
+    const probe = Object.fromEntries(STORED_ROW_ATTRIBUTES.map((id) => [id, 7]));
+    const { value } = statRowValue(row, { attributes: probe, level: 3, statId: path, lenientAttributes: true });
+    if (!Number.isFinite(value)) return [`${path} does not price to a number`];
+  } catch (error) {
+    return [`${path}: ${error.message}`];
+  }
+  return [];
+}
