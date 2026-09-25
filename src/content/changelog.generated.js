@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1315",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Loading a save from a newer version mid-climb no longer throws away the climb you're on",
+    "detail": "Choosing Load from the in-game menu on a slot saved by a newer version of Ashen Spire now says straight away that it cannot be opened here and leaves your current climb exactly where it was. Before, it closed the menu, failed to load, and dropped you on the title screen with the climb in hand gone. A new browser check also walks away from a fight without saving and loads the slot through the real menu, and confirms the fight starts again at turn 1 with the same health, the same opening hand and the same deck.",
+    "build": "0.7.1.502",
+    "pullRequest": 1315,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1315"
+  },
+  {
     "id": "pr-1301",
     "date": "2026-09-25",
     "group": "2026-09-25",
