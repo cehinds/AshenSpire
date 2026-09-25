@@ -16,6 +16,14 @@ stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
 CI hydrates these files, and historical build readers verify their content hashes.
 
 
+Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
+searches every section; `src/ui/buildChannel.js` decides whether the debug-only
+sections (tuning, layout, import/export, Defaults & sync) are shown — dev and
+test builds only, never main or release; `src/model/settingsSync.js` keeps a
+settings profile on GitHub. Review, design and next steps are in
+[docs/SETTINGS-REVAMP.md](docs/SETTINGS-REVAMP.md); run
+`node --test tests/settings-revamp.test.mjs`.
+
 Hand management lives in `src/content/handRules.js` (defaults),
 `src/model/handRules.js` (settings and stat formula), and
 `src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a

@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "ec2d1799fb555e4b"
+      "digest": "a3043f4086aa8d3b"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -297,8 +297,8 @@
       "digest": "0df767382db6375e"
     },
     "tools/slot-load-door.mjs": {
-      "count": 3,
-      "digest": "a6374cf9a8dcf270"
+      "count": 4,
+      "digest": "72c9109639d0c591"
     },
     "tools/startup-gate.mjs": {
       "count": 26,

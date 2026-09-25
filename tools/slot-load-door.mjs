@@ -50,7 +50,9 @@ if (process.argv.includes('--selftest')) {
         file: 'src/main.js',
         find: '  if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });',
         replace: '  // slot-load-door selftest plant',
-        expectRed: /RED SLOT-LOAD-NEWER-KEEPS-RUN/,
+        // The press-time recheck still keeps the run; what goes is the
+        // up-front refusal — the player is asked to load a slot that can't.
+        expectRed: /RED SLOT-LOAD-NEWER-NOTICE/,
       },
       {
         name: 'the confirm press stops rechecking for a newer slot',
