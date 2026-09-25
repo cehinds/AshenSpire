@@ -680,12 +680,12 @@
    actor (--idle-ms / --idle-delay, assets.js idleRhythm). `.hit-stop *`
    pauses it with everything else; reduced motion and lite rendering stop it. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2.5px; } }
-.combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) {
+.combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img, .rendered-stage > .painted-presentation) {
   animation: sprite-idle var(--idle-ms, 3.2s) ease-in-out var(--idle-delay, 0s) infinite;
 }
 /* A fallen combatant holds still: the idle drift kept every dead sprite on the
    compositor's per-frame list for the rest of the fight. */
-.combatant:is(.dead, .down) .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+.combatant:is(.dead, .down) .sprite :is(.facing > img, .pose-layer, .painted-outfit > img, .rendered-stage > .painted-presentation) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -705,9 +705,9 @@
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.reduced-motion .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+.reduced-motion .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img, .rendered-stage > .painted-presentation) { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+  .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img, .rendered-stage > .painted-presentation) { animation: none; }
 }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
@@ -729,7 +729,8 @@
   --card-name-h: 1.3rem; --card-art-h: 2.2rem; --card-band-h: 1.1rem;
   --card-row: 0.75rem; --card-gap: 0.2rem;
   width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
-  transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
+  /* Upright here (no fan angle), but hover/selection still lift through --lift. */
+  transform: translateY(calc(var(--lift, 0px) - var(--fan-lift, 0px))) !important;
 }
 :root[data-composition='short-wide'] .combat.coop .hand .card .cost {
   top: -0.6rem; left: -0.6rem; width: 2.4rem; height: 2.4rem;
@@ -751,7 +752,7 @@
 }
 :root[data-composition='short-wide'] .combat.coop .hand .card:hover,
 :root[data-composition='short-wide'] .combat.coop .hand .card.selected {
-  --lift: -12px; --lift-scale: 1.1;
+  --lift: -12px; --lift-scale: 1; /* no scale: the kit hit lane cancels lift, not scale */
 }
 :root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
@@ -1471,7 +1472,7 @@
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
 :root[data-performance='lite'] .backdrop::after,
-:root[data-performance='lite'] .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+:root[data-performance='lite'] .sprite :is(.facing > img, .pose-layer, .painted-outfit > img, .rendered-stage > .painted-presentation) { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
