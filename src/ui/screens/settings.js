@@ -1243,10 +1243,15 @@ export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
 // value every touched key held before (undefined = was not stored).
 const UNDO_MS = 8000;
 let undoOffer = null;
-/** offerUndo(label, snapshot) — the next paint shows "label · Undo". */
-export function offerUndo(label, snapshot) {
+/**
+ * offerUndo(label, snapshot, owner) — the next paint shows "label · Undo".
+ * `owner` is the settings object the snapshot was taken from: an offer is only
+ * ever painted over that same object, so a profile restored in between never
+ * receives another profile's values.
+ */
+export function offerUndo(label, snapshot, owner = null) {
   if (!snapshot || !Object.keys(snapshot).length) return;
-  undoOffer = { label, snapshot, until: Date.now() + UNDO_MS };
+  undoOffer = { label, snapshot, owner, until: Date.now() + UNDO_MS };
 }
 
 /**
@@ -1292,9 +1297,13 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     return snapshot;
   }
   const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
-  // Undo puts back which values the promotion owned, as well as the values.
-  if (moved.length && Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore;
-  offerUndo(label, undo);
+  // Undo puts back which values the promotion owned, as well as the values —
+  // also when only that moved (every key already sat at its promoted value
+  // but was the player's): that reset is saved, so it can be undone.
+  const seedMoved = Object.hasOwn(changed, SEED_KEY)
+    && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
+  if (moved.length || seedMoved) { if (Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore; }
+  offerUndo(label, undo, settings);
   return snapshot;
 }
 
@@ -2539,7 +2548,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   let undoTimer = null;
   function paintUndo() {
     container.querySelector(':scope > .set-undo')?.remove();
-    if (!undoOffer || Date.now() > undoOffer.until) { undoOffer = null; return; }
+    if (!undoOffer || Date.now() > undoOffer.until || (undoOffer.owner && undoOffer.owner !== settings)) { undoOffer = null; return; }
     const offer = undoOffer;
     const bar = document.createElement('div');
     bar.className = 'set-undo';
@@ -2740,7 +2749,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
   if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before) => {
-    if (moved) offerUndo(`Profile loaded (${moved} setting${moved === 1 ? '' : 's'})`, before);
+    if (moved) offerUndo(`Profile loaded (${moved} setting${moved === 1 ? '' : 's'})`, before, settings);
     repaintPanel({ keepScroll: true });
   } });
 

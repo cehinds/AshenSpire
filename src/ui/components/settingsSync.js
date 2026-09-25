@@ -11,7 +11,7 @@ import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { SEED_KEY } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
-  SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
+  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff,
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
@@ -65,18 +65,30 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     had[key] = Object.hasOwn(settings, key) ? { value: settings[key] } : null;
     if (to === undefined) delete settings[key]; else settings[key] = to;
   }
-  // A key the profile leaves out goes back to the promotion, and is the
-  // promotion's again (as a Reset makes it): say so in the seed record, and
-  // prune it as the save path would, since sending the record overrides that.
+  // Who owns each value afterwards, in the seed record. A key the profile
+  // leaves out goes back to the promotion, and is the promotion's again (as a
+  // Reset makes it). A key the profile sets takes the ownership the saving
+  // device gave it (`promotionOwned`), when the profile says; a profile saved
+  // before that field leaves ownership alone. A key moved off its recorded
+  // value is pruned, as the save path would, since sending the record
+  // overrides that.
   const toPromotion = (parsed.cleared || []).filter((key) => Object.hasOwn(promoted, key));
-  if (toPromotion.length) {
+  const listed = Array.isArray(parsed.promotionOwned) ? new Set(parsed.promotionOwned) : null;
+  if (toPromotion.length || listed) {
     const record = seedBefore && typeof seedBefore === 'object' ? seedBefore : {};
     const next = { ...record };
     for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
     for (const key of toPromotion) next[key] = promoted[key];
+    if (listed) {
+      for (const [key, value] of Object.entries(parsed.changes || {})) {
+        if (listed.has(key) && Object.hasOwn(promoted, key) && promoted[key] === value) next[key] = value;
+        else delete next[key];
+      }
+    }
     // Only when it changes: a load that moves nothing and owns nothing new
     // writes nothing.
-    if (JSON.stringify(next) !== JSON.stringify(record) || seedBefore === undefined) {
+    const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(record).sort());
+    if (!same || (seedBefore === undefined && Object.keys(next).length)) {
       settings[SEED_KEY] = next;
       changed[SEED_KEY] = next;
     }
@@ -414,6 +426,10 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('where', () => {
       const raw = {};
       mount.querySelectorAll('[data-sync-field]').forEach((input) => { raw[input.dataset.syncField] = input.value.trim(); });
+      // A mistyped field is refused by name, never swapped for the default
+      // location (a Save there would overwrite the default profile).
+      const problems = syncConfigProblems(raw);
+      if (problems.length) { status(`Not saved: check ${problems.join(', ')}. Profiles live under settings-profiles/ on a branch other than dev, test, release or main.`); return; }
       const next = syncConfig(raw);
       if (!write(SYNC_STORAGE.config, JSON.stringify(next))) { status(STORAGE_REFUSED); return; }
       cfg = next;

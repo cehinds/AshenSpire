@@ -22,6 +22,7 @@
 // Everything here is plain functions over (config, token, fetch). The screen
 // owns the buttons; tests own a fake fetch.
 
+import { SEED_KEY } from './settingsDefaults.js';
 import { advancedConfigExport, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
 
 export const SYNC_DEFAULTS = Object.freeze({
@@ -97,6 +98,17 @@ export function syncConfig(raw = {}) {
   };
 }
 
+/**
+ * syncConfigProblems(raw) → the fields syncConfig would replace with a default,
+ * by name ([] when every field stands). A typed location is refused rather
+ * than quietly swapped for the default profile, which a Save would overwrite.
+ * An empty field is not a problem: it asks for the default.
+ */
+export function syncConfigProblems(raw = {}) {
+  const cfg = syncConfig(raw);
+  return Object.keys(cfg).filter((key) => typeof raw?.[key] === 'string' && raw[key] !== '' && raw[key] !== cfg[key]);
+}
+
 const api = (cfg) => `https://api.github.com/repos/${cfg.owner}/${cfg.repo}`;
 const encodePath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
@@ -125,7 +137,14 @@ export function profileKeys(rows, options = {}) {
 
 /** profileText(settings, keys, build) → the JSON a profile file holds. */
 export function profileText(settings, keys, build = {}) {
-  return advancedConfigExport(settings, { ...build, profile: true }, keys);
+  const text = advancedConfigExport(settings, { ...build, profile: true }, keys);
+  // Which of these values are the owner's promoted defaults rather than the
+  // player's own choice: a device loading the profile takes that over too, so
+  // a later promotion moves exactly what it would have moved here.
+  const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+  const file = JSON.parse(text);
+  const promotionOwned = [...new Set(keys)].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && record[key] === settings[key]).sort();
+  return JSON.stringify({ ...file, promotionOwned }, null, 2) + '\n';
 }
 
 /**
@@ -144,7 +163,14 @@ export function profileChanges(text, bundle, settings, rows, keys) {
   for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
   const cleared = Object.keys(settings || {}).filter((key) => settings[key] !== undefined
     && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key)));
-  return { changes, cleared, warnings };
+  // Absent in a profile saved before this field existed: then ownership is
+  // left as it is (null), rather than guessed.
+  let promotionOwned = null;
+  try {
+    const listed = JSON.parse(text).promotionOwned;
+    if (Array.isArray(listed)) promotionOwned = listed.filter((key) => typeof key === 'string' && key in changes);
+  } catch { /* parseAdvancedConfigFile already accepted the text */ }
+  return { changes, cleared, warnings, promotionOwned };
 }
 
 /**

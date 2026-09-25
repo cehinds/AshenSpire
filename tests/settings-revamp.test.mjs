@@ -590,7 +590,7 @@ test('Save drops an older preview, and Undo gives promotion ownership back', asy
   resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(moved\.length && Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore;/);
+  assert.match(screen, /if \(moved\.length \|\| seedMoved\) \{ if \(Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore; \}/);
 });
 
 test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
@@ -673,4 +673,56 @@ test('a manual load that matches still saves promotion ownership before it is ma
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}\s*if \(!write\(SYNC_STORAGE\.lastSha/);
+});
+
+test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: moved musicVolume off the promoted 40 and back — its own
+  // choice; sfxVolume 30 is still the promotion's.
+  const deviceA = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, ['sfxVolume']);
+  // Device B: seeded both, both owned by the promotion.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40, sfxVolume: 30 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.deepEqual(parsed.promotionOwned, ['sfxVolume']);
+  const seen = [];
+  const moved = applyProfile(deviceB, (c) => { seen.push(c); return { ok: true }; }, parsed, { musicVolume: 40, sfxVolume: 30 });
+  assert.equal(moved, 0, 'no visible value moved');
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'musicVolume is now the player\'s, as it was on A');
+  // A profile saved before the field existed leaves ownership alone.
+  const legacy = JSON.stringify({ ...JSON.parse(text), promotionOwned: undefined });
+  const deviceC = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const legacyParsed = profileChanges(legacy, contentBundle, deviceC, rows, keys);
+  assert.equal(legacyParsed.promotionOwned, null);
+  applyProfile(deviceC, () => ({ ok: true }), legacyParsed, { musicVolume: 40 });
+  assert.deepEqual(deviceC[SEED_KEY], { musicVolume: 40 });
+});
+
+test('an Undo is painted only over the settings it was taken from; a seed-only reset can be undone', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /undoOffer\.owner && undoOffer\.owner !== settings\)\) \{ undoOffer = null; return; \}/);
+  assert.match(screen, /offerUndo\(label, undo, settings\);/);
+  assert.match(screen, /before, settings\);/, 'a profile load\'s Undo is bound too');
+  // Every key already at its promoted value, but the player's: only ownership moves.
+  const settings = { musicVolume: 40 };
+  resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  assert.match(screen, /if \(moved\.length \|\| seedMoved\) \{ if \(Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore; \}/);
+});
+
+test('a mistyped sync location is refused by name, never swapped for the default', async () => {
+  const { syncConfigProblems } = await import('../src/model/settingsSync.js');
+  assert.deepEqual(syncConfigProblems({ path: 'profiles/desk.json' }), ['path']);
+  assert.deepEqual(syncConfigProblems({ branch: 'main' }), ['branch']);
+  assert.deepEqual(syncConfigProblems({ path: 'settings-profiles/desk.json', owner: '' }), [], 'empty asks for the default');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const problems = syncConfigProblems\(raw\);\s*if \(problems\.length\) \{ status\(`Not saved: check/);
 });
