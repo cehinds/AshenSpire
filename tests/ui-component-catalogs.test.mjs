@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { catalogDisagreement, findings, receipt } from '../tools/ui-components.mjs';
+import { catalogDisagreement, findings, railUnderMeters, receipt } from '../tools/ui-components.mjs';
 
 const md = readFileSync(new URL('../docs/COMPONENT-CATALOG.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const html = readFileSync(new URL('../docs/component-catalog.html', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
@@ -83,4 +83,41 @@ test('an armoury record moved into the interactive SEMANTIC_COMPONENTS array fai
 // that run. Its plants live in `node tools/ui-components.mjs --selftest`.
 test('every reusable component contract of tools/ui-components.mjs holds on this checkout', () => {
   assert.deepEqual(findings(receipt()), []);
+});
+
+// An empty family names itself: with the Markdown Rendered-family table gone,
+// the message says that catalog listed no Armoury ids, not only that every
+// Armoury id is one-sided.
+test('an empty family says which catalog listed no ids for it', () => {
+  const r = receipt();
+  const emptied = r.catalogMarkdown.replace('| Rendered family |', '| Rendered families (renamed) |');
+  assert.notEqual(emptied, r.catalogMarkdown);
+  assert.match(c22({ ...r, catalogMarkdown: emptied }).join('\n'), /COMPONENT-CATALOG\.md listed no armoury ids/);
+});
+
+const c12 = (r) => findings(r).filter((line) => line.startsWith('C12 '));
+
+// Codex, #1316: a HUD layout override that drops its `meters` row is a broken
+// grid, not one to skip. railUnderMeters judges every shared-HUD grid.
+test('a HUD layout override that drops its meters row fails C12', () => {
+  const r = receipt();
+  const kit = r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";');
+  assert.notEqual(kit, r.kit);
+  assert.equal(railUnderMeters(kit), false);
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
+// Review of #1316: the rail is in flow only if nothing later hangs it again,
+// in the same rule or in a later .hud-bottom rule.
+test('a later declaration that hangs the relic rail again fails C12', () => {
+  const r = receipt();
+  const kit = r.kit.replace('align-self: start; pointer-events: none;\n}', 'align-self: start; pointer-events: none;\n  position: absolute;\n}');
+  assert.notEqual(kit, r.kit);
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
+test('a later .hud-bottom rule that hangs the relic rail again fails C12', () => {
+  const r = receipt();
+  const kit = `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n`;
+  assert.equal(c12({ ...r, kit }).length, 1);
 });

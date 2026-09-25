@@ -110,26 +110,47 @@ export function catalogDisagreement(md, html) {
   const htmlFamilies = htmlCatalogFamilies(html);
   const markdownOnly = [];
   const htmlOnly = [];
-  let empty = false;
+  // Each side that listed no ids for a family, named, so an emptied table
+  // reads as "listed no armoury ids" and not only as every id one-sided.
+  const emptyFamilies = [];
   for (const family of ['semantic', 'armoury']) {
     const mdIds = new Set(mdFamilies[family]);
     const htmlIds = new Set(htmlFamilies[family]);
-    if (!mdIds.size || !htmlIds.size) empty = true;
+    if (!mdIds.size) emptyFamilies.push(`COMPONENT-CATALOG.md listed no ${family} ids`);
+    if (!htmlIds.size) emptyFamilies.push(`component-catalog.html listed no ${family} ids`);
     markdownOnly.push(...[...mdIds].filter((id) => !htmlIds.has(id)).map((id) => `${id} [${family}]`));
     htmlOnly.push(...[...htmlIds].filter((id) => !mdIds.has(id)).map((id) => `${id} [${family}]`));
   }
-  return { markdownOnly, htmlOnly, empty };
+  return { markdownOnly, htmlOnly, empty: emptyFamilies.length > 0, emptyFamilies };
 }
 
 // Every shared-HUD grid (the base band, the compact and wide map headers, the
-// narrow phone band) that lays out a `meters` row puts a `rail` row directly
-// beneath it, in the same column, and the base band has such a grid.
+// narrow phone band) that sets grid-template-areas lays out a `meters` row and
+// puts a `rail` row directly beneath it, in the same column, and the base band
+// has such a grid. A grid that drops `meters` is judged, not skipped: Vitals
+// would fall into an implicit area (Codex, #1316).
 export function railUnderMeters(css) {
   const grids = [...css.matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
     .map((m) => ({ selector: m[1].trim(), rows: m[2].match(/grid-template-areas:([^;]*);/)?.[1].match(/"[^"]*"/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
-    .filter((g) => g.rows?.some((row) => row.includes('meters')));
+    .filter((g) => g.rows);
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
-    && grids.every(({ rows }) => rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
+    && grids.every(({ rows }) => rows.some((row) => row.includes('meters'))
+      && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
+}
+
+// The relic rail is in flow: the base `.shared-hud .hud-bottom` rule's LAST
+// position declaration is static and it takes the `rail` area, and no rule
+// whose subject is `.hud-bottom` (the rail itself, in any layout or media
+// override; not its children) hangs it again with absolute or fixed.
+export function railInFlow(css) {
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]*)\{([^{}]*)\}/g)]
+    .map((m) => ({ selector: m[1].trim(), body: m[2] }))
+    .filter((rule) => rule.selector.split(',').some((part) => /\.hud-bottom(?:[:[][^\s>+~]*)?\s*$/.test(part)));
+  const base = rules.find((rule) => rule.selector === '.shared-hud .hud-bottom');
+  const lastPosition = base && [...base.body.matchAll(/(?:^|[;\s])position:\s*([a-z-]+)/g)].at(-1)?.[1];
+  return lastPosition === 'static'
+    && /grid-area:\s*rail;/.test(base.body)
+    && !rules.some((rule) => /(?:^|[;\s])position:\s*(?:absolute|fixed)\b/.test(rule.body));
 }
 
 export function receipt() {
@@ -388,7 +409,7 @@ export function findings(r) {
       // this clause pinned the hang and left C12 red on dev. What it means
       // now: the rail is in flow in the `rail` area, and the shared grid
       // stacks a rail row directly under the meters row.
-      || !/\.shared-hud \.hud-bottom \{[^}]*position: static;[^}]*grid-area: rail;/.test(r.kit)
+      || !railInFlow(r.kit)
       || !railUnderMeters(r.kit)
       // The relic rail is the shared icon tray (components/iconTray.js), the
       // combatant card's status row its reference: the rail wears the tray's
@@ -611,7 +632,7 @@ export function findings(r) {
   }
   const split = catalogDisagreement(r.catalogMarkdown, r.catalogHtml);
   if (split.empty || split.markdownOnly.length || split.htmlOnly.length) {
-    bad.push(`C22 the two component catalogs disagree — only in COMPONENT-CATALOG.md: ${split.markdownOnly.join(', ') || 'none'}; only in component-catalog.html: ${split.htmlOnly.join(', ') || (split.empty ? 'a catalog listed no ids' : 'none')}`);
+    bad.push(`C22 the two component catalogs disagree — ${split.emptyFamilies.map((line) => `${line}; `).join('')}only in COMPONENT-CATALOG.md: ${split.markdownOnly.join(', ') || 'none'}; only in component-catalog.html: ${split.htmlOnly.join(', ') || 'none'}`);
   }
   return bad;
 }
@@ -634,6 +655,12 @@ function selftest() {
     ['hang the relic rail beneath the HUD again', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\.shared-hud \.hud-bottom \{[^}]*)position: static;/, '$1position: absolute;') })],
     ['drop the rail row from under the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"meters actions" "rail actions" "route route"', '"meters actions" "route route"') })],
     ['put the phone band\'s rail beside the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\[data-layout='narrow'\] \.shared-hud > \.hud-top \{[^}]*)"meters actions" "rail actions"/, '$1"meters rail" "actions actions"') })],
+    // Review of #1316: the in-flow rule reads the LAST position declaration
+    // and every rule on the rail, so a later override is still red.
+    ['re-hang the relic rail later in its own rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\.shared-hud \.hud-bottom \{[^}]*)\}/, '$1  position: absolute;\n}') })],
+    ['re-hang the relic rail from a later layout rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n` })],
+    // Codex, #1316: an override grid that drops `meters` is judged, not skipped.
+    ['drop the meters row from a map-header override', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
@@ -673,6 +700,8 @@ function selftest() {
   }
   if (failures) process.exitCode = 1;
   else console.log(`ui-components --selftest: OK — ${plants.length}/${plants.length} plants observed red`);
+  // The one line tests/run-node.mjs quotes (rung 94).
+  console.log(`RESULT: ${failures ? `${failures} of ${plants.length + 1} selftest check(s) failed.` : `${plants.length}/${plants.length} known-bad plants observed red and the clean source holds.`}`);
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
@@ -683,4 +712,6 @@ else {
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
   else console.log('ui-components: OK — 22/22 reusable component contracts hold');
+  // The one line tests/run-node.mjs quotes (rung 95).
+  console.log(`RESULT: ${bad.length ? `${bad.length} reusable component contract(s) broken.` : '22/22 reusable component contracts hold.'}`);
 }
