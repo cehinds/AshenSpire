@@ -10,15 +10,28 @@
 //   1. BEHAVIOUR. A real run and a real fight are taken mid-combat (a card
 //      played, the enemies holding intents), the production lifecycle
 //      listeners are installed on a stand-in window/document — the global
-//      input layer (`initInput`) and a card drag held in flight
-//      (`trackGesture`, wired exactly as combat.js wires its drag) — and a full
+//      input layer (`initInput`) with an input gate AND a held key press
+//      armed, and a card drag held in flight (`trackGesture` ending in
+//      `finishCardDrag`, the very function combat.js hands it) — and a full
 //      hidden→visible cycle is dispatched. The run and the fight must
-//      deep-equal their snapshots from before, minus timestamps, and the drag
-//      must end CANCELLED (a cancelled drag drops nothing).
-//   2. INVENTORY. Every page-lifecycle listener in src/ is listed below with
-//      the reason it is safe. A new one fails this file until it is added
-//      here — so a handler that would mutate state on background cannot land
-//      unseen.
+//      deep-equal their snapshots from before, minus timestamps; the gate and
+//      the press must be told CANCEL; the drag must end CANCELLED and drop
+//      nothing.
+//   2. INVENTORY. Every listener registered on the page itself — any
+//      `addEventListener(` on window/document/globalThis/self or a bare
+//      global, and any `window.on<event> =` — in src/ is pinned below, ONE
+//      ENTRY PER CALL SITE, whatever its first argument is. A new call site,
+//      or a second one for an event already listed, fails this file until it
+//      is added here; a page-lifecycle event or a computed event name must
+//      also say why it cannot move state. The registrations the behaviour
+//      half makes are also captured at runtime and checked against the pins.
+//
+// WHY A STATIC INVENTORY AND NOT ONLY RUNTIME CAPTURE. The node runner has no
+// DOM (no jsdom, no package.json), so main.js cannot boot here; and most page
+// listeners register only when their screen or modal mounts (the prologue's
+// `visibilitychange`, a modal's keydown), so capturing a boot would miss them
+// anyway. Runtime capture is used where it can run — the two modules the
+// behaviour half boots — and the call-site inventory covers everything else.
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -30,9 +43,11 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { finishCardDrag } from '../src/ui/cardDragEnd.js';
 import { affordableCards } from '../tools/simbot.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const LIFECYCLE_EVENTS = ['visibilitychange', 'pagehide', 'pageshow', 'freeze', 'resume', 'blur', 'focus', 'beforeunload', 'unload'];
 
 // ---- a stand-in page: window + document as real EventTargets -----------------
 let hidden = false;
@@ -43,12 +58,40 @@ Object.defineProperties(doc, {
   visibilityState: { get: () => (hidden ? 'hidden' : 'visible') },
 });
 Object.assign(doc, {
-  body: { classList: { add() {}, remove() {}, contains: () => false } },
+  body: { classList: { add() {}, remove() {}, contains: () => false }, contains: () => true },
   activeElement: null,
   getElementById: () => null,
   querySelector: () => null,
   querySelectorAll: () => [],
 });
+
+// RUNTIME CAPTURE. Every listener the booted modules put on the page — by
+// addEventListener or by an on<event> property — is recorded with the src/
+// file that registered it, read off the call stack.
+const captured = [];
+function callerFile() {
+  const frame = (new Error().stack || '').split('\n').find((line) => /[\\/]src[\\/].+\.m?js/.test(line));
+  const m = frame && frame.match(/([\\/]src[\\/][^:)]+\.m?js)/);
+  return m ? `src/${m[1].split(/[\\/]src[\\/]/).pop().split('\\').join('/')}` : '(outside src)';
+}
+for (const [name, target] of [['window', win], ['document', doc]]) {
+  const add = target.addEventListener.bind(target);
+  target.addEventListener = (type, ...rest) => { captured.push({ target: name, type: String(type), file: callerFile() }); return add(type, ...rest); };
+  for (const event of LIFECYCLE_EVENTS) {
+    let handler = null;
+    Object.defineProperty(target, `on${event}`, {
+      configurable: true,
+      get: () => handler,
+      set: (fn) => {
+        captured.push({ target: name, type: event, file: callerFile(), property: true });
+        if (handler) target.removeEventListener(event, handler);
+        handler = fn;
+        if (fn) add(event, fn);
+      },
+    });
+  }
+}
+
 // Remember what was there so the stand-ins never leak past this file, even if
 // the runner is ever switched to run several files in one process.
 const STUBBED = ['window', 'document', 'addEventListener', 'removeEventListener', 'navigator'];
@@ -63,14 +106,14 @@ after(() => {
 });
 globalThis.window = win;
 globalThis.document = doc;
-globalThis.addEventListener = win.addEventListener.bind(win);
+globalThis.addEventListener = (...args) => win.addEventListener(...args);
 globalThis.removeEventListener = win.removeEventListener.bind(win);
 if (typeof globalThis.navigator === 'undefined' || !('getGamepads' in globalThis.navigator)) {
   try { Object.defineProperty(globalThis, 'navigator', { value: { ...(globalThis.navigator || {}), getGamepads: () => [] }, configurable: true }); } catch { /* read-only navigator: input.js guards the call */ }
 }
 
-const { initInput, setInputGate } = await import('../src/ui/input.js');
-const { trackGesture } = await import('../src/ui/gesture.js');
+const { initInput, setInputGate, setActionControl } = await import('../src/ui/input.js');
+const { trackGesture, PRESS_EVENT, RELEASE_EVENT } = await import('../src/ui/gesture.js');
 
 // ---- snapshot: deep copy, cycles kept, functions by identity, no timestamps ---
 const TIMESTAMP = /^(savedAt|updatedAt|createdAt|startedAt|timestamp|ts|now)$/;
@@ -100,6 +143,22 @@ function midCombat() {
   return { run, combat };
 }
 
+// combat.js's side of finishCardDrag, pointed at a real fight: a drag had
+// begun, the release is off the hand over a live enemy, and `play` really
+// plays a card. So the ONLY thing between a backgrounded drag and a played
+// card is finishCardDrag's own cancelled check.
+function liveDragOps(combat, played) {
+  const cardId = combat.piles.hand[0]?.instanceId;
+  assert.ok(cardId, 'the hand still holds a card to drag');
+  return {
+    teardown: () => true,
+    overHand: () => false,
+    reorder: () => assert.fail('a drag released off the hand never reorders'),
+    dropPlan: () => ({ legal: true, targetId: combat.enemies.find((e) => e.alive).id }),
+    play: (targetId) => { played.push(cardId); dispatch(combat, { type: 'playCard', cardInstanceId: cardId, targetId }); },
+  };
+}
+
 function backgroundAndResume() {
   hidden = true;
   doc.dispatchEvent(new Event('visibilitychange'));
@@ -113,23 +172,48 @@ function backgroundAndResume() {
   doc.dispatchEvent(new Event('visibilitychange'));
 }
 
+test('the drag ops are live: an UNcancelled drag through finishCardDrag really plays the card', () => {
+  // The control for the test below — without it, "nothing changed" could mean
+  // the ops never reached the fight at all.
+  const { combat } = midCombat();
+  const handBefore = combat.piles.hand.length;
+  const played = [];
+  assert.equal(finishCardDrag({ clientX: 0, clientY: 0 }, { cancelled: false }, liveDragOps(combat, played)), 'played');
+  assert.equal(played.length, 1, 'play ran once');
+  assert.notEqual(combat.piles.hand.length, handBefore, 'and the fight moved: the card left the hand');
+});
+
 test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged', () => {
   initInput({ getSettings: () => ({}) });
   const { run, combat } = midCombat();
   const before = { run: snapshot(run), combat: snapshot(combat) };
 
-  // A card is mid-drag when the phone goes to the background — wired the way
-  // combat.js wires it: a completed drag plays, a cancelled one drops nothing.
+  // A card is mid-drag when the phone goes to the background. Its gesture ends
+  // in finishCardDrag — the function combat.js hands trackGesture — with ops
+  // that WOULD play the card into this fight (proved live by the test above).
   const el = new EventTarget();
   el.setPointerCapture = () => {}; el.releasePointerCapture = () => {};
-  const ends = [];
-  const hand = combat.piles.hand.map((h) => h.instanceId);
+  const outcomes = [];
+  const played = [];
+  const ops = liveDragOps(combat, played);
   trackGesture({ pointerId: 7, pointerType: 'touch', currentTarget: el }, {
-    onEnd: (_up, { cancelled }) => {
-      ends.push(cancelled);
-      if (!cancelled && hand.length) dispatch(combat, { type: 'playCard', cardInstanceId: hand[0], targetId: combat.enemies[0].id });
-    },
+    onEnd: (up, info) => outcomes.push(finishCardDrag(up, info, ops)),
   });
+
+  // A key is HELD on a control with a live hold beat (End Turn's `e`, the
+  // S7-wide key door) when the phone goes away: blur must end that press
+  // cancelled, never let it commit.
+  const endTurn = new EventTarget();
+  Object.assign(endTurn, { isConnected: true, dataset: { holdMs: '600' }, matches: () => false, closest: () => null });
+  const releases = [];
+  endTurn.addEventListener(PRESS_EVENT, (ev) => ev.preventDefault());
+  endTurn.addEventListener(RELEASE_EVENT, (ev) => { releases.push(ev.detail.cancelled); ev.preventDefault(); });
+  endTurn.addEventListener('click', () => assert.fail('a backgrounded hold must not click End Turn'));
+  setActionControl('endTurn', endTurn);
+  const down = Object.assign(new Event('keydown', { cancelable: true }), { key: 'e', repeat: false });
+  win.dispatchEvent(down);
+  assert.ok(down.defaultPrevented, 'the fixture really armed the held press (input.js claimed the key)');
+  assert.deepEqual(releases, [], 'the press is live, not yet released');
 
   // A first-input owner holds the input gate when the phone goes away: blur
   // must hand it a cancel, never a commit.
@@ -138,30 +222,136 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
 
   backgroundAndResume();
   releaseGate();
+  setActionControl('endTurn', null);
 
   assert.deepEqual(gateSeen, ['cancel'], 'the armed input gate was told cancel, and nothing else, on blur');
-  assert.deepEqual(ends, [true], 'the in-flight drag ended once, cancelled — backgrounding never commits a card');
+  assert.deepEqual(releases, [true], 'the held press was released once, CANCELLED — backgrounding never commits a hold');
+  assert.deepEqual(outcomes, ['cancelled'], 'the in-flight drag ended once, cancelled');
+  assert.deepEqual(played, [], 'no card was played');
   assert.deepStrictEqual(snapshot(run), before.run, 'the run is unchanged');
   assert.deepStrictEqual(snapshot(combat), before.combat, 'the fight is unchanged: hand, piles, enemies, intents, resources');
 });
 
-// ---- inventory of page-lifecycle listeners -----------------------------------
-// file → event → why it cannot move run or combat state on background.
+test('combat.js ends a card drag through finishCardDrag, so the unit above is the shipped one', () => {
+  const text = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  assert.match(text, /import \{ finishCardDrag \} from '\.\.\/cardDragEnd\.js';/);
+  const drags = [...text.matchAll(/trackGesture\(ev, \{[\s\S]*?\n {6}\}\);/g)].map((m) => m[0]);
+  assert.equal(drags.length, 1, 'combat.js has one card-drag trackGesture');
+  assert.match(drags[0], /onEnd: \(up, info\) => finishCardDrag\(up, info, \{/, 'its onEnd is finishCardDrag, handed the gesture\'s own cancelled flag');
+  assert.doesNotMatch(drags[0], /\bif \(\s*!?\s*(?:info\??\.)?cancelled\b/, 'no second cancelled decision beside it in combat.js');
+});
+
+// ---- inventory of page listeners ---------------------------------------------
+// file → one entry per call site. An entry is the call's first argument as
+// written (whitespace collapsed); a property handler is `.on<event>`. A plain
+// string is enough for a literal, non-lifecycle event; a page-lifecycle event
+// or a computed name must be [argument, why it cannot move run/combat state].
 const KNOWN = {
-  'src/ui/input.js': { blur: 'cancels the input gate and any held press (cancelled, nothing commits); the gate half is exercised above, the held-press half (pressEnd(true)) is not armed in this stand-in page' },
-  'src/ui/gesture.js': { blur: 'aborts the in-flight gesture as CANCELLED; exercised above' },
-  'src/ui/screens/prologue.js': { visibilitychange: 'pauses/resumes the opening slideshow timer only; the prologue runs before any fight' },
+  'src/main.js': ["'resize'", "'load'", "'resize'"],
+  'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
+  'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
+  'src/ui/components/battlefieldStage.js': ["'resize'"],
+  'src/ui/components/card.js': ["'resize'"],
+  'src/ui/components/cardInspection.js': ["'resize'"],
+  'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
+  'src/ui/components/creationInfoLayer.js': ["'resize'"],
+  'src/ui/components/dialogueStage.js': ["'resize'"],
+  'src/ui/components/flask.js': ["'keydown'", "'click'"],
+  'src/ui/components/handInspectionOverlay.js': ["'resize'"],
+  'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
+  'src/ui/components/holdconfirm.js': ["'keydown'", "'keydown'"],
+  'src/ui/components/hudQuickSettings.js': ["'fullscreenchange'", "'webkitfullscreenchange'"],
+  'src/ui/components/iconTray.js': ["'pointerdown'"],
+  'src/ui/components/intro.js': ["'keydown'"],
+  'src/ui/components/localMapCamera.js': ["'pointerup'"],
+  'src/ui/components/modalShell.js': ["'keydown'"],
+  'src/ui/components/overlay.js': ["'ashenspire:quicknav-mode-change'", "'keydown'"],
+  'src/ui/components/quicknav.js': ["'keydown'", ['type', "one of the four literal fullscreen change/error events in the loop: re-syncs the quick-nav rows only"]],
+  'src/ui/components/saveSlotSelector.js': ["'keydown'"],
+  'src/ui/components/smithUpgradeModal.js': ["'keydown'"],
+  'src/ui/components/tooltip.js': ["'pointerover'", "'focusin'", "'click'", "'keydown'", "'pointerdown'", "'keydown'", "'resize'"],
+  'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],
+  'src/ui/components/tutorial.js': ["'keydown'", "'resize'"],
+  'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
+  'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'"],
+  'src/ui/gesture.js': [["'blur'", 'aborts the in-flight gesture as CANCELLED; driven above through finishCardDrag, which drops nothing'], "'pointerdown'", "'pointermove'", "'pointerup'", "'pointercancel'"],
+  'src/ui/input.js': ["'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
+  'src/ui/kit/categoryNav.js': ["'keydown'"],
+  'src/ui/screens/combat.js': ["'keydown'"],
+  'src/ui/screens/coop.js': ["'keydown'", "'keydown'"],
+  'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
+  'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
+  'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
+  'src/ui/screens/profileNotice.js': ["'keydown'"],
+  'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists']],
+  'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
+  'src/ui/screens/title.js': ["'keydown'"],
 };
-// Page-level only: `window.`/`document.`/`globalThis.`/`self.` or a bare
-// global — as an `addEventListener('<event>'` call (any quote style) or an
-// `on<event> =` property handler. An element's own blur/focus (an input, a
-// menu item) is not page lifecycle.
-const EVENTS = 'visibilitychange|pagehide|pageshow|freeze|resume|blur|focus|beforeunload|unload';
-const PAGE = String.raw`(?:\b(?:window|document|globalThis|self)\.|(?<![.\w]))`;
-const LIFECYCLE = [
-  new RegExp(String.raw`${PAGE}addEventListener\(\s*['"\x60](${EVENTS})['"\x60]`, 'g'),
-  new RegExp(String.raw`${PAGE}on(${EVENTS})\s*=(?!=)`, 'g'),
-];
+
+// A call on the page itself: `window.` / `document.` / `globalThis.` / `self.`
+// (also `?.` and `['addEventListener']`), or a bare global call. An element's
+// own listener (`el.addEventListener`, `window.visualViewport?.addEventListener`)
+// is not the page and is not listed.
+const CALL = /(?:\b(?:window|document|globalThis|self)\s*(?:\??\.\s*|\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
+const PROP = /\b(?:window|document|globalThis|self)\s*\??\.\s*(on[a-z]+)\s*=(?![=>])/g;
+
+function firstArgument(text, start) {
+  let depth = 0, quote = null, i = start;
+  for (; i < text.length; i++) {
+    const c = text[i];
+    if (quote) { if (c === '\\') i++; else if (c === quote) quote = null; continue; }
+    if (c === "'" || c === '"' || c === '`') quote = c;
+    else if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) { if (depth === 0) break; depth--; }
+    else if (c === ',' && depth === 0) break;
+  }
+  return text.slice(start, i).trim().replace(/\s+/g, ' ');
+}
+
+/** Every page-listener call site in one file's text, one entry each. */
+export function pageListenerSites(text) {
+  const sites = [];
+  for (const m of text.matchAll(CALL)) sites.push(firstArgument(text, m.index + m[0].length));
+  for (const m of text.matchAll(PROP)) sites.push(`.${m[1]}`);
+  return sites;
+}
+
+// The event a site names, when it names one literally; null when computed.
+function literalEvent(arg) {
+  if (arg.startsWith('.on')) return arg.slice(3);
+  const m = arg.match(/^(['"`])([\w:-]+)\1$/);
+  return m ? m[2] : null;
+}
+
+/** Every way `files` ({ path: text }) disagrees with `known`. Empty = pass. */
+export function inventoryProblems(files, known = KNOWN) {
+  const problems = [];
+  const where = 'tests/visibility-resume.test.mjs KNOWN';
+  const count = (list) => list.reduce((m, a) => m.set(a, (m.get(a) || 0) + 1), new Map());
+  for (const [file, text] of Object.entries(files)) {
+    const found = count(pageListenerSites(text));
+    const entries = known[file] || [];
+    const listed = count(entries.map((e) => (Array.isArray(e) ? e[0] : e)));
+    for (const [arg, n] of found) {
+      const m = listed.get(arg) || 0;
+      if (n > m) problems.push(`${file}: ${n - m} unlisted page listener(s) on ${arg} (${n} call site(s), ${m} in KNOWN). Every page listener is pinned per call site: add one entry for it to ${where}${LIFECYCLE_EVENTS.includes(literalEvent(arg)) || literalEvent(arg) === null ? ', with why it cannot move run/combat state (and cover it in the cycle above)' : ''}`);
+    }
+    for (const [arg, m] of listed) {
+      const n = found.get(arg) || 0;
+      if (m > n) problems.push(`${file}: KNOWN lists ${m} page listener(s) on ${arg}, the file has ${n}; drop the stale entry from ${where}`);
+    }
+    for (const e of entries) {
+      const arg = Array.isArray(e) ? e[0] : e;
+      const event = literalEvent(arg);
+      const needsWhy = event === null || LIFECYCLE_EVENTS.includes(event);
+      if (needsWhy && !(Array.isArray(e) && typeof e[1] === 'string' && e[1].trim())) {
+        problems.push(`${file}: ${arg} is ${event === null ? 'a computed event name' : 'a page-lifecycle event'} — its KNOWN entry must be [${arg}, why it cannot move run/combat state]`);
+      }
+    }
+  }
+  for (const file of Object.keys(known)) if (!(file in files)) problems.push(`${file} is in KNOWN but not in src/; drop it`);
+  return problems;
+}
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -170,22 +360,58 @@ function walk(dir) {
     return /\.m?js$/.test(name) ? [path] : [];
   });
 }
+const SRC = Object.fromEntries(walk(join(ROOT, 'src')).map((path) => [relative(ROOT, path).split('\\').join('/'), readFileSync(path, 'utf8')]));
 
-test('every page-lifecycle listener in src/ is known to leave state alone', () => {
-  const found = {};
-  for (const path of walk(join(ROOT, 'src'))) {
-    const file = relative(ROOT, path).split('\\').join('/');
-    const text = readFileSync(path, 'utf8');
-    for (const pattern of LIFECYCLE) {
-      for (const [, event] of text.matchAll(pattern)) (found[file] ||= new Set()).add(event);
-    }
+test('every page listener call site in src/ is pinned, and each lifecycle or computed one says why it is safe', () => {
+  assert.deepEqual(inventoryProblems(SRC), []);
+});
+
+test('the listeners the booted modules registered at runtime are the pinned ones', () => {
+  // Captured while the behaviour test ran initInput and trackGesture.
+  assert.ok(captured.length > 0, 'runtime capture saw registrations');
+  for (const { target, type, file, property } of captured) {
+    if (file === '(outside src)') continue; // this file's own stand-ins
+    const args = (KNOWN[file] || []).map((e) => (Array.isArray(e) ? e[0] : e));
+    const named = args.some((a) => literalEvent(a) === type);
+    const computed = args.some((a) => literalEvent(a) === null);
+    assert.ok(named || computed, `${file} registered '${type}' on ${target}${property ? ` via on${type}` : ''} at runtime, and KNOWN has no site that could be it`);
   }
-  for (const [file, events] of Object.entries(found)) {
-    for (const event of events) {
-      assert.ok(KNOWN[file]?.[event], `${file} listens for '${event}' — say why it cannot move run/combat state in tests/visibility-resume.test.mjs KNOWN (and cover it in the cycle above)`);
-    }
+  const lifecycle = captured.filter((c) => LIFECYCLE_EVENTS.includes(c.type) && c.file !== '(outside src)').map((c) => `${c.file} ${c.type}`);
+  assert.ok(lifecycle.includes('src/ui/input.js blur') && lifecycle.includes('src/ui/gesture.js blur'), `both blur listeners were really registered: ${lifecycle.join(', ')}`);
+});
+
+// ---- the inventory can fail: known-bads against the real tree ----------------
+const plant = (file, extra) => ({ ...SRC, [file]: `${SRC[file]}\n${extra}\n` });
+
+test('known-bad: a lifecycle listener behind a computed event name is caught', () => {
+  const problems = inventoryProblems(plant('src/ui/screens/combat.js', "const e = 'pagehide'; window.addEventListener(e, () => endTurn());"));
+  assert.ok(problems.some((p) => p.startsWith('src/ui/screens/combat.js') && p.includes(' e ')), problems.join('\n'));
+});
+
+test('known-bad: a second listener for an already-known event in the same file is caught', () => {
+  const problems = inventoryProblems(plant('src/ui/input.js', "addEventListener('blur', () => dispatch(combat, { type: 'endTurn' }));"));
+  assert.ok(problems.some((p) => p.startsWith("src/ui/input.js: 1 unlisted page listener(s) on 'blur'")), problems.join('\n'));
+});
+
+test('known-bad: other spellings of a page listener are caught too', () => {
+  for (const extra of [
+    'window.addEventListener("pagehide", save);',
+    'document.addEventListener(`visibilitychange`, save);',
+    'globalThis.addEventListener(\'freeze\', save);',
+    'self.addEventListener(\'pagehide\', save);',
+    'window?.addEventListener(\'pagehide\', save);',
+    'window[\'addEventListener\'](\'pagehide\', save);',
+    'window.onpagehide = save;',
+    'document.onvisibilitychange = save;',
+    'window.addEventListener(\'keydown\', save);',
+  ]) {
+    assert.ok(inventoryProblems(plant('src/ui/screens/map.js', extra)).length > 0, `not caught: ${extra}`);
   }
-  for (const [file, events] of Object.entries(KNOWN)) {
-    for (const event of Object.keys(events)) assert.ok(found[file]?.has(event), `${file} no longer listens for '${event}'; drop it from KNOWN`);
-  }
+  // …and an element's own listener is not the page.
+  assert.deepEqual(inventoryProblems(plant('src/ui/screens/map.js', "button.addEventListener('blur', f); window.visualViewport?.addEventListener('resize', f);")), []);
+});
+
+test('known-bad: a lifecycle entry with no reason is refused', () => {
+  const known = { ...KNOWN, 'src/ui/screens/prologue.js': ["'visibilitychange'"] };
+  assert.ok(inventoryProblems(SRC, known).some((p) => p.includes('page-lifecycle event')));
 });
