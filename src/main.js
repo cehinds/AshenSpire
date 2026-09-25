@@ -86,7 +86,11 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
+import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
+import { pageDebug } from './ui/buildChannel.js';
+import { openSettings, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -110,7 +114,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -319,6 +323,21 @@ function bringStoredProfileForward(meta) {
 }
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
+// THE OWNER'S PROMOTED DEFAULTS (src/content/settingsDefaults.js, written by
+// tools/settings-defaults.mjs). A key the player never set starts there, and a
+// key still at an earlier promotion's value follows a new one; a key the
+// player chose is theirs. Applied before anything reads the profile.
+// The same step runs again when a restored profile replaces this one.
+function seedPromotedDefaults(meta, settings) {
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  if (!Object.keys(seeded).length) return;
+  for (const [key, value] of Object.entries(seeded)) {
+    if (value === undefined) delete settings[key]; else settings[key] = value;
+  }
+  meta.settings = settings;
+  saves.saveMeta(meta);
+}
+seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
@@ -843,7 +862,15 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
-  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  // A cleared key (a Reset, a profile that leaves it out) means the default:
+  // setVolumes ignores a missing field, so say the default out loud.
+  audio.setVolumes({
+    ...settings,
+    musicEnabled: resolveMusicEnabled(settings),
+    musicVolume: settings.musicVolume ?? AUDIO_DEFAULTS.musicVolume,
+    sfxVolume: settings.sfxVolume ?? AUDIO_DEFAULTS.sfxVolume,
+    muteAudio: settings.muteAudio === true,
+  });
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the
@@ -1411,7 +1438,14 @@ function showProfile() {
     saves,
     // Through boot's door first: a restored profile from before a key was
     // renamed must reach the rows, the bundle and storage already rewritten.
-    onRestored: () => applyRestoredSettings(bringStoredProfileForward(saves.loadMeta())),
+    onRestored: () => {
+      // Through boot's promotion step too: an archive from before the current
+      // promotion must start at its values, in play and in storage.
+      const meta = saves.loadMeta();
+      const settings = bringStoredProfileForward(meta);
+      seedPromotedDefaults(meta, settings);
+      applyRestoredSettings(settings);
+    },
   });
 }
 
@@ -1420,11 +1454,14 @@ function persistSettingsChange(changed) {
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
+  // A value the player moves off a promoted one is theirs from now on.
+  const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
   // A `draw` or `poise` stat row written by this build means what it means
   // now (ruleset 7); the marker keeps a later boot from reading it as the
   // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
   if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
+  if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
   const res = saves.saveMeta(activeMeta);
   applyDisplaySettings(activeSettings);
@@ -3535,6 +3572,21 @@ if (shotState === 'combat-test') {
   // was measured three times over. A seed is passed rather than randomised so
   // the seed field photographs the same on every run.
   showCustomize(1, shotState === 'components');
+} else if (pageDebug() && autoLoadEnabled()) {
+  // YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on
+  // a debug build, only when this device opted in, and never for a photograph
+  // (a posed ?shot= state takes the branches above). The title — Continue and
+  // New Game — waits for it, at most PROFILE_WAIT_MS, so no run starts on the
+  // settings the profile is about to replace; a profile later than that is
+  // left for the next start rather than applied mid-session.
+  const PROFILE_WAIT_MS = 3000;
+  let waiting = true;
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+    .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
+    .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
+  Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
+    .finally(() => { waiting = false; showTitle(); });
 } else {
   showTitle();
 }
+

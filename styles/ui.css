@@ -1186,10 +1186,82 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 /* A row's own buttons (Command log's Open, the flick distance Reset) take at
    least the floor's width: "Open" measured 43.6 px wide at 844x390. */
 .set-panel .r-trail button:not(.as-toggle):not(.choice) { min-width: var(--tap-floor); }
-/* The flick setting keeps its numeric value, slider and practice surface together. */
-.num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
-.set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }
-.set-num-reset { grid-column:2; grid-row:1; }
+/* ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) ----------------------
+   Every number is  −  slider  field  +  on one line under its label, at every
+   width; the buttons meet the tap floor and repeat while held. A row that
+   differs from its default shows a dot before its name and a Reset after it. */
+[data-settings-host] .set-row-number > .as-labelstack { flex: 1 1 100%; }
+[data-settings-host] .set-row-number > .r-trail { flex: 1 1 100%; max-width: 100%; margin-left: 0; }
+.set-stepper { display: flex; align-items: center; gap: .45rem; width: 100%; min-width: 0; }
+.set-stepper > input[type='range'] { flex: 1 1 8rem; min-width: 4rem; min-height: var(--tap-floor); margin: 0; touch-action: pan-y; accent-color: var(--accent, #c9a45c); }
+:root [data-settings-host] .set-stepper > input[type='number'] { flex: 0 0 5.6rem; width: 5.6rem; min-height: var(--tap-floor); padding: .3rem .25rem; text-align: center; font-variant-numeric: tabular-nums; }
+.set-stepper > .set-step { flex: 0 0 auto; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; font-size: 1.35rem; line-height: 1; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.set-stepper > .set-step:disabled { opacity: .4; }
+/* A gated or rule-locked field locks its buttons and slider with it. */
+.set-stepper:has(> input[type='number']:disabled) > :is(.set-step, input[type='range']) { opacity: .4; pointer-events: none; }
+.set-unit { color: var(--muted); margin-left: -.25rem; }
+.set-mod-dot { display: none; width: .5rem; height: .5rem; margin-right: .45rem; border-radius: 50%; background: var(--accent, #c9a45c); vertical-align: middle; }
+.set-row[data-modified='true'] .set-mod-dot { display: inline-block; }
+/* The label and its Reset share one line, so showing or hiding the Reset
+   never changes the row's height. The label keeps its own ellipsis. */
+.set-label-line { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.set-label-line > .ls-label { flex: 0 1 auto; min-width: 0; }
+.set-row-reset { flex: 0 0 auto; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; }
+/* Hidden, a Reset keeps its height (the tap floor) but no width: the row is
+   the same height changed or not, and the label keeps the whole line. */
+[data-settings-host] .set-label-line > .set-row-reset[hidden] { display: inline-flex !important; visibility: hidden; width: 0; min-width: 0; padding: 0; margin: 0; border: 0; overflow: hidden; }
+.set-row-reset[hidden] { display: none; }
+.set-search-where { margin-top: 1.1rem; }
+/* The Changed filter, the Undo bar and the first-open tip. */
+[data-settings-host] .set-changed-toggle { white-space: nowrap; }
+[data-settings-host] .set-changed-toggle.on, [data-settings-host] .set-changed-toggle[aria-pressed='true'] { color: var(--accent, #c9a45c); border-color: var(--accent, #c9a45c); }
+[data-settings-host] > :is(.set-undo, .set-tip) { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .4rem var(--modal-inset, .8rem); padding: .45rem .7rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--accent, #c9a45c); border-radius: var(--r-2); background: var(--panel); }
+[data-settings-host] > :is(.set-undo, .set-tip) > span { flex: 1 1 14rem; min-width: 0; }
+[data-settings-host] > :is(.set-undo, .set-tip) > .as-btn { min-height: var(--tap-floor); }
+.set-search-empty { padding: 1rem .7rem; }
+/* Defaults & sync */
+.set-sync { display: grid; gap: .6rem; }
+.set-sync a { color: var(--accent, #c9a45c); overflow-wrap: anywhere; }
+.set-sync-acts { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.set-sync-acts .set-text { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-floor); }
+.set-sync-select { flex: 1 1 10rem; min-width: 0; min-height: var(--tap-floor); max-width: 100%; padding: .4rem .6rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); font: inherit; }
+.set-sync-active { color: var(--gold); overflow-wrap: anywhere; }
+.set-sync-preview { margin: .2rem 0 .6rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
+.set-sync-diff { margin: .4rem 0; padding-left: 1.1rem; display: grid; gap: .2rem; }
+.set-sync-diff s { color: var(--muted); }
+.set-sync-where { padding: .6rem .7rem; }
+.set-sync-fields { display: grid; gap: .5rem; margin-top: .6rem; }
+.set-sync-fields label { display: grid; gap: .2rem; color: var(--muted); }
+.set-sync-fields .set-text { width: 100%; min-height: var(--tap-floor); }
+@media (max-width: 600px) {
+  /* Phones: a row is label over control, the control full width. */
+  [data-settings-host] .set-panel .as-row.setting { flex-direction: column; align-items: stretch; }
+  [data-settings-host] .set-panel .as-row.setting > .as-labelstack { flex: 0 0 auto; }
+  [data-settings-host] .set-panel .as-row.setting > .r-trail { max-width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) { flex-direction: row; align-items: center; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .r-trail { margin-left: auto; }
+  /* A switch row keeps label and switch side by side: the label takes the
+     rest of the width and wraps, never its one-line length (was 1,395px). */
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack { flex: 1 1 0; min-width: 0; }
+  [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
+  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 4.6rem; width: 4.6rem; }
+  :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
+}
+/* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
+   Display and Accessibility. It only arranges the sample; every face in it is
+   the game's own rule, restyled by the classes/vars applyDisplaySettings writes. */
+[data-settings-host] .set-preview { margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--r-2, 8px); background: var(--bg); min-width: 0; max-width: 100%; box-sizing: border-box; }
+[data-settings-host] .set-preview > .set-preview-summary { display: flex; align-items: center; min-height: var(--tap-floor, 44px); padding: 0 .9rem; cursor: pointer; font: 600 1.1rem/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+[data-settings-host] .set-preview > .set-preview-body { display: flex; align-items: flex-start; gap: 1rem; padding: 0 .9rem .9rem; min-width: 0; }
+[data-settings-host] .set-preview-text { display: flex; flex-direction: column; gap: .5rem; flex: 1 1 auto; min-width: 0; }
+[data-settings-host] .set-preview-heading { white-space: normal; overflow-wrap: anywhere; }
+[data-settings-host] .set-preview-lore { margin: 0; color: var(--parchment); font-family: var(--lore-font); font-size: var(--lore-size); line-height: var(--lore-leading); letter-spacing: var(--lore-tracking); font-style: var(--lore-slant); }
+[data-settings-host] .set-preview-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+[data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 152px), 40%); min-width: 0; }
+[data-settings-host] .set-preview-card > .card { width: 100%; max-width: 100%; margin: 0; }
+@media (max-width: 600px) {
+  [data-settings-host] .set-preview > .set-preview-body { padding: 0 .7rem .7rem; gap: .7rem; }
+}
 .set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
 :root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
 :root .hand .card.selected { border-color: var(--selection-color, #59bd75); }
