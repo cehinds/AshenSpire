@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Behind the scenes: a missing changelog entry is caught before merge",
     "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check's title-screen Continue row now names the highlighted, enabled entry it already measured, so it fails loudly instead of measuring a greyed-out one if the screenshot ever stops seeding a save. Two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
-    "build": "0.7.1.509",
+    "build": "0.7.1.510",
     "pullRequest": 1317,
     "url": "https://github.com/cehinds/AshenSpire/pull/1317"
+  },
+  {
+    "id": "pr-1300",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the release checklist is written down",
+    "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
+    "build": "0.7.1.509",
+    "pullRequest": 1300,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1300"
   },
   {
     "id": "pr-1294",
