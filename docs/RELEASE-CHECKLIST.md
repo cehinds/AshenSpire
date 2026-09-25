@@ -44,10 +44,10 @@ command yet, and G20 is read from docs/FINISH.md.
 | G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
-| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` self-test job, `ci.yml` |
+| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `bundler parse gate` job, `ci.yml` |
 | G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only` | Exit 0. The standalone builds are regenerated from the RC source. | `ci.yml` |
 | G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
-| G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. | local only; run it before the RC |
+| G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. Green also needs a workflow to run `contrast-audit.mjs --gate` (FINISH.md §9 asks for it in CI); today only a `ci.yml` echo names it. | not yet: no workflow runs it |
 | G12 | `node tools/verdict.mjs -- node tools/about-changelog.mjs` | Exit 0. The in-game changelog is a faithful projection of CHANGELOG.md, in order. | `ci.yml` |
 
 Gate G13 has no local command. A hand-dispatched `ci.yml` run on the RC SHA must
@@ -79,8 +79,10 @@ line) maps to one gate above, or to a waiver that gives its reason. A criterion 
 named by the words its FINISH.md line starts with, not by its line number, because
 FINISH.md is edited after every pull request and its line numbers move.
 `tests/release-checklist.test.mjs` fails when a FINISH.md criterion has no row
-here, when a row here names a criterion FINISH.md no longer has, and when a gate
-from G14 up still has an open criterion but is not marked **RED**. When you add,
+here or more than one, when a row here names a criterion FINISH.md no longer has
+or a key that starts more than one criterion, when a checkbox line in FINISH.md
+cannot be read, and when any gate still has an open criterion but is not marked
+**RED**. When you add,
 rename or remove a FINISH.md criterion, update this table in the same pull request.
 
 | § | FINISH.md criterion | Gate |

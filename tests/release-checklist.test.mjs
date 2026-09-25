@@ -86,21 +86,29 @@ function rows(md) {
 
 const finishPath = join(root, 'docs', 'FINISH.md');
 
-// Every release criterion in docs/FINISH.md §1–§13: a `- [ ]`, `- [~]` or
-// `- [x]` line under a numbered section. `text` drops the checkbox and the
-// bold marks, so a criterion is named by the words it starts with.
-function criteria(md) {
+// Every release criterion in docs/FINISH.md §1–§13: a checkbox list item
+// under a numbered section, at any indent, with any list marker, and with
+// `[ ]`, `[~]`, `[x]` or `[X]`. `text` drops the checkbox and the bold marks,
+// so a criterion is named by the words it starts with. Anything else that
+// looks like a checkbox there (`[]`, `[v]`, `-[ ]`, no text) is returned in
+// `malformed`, so a criterion the parser cannot read fails rather than
+// vanishing from the map.
+function parseFinish(md) {
   const out = [];
+  const malformed = [];
   let sec = null;
   md.split(/\r?\n/).forEach((l, i) => {
     const h = /^## (\d+)\. /.exec(l);
     if (h) { sec = Number(h[1]); return; }
     if (/^## /.test(l)) { sec = null; return; }
-    const c = /^- \[([ x~])\] (.*)$/.exec(l);
-    if (sec && c) out.push({ line: i + 1, sec, mark: c[1], text: c[2].replace(/\*\*/g, '') });
+    if (!sec) return;
+    const c = /^\s*[-*+] \[([ xX~])\] +(\S.*)$/.exec(l);
+    if (c) out.push({ line: i + 1, sec, mark: c[1].toLowerCase(), text: c[2].replace(/\*\*/g, '') });
+    else if (/^\s*[-*+]?\s*\[[^\]]{0,3}\]/.test(l)) malformed.push({ line: i + 1, text: l.trim() });
   });
-  return out;
+  return { criteria: out, malformed };
 }
+const criteria = (md) => parseFinish(md).criteria;
 
 // The *Criterion map* table: | §N | criterion | G<n> or "waived: reason" |.
 function criterionMap(md) {
@@ -128,6 +136,12 @@ test('FINISH.md still has release criteria to map (the parser is not reading not
   assert.deepEqual([...new Set(cs.map((c) => c.sec))], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
 });
 
+test('every checkbox line in FINISH.md §1–§13 is one the parser can read', () => {
+  const { malformed } = parseFinish(readFileSync(finishPath, 'utf8'));
+  assert.deepEqual(malformed.map((m) => `line ${m.line}: ${m.text.slice(0, 60)}`), [],
+    'FINISH.md has checkbox lines that are not `- [ ]`, `- [~]` or `- [x]` followed by text');
+});
+
 test('every FINISH.md release criterion maps to a gate row or a waiver, and every map row to a live criterion', () => {
   const md = readFileSync(docPath, 'utf8');
   const cs = criteria(readFileSync(finishPath, 'utf8'));
@@ -142,8 +156,12 @@ test('every FINISH.md release criterion maps to a gate row or a waiver, and ever
     assert.equal(hits[0].sec, c.sec, `map row "${hits[0].key}" says §${hits[0].sec}, FINISH.md line ${c.line} is in §${c.sec}`);
   }
   for (const m of map) {
-    assert.ok(cs.some((c) => c.text.startsWith(m.key)),
+    const claimed = cs.filter((c) => c.text.startsWith(m.key));
+    assert.ok(claimed.length > 0,
       `the *Criterion map* cites "${m.key}" (§${m.sec}), which no FINISH.md criterion starts with any more`);
+    // A key that is a prefix of two criteria would silently absorb a new one.
+    assert.equal(claimed.length, 1,
+      `the *Criterion map* row "${m.key}" matches ${claimed.length} FINISH.md criteria (lines ${claimed.map((c) => c.line).join(', ')}); make the key longer so it names one`);
     if (/^waived:/i.test(m.target)) {
       assert.ok(m.target.replace(/^waived:/i, '').trim().length >= 20, `waiver for "${m.key}" gives no reason`);
     } else {
@@ -153,28 +171,32 @@ test('every FINISH.md release criterion maps to a gate row or a waiver, and ever
   }
 });
 
-test('a release-criterion gate (G14 up) with an open criterion is marked RED', () => {
+test('a gate with an open FINISH.md criterion is marked RED', () => {
   const md = readFileSync(docPath, 'utf8');
   const rs = rows(md);
   const cs = criteria(readFileSync(finishPath, 'utf8'));
   const map = criterionMap(md);
   for (const [id, line] of rs) {
-    if (Number(id.slice(1)) < 14) continue;
     const mine = map.filter((m) => m.target === id);
-    assert.ok(mine.length > 0, `${id} gates no FINISH.md criterion in the *Criterion map*`);
+    // G14 up exist only to gate FINISH.md criteria; G1–G12 may gate none.
+    if (Number(id.slice(1)) >= 14) assert.ok(mine.length > 0, `${id} gates no FINISH.md criterion in the *Criterion map*`);
     const open = cs.filter((c) => c.mark !== 'x' && mine.some((m) => c.text.startsWith(m.key)));
     if (open.length) {
       assert.match(line, /\*\*RED\b/,
         `${id} is not marked RED, but its criterion is still open: FINISH.md line ${open[0].line}`);
     }
     const cmd = line.split('|')[2].trim();
-    if (!cmd.startsWith('`node ') && id !== 'G20') {
+    if (Number(id.slice(1)) >= 14 && !cmd.startsWith('`node ') && id !== 'G20') {
       assert.match(line, /\*\*RED: not yet runnable\.\*\*/, `${id} has no command but is not marked RED: not yet runnable`);
     }
   }
   // Pinned by the owner (#1300 review), whatever FINISH.md's ticks say.
-  const runNode = readFileSync(join(root, 'tests', 'run-node.mjs'), 'utf8');
-  if (!runNode.includes('runsim.mjs')) {
+  // A real invocation, not a mention: comments are dropped, and the path must
+  // be a whole string literal such as ['tools/runsim.mjs', '5'].
+  const runNode = readFileSync(join(root, 'tests', 'run-node.mjs'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:\\])\/\/.*$/gm, '$1');
+  if (!/(['"`])(?:\.\/)?tools\/runsim\.mjs\1/.test(runNode)) {
     assert.match(rs.get('G14'), /\*\*RED\b/, 'tests/run-node.mjs does not run runsim.mjs, so G14 must be RED');
   }
   assert.match(rs.get('G16'), /\*\*RED: no verdict yet\.\*\*/, 'G16 must stay RED until a tool gates the band');
