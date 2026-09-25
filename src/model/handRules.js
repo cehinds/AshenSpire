@@ -32,7 +32,7 @@ export function handRulesProblems(rules) {
  * hand, turn draws, capacity, then what happens to unplayed cards — so each
  * subsection is one unbroken run of rows (tests/hand-rules.test.mjs).
  */
-export function handRulesRows(attributes = []) {
+export function handRulesRows(attributes = [], classes = []) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
     cat: 'Advanced', advancedGroup: 'Stats', handTopic: topic, settingSection: topic,
@@ -62,6 +62,12 @@ export function handRulesRows(attributes = []) {
       if (group === 'capacity' && ['base', 'minimum', 'maximum'].includes(field)) extra.min = 1;
       if (['stat', 'baseline', 'pointsPerCard'].includes(field)) extra.requires = [group + '.statEnabled', true];
       if (group === 'turn') extra.fixedOnly = true;
+      // EVERY SHIPPED CLASS OPENS ON ITS OWN BASE AND ATTRIBUTE (owner,
+      // 2026-09-24), set by the per-class rows below, so the shared pair moved
+      // nothing a player can reach. The keys stay so an exported configuration
+      // still imports; the rows leave the screen (`retired`), the way a
+      // retired creation mode's dials do.
+      if (group === 'starting' && ['base', 'stat'].includes(field)) Object.assign(extra, { retired: true, inert: true });
       if (field === 'base') extra.note = `The ${subject} before any attribute bonus.`;
       if (field === 'statEnabled') extra.note = `On: the attribute below adds cards to the ${subject}. Off: only the base and the limits apply.`;
       if (field === 'stat') extra.note = `The attribute that adds cards to the ${subject}.`;
@@ -73,6 +79,20 @@ export function handRulesRows(attributes = []) {
     }
   };
   addGroupRows('starting');
+  // ONE ROW PAIR PER CLASS, beside the shared opening-hand rows they refine.
+  const classNames = Object.fromEntries((classes || []).map((row) => [row.id, row.name || row.id]));
+  for (const [classId, def] of Object.entries(handRulesDefaults.startingByClass || {})) {
+    const name = classNames[classId] || classId[0].toUpperCase() + classId.slice(1);
+    add(`startingByClass.${classId}.base`, def.base, `${name} — Opening hand base cards`, groups.starting, {
+      note: `The ${name}'s opening hand before any attribute bonus. The attribute below adds cards on top, within the opening-hand limits above.`,
+    });
+    add(`startingByClass.${classId}.stat`, def.stat, `${name} — Opening hand attribute`, groups.starting, {
+      type: 'choice', choices: attributes.map(a => a.id),
+      choiceLabels: Object.fromEntries(attributes.map(a => [a.id, `${a.label} (${a.shortLabel})`])),
+      requires: ['starting.statEnabled', true],
+      note: `The attribute that adds cards to the ${name}'s opening hand.`,
+    });
+  }
   add('drawMode', handRulesDefaults.drawMode, 'How cards are drawn each turn', groups.turn, {
     type: 'choice', dropdown: true, choices: ['fill', 'fixed'],
     choiceLabels: { fill: 'Fill up to hand capacity', fixed: 'Draw a fixed number' },
@@ -115,10 +135,127 @@ export function resolveHandRules(settings = {}, attributes = []) {
     else { if (!Number.isFinite(Number(raw))) continue; value = Math.min(row.max, Math.max(row.min, Math.floor(Number(raw)))); }
     const parts = row.key.slice(HAND_RULES_PREFIX.length).split('.');
     const field = parts.pop();
-    (parts.length ? rules[parts[0]] : rules)[field] = value;
+    parts.reduce((node, part) => node[part], rules)[field] = value;
   }
   for (const group of Object.keys(groups)) if (rules[group].minimum > rules[group].maximum) rules[group] = structuredClone(handRulesDefaults[group]);
   return rules;
+}
+
+/**
+ * handRulesForClass(rules, classId) → the rules one fight is handed.
+ *
+ * The class's own opening-hand row replaces `starting.base` and
+ * `starting.stat`; the per-class table itself does not ride into the fight,
+ * so the combat snapshot states exactly the opening hand that fight was born
+ * with and a saved fight keeps it whatever the table later becomes. A class
+ * with no row (or no class at all: a headless fixture) keeps the shared rule.
+ */
+export function handRulesForClass(rules, classId = null) {
+  const { startingByClass, ...fight } = structuredClone(rules);
+  const own = classId && startingByClass ? startingByClass[classId] : null;
+  if (own) fight.starting = { ...fight.starting, base: own.base, stat: own.stat };
+  return fight;
+}
+
+// THE OPENING-HAND LIMITS BEFORE 2026-09-24 WERE 3–15 (owner, 2026-09-24:
+// "start with 4-6 cards"). The Advanced panel stores — and an export writes —
+// every value it holds, so a profile or file from before the change pins the
+// old default cap of 15, and with it every opening hand above the 4–6 he asked
+// for. A stored or imported `starting.maximum` of exactly 15 is that retired
+// default, so it is DROPPED with a warning and the current default applies;
+// the `starting.minimum` of 3 riding beside it is the other half of the same
+// retired pair and goes with it (a floor of 3 would open an all-1s Reaver on
+// 3). A lone minimum of 3, with no 15 beside it, is somebody's choice and
+// stays; once the 15 is gone the check never fires again. A deliberate 15 is
+// indistinguishable from the old default and is dropped too — the price of
+// reading intent from a value. Run snapshots are never touched: a fight keeps
+// the hand it was born with.
+const OPENING_MAXIMUM_KEY = `${HAND_RULES_PREFIX}starting.maximum`;
+const OPENING_MINIMUM_KEY = `${HAND_RULES_PREFIX}starting.minimum`;
+const RETIRED_OPENING_MAXIMUM = 15;
+const RETIRED_OPENING_MINIMUM = 3;
+const bareKey = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+
+/** True when a stored profile pins the retired opening-hand cap of 15. */
+export function hasRetiredOpeningLimits(settings = {}) {
+  return settings?.[OPENING_MAXIMUM_KEY] === RETIRED_OPENING_MAXIMUM;
+}
+
+/**
+ * withoutRetiredOpeningLimits(entries, warnings) → entries without the retired
+ * 3–15 opening-hand limits, in either spelling (plain or `settings.`-prefixed).
+ */
+export function withoutRetiredOpeningLimits(entries, warnings = null) {
+  const retiredMaximum = ([key, value]) => bareKey(key) === OPENING_MAXIMUM_KEY && value === RETIRED_OPENING_MAXIMUM;
+  if (!entries.some(retiredMaximum)) return entries;
+  const retiredMinimum = ([key, value]) => bareKey(key) === OPENING_MINIMUM_KEY && value === RETIRED_OPENING_MINIMUM;
+  const dropsMinimum = entries.some(retiredMinimum);
+  if (Array.isArray(warnings)) {
+    warnings.push(`Opening hand: the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${handRulesDefaults.starting.minimum}–${handRulesDefaults.starting.maximum} applies. Everything else was kept.`);
+  }
+  return entries.filter((entry) => !retiredMaximum(entry) && !retiredMinimum(entry));
+}
+
+/**
+ * classHandRules(settings, attributes, classId) → the hand rules a fight of
+ * this class is handed under these settings. The ONE door: combat
+ * (engine/runCombat.js) snapshots it, and character creation's Hand and Draw
+ * chips read it, so the hand a new character is promised is the hand its
+ * first fight deals (Codex, #1294).
+ */
+export function classHandRules(settings = {}, attributes = [], classId = null) {
+  return handRulesForClass(resolveHandRules(settings || {}, attributes), classId);
+}
+
+/**
+ * handDrawCount(rules, attributes, { handSize, opening, replacements }) → how
+ * many cards one draw puts into a hand already holding `handSize`: the
+ * starting rule on the opening draw, otherwise the fixed turn rule (plus any
+ * replacements for chosen discards) or a fill to capacity — never more than
+ * the room capacity leaves. The ONE formula: combat's `turnDrawCount`
+ * (engine/handRules.js) deals it and creation's Hand and Draw chips
+ * (`handSizeReceipts`) preview it for an empty hand, so a turn draw of 2 into
+ * a capacity of 1 reads 1 on both (Codex, #1294).
+ */
+export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = false, replacements = 0 } = {}) {
+  const capacity = scaledCards(rules.capacity, attributes);
+  const room = Math.max(0, capacity - handSize);
+  const wanted = opening ? scaledCards(rules.starting, attributes)
+    : rules.drawMode === 'fill' ? room : scaledCards(rules.turn, attributes) + replacements;
+  return { capacity, room, wanted, value: Math.min(room, wanted) };
+}
+
+/**
+ * handSizeReceipts(rules, attributes) → the opening hand, the most one turn
+ * draws, and the capacity, each with the terms `scaledCards` used. Both
+ * values are `handDrawCount` into an empty hand — what `turnDrawCount`
+ * (engine/handRules.js) deals: the stated rule (`stated`), limited by
+ * capacity. A fill draw tops the hand up to capacity.
+ */
+export function handSizeReceipts(rules, attributes = {}) {
+  const capacity = scaledCardsReceipt(rules.capacity, attributes);
+  const starting = scaledCardsReceipt(rules.starting, attributes);
+  const opening = { ...starting, stated: starting.value, capacity: capacity.value, value: handDrawCount(rules, attributes, { opening: true }).value };
+  const most = handDrawCount(rules, attributes).value;
+  const turnRule = scaledCardsReceipt(rules.turn, attributes);
+  const turn = rules.drawMode === 'fill'
+    ? { fill: true, capacity: capacity.value, value: most }
+    : { ...turnRule, stated: turnRule.value, fill: false, capacity: capacity.value, value: most };
+  return { opening, turn, capacity };
+}
+
+/**
+ * handRuleFacts(rules, attrId) → what one point of `attrId` buys in the hand
+ * these rules deal, as `{ label, points, baseline, maximum }` per hand rule
+ * that grows with it (the opening hand first: it is the one a class's own
+ * attribute moves). Read by the attribute cards (model/creationBrief.js) with
+ * the rules `classHandRules` hands the character's next fight.
+ */
+export function handRuleFacts(rules, attrId) {
+  const rows = [['starting', 'Opening hand'], ...(rules.drawMode === 'fill' ? [] : [['turn', 'Turn draw']]), ['capacity', 'Hand capacity']];
+  return rows
+    .filter(([group]) => rules[group]?.statEnabled && rules[group].stat === attrId)
+    .map(([group, label]) => ({ label, points: rules[group].pointsPerCard, baseline: rules[group].baseline, maximum: rules[group].maximum }));
 }
 
 export function handRulesSettingsProblems(settings = {}) {
