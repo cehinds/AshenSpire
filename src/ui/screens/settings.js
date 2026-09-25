@@ -233,6 +233,15 @@ export function promotionFor(defaults, debug = pageDebug()) {
   return { ...defaults, values };
 }
 
+/**
+ * buildPromotion(debug) → the promoted values this build applies: what a
+ * Reset goes back to. On a release build that leaves out every row it does
+ * not show, as boot does, so no Reset reinstalls hidden tuning.
+ */
+function buildPromotion(debug = pageDebug()) {
+  return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
+}
+
 /** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
 const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
 
@@ -1242,7 +1251,7 @@ export function offerUndo(label, snapshot) {
  * back to its promoted default when there is one, else is cleared so the row's
  * own default applies; an Undo is offered.
  */
-export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = PROMOTED_DEFAULTS } = {}) {
+export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) {
   const snapshot = {};
   const changed = {};
   for (const key of keys) {

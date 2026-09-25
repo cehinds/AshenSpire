@@ -519,3 +519,14 @@ test('−/+ ask for the button step of the value they step from', async () => {
   assert.match(screen, /const by = \(stepFor \? stepFor\(base\) : Number\(b\.dataset\.stepBy\)\) \|\| step;/);
   assert.match(screen, /stepFor: \(v\) => buttonStep\(row, v\)/);
 });
+
+test('a Reset goes back to the promotion this build applies, never hidden tuning on release', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
+  assert.match(screen, /return debug \? PROMOTED_DEFAULTS : promotionFor\(SETTINGS_DEFAULTS, false\)\.values;/);
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { shrineMultiUse: true, screenShake: true };
+  resetKeys(settings, () => ({ ok: true }), ['shrineMultiUse', 'screenShake'], 'all', { promoted: { screenShake: false } });
+  assert.deepEqual(settings, { screenShake: false }, 'a key the promotion leaves out is cleared');
+});
