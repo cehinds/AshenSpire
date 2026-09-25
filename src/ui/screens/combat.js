@@ -973,7 +973,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (host) {
       host.innerHTML = '';
       const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player'), ghost: 'hud:player' }));
       host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
     // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
@@ -1199,7 +1199,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, ghost: `model:${entity.id}` });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
