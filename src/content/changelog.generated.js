@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1296",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Every stat is set the same way, in one place, and read from one table",
+    "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your opening hand stays your class's own 4 to 6 cards, now set per class in the same editor; your turn draw, hand size, HP, Actions, AR, DR, PR and Ward read as before at the starting attributes; Poise goes from 9 to 10 at every attribute 5. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
+    "build": "0.7.1.521",
+    "pullRequest": 1296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1315",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Loading a save from a newer version mid-climb no longer throws away the climb you're on",
+    "detail": "Choosing Load from the in-game menu on a slot saved by a newer version of Ashen Spire now says straight away that it cannot be opened here and leaves your current climb exactly where it was. The same check runs again when you confirm, in case a newer version open in another tab saved to that slot while the question was on screen. Before, it asked you to confirm discarding unsaved changes, then closed the menu, failed to load, and dropped you on the title screen with the climb in hand gone. A new browser check also lands a hit and ends a turn, walks away from the fight without saving, and loads the slot through the real menu, and confirms the fight starts again at turn 1 with the same health, the same opening hand, the enemies back at full health and the same deck.",
+    "build": "0.7.1.518",
+    "pullRequest": 1315,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1315"
+  },
+  {
     "id": "pr-1318",
     "date": "2026-09-25",
     "group": "2026-09-25",
