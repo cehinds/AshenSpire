@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
-import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
+import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
@@ -359,6 +359,12 @@ if (MOBILE) {
 }
 if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
+  // ONE DATA URI PER DISTINCT IMAGE. ~50 images are byte-identical to another
+  // path (an outfit's menu and detail plate, a portrait shared by two sets);
+  // inlining each copy cost the mobile file ~410 KB. A repeat becomes an alias
+  // line after the map, pointing at the first key with the same bytes.
+  const firstKeyOf = new Map();
+  const aliases = [];
   for (const abs of walkAssets(ART_DIR)) {
     const assetPath = relative(ART_DIR, abs);
     if (!runtimeAsset(assetPath)) {
@@ -405,6 +411,13 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       // CSS url points at that copy.
       continue;
     } else {
+      const id = distinctAssetId(buf, extname(abs));
+      if (firstKeyOf.has(id)) {
+        aliases.push([key, firstKeyOf.get(id)]);
+        mapEntries += 1;
+        continue;
+      }
+      firstKeyOf.set(id, key);
       pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
     }
     mapEntries += 1;
@@ -420,9 +433,13 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   // run is a worse day than finding it here.
   if (!EXTERNAL_ART) sources.set(
     ASSET_MAP_ID,
+    // A replacer FUNCTION: a string replacement would read `$&`, `$1`… in an
+    // asset path as a pattern.
     src.replace(
       /\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//,
-      `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n/* ASSET_MAP_END */`
+      () => `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n`
+        + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) ASSET_MAP[alias] = ASSET_MAP[key];\n` : '')
+        + '/* ASSET_MAP_END */'
     )
   );
 }
