@@ -135,9 +135,9 @@ export function catalogDisagreement(md, html) {
 // judged as unreadable. A further CSS form is fixed here only if the shipped
 // CSS uses it; otherwise this note is the answer.
 function splitTop(text, sep) {
-  const out = []; let depth = 0; let quote = null; let cur = '';
+  const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
-    if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
+    if (quote) { cur += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
     if (ch === '(' || ch === '[') depth++;
     if (ch === ')' || ch === ']') depth--;
@@ -154,7 +154,7 @@ function splitTop(text, sep) {
 const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/i;
 
 function parseBlock(src, parent, rules, conditional = false, scopeBlock = false) {
-  let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
+  let depth = 0; let quote = null; let escaped = false; let text = ''; let openAt = -1; let prelude = '';
   const decls = [];
   const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
     const at = d.indexOf(':');
@@ -162,7 +162,8 @@ function parseBlock(src, parent, rules, conditional = false, scopeBlock = false)
   });
   for (let j = 0; j < src.length; j++) {
     const ch = src[j];
-    if (quote) { if (depth === 0) text += ch; if (ch === quote) quote = null; continue; }
+    // A backslash escapes the next character, so `"\""` is one string.
+    if (quote) { if (depth === 0) text += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
     if (ch === '"' || ch === "'") { quote = ch; if (depth === 0) text += ch; continue; }
     if (ch === '{') {
       if (depth++ === 0) {
@@ -221,8 +222,22 @@ function scopeRoot(prelude) {
   return null;
 }
 
+// Comments removed outside strings only: `content: "/*"` is text, not the
+// start of a comment.
+function stripComments(css) {
+  let out = ''; let quote = null; let escaped = false;
+  for (let i = 0; i < css.length; i++) {
+    const ch = css[i];
+    if (quote) { out += ch; if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === quote) quote = null; continue; }
+    if (ch === '/' && css[i + 1] === '*') { const end = css.indexOf('*/', i + 2); i = end < 0 ? css.length : end + 1; continue; }
+    if (ch === '"' || ch === "'") quote = ch;
+    out += ch;
+  }
+  return out;
+}
+
 export function cssRules(css) {
-  return parseBlock(css.replace(/\/\*[\s\S]*?\*\//g, ''), null, []);
+  return parseBlock(stripComments(css), null, []);
 }
 
 // The subject of one selector (no commas): its last top-level compound, so
@@ -305,7 +320,7 @@ export function railInFlow(css) {
   // a copy a nested @media emits is conditional and is judged only below.
   const base = rules.filter((rule) => rule.selector === '.shared-hud .hud-bottom' && !rule.conditional).flatMap((rule) => rule.decls);
   return base.length > 0
-    && lastValue(base, ['position']) === 'static'
+    && /^static$/i.test(lastValue(base, ['position']) ?? '')
     && lastValue(base, ['grid-area']) === 'rail'
     && !rules.some((rule) => /^(?:absolute|fixed)\b/i.test(lastValue(rule.decls, ['position']) || '')
       // Placement too: a rail rule that sets grid-area keeps it `rail`, and
