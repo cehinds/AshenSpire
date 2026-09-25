@@ -130,8 +130,9 @@ export function catalogDisagreement(md, html) {
 // has such a grid. A grid that drops `meters` is judged, not skipped: Vitals
 // would fall into an implicit area (Codex, #1316).
 export function railUnderMeters(css) {
-  const grids = [...css.matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
-    .map((m) => ({ selector: m[1].trim(), rows: m[2].match(/grid-template-areas:([^;]*);/)?.[1].match(/"[^"]*"/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
+  // Each rule is judged by its LAST grid-template-areas, the one CSS honours.
+  const grids = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/^([^{}\n]*\.shared-hud[^{}\n]*> \.hud-top) \{([^}]*)\}/gm)]
+    .map((m) => ({ selector: m[1].trim(), rows: [...m[2].matchAll(/grid-template-areas:([^;]*);/g)].at(-1)?.[1].match(/"[^"]*"/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) }))
     .filter((g) => g.rows);
   return grids.some((g) => g.selector === '.shared-hud > .hud-top')
     && grids.every(({ rows }) => rows.some((row) => row.includes('meters'))
@@ -661,6 +662,7 @@ function selftest() {
     ['re-hang the relic rail from a later layout rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n` })],
     // Codex, #1316: an override grid that drops `meters` is judged, not skipped.
     ['drop the meters row from a map-header override', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";') })],
+    ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE

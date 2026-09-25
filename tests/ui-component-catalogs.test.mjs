@@ -107,6 +107,17 @@ test('a HUD layout override that drops its meters row fails C12', () => {
   assert.equal(c12({ ...r, kit }).length, 1);
 });
 
+// Codex on #1316: CSS honours the LAST grid-template-areas in a rule, so a
+// repeated declaration that drops `meters` must fail even when the first one
+// still lays it out.
+test('a repeated grid-template-areas that drops meters fails C12', () => {
+  const r = receipt();
+  const kit = r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";');
+  assert.notEqual(kit, r.kit);
+  assert.equal(railUnderMeters(kit), false);
+  assert.equal(c12({ ...r, kit }).length, 1);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {
