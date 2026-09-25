@@ -38,6 +38,11 @@ function rowProblems(rows, problems) {
       if (row[key] !== undefined && row[key] !== null && (!Number.isInteger(row[key]) || row[key] < 0)) problems.push(`Hand rules: invalid ${id}.${key}`);
     }
     if (Number.isInteger(row.min) && Number.isInteger(row.max) && row.min > row.max) problems.push(`Hand rules: ${id} min must not exceed max`);
+    // A hand holds at least one card, at the fight door as at the content and
+    // settings doors (model/derivedStats.js), or a resumed fight deals nothing.
+    if (id === 'handSize' && (!Number.isInteger(row.min) || row.min < 1 || (Number.isInteger(row.max) && row.max < 1))) {
+      problems.push('Hand rules: handSize min and max must each be at least 1');
+    }
   }
 }
 

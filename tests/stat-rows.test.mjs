@@ -326,3 +326,12 @@ test('an old run with ratings on names its rating Poise on its cards; a ratings-
   assert.equal(off['gameConfig.derivedStatRules.rules.poise.base'], undefined);
   assert.equal(off['gameConfig.combatRatings.ratings.poise.base'], undefined);
 });
+
+test('a saved fight whose hand size can reach 0 is refused at the fight door', async () => {
+  const { handRulesProblems, resolveHandRules } = await import('../src/model/handRules.js');
+  const rows = { openingHand: { base: 4 }, draw: { base: 2 }, handSize: { base: 7, min: 1, max: 30 } };
+  assert.deepEqual(handRulesProblems(resolveHandRules({}, rows)), []);
+  for (const handSize of [{ base: 0, min: 0 }, { base: 7 }, { base: 7, min: 1, max: 0 }]) {
+    assert(handRulesProblems(resolveHandRules({}, { ...rows, handSize })).some((line) => /handSize min and max/.test(line)), JSON.stringify(handSize));
+  }
+});
