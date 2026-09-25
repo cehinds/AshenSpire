@@ -1101,3 +1101,36 @@ test('one receipt striking two figures from the same source holds that source fo
     B.restore();
   }
 });
+
+test('a co-op kill whose finishing hit also stops time slows the frozen figures with the rest of the kill cam', async () => {
+  const T = COMBAT_JUICE.sizing.damageTiers;
+  const H = COMBAT_JUICE.motion.hitStop;
+  const K = COMBAT_JUICE.motion.killCam;
+  const B = await juiceBoard('JUICEKILLCAM');
+  try {
+    const enemy = B.fightSnap.scene.enemies[0];
+    const death = fakeAnimation();
+    const swing = fakeAnimation();
+    B.anims.set(enemy.id, [death]);
+    B.anims.set('p1', [swing]);
+    B.runUntil(0);
+    const snap = B.receipt([
+      { type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'p1', targetId: enemy.id, amount: T.capAt, blocked: 0 },
+      { type: 'enemyDied', targetId: enemy.id },
+    ]);
+    snap.scene.result = 'victory';
+    B.deliver(snap);
+    assert.ok(B.app.querySelector('.combat')?.classList.contains('kill-cam-active'), 'the kill cam is playing');
+    assert.equal(death.playState, 'paused', 'the finishing hit froze the victim');
+    B.runUntil(H.maxMs);
+    assert.equal(death.playState, 'running', 'the freeze has let go');
+    assert.equal(death.playbackRate, K.slowRate, 'the victim resumes in slow motion, not at full speed');
+    assert.equal(swing.playbackRate, K.slowRate, 'so does the seat that struck it');
+    B.runUntil(K.lastEnemyMs);
+    assert.ok(!B.app.querySelector('.combat').classList.contains('kill-cam-active'), 'the kill cam ended');
+    assert.equal(death.playbackRate, 1, 'and gave back full speed');
+    assert.equal(swing.playbackRate, 1);
+  } finally {
+    B.restore();
+  }
+});

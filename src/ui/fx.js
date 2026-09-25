@@ -579,10 +579,13 @@ export function playKillCam(ctx, anchor, plan) {
     ctx.layer.appendChild(vignette);
   }
   // Slow motion: everything already moving on the board (death pose, the ✝
-  // float, a finishing effect) plays at slowRate until the cam lets go.
+  // float, a finishing effect) plays at slowRate until the cam lets go. That
+  // includes animations a hit-stop has paused this instant (the finishing
+  // hit's impact and the death pose it froze): they resume slowed, not at
+  // full speed in the middle of the cam.
   const slowed = [];
   for (const a of [...animationsOf(ctx.combatEl)]) {
-    if (a.playState !== 'running') continue;
+    if (a.playState !== 'running' && a.playState !== 'paused') continue;
     try { slowed.push([a, a.playbackRate]); a.playbackRate = a.playbackRate * plan.slowRate; } catch (e) { /* ignore */ }
   }
   ctx.combatEl.classList.add('kill-cam-active');
