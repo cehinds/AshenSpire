@@ -26,20 +26,25 @@ test('Progression is the one driver: pool first, then each class, and the tier d
   // two read in a row, before the floors and the class tables they bound. What
   // the points turn into is a topic per trait under Stats (below).
   assert.deepEqual(groups.map(group => group.id).slice(0, 7),
-    ['Assign points', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
+    ['Starting stats', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
   assert.ok(!groups.some(group => group.id === 'Stats & resources'), 'the formulas are edited under Stats, one topic per trait');
 
-  const assign = groups.find(group => group.id === 'Assign points');
+  const assign = groups.find(group => group.id === 'Starting stats');
   // His sentence, in his order: the baseline he names first is the row he sees
   // first, then the points he places, then what they add up to, then the limits
-  // that bound both.
-  assert.deepEqual(assign.rows.map(row => row.label), [
+  // that bound both. Two modes are offered (owner, 2026-09-24), so each run of
+  // six names its mode: Standard's first, then Assign points'.
+  const dials = [
     'Starting value for every attribute',
     'Points available to assign',
     'Total points on a character',
     'Lowest a stat may be set to',
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
+  ];
+  assert.deepEqual(assign.rows.map(row => row.label), [
+    ...dials.map(label => `Standard — ${label}`),
+    ...dials.map(label => `Assign points — ${label}`),
   ]);
   assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'),
     'the tier dial retired with ruleset 6 — every stat states its own weights');
@@ -67,10 +72,16 @@ test('Progression is the one driver: pool first, then each class, and the tier d
 // effect is invalidating an old save; three of them read as three pools for
 // one idea. They keep their keys (see the `retired` filter in settings.js) and
 // leave the screen.
-test('only the creation mode a player can pick is offered a pool', () => {
+test('only the creation modes a player can pick — Standard and Assign points — are offered a pool', () => {
   const keys = categoryHandler('Advanced').rows.map(row => row.key);
   const pools = keys.filter(key => /^gameConfig\.startingStats\..+\.(total|bonusPool|baseline|minimum|maximum|belowBaseline)$/.test(key));
   assert.deepEqual(pools.sort(), [
+    'gameConfig.startingStats.assign.baseline',
+    'gameConfig.startingStats.assign.belowBaseline',
+    'gameConfig.startingStats.assign.bonusPool',
+    'gameConfig.startingStats.assign.maximum',
+    'gameConfig.startingStats.assign.minimum',
+    'gameConfig.startingStats.assign.total',
     'gameConfig.startingStats.lean.baseline',
     'gameConfig.startingStats.lean.belowBaseline',
     'gameConfig.startingStats.lean.bonusPool',
@@ -468,9 +479,9 @@ test('a setting that moves nothing is off the screen and still imports', async (
   }
   // Retired, not deleted: parseAdvancedConfigFile aborts a whole file on one
   // unknown key, so removing the row would refuse every configuration that
-  // still names it.
+  // still names it. The file lands; the dead keys are skipped by name (review
+  // of #1294), since nothing would ever read them back.
   const legacy = { 'gameConfig.balance.energy': 3, 'gameConfig.balance.draw': 5 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy);
 
   // The fallback hand size WAS read — by co-op fights — and ruleset 7 made
   // the Hand size stat row govern every fight instead. So it is no row at all,
@@ -478,9 +489,9 @@ test('a setting that moves nothing is off the screen and still imports', async (
   // the warning points at the row a fight actually uses.
   assert.ok(!rows.some(candidate => candidate.key === 'gameConfig.balance.handMax'), 'handMax is not a row since ruleset 7');
   const warnings = [];
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...legacy, 'gameConfig.balance.handMax': 5 }), contentBundle, {}, [], warnings), legacy);
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /Stats → Draw & hand → Hand size/, 'and points at the row a fight actually uses');
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...legacy, 'gameConfig.balance.handMax': 5 }), contentBundle, {}, [], warnings), {});
+  assert.ok(warnings.some((line) => /no longer used and were skipped\. Everything else in the file was imported\./.test(line)), 'the dead keys are skipped by name');
+  assert.ok(warnings.some((line) => /Stats → Draw & hand → Hand size/.test(line)), 'and handMax points at the row a fight actually uses');
 });
 
 // ---- ONE HOME PER SETTING (owner, 2026-09-23) -------------------------------
@@ -559,8 +570,10 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   }
   assert.ok(!shown.has('mapHeaderSeed'), 'the seed toggle the header never honoured is off the screen');
   const legacy = { 'gameConfig.balance.levelUp.pointsPerLevelMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
-    'an exported file naming a retired key still imports');
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy, {}, Object.keys(legacy)), contentBundle, {}, [], warnings), {},
+    'an exported file naming a retired key still imports, in either spelling, the dead keys skipped');
+  assert.match(warnings.join(' '), /Reaver — Base HP/);
 
   // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
   // land in the bundle and refuse the whole configuration over a row no longer
@@ -592,6 +605,8 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.intelligence'), 'Draw & hand');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.handSize.max'), 'Draw & hand', 'the one hand size, co-op included');
   assert.equal(topicOf('gameConfig.handRules.drawMode'), 'Draw & hand');
+  assert.equal(topicOf('gameConfig.derivedStatRules.byClass.reaver.openingHand.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
+  assert.equal(topicOf('gameConfig.handRules.startingByClass.reaver.base'), undefined, 'the #1294 per-class keys are retired into the class rows');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.hp.perLevel'), 'HP', 'level growth is part of the trait');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.mana.wisdom'), 'Mana');
   assert.equal(topicOf('gameConfig.balance.mana.minActionCost'), 'Mana');
@@ -606,9 +621,14 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   // Every term of a trait is editable where the trait is — and since ruleset 7
   // every stat has the SAME editor: the same nine fields in the same order.
   for (const id of ['energy', 'openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
-    const own = rows.filter(row => row.derivedStatId === id).map(row => row.key.split('.').at(-1));
+    const own = rows.filter(row => row.derivedStatId === id && row.key.startsWith('gameConfig.derivedStatRules.rules.')).map(row => row.key.split('.').at(-1));
     assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'],
       `${id}: base, a weight per attribute, growth per level, bounds`);
+  }
+  // A class's own opening hand is the same editor, beside the shared row.
+  for (const classId of ['reaver', 'rogue', 'herald', 'starseer']) {
+    const own = rows.filter(row => row.key.startsWith(`gameConfig.derivedStatRules.byClass.${classId}.openingHand.`)).map(row => row.key.split('.').at(-1));
+    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'], `${classId} opening hand`);
   }
   // The retired homes are no rows: the rating formula and its multiplier, and
   // the hand rules' single-stat groups (their keys convert on import).
@@ -749,7 +769,11 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
+  // Each class opens on its own row (#1294), so every class's is raised.
+  const deepSettings = { 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
+  for (const classId of ['reaver', 'rogue', 'herald', 'starseer']) {
+    Object.assign(deepSettings, { [`gameConfig.derivedStatRules.byClass.${classId}.openingHand.base`]: 20, [`gameConfig.derivedStatRules.byClass.${classId}.openingHand.max`]: 30 });
+  }
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the

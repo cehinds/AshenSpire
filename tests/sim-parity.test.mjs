@@ -15,7 +15,7 @@ import { cardPlayCosts } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveHandRules } from '../src/model/handRules.js';
 import { handStatRows } from '../src/model/statRows.js';
-import { resolvedRuleRow } from '../src/model/derivedStats.js';
+import { classRuleRow } from '../src/model/derivedStats.js';
 import { resolveSwapCostRule } from '../src/model/loadout.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards } from '../tools/simbot.mjs';
@@ -35,7 +35,7 @@ test('a run fight carries the rules a fresh profile gives the live game', () => 
   // run's are the shipped table's.
   assert.deepEqual(combat.handRules, resolveHandRules({}, handStatRows(registries, run)), 'default hand rules');
   for (const id of ['openingHand', 'draw', 'handSize']) {
-    assert.deepEqual(combat.handRules.rows[id], resolvedRuleRow(registries.derivedStatRules, id), `the shipped ${id} row`);
+    assert.deepEqual(combat.handRules.rows[id], classRuleRow(registries.derivedStatRules, run.class, id), `the shipped ${id} row (the class's own opening hand)`);
   }
   assert.equal(combat.swapCostRule, resolveSwapCostRule(registries, { settings: {} }), 'default swap price');
   if (registries.balance.combatRatings?.enabled) assert.ok(combat.ratingsRules, 'rating rules applied');

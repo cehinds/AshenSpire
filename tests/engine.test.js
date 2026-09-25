@@ -62,7 +62,7 @@ import {
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
-import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints } from '../src/model/attributes.js';
+import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints, creationMode } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
 import { LEGACY_HAND_MAX } from '../src/model/statRows.js';
 import { outfits } from '../src/content/generated/outfits.js';
@@ -7635,8 +7635,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
     eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
     eq(defaultCreationModeId(REG), 'lean', 'the internal creation default is the lean mode (owner, 2026-09-20)');
-    eq(creationModeViews(REG).map((row) => row.id).join(','), 'lean',
-      'creation offers the lean mode alone; the older modes stay in the table for saved runs (plan phase 9)');
+    eq(creationModeViews(REG).map((row) => row.id).join(','), 'lean,assign',
+      'creation offers Standard (lean) and Assign points; the older modes stay in the table for saved runs (owner, 2026-09-24)');
+    eq(creationModeViews(REG).map((row) => row.label).join(','), 'Standard,Assign points', 'labelled in the owner\'s words');
+    eq(creationMode(REG, 'lean').opensOn, 'preset', 'Standard seats the class preset');
+    eq(creationMode(REG, 'assign').opensOn, 'baseline', 'Assign points opens on the baseline');
+    eq(allocationTotal(REG, 'assign'), allocationTotal(REG, 'lean'), 'both open on the same eight points');
+    eq(Object.values(baselineAttributeAllocation(REG, 'assign')).join(','), '1,1,1,1,1', 'Assign points opens on all 1s');
+    eq(classAttributePreset(REG, 'starseer', 'lean').intelligence, 3, 'Standard opens the Starseer on INT 3');
     eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
     eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
     eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
@@ -9767,7 +9773,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('93. the attribute rebase: one creation scale, one derived ruleset, one equip gate (plan phase 9)', () => {
     // THE MODE CREATION OFFERS, AND THE ONES IT NO LONGER DOES. The older
     // modes stay in the table because saves were admitted against them.
-    eq(creationModeViews(REG).map((m) => m.id).join(','), 'lean', 'creation offers the lean mode alone');
+    eq(creationModeViews(REG).map((m) => m.id).join(','), 'lean,assign', 'creation offers Standard (lean) and Assign points (owner, 2026-09-24)');
     const older = ['tuned2', 'tuned', 'standard', 'pointbuy'].every((id) => REG.creationModes.all().some((m) => m.id === id));
     assert(older, 'and every retired mode is still resolvable for the runs born under it');
     eq(allocationTotal(REG, 'lean'), 8, 'five stats at a baseline of 1 plus three to place');

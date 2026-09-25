@@ -10,6 +10,7 @@ import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
 import { ratingStatRows, ratingsConfigFor, readsLegacyStatHomes, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
+import { classHandRules, handSizeReceipts } from './handRules.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -271,4 +272,57 @@ export function statProjection(registries, run) {
     ? { openingHand: statRow(registries, run, 'openingHand'), handSize: statRow(registries, run, 'handSize') }
     : null;
   return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows };
+}
+
+/**
+ * handResourceRows(registries, run, settings) → the Hand and Draw chips for a
+ * character about to begin, read off the hand rows its first fight is
+ * handed (`classHandRules`, the door engine/runCombat.js snapshots).
+ *
+ * TWO CHIPS, EACH SAYING ONE TRUE THING (Codex, #1294). Creation used to show
+ * the derived `draw` row as "Draw / turn and opening hand", but a solo fight
+ * deals its opening hand and its turn draws from the hand rules — per class
+ * since #1294 — so a Standard Rogue read Draw 3 and opened with 5 cards. The
+ * derived row still prices LAN co-op and older saved fights; these two rows
+ * replace it only where a new solo run is being previewed.
+ */
+export function handResourceRows(registries, run, settings = {}) {
+  const rules = classHandRules(settings, registries, run);
+  const { opening, turn } = handSizeReceipts(rules, run.attributes, run.level);
+  const short = (id) => registries.attributes.get(id)?.shortLabel || id;
+  // The row's own terms, as the one row formula prices them (§3.5).
+  const terms = (receipt) => [
+    `${receipt.base} base`,
+    ...Object.entries(receipt.terms || {}).filter(([id]) => (receipt.weights || {})[id] > 0).map(([id, value]) => `${value} ${short(id)}`),
+    ...(receipt.levelBonus ? [`${receipt.levelBonus} level`] : []),
+  ].join(' + ');
+  const limits = (receipt) => (receipt.min !== null && receipt.raw < receipt.min ? `, raised to the minimum ${receipt.min}`
+    : receipt.max !== null && receipt.raw > receipt.max ? `, limited to the maximum ${receipt.max}` : '');
+  // Both values are `handDrawCount` into an empty hand (the formula combat's
+  // `turnDrawCount` deals), so a stated row above the hand size reads the
+  // capped count on the chip and at the end of its arithmetic.
+  const capped = (receipt) => (receipt.stated > receipt.capacity ? `, limited to hand size ${receipt.capacity}` : '');
+  const openingFormula = `${terms(opening)}${limits(opening)}${capped(opening)} = ${opening.value}`;
+  const turnFormula = turn.fill
+    ? `draw until the hand holds ${turn.capacity}`
+    : `${terms(turn)}${limits(turn)}${capped(turn)} = ${turn.value}${capped(turn) ? '' : `, never past hand size ${turn.capacity}`}`;
+  return [
+    {
+      id: 'openingHand', label: 'Opening hand', faceLabel: 'Hand', disclosure: 'face', order: 4.5,
+      sense: 'The cards you hold when a fight begins.', value: opening.value, formula: `Opening hand: ${openingFormula}`, note: '',
+    },
+    {
+      id: 'draw', label: 'Cards drawn each turn', faceLabel: 'Draw', disclosure: 'face', order: 5,
+      sense: 'The cards you draw at the start of each later turn.', value: turn.value, formula: `Each turn: ${turnFormula}`, note: '',
+    },
+  ];
+}
+
+/**
+ * withHandResources(derived, handRows) → the projection's rows with its
+ * `draw` row replaced by the hand chips, and its own `openingHand` row
+ * dropped (the chip states it, capped by the hand size, once).
+ */
+export function withHandResources(derived, handRows) {
+  return derived.filter((row) => row.id !== 'openingHand').flatMap((row) => (row.id === 'draw' ? handRows : [row]));
 }

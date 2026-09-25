@@ -642,6 +642,10 @@ function collectContentProblems(bundle, errors = []) {
       if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}`);
       if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}, and a copy here is a second home for one number`);
     }
+    // #1294's per-class opening hand is a class row (derivedStatRules.byClass).
+    for (const [where, source] of [['handRulesDefaults', handRulesDefaults], ['handRules', b.handRules]]) {
+      if (source && source.startingByClass !== undefined) err(`${where}.startingByClass`, 'was retired in derived-stat ruleset 7: each class\'s opening hand is derivedStatRules.byClass.<class>.openingHand');
+    }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);

@@ -1,6 +1,6 @@
 {
   "spritePreviewSide": "right",
-  "visibleModeIds": ["lean"],
+  "visibleModeIds": ["lean", "assign"],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",

@@ -29,7 +29,8 @@ import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
-import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources } from '../../model/statProjection.js';
+import { classHandRules } from '../../model/handRules.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
@@ -81,6 +82,8 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Power Rating (PR)',
+  openingHand: 'Opening hand',
+  draw: 'Cards drawn each turn',
 });
 
 function creationDerivedLabel(entry) {
@@ -98,6 +101,11 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
 }) {
+  // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
+  // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
+  // Draw chips read from the class's own hand rules under these settings,
+  // through the door (`classHandRules`) engine/runCombat.js snapshots.
+  const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -394,6 +402,9 @@ export function mountCustomize(app, {
    * (review, #1217). The real question is whether the mode has a pool.
    */
   const hasPoints = (modeId) => !!modeId && creationModeHasPoints(creationMode(registries, modeId));
+  /** Does choosing this mode seat the class preset (Standard) rather than
+   *  open the editor on the baseline (Assign points)? Data: `opensOn`. */
+  const opensOnPreset = (modeId) => !!modeId && creationMode(registries, modeId).opensOn === 'preset';
   // Which sections have their starting-card fold open, for the life of this
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.
@@ -555,6 +566,11 @@ export function mountCustomize(app, {
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
+  /** The rules this character's first fight is handed — the door
+   *  engine/runCombat.js snapshots — for the attribute cards' hand facts. */
+  function creationHandRules(run) {
+    return classHandRules(meta.settings || {}, registries, run);
+  }
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
     // An incomplete draft previews from its OWN mode's class preset — not
@@ -596,6 +612,7 @@ export function mountCustomize(app, {
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      hand: creationHandRules(run),
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run);
@@ -606,7 +623,7 @@ export function mountCustomize(app, {
     });
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
-    const resources = projection.derived
+    const resources = creationResources(run, projection)
       .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
     $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
@@ -620,7 +637,7 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const resources = classResourceGrid(projection.derived.slice(0, 5));
+    const resources = classResourceGrid(creationResources(run, projection).slice(0, 5));
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -655,13 +672,24 @@ export function mountCustomize(app, {
     modes.addEventListener('change', () => {
         const mode = visibleModes.find(mode => mode.id === modes.value);
         if (!mode) return;
+        // What was chosen BEFORE this change, so Cancel on a fresh Assign
+        // points puts it back (review of #1294): Standard → Assign points →
+        // Cancel used to land on unchosen, the Standard preset thrown away.
+        const previous = { mode: state.attributeMode, attributes: state.attributes ? { ...state.attributes } : null };
         state.attributeMode = mode.id;
-        if (hasPoints(mode.id)) {
+        if (opensOnPreset(mode.id)) {
+          // STANDARD SEATS THE CLASS PRESET (owner, 2026-09-24: "standard (pre
+          // assigned class presets)"). Nothing is left to spend, so no editor
+          // opens and the step's Continue is green at once; "Edit points"
+          // still reshapes the same fixed total as a revision.
+          closePointBuy();
+          state.attributes = { ...classAttributePreset(registries, state.classId, mode.id) };
+        } else if (hasPoints(mode.id)) {
           // Entering Assign Points from the SELECT is an explicit fresh
           // allocation: the whole authored pool comes back rather than the
           // class-biased preset (or a previous edit) with points already
           // spent. Reopening it from "Edit points" is a revision instead.
-          openPointBuy({ fresh: true });
+          openPointBuy({ fresh: true, previous });
         } else {
           closePointBuy();
         }
@@ -736,7 +764,7 @@ export function mountCustomize(app, {
    * cancelling puts back exactly what was there, because a player who opens
    * their own stats to look at them must not lose them by pressing Cancel.
    */
-  function openPointBuy({ fresh = true } = {}) {
+  function openPointBuy({ fresh = true, previous = null } = {}) {
     closePointBuy({ restoreFocus: false });
     // Taken BEFORE the reset below, which fills a null allocation in: read
     // after it, a revision opened on no allocation (the catalogue's
@@ -759,6 +787,7 @@ export function mountCustomize(app, {
       const cards = new Map(attributeCardModels(registries, state.attributes, {
         projection: statProjection(registries, preview),
         equipmentProfiles: rules,
+        hand: creationHandRules(preview),
       }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
@@ -849,9 +878,15 @@ export function mountCustomize(app, {
         // over. A REVISION puts back the allocation it opened, so looking at
         // your own stats and changing your mind costs nothing (review,
         // #1217).
+        // A fresh allocation entered FROM ANOTHER CHOSEN MODE (Standard →
+        // Assign points) puts that choice back, preset and all: Cancel undoes
+        // the switch, it does not also undo the answer given before it.
         if (!fresh) {
           state.attributeMode = priorMode;
           state.attributes = priorAttributes;
+        } else if (previous?.mode && previous.attributes) {
+          state.attributeMode = previous.mode;
+          state.attributes = previous.attributes;
         } else {
           state.attributeMode = '';
           state.attributes = null;
@@ -1183,8 +1218,8 @@ export function mountCustomize(app, {
   // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
   const summaryBody = el('div', { class: 'as-stack cc-summary' });
   let summaryFold = null;
-  function characterSummaryResources(projection, poise) {
-    const resources = projection.derived
+  function characterSummaryResources(derived, poise) {
+    const resources = derived
       .filter(entry => entry.id !== 'poise')
       .map(entry => ({
         id: entry.id,
@@ -1244,7 +1279,7 @@ export function mountCustomize(app, {
       value: run.attributes[def.id],
     }));
     const resources = characterSummaryResources(
-      projection,
+      creationResources(run, projection),
       playerPoiseThresholdReceipt(registries, run),
     );
     const card = el('article', {
@@ -1473,6 +1508,7 @@ export function mountCustomize(app, {
     const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
       projection: specimenProjection,
       equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+      hand: creationHandRules(specimenRun),
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));
@@ -1502,12 +1538,12 @@ export function mountCustomize(app, {
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
       sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
+      resources: classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    const classResourceSpecimen = classResourceGrid(creationResources(specimenRun, specimenProjection).slice(0, 5));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
@@ -1590,7 +1626,7 @@ export function mountCustomize(app, {
       { key: 'selection-section-face', label: 'Selection subcard face', node: selectionFaceSpecimen },
       { key: 'primary-stat-card', label: 'Primary stat card', node: statHost },
       { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+        creationResources(specimenRun, specimenProjection), playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
       { key: 'mode-choice', label: 'Stat allocation mode', node: choiceSpecimen(
         'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,

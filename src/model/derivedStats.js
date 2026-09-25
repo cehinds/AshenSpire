@@ -83,7 +83,7 @@ export const UNIFIED_RULESET_VERSION = 6;
 export const DERIVED_STAT_SNAPSHOT_VERSION = 3;
 export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2, 3]);
 
-const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
+const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation', 'byClass'];
 const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
 const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap', 'perLevel'];
@@ -395,6 +395,18 @@ export function resolvedRuleRow(table, statId) {
   return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row });
 }
 
+/**
+ * classRuleRow(table, classId, statId) → the row a character of this class
+ * reads from a live table: the class's own row where the table has one
+ * (`byClass`), the shared row otherwise. A run reads its snapshot instead,
+ * which was resolved per class when the run was born.
+ */
+export function classRuleRow(table, classId, statId) {
+  const own = classId && table && plainObject(table.byClass) && plainObject(table.byClass[classId]) ? table.byClass[classId][statId] : null;
+  if (plainObject(own)) return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...own });
+  return resolvedRuleRow(table, statId);
+}
+
 /** Every attribute this row answers to, as `[id, weight]`, weight non-zero. */
 export function ruleWeights(row) {
   if (!plainObject(row)) return [];
@@ -435,6 +447,20 @@ export function derivedStatRuleProblems(source, options = {}) {
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
+  }
+  // A CLASS'S OWN ROWS (ruleset 7): a full row in the one shape, which that
+  // class's runs are born with in place of the shared row — the opening hand
+  // is per class (owner, 2026-09-24: "Class base 3–5, +1 from stats", #1294).
+  if (source.byClass !== undefined) {
+    if (!opts.statRows) problem(out, 'byClass', 'is only legal from derived-stat ruleset 7');
+    else if (!plainObject(source.byClass)) problem(out, 'byClass', 'must be a plain object of class id → rows');
+    else for (const [classId, rows] of Object.entries(source.byClass)) {
+      if (!plainObject(rows)) { problem(out, `byClass.${classId}`, 'must be a plain object of row id → row'); continue; }
+      for (const [id, row] of Object.entries(rows)) {
+        if (!DERIVED_STAT_IDS.includes(id)) problem(out, `byClass.${classId}.${id}`, `unknown derived-stat row '${id}'`);
+        else validateRule(out, row, `byClass.${classId}.${id}`, opts, false);
+      }
+    }
   }
   // A HAND HOLDS AT LEAST ONE CARD. The retired capacity group refused a floor
   // or ceiling under 1; the row that replaced it keeps that refusal, or a
@@ -554,6 +580,16 @@ export function resolveDerivedStatRules(source, options = {}) {
       .filter((id) => own(source.rules, id))
       .map((id) => [id, normalizeRule({ ...source.defaults, ...structuredClone(source.rules[id]) })])),
   };
+  // A CLASS'S OWN ROWS REPLACE THE SHARED ONES when the table is resolved for
+  // a character (a run's snapshot is born here with its class's opening hand);
+  // the per-class table itself never rides into a snapshot.
+  const classId = options.classId || (options.classDef && options.classDef.id) || null;
+  const classRows = classId && plainObject(source.byClass) && plainObject(source.byClass[classId]) ? source.byClass[classId] : null;
+  if (classRows) {
+    for (const [id, row] of Object.entries(classRows)) {
+      if (replayed.rules[id]) replayed.rules[id] = normalizeRule({ ...source.defaults, ...structuredClone(row) });
+    }
+  }
   for (const [, layer] of layers) {
     if (!layer) continue;
     // A LAYER PATCHES THE ROWS THE TABLE HAS. Since the row set became a

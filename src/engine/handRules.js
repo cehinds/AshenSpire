@@ -1,15 +1,16 @@
-import { handRow, scaledCards } from '../model/handRules.js';
+import { handDrawCount, handRow, scaledCards } from '../model/handRules.js';
 import { resolveCard } from '../model/registries.js';
 
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
   const rules = ctx.handRules;
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
-  ctx.handMax = scaledCards(handRow(rules, 'handSize'), ctx.attributes, ctx.characterLevel);
-  const room = Math.max(0, ctx.handMax - ctx.piles.hand.length);
-  const wanted = opening ? scaledCards(handRow(rules, 'openingHand'), ctx.attributes, ctx.characterLevel)
-    : rules.drawMode === 'fill' ? room : scaledCards(handRow(rules, 'draw'), ctx.attributes, ctx.characterLevel) + (ctx.pendingDiscardDraw || 0);
+  // The ONE formula creation's Hand and Draw chips preview (model/handRules.js).
+  const draw = handDrawCount(rules, ctx.attributes, {
+    handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel,
+  });
+  ctx.handMax = draw.capacity;
   ctx.pendingDiscardDraw = 0;
-  return Math.min(room, wanted);
+  return draw.value;
 }
 
 export function endTurnCardFate(ctx, card) {

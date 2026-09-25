@@ -46,7 +46,7 @@ export function statsExampleClasses(bundle = contentBundle) {
  * examples read: the current character, or the stored example class's
  * starting attributes under the configured creation mode.
  */
-export function statsExampleSubject(settings = {}, previewAttributes = null, configured = configuredContentBundle(contentBundle, settings), previewLevel = null) {
+export function statsExampleSubject(settings = {}, previewAttributes = null, configured = configuredContentBundle(contentBundle, settings), previewLevel = null, previewClassId = null) {
   const shortLabel = Object.fromEntries((configured.attributes || []).map((attribute) => [attribute.id, attribute.shortLabel || attribute.label]));
   if (previewAttributes) {
     const attributes = Object.fromEntries((configured.attributes || []).map((attribute) => [attribute.id, Number(previewAttributes[attribute.id]) || 0]));
@@ -55,7 +55,7 @@ export function statsExampleSubject(settings = {}, previewAttributes = null, con
     // under (`derivedStatRuleSnapshot`), and every row here applies to a new
     // run, so the example is what these settings make of the character in
     // play, and says so rather than claiming to be its sheet (Codex, #1252).
-    return { current: true, label: `Your attributes at level ${level}, under these settings`, classDef: null, attributes, shortLabel, level };
+    return { current: true, label: `Your attributes at level ${level}, under these settings`, classDef: null, classId: previewClassId || null, attributes, shortLabel, level };
   }
   const classes = configured.classes || [];
   const classDef = classes.find((row) => row.id === settings[STATS_EXAMPLE_CLASS_KEY]) || classes[0] || {};
@@ -84,7 +84,7 @@ function refusalFor(settings, configured) {
 
 // Everything an example reads, resolved once per preview: the configured
 // bundle, whose attributes, and the three rule sets built from it.
-function previewContext(settings, previewAttributes, previewLevel, forcedRefusal = null) {
+function previewContext(settings, previewAttributes, previewLevel, forcedRefusal = null, previewClassId = null) {
   // THE BUNDLE A RUN WOULD ACTUALLY GET. A configuration the game refuses is
   // not applied: `main.js` `rebuildRegistries` keeps the authored content until
   // `validateContent` and the structural checks pass. The example runs the
@@ -109,10 +109,10 @@ function previewContext(settings, previewAttributes, previewLevel, forcedRefusal
       if (configured === contentBundle) throw error;
       refused = error.message;
       configured = contentBundle;
-      return previewContext(settings, previewAttributes, previewLevel, refused);
+      return previewContext(settings, previewAttributes, previewLevel, refused, previewClassId);
     }
   }
-  const subject = statsExampleSubject(settings, previewAttributes, configured, previewLevel);
+  const subject = statsExampleSubject(settings, previewAttributes, configured, previewLevel, previewClassId);
   const lazy = (build) => { let value; let done = false; return () => { if (!done) { value = build(); done = true; } return value; }; };
   return {
     configured, subject, settings, refused, registries,
@@ -129,7 +129,9 @@ function previewContext(settings, previewAttributes, previewLevel, forcedRefusal
     // rows, or the configured table's (model/statRows.js).
     ratings: lazy(() => ratingsConfigFor(registries, newRun, configured.balance?.combatRatings || { ...resolveCombatRatings({}, configured), enabled: false })),
     newRun: () => newRun,
-    hand: lazy(() => resolveHandRules(settings, handStatRows(registries, newRun, { settings }))),
+    // The subject's class opens on its own hand (its `byClass` opening-hand
+    // row, #1294), exactly as `createRunCombat` hands a fight.
+    hand: lazy(() => resolveHandRules(settings, handStatRows(registries, newRun && newRun.class === subject.classId ? newRun : { class: subject.classId }, { settings }))),
   };
 }
 
@@ -339,13 +341,13 @@ function overviewExample(ctx) {
  * tables). Never throws: a combination the engine refuses is reported as the
  * example's text, which is what a player tuning a dial needs to see.
  */
-export function statsTopicPreview(settings = {}, topic, previewAttributes = null, previewLevel = null) {
+export function statsTopicPreview(settings = {}, topic, previewAttributes = null, previewLevel = null, previewClassId = null) {
   const derivedId = DERIVED_BY_TOPIC[topic];
   const ratingId = RATING_BY_TOPIC[topic];
   if (!derivedId && !ratingId && topic !== 'Overview' && topic !== 'Draw & hand') return null;
   let ctx;
   try {
-    ctx = previewContext(settings, previewAttributes, previewLevel);
+    ctx = previewContext(settings, previewAttributes, previewLevel, null, previewClassId);
   } catch (error) {
     return { subject: null, attributes: '', examples: [], problem: `These settings cannot build a character: ${error.message}` };
   }

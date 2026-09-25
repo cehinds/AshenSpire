@@ -14,7 +14,7 @@ import { attributeRatingReceipt } from '../src/model/ratingFormula.js';
 import { scaledCards } from '../src/model/handRules.js';
 import { validateContent } from '../src/model/validate.js';
 import {
-  LEGACY_HAND_GROUPS, LEGACY_RATING_FORMULA, legacyHandRow, legacyRatingRow, migrateLegacyStatSettings,
+  LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, legacyRatingRow, migrateLegacyStatSettings,
   statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes,
 } from '../src/model/statRows.js';
 import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile, hasLegacyAdvancedSettings } from '../src/model/advancedConfig.js';
@@ -142,9 +142,10 @@ test('a ruleset-6 save restores identical values: pools, ratings and hand counts
     const expected = legacy.base + ATTRIBUTES.reduce((sum, attr) => sum + Math.floor(restored.attributes[attr] * legacy[attr] + 1e-9), 0);
     assert.equal(attributeRatingReceipt(config, restored.attributes, id).value, expected, id);
   }
-  // Hand counts: the frozen hand-rule groups, exactly as the old formula.
+  // Hand counts: the frozen hand-rule groups, exactly as the old formula —
+  // the opening hand the class's own (#1294).
   const legacyCount = (group) => {
-    const rule = LEGACY_HAND_GROUPS[group];
+    const rule = group === 'starting' ? { ...LEGACY_HAND_GROUPS.starting, ...LEGACY_STARTING_BY_CLASS[restored.class] } : LEGACY_HAND_GROUPS[group];
     const points = restored.attributes[rule.stat];
     return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard)));
   };
