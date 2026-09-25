@@ -50,7 +50,7 @@ import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
@@ -1235,6 +1235,11 @@ function saveSlotRecords() {
 }
 
 function confirmSlotLoad(slot, { returnFocusElement } = {}) {
+  // A SLOT A NEWER BUILD WROTE IS REFUSED HERE, BEFORE ANYTHING IS DROPPED.
+  // resumeRun's loadRun is null for it (SPEC §3.12: refused and kept), and by
+  // then closeOverlay has run and `run` is overwritten — the climb in hand was
+  // lost to a load that could never succeed. Say why and leave the run be.
+  if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
   // WHICH CLIMB, NOT JUST WHICH SLOT. This is the in-run door's only stop
   // before the load, and it named a number and nothing else. The title's list
   // hands the seed to a review door on the way through; this path has no
@@ -3020,6 +3025,17 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
+  // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
+  // the schema one ahead, so the in-run Load door meets exactly what a newer
+  // build leaves behind (SPEC §3.12). Memory storage only: a shot boot's
+  // storage is the stub, so no durable byte is involved.
+  // tools/slot-load-door.mjs is the reader.
+  const shotNewerSlot = Number(shotParams.get('shotNewerSlot'));
+  if (Number.isInteger(shotNewerSlot) && shotNewerSlot > 1 && shotNewerSlot <= SLOTS) {
+    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
+    bootStorage.setItem(runKey(shotNewerSlot), JSON.stringify({ ...bytes, schemaVersion: bytes.schemaVersion + 1 }));
+  }
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
     configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
   }

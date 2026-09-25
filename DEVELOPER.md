@@ -428,6 +428,16 @@ node tools/startup-gate.mjs
 node tools/startup-gate.mjs --selftest
 ```
 
+Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
+Quick Menu → Load path: a newer-build slot must be refused with the run kept,
+and a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck:
+
+```bash
+node tools/slot-load-door.mjs
+node tools/slot-load-door.mjs --selftest
+```
+
 Exact combat-save changes additionally run the real Save / Save and Quit /
 Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
