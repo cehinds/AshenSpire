@@ -206,14 +206,27 @@ export function cssRules(css) {
 // has subject `.relic`; `:is(.hud-bottom)` has subject `.hud-bottom`.
 function subjectOf(part) {
   const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
-  let subject = compounds.at(-1) || '';
-  // :is() / :where() / :matches() match the element itself, so their
-  // arguments are part of the subject; any other functional pseudo's
-  // arguments (:has, :not, :nth-child) are not.
-  for (let guard = 0; guard < 20 && /\([^()]*\)/.test(subject); guard++) {
-    subject = subject.replace(/:(?:is|where|matches|-webkit-any)\(([^()]*)\)/g, ' $1 ').replace(/\([^()]*\)/g, '');
+  const compound = compounds.at(-1) || '';
+  // :is() / :where() / :matches() match the element itself, so each of their
+  // arguments contributes ITS OWN subject (recursively): `:is(.a > .b)` has
+  // subject `.b`, not `.a .b`. Any other functional pseudo's arguments
+  // (:has, :not, :nth-child) are not the subject and are dropped.
+  let out = ''; let i = 0;
+  while (i < compound.length) {
+    const open = compound.indexOf('(', i);
+    if (open < 0) { out += compound.slice(i); break; }
+    let depth = 0; let close = open;
+    for (; close < compound.length; close++) {
+      if (compound[close] === '(') depth++;
+      if (compound[close] === ')' && --depth === 0) break;
+    }
+    const head = compound.slice(i, open);
+    const matchesSelf = /:(?:is|where|matches|-webkit-any)$/.test(head);
+    out += head.replace(/:(?:is|where|matches|-webkit-any)$/, '');
+    if (matchesSelf) out += ` ${splitTop(compound.slice(open + 1, close), /,/).map(subjectOf).join(' ')} `;
+    i = close + 1;
   }
-  return subject;
+  return out;
 }
 const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
 const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop)).at(-1)?.value;

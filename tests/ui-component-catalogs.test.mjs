@@ -210,6 +210,16 @@ test(':not() and :has() arguments are not the subject', () => {
   assert.equal(c12({ ...r, kit }).length, 0);
 });
 
+// Codex on #1316: inside :is()/:where() the subject is each argument's own
+// last compound, so an ancestor class there is not the subject.
+test('an ancestor class inside :is() is not the subject', () => {
+  const r = receipt();
+  const ok = `${r.kit}\n.shared-hud :is(.hud-bottom > .relic) { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit: ok }).length, 0);
+  const bad = `${r.kit}\n.shared-hud :is(.relic, .x > .hud-bottom.expanded) { position: absolute; }\n`;
+  assert.equal(c12({ ...r, kit: bad }).length, 1);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {
