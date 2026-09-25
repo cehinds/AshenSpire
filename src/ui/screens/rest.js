@@ -23,7 +23,7 @@ import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
-import { classHandRules } from '../../model/handRules.js';
+import { runHandRules } from '../../model/handRules.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -471,9 +471,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
         // The next fight's hand, resolved the way engine/runCombat.js resolves
-        // it, so a point here states what it buys in the solo hand — not the
-        // co-op Draw row (Codex, #1294).
-        hand: classHandRules(meta?.settings || {}, registries.attributes.all(), run.class),
+        // it (`runHandRules`: the run's own rows), so a point here states what
+        // it buys in the solo hand (Codex, #1294; #1318).
+        hand: runHandRules(registries, run, meta?.settings || {}),
       }).map((card) => [card.id, card]));
       const spec = {
         title: 'Level up',

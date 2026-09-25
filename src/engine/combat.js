@@ -16,7 +16,8 @@ import { formationMovePlan } from '../model/formationMovement.js';
 
 import * as A from './actions.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
-import { scaledCards } from '../model/handRules.js';
+import { handRow, scaledCards } from '../model/handRules.js';
+import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -69,7 +70,6 @@ export function createCombat({
   // his Settings choice is read.
   swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
 }) {
-  const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -97,6 +97,8 @@ export function createCombat({
         // snapshot's number, and an Advanced tier override moves one and
         // not the other (Codex, #1217).
         derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
+        // …and its level, or a row's `perLevel` never reaches the meter.
+        ...(Number.isInteger(player.level) ? { level: { level: player.level } } : {}),
       }).value
       : 0);
   const combat = {
@@ -129,7 +131,11 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: handRules ? scaledCards(handRules.capacity, player.attributes) : (bal.handMax != null ? bal.handMax : 10),
+    // THE HAND SIZE IS A STAT ROW (ruleset 7). A fight handed no hand rules —
+    // an old headless fixture — keeps the retired fallback it always had.
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), player.attributes, player.level) : LEGACY_HAND_MAX,
+    // The character level a row's `perLevel` reads, for the hand and ratings.
+    ...(Number.isInteger(player.level) ? { characterLevel: player.level } : {}),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
@@ -762,6 +768,10 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
@@ -781,6 +791,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     loadout: combat.loadout, relics: p.relicIds || [], class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
@@ -874,6 +885,10 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
@@ -886,6 +901,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
     attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
   refreshCombatRatings(combat);

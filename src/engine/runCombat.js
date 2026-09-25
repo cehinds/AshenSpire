@@ -14,7 +14,8 @@
 // onCombatEnd does, so the next fight opens where this one ended.
 
 import { createCombat } from './combat.js';
-import { classHandRules } from '../model/handRules.js';
+import { runHandRules } from '../model/handRules.js';
+import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 
@@ -31,6 +32,8 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     attributes: run.attributes,
+    // The character level every stat row's `perLevel` reads (ruleset 7).
+    level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
     attributeMode: run.attributeMode, // the scale the dodge reads Dexterity on (plan A3)
     // The rule this run was born with, so the Poise vessel combat stamps
     // is the one its character sheet shows (plan phase 9).
@@ -76,10 +79,13 @@ export function createRunCombat({
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
   return createCombat({
-    ratingsRules: registries.balance.combatRatings || null,
-    // The class's own opening hand is resolved HERE, into the fight's
-    // snapshot, so a saved fight keeps the hand it was born with.
-    handRules: classHandRules(settings || {}, registries.attributes.all(), run.class),
+    // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
+    // three hand rows are this run's own — its snapshot's (its class's opening
+    // hand among them), or for a run born before ruleset 7 the retired homes it
+    // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
+    // fight keeps the hand it was born with.
+    ratingsRules: ratingsConfigFor(registries, run) || null,
+    handRules: runHandRules(registries, run, settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

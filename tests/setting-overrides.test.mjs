@@ -66,7 +66,9 @@ test('a row whose switch is off does nothing, and the screen says so', () => {
   assert.equal(closedGate({ swapCostRule: 'category' }, row('gameConfig.balance.equipment.swapCostByCategory.0.cost')), null);
   assert.ok(closedGate({}, row('gameConfig.balance.poise.growthMult')), 'the older poise meter is off while ratings are on');
   assert.equal(closedGate({ 'gameConfig.combatRatings.enabled': false }, row('gameConfig.balance.poise.growthMult')), null);
-  assert.ok(closedGate({ 'gameConfig.combatRatings.enabled': false }, row('gameConfig.combatRatings.multiplier')));
+  // (The rating multiplier this line used to test retired with ruleset 7; a
+  // rating's own stat row is gated the same way.)
+  assert.ok(closedGate({ 'gameConfig.combatRatings.enabled': false }, row('gameConfig.derivedStatRules.rules.ar.strength')));
 });
 
 test('refreshGates disables the controls, shows the inherited value, and restores the own value', () => {
@@ -155,12 +157,22 @@ test('a swap-cost rule row is gated by the rule it belongs to, read from the con
   });
 });
 
-// Codex, on #1260: with the whole feature off, the note names the feature's
-// switch, not the row's own switch (which is itself disabled then).
-test('the Poise pool is disabled while ratings are on, and the note says why', () => {
-  const poise = row('gameConfig.derivedStatRules.rules.poise.base');
-  assert.match(gateSentence(closedGate({}, poise), {}), /Enable ratings, Poise & Ward” is off/);
-  assert.equal(closedGate({ 'gameConfig.combatRatings.enabled': false }, poise), null);
+// Codex, on #1260: a row that does nothing right now is disabled, and the note
+// says which switch. Ruleset 7 made Poise ONE row, in force with ratings on or
+// off, so it is never disabled; the AR, DR, PR and Ward rows are the ones a
+// switch closes — they are read only while ratings are on.
+test('the Poise row is live either way; AR, DR, PR and Ward rows are disabled while ratings are off', () => {
+  const off = { 'gameConfig.combatRatings.enabled': false };
+  for (const field of ['base', 'constitution', 'max']) {
+    const poise = row(`gameConfig.derivedStatRules.rules.poise.${field}`);
+    assert.equal(closedGate({}, poise), null, `poise.${field} is live with ratings on`);
+    assert.equal(closedGate(off, poise), null, `poise.${field} is live with ratings off`);
+  }
+  for (const id of ['ar', 'dr', 'pr', 'ward']) {
+    const rating = row(`gameConfig.derivedStatRules.rules.${id}.base`);
+    assert.equal(closedGate({}, rating), null, `${id} is live with ratings on`);
+    assert.match(gateSentence(closedGate(off, rating), off), /Enable ratings, Poise & Ward” is on/, `${id} names the switch`);
+  }
 });
 
 test('a row closed by both its feature and its own switch names the feature', () => {

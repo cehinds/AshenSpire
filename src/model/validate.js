@@ -11,6 +11,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { handRulesDefaults } from '../content/handRules.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -627,6 +628,23 @@ function collectContentProblems(bundle, errors = []) {
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
       if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
     }
+    // RULESET 7 RETIRED THREE HOMES FOR ONE NUMBER EACH. A copy returning to
+    // any of them is refused by name, as `playerPerConstitution` is above:
+    // the hand size, the rating formula and its multiplier, and the hand
+    // rules' counts are rows of derivedStatRules now.
+    if (b.balance.handMax !== undefined) err('balance.handMax', 'was retired in derived-stat ruleset 7: the hand size is derivedStatRules.rules.handSize, and a copy here is a second home for one number');
+    if (b.balance.combatRatings !== undefined && b.balance.combatRatings !== null && typeof b.balance.combatRatings === 'object') {
+      if (b.balance.combatRatings.multiplier !== undefined) err('balance.combatRatings.multiplier', 'was retired in derived-stat ruleset 7: each rating is a derivedStatRules row whose weights are the whole formula');
+    }
+    // The hand's shipped behaviour options (content/handRules.js) are the
+    // other place a count could creep back; a bundle may carry its own too.
+    // #1294's per-class opening hand (`startingByClass`) is the openingHand
+    // row's per-class form (`byClass`) since ruleset 7.
+    const retiredHand = { starting: 'openingHand', startingByClass: 'openingHand.byClass', turn: 'draw', capacity: 'handSize' };
+    for (const [group, row] of Object.entries(retiredHand)) {
+      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
+      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
+    }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -1236,6 +1254,14 @@ function collectContentProblems(bundle, errors = []) {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
+  // A row's per-class form names shipped classes only: a misspelt class id
+  // would silently open that class on the shared row.
+  const classIds = new Set((b.classes || []).map((row) => row.id));
+  for (const [id, row] of Object.entries(b.derivedStatRules?.rules || {})) {
+    for (const classId of Object.keys((row && typeof row.byClass === 'object' && row.byClass) || {})) {
+      if (!classIds.has(classId)) err(`derivedStatRules.rules.${id}.byClass.${classId}`, `unknown class '${classId}'`);
+    }
+  }
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.

@@ -1,13 +1,16 @@
 // One read model for character stats on every non-combat comparison surface.
 // It exposes calculation receipts; screens choose layout, never redo formulas.
 
-import { deriveStat, deriveStatIncrease, levelBonus, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { deriveStat, isStatRowRuleset, resolvedRuleRow, ruleWeights, statRowValue } from './derivedStats.js';
+
+const RATING_ONLY = new Set(['ar', 'dr', 'pr', 'ward']);
 import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
+import { handStatRows, ratingStatRows, ratingsConfigFor, readsLegacyStatHomes, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { classHandRules, handSizeReceipts } from './handRules.js';
+import { handSizeReceipts, resolveHandRules } from './handRules.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -40,7 +43,7 @@ const LEGACY_PLAYER_POISE_RULE = Object.freeze({ base: 0, constitution: 1, perLe
 export function playerPoiseThresholdReceipt(registries, run) {
   if (!run || !run.loadout) throw new Error('playerPoiseThresholdReceipt requires a run loadout');
   if (registries.balance?.combatRatings?.enabled) {
-    const receipt = ratingReceipt(registries, run, registries.balance.combatRatings);
+    const receipt = ratingReceipt(registries, run, ratingsConfigFor(registries, run));
     return { id: 'poiseThreshold', label: 'Poise & Ward', value: receipt.totals.poise,
       raw: receipt.totals.poise, active: true, attribute: receipt.sources[0].poise,
       equipment: receipt.totals.poise - receipt.sources[0].poise, relic: 0, sources: [],
@@ -77,7 +80,7 @@ export function playerPoiseThresholdReceipt(registries, run) {
   const ownSnapshot = run.derivedStatRuleSnapshot?.rules;
   const poiseRule = ownSnapshot?.rules
     ? resolvedRuleRow(ownSnapshot, 'poise') || LEGACY_PLAYER_POISE_RULE
-    : resolvedRuleRow(registries.derivedStatRules, 'poise');
+    : statRow(registries, run, 'poise');
   // A run handed without attributes (a headless fixture) has no attribute term,
   // so every attribute the row names reads 0 rather than refusing the fixture.
   const poiseAttributes = Object.fromEntries(ruleWeights(poiseRule || {})
@@ -86,10 +89,10 @@ export function playerPoiseThresholdReceipt(registries, run) {
   // the sheet (statProjection below prices every row at the run's level) while
   // the meter this receipt stamps stayed at level 1 (Codex, #1253).
   const level = Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1;
+  // THE ONE ROW FORMULA (ruleset 7), bounds included, so the meter and the
+  // sheet agree on a row with a min or max (Codex, #1296).
   const attribute = poiseRule
-    ? (Number.isFinite(poiseRule.base) ? poiseRule.base : 0)
-      + deriveStatIncrease(poiseRule, { attributes: poiseAttributes, statId: 'poise' }).value
-      + levelBonus(poiseRule, level)
+    ? statRowValue({ ...poiseRule, base: Number.isFinite(poiseRule.base) ? poiseRule.base : 0 }, { attributes: poiseAttributes, level, statId: 'poise' }).value
     : 0;
   const pieces = equippedPieces(registries, run.loadout, run.class, { itemUpgradeLevels: levels }).filter((piece) => piece.kind === 'armor');
   const pieceSources = pieces.map((piece) => ({
@@ -219,8 +222,13 @@ export function statProjection(registries, run) {
   // took every stat surface down with it (Codex, #1217). The pairing the
   // content door enforces is between the live table's halves; across a
   // version boundary the snapshot decides.
+  // THE COMBAT RATINGS ARE NOT PROJECTED HERE. They are rows of the same
+  // table (ruleset 7), but a rating is only its attribute part until armour,
+  // weapons and relics are added, and `ratingReceipt` — which reads these
+  // same rows — is the surface that shows the whole of it.
   const derived = presentationRows(registries).filter((presentation) => (
-    snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
+    !RATING_ONLY.has(presentation.id)
+    && snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
   )).map((presentation) => {
     const id = presentation.id;
     const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
@@ -250,32 +258,42 @@ export function statProjection(registries, run) {
         : `${receipt.tier} × ${receipt.gain}`}`
         + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
-        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'Legacy draw value for LAN and older saved fights. New solo fights use Advanced → Stats → Draw & hand.' : '',
+        + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
+        + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
+      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
     };
   });
-  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived };
+  // The rating rows this run reads (its own, or its retired formula restated),
+  // so an attribute card names the weights its fights actually use.
+  // A RUN BORN BEFORE RULESET 7 has no openingHand/handSize rows in its
+  // snapshot, and its `draw` row is the co-op draw: its solo fights deal by
+  // its retired hand groups — all three — restated as rows here so its
+  // attribute cards name the scaling combat uses (Codex, #1296).
+  const handRows = readsLegacyStatHomes(run)
+    ? Object.fromEntries(['openingHand', 'draw', 'handSize'].map((id) => [id, statRow(registries, run, id)]))
+    : null;
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows };
 }
 
 /**
  * handResourceRows(registries, run, settings) → the Hand and Draw chips for a
- * character about to begin, read off the hand rules its first fight is
- * handed (`classHandRules`, the door engine/runCombat.js snapshots).
+ * character about to begin, read off the hand rows its first fight is handed
+ * (`handStatRows`, the rows engine/runCombat.js snapshots).
  *
- * TWO CHIPS, EACH SAYING ONE TRUE THING (Codex, #1294). Creation used to show
- * the derived `draw` row as "Draw / turn and opening hand", but a solo fight
- * deals its opening hand and its turn draws from the hand rules — per class
- * since #1294 — so a Standard Rogue read Draw 3 and opened with 5 cards. The
- * derived row still prices LAN co-op and older saved fights; these two rows
- * replace it only where a new solo run is being previewed.
+ * TWO CHIPS, EACH SAYING ONE TRUE THING (Codex, #1294): the class's opening
+ * hand and the turn draw, each as `handDrawCount` deals it into an empty hand,
+ * so a stated row above the hand size reads the capped count.
  */
 export function handResourceRows(registries, run, settings = {}) {
-  const rules = classHandRules(settings, registries.attributes.all(), run.class);
-  const { opening, turn } = handSizeReceipts(rules, run.attributes);
+  // The run's own hand rows (its class's opening hand among them), exactly as
+  // engine/runCombat.js hands its next fight (model/statRows.js).
+  const rules = resolveHandRules(settings, handStatRows(registries, run, { settings }));
+  const level = run.level && Number.isInteger(run.level.level) ? run.level.level : undefined;
+  const { opening, turn } = handSizeReceipts(rules, run.attributes, level);
   const short = (id) => registries.attributes.get(id)?.shortLabel || id;
-  const terms = (receipt) => `${receipt.base} base${receipt.statEnabled ? ` + ${receipt.bonus} ${short(receipt.stat)}` : ''}`;
-  const limits = (receipt) => (receipt.raw < receipt.minimum ? `, raised to the minimum ${receipt.minimum}`
-    : receipt.raw > receipt.maximum ? `, limited to the maximum ${receipt.maximum}` : '');
+  const terms = (receipt) => `${receipt.base} base${Object.entries(receipt.terms).filter(([, term]) => term).map(([id, term]) => ` + ${term} ${short(id)}`).join('')}${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`;
+  const limits = (receipt) => (Number.isFinite(receipt.min) && receipt.raw < receipt.min ? `, raised to the minimum ${receipt.min}`
+    : Number.isFinite(receipt.max) && receipt.raw > receipt.max ? `, limited to the maximum ${receipt.max}` : '');
   // Both values are `handDrawCount` into an empty hand (the formula combat's
   // `turnDrawCount` deals), so a stated rule above capacity reads the capped
   // count on the chip and at the end of its arithmetic.
@@ -296,9 +314,13 @@ export function handResourceRows(registries, run, settings = {}) {
   ];
 }
 
-/** withHandResources(derived, handRows) → the projection's rows with the legacy `draw` row replaced by the hand-rule rows. */
+/**
+ * withHandResources(derived, handRows) → the projection's rows with its own
+ * `draw` and `openingHand` rows replaced by the two chips, which state the same
+ * rows as a fight deals them (limited by the hand size).
+ */
 export function withHandResources(derived, handRows) {
-  return derived.flatMap((row) => (row.id === 'draw' ? handRows : [row]));
+  return derived.flatMap((row) => (row.id === 'draw' ? handRows : row.id === 'openingHand' ? [] : [row]));
 }
 
 /**

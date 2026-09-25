@@ -24,14 +24,19 @@ settings profile on GitHub. Review, design and next steps are in
 [docs/SETTINGS-REVAMP.md](docs/SETTINGS-REVAMP.md); run
 `node --test tests/settings-revamp.test.mjs`.
 
-Hand management lives in `src/content/handRules.js` (defaults),
-`src/model/handRules.js` (settings and stat formula), and
-`src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
-per-fight snapshot from profile settings; legacy snapshots omit it. Run
-`node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
+Every stat — HP, Mana, Stamina, Actions, opening hand, draw per turn, hand
+size, AR, DR, PR, Ward, Poise — is one row of `src/content/derivedStats.js`
+(ruleset 7, SPEC §3.5), priced by `statRowValue` in `src/model/derivedStats.js`.
+`src/model/statRows.js` decides which rows a run, fight or preview reads (the
+run's snapshot, the retired homes restated exactly for a pre-ruleset-7 run, or
+the live table) and converts the retired settings keys. Hand behaviour options
+live in `src/content/handRules.js` (defaults), `src/model/handRules.js`
+(settings and the fight's rows), and `src/engine/handRules.js`
+(draw/retention/discard planning). Run
+`node --test tests/stat-rows.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
 for the focused rules, persistence and settings checks. Advanced → Stats →
-Draw & hand keeps the starting-hand, turn-draw, capacity and discard controls
-together, under a live worked example.
+Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
+discard controls, under a live worked example.
 
 `node tools/launch.mjs --build-only` produces the standalone aliases — the full
 single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
@@ -880,4 +885,4 @@ Old saves bypass the opening. The completion callback persists before revealing
 the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
 ### Ratings and starting pools
-Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its formula (base, a weight per attribute, growth per level), rating formula and constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.
+Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.

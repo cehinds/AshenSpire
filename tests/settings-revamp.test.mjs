@@ -111,14 +111,14 @@ test('a profile round-trips through the import door, and loading clears what it 
   const rows = settingsRows();
   const keys = profileKeys(rows);
   assert.ok(keys.includes('screenShake') && !keys.some((key) => key.startsWith('gameConfig.')));
-  const source = { screenShake: false, musicVolume: 30, 'gameConfig.combatRatings.multiplier': 1.5 };
+  const source = { screenShake: false, musicVolume: 30, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 };
   const text = profileText(source, keys, { contentVersion: contentBundle.version });
   const device = { reducedMotion: true, musicVolume: 80, settingsCategory: 'Advanced' };
   const parsed = profileChanges(text, contentBundle, device, rows, keys);
   assert.deepEqual(parsed.changes, source);
   assert.deepEqual(parsed.cleared, ['reducedMotion'], 'a key the profile omits goes back to default; navigation state is left alone');
   const diff = profileDiff(device, parsed);
-  assert.deepEqual(diff.map((d) => d.key).sort(), ['gameConfig.combatRatings.multiplier', 'musicVolume', 'reducedMotion', 'screenShake']);
+  assert.deepEqual(diff.map((d) => d.key).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'musicVolume', 'reducedMotion', 'screenShake']);
   assert.throws(() => profileChanges('{"game":"Ashen Spire","schemaVersion":1,"overrides":{"settings.nope":1}}', contentBundle, {}, rows, keys), /Unknown setting/);
 });
 
@@ -285,10 +285,13 @@ test('a compact slider over a signed range is centred on its value', () => {
 });
 
 test('search leaves out rows the hand rules hide, so the count and the reset match the screen', () => {
+  // Fill mode draws up to the hand size and never reads the Draw / turn stat
+  // row (the turn draw since derived-stat ruleset 7), so its editors are
+  // hidden there, as the retired fixed-draw rows were, and found in fixed mode.
+  const key = 'gameConfig.derivedStatRules.rules.draw.base';
   const fill = { 'gameConfig.handRules.drawMode': 'fill' };
-  const shown = settingsSearchHits('turn draw base', true, fill).map((hit) => hit.row.key);
-  assert.ok(!shown.includes('gameConfig.handRules.turn.base'), 'a fixed-draw row is hidden while drawing to a hand size');
-  assert.ok(settingsSearchHits('turn draw base', true, {}).some((hit) => hit.row.key === 'gameConfig.handRules.turn.base'), 'and found in fixed mode');
+  assert.ok(!settingsSearchHits('draw / turn base', true, fill).some((hit) => hit.row.key === key), 'a fixed-draw row is hidden while drawing to a hand size');
+  assert.ok(settingsSearchHits('draw / turn base', true, {}).some((hit) => hit.row.key === key), 'and found in fixed mode');
 });
 
 test('a new profile load retires the previous preview first', async () => {
@@ -320,8 +323,8 @@ test('a profile load that finishes after the location changed is dropped', async
 
 test('Changed lists every modified row from every section, and nothing else', async () => {
   const { rowDefault } = await import('../src/ui/screens/settings.js');
-  const hits = settingsSearchHits('', true, { screenShake: false, 'gameConfig.combatRatings.multiplier': 1.5 }, { changedOnly: true });
-  assert.deepEqual(hits.map((hit) => hit.row.key).sort(), ['gameConfig.combatRatings.multiplier', 'screenShake']);
+  const hits = settingsSearchHits('', true, { screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
+  assert.deepEqual(hits.map((hit) => hit.row.key).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'screenShake']);
   assert.deepEqual(settingsSearchHits('', true, {}, { changedOnly: true }), [], 'a fresh profile has nothing changed');
   assert.deepEqual(settingsSearchHits('shake', true, { screenShake: false, reducedMotion: true }, { changedOnly: true }).map((h) => h.row.key), ['screenShake'], 'words narrow it');
   assert.equal(rowDefault(settingsRow('screenShake')), settingsRow('screenShake').def, 'no promoted default: the row default');
@@ -340,8 +343,8 @@ test('a reset offers Undo with exactly what it moved', async () => {
 
 test('a release build can see and clear tuning it hides', async () => {
   const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
-  const settings = { 'gameConfig.combatRatings.multiplier': 2, screenShake: false };
-  assert.deepEqual(hiddenTuningKeys(settings, false), ['gameConfig.combatRatings.multiplier']);
+  const settings = { 'gameConfig.derivedStatRules.rules.ar.strength': 2, screenShake: false };
+  assert.deepEqual(hiddenTuningKeys(settings, false), ['gameConfig.derivedStatRules.rules.ar.strength']);
   assert.deepEqual(hiddenTuningKeys(settings, true), [], 'a debug build shows every row, so nothing is hidden');
 });
 
@@ -401,7 +404,7 @@ test('changing the device-key scope forgets the loaded version, and Changed coun
   assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*write\(SYNC_STORAGE\.lastSha, null\);/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
-  const hidden = settingsSearchHits('', false, { 'gameConfig.combatRatings.multiplier': 1.5 }, { changedOnly: true });
+  const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
   assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
 });
 
@@ -416,18 +419,18 @@ test('a player value that happens to equal a promotion is not recorded as seeded
 
 test('a release build neither applies nor keeps promoted hidden tuning', async () => {
   const { promotionFor, resetKeys, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
-  const defaults = { digest: 'x', values: { screenShake: false, 'gameConfig.combatRatings.multiplier': 1.5 } };
+  const defaults = { digest: 'x', values: { screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 } };
   assert.deepEqual(promotionFor(defaults, true), defaults, 'debug builds apply all of it');
   assert.deepEqual(promotionFor(defaults, false).values, { screenShake: false }, 'release leaves hidden tuning out');
-  const settings = { 'gameConfig.combatRatings.multiplier': 1.5 };
+  const settings = { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 };
   const keys = hiddenTuningKeys(settings, false);
   resetKeys(settings, () => ({ ok: true }), keys, 'clear', { promoted: {} });
-  assert.equal(Object.hasOwn(settings, 'gameConfig.combatRatings.multiplier'), false, 'cleared, not reset to the promotion');
+  assert.equal(Object.hasOwn(settings, 'gameConfig.derivedStatRules.rules.ar.strength'), false, 'cleared, not reset to the promotion');
   const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
-  const seeded = { 'gameConfig.combatRatings.multiplier': 1.5, [SEED_KEY]: { 'gameConfig.combatRatings.multiplier': 1.5 } };
+  const seeded = { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5, [SEED_KEY]: { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 } };
   const moved = seedSettingsDefaults(seeded, promotionFor(defaults, false));
-  assert.equal(moved['gameConfig.combatRatings.multiplier'], undefined, 'an earlier seed of it is withdrawn on release');
-  assert.equal(Object.hasOwn(moved, 'gameConfig.combatRatings.multiplier'), true);
+  assert.equal(moved['gameConfig.derivedStatRules.rules.ar.strength'], undefined, 'an earlier seed of it is withdrawn on release');
+  assert.equal(Object.hasOwn(moved, 'gameConfig.derivedStatRules.rules.ar.strength'), true);
 });
 
 test('pad directions, profile switches and cleared volumes reach the live state', async () => {
@@ -464,9 +467,9 @@ test('navigate() reads its own cursor, and a refused token write is reported', a
 
 test('release promotions and Clear hidden tuning cover every debug-only row, not only gameConfig.*', async () => {
   const { promotionFor, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
-  const values = { shrineMultiUse: true, screenShake: false, 'gameConfig.combatRatings.multiplier': 2 };
+  const values = { shrineMultiUse: true, screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 2 };
   assert.deepEqual(promotionFor({ digest: 'x', values }, false).values, { screenShake: false });
-  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['gameConfig.combatRatings.multiplier', 'shrineMultiUse']);
+  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'shrineMultiUse']);
   assert.deepEqual(hiddenTuningKeys(values, true), [], 'debug builds show them all');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
@@ -511,7 +514,7 @@ test('each input steers the control it is on', async () => {
 
 test('−/+ ask for the button step of the value they step from', async () => {
   const { buttonStep } = await import('../src/ui/screens/settings.js');
-  const row = settingsRow('gameConfig.combatRatings.multiplier');
+  const row = settingsRow('gameConfig.derivedStatRules.rules.ar.strength');
   assert.equal(buttonStep(row, 1), 0.05);
   assert.equal(buttonStep(row, 40), 1, 'a typed 40 steps by 1, not the 0.05 it was drawn with');
   const { readFileSync } = await import('node:fs');

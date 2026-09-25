@@ -483,6 +483,8 @@ export function createSession({ registries, seedString, endless = false, restore
       maxMana: m.run.maxMana, mana: m.run.mana,
       maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      // The level every stat row's `perLevel` reads (ruleset 7).
+      level: m.run.level?.level,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
@@ -500,7 +502,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
       // upgraded armour's threshold bought at the Shrine did nothing here
       // while its weight still priced the seat's dodge (Codex, #528).
-      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot }).value,
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot, level: m.run.level }).value,
     };
   }
 
