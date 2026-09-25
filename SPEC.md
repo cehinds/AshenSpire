@@ -31,6 +31,11 @@ Those sections continue to describe legacy behavior during migration. New code
 must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
 or card-only poise with the replacement rules.
 
+**Scope for 1.0 (owner ruling D3, 2026-09-24):** the linked contract's three-build
+prototype gate and the class reward-pool expansion from 36 to 50 cards are
+**post-1.0**. The 1.0 release ships the 36-card class pools of §5.1 and does not wait
+on the prototype gate; both remain the contract for the work after 1.0, unchanged.
+
 ---
 
 ## 1. Product overview
@@ -950,8 +955,12 @@ faucet) is gone with the purse.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 39 authored Rogue cards, of which exactly 36 are in its ordinary reward pool, all with
-  upgrades and validation-clean player text;
+- 40 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 36 in its ordinary reward pool (the class row's
+  `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
+  two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
+  starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
+  is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
 - two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
   of each required kind and the same unlock/discovery rules as the existing classes;
@@ -990,7 +999,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in energy. `+` col
 | Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: Retain 4 of it next turn. | 16 Block |
 | Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
-| Lord's Blood | R | 3 | Power | Bleed thresholds no longer increase after bursting. | cost 2 |
+| Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
 | Grafted Arms | R | 1 | Attack | X-cost: Deal 6 per energy spent, split randomly among enemies as 6-damage hits. | 8 per |
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
@@ -1758,7 +1767,7 @@ Three things this list once excluded have since shipped and are no longer non-go
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-**Status: planned, not shipped.** This section defines the proposed expansion requested in September 2026. It does not assert that the interfaces, content, migrations, or checks below already exist. Existing mechanics remain authoritative until their implementation is delivered and verified. Each implementation PR must identify the requirements it completes and any remaining limitations.
+**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The items still open are the elite count for 1.0 in §12.4 and the Power resting stance in §12.5 (stage 3 rows P6 and P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
 
 ### 12.1 Dodge and action feedback
 
@@ -1792,7 +1801,7 @@ New maps support multiple terminal boss destinations within an act, with distinc
 
 Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
 
-The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **two per seat** (owner ruling D4, 2026-09-24), counted separately from the other two totals. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
 
 Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
 

@@ -4,13 +4,103 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1296",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
     "summary": "Every stat is set the same way, in one place, and read from one table",
     "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your hand sizes, HP, Actions and the combat ratings read as before at the starting attributes. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
-    "build": "0.7.1.494",
+    "build": "0.7.1.502",
     "pullRequest": 1296,
     "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1303",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: three changes that landed without a changelog entry now have one",
+    "detail": "Nothing you see changes. #1305, #1307 and #1310 were merged straight to the development line without an entry here; their receipts are written after the fact under 2026-09-24, each stamped at the first build that contains it.",
+    "build": "0.7.1.498",
+    "pullRequest": 1303,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1303"
+  },
+  {
+    "id": "pr-1282",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the design spec matches the shipped game",
+    "detail": "Nothing you play changes. The design spec now counts the Rogue's 40 cards, names Goreblood as it ships, and says item by item what from its polish list is shipped and what is still to build.",
+    "build": "0.7.1.497",
+    "pullRequest": 1282,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1282"
+  },
+  {
+    "id": "pr-1286",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Guilt costs its HP at the end of your turn, in co-op too",
+    "detail": "Holding the Guilt curse now takes its HP at the end of each of your turns straight from your hand, solo and in co-op, and the card's text shows the amount it actually takes.",
+    "build": "0.7.1.497",
+    "pullRequest": 1286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1286"
+  },
+  {
+    "id": "pr-1291",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Text is easier to read in the colour-blind-safe and dark palettes",
+    "detail": "Several text colours in the colour-blind-safe and darker palettes fell below the readable contrast mark; they are brightened, and every palette's text is now checked for contrast on every change.",
+    "build": "0.7.1.497",
+    "pullRequest": 1291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1291"
+  },
+  {
+    "id": "pr-1288",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Reading a card no longer hides behind other panels",
+    "detail": "Opening a card to read it from inside another window now shows it on its own layer above everything else, so the enlarged card is never clipped or covered.",
+    "build": "0.7.1.497",
+    "pullRequest": 1288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1288"
+  },
+  {
+    "id": "pr-1289",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The map re-centres when your screen changes size",
+    "detail": "Rotating a phone, resizing the window or opening the browser's toolbar after the map has opened now re-fits the map view, so the path you're on stays framed instead of drifting off the edge.",
+    "build": "0.7.1.497",
+    "pullRequest": 1289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1289"
+  },
+  {
+    "id": "pr-1278",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the combat card hotkeys are tested",
+    "detail": "Nothing you play changes. The rule for what a key does in a fight — 1 to 9 pick a card from your hand and Q the tenth, or, while a card or flask is armed, a number picks that living enemy instead — now lives in one small function the keyboard handler calls, and a new test runs it through every case so a later change cannot quietly break the hotkeys.",
+    "build": "0.7.1.497",
+    "pullRequest": 1278,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1278"
+  },
+  {
+    "id": "pr-1279",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The build checks now refuse an out-of-order changelog on every pull request, and every merge gets its own test run",
+    "detail": "Nothing you see in the game changes. A check that needs no browser now runs on each pull request and refuses a changelog whose dates or build numbers run backward, or that names a build that does not exist yet. Test runs for merges into the development branch are no longer cancelled by the next merge, the slowest check runs alongside the others instead of after them, and the full browser checks now also run whenever the release branch is updated.",
+    "build": "0.7.1.497",
+    "pullRequest": 1279,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1279"
+  },
+  {
+    "id": "pr-1297",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the two component catalogs are checked against each other",
+    "detail": "Nothing you play changes. The interface-component check now fails when the written component catalog and the interactive one disagree about which components exist, the Armoury's asset family included, so neither can drift out of date.",
+    "build": "0.7.1.493",
+    "pullRequest": 1297,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1297"
   },
   {
     "id": "pr-1283",
@@ -41,6 +131,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.487",
     "pullRequest": 1309,
     "url": "https://github.com/cehinds/AshenSpire/pull/1309"
+  },
+  {
+    "id": "pr-1310",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The opening scene editor lays out more clearly, and the first journey scene is framed better",
+    "detail": "In Advanced Settings → Opening sequence → Scenes, the editor's layout controls are reworked, and the first step of the journey ships with new default framing. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.485",
+    "pullRequest": 1310,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1310"
   },
   {
     "id": "pr-1304",
@@ -91,6 +191,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.471",
     "pullRequest": 1308,
     "url": "https://github.com/cehinds/AshenSpire/pull/1308"
+  },
+  {
+    "id": "pr-1307",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Crownfall's skyline gains two distant towers, and the traveller can be resized by dragging",
+    "detail": "The Crownfall journey painting now shows a snow-dusted tower on the left summit and a faintly volcanic one on the right, with the Ashen Spire still dominant between them. In the opening scene editor, the Traveller tab adds a gold handle over the preview: drag it to resize the figure, drag the figure to move it, with desktop and phone placed separately. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1307,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1307"
+  },
+  {
+    "id": "pr-1305",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last scene puts your traveller on the road, and you can place it yourself",
+    "detail": "The final journey scene used to stand the traveller on the bridge parapet beside the road; on desktop and phone it now stands on the road itself. Advanced Settings → Opening sequence → Scenes gains a Place traveller action: drag the figure in the painting, or set its position and size exactly, with separate values for desktop and phone. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1305"
   },
   {
     "id": "pr-1302",
@@ -153,16 +273,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1273"
   },
   {
-    "id": "pr-1270",
-    "date": "2026-09-24",
-    "group": "2026-09-24",
-    "summary": "The balance simulator now plays by the game's rules",
-    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
-    "build": "0.7.1.455",
-    "pullRequest": 1270,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
-  },
-  {
     "id": "pr-1285",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -171,6 +281,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.456",
     "pullRequest": 1285,
     "url": "https://github.com/cehinds/AshenSpire/pull/1285"
+  },
+  {
+    "id": "pr-1270",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The balance simulator now plays by the game's rules",
+    "detail": "Nothing you play changes. The tools that measure how often each class wins used to build their fights by hand and had drifted from the game: they ignored the hand-keeping rules and card ratings, let a bot pick cards it could not pay Stamina for, and refilled Stamina and Mana before every fight. They now build every fight through the same door the game does, pay every pool, and carry what a fight spends into the next one. Measured this way over 100 seeded runs a class, the Reaver wins 12, the Starseer 1, the Rogue 54 and the Herald 58, and most of the gap is Stamina and Mana running dry across fights; the published balance notes are regenerated and now checked on every pull request so they cannot go stale again.",
+    "build": "0.7.1.455",
+    "pullRequest": 1270,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1270"
   },
   {
     "id": "pr-1271",

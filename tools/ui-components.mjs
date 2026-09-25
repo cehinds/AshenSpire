@@ -4,7 +4,7 @@
 // imported into component modules.
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -53,6 +53,57 @@ const REQUIRED_IDS = Object.freeze([
   'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
   'equipment-choice-card', 'relic-choice-card',
 ]);
+
+// THE TWO CATALOGS NAME THE SAME COMPONENTS (#1230). The Markdown catalog's
+// entries are the rows of its "| Component ID |" and "| Stable ID |" tables
+// plus every `armoury.*` id in its "| Rendered family |" table; the
+// interactive catalog's are the SEMANTIC_COMPONENTS and
+// RENDERED_ARMOURY_COMPONENTS records. An id in one and not the other is a
+// component one reader can find and the other cannot.
+export function markdownCatalogIds(md) {
+  const ids = [];
+  let table = null;
+  for (const line of md.split('\n')) {
+    if (/^\| (?:Component|Stable) ID \|/.test(line)) { table = 'semantic'; continue; }
+    if (/^\| Rendered family \|/.test(line)) { table = 'family'; continue; }
+    if (!table) continue;
+    if (!line.startsWith('|')) { table = null; continue; }
+    if (table === 'semantic') {
+      const id = line.match(/^\| `([^`]+)` \|/)?.[1];
+      if (id) ids.push(id);
+    } else {
+      ids.push(...[...line.matchAll(/`(armoury\.[^`]+)`/g)].map((m) => m[1]));
+    }
+  }
+  return ids;
+}
+
+// Record ids are the first string of each array literal, in either quote
+// style, between the list's opening line and its closing "\n]".
+function htmlListIds(html, name) {
+  const start = html.indexOf(`const ${name} = [`);
+  if (start < 0) return null;
+  const end = html.indexOf('\n]', start);
+  const body = html.slice(start, end < 0 ? undefined : end);
+  return [...body.matchAll(/^\s*\[(['"])([^'"]+)\1,/gm)].map((m) => m[2]);
+}
+
+export function htmlCatalogIds(html) {
+  const semantic = htmlListIds(html, 'SEMANTIC_COMPONENTS');
+  const armoury = htmlListIds(html, 'RENDERED_ARMOURY_COMPONENTS');
+  if (!semantic?.length || !armoury?.length) return [];
+  return [...semantic, ...armoury];
+}
+
+export function catalogDisagreement(md, html) {
+  const mdIds = new Set(markdownCatalogIds(md));
+  const htmlIds = new Set(htmlCatalogIds(html));
+  return {
+    markdownOnly: [...mdIds].filter((id) => !htmlIds.has(id)),
+    htmlOnly: [...htmlIds].filter((id) => !mdIds.has(id)),
+    empty: !mdIds.size || !htmlIds.size,
+  };
+}
 
 export function receipt() {
   return {
@@ -511,6 +562,10 @@ export function findings(r) {
         && r.catalogHtml.includes(`['${id}'`))) {
     bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');
   }
+  const split = catalogDisagreement(r.catalogMarkdown, r.catalogHtml);
+  if (split.empty || split.markdownOnly.length || split.htmlOnly.length) {
+    bad.push(`C22 the two component catalogs disagree — only in COMPONENT-CATALOG.md: ${split.markdownOnly.join(', ') || 'none'}; only in component-catalog.html: ${split.htmlOnly.join(', ') || (split.empty ? 'a catalog listed no ids' : 'none')}`);
+  }
   return bad;
 }
 
@@ -547,11 +602,14 @@ function selftest() {
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
     ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
     ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
+    ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],
+    ['list a component in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace("const SEMANTIC_COMPONENTS = [", "const SEMANTIC_COMPONENTS = [\n ['html-only-component','x','x','primitive','x','x','panel'],") })],
+    ['list an armoury asset id in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace('const RENDERED_ARMOURY_COMPONENTS = [', 'const RENDERED_ARMOURY_COMPONENTS = [\n ["armoury.htmlOnlyAsset",".x","x","x","x"],') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 21/21 reusable component contracts hold');
+  else console.log('PASS clean source: 22/22 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -562,10 +620,12 @@ function selftest() {
   else console.log(`ui-components --selftest: OK — ${plants.length}/${plants.length} plants observed red`);
 }
 
-if (process.argv.includes('--selftest')) selftest();
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (!isMain) { /* imported by a test: run nothing */ }
+else if (process.argv.includes('--selftest')) selftest();
 else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 21/21 reusable component contracts hold');
+  else console.log('ui-components: OK — 22/22 reusable component contracts hold');
 }
