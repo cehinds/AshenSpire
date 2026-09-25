@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1318",
+    "id": "pr-1300",
     "date": "2026-09-25",
     "group": "2026-09-25",
-    "summary": "Opening-hand settings say what they do, everywhere",
-    "detail": "An older setting that gave every class the same opening hand no longer imports and then quietly does nothing: it is set aside wherever it was saved, and when it held something other than the default a note points you to each class's own opening-hand settings under Stats → Draw & hand. The Shrine's level-up cards and the Armoury opened mid-fight now say what a point buys in your opening hand under your own settings, and the class chooser's preview shows both the Hand and the Draw chips.",
-    "build": "0.7.1.510",
-    "pullRequest": 1318,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1318"
+    "summary": "Behind the scenes: the release checklist is written down",
+    "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
+    "build": "0.7.1.509",
+    "pullRequest": 1300,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1300"
   },
   {
     "id": "pr-1294",
