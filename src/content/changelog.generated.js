@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Settings open faster, search everything, and every value has − / + and a slider",
     "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once. A Changed button lists every setting you have changed, and any Reset can be undone. A one-time tip explains search and Reset, and a gamepad presses − and + directly. Development builds can keep named profiles (desk, phone and so on); screen-size settings stay with each device unless you choose to share them. The owner can also promote a profile to be every new player's defaults.",
-    "build": "0.7.1.540",
+    "build": "0.7.1.542",
     "pullRequest": 1277,
     "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1283",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Developer notes that had gone out of date now point at where the fact lives",
+    "detail": "Nothing you play changes. The developer guide no longer quotes a hand-counted test total but gives the command that lists the tests; its list of known gaps drops Frostbite, which was cut rather than postponed, and marks the Goreblood gap resolved, since Goreblood freezes only Poise and its card already says so. The versioning notes stop quoting an old release number and name the file that holds the current one, the licence names AshenSpire instead of the project's old name, and the finishing checklist names the Guilt and Warrior's Vow gaps instead of numbering them. A new test fails if any of the old wording comes back.",
+    "build": "0.7.1.492",
+    "pullRequest": 1283,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1283"
   },
   {
     "id": "pr-1276",
