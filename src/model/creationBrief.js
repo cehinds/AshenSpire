@@ -160,6 +160,7 @@ function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING
       return {
         line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
         summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
+        cap,
       };
     });
 }
@@ -287,7 +288,9 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
-    const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
+    // A capped rating always reaches the face: its points stop paying at the
+    // cap, which the other feeds never say (Codex, #1321).
+    const scalingFacts = (faceFacts.length ? ratingFacts.filter(({ cap }) => cap !== null) : ratingFacts).map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];

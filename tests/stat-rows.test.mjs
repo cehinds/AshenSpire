@@ -508,4 +508,6 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   const arRun = createRunState({ seed: 6, classId: 'reaver', registries: arCapped });
   const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'strength');
   assert(str.reveal.lines.some((line) => /^AR: floor\(0\.75 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
+  assert.match(str.face.summary, /AR weight 0\.75 \(max 3\)/, 'the cap reaches the face beside the other feeds');
+  assert.doesNotMatch(con.face.summary, /weight/, 'an uncapped rating stays off a face that has feeds');
 });
