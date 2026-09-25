@@ -279,11 +279,14 @@ and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
 `value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
 
 Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
-attribute reaches 8. Two optional fields serve the opening hand alone (§4.1): `attributeBaseline`
+attribute reaches 8. Two optional fields serve the hand rows (§4.1): `attributeBaseline`
 counts only the points above it (each term is floor(max(0, attribute − attributeBaseline) ×
-weight)), and `byClass.<class>` gives a class its own base and weights over the row's bounds.
-Owner decision, 2026-09-24: this per-attribute rounding is kept
-deliberately; rounding the total was declined (so Mana is 4, not 6, at every attribute 5).
+weight)), which restates the retired hand groups exactly, and `byClass.<class>` (the opening
+hand alone) gives a class its own base and weights over the row's bounds.
+**Rounding is per attribute: the owner chose it** (owner decision, 2026-09-24, answering
+"Per attribute (keep)"); rounding the total was declined, so Mana is 4, not 6, at every
+attribute 5. Mana's INT weight is 0.125 per the owner's sum-to-1 formula
+(`.5 w + 0.25 c + 0.125 str + 0.125 int = 1`).
 Equipment, relics and statuses are external addends on top (armour
 `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
 owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's to 1.
@@ -295,8 +298,8 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
 | Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
-| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Fitted to hand rules `turn` (2 + floor(max(0, INT − 4) / 5)): equal at INT 0–8 and 10–13, fewer elsewhere (one card at INT 9 and 14–18, up to three by INT 29); every fight, co-op included. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.19 | — | 1–30 | Fitted to hand rules `capacity` (7 + floor(max(0, INT − 1) / 5)): equal for INT 0–20; replaces `balance.handMax`. |
+| Draw / turn (`draw`) | 2 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`): exactly the retired hand rules `turn` group at every INT; every fight, co-op included. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
 | PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |

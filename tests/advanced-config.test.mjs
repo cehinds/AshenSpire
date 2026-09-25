@@ -785,7 +785,10 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
   const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
   const warnings = [];
   const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
-  assert.ok(Object.keys(changes).length > 80, 'everything else in the file lands');
+  assert.ok(Object.keys(changes).length > 70, 'everything else in the file lands');
+  // Its rating keys are all at their old shipped numbers, so they pin nothing:
+  // Poise reads the ruleset-7 row (review, #1296).
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.derivedStatRules.rules.poise.')), 'the retired Poise weights are not pinned');
   assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
   // Ruleset 7: the hand groups, the fallback hand size and the rating formula
   // are stat rows; their keys (and their `settings.` mirrors) convert or drop.

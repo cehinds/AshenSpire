@@ -116,8 +116,8 @@ check('the twelve rows answer to the ruled attributes', () => {
     // The opening hand's SHARED weight — the fallback for a fight with no
     // class; each class reads its own form (checked below).
     'openingHand:intelligencex0.5',
-    'draw:intelligencex0.1',
-    'handSize:intelligencex0.19',
+    'draw:intelligencex0.2',
+    'handSize:intelligencex0.2',
     'hp:strengthx0.35+constitutionx4+wisdomx0.1',
     'stamina:strengthx0.25+dexterityx0.25+constitutionx0.5',
     'mana:strengthx0.125+constitutionx0.25+wisdomx0.5+intelligencex0.125',
@@ -172,11 +172,13 @@ check('INT 10 gives Draw base 2 + floor(10 x 0.1) = 3', () => {
   equal(out.terms.intelligence, 1, 'intelligence term'); equal(out.raw, 3, 'raw'); equal(out.value, 3, 'value');
 });
 
-check('a tenth of a card is nothing until ten arrive: INT 9 stays at the base, INT 10 buys one', () => {
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 9 }), classDef: CLASS }).value, 2, 'INT 9');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 10 }), classDef: CLASS }).value, 3, 'INT 10');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 19 }), classDef: CLASS }).value, 3, 'INT 19');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 20 }), classDef: CLASS }).value, 4, 'INT 20');
+// Draw / turn counts INT above 4 at a fifth of a card a point: exactly the
+// retired turn group, 2 + floor(max(0, INT − 4) ÷ 5).
+check('a fifth of a card per point above 4: INT 8 stays at the base, INT 9 buys one', () => {
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 8 }), classDef: CLASS }).value, 2, 'INT 8');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 9 }), classDef: CLASS }).value, 3, 'INT 9');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 13 }), classDef: CLASS }).value, 3, 'INT 13');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 14 }), classDef: CLASS }).value, 4, 'INT 14');
 });
 
 // Stamina's budget is 1: STR 0.25 + DEX 0.25 + CON 0.5. Wisdom left the row
@@ -271,12 +273,12 @@ check('shipped Energy grows unbounded at high stats; the hand rows hold to their
   const high = (id, attribute) => deriveStat(rules, id, { attributes: at({ [attribute]: 5000 }), classDef: CLASS });
   // 3 + floor(5000 x 0.2); STR, WIS and INT at 1 add nothing.
   equal(high('energy', 'dexterity').value, 1003, 'uncapped high-stat Energy');
-  // 2 + floor(5000 x 0.1) = 502, 7 + floor(5000 x 0.19) = 957; the shared
+  // 2 + floor(4996 x 0.2) = 1001, 7 + floor(4999 x 0.2) = 1006; the shared
   // opening hand (no class) 4 + floor(4999 x 0.5) = 2503.
-  equal(high('draw', 'intelligence').raw, 502, 'Draw raw'); equal(high('draw', 'intelligence').value, 10, 'Draw max');
+  equal(high('draw', 'intelligence').raw, 1001, 'Draw raw'); equal(high('draw', 'intelligence').value, 10, 'Draw max');
   const opening = deriveStat(rules, 'openingHand', { attributes: at({ intelligence: 5000 }) });
   equal(opening.raw, 2503, 'opening hand raw'); equal(opening.value, 6, 'opening hand max');
-  equal(high('handSize', 'intelligence').raw, 957, 'hand size raw'); equal(high('handSize', 'intelligence').value, 30, 'hand size max');
+  equal(high('handSize', 'intelligence').raw, 1006, 'hand size raw'); equal(high('handSize', 'intelligence').value, 30, 'hand size max');
 });
 
 // The fixture carries a maxHp and a maxMana that are BOTH wrong answers, so a
@@ -308,8 +310,8 @@ check('run modifiers apply in listed order before the explicit/debug override', 
     ],
     explicitOverride: { rules: { draw: { intelligence: 0.5 } } },
   });
-  const out = deriveStat(rules, 'draw', { attributes: at({ intelligence: 10 }), classDef: CLASS });
-  equal(out.raw, 11, 'later run base 6 + explicit floor(10 x 0.5)');
+  const out = deriveStat(rules, 'draw', { attributes: at({ intelligence: 20 }), classDef: CLASS });
+  equal(out.raw, 14, 'later run base 6 + explicit floor((20 - 4) x 0.5)');
   equal(out.value, 10, 'held to Draw\'s own max 10');
 });
 

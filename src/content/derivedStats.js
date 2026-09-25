@@ -62,8 +62,10 @@ export const derivedStatRules = {
     // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
     // pool reads a spread of attributes, not one.
     energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
-    // The hand. Draw / turn and Hand size were single-attribute rules on INT;
-    // the weight below lands on the old count at INT 3, 5, 8 and 12.
+    // The hand. Draw / turn and Hand size were single-attribute rules on INT,
+    // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
+    // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
+    // (`attributeBaseline`), so every INT reads what it read before.
     //
     // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
     // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
@@ -83,8 +85,8 @@ export const derivedStatRules = {
         starseer: { base: 5, intelligence: 0.5 },
       },
     },
-    draw: { base: 2, intelligence: 0.1, min: 2, max: 10 },
-    handSize: { base: 7, intelligence: 0.19, min: 1, max: 30 },
+    draw: { base: 2, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
+    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
     hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
     stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
