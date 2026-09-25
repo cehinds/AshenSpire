@@ -370,3 +370,10 @@ test('character creation\'s Draw chip is capped by the hand size when the turn d
     if (combat.turn === 2) assert.equal(combat.piles.hand.length, draw.value, `${classDef.id}: the Draw chip is the turn draw dealt`);
   }
 });
+
+// A class row whose bounds cross is refused at the import door, not at boot,
+// where the refusal would drop every other setting with it (review of #1296).
+test('a class opening-hand row with min above max is refused at import', () => {
+  const bad = { 'gameConfig.derivedStatRules.byClass.reaver.openingHand.min': 7, 'gameConfig.derivedStatRules.byClass.reaver.openingHand.max': 5 };
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(bad), contentBundle), /byClass\.reaver\.openingHand\.min \(7\)/);
+});

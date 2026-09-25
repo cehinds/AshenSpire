@@ -292,7 +292,7 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.45 | — | 4–6 | Per class (`byClass`, below); this shared row serves a fight with no class. Was hand rules `starting`. |
-| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Fitted to hand rules `turn` (2 + floor(max(0, INT − 4) / 5)): equal for INT 0–8, one card fewer from INT 9; every fight, co-op included. |
+| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Fitted to hand rules `turn` (2 + floor(max(0, INT − 4) / 5)): equal at INT 0–8 and 10–13, fewer elsewhere (one card at INT 9 and 14–18, up to three by INT 29); every fight, co-op included. |
 | Hand size (`handSize`) | 7 | — | — | — | — | 0.19 | — | 1–30 | Fitted to hand rules `capacity` (7 + floor(max(0, INT − 1) / 5)): equal for INT 0–20; replaces `balance.handMax`. |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |

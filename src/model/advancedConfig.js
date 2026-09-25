@@ -1168,9 +1168,19 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
   if (hand && !(Number.isInteger(hand.min) && hand.min >= 1 && (!Number.isFinite(hand.max) || hand.max >= 1))) {
     problems.push(`derivedStatRules.rules.handSize.min (${hand.min}) and max (${hand.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
   }
-  for (const [id, row] of Object.entries(configured.derivedStatRules?.rules || {})) {
+  // A class's own row (`byClass.<class>.<id>`) is held to the same bounds.
+  const statRows = [
+    ...Object.entries(configured.derivedStatRules?.rules || {}).map(([id, row]) => [`rules.${id}`, id, row]),
+    ...Object.entries(configured.derivedStatRules?.byClass || {}).flatMap(([classId, own]) => Object.entries(own || {})
+      .map(([id, row]) => [`byClass.${classId}.${id}`, id, row])),
+  ];
+  for (const [path, id, row] of statRows) {
+    if (!row || typeof row !== 'object') continue;
+    if (id === 'handSize' && path.startsWith('byClass.') && !(Number.isInteger(row.min) && row.min >= 1 && (!Number.isFinite(row.max) || row.max >= 1))) {
+      problems.push(`derivedStatRules.${path}.min (${row.min}) and max (${row.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
+    }
     if (Number.isFinite(row.min) && Number.isFinite(row.max) && row.min > row.max) {
-      problems.push(`derivedStatRules.rules.${id}.min (${row.min}) must stay at or below derivedStatRules.rules.${id}.max (${row.max}).`);
+      problems.push(`derivedStatRules.${path}.min (${row.min}) must stay at or below derivedStatRules.${path}.max (${row.max}).`);
     }
   }
   return problems;

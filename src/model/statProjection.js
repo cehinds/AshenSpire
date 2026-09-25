@@ -11,6 +11,7 @@ import { ratingReceipt } from './combatRatings.js';
 import { ratingStatRows, ratingsConfigFor, readsLegacyStatHomes, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { classHandRules, handSizeReceipts } from './handRules.js';
+import { characterLevelOf } from './state.js';
 
 // The labels and the order used to be a frozen map right here — a second home
 // for a fact the content table should own, and the reason "add a derived stat"
@@ -288,7 +289,7 @@ export function statProjection(registries, run) {
  */
 export function handResourceRows(registries, run, settings = {}) {
   const rules = classHandRules(settings, registries, run);
-  const { opening, turn } = handSizeReceipts(rules, run.attributes, run.level);
+  const { opening, turn } = handSizeReceipts(rules, run.attributes, characterLevelOf(run));
   const short = (id) => registries.attributes.get(id)?.shortLabel || id;
   // The row's own terms, as the one row formula prices them (§3.5).
   const terms = (receipt) => [
