@@ -940,3 +940,24 @@ test('HEAD is not a sync branch or base', async () => {
   assert.equal(validBranchName('HEADS'), true, 'only the exact name');
   assert.equal(validBranchName('feature/HEAD'), true, 'git allows it as a component');
 });
+
+test('float noise never costs a value its promotion ownership', async () => {
+  const { SEED_KEY, sameSetting, seedSettingsDefaults, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  const { seedPatch } = await import('../src/ui/screens/settings.js');
+  const noisy = 0.1 + 0.2; // 0.30000000000000004
+  assert.notEqual(noisy, 0.3);
+  assert.equal(sameSetting(noisy, 0.3), true);
+  assert.equal(sameSetting(0.3, 0.31), false);
+  assert.equal(sameSetting('0.3', 0.3), false, 'only numbers are compared loosely');
+  const keys = profileKeys(settingsRows());
+  const device = { musicVolume: noisy, [SEED_KEY]: { musicVolume: 0.3 } };
+  // Seeding calls it the promotion's…
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'e', values: { musicVolume: 0.3 } }), {});
+  // …and so does every other path.
+  assert.deepEqual(JSON.parse(profileText(device, keys)).promotionOwned, ['musicVolume'], 'the profile lists it');
+  assert.equal(seedAfterChange(device, { musicVolume: 0.3 }), undefined, 'a save within the noise keeps ownership');
+  assert.deepEqual(seedPatch({ musicVolume: 0.3 }, { musicVolume: noisy }), {}, 'an Undo sees no ownership change');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(Object\.hasOwn\(next, key\) && !sameSetting\(next\[key\], to\)\) delete next\[key\];/, 'a profile load prunes the same way');
+});

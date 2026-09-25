@@ -8,7 +8,7 @@
 
 import { contentBundle } from '../../content/index.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { SEED_KEY } from '../../model/settingsDefaults.js';
+import { SEED_KEY, sameSetting } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
   SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff, promotedValue, promotionProblem,
@@ -84,7 +84,7 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   if (toPromotion.length || listed) {
     const record = seedBefore && typeof seedBefore === 'object' ? seedBefore : {};
     const next = { ...record };
-    for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
+    for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && !sameSetting(next[key], to)) delete next[key];
     for (const key of toPromotion) next[key] = promoted[key];
     if (listed) {
       for (const key of Object.keys(parsed.changes || {})) {

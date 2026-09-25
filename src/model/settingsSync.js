@@ -22,7 +22,7 @@
 // Everything here is plain functions over (config, token, fetch). The screen
 // owns the buttons; tests own a fake fetch.
 
-import { SEED_KEY } from './settingsDefaults.js';
+import { SEED_KEY, sameSetting } from './settingsDefaults.js';
 import { advancedConfigExport, advancedConfigProblems, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
 
 export const SYNC_DEFAULTS = Object.freeze({
@@ -161,7 +161,7 @@ export function profileText(settings, keys, build = {}) {
   // Every key the file carries: the profile's own rows and the gameConfig.*
   // overrides advancedConfigExport always writes.
   const exported = new Set([...keys, ...Object.keys(settings || {}).filter((key) => key.startsWith(ADVANCED_CONFIG_PREFIX))]);
-  const promotionOwned = [...exported].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && record[key] === settings[key]).sort();
+  const promotionOwned = [...exported].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && sameSetting(record[key], settings[key])).sort();
   return JSON.stringify({ ...file, promotionOwned }, null, 2) + '\n';
 }
 

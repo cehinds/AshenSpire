@@ -39,7 +39,7 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
@@ -1274,7 +1274,7 @@ export function seedPatch(before, after) {
   const b = after && typeof after === 'object' ? after : {};
   const patch = {};
   for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || a[key] !== b[key]) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
+    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || !sameSetting(a[key], b[key])) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
   }
   return patch;
 }
