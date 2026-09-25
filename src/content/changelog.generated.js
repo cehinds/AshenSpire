@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1314",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The map keeps your chosen destination in view when the screen changes shape",
+    "detail": "With a node picked and its tray open, a change to the map's size, such as the window resizing or a toolbar appearing, used to jump the view back to where you stand. The picked node now stays centred in the part of the map the tray leaves visible.",
+    "build": "0.7.1.523",
+    "pullRequest": 1314,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1314"
+  },
+  {
     "id": "pr-1296",
     "date": "2026-09-25",
     "group": "2026-09-25",
