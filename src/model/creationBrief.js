@@ -203,6 +203,10 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
       .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
+      // A RUN IS DESCRIBED BY ITS OWN ROWS: a row its projection does not carry
+      // (the hand rows, for a run born before ruleset 7) is not the run's, so
+      // the live table must not speak for it (Codex, #1296).
+      .filter(([id]) => !projection?.derived || projected.has(id))
       // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
       // attribute feeds" is every row that puts a non-zero weight on it — a row
       // may now feed two attributes and appear on both cards, which the single
