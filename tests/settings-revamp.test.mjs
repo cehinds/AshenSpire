@@ -232,10 +232,10 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
   assert.doesNotMatch(html, /data-reset-key="musicEnabled"[^>]*hidden/);
 });
 
-test('while searching, the scoped reset resets the shown results and says so', async () => {
+test('while searching, the scoped reset resets every matching result and says so', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.slice\(0, SEARCH_LIMIT\)/);
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
   assert.ok(screen.includes("'Reset these results'"));
 });
 
@@ -561,4 +561,16 @@ test('every version marker and the token removal report a refused write', async 
   assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, result\.sha \|\| ''\);[\s\S]*?\(noted \? '' : ` \$\{UNNOTED\}`\)/, 'Save');
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, null\)\) \{ status\('The token could not be removed/, 'Forget');
   assert.doesNotMatch(panel, /^\s*write\(SYNC_STORAGE\.(lastSha|token), (remote|pending|result)\.sha/m, 'no unchecked version write is left');
+});
+
+test('a Reset that cannot be saved is not left applied, and results reset covers every match', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const calls = [];
+  resetKeys(settings, (c) => { calls.push(c); return { ok: false }; }, ['screenShake', 'reducedMotion'], 'reset', { promoted: {} });
+  assert.deepEqual(settings, { screenShake: false, reducedMotion: true }, 'values back as they were');
+  assert.deepEqual(calls[1], { screenShake: false, reducedMotion: true }, 'and back through onChange, so live state follows');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
 });

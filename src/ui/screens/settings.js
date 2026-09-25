@@ -1255,6 +1255,7 @@ export function offerUndo(label, snapshot) {
 export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) {
   const snapshot = {};
   const changed = {};
+  const seedBefore = settings[SEED_KEY];
   for (const key of keys) {
     snapshot[key] = settings[key];
     if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
@@ -1272,7 +1273,22 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     settings[SEED_KEY] = next;
     changed[SEED_KEY] = next;
   }
-  onChange(changed);
+  const result = onChange(changed);
+  if (result?.ok === false) {
+    // Not saved, so not reset: put every value (and the seed record) back —
+    // here and, through the same onChange, in the game and its live state.
+    const back = {};
+    for (const [key, value] of Object.entries(snapshot)) {
+      back[key] = value;
+      if (value === undefined) delete settings[key]; else settings[key] = value;
+    }
+    if (Object.hasOwn(changed, SEED_KEY)) {
+      back[SEED_KEY] = seedBefore;
+      if (seedBefore === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = seedBefore;
+    }
+    onChange(back);
+    return snapshot;
+  }
   offerUndo(label, Object.fromEntries(moved.map((key) => [key, snapshot[key]])));
   return snapshot;
 }
@@ -2802,10 +2818,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
       // While a search is open the pane shows its matches, so "this group" IS
-      // the matches — never the section that was open behind the search.
+      // the matches — every one the pane counts, not only the page it draws —
+      // and never the section that was open behind the search.
       const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).slice(0, SEARCH_LIMIT).map((hit) => hit.row)
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
