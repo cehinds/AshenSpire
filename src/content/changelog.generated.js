@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-24",
     "summary": "Fights pay their normal Cinders again",
     "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders. Character creation now offers two ways to set your stats: Standard opens on your class's own spread — mostly 1s, with its three points already placed (the Starseer starts with Intelligence 3) — ready to go, and Assign points starts every stat at 1 with 3 points for you to place, a number you can change in Advanced settings. Your opening hand now depends on your class: a base of 3 (Reaver), 4 (Rogue, Herald) or 5 (Starseer), plus one card once your class's main stat reaches 3, so a Standard character opens with 4 to 6 cards. Character creation shows that number as its own Hand chip, beside Draw, the cards you draw on each later turn.",
-    "build": "0.7.1.492",
+    "build": "0.7.1.494",
     "pullRequest": 1294,
     "url": "https://github.com/cehinds/AshenSpire/pull/1294"
+  },
+  {
+    "id": "pr-1283",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Developer notes that had gone out of date now point at where the fact lives",
+    "detail": "Nothing you play changes. The developer guide no longer quotes a hand-counted test total but gives the command that lists the tests; its list of known gaps drops Frostbite, which was cut rather than postponed, and marks the Goreblood gap resolved, since Goreblood freezes only Poise and its card already says so. The versioning notes stop quoting an old release number and name the file that holds the current one, the licence names AshenSpire instead of the project's old name, and the finishing checklist names the Guilt and Warrior's Vow gaps instead of numbering them. A new test fails if any of the old wording comes back.",
+    "build": "0.7.1.492",
+    "pullRequest": 1283,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1283"
+  },
+  {
+    "id": "pr-1276",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Behind the scenes: two content checks that had gone stale are fixed and now run with every test",
+    "detail": "Nothing you see in the game changes. The check that the Rogue is complete and the check that every enemy is reachable and grows stronger in order as you climb had both gone red unseen, because they counted cards, outfits, enemies and flask charges from an older roster and grouped fights by a retired act number. They now read those counts from the game's own data, group fights by the seat they belong to, and run in the test suite, so the next time either goes red a pull request fails instead of nobody noticing.",
+    "build": "0.7.1.490",
+    "pullRequest": 1276,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1276"
   },
   {
     "id": "pr-1309",
