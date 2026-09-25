@@ -39,7 +39,7 @@ import { getAnimSpeed } from '../fx.js';
 // Off under Reduced motion and at Instant speed: the bar simply jumps.
 // ---------------------------------------------------------------------------
 export const GHOST_BAR = Object.freeze({ ids: Object.freeze(['hp']), lagMs: 260, drainMs: 420 });
-const ghostMemory = new Map(); // key -> { pct, trail: { from, to, at } | null }
+const ghostMemory = new Map(); // key -> { pct, cur, trail: { from, to, at } | null }
 
 /** The trail's level at `now`: `from` through the lag, then a linear drain to `to`. */
 export function ghostLevel(trail, now, cfg = GHOST_BAR) {
@@ -50,28 +50,32 @@ export function ghostLevel(trail, now, cfg = GHOST_BAR) {
 }
 
 /**
- * ghostStep(prev, pct, now, { enabled }) → { state, ghost }
- * Pure. `prev` is the last { pct, trail } for this bar (or undefined); `ghost`
- * is what to draw now — { fromPct, toPct, delayMs, drainMs } — or null.
+ * ghostStep(prev, pct, now, { enabled, cur }) → { state, ghost }
+ * Pure. `prev` is the last { pct, cur, trail } for this bar (or undefined);
+ * `ghost` is what to draw now — { fromPct, toPct, delayMs, drainMs } — or null.
+ * A trail starts only when the VALUE drops (`cur`, when given): a raised
+ * maximum lowers the percentage without anything being lost.
  */
-export function ghostStep(prev, pct, now, { enabled = true, cfg = GHOST_BAR } = {}) {
-  if (!enabled || !prev) return { state: { pct, trail: null }, ghost: null };
+export function ghostStep(prev, pct, now, { enabled = true, cfg = GHOST_BAR, cur } = {}) {
+  if (!enabled || !prev) return { state: { pct, cur, trail: null }, ghost: null };
   const live = prev.trail && now - prev.trail.at < cfg.lagMs + cfg.drainMs ? prev.trail : null;
   const top = live ? ghostLevel(live, now, cfg) : prev.pct;
+  const lost = Number.isFinite(cur) && Number.isFinite(prev.cur) ? cur < prev.cur : pct < prev.pct - 1e-6;
   let trail = live;
-  if (pct < prev.pct - 1e-6) trail = { from: Math.max(top, prev.pct), to: pct, at: now }; // a new loss
+  if (lost && pct < prev.pct - 1e-6) trail = { from: Math.max(top, prev.pct), to: pct, at: now }; // a new loss
   else if (trail && pct > top) trail = null; // healed past the trail
-  if (!trail) return { state: { pct, trail: null }, ghost: null };
+  if (!trail) return { state: { pct, cur, trail: null }, ghost: null };
   // A heal under the trail re-aims it at the bar as it now stands, from where
   // it is: the rest of its lag if it is still holding, a fresh drain if not.
   if (pct !== trail.to) trail = { from: top, to: pct, at: now - Math.min(now - trail.at, cfg.lagMs) };
   const elapsed = now - trail.at;
   const delayMs = Math.max(0, cfg.lagMs - elapsed);
   const drainMs = Math.max(0, Math.min(cfg.drainMs, cfg.lagMs + cfg.drainMs - elapsed));
-  return { state: { pct, trail }, ghost: { fromPct: ghostLevel(trail, now, cfg), toPct: pct, delayMs, drainMs } };
+  return { state: { pct, cur, trail }, ghost: { fromPct: ghostLevel(trail, now, cfg), toPct: pct, delayMs, drainMs } };
 }
 
-/** Forget every trail (a fight's teardown; tests). */
+/** Forget every trail: a fight's mount and teardown (solo and co-op), so a
+ *  loss between fights never draws on the next fight's first render. */
 export function resetGhostBars() { ghostMemory.clear(); }
 
 const clock = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
@@ -80,7 +84,7 @@ const ghostsEnabled = () => !reducedMotionRequested() && getAnimSpeed() !== 'ins
 function drawGhost(node, bar, key) {
   if (!key || !GHOST_BAR.ids.includes(bar.id)) return;
   const id = `${key}:${bar.id}`;
-  const { state, ghost } = ghostStep(ghostMemory.get(id), bar.pct, clock(), { enabled: ghostsEnabled() });
+  const { state, ghost } = ghostStep(ghostMemory.get(id), bar.pct, clock(), { enabled: ghostsEnabled(), cur: Number(bar.cur) });
   ghostMemory.set(id, state);
   if (!ghost) return;
   const track = node.querySelector('.m-track');

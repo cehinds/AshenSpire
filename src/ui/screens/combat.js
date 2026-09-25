@@ -61,7 +61,7 @@ import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
-import { resourceBars } from '../components/resbars.js';
+import { resourceBars, resetGhostBars } from '../components/resbars.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -114,6 +114,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Ghost-bar trails belong to the fight that drew them (resbars.js): a loss
+  // between fights must not draw on this fight's first render.
+  resetGhostBars();
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
@@ -2648,6 +2651,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         handStrip.teardown();
+        resetGhostBars();
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();
