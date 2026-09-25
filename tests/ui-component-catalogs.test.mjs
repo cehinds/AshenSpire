@@ -309,6 +309,17 @@ test('an all reset on the rail or the top grid fails C12', () => {
   assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; grid-area: rail; }\n` }).length, 0);
 });
 
+// Codex on #1316: pseudo-class names are case-insensitive, and the
+// two-keyword display forms of grid are grid.
+test('uppercase :IS() is a subject and two-keyword grid display is grid', () => {
+  const r = receipt();
+  assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud :IS(.hud-bottom) { position: absolute; }\n` }).length, 1);
+  assert.equal(railUnderMeters(`${r.kit}\n.shared-hud > :WHERE(.hud-top) { grid-template-areas: "info actions" "rail actions"; }\n`), false);
+  for (const d of ['block grid', 'inline grid', 'grid block', 'INLINE-GRID']) {
+    assert.equal(railUnderMeters(`${r.kit}\n.shared-hud[data-x] > .hud-top { display: ${d}; }\n`), true, d);
+  }
+});
+
 // Codex on #1316: a grouping rule nested in the base rail rule emits a
 // conditional copy with the base selector; the base is the unconditional
 // rule, so an unrelated nested @media does not hide its position/grid-area.
