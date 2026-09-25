@@ -3,14 +3,34 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1298",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: leaving the game in the background is now tested",
+    "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
+    "build": "0.7.1.503",
+    "pullRequest": 1298,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1298"
+  },
+  {
     "id": "pr-1300",
     "date": "2026-09-25",
     "group": "2026-09-25",
     "summary": "Behind the scenes: the release checklist is written down",
     "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
-    "build": "0.7.1.501",
+    "build": "0.7.1.503",
     "pullRequest": 1300,
     "url": "https://github.com/cehinds/AshenSpire/pull/1300"
+  },
+  {
+    "id": "pr-1311",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the finishing checklist matches the development line again",
+    "detail": "Nothing you see changes. The checklist that tracks the road to 1.0 now ticks what tonight's merges finished, each checked against the code or a test: Guilt's turn-end cost, the card hotkeys, the save-migration corpus, the spec reconcile, the card door and more. It marks what is only part done, among them the mid-combat restart and the map re-fit, which still want a test through the real path, and says what is left, and it adds the follow-ups found on the way: seven cards with no route in, two interface checks that are red, review findings that have not been fixed, and the slow test job.",
+    "build": "0.7.1.501",
+    "pullRequest": 1311,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1311"
   },
   {
     "id": "pr-1301",
