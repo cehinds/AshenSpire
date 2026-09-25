@@ -625,12 +625,25 @@
 @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
 
-/* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
-@keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
-/* A fallen combatant holds still: the idle bob kept every dead sprite on the
+/* ---- rendered sprites: idle breath + death fade (solo + co-op boards) ----
+   SPEC §7.4.1. The painting sits INSIDE the figure's layers (enemySprite:
+   wrapper > .facing > img; classSprite: > .facing > img), never as a direct
+   child of `.sprite` — the old `.sprite > img` selector matched nothing. A
+   pose stage drifts its `.pose-layer`, not the frame img: paintedOutfits.js
+   cancels the img's animations on every pose change, which would kill a
+   CSS animation there for good. The drift rides the
+   standalone `translate` property, so it composes with `.facing`'s mirror,
+   the painted art's inline foot-line transform and the wrapper's hit
+   animations instead of replacing any of them. Period and phase are per
+   actor (--idle-ms / --idle-delay, assets.js idleRhythm). `.hit-stop *`
+   pauses it with everything else; reduced motion and lite rendering stop it. */
+@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2.5px; } }
+.combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) {
+  animation: sprite-idle var(--idle-ms, 3.2s) ease-in-out var(--idle-delay, 0s) infinite;
+}
+/* A fallen combatant holds still: the idle drift kept every dead sprite on the
    compositor's per-frame list for the rest of the fight. */
-.combatant.dead .sprite > img { animation: none; }
+.combatant:is(.dead, .down) .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -644,17 +657,16 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img { animation: none; }
+.reduced-motion .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .combatant .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
+}
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1408,7 +1420,7 @@
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
 :root[data-performance='lite'] .backdrop::after,
-:root[data-performance='lite'] .sprite > img { animation: none; }
+:root[data-performance='lite'] .sprite :is(.facing > img, .pose-layer, .painted-outfit > img) { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
