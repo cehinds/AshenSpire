@@ -647,6 +647,10 @@ export function startingStatRows(bundle) {
         // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
         advancedGroup: 'Stats', derivedStatId: id, statField: field,
         settingSection: 'Formula',
+        // Fill mode draws to the hand size and never reads Draw / turn, so its
+        // editor is shown only while turns draw a fixed number (as the retired
+        // `turn` group's rows were).
+        ...(id === 'draw' ? { fixedOnly: true } : {}),
         // Whole points only: every other term is floored, so a fractional base
         // or bound would be the one way a stat stopped being a whole number.
         ...(['base', 'min', 'max'].includes(field) ? { integer: true } : {}),

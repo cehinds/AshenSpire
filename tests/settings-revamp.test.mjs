@@ -284,16 +284,14 @@ test('a compact slider over a signed range is centred on its value', () => {
   assert.deepEqual(sliderSpan({ min: -3, max: 999, step: 1, def: 5 }, 5), [-3, 50], 'a shallow negative floor is kept');
 });
 
-test('search leaves out rows the hand rules hide, so the count and the reset match the screen', async () => {
-  // Since derived-stat ruleset 7 the turn draw is the Draw / turn stat row,
-  // which fill mode still reads as the draw a fixed turn would take: no hand
-  // behaviour hides it, so search finds it in both modes, and no hand-rule row
-  // is left for the screen to hide (#1296).
-  const { handRulesRows } = await import('../src/model/handRules.js');
-  assert.deepEqual(handRulesRows().filter((row) => row.fixedOnly), []);
-  for (const settings of [{ 'gameConfig.handRules.drawMode': 'fill' }, {}]) {
-    assert.ok(settingsSearchHits('draw / turn base', true, settings).some((hit) => hit.row.key === 'gameConfig.derivedStatRules.rules.draw.base'), JSON.stringify(settings));
-  }
+test('search leaves out rows the hand rules hide, so the count and the reset match the screen', () => {
+  // Fill mode draws up to the hand size and never reads the Draw / turn stat
+  // row (the turn draw since derived-stat ruleset 7), so its editors are
+  // hidden there, as the retired fixed-draw rows were, and found in fixed mode.
+  const key = 'gameConfig.derivedStatRules.rules.draw.base';
+  const fill = { 'gameConfig.handRules.drawMode': 'fill' };
+  assert.ok(!settingsSearchHits('draw / turn base', true, fill).some((hit) => hit.row.key === key), 'a fixed-draw row is hidden while drawing to a hand size');
+  assert.ok(settingsSearchHits('draw / turn base', true, {}).some((hit) => hit.row.key === key), 'and found in fixed mode');
 });
 
 test('a new profile load retires the previous preview first', async () => {
