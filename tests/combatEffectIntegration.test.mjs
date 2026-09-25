@@ -91,7 +91,7 @@ test('every authored playable card and equipment profile resolves to existing ar
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstonePebble','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

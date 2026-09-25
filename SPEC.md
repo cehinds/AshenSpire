@@ -31,6 +31,11 @@ Those sections continue to describe legacy behavior during migration. New code
 must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
 or card-only poise with the replacement rules.
 
+**Scope for 1.0 (owner ruling D3, 2026-09-24):** the linked contract's three-build
+prototype gate and the class reward-pool expansion from 36 to 50 cards are
+**post-1.0**. The 1.0 release ships the 36-card class pools of §5.1 and does not wait
+on the prototype gate; both remain the contract for the work after 1.0, unchanged.
+
 ---
 
 ## 1. Product overview
@@ -592,10 +597,15 @@ id only (§3.3).
   record restores it without replaying combat start, draws, or enemy rolls. A live action queue
   or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
-- An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
+- An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
+- A `schemaVersion` **newer** than this build is refused and **preserved**, as the profile is
+  (property 1 below): runStatus `newer`, nothing archived, the bytes left in their slot, so
+  opening an old build cannot eat a run a newer one wrote. Every older schema, v1 to the
+  current one, loads and migrates forward; `tests/save-migration.test.mjs` proves it over one
+  real save per version (`tests/fixtures/run-save-schema-versions.json`).
 - **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
   stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
   adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
@@ -698,6 +708,14 @@ are outside that census. Class-specific reward rarity weights may override
 the default encounter weights; Chaos Rewards and skill rarity unlocks retain
 precedence. See [the balance receipt](docs/card-resource-balance.md) for counts,
 scope and verification.
+
+**Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
+at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
+the old rule); a restored fight keeps the Stamina it was saved with. HP and
+Mana carry from one fight to the next, and only rests, flasks and effects
+restore them. The refill also clears the Stamina deficit an equipment swap
+carried, so the next swap cannot take the refilled points back. Rules text:
+[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
 
 ### 4.1 Turn loop
 
@@ -865,12 +883,12 @@ continue to validate exactly as authored.
 
 The `tuned` opening presets are contractual and each sums to 53:
 
-| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation |
+| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation (the owner's defaults, `classes.js`, #1273) |
 |---|---|---|
-| Reaver | `13 / 11 / 11 / 8 / 10` | `3 / 1` |
-| Starseer | `11 / 11 / 8 / 13 / 10` | `2 / 2` |
-| Herald | `12 / 11 / 8 / 12 / 10` | `3 / 1` |
-| Rogue | `11 / 13 / 10 / 9 / 10` | `3 / 1` |
+| Reaver | `13 / 11 / 11 / 8 / 10` | `2 / 1` |
+| Starseer | `11 / 11 / 8 / 13 / 10` | `1 / 2` |
+| Herald | `12 / 11 / 8 / 12 / 10` | `2 / 1` |
+| Rogue | `11 / 13 / 10 / 9 / 10` | `2 / 1` |
 
 The preset is an editor opening position, not a lock: players may redistribute the fixed
 total within the mode's data-authored bounds. Starting derived values come only from the
@@ -905,8 +923,12 @@ faucet) is gone with the purse.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 39 authored Rogue cards, of which exactly 36 are in its ordinary reward pool, all with
-  upgrades and validation-clean player text;
+- 40 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 36 in its ordinary reward pool (the class row's
+  `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
+  two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
+  starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
+  is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
 - two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
   of each required kind and the same unlock/discovery rules as the existing classes;
@@ -945,7 +967,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in energy. `+` col
 | Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: Retain 4 of it next turn. | 16 Block |
 | Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
-| Lord's Blood | R | 3 | Power | Bleed thresholds no longer increase after bursting. | cost 2 |
+| Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
 | Grafted Arms | R | 1 | Attack | X-cost: Deal 6 per energy spent, split randomly among enemies as 6-damage hits. | 8 per |
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
@@ -1713,7 +1735,7 @@ Three things this list once excluded have since shipped and are no longer non-go
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-**Status: planned, not shipped.** This section defines the proposed expansion requested in September 2026. It does not assert that the interfaces, content, migrations, or checks below already exist. Existing mechanics remain authoritative until their implementation is delivered and verified. Each implementation PR must identify the requirements it completes and any remaining limitations.
+**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The items still open are the elite count for 1.0 in §12.4 and the Power resting stance in §12.5 (stage 3 rows P6 and P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
 
 ### 12.1 Dodge and action feedback
 
@@ -1747,7 +1769,7 @@ New maps support multiple terminal boss destinations within an act, with distinc
 
 Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
 
-The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **two per seat** (owner ruling D4, 2026-09-24), counted separately from the other two totals. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
 
 Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
 
@@ -1823,6 +1845,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - `balance.seatTiers = { 1: 1.0, 2: <m2>, 3: <m3> }` — one multiplier per tier, data. `hpMult` for a fight is `seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers exactly where they compose today (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll, so the same seed rolls the same base.
 - **A seat climbed at its baseline tier scales by exactly 1** — `seatTiers[n] / seatTiers[n]` — which is the byte-identity claim of §13.6.
+- **Bosses scale by the tier they are met at** (`balance.bossTiers = { 1: { hp, damage }, 2: …, 3: … }`, data; `bossTierScale` in `model/seats.js` is its one reader, used by `main.js` fight modifiers, `tools/session.mjs` and the sims). The seat order is drawn per run (§13.4), so a boss's difficulty cannot be authored into its roster row — the Marches boss is a run's first boss in a third of climbs. A `boss`-pool fight at tier T takes, in place of the seat ratio above, `ratio × bossTiers[T].hp` on HP and `ratio × bossTiers[T].damage` on every move's damage, where `ratio = seatTiers[T] / seatTiers[the encounter's own seat's baseTier]` — the causeway's null-seat boss (the Valkyrie) is authored at the final tier whichever seat holds it. Move damage reaches the engine as `createCombat`'s `enemyDamageMult`, stamped on each enemy entity (`damageMult`, rounded per hit, never below 1) so the intent, the hit, the move card and a saved fight agree. Other pools keep the seat ratio on HP alone. Shipped (#1284, A2): tier 1 `{ 0.8, 0.8 }`, tiers 2 and 3 `{ 2.2, 1.5 }`, tuned with `node tools/runsim.mjs <n> --seeded-seats` (the real per-run order; the tool's default is the fixed weald → marches → reach order, one climb in six).
 - Strength scaling per tier is **not** introduced here; Endless already owns per-loop Strength and a second knob on the same status is a balance decision for the tuning pass, not this contract. `<m2>` and `<m3>` are set in the delivering PR from the measured HP ratio of the shipped rosters (`tools/runsim.mjs` at 300 seeds prints per-tier win rate before and after) and are stated in `docs/BALANCE.md`.
 
 *Falsify:* `node tools/runsim.mjs --seeds 300` win rate per tier within the tolerance BALANCE.md states; `node -e "..."` computing `hpMult` for `(seat: 'reach', tier: 3)` → `1`.
@@ -1936,7 +1959,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 ### 13.4k Mana is the third cost line, a focus owns its break, and the player has a Poise meter (plan phase 8)
 
-- **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` action and `minStaminaCost` stamina (1 / 1), base and upgrade alike — `validate.js` refuses a card under either floor BY NAME (`cards.<id>.staminaCost: '<name>' costs Mana, so it costs at least 1 stamina …`), an upgrade inheriting the base's lines where it leaves them unsaid. The re-cost this rule forced: the four signature arts cost 1 stamina beside their 1 Mana (the proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it — under the current tiers two classes start with one point of each); Comet Fragment costs an action; seven Mana powers whose upgrade was "costs 0" now drop the Mana line instead (an action floor leaves nothing else to drop). A Mana spell (one whose school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such row in `cardExposure.csv` reads 5, action-only spells keep 1.
+- **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` action and `minStaminaCost` stamina (1 / 1), base and upgrade alike — `validate.js` refuses a card under either floor BY NAME (`cards.<id>.staminaCost: '<name>' costs Mana, so it costs at least 1 stamina …`), an upgrade inheriting the base's lines where it leaves them unsaid. The re-cost this rule forced: the four signature arts cost 1 stamina beside their 1 Mana (A2 since took the Starseer's Starstone Pebble — with Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — off both lines: they cost actions only, and their `cardExposure.csv` rows read the action-only 1) (the proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it — under the current tiers two classes start with one point of each); Comet Fragment costs an action; seven Mana powers whose upgrade was "costs 0" now drop the Mana line instead (an action floor leaves nothing else to drop). A Mana spell (one whose school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such row in `cardExposure.csv` reads 5; a spell with no Mana line keeps 1, whether it costs actions only or Stamina (A2's Blight Touch, which costs Stamina without Mana, reads 1).
 - **A focus owns what its break does** (§3.6's property mounts): beside the sceptres' `siphon` and the wand's `overcharge`, **`staggerBreak`** (the plain staves: Ash, Starstone, Wyrmhorn) deals `balance.exposure.staggerBreakPoise` (6) Poise damage to the foe whose Exposure the holder's own hit broke, and **`resonance`** (the Goldbough Branch) pours `balance.exposure.resonanceSpreadPct` (50) of the broken foe's threshold into every OTHER foe as buildup — the new opcode **`arcaneBuildup`** (`amount` | `pct`, exactly one) on the new target **`otherEnemies`** (every living enemy but the firing event's and the action's own target). The Blight Rod and the Gorefire Brand carry `overcharge`. Every focus is a `staff` kind, so the proposal's staff / wand / orb reading is by item, in `tagging.csv`. Buildup has one path to a meter, `addArcaneExposure` (a hit's and a pour's alike): immune and locked foes refuse by name, a fill resets and breaks.
 - **The player's Poise meter is real.** Its max is Constitution through the derived `poise` row (§13.4l) + the worn body armour's `poiseThreshold` + relic `poiseThresholdAdd` (`playerPoiseThresholdReceipt`, `active: true`; a weapon's `poiseThreshold` is its weight, not the wearer's footing). Impact fills it — `dealPoiseDamage` takes the player as it takes an enemy, and `impactDealt` is emitted for every target so the armour skill hooks (§13.4d) hear it; outside the foundation ruleset (the shipped fight is created without one) an enemy blow that draws blood rocks the player by `balance.poise.playerImpactPerHit` (2), the ruleset's weapon impact replacing it wherever a ruleset is handed in. A restored fight re-derives the max from the receipt, never from the save. In co-op the receipts carry `targetPlayerId`. A fill Staggers the player: `balance.stagger.player` names the statuses applied and their stacks (`vulnerable` 2, `weak` 2, ordinary decay — the engine names no status) and the actions owed to the NEXT turn (`actionLoss` 1: the turn opens `energyMax − pendingActionLoss`, once); `meterFilled` and **`playerStaggered`** `{ targetId, actionLoss, statuses }` are emitted; the meter grows by `poise.growthMult` as an enemy's does. Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l). Co-op stamps the same receipt per member.
 
@@ -1957,12 +1980,13 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 His words: *"I'd like the default stats to be low, with everyone having a total pool of points starting off. the default stat for each stat is 1 and assign allows a user to assign 3 points … reduce equipment requirements accross the board for this low stat environment. Also, I'd like to have more stat customization options in general to be able to make this change in the settings."*
 
 - **Creation offers the `lean` mode** (labelled **Assigned** since owner, 2026-09-24; the id stays `lean`, which saves and exported configurations key on). Baseline **1** across the five attributes, **3** points to place, floor 1 and ceiling 4, `belowBaseline: 'allow'`, `redistribution: 'fixedTotal'`, for a fixed total of **8**. `tuned2` joins `tuned`, `standard` and `pointbuy` in the table and out of creation (`characterCreation.visibleModeIds`) for the same reason they are there: every in-flight save was admitted against its own mode's total at the load door, and a mode that vanished would archive those runs. The ceiling still caps CREATION, not the character. Each class's preset is baseline 1 plus its three points: Reaver STR 3 / CON 2, Starseer INT 3 / WIS 2, Herald WIS 3 / CON 2, Rogue DEX 3 / CON 2.
-- **The pools are not the stats, and the mode says so.** `lean` carries `statConversionScale: 1/5` — the ratio of the two BASELINES, not of the two totals. Ruleset 5's coefficients are authored against the tuned2 span, so the run door divides every rule's `pointsPerTier` by five: **one lean point IS one tuned tier of five**. A character who assigns nothing therefore opens on exactly the pools tuned2 opened with (40 HP before class bonuses, 3 Actions, 5 draw, 5 Mana, 5 Stamina), and each of the three assignable points is worth a whole tier of the old scale. Using the ratio of the TOTALS (8/35) instead would hold the total steady and let the baseline drift, which cost a stock character a third of its action economy.
-- **The mode's scale is the LAST override layer, not the first.** It used to ride in `modeModifiers`, which `resolveDerivedStatRules` applies before `runModifiers` and `explicitOverride`; the Advanced *stat points per tier* dial arrives as an `explicitOverride` whose `defaults` is assigned onto every row, so turning that dial deleted the mode's scale. It is now read off the rules as they finally resolve and re-applied in the last layer, where a layer's `rules` beats its own `defaults`. A combat snapshot carries `derivedStatRuleSnapshot` for the same reason: the Poise vessel is re-derived on restore, and a resumed fight used to re-price it on the authored table.
+- **The pools are the stats; there is no conversion scale** (owner, 2026-09-21, superseding this bullet as first written). `lean` shipped with `statConversionScale: 1/5`, which divided every rule's tier by five so one lean point read as one tuned2 tier. It was removed with derived-stat ruleset 6: *"all calculations should be sum(floor(statmult*stat)) + equipment bonus"*. Every derived row now reads the attribute the character sheet shows, `base + Σ floor(weight × attribute) + floor(perLevel × (level − 1))` (the rows themselves are the owner's defaults of 2026-09-24, §3.5), and no creation mode converts an attribute on its way in. A run snapshotted under the scale restores its own rows.
+- **The Dodge Roll reads the lean scale** (plan A3, 2026-09-24). Its Dexterity term is `floor((DEX − 3) / 2)` (`mechanics.dodgeRoll.dexterityCentreByMode.lean`, `dexterityPerModifier`; no sheet reads as no term) for a run made on the lean scale, not the d20 habit `floor((DEX − 10) / 2)`, which was −3 to −5 for every creatable character (−4 or −5 for every class preset) and left a preset's landed dodge guarding 2 at best when Light, 0 when Medium and less than nothing when Heavy. A landed dodge's guard is `3 + DEX term + class guard`: 5 for Light at DEX 1, 2 for Heavy at DEX 1, the least a creatable sheet can land. The Weight Class prices the dodge at Light 1 Stamina / 0 Actions, Medium 1 / 1, Heavy 2 / 1 (Medium was 2 / 1 and Heavy 3 / 2, more than any class preset's opening Stamina of 1 or 2). Measured with `node tools/runsim.mjs 240 --seeded-seats`: dodges land 57–65% of plays for 4.4–6.0 guard (35–44% for 0.6–2.0 before), and wins stay inside the 35–65% band (Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240). A run made under an older creation mode (`tuned2`, `tuned`, `standard`, `pointbuy`) keeps the d20-scale centre (`mechanics.dodgeRoll.dexterityCentre` 10), so an update never moves its dodge; the mode rides the fight, the co-op seat and the mid-fight save (`combat.attributeMode`, the run's mode for an older snapshot).
+- **A combat snapshot carries `derivedStatRuleSnapshot`.** The Poise vessel is re-derived on restore, and a resumed fight used to re-price it on the authored table. (This bullet once described where the removed conversion scale sat among the override layers; with the scale gone there is nothing to re-apply.)
 - **Equipment minima are rebased again, onto 1–4.** `equipmentRequirements.csv` carries each old value through `round((old − 3) / 3) + 1`: the straight sword asks 2 Strength, the dagger 2 Dexterity, the greatsword 3, the Ash Focus staff 3, and every outfit 3. The kit floor (`startingStatBounds`) therefore puts the least a character can carry at **7** — the Starseer's 3 Intelligence plus a point in each of the other four.
 - **Everything above is a dial.** Advanced → Progression → *Assign points* exposes the starting value for every attribute, the points available to assign, the total, the floor, the creation ceiling and whether points may be taken back off a stat; *Equipment requirements* exposes one row per authored minimum plus an across-the-board multiplier. Baseline and total are the same fact said twice, so the baseline wins when it is set and the total drives when it is not — which is what keeps every configuration exported before the baseline row existed resolving to its own numbers.
 
-*Falsify:* a bundle whose `lean` preset misses the mode total of 8 or falls outside 1–4 is refused by name, and one that cannot hold its class's baseline kit is refused naming the kit; a stock lean Reaver opens on 3 Actions and 5 draw; a total below 7 is refused naming the Starseer and the Ash Focus; a typed baseline decides the total while a typed total alone still derives the baseline; halving the equipment multiplier halves the table and the kit floor with it; an attribute card reads the run's own tier, not the authored row.
+*Falsify:* a bundle whose `lean` preset misses the mode total of 8 or falls outside 1–4 is refused by name, and one that cannot hold its class's baseline kit is refused naming the kit; a stock lean Reaver opens on 3 Actions and 5 draw; a landed Light dodge at DEX 1 guards 5 and a landed Heavy dodge at DEX 1 guards 2; a total below 7 is refused naming the Starseer and the Ash Focus; a typed baseline decides the total while a typed total alone still derives the baseline; halving the equipment multiplier halves the table and the kit floor with it; an attribute card reads the run's own tier, not the authored row.
 
 ### 13.4n The quest board: a place's service, spoken quests, the run's journal (plan phase 10b)
 
@@ -1986,7 +2010,7 @@ For every seed and every save written before this section:
 
 1. **Every act map is byte-identical** to the one the same seed generated before, for the same content act, because geometry is per tier (`mapConfigs[tier]` = today's `mapConfigs[act]`), unknown weights are per tier, and no draw on `map`, `events`, `enemyHP`, `shuffle` or any other pre-existing stream is added, removed or reordered. The only new draw is on the new `seats` stream.
 2. **A migrated save climbs the seats in the order it always did** and fights the boss its graph already names.
-3. **A fight in a seat at its baseline tier rolls the same HP** it rolled before (§13.3 multiplier is 1).
+3. **A fight in a seat at its baseline tier rolls the same HP** it rolled before (§13.3 multiplier is 1). Boss fights are the stated exception since #1284: `balance.bossTiers` scales a boss by the tier it is met at, baseline or not (§13.3).
 4. **World Journey is untouched**: it never called `rollEncounter` or `buildActMap` (`journeyEncounter`, `journeyGraph`), and it keeps `drowned-coast`.
 
 What does change for a **new** run on an existing seed: which seat the run opens in. That is the feature, and it is the one thing this section is allowed to change about a seed's replay. `tools/runsim.mjs` and `tests/branchingBosses.test.mjs` pin claims 1–3; `tests/world-atlas.test.mjs` pins 4.

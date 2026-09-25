@@ -21,6 +21,7 @@ import {
   validateContent,
   extractTemplateTokens,
   computeTokenBindings,
+  cardTokenEffects,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
@@ -965,9 +966,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(loaded), JSON.stringify(run), 'round-trip identical');
     eq(loaded.streamCounters.shuffle, 1, 'rng counters persisted');
 
-    // Unknown schemaVersion → refused, archived, save slot cleared.
-    const tampered = { ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 };
-    storage.setItem(RUN_KEY, JSON.stringify(tampered));
+    // Newer schemaVersion → refused and PRESERVED: the slot keeps the bytes,
+    // nothing is archived (tests/save-migration.test.mjs covers it in full).
+    const tampered = JSON.stringify({ ...run, schemaVersion: RUN_SCHEMA_VERSION + 99 });
+    storage.setItem(RUN_KEY, tampered);
+    eq(saves.loadRun(REG), null, 'newer schemaVersion refused');
+    eq(saves.runStatus().state, 'newer', 'refusal named as newer');
+    eq(storage.getItem(RUN_KEY), tampered, 'newer save left in the slot untouched');
+    eq(storage.getItem(RUN_ARCHIVE_KEY), null, 'newer save not archived');
+
+    // Unknown (non-newer) schemaVersion → refused, archived, save slot cleared.
+    storage.setItem(RUN_KEY, JSON.stringify({ ...run, schemaVersion: 0 }));
     eq(saves.loadRun(REG), null, 'unknown schemaVersion refused');
     assert(storage.getItem(RUN_ARCHIVE_KEY) != null, 'refused save was archived');
     eq(storage.getItem(RUN_KEY), null, 'save slot cleared after archive');
@@ -1414,9 +1423,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           assert(bound.has(tok), `${label}: token {${tok}} unbound`);
         }
       };
-      check(card.textTemplate, card.effects, card.id);
+      // A card's template binds its play effects, then its in-hand hook.
+      check(card.textTemplate, cardTokenEffects(card), card.id);
       if (card.upgrade) {
-        check(card.upgrade.textTemplate ?? card.textTemplate, card.upgrade.effects ?? card.effects, `${card.id}+`);
+        check(card.upgrade.textTemplate ?? card.textTemplate, cardTokenEffects({ effects: card.upgrade.effects ?? card.effects, onTurnEndInHand: card.onTurnEndInHand }), `${card.id}+`);
       }
     }
     const c = makeCombat({ deck: Array(5).fill('strike') });
@@ -1612,12 +1622,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
       enemyIds: ['tGiant'],
     });
-    eq(soloMagic.player.mana, 2, 'Starstone combatStart recovery restores one Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) one more');
+    eq(soloMagic.player.mana, Math.min(starRun.maxMana, REG.balance.powers.starstoneShard.restoreMana + REG.balance.powers.lodestarShard.restoreMana), 'Starstone combatStart recovery restores Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) more');
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
-    eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
+    // A2: Starstone Shard's magic damage is +2 (was +1).
+    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 7, 'solo live primary damage matches preview');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
 
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
@@ -1630,11 +1641,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
       enemyIds: ['tGiant'],
     });
-    eq(coopMagic.players.get('p1').entity.mana, 2, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
+    eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
-    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 7,
-      'co-op live magic damage uses the same host-stamped +1');
+    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
+      'co-op live magic damage uses the same host-stamped +2');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
@@ -1825,7 +1836,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const v = makeCombat({ deck: Array(5).fill('defend'), enemies: ['blightedValkyrie'] });
     const e1 = getEntity(v, 'e1');
     applyLoseHp(v, e1, 30); // give her something to heal back
-    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 12 dmg + 2 player Bleed
+    dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 20 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
     assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
     eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
@@ -1840,7 +1851,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Stitched King: ≤50% HP grafts new limbs — unlocks thousandHands, buffs, Frails you.
     const k = makeCombat({ deck: Array(5).fill('defend'), enemies: ['stitchedKing'] });
     const king = getEntity(k, 'e1');
-    applyLoseHp(k, king, 115); // 220 → 105 (<50%): checkPhases fires in afterHpChange
+    // A2 raised his HP (195 → 332 authored), so the cut is read off his pool.
+    applyLoseHp(k, king, king.hp - Math.floor(king.maxHp * 0.45)); // → 45% (<50%): checkPhases fires in afterHpChange
     dispatch(k, { type: 'endTurn' }); // drain phase effects
     assert(king.unlockedMoves.includes('thousandHands'), 'phase 2 move unlocked');
     assert(S.getStacks(king, 'strength') >= 2, 'phase buffed his Strength');
@@ -6614,7 +6626,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const perPoint = 4;
     const liveHp = REG.derivedStatRules.rules.hp;
     const otherTerms = (attributes) => attributeTerms(liveHp, { ...attributes, constitution: 0 });
-    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 0], ['rogue', 2, 0], ['herald', 2, 0]]) {
+    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 14], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
@@ -9046,7 +9058,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     applyHeal(heals, entA, 5);
     eq(fires('A'), 1, "A's seal answers A's own heal, still whole"); eq(fires('B'), 1, "and B's once is spent");
     // Lodestar Shard: extra Mana at combat start.
-    const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 3 });
+    const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
     // Attune restores Mana and exhausts; upgraded it stays.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
@@ -9632,8 +9644,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
-    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
-    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstoneArc' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
+    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstoneArc\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
     assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
@@ -9759,9 +9771,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // raising it strands the starter card of every run already under way
     // (a legacy Reaver at Wisdom 8 holds one Mana). That step needs
     // run-stamped costs, which is a mechanism and not this phase's number.
-    const art = REG.cards.get('starstonePebble');
+    // A2 took the Starseer's own signature art off both lines (it costs
+    // actions only), so the 1/1 claim is read off a Starseer Mana spell.
+    const art = REG.cards.get('starstoneArc');
+    assert(!REG.cards.get('starstonePebble').manaCost && !REG.cards.get('starstonePebble').staminaCost,
+      'A2: the Starseer signature art costs actions only');
     assert(star.maxStamina >= art.staminaCost && star.maxMana >= art.manaCost,
-      'the signature art is playable on the first floor');
+      'a Starseer Mana spell is playable on the first floor');
     assert(art.staminaCost === 1 && art.manaCost === 1,
       'and stays at 1/1 until costs travel with the run rather than with the table');
 

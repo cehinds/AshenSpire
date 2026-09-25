@@ -245,4 +245,4 @@ Thirty-two original transparent atlases generated with built-in OpenAI image gen
 
 ## Generated music score (2026-09-24)
 
-Four original 180-second instrumental tracks generated for AshenSpire with ElevenLabs Music (`eleven_music_v2`): `music/map/ashen_map_1.mp3`, `music/map/ashen_map_2.mp3`, `music/boss/ashen_boss_1.mp3` and `music/victory/ashen_victory_1.mp3`, listed in `music/manifest.json`. Prompts are in `music/PROMPTS.md`. Contexts without a track keep the built-in generated score. No third-party recordings were used and no third-party asset license is claimed.
+Two original instrumental tracks generated for AshenSpire with ElevenLabs Music (`eleven_music_v2`): `music/boss/ashen_boss_1.mp3` (180 s) and `music/victory/ashen_victory_1.mp3` (the first 61 s of a 180 s render, faded out with ffmpeg), listed in `music/manifest.json`. Prompts are in `music/PROMPTS.md`. Two map tracks from the same session were withdrawn as too bright for the setting. Contexts without a track keep the built-in generated score. No third-party recordings were used and no third-party asset license is claimed.
