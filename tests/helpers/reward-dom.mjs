@@ -25,6 +25,9 @@ export function rewardDom() {
     appendChild(child) { child.remove(); child.parentNode = this; this.children.push(child); return child; }
     append(...children) { children.forEach(child => this.appendChild(child)); }
     after(child) { const parent = this.parentNode; child.parentNode = parent; parent.children.splice(parent.children.indexOf(this) + 1, 0, child); }
+    get firstChild() { return this.children[0] || null; }
+    insertBefore(child, ref) { child.remove(); child.parentNode = this; const i = ref ? this.children.indexOf(ref) : -1; if (i < 0) this.children.push(child); else this.children.splice(i, 0, child); return child; }
+    replaceWith(node) { const parent = this.parentNode; if (!parent) return; node.remove(); node.parentNode = parent; parent.children.splice(parent.children.indexOf(this), 1, node); this.parentNode = null; }
     remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(x => x !== this); this.parentNode = null; }
     matches(selector) {
       if (selector.includes(',')) return selector.split(',').some(s => this.matches(s.trim()));

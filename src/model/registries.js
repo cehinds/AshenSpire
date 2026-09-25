@@ -225,6 +225,9 @@ export function createRegistries(contentBundle) {
   registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // Each combat-kit Weapon Art's unleashed form, keyed by card id (SPEC
+  // §12.2.1); model/artCharge.js is the one reader.
+  registries.weaponArtUnleashed = deepFreeze(structuredClone(bundle.weaponArtUnleashed || {}));
   // Quest steps (E12): which events an Unknown node may roll only once the
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });

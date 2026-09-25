@@ -1,6 +1,7 @@
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { equipmentCardModel } from '../../model/equipmentCard.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
@@ -523,7 +524,7 @@ export function setPieceChipChosen(chip, chosen) {
 }
 
 function inventoryFace(registries, row, {
-  selected = false, draggable = false, actionLabel = '', classModel = null,
+  selected = false, draggable = false, actionLabel = '', classModel = null, run = null,
 } = {}) {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
@@ -537,7 +538,7 @@ function inventoryFace(registries, row, {
     // (content/config/ui/components/card.json, behavior.fields.surfaces).
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
       ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
-      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury' })).card);
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury', run })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
@@ -548,7 +549,7 @@ function inventoryFace(registries, row, {
 
 function inventoryReveal(registries, row, {
   comparison = null, action = null, instruction = '', holdDuration = 0,
-  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null, facts = null,
+  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null, facts = null, run = null,
 } = {}) {
   const item = row.item;
   let art;
@@ -580,7 +581,7 @@ function inventoryReveal(registries, row, {
     for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
     el.prepend(['Potion', 'Relic'].includes(row.category)
       ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
-      : renderEquipmentInspection(registries, item, { interactive: false }));
+      : renderEquipmentInspection(registries, item, { interactive: false, run }));
   }
   // W1n: what the selected item is compared with and whether it can go on
   // stand just before the action, so the action is read with its reason.
@@ -1433,6 +1434,7 @@ export function mountEquipment(host, {
         draggable,
         actionLabel: selectedSlot ? actionLabel : '',
         classModel: inventoryItemClass,
+        run,
       });
       if (draggable) draggableRows.set(row.key, row);
       let actionButton = null;
@@ -1497,6 +1499,7 @@ export function mountEquipment(host, {
         },
         reveal: {
           node: inventoryReveal(registries, row, {
+            run,
             comparison,
             facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
             action: actionButton,
@@ -2009,6 +2012,7 @@ export function mountEquipment(host, {
       ? run.lastSmithingReceipt
       : null;
     const fact = (name, value, attrs = {}) => statRowFlat(name, value, attrs);
+    const itemScaling = equipmentCardModel(registries, item, { run }).scaling;
     const facts = [
       fact('Type', `${summaryItem.category} · ${item.rarity || 'standard'}`),
       fact('Effects', mods.length ? mods.join(' · ') : 'No additional equipment effects authored.'),
@@ -2016,6 +2020,9 @@ export function mountEquipment(host, {
       fact('Smithing tier', String(smithingLevel)),
       ...(intrinsic ? [
         fact('Attack rating (AR)', String(intrinsic.attackRating)),
+        // SPEC §13.4o: the grades that price this weapon's attack above the anchor.
+        // The run's snapshot owns the letters (what the attack card is priced by).
+        ...(itemScaling ? [fact('Scaling', itemScaling.replace(/^Scales /, ''))] : []),
         fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
         fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
@@ -2041,7 +2048,7 @@ export function mountEquipment(host, {
     const card = detailCard({
       eyebrow: slot.label, name: `${item.name} details`,
       attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } },
-      children: [renderEquipmentInspection(registries, item), detail],
+      children: [renderEquipmentInspection(registries, item, { run }), detail],
     });
     attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
     return card;

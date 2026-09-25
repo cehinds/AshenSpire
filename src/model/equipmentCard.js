@@ -1,9 +1,26 @@
 import { parseMod } from './loadout.js';
 import { pieceWeight } from './statProjection.js';
+import { orderedAttributes } from './attributes.js';
 import { balance } from '../content/balance.js';
+import { pieceGrades } from './ratingFormula.js';
+
+/**
+ * The grade letters and grade table this card reads. With a run, the run's
+ * snapshot owns both (SPEC §13.4o) — the same letters loadout.js prices the
+ * attack card by — so a save born before the grade table reads no grade at
+ * all, and a content regrade does not change what a run in progress shows.
+ * With no run (creation, previews), the live content.
+ */
+function cardScaling(registries, piece, run) {
+  if (run) {
+    const table = run.equipmentProfileRuleSnapshot?.weaponScaling || null;
+    return { table, grades: table ? pieceGrades(piece, table) : null };
+  }
+  return { table: registries.balance?.weaponScaling || null, grades: piece.scaling || null };
+}
 
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
-export function equipmentCardModel(registries, piece) {
+export function equipmentCardModel(registries, piece, { run = null } = {}) {
   const armor = piece.kind === 'armor';
   const tags = piece.tags || [];
   const tag = id => (registries.tags || []).find(row => row.id === id);
@@ -22,8 +39,19 @@ export function equipmentCardModel(registries, piece) {
     const label = spec.apply === 'startStatus' ? `starting ${spec.label}` : mod.field === 'poise' ? 'poise damage' : spec.label;
     return field(`${target}${value} ${label}`, raw, `${mod.mode === 'set' ? 'Replaces the value' : 'Adjusts the value'} ${mod.prefix === 'self' ? 'on the wearer' : `on ${mod.prefix === 'power' ? 'the class power card' : mod.prefix}`}. ${spec.blurb}`);
   });
+  // SCALING GRADES (SPEC §13.4o), in the attribute table's order: the letters
+  // the Level-up row and the rating door read. Null for an ungraded piece.
+  const { table: gradeTable, grades } = cardScaling(registries, piece, run);
+  const gradeRows = orderedAttributes(registries).filter((attr) => grades?.[attr.id]).map((attr) => `${attr.shortLabel} ${grades[attr.id]}`);
+  const scaling = gradeRows.length ? `Scales ${gradeRows.join(' · ')}` : null;
+  const scalingExplanation = scaling
+    ? `Each point of a graded attribute above ${gradeTable?.anchor ?? 3} adds to this weapon's attack at its grade (${Object.entries(gradeTable?.grades || {}).map(([grade, c]) => `${grade} ×${c}`).join(', ')}); at or below it every weapon reads the flat rating.`
+    : null;
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
-  return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
+  // Each grade is a face fact of its own, after Weight: "B / STR".
+  const gradeFacts = orderedAttributes(registries).filter((attr) => grades?.[attr.id])
+    .map((attr) => ({ ...field(attr.shortLabel, grades[attr.id], `${attr.label} scaling grade ${grades[attr.id]}. ${scalingExplanation}`), grade: true }));
+  return { id: piece.id, name: piece.name, armor, type, facts: [...facts, ...gradeFacts], bonuses, scaling, scalingExplanation,
     tags: tags.map(id => field(tag(id)?.label || id, id, tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
     flavor: piece.blurb || 'No flavor text authored.',

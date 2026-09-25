@@ -27,6 +27,7 @@ import { equippedIn, slotHand, gripOf } from '../model/loadout.js';
 import { ownerItemRef } from '../model/cardMounts.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { awardSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
+import { wrapEmit } from './busHooks.js';
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
 
@@ -205,14 +206,13 @@ export function recordSkillXp(combat, event) {
 
 /** Hook the bus: every emitted event is recorded after its triggers fired. */
 export function attachSkillXp(combat) {
-  const inner = combat.emit;
   combat.skillXp = combat.skillXp || {};
-  combat.emit = (type, payload) => {
+  // Through wrapEmit, so a foundation transaction's candidate records too.
+  return wrapEmit(combat, (ctx, inner) => (type, payload) => {
     const event = inner(type, payload);
-    recordSkillXp(combat, event);
+    recordSkillXp(ctx, event);
     return event;
-  };
-  return combat;
+  });
 }
 
 /**

@@ -313,6 +313,29 @@ export const balance = {
     },
   },
 
+  // WEAPON ART CHARGE (SPEC §12.2.1): each equipped weapon whose combat-kit
+  // Art has an unleashed form (content/weaponArtUnleashed.js) fills a meter
+  // on its own cards' hits; a full meter turns its Art's next play into the
+  // unleashed form and empties. Meters start empty every fight. A weapon's
+  // max is `maxByWeapon[id]` when authored, else `defaultMax`; 0 = no meter.
+  // model/artCharge.js is the one reader.
+  weaponArtCharge: {
+    defaultMax: 4,
+    // Quick weapons land many small hits, so they need more pips; heavy
+    // weapons land few, so they need fewer. Every other weapon reads 4.
+    maxByWeapon: { dagger: 5, twinblade: 5, parryDagger: 5, greatsword: 3, warhammer: 3, battleaxe: 3, cinderAxe: 3 },
+    gainPerHit: 1,
+    gainOnStagger: 1,
+    gainOnBurst: 1,
+    [NOTE]: {
+      defaultMax: 'How many charge pips a weapon\'s Art meter holds before its Art is unleashed, for any weapon without its own row. 0 gives that weapon no meter.',
+      'maxByWeapon.{weapon}': 'How many charge pips the {weaponName} Art meter holds before its Art is unleashed.',
+      gainPerHit: 'Charge a weapon\'s Art meter gains for each hit its own cards land on an enemy (the Art itself never charges).',
+      gainOnStagger: 'Extra Art charge a weapon gains when its hit staggers an enemy.',
+      gainOnBurst: 'Extra Art charge a weapon gains when its hit bursts an enemy\'s build-up meter, such as Bleed.',
+    },
+  },
+
   // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
   // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
   // is the floor at character level 0; it rises by `minimumPerStep` every
@@ -438,8 +461,53 @@ export const balance = {
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    // Card-rarity pity (SPEC §3.8.1, the StS rare offset): percentage points
+    // added to each card slot's rare chance. Starts below zero so the first
+    // fights stay lean, climbs with every common shown, resets on a rare —
+    // and an offer after `rareGuaranteeAfter` rare-less ones always holds one.
+    cardPity: {
+      offsetStart: -5,
+      offsetStep: 1,
+      offsetMax: 40,
+      rareGuaranteeAfter: 4,
+      [NOTE]: {
+        offsetStart: 'Percentage points added to a card\'s rare chance at the start of a run, and again each time a rare is offered.',
+        offsetStep: 'How many points the rare chance climbs for each common card offered at a normal, elite or boss fight.',
+        offsetMax: 'The most points the climbing rare chance may add.',
+        rareGuaranteeAfter: 'How many card offers in a row may show no rare before the next one is certain to hold one.',
+      },
+    },
+    // The elite chest (SPEC §3.8.1): an elite's single random relic became a
+    // visible pick of one big reward from `choices` distinct categories.
+    eliteChest: {
+      choices: 3,
+      categoryWeights: {
+        relic: 30, upgrade: 25, armament: 25, cinders: 20,
+        [NOTE]: {
+          relic: 'How often an elite chest offers a relic, weighed against its other categories.',
+          upgrade: 'How often an elite chest offers an upgraded card, weighed against its other categories.',
+          armament: 'How often an elite chest offers an armament or weapon art, weighed against its other categories.',
+          cinders: 'How often an elite chest offers a purse of cinders and Smithing Stones, weighed against its other categories.',
+        },
+      },
+      upgradeOwnedPct: 50,
+      cinders: [90, 130],
+      smithingStones: 1,
+      [NOTE]: {
+        choices: 'How many different rewards an elite chest lays out to choose one from.',
+        upgradeOwnedPct: 'The chance an elite chest\'s card upgrade is one of your own cards rather than a new rare card, already upgraded.',
+        'cinders.{end}': 'The {band} of the cinders an elite chest\'s purse holds.',
+        smithingStones: 'How many Smithing Stones an elite chest\'s purse holds.',
+      },
+    },
+    // SPEC §6.1: a boss lays out this many distinct boss relics; you keep one.
+    bossRelicChoices: 3,
+    // Paid instead when every boss relic is already held.
+    bossRelicConsolationCinders: 60,
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
+      bossRelicChoices: 'How many different boss relics a boss lays out to choose one from.',
+      bossRelicConsolationCinders: 'Cinders a boss pays instead of a relic when you already hold every boss relic it could offer.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
       flaskDropStepPct: 'How far that chance falls after a drop, and rises after a miss.',
     },
@@ -689,6 +757,28 @@ export const balance = {
     [NOTE]: {
       pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
       pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
+    },
+  },
+  // ---- weapon scaling grades (SPEC §13.4o) -----------------------------------
+  // A weapon's grade for an attribute (content/source/weaponScaling.csv) prices
+  // that attribute's points ABOVE `anchor` in the weapon's attack rating; at or
+  // below it every weapon reads the flat rating weight, so a stock lean
+  // character (class stat 3) opens on the damage it always had and each point
+  // a level buys shows. The run snapshots this table at birth
+  // (equipmentProfileRuleSnapshot.weaponScaling): a run born before it reads
+  // every weapon flat.
+  //   S 2.0  +2 a point        A 1.5  +1, +2, +1 …     B 1.0  +1 a point
+  //   C 0.75 three in four     D 0.5  one in two (the flat rate)
+  weaponScaling: {
+    anchor: 3,
+    grades: {
+      S: 2, A: 1.5, B: 1, C: 0.75, D: 0.5,
+      [NOTE]: {
+        '{grade}': 'Weapon scaling: what one attribute point above the anchor adds to a weapon graded {grade} for that attribute (floored per attribute).',
+      },
+    },
+    [NOTE]: {
+      anchor: 'Weapon scaling: attribute points up to this value read the flat rating weight on every weapon; each point above it is paid at the weapon\'s grade.',
     },
   },
 

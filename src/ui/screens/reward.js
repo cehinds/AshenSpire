@@ -62,9 +62,11 @@ import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { rewardProgress } from '../../model/rewardprogress.js';
+import { rewardProgress, levelUpMoment } from '../../model/rewardprogress.js';
+import { reducedMotionRequested } from '../motion.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
+import { chestOptionView as sharedChestOptionView } from '../components/chestOption.js';
 import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -72,12 +74,14 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { applyChestOption, chestUpgradeable, landChestPick } from '../../model/rewardChest.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', chest: '▣', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
-// caller (main.js collectArmament): run storage + meta.found + the discovery
-// receipt. Handed in rather than done here because the persistence needs the
+// caller (main.js collectArmament): run storage now, and — through the commit
+// it returns, run only after the reward save lands — meta.found + the
+// discovery receipt. Handed in rather than done here because the persistence needs the
 // caller's run/shot context, and because a screen that decides nothing should
 // also STORE nothing itself. A caller that hands none gets reveal-only rows —
 // no such caller exists today; the boundary is named, not covered.
@@ -91,7 +95,25 @@ export function mountRewards(app, {
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
-  const plan = rewardPlan(rewards, {
+  // THE PROFILE WRITE WAITS FOR THE RUN SAVE. The collector stores the piece
+  // in the run bag now (the rollback snapshot covers it) and may hand back a
+  // commit for the durable profile (main.js: meta.found + the discovery
+  // receipt). Those commits run only once persistProgress lands, so a refused
+  // save rolls the bag back without leaving the piece permanently found.
+  const pendingProfileCommits = [];
+  if (onCollectArmament) {
+    const collector = onCollectArmament;
+    onCollectArmament = (id) => {
+      const result = collector(id);
+      if (result === false) return false;
+      if (typeof result === 'function') pendingProfileCommits.push(result);
+      return true;
+    };
+  }
+  // The run-derived facts the plan reads — a function, because the chest
+  // chooser re-reads the bag at pick time (a player's own pick is judged
+  // against the bag as it stands, model/rewardplan.js).
+  const planFacts = () => ({
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
     // home, two questions (the model asks "is there room", the collector's
@@ -101,13 +123,27 @@ export function mountRewards(app, {
       0,
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
+    // A resumed door whose armament row is already settled: a taken piece is
+    // in the bag (counted above), a skipped one needs no slot, so the chest's
+    // piece need not leave one for it (model/rewardplan.js).
+    armamentRowSettled: !!checkpoint?.states?.armament,
+    // An owned chest upgrade whose card has since been upgraded (a skill
+    // threshold's reconcile) is spent, not a refused save (SPEC §3.8.1).
+    chestOptionsSpent: (rewards.chest?.options || []).map((o) => o?.category === 'upgrade' && o.mode === 'owned'
+      && !chestUpgradeable(registries, run, (run.deck || []).find((c) => c.instanceId === o.instanceId))),
   });
+  const plan = rewardPlan(rewards, planFacts());
   // The fight's progression, derived once: the ledgers are already paid and
   // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
   // panel's whole claim is what this one moved, and a treasure room (or an
   // offer saved before the receipt existed) moved nothing, so it draws the
   // spoils alone rather than a heading with no gains under it.
   const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
+  // THE LEVEL MOMENT (SPEC §13.4o): a fight that climbed a character level
+  // says so at the top of the door, not only as a bar in the side column —
+  // the level and the waiting points read live, the climb off the receipt.
+  const levelMoment = rewards.xpGains ? levelUpMoment(run, rewards.xpGains) : null;
+  let levelBannerFresh = true;
   const states = {
     ...(checkpoint?.states || {}),
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
@@ -119,6 +155,10 @@ export function mountRewards(app, {
   const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
   // The class drafts' picks (plan phase 5b), keyed by row key: tree nodes.
   const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
+  // The elite chest's pick (SPEC §3.8.1): the index of the option taken.
+  let chosenChestIndex = Number.isInteger(checkpoint?.chosenChestIndex) ? checkpoint.chosenChestIndex : null;
+  // The boss relic kept from a choice row (SPEC §6.1); a pre-choice save has none.
+  let chosenRelicId = checkpoint?.chosenRelicId || null;
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
   function persistProgress() {
@@ -127,8 +167,17 @@ export function mountRewards(app, {
       checkpoint.chosenCardId = chosenCardId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
+      if (chosenChestIndex !== null) checkpoint.chosenChestIndex = chosenChestIndex;
+      checkpoint.chosenRelicId = chosenRelicId;
     }
+    // A refused (or throwing) save drops the queued profile commits with it.
+    const commits = pendingProfileCommits.splice(0);
     if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
+    for (const commit of commits) {
+      // Best-effort after the run landed: the piece is in the bag either way,
+      // and a quarantined profile refusing the write must not strand the take.
+      try { commit(); } catch { /* the profile record is a convenience here */ }
+    }
   }
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
@@ -193,26 +242,80 @@ export function mountRewards(app, {
       return true;
     },
     relic(row) {
+      // A choice row lands exactly one relic: the pick, and only if not held.
+      if (!row.relicId || run.relics.includes(row.relicId)) return false;
+      if (row.choice) chosenRelicId = row.relicId;
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+    // The elite chest: exactly the one option picked (model/rewardChest.js).
+    chest(row) {
+      const option = row.options[row.optionIndex];
+      if (!option || !row.takeable[row.optionIndex]) return false;
+      if (!applyChestOption(registries, run, option, { collectArmament: onCollectArmament })) return false;
+      if (option.category === 'relic') {
+        syncFlaskGrowth(registries, run);
+        recordSeen('relic', [option.relicId]);
+      }
+      chosenChestIndex = row.optionIndex;
+      return true;
+    },
   };
+
+  // THE ROLLBACK SNAPSHOT: everything a row's grant may write — the deck
+  // (deep: a chest upgrade flips `upgraded` in place), relics, the purse and
+  // stones, the flask belt and its charges, the armament bag, the drafts' ledger and picks,
+  // and the checkpoint — so a grant whose save is refused leaves no mutation,
+  // whether it came from a tap (take) or from Continue's auto-collect (finish).
+  function snapshotForRollback() {
+    return {
+      deck: structuredClone(run.deck),
+      chosenCardId, chosenRelicId, chosenChestIndex, relics: [...run.relics],
+      chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+      cinders: run.cinders, smithingStones: run.smithingStones,
+      flasks: Array.isArray(run.flasks) ? structuredClone(run.flasks) : null,
+      // A flask-growth relic (syncFlaskGrowth) raises the belt's capacity and charge.
+      flaskCharges: run.flaskCharges === undefined ? undefined : structuredClone(run.flaskCharges),
+      storage: Array.isArray(run.loadout?.storage) ? [...run.loadout.storage] : null,
+      skills: run.skills === undefined ? undefined : structuredClone(run.skills),
+      coreTags: run.coreTags === undefined ? undefined : [...run.coreTags],
+      checkpoint: checkpoint ? structuredClone(checkpoint) : null,
+    };
+  }
+
+  function restoreRollback(before, row) {
+    run.deck.splice(0, run.deck.length, ...before.deck);
+    chosenCardId = before.chosenCardId;
+    chosenRelicId = before.chosenRelicId;
+    chosenChestIndex = before.chosenChestIndex;
+    run.relics.splice(0, run.relics.length, ...before.relics);
+    for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
+    Object.assign(chosenDraftCardIds, before.chosenDraft);
+    for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
+    Object.assign(chosenDraftNodeIds, before.chosenNode);
+    run.cinders = before.cinders;
+    run.smithingStones = before.smithingStones;
+    if (before.flasks) run.flasks.splice(0, run.flasks.length, ...before.flasks);
+    if (before.flaskCharges === undefined) delete run.flaskCharges; else run.flaskCharges = before.flaskCharges;
+    if (before.storage) run.loadout.storage.splice(0, run.loadout.storage.length, ...before.storage);
+    if (before.skills !== undefined) run.skills = before.skills;
+    if (before.coreTags !== undefined) run.coreTags = before.coreTags;
+    delete states[row.key];
+    if (checkpoint) {
+      for (const key of Object.keys(checkpoint)) delete checkpoint[key];
+      Object.assign(checkpoint, before.checkpoint);
+    }
+  }
 
   function take(row, viaKind) {
     if (states[row.key]) return false;
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? {
-      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
-      // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
-      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
-      coreTags: row.kind === 'classDraft' ? [...(run.coreTags || [])] : null,
-      checkpoint: checkpoint ? structuredClone(checkpoint) : null,
-    } : null;
+    const cardBefore = snapshotForRollback();
     if (!apply[row.kind](row)) return false;
     states[row.key] = 'taken';
     // Reward state and the run mutation cross one save door. A reload can now
@@ -221,21 +324,7 @@ export function mountRewards(app, {
     try {
       persistProgress();
     } catch (error) {
-      if (cardBefore) {
-        run.deck.splice(0, run.deck.length, ...cardBefore.deck);
-        chosenCardId = cardBefore.chosenCardId;
-        for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
-        Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
-        if (cardBefore.skills) run.skills = cardBefore.skills;
-        if (cardBefore.coreTags) run.coreTags = cardBefore.coreTags;
-        for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
-        Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
-        delete states[row.key];
-        if (checkpoint) {
-          for (const key of Object.keys(checkpoint)) delete checkpoint[key];
-          Object.assign(checkpoint, cardBefore.checkpoint);
-        }
-      }
+      restoreRollback(cardBefore, row);
       throw error;
     }
     if (row.kind === 'card' || row.kind === 'skillDraft') recordSeen('card', [row.cardId]);
@@ -323,7 +412,23 @@ export function mountRewards(app, {
             : name,
         };
       }
+      case 'chest': {
+        if (state === 'taken' && Number.isInteger(chosenChestIndex)) {
+          return { title: t('reward.kind.chest'), body: t('reward.chest.took', { name: esc(chestOptionView(row.options[chosenChestIndex]).name) }) };
+        }
+        const names = row.options.map((o) => esc(chestOptionView(o).label)).join(' · ');
+        return { title: t('reward.kind.chest'), body: `${t('reward.chest.chooseOne', { count: row.options.length })}<br><span style="color:var(--muted)">${names}</span>` };
+      }
       case 'relic': {
+        if (row.choice) {
+          const title = t('reward.relic.bossTitle');
+          if (state === 'taken') {
+            const def = registries.relics.get(chosenRelicId);
+            return { title, body: t('reward.relic.chosen', { name: esc(`${def.icon || '◆'} ${def.name}`) }) };
+          }
+          const names = row.relicIds.map((id) => esc(registries.relics.get(id).name)).join(' · ');
+          return { title, body: `${t('reward.card.chooseOne', { count: row.relicIds.length })}<br>${names}` };
+        }
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
       }
@@ -336,7 +441,7 @@ export function mountRewards(app, {
     switch (row.kind) {
       case 'card':
       case 'skillDraft': return row.cardIds.some((id) => marks.cards.includes(id));
-      case 'relic': return marks.relics.length > 0;
+      case 'relic': return (row.choice ? row.relicIds : [row.relicId]).some((id) => marks.relics.includes(id));
       case 'flask': return marks.flasks.length > 0;
       case 'armament': return marks.armaments.length > 0;
       default: return false;
@@ -425,10 +530,13 @@ export function mountRewards(app, {
       // already announces progress.
       status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
-      body: el('div', { class: 'reward-claim-layout' }, [
-        el('div', { class: 'class-row reward-menu', html: rowsHtml }),
-        sideColumn(claim),
-      ]),
+      body: [
+        levelBanner(),
+        el('div', { class: 'reward-claim-layout' }, [
+          el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+          sideColumn(claim),
+        ]),
+      ].filter(Boolean),
       foot,
     });
 
@@ -444,12 +552,15 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        if (row.kind === 'chest') return `<div class="tt-title">${esc(tTip('reward.kind.chest'))}</div>${esc(tFull('reward.kind.chest'))}`;
+        const offer = row.kind === 'relic' && row.choice ? 'reward.relic.choose'
+          : row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
-        if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') return renderChooser(row);
+        if (row.kind === 'chest') return renderChestChooser(row);
+        if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || (row.kind === 'relic' && row.choice)) return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -458,9 +569,22 @@ export function mountRewards(app, {
       attachTooltip(btn, () => `<div class="tt-title">${esc(tTip('reward.skip'))}</div>${esc(tFull('reward.skip'))}`);
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        states[btn.dataset.skip] = 'skipped';
-        persistProgress();
-        renderMenu(btn.dataset.skip);
+        // A skip is a decision the save must carry (the boss relic chooser's
+        // Skip, below): a refused save puts the row back, says so, and throws
+        // nothing — the row stays skippable for a retry.
+        const row = plan.rows.find((r) => r.key === btn.dataset.skip);
+        if (!row || states[row.key]) return;
+        const before = snapshotForRollback();
+        states[row.key] = 'skipped';
+        try {
+          persistProgress();
+        } catch {
+          restoreRollback(before, row);
+          const note = app.querySelector('#reward-hold-copy');
+          if (note) note.textContent = t('reward.card.saveFailed');
+          return;
+        }
+        renderMenu(row.key);
       });
     }
 
@@ -472,14 +596,39 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
-      for (const row of toTake) {
-        if (apply[row.kind](row)) {
+      // THE COUNTERS THE SAVE HOLDS: each row's auto pick is drawn just
+      // before that row lands (resolved one row at a time, in plan order), so
+      // every landed save carries only the draws of the rows it holds. A
+      // refused save hands its row's draw back — to the counters the last
+      // landed save wrote — so a retry picks the same card, relic or chest
+      // option a reload of that checkpoint would, whichever row refused.
+      let savedCounters = rng && rng.getCounters ? rng.getCounters() : null;
+      let took = 0;
+      for (const planRow of plan.rows) {
+        const [row] = resolveContinue({ ...plan, rows: [planRow] }, states, mode, pickFn).take;
+        if (!row) continue;
+        took++;
+        const before = snapshotForRollback();
+        // A chest pick that cannot land (the bag filled after the plan was
+        // drawn) falls back to another takeable option rather than dropping
+        // the whole chest on the floor (model/rewardChest.js landChestPick).
+        const landed = row.kind === 'chest'
+          ? landChestPick(row, (i) => apply.chest({ ...row, optionIndex: i })) !== null
+          : apply[row.kind](row);
+        if (landed) {
           states[row.key] = 'taken';
-          persistProgress();
+          // The take's own door: a refused save rolls this row's grant back.
+          try {
+            persistProgress();
+          } catch (error) {
+            restoreRollback(before, row);
+            if (savedCounters) rng.restoreCounters(savedCounters);
+            throw error;
+          }
+          if (savedCounters) savedCounters = rng.getCounters();
         }
       }
-      if (toTake.length) sfx.play('rewardTake');
+      if (took) sfx.play('rewardTake');
       onDone(chosenCardId);
     };
     // The action is registered in secondbeat's enumerable table, so native
@@ -495,6 +644,24 @@ export function mountRewards(app, {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
     }
+  }
+
+  // The banner rises once, on the door's first draw; a redraw (a take, a Back
+  // from the chooser) shows it still, and reduced motion never animates it.
+  function levelBanner() {
+    if (!levelMoment) return null;
+    const motion = levelBannerFresh && !reducedMotionRequested() ? 'rise' : 'still';
+    levelBannerFresh = false;
+    const points = levelMoment.points;
+    return el('div', {
+      class: 'reward-level-banner', role: 'status', dataset: { levelBanner: '', motion, levelUps: levelMoment.levelUps },
+    }, [
+      el('span', { class: 'rlb-glyph', 'aria-hidden': 'true', text: '✦' }),
+      el('span', { class: 'rlb-title', text: t('reward.levelUp.title', { level: levelMoment.level }) }),
+      el('span', { class: 'rlb-points', text: points
+        ? t('reward.levelUp.points', { points, plural: points === 1 ? '' : 's' })
+        : t('reward.levelUp.assigned') }),
+    ]);
   }
 
   // The W1t claim-status column: every row's state, then the one choice still
@@ -591,7 +758,7 @@ export function mountRewards(app, {
     const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle' });
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
-    if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
+    if (armament) detailBody.append(renderEquipmentInspection(registries, armament, { run }));
     else if (row.kind === 'relic') detailBody.append(renderCollectibleInspection(registries, registries.relics.get(row.relicId), t('reward.kind.relic'), { interactive: false }));
     else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), t('reward.kind.potion')));
     else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
@@ -621,17 +788,23 @@ export function mountRewards(app, {
     // with the node's glyph, name and its rule's sentence, the numbers read
     // through the node's bindings — the same selection path as a card.
     const isNodeRow = row.kind === 'classDraft';
-    const ids = isNodeRow ? row.nodeIds : row.cardIds;
-    const pickField = isNodeRow ? 'nodeId' : 'cardId';
+    // A boss's relic choice (SPEC §6.1) rides the same select-then-Confirm
+    // door as a card: tiles in a radiogroup, one pick, plus a Skip that
+    // leaves every relic behind.
+    const isRelicRow = row.kind === 'relic';
+    const ids = isNodeRow ? row.nodeIds : isRelicRow ? row.relicIds : row.cardIds;
+    const pickField = isNodeRow ? 'nodeId' : isRelicRow ? 'relicId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const skipButton = isRelicRow ? button({ label: t('reward.relic.skip'), id: 'reward-relic-skip', className: 'subtle' }) : null;
     const confirmButton = button({
-      label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+      label: t(isRelicRow ? 'reward.relic.confirm' : 'reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: isRelicRow ? t('reward.relic.eyebrow') : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
       title: rewards.title || t('reward.title.victory'),
-      body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
-      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+      attrs: isRelicRow ? { dataset: { size: 'md', rewardChooser: 'relic' } } : {},
+      body: el('div', { class: `reward-row${isRelicRow ? ' reward-relic-row' : ''}`, role: 'radiogroup', 'aria-label': t(isRelicRow ? 'reward.relic.aria' : 'reward.card.aria') }),
+      foot: modalFooter({ secondary: [backButton, skipButton].filter(Boolean), primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
     let selectedCardId = pendingByKey[row.key] || null;
@@ -671,7 +844,23 @@ export function mountRewards(app, {
       tile.addEventListener('click', () => selectCard(nodeId));
       strip.appendChild(tile);
     }
-    for (const cardId of isNodeRow ? [] : ids) {
+    for (const relicId of isRelicRow ? ids : []) {
+      const def = registries.relics.get(relicId);
+      const tile = el('button', { class: 'class-pick reward-relic reward-pick', type: 'button', role: 'radio', 'aria-checked': String(relicId === selectedCardId), dataset: { pickId: relicId, relicId } }, [
+        el('div', { class: 'glyph', text: def.icon || '◆' }),
+        el('div', { class: 'cp-body' }, [el('h3', { text: def.name }), el('p', { text: relicText(def, registries) })]),
+      ]);
+      if (marks.relics.includes(relicId)) {
+        tile.dataset.new = '1';
+        tile.querySelector('h3').append(document.createTextNode(' '), el('span', { class: 'chip reward-new', text: t('reward.card.new') }));
+      }
+      tile.classList.toggle('reward-selected', relicId === selectedCardId);
+      tile.classList.toggle('is-chosen', relicId === selectedCardId);
+      attachTooltip(tile, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
+      tile.addEventListener('click', () => selectCard(relicId));
+      strip.appendChild(tile);
+    }
+    for (const cardId of isNodeRow || isRelicRow ? [] : ids) {
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -738,10 +927,121 @@ export function mountRewards(app, {
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
     back.addEventListener('click', () => renderMenu(row.key));
+    if (skipButton) {
+      attachTooltip(skipButton, () => `<div class="tt-title">${esc(tTip('reward.relic.skip'))}</div>${esc(tFull('reward.relic.skip'))}`);
+      skipButton.addEventListener('click', () => {
+        if (taken()) return;
+        // A skip is a decision the save must carry: a refused save puts the
+        // row (and the unconfirmed pick) back so the choice can be retried.
+        const before = snapshotForRollback();
+        const pending = pendingByKey[row.key];
+        states[row.key] = 'skipped';
+        delete pendingByKey[row.key];
+        try {
+          persistProgress();
+        } catch {
+          restoreRollback(before, row);
+          if (pending !== undefined) pendingByKey[row.key] = pending;
+          message.textContent = t('reward.card.saveFailed');
+          message.hidden = false;
+          return;
+        }
+        renderMenu(row.key);
+      });
+    }
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
+  // ---- the elite chest (SPEC §3.8.1) ----------------------------------------
+  // What one option reads as — the shared view (components/chestOption.js),
+  // so the co-op door words a chest exactly as this screen does.
+  function chestOptionView(option) { return sharedChestOptionView(registries, option); }
+
+  // Select one option, then Confirm — the card chooser's two beats. An
+  // option the bag cannot hold is drawn locked with its reason.
+  function renderChestChooser(mounted) {
+    // A PLAYER'S PICK IS JUDGED AGAINST THE BAG AS IT STANDS (SPEC §3.8.1):
+    // re-derived now, so a chest armament is open while a slot is free even
+    // with the door's own armament row pending (leaving that drop is the
+    // player's choice), and closed once that row has filled the bag.
+    const live = rewardPlan(rewards, planFacts()).rows.find((r) => r.key === mounted.key);
+    const row = live ? { ...mounted, takeable: live.takeable } : mounted;
+    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const confirmButton = button({
+      label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
+    });
+    door({
+      eyebrow: t('reward.chest.eyebrow'),
+      title: rewards.title || t('reward.title.victory'),
+      attrs: { dataset: { size: 'md', rewardDetail: 'chest' } },
+      body: el('div', { class: 'reward-row reward-chest-row', role: 'radiogroup', 'aria-label': t('reward.chest.aria') }),
+      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+    });
+    const strip = app.querySelector('.reward-row');
+    const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
+    strip.after(message);
+    let selected = Number.isInteger(pendingByKey[row.key]) ? pendingByKey[row.key] : null;
+    let confirming = false;
+    const select = (index) => {
+      selected = index;
+      pendingByKey[row.key] = index;
+      for (const tile of strip.querySelectorAll('.reward-pick')) {
+        const on = Number(tile.dataset.optionIndex) === index;
+        tile.classList.toggle('reward-selected', on);
+        tile.classList.toggle('is-chosen', on);
+        tile.setAttribute('aria-checked', String(on));
+      }
+      confirmButton.disabled = false;
+      message.hidden = true;
+    };
+    row.options.forEach((option, index) => {
+      const view = chestOptionView(option);
+      const open = row.takeable[index];
+      const body = el('div', { class: 'cp-body' }, [
+        el('span', { class: 'as-eyebrow reward-chest-cat', text: view.label }),
+        el('h3', { text: view.name }),
+        el('p', { html: open ? view.text : `${view.text}<br><span style="color:var(--muted)">${esc(t('reward.chest.unavailable'))}</span>` }),
+      ]);
+      const tile = el('button', {
+        class: `class-pick reward-chest-option reward-pick${open ? '' : ' locked'}`, type: 'button', role: 'radio',
+        'aria-checked': String(index === selected), dataset: { optionIndex: String(index), category: option.category },
+      }, [el('div', { class: 'glyph', text: view.glyph }), body]);
+      if (!open) tile.disabled = true;
+      tile.classList.toggle('reward-selected', index === selected);
+      tile.classList.toggle('is-chosen', index === selected);
+      if (open) tile.addEventListener('click', () => select(index));
+      attachTooltip(tile, () => `<div class="tt-title">${esc(view.label)}</div>${esc(open ? view.name : tFull('reward.chest.unavailable'))}`);
+      strip.appendChild(tile);
+    });
+    confirmButton.disabled = selected === null;
+    confirmButton.addEventListener('click', () => {
+      if (selected === null || confirming || states[row.key]) return;
+      confirming = true;
+      confirmButton.disabled = true;
+      try {
+        if (!take({ ...row, optionIndex: selected }, row.key)) {
+          message.textContent = t('reward.chest.unavailable');
+          message.hidden = false;
+          confirming = false;
+          confirmButton.disabled = false;
+        }
+      } catch {
+        message.textContent = t('reward.card.saveFailed');
+        message.hidden = false;
+        confirming = false;
+        confirmButton.disabled = false;
+      }
+    });
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
+    back.addEventListener('click', () => renderMenu(row.key));
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick:not(.locked)') || focusFirst('#reward-back'), 0);
+  }
+
   sfx.play('victory');
+  // The level's own chime, a beat after the fanfare so the two do not mask
+  // each other — once per door, never per redraw.
+  if (levelMoment) setTimeout(() => sfx.play('levelUp'), 650);
   grantCinders();
   renderMenu();
 }

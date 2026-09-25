@@ -28,7 +28,7 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'chest', 'relic']);
 
 /**
  * A row's KEY is what its state is kept under (`states[key]`): the kind for
@@ -42,8 +42,48 @@ export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'cla
 export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}` : kind);
 
-/** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
+/** The ids a choice row picks among: a card draft's cards, a class draft's nodes, a boss's relics. */
+export const pickIds = (row) => (Array.isArray(row.options) ? row.options : Array.isArray(row.nodeIds) ? row.nodeIds
+  : Array.isArray(row.relicIds) ? row.relicIds : row.cardIds || []);
+
+/**
+ * offeredRelicIds(offer) → the relic ids an offer lays out (SPEC §6.1): a
+ * boss's `relicIds` choice, or the single `relicId` elites and treasure (and
+ * pre-choice boss saves) carry. The one reading of "which relics are on the
+ * table", shared by the solo menu, the co-op screen and the co-op host.
+ */
+export const offeredRelicIds = (offer = {}) => (offer.relicId ? [offer.relicId]
+  : Array.isArray(offer.relicIds) ? offer.relicIds.filter(Boolean) : []);
+
+/**
+ * relicChoiceShapeProblems(relicIds, path) → problems with a saved boss relic
+ * choice (SPEC §6.1): an array of distinct non-empty relic ids. One rule for
+ * the solo save door (model/state.js) and the co-op restore (tools/session.mjs),
+ * so a string or object can never read as "no relics on the table" there.
+ */
+export function relicChoiceShapeProblems(relicIds, path = 'relicIds') {
+  if (!Array.isArray(relicIds) || relicIds.some((id) => typeof id !== 'string' || !id)) {
+    return [`${path} must be an array of relic ids`];
+  }
+  if (new Set(relicIds).size !== relicIds.length) return [`${path} must be distinct`];
+  return [];
+}
+
+/** The field a choice row's pick lands in, by kind. */
+const pickField = (kind) => (kind === 'classDraft' ? 'nodeId' : kind === 'relic' ? 'relicId' : 'cardId');
+
+/**
+ * The bag slots the chest's armament piece may use UNDER AUTO-COLLECT: the
+ * free slots less the one the door's own armament row will take, unless that
+ * row is already settled (`facts.armamentRowSettled`: taken — the bag already
+ * counts it — or skipped). A player's own pick reads the bag as it stands
+ * (`facts.armamentSlotsFree`): leaving the standalone drop is theirs to choose.
+ */
+const chestArmamentSlots = (r, facts) => (facts.armamentSlotsFree || 0) - (r.armamentId && !facts.armamentRowSettled ? 1 : 0);
+
+/** Per option: may it land, with `slots` bag slots for an armament piece. */
+const chestTakeable = (r, facts, slots) => r.chest.options.map((o, i) => !(facts.chestOptionsSpent && facts.chestOptionsSpent[i])
+  && !(o.category === 'armament' && o.armamentId && !(slots > 0)));
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -117,9 +157,40 @@ const KINDS = {
     // excluded from every future drop.
     blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
+  chest: {
+    // The elite chest (SPEC §3.8.1): pick ONE of its options. `takeable` is
+    // per option — an armament cannot land in a full bag — derived here the
+    // armament row's way, so the chooser and auto-collect read one answer.
+    // The door's own armament row claims a bag slot first UNDER AUTO-COLLECT
+    // (it is listed, and auto-collected, before the chest): while that row is
+    // still pending `autoTakeable` counts the chest's piece one slot fewer, so
+    // auto-collect never lands the chest's pick on an armament the row has
+    // just filled the bag against. `takeable` is the player's own pick, read
+    // against the bag as it stands: with one slot free they may take the
+    // chest's piece and leave the standalone drop (whose collector then
+    // refuses it at the cap).
+    present: (r) => !!r.chest && Array.isArray(r.chest.options) && r.chest.options.length > 0,
+    row: (r, facts) => ({
+      options: r.chest.options.map((o) => ({ ...o })),
+      choice: r.chest.options.length > 1,
+      // An owned upgrade whose card is no longer one the chest may upgrade
+      // (a skill threshold upgraded it since the offer was drawn — SPEC
+      // §3.8.1) is spent: shown, locked, never auto-picked. The caller states
+      // which (`facts.chestOptionsSpent`, by option index); this file never reads the deck.
+      takeable: chestTakeable(r, facts, facts.armamentSlotsFree || 0),
+      autoTakeable: chestTakeable(r, facts, chestArmamentSlots(r, facts)),
+    }),
+    blocked: (r, facts) => (r.chest.options.some((o) => !(o.category === 'armament' && o.armamentId)) || (facts.armamentSlotsFree || 0) > 0 ? null : 'storage'),
+  },
   relic: {
-    present: (r) => !!r.relicId,
-    row: (r) => ({ relicId: r.relicId }),
+    // A boss offers a CHOICE of distinct boss relics (`relicIds`, SPEC §6.1);
+    // elites and treasure carry the single `relicId` they always did. One
+    // row either way: 2+ ids is a choice, one id is a plain take.
+    present: (r) => offeredRelicIds(r).length > 0,
+    row: (r) => {
+      const ids = offeredRelicIds(r);
+      return !r.relicId && ids.length > 1 ? { relicIds: ids, choice: true } : { relicId: ids[0] };
+    },
     blocked: () => null,
   },
 };
@@ -127,7 +198,8 @@ const KINDS = {
 /**
  * rewardPlan(rewards, facts) → { rows }
  * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`,
- * `armamentSlotsFree`); the offer stays pure data. Defaults are CONSERVATIVE
+ * `armamentSlotsFree`, and `armamentRowSettled` — the armament row already
+ * taken or skipped); the offer stays pure data. Defaults are CONSERVATIVE
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */
@@ -136,7 +208,7 @@ export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSl
   for (const kind of REWARD_KIND_ORDER) {
     const d = KINDS[kind];
     if (!d.present(rewards)) continue;
-    for (const fields of d.rows ? d.rows(rewards) : [d.row(rewards)]) {
+    for (const fields of d.rows ? d.rows(rewards) : [d.row(rewards, facts)]) {
       rows.push({ kind, key: rowKey(kind, fields), blockedBy: d.blocked(rewards, facts), ...fields });
     }
   }
@@ -166,10 +238,19 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
+      if (row.kind === 'chest') {
+        // Only an option auto-collect may land is picked (the pending armament
+        // row's slot reserved); the seeded pick chooses among them. The row
+        // handed on carries that reading as its `takeable`, so the grant and
+        // its fallback (landChestPick) honour the same reservation.
+        const takeable = row.autoTakeable || row.takeable;
+        const open = row.options.map((_, i) => i).filter((i) => takeable[i]);
+        if (!open.length) { leave.push(row); continue; }
+        take.push({ ...row, takeable, optionIndex: open[pick(open.length) % open.length] });
+      } else if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' || (row.kind === 'relic' && row.choice)) {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
-        take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id } : { cardId: id }) });
+        take.push({ ...row, [pickField(row.kind)]: id });
       } else {
         take.push(row);
       }
@@ -220,7 +301,7 @@ export function unseenIds(rewards = {}, possessions = {}) {
   const draftIds = (rewards.skillDrafts || []).flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
-    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    relics: [...new Set(offeredRelicIds(rewards))].filter((id) => !holds(possessions.relics, id)),
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
   };

@@ -25,6 +25,8 @@ import {
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
+import { chestShapeProblems, chestOptionDeckProblems } from './rewardChest.js';
+import { relicChoiceShapeProblems } from './rewardplan.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
@@ -614,6 +616,10 @@ export const RUN_SHAPE = [
   { key: 'lastMountReceipt', type: 'object', optional: true },
   { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
+  // Card-rarity pity (SPEC §3.8.1). Optional: absent reads as the balance
+  // start and zero, written on the first card offer that reads them.
+  { key: 'cardRarityOffset', type: 'number', optional: true },
+  { key: 'cardRewardsSinceRare', type: 'number', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -830,6 +836,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }
+  // Card-rarity pity (SPEC §3.8.1): the counter is a count of offers and
+  // the offset moves by whole steps. The offset's authored range is NOT
+  // checked here: a later retune of cardPity must not refuse older saves —
+  // the reader clamps an out-of-range offset to the current band.
+  if (run.cardRewardsSinceRare !== undefined && (!Number.isInteger(run.cardRewardsSinceRare) || run.cardRewardsSinceRare < 0)) {
+    problems.push('cardRewardsSinceRare must be a non-negative integer');
+  }
+  if (run.cardRarityOffset !== undefined && !Number.isInteger(run.cardRarityOffset)) {
+    problems.push('cardRarityOffset must be an integer');
+  }
+
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
@@ -890,7 +907,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
         problems.push('pendingReward.states must be an object');
       } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'chest', 'relic'];
         const draftKeys = new Set(pendingDraftKeys(pending));
         for (const [key, state] of Object.entries(pending.states)) {
           // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
@@ -951,6 +968,45 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           for (const draft of drafts) {
             if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
           }
+        }
+      }
+      // The elite chest (SPEC §3.8.1): a Taken chest names the option it took.
+      if (pending.rewards?.chest != null) {
+        const options = pending.rewards.chest && pending.rewards.chest.options;
+        const chestProblems = chestShapeProblems(pending.rewards.chest, 'pendingReward.rewards.chest');
+        if (chestProblems.length) {
+          problems.push(...chestProblems);
+        } else {
+          const idx = pending.chosenChestIndex;
+          if (idx !== undefined && idx !== null && (!Number.isInteger(idx) || idx < 0 || idx >= options.length)) {
+            problems.push('pendingReward.chosenChestIndex must index pendingReward.rewards.chest.options');
+          }
+          if (pending.states?.chest === 'taken' && !Number.isInteger(idx)) problems.push('pendingReward chest Taken state requires chosenChestIndex');
+          // An owned upgrade names the deck card the chooser shows (SPEC §3.8.1).
+          // Only while the chest is open: a Taken chest's card is upgraded now.
+          if (!pending.states?.chest) {
+            options.forEach((o, i) => problems.push(...chestOptionDeckProblems(null, run, o, `pendingReward.rewards.chest.options[${i}]`)));
+          }
+        }
+      }
+      // The boss relic choice (SPEC §6.1): distinct ids; the pick is one of them,
+      // held only by a Taken row, and a Taken choice (2+ ids) names its pick.
+      {
+        const relicIds = pending.rewards?.relicIds;
+        const chosen = pending.chosenRelicId;
+        let offered = null;
+        if (relicIds !== undefined && relicIds !== null) {
+          const relicProblems = relicChoiceShapeProblems(relicIds, 'pendingReward.rewards.relicIds');
+          if (relicProblems.length) problems.push(...relicProblems);
+          else offered = relicIds;
+        }
+        if (chosen !== undefined && chosen !== null) {
+          if (typeof chosen !== 'string' || !chosen) problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
+          else if (!(offered || []).includes(chosen)) problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicIds');
+          if (pending.states?.relic !== 'taken') problems.push('pendingReward chosenRelicId requires relic Taken state');
+        }
+        if (offered && offered.length > 1 && !pending.rewards.relicId && pending.states?.relic === 'taken' && !chosen) {
+          problems.push('pendingReward relic Taken state requires chosenRelicId');
         }
       }
       if (pending.chosenCardId !== null && pending.chosenCardId !== undefined

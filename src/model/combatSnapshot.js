@@ -11,6 +11,7 @@ import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
 import { restoreDerivedStatRuleSnapshot } from './derivedStats.js';
+import { artChargeSnapshotProblems } from './artCharge.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -95,6 +96,8 @@ export function combatSnapshotProblems(snapshot) {
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  // The Weapon Art charge meters (SPEC §12.2.1); absent on an older snapshot.
+  problems.push(...artChargeSnapshotProblems(snapshot.artCharge));
   if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
   if (snapshot.skillXp !== undefined) {
     if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');

@@ -1515,3 +1515,117 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* WEAPON ART CHARGE (SPEC §12.2.1): one pip bar per equipped weapon under the
+   player's frame, and the same pips on that weapon's Art card in hand. A
+   meter that has just filled flashes once; reduced motion (the OS preference
+   or the in-game setting) keeps the static full highlight and no flash. */
+.combat .art-charge { display: flex; flex-direction: column; gap: calc(2px / var(--ui-zoom, 1)); align-items: center; pointer-events: auto; }
+.combat .art-charge-row {
+  display: inline-flex; align-items: center; gap: calc(5px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(6px / var(--ui-zoom, 1));
+  border: 1px solid #c9a22755; border-radius: 999px; background: #120d09d9;
+  font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1.2; color: #e8dcc0; white-space: nowrap;
+}
+.combat .art-charge-name { max-width: calc(90px / var(--ui-zoom, 1)); overflow: hidden; text-overflow: ellipsis; }
+.art-charge-pips { display: inline-flex; gap: calc(3px / var(--ui-zoom, 1)); }
+.art-charge-pip {
+  width: calc(8px / var(--ui-zoom, 1)); height: calc(8px / var(--ui-zoom, 1)); border-radius: 50%;
+  border: 1px solid #c9a227aa; background: #2a2118; box-sizing: border-box;
+}
+.art-charge-pip.lit { background: var(--gold, #c9a227); border-color: #f3d57a; }
+.combat .art-charge-row.full { border-color: #f3d57a; box-shadow: 0 0 8px #f3d57a88; }
+.combat .art-charge-row.full .art-charge-pip.lit { background: #f7e08c; box-shadow: 0 0 4px #f7e08c; }
+.combat .art-charge-ready { color: #f7e08c; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .9em; }
+.combat .art-charge-row.flash { animation: art-charge-flash 700ms ease-out 2; }
+@keyframes art-charge-flash { 0% { box-shadow: 0 0 0 #f3d57a00; filter: brightness(1); } 35% { box-shadow: 0 0 18px #f3d57a; filter: brightness(1.6); } 100% { box-shadow: 0 0 8px #f3d57a88; filter: brightness(1); } }
+/* The Art card in hand: the pips ride the card's top edge; full adds the
+   Unleashed marker and a gold edge. */
+.hand .card .art-charge-card {
+  position: absolute; right: calc(5px / var(--ui-zoom, 1)); top: 46%; z-index: 3;
+  display: inline-flex; align-items: center; gap: calc(4px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(5px / var(--ui-zoom, 1)); border-radius: 999px;
+  background: #120d09; border: 1px solid #c9a22788; pointer-events: none;
+  font-size: calc(10px / var(--ui-zoom, 1)); color: #f7e08c; white-space: nowrap; font-weight: 700; text-transform: uppercase;
+}
+.hand .card[data-art-charge='full'] { box-shadow: 0 0 0 2px #f3d57a, 0 0 16px #f3d57a99; }
+.hand .card[data-art-charge='full'] .art-charge-card { border-color: #f3d57a; top: 13%; }
+/* The unleashed strip (card.js): the full bonus at the foot of the art band,
+   wrapping rather than clipping, so it reads in full at resting size. */
+.card .art .cd-unleashed {
+  position: absolute; left: calc(3px / var(--ui-zoom, 1)); right: calc(3px / var(--ui-zoom, 1)); bottom: calc(2px / var(--ui-zoom, 1)); z-index: 2;
+  padding: calc(1px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); border: 1px solid #f3d57a; border-radius: calc(6px / var(--ui-zoom, 1));
+  background: #120d09e6; color: #f7e08c; font-size: calc(10px / var(--ui-zoom, 1)); font-weight: 700; line-height: 1.2;
+  text-align: center; white-space: normal; overflow-wrap: break-word; pointer-events: none;
+}
+/* In an overlapping hand only a card's left step is uncovered at rest
+   (--hand-hit-width, hand.js), so the strip keeps to that step and wraps. */
+.hand .card .art .cd-unleashed { max-width: calc(var(--hand-hit-width, 100%) - 10px / var(--ui-zoom, 1)); text-align: left; }
+.card .cd-unleashed-short { display: none; }
+.hand .card[data-art-charge='full'].art-charge-flash { animation: art-charge-flash 700ms ease-out 2; }
+.reduced-motion .combat .art-charge-row.flash,
+.reduced-motion .hand .card.art-charge-flash { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .combat .art-charge-row.flash, .hand .card.art-charge-flash { animation: none; }
+}
+/* Phone: the player's column is too narrow for names beside the enemy
+   intents, so each meter is its pips alone (the name stays in its label and
+   tooltip), and the card marker keeps its pips. */
+@media (max-width: 600px) {
+  .combat .art-charge-row .art-charge-name, .combat .art-charge-row .art-charge-ready, .hand .card .art-charge-card > span:not(.art-charge-pips) { display: none; }
+  .combat .art-charge-row { padding: calc(2px / var(--ui-zoom, 1)) calc(4px / var(--ui-zoom, 1)); }
+  /* Overlapping cards cover each other's right side, so the pips sit on the
+     card's top-left edge, above the cost — the part every card keeps visible. */
+  .hand .card .art .cd-unleashed { left: calc(1px / var(--ui-zoom, 1)); max-width: calc(var(--hand-hit-width, 100%) - 4px / var(--ui-zoom, 1)); font-size: calc(9px / var(--ui-zoom, 1)); line-height: 1.15; padding-inline: calc(2px / var(--ui-zoom, 1)); }
+  .hand .card .art .cd-unleashed-long { display: none; }
+  .hand .card .art .cd-unleashed-short { display: inline; }
+  .hand .card .art-charge-card, .hand .card[data-art-charge='full'] .art-charge-card { left: calc(2px / var(--ui-zoom, 1)); right: auto; top: calc(-8px / var(--ui-zoom, 1)); z-index: 5; }
+}
+/* The marker's copy of the unleashed words (combat.js) is for phones only;
+   wider hands read the strip on the card itself. */
+.hand .card .art-charge-card .art-charge-bonus { display: none; }
+/* Phone, portrait or landscape: the next card covers all but the Art card's
+   left step, so the strip there is cut to a sliver. When the meter is full the
+   marker becomes a tab above the card's top edge — the one band no neighbour
+   covers — carrying the compact bonus on one line, and the
+   in-card strip steps aside. */
+@media (max-width: 600px), (max-height: 500px) {
+  .hand .card[data-art-charge='full'] .art .cd-unleashed { display: none; }
+  .hand .card[data-art-charge='full'] .art-charge-card {
+    left: 0; right: auto; top: auto; bottom: calc(100% + 2px / var(--ui-zoom, 1)); z-index: 5;
+    /* One line: the band above the fan is only the selection lift tall (the
+       hand clips below it). It may run a little past the card's right edge,
+       over the free band above its neighbour; the last card's tab hangs
+       left instead, so it stays inside the hand. */
+    max-width: calc(var(--hand-card-width, 100%) * 1.3); box-sizing: border-box; overflow: hidden;
+    padding: calc(1px / var(--ui-zoom, 1)) calc(3px / var(--ui-zoom, 1)); border-radius: calc(6px / var(--ui-zoom, 1));
+    background: #120d09; border-color: #f3d57a; box-shadow: 0 0 6px #f3d57a88;
+  }
+  .hand .card[data-art-charge='full']:last-child .art-charge-card { left: auto; right: 0; }
+  /* Full is the star's meaning, so the tab spends its width on the bonus;
+     the pips stay on the HUD meter. */
+  .hand .card[data-art-charge='full'] .art-charge-card > .art-charge-pips { display: none; }
+  .hand .card[data-art-charge='full'] .art-charge-card > .art-charge-bonus {
+    display: inline; overflow: hidden; text-overflow: ellipsis; font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2; text-transform: none; letter-spacing: 0;
+  }
+}
+/* ---------- combat juice (SPEC §7.4): damage scale, hit-stop, kill cam ----------
+   Decisions and every number: CombatJuiceModel.js + combatJuiceModel.json.
+   These rules only draw what src/ui/fx.js sets. */
+/* In-tier scale: the standalone `scale` composes with num-pop's `transform`
+   and with the centring `translate`, about the same bottom-centre origin. */
+.float-num { scale: var(--dmg-scale, 1); }
+/* Hit-stop: anything that STARTS on a frozen figure during the hold waits too
+   (fx.js pauses what was already running). */
+.hit-stop, .hit-stop * { animation-play-state: paused !important; }
+/* Kill cam: the battlefield and its painting zoom about the target. */
+.kill-cam { scale: var(--kc-zoom, 1); transform-origin: var(--kc-origin, 50% 50%); transition: scale var(--kc-in, 160ms) cubic-bezier(0.2, 0.8, 0.3, 1); }
+/* The turn ribbon is interface, not scene: zoomed, it would slide under the topbar half-cut. */
+.field.kill-cam > .turn-ribbon { visibility: hidden; }
+.kill-cam-out { transform-origin: var(--kc-origin, 50% 50%); transition: scale var(--kc-out, 200ms) ease-in; }
+.kill-cam-vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--kc-x, 50%) var(--kc-y, 50%), transparent 0 12%, rgba(8, 5, 3, var(--kc-opacity, 0.6)) 58%);
+  animation: kill-cam-vignette var(--kc-in, 160ms) ease-out both;
+}
+@keyframes kill-cam-vignette { from { opacity: 0; } to { opacity: 1; } }

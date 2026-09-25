@@ -159,6 +159,9 @@ export const EVENTS = Object.freeze([
   'rested',
   'flaskUsed',
   'relicTriggered',
+  // The Weapon Art charge meters (SPEC §12.2.1, engine/artCharge.js).
+  'artChargeChanged',
+  'artUnleashed',
 ]);
 
 // The events only the run-level door emits (engine/locations.js): a status,
@@ -1053,3 +1056,6 @@ export const SCHEMAS = Object.freeze({
 
   balance: any, // flat constants object; shape is content's concern (SPEC §3.3)
 });
+
+/** The elite chest's closed category set, in the order the chest lays them out (SPEC §3.8.1). */
+export const CHEST_CATEGORIES = Object.freeze(['relic', 'upgrade', 'armament', 'cinders']);

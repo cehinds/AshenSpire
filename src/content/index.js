@@ -15,6 +15,7 @@ import { rogueCards } from './cards/rogue.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
 import { armamentCards } from './cards/armaments.js';
+import { weaponArtUnleashed } from './weaponArtUnleashed.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
@@ -43,7 +44,7 @@ import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
+  EQUIPMENT_REQUIREMENTS, WEAPON_SCALING, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
   ITEM_UPGRADE_CHANGES,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
@@ -71,6 +72,8 @@ export const contentBundle = {
   version: '0.7.1',
   balance,
   cards,
+  // Each combat-kit Weapon Art's unleashed form (SPEC §12.2.1).
+  weaponArtUnleashed,
   relics,
   statuses,
   stances,
@@ -118,6 +121,7 @@ export const contentBundle = {
     cardExposure: CARD_EXPOSURE,
     startingKits: STARTING_KITS,
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
+    weaponScaling: WEAPON_SCALING,
     itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,

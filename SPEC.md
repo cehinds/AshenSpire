@@ -343,10 +343,157 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 |---|---|---|
 | Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
 | Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
-| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Rewards | rarity rolls + pity/decay counters (§3.8.1), `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay, card pity, elite chest |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+
+#### 3.8.1 Card-rarity pity and the elite chest *(game-feel rework, 2026-09-24)*
+
+Two reward rules that make a run's spoils feel earned rather than flat. Both are seeded (the
+same seed replays the same offers) and both read every number from `balance.rewards`. Pity
+covers the boss card offer too; the chest is the elite's alone (a boss keeps its relic
+choice, §6.1).
+
+**Card-rarity pity (the StS rare offset).** A run carries two counters:
+
+| Field | Meaning | Absent in an old save |
+|---|---|---|
+| `run.cardRarityOffset` | percentage points added to the rare chance of each card slot | reads as `cardPity.offsetStart` |
+| `run.cardRewardsSinceRare` | consecutive card offers that showed no rare | reads as `0` |
+
+They are written lazily on the first card offer that reads them (the `flaskChancePct`
+precedent), so no migration invents them. When present, the shape door (`validateRunShape`) requires
+`cardRewardsSinceRare` a non-negative integer and `cardRarityOffset` an integer. The offset's
+band is not a save-door rule, so a later retune of `cardPity` never refuses an older save: the
+offer clamps an out-of-range offset to `[cardPity.offsetStart, cardPity.offsetMax]` when it reads
+it. Pity applies to the **card offer of a normal,
+elite or boss fight** (`rollCardRewardIds` handed the `run`); a boss offer reads the boss
+pool's authored weights and moves the same counters. It does not apply to Chaos Rewards
+(equal odds) or to skill/class drafts, and neither moves the counters.
+
+For each card slot, with `w` the pool's authored weights (the class's own row when it has one):
+
+- `baseRarePct = 100 × w.rare / (w.common + w.uncommon + w.rare)`
+- `rarePct = clamp(baseRarePct + offset, 0, 100)`; the remaining `100 − rarePct` is split
+  between common and uncommon in their authored ratio. A rarity the pool cannot fill is
+  dropped from the roll, as before.
+- After the slot is shown: a **common** raises `offset` by `cardPity.offsetStep` (capped at
+  `cardPity.offsetMax`); a **rare** resets it to `cardPity.offsetStart`; an uncommon leaves it.
+
+**Hard guarantee.** When an offer begins with `cardRewardsSinceRare ≥ cardPity.rareGuaranteeAfter`
+and its slots rolled no rare, the **last** slot is replaced by a rare from the pool not already
+offered (stream `cardRewards`), and the offset resets. After every offer the counter is `0` if
+any rare was shown, else it grows by one. A class pool with no rare card leaves the offer as
+rolled. Shipped values: `offsetStart −5`, `offsetStep 1`, `offsetMax 40`, `rareGuaranteeAfter 4`.
+
+**The elite chest.** An elite fight no longer drops one random relic. In its place the offer
+carries `rewards.chest = { options: [ … ] }`: a visible choice of **one** of up to
+`eliteChest.choices` (3) big rewards, each from a **distinct category**. Cinders, the card
+offer, the flask roll, the armament chance and the Smithing Stone are unchanged.
+
+| Category | Option shape | Grants |
+|---|---|---|
+| `relic` | `{ category, relicId }` | the relic (same pool as the old elite relic: common/uncommon/rare, unowned, never quest-pool) |
+| `upgrade` | `{ category, mode: 'owned', instanceId, cardId }` or `{ category, mode: 'rare', cardId }` | `owned`: that ordinary run-owned deck card becomes upgraded; `rare`: a rare card from the class pool joins the deck already upgraded |
+| `armament` | `{ category, armamentId }` or `{ category, weaponArtId }` | the armament through the reward collector (a guaranteed elite-weighted armament roll); when none is left to find, a mountable weapon art the deck lacks joins as a card |
+| `cinders` | `{ category, cinders, smithingStones }` | a bonus purse: cinders from `eliteChest.cinders` and `eliteChest.smithingStones` Stones |
+
+- **Draw.** Categories are drawn by `eliteChest.categoryWeights` without replacement.
+  **Every chest draw is on stream `relicRewards` and no other** — the category rolls and every
+  payload roll (the relic pick, the upgrade's owned-vs-rare roll and pick, the armament's
+  rarity and piece rolls or its weapon-art pick, the cinders purse). The chest never draws on
+  `cardRewards`, `armaments` or `misc`, so the door's card offer, its own armament drop and
+  every later offer on those streams replay exactly as before the chest; only `relicRewards`
+  (which the replaced elite relic drew on) moves by more than one draw. A category whose payload cannot be built (no relic left, no
+  upgradeable card and no rare, no armament and no weapon art) is dropped and the draw moves
+  on, so the chest may offer fewer than three; with none, the offer carries no chest.
+  `upgrade` prefers an owned card with chance `eliteChest.upgradeOwnedPct`.
+- **Claim.** The chest is one reward row (key `chest`), a choice like the card offer. Picking
+  an option grants exactly that option and nothing else; its index is kept on the reward
+  checkpoint (`chosenChestIndex`) so a reload resumes it. The grant and its Taken state cross
+  one save door: if that save is refused, the grant is rolled back (deck, relics, cinders,
+  Smithing Stones, the armament bag, `chosenChestIndex`) and Confirm can be pressed again.
+  A collected armament's durable profile record (`found` and its discovery receipt) is
+  written only after that save lands — the collector hands the write back as a commit — so
+  a refused save never leaves a piece found that the run no longer carries.
+  A saved chest is validated at both save doors: the shape door (`validateRunShape`, via
+  `chestOptionShapeProblems`) refuses an option whose `category` is outside the closed set
+  or whose payload is not the one its table row names (ids non-empty strings, `mode`
+  `owned`|`rare`, an `owned` upgrade's `instanceId`, exactly one of `armamentId` /
+  `weaponArtId`, `cinders` and `smithingStones` non-negative integers); the load door
+  (`engine/save.js`, via `chestOptionReferenceProblems`) refuses an id the content does not
+  hold, by name — so a corrupt or stale save is archived, never mounted. While the chest is
+  still open (no `states.chest`), an `owned` upgrade must name the card the chooser shows
+  (`chestOptionDeckProblems`): the shape door refuses an `instanceId` absent from `run.deck`
+  or carrying a different `cardId`, and the load door refuses the same two. An instance the
+  chest may no longer upgrade (`chestUpgradeable` false — typically because the load door's
+  own skill-threshold reconcile upgraded it after the offer was drawn) is **not** a refusal:
+  the save loads, and the reward plan draws that option **spent** (`facts.chestOptionsSpent`,
+  shown locked with its reason, never picked by auto-collect), leaving the chest's other
+  options to choose from. `applyChestOption` refuses the mismatch and the spent card alike
+  and grants nothing. Auto-collect picks one of the
+  takeable options on the seeded `cardRewards` stream. An `armament` option is not takeable
+  while the bag is full. **Under auto-collect** (`resolveContinue`, `autoTakeChest`) it also
+  needs **two** free slots while the door's own armament row is still pending, since that row
+  claims one first (it is listed and auto-collected before the chest; the plan's
+  `autoTakeable`); a taken or skipped armament row claims none, and a chest with no option
+  auto-collect may land is left, with no draw. **A player's own pick** (the chest chooser)
+  reads the bag as it stands when the chooser opens (`takeable`): with one slot free the
+  chest's piece may be taken and the standalone drop left — that drop's collector then
+  refuses it at the cap — and once the standalone drop has filled the bag the chest's piece
+  is locked. If the auto pick still cannot land
+  (a collector refuses the piece), the next takeable option in row order is granted instead
+  (`landChestPick`, `model/rewardChest.js`), so an openable chest is never dropped. The
+  chest's armament piece is never the door's own armament drop: that drop is rolled first
+  (on `armaments`; the streams are disjoint) and passed to `rollEliteChest` as `exclude`. An old save whose pending elite offer still carries `relicId`
+  resumes with its relic row, unchanged.
+
+**Simulators and co-op.** The balance simulators (`tools/runsim.mjs`,
+`tools/measure-classes.mjs`) hand the run to every card offer, so pity moves as in play, and
+roll the elite chest in place of the old relic: `autoTakeChest` (`model/rewardChest.js`)
+passes it through the reward plan's auto-collect, a seeded `cardRewards` pick among the
+takeable options (the bot has no armament bag, so an armament piece is never takeable
+there). The co-op host (`tools/session.mjs`) hands each seat's run to its card offer, so
+each seat carries its own pity counters.
+
+**The co-op elite chest** *(PR #1287 round 2)*. A co-op elite door rolls each seat its own
+chest in place of the old single relic, with the same `rollEliteChest` on **that seat's** seeded
+stream (`m.rng`, `relicRewards` only), handed the seat's run — so each seat's options are its
+own and one seed replays them byte for byte. The rolled options are **stored in the offer**
+(`offer.chest = { options }`, `offer.relicId` absent); a seat that is away gets the same offer
+object in its catch-up entry, so the catch-up replays the stored options and never re-rolls.
+- **No `armament` category in co-op.** The co-op door rolls no armament piece and a seat has
+  no armament bag or profile `found` list for the host to write, so the host rolls the chest
+  with `omit: ['armament']` (`rollEliteChest`'s option; the category is skipped before it is
+  drawn, so no payload roll is spent on it). A co-op chest therefore offers up to three of
+  `relic`, `upgrade`, `cinders`.
+- **Claim.** A pick names one option by index (`chooseReward` / `resolveCatchup` with
+  `chestIndex`). The co-op door, like solo's, lets a seat take a row of each kind — the card,
+  the relic, the flask and one chest option: each tap only stages its row and the seat's single
+  **Continue** ("Skip all" with nothing staged) sends the whole pick in one message, which the
+  host grants row by row, once per seat (`scene.claimed`), before marking the seat done. The host grants it through `applyChestOption`, the solo
+  grant; an index outside the stored options lands nothing. A pick that **cannot land now** is
+  refused with nothing mutated and the door stays open: only a catch-up can meet one, when an
+  earlier replayed entry has since upgraded or removed the deck instance an `owned` upgrade
+  names. The host marks each stored option's `takeable` on the member view's catch-up entry
+  (`chestTakeable`, from a dry run of the same grant on a copy of the seat's run) and the
+  co-op screen draws a stale option disabled with its reason. A `relic` option whose relic an
+  earlier replayed entry already granted follows the co-op catch-up relic rule (a substitute
+  rolled against the relics in hand), as the single elite relic always did — takeable only while a substitute is left: with none, `chestTakeable` marks it unavailable (read without drawing) and the pick is refused without consuming the entry, so another option can be taken.
+- **Save compatibility.** A persisted session (`.coop-session.json`) whose pending elite offer
+  or catch-up entry still carries `relicId` resumes with its single relic, unchanged; a chest
+  offer is plain JSON in the scene and the queue, which the session already persists.
+- **Acceptance** (`tests/coop-parity.test.mjs`): per-seat chest offers differ by seat and
+  repeat by seed, carry no armament and no `relicId`; a pick grants exactly the named option;
+  a bad index and a stale `owned` upgrade are refused without mutation; a missed chest
+  replays the stored options on catch-up; the co-op screen lays out one option per chest entry
+  and sends the index tapped.
+
+**Acceptance.** Tests prove the offset arithmetic, the guarantee firing after
+`rareGuaranteeAfter` rare-less offers, byte-identical offers for one seed, three distinct
+categories in a chest, that taking an option grants exactly it, and that a run without the
+counters loads and defaults them.
 
 **Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
 
@@ -553,6 +700,7 @@ enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
+artChargeChanged(weaponId,value,max,amount,reason), artUnleashed(weaponId,cardId,cardInstanceId)   // §12.2.1
 ```
 
 ### 3.11 Seeded RNG
@@ -1083,7 +1231,19 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
+Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop the elite chest (§3.8.1; co-op elites keep a single relic); bosses drop a boss-relic choice of 3 (§6.1). Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
+
+### 6.1 Boss relic choice
+
+A boss that is not the run's final victory offers a **choice among boss relics**, not a single one. The contract:
+
+- **Roll.** `rollBossRelicChoices(registries, rng, ownedIds, count)` (`src/engine/encounters.js`) draws **`balance.rewards.bossRelicChoices`** (3) relic ids **without replacement** from the boss-rarity reward pool on the seeded `relicRewards` stream. The pool is every relic with `rarity: 'boss'` that `relicInRewardPool` admits (quest-pool relics never), **minus every relic the run already holds**. The ids are **distinct**, and the same seed, stream position and owned set yield the same ids in the same order.
+- **Short pool.** With fewer eligible relics than `count` the offer carries all that remain (2 or 1). With **none** the offer carries no relic row and the boss's cinders gain **`balance.rewards.bossRelicConsolationCinders`** instead, so a boss never pays nothing where the relic stood.
+- **Offer shape.** The boss offer carries `relicIds: [id, …]` (the choice) and no `relicId`. Elite and treasure offers keep the single `relicId` path unchanged. The reward plan (`src/model/rewardplan.js`) derives one `relic` row from either field; a `relicIds` row of 2+ is a **choice** (`choice: true`), a `relicIds` row of 1 is a plain take.
+- **Pick exactly one, or skip.** The row opens a chooser of the offered relics (icon, name, rule text); Confirm grants **exactly one** — the chosen id is pushed to `run.relics` and the row is Taken. The chooser's **Skip** marks the row skipped and grants none; manual Continue leaves an unpicked choice behind (grants none); auto-collect Continue takes one through the same seeded pick the card offer uses. No path grants two.
+- **Save compatibility.** The checkpoint records the pick as `pendingReward.chosenRelicId` (absent → `null`). The shape door (`validateRunShape`) refuses `relicIds` that are not an array of non-empty distinct strings, a `chosenRelicId` that is not one of them or is held without the relic row's Taken state, and a Taken choice of 2+ ids without its `chosenRelicId`; the load door (`engine/save.js`) refuses an offered id the content does not hold, by name. A save taken with the chooser open re-mounts the menu with the same `relicIds`, nothing granted; a save after Confirm re-mounts with the row Taken and the relic held once. A pre-choice save whose boss offer carries a single `relicId` still loads and offers that relic as before.
+- **Co-op and simulators.** The co-op host (`tools/session.mjs`) rolls each seat's own boss choice against that seat's relics, with the same consolation; a seat keeps only an id on its own table (`chooseReward` / `resolveCatchup` with `relicId`), one or none, and a missed boss door replays as the same choice. On catch-up, a picked boss relic an earlier replayed entry already granted is replaced by a boss relic rolled against the relics in hand; with none left the seat is paid the same consolation, once. A stored normal, elite or treasure relic in that state with no substitute left pays nothing, as its live door would: the view marks it `relicTakeable: false`, the pick is refused without consuming the entry, and an empty pick leaves it. The co-op screen lays out one option per relic. Player-less runs (`tools/runsim.mjs`, `tools/measure-classes.mjs`) keep one through `autoPickBossRelic`, a seeded pick on `relicRewards`.
+- **Acceptance.** Engine tests prove 3 distinct ids, determinism by seed, owned exclusion, the short-pool fallback and the empty-pool consolation; reward-flow tests prove a pick grants exactly one, skip grants none, and auto-collect grants one; co-op tests prove the per-seat offer, the one-of-own-table rule, catch-up and the screen's sent pick. `?shot=reward&shotReward=bossRelic` poses the boss reward door with three relics on offer.
 
 ---
 
@@ -1543,6 +1703,14 @@ together.
 
 - Floating damage/heal/block numbers; brief target flash on hit; ≤4 px screen shake for hits ≥15 damage. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
+- **Combat juice: hit-stop, kill cam, damage-number scale** (presentation only — `src/ui/models/CombatJuiceModel.js` decides, `src/ui/fx.js` plays; every number lives in `content/config/ui/presentation/combatJuiceModel.json`, none in code). No engine event, run field or save key changes; an old save loads unchanged, and the only new stored value is the sparse `killCam` setting (absent ⇒ on).
+  - **Damage tiers** (`sizing.damageTiers`): residual HP damage `< chipBelow` (6) is *chip*, `≥ heavyAt` (15) *heavy*, `≥ critAt` (25) *crit*, else *normal*. The four float classes are unchanged; inside a tier the number also scales continuously, `scale = 1 + tierBoost × t`, where `t` is the hit's position in its tier's span (crit's span ends at `capAt`, 50) clamped to [0, 1] — so a 24 reads bigger than a 16 and a 45 bigger than a 26. Chip hits never scale.
+  - **Hit-stop**: on a *heavy* or *crit* residual hit (guard-absorbed damage never counts) and on every Stagger, the attacker's and target's figures freeze in place. Duration: heavy ramps linearly `minMs` (40) → `critMs` (80) across [heavyAt, critAt); crit ramps `critMs` → `maxMs` (120) across [critAt, capAt] and clamps; Stagger is a flat `staggerMs` (100). Always within [40, 120] ms. The freeze is a **hold on the paced timeline's own clock**: the visual that triggers it returns its hold, the stepper waits `stepMs + hold` before the next visual, and the actor's recovery budget grows by the same amount — so HUD application (`onBeatApplied`) and every later beat shift together and nothing desyncs. Effects the freeze interrupts (hit flash, recoil pose, wobble) are lengthened by the hold rather than cut short. **Painted fighters freeze too**: CSS and Web Animations pause through `getAnimations()`, but painted pose stages step frames on JS timers, so every such stage (`PoseAnimator`, `paintedOutfits`, `enemyPoseStage`, the equipped figure, the Reaver attack strip) schedules its steps on `src/ui/services/stageClock.js`, keyed by the element it draws into. A hit-stop freezes the figure's stage clock: each pending step stops, keeps its remaining time, and resumes with exactly that remainder — nothing skipped, nothing early.
+  - **Kill cam**: the killing blow on an **elite** (stature `large`) or **boss** (stature `huge`) — and, when `behavior.killCam.lastEnemy` is true, the kill that wins the fight — gets a short slow-motion (running battlefield animations, and any a hit-stop holds paused, at `slowRate`, 0.35) plus a zoom toward the target (`zoom`, 1.12) and a vignette centred on it, for `bossMs` 900 / `eliteMs` 750 / `lastEnemyMs` 600. **At most one kill cam per dispatch**, chosen boss > elite > last-enemy, latest kill winning ties. It holds the timeline the same way hit-stop does.
+  - **Gates** (a pure decision, unit-tested): both effects run only in paced playback — Animation speed *instant* and Reduced motion (in-game or OS) skip them entirely, because those modes never enter the paced timeline. Kill cam additionally requires only its own **Kill cam** setting on (Settings → General → Combat → Animation & effects, `def: true`, body class `no-killcam`). It is **deliberately independent of Screen shake**: a player who turns the camera kick off may still want the close-up, so each effect has its own switch and neither implies the other.
+  - **Never blocks input**: a click still skips to end-state — the skip releases every active freeze, restores playback rates and removes the zoom and vignette before `onFlush`. The watchdog budget adds the largest possible kill cam plus one `maxMs` per event that can hit-stop (every `damageDealt` and `enemyStaggered` in the dispatch), so a juiced timeline can never trip it. Combat-end flow is untouched: `onEnd` still fires 350 ms after the timeline finishes, just later by at most one kill cam.
+  - Acceptance: `tests/combat-juice.test.mjs` (which hits stop, for how long, kill-cam eligibility and choice, every gate off); `?shot=fx&shotFx=hitstop` and `?shot=fx&shotFx=killcam` pose the two frames through the same fx.js helpers the game uses. A real kill is reachable too: `?shot=combat&shotEncounter=<id>&shotEnemyHp=1` enters the named encounter (e.g. `eliteWyrm`) with every enemy at 1 HP, so one played attack is the killing blow and the kill cam runs through the live timeline.
+  - **Co-op** *(PR #1287 round 2)*. Co-op has no paced timeline: the host resolves an intent whole and the client draws the snapshot, playing that snapshot's event receipts at once (`coop.js spawnCombatFx`, the co-op event-playback hook). The same decisions apply there through one more pure function, `receiptJuicePlan(events, { rankOf, won }, gates)` in `CombatJuiceModel.js`: per struck figure, the **longest** `hitStopForEvent` among that receipt's `damageDealt` / `enemyStaggered` events (a figure freezes once, never stacks), and `pickKillCam` over its `enemyDied` events. `coop.js` plays them with the same `freezeFigures` / `playKillCam` helpers — the freeze holds the struck figure and the seat that struck it right after the recoil starts; there is no timeline to extend, so nothing else waits. Freezes are **reference-counted per figure** (as the stage clock's are): a seat or enemy that struck several figures in one receipt is frozen by each of their stops and stays frozen — `.hit-stop` on, its animations paused — until the longest of them ends. A kill cam slows **paused** battlefield animations as well as running ones, so the impact and death pose a finishing hit-stop froze resume in slow motion rather than at full speed mid-cam. Gates are solo's: Animation speed *instant* and Reduced motion skip both, the Kill cam setting (`no-killcam`) gates the cam. **The fight-ending frame**: the host settles a finished fight into the reward door (or the run's end) in the same snapshot, so the killing receipts would never reach a combat board. The host therefore keeps the last combat scene as a transient `finale` on the snapshot (never persisted; cleared when the reward door closes or the next fight starts); a client that was showing the fight plays that finale on its combat board — floats, hit-stop, kill cam — holds for the kill cam's length (or `motion.coopFinaleHoldMs` without one), then renders the new scene. A client that was not on the board (a reconnect, a resync) ignores it. Acceptance (`tests/coop-parity.test.mjs`): the plan's per-figure longest stop, its kill-cam choice and every gate; a shared attacker held for the longest of its targets' stops; a hit-stopped finishing blow slowed with its kill cam; the host's `finale` carries the killing receipts and is dropped when the door closes.
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
 
@@ -1699,6 +1867,24 @@ Purchased weapon arts use the existing loose-card and compatible item-mount mode
 Armament sales are limited to stored, unequipped armaments. Equipped items explain that they must first be unequipped; selling never silently changes an active or inactive equipment set. Permanent profile discovery survives a sale. Smithing tiers and installed mount records remain bound to the same armament identity in the run ledger; they are neither deleted nor converted into extra loose cards, and grant no usable cards while that armament is no longer owned. Reacquiring that identity restores its recorded package through existing reconciliation. The sale preview discloses the tier, attached cards, and value before commitment. Buying and selling must not duplicate upgrades, mounts, cards, or ownership, or produce a profitable immediate buy/sell loop.
 
 A transaction validates current stock, ownership, capacity, and funds at commitment, then applies the complete change once. Refusal leaves cinders, stock, inventory, card mounts, and discovery unchanged. Verify repeated/stale activation, full inventory, equipped duplicates, upgraded/mounted armaments, save/reload, and reacquisition. Older shop saves without the new shelves load as empty new shelves for that already-open visit; migration does not consume randomness or reroll existing stock.
+
+#### 12.2.1 Weapon Art charge — the equipped weapon is a choice every fight
+
+**Status: shipped with this subsection** (solo combat; co-op per seat since PR #1287 round 2, item 10). Each equipped armament whose combat-kit Weapon Art (`weaponCardPackage.combatKit.artCardId`) has an authored *unleashed form* carries an **Art charge meter** for the fight. Hitting with that weapon's cards fills it; a full meter turns the next play of that weapon's Art into its unleashed form, and playing it empties the meter. The contract, in order:
+
+1. **Rules are balance data** (`balance.weaponArtCharge`): `defaultMax` (4), `maxByWeapon.<armamentId>` (optional per-weapon override: fast weapons that hit often fill more pips, heavy ones fewer), `gainPerHit` (1), `gainOnStagger` (1), `gainOnBurst` (1). A weapon's max is `maxByWeapon[id] ?? defaultMax`; a max of 0 means that weapon has no meter. No number lives in engine or UI code.
+2. **Unleashed forms are content** (`src/content/weaponArtUnleashed.js`, bundle key `weaponArtUnleashed`): `{ [artCardId]: { effects: [effect DSL, §3.4] } }`. They are ordinary opcodes validated by `validateEffects`; no per-weapon engine code exists. Validation also requires: the table is present whenever `balance.weaponArtCharge` is set or any combat-kit Art exists (a missing table is refused by name, never skipped); every combat-kit Art has an entry; the key is a known card; an Art that does not itself target `enemy` may not gain an `enemy`-targeted unleashed effect (it would need a target the card never asks for), nor a `damage`, `poiseDamage`, `stagger`, `applyStatus` or `arcaneBuildup` effect with its target omitted (an omitted target resolves to the play's source, so it would land on the player).
+3. **State** is one map on the combat, `combat.artCharge = { [armamentId]: integer }`, keyed by the armament identity (the id a kit card's `grantedBy` / `sourceArmamentId` carries). Missing entries read as 0; reads clamp to the current max. It starts **empty at every combat start** — charge never carries between fights, so no run-state field exists.
+4. **Accrual** (`src/engine/artCharge.js`, one listener on the event bus, the same shape as the skill-XP hooks, installed through `wrapEmit` in `src/engine/busHooks.js` so every copy of the combat carries it: under a combat ruleset each play resolves on the foundation transaction's clone, which re-applies the combat's emit hooks, so the clone's hits fill the meter and the charge commits with the play). A *qualifying hit* is a `damageDealt` event whose source is the player, whose target is an enemy, whose `amount > 0` (a hit into Block still counts), dealt by the card being resolved (the instance the last `cardPlayed` announced — a status or trigger that remembers a card and fires later, such as a Combat Ratings `ratingCard` hook on the enemy's turn, is not it), that card lent by armament *W* (`sourceArmamentId`, else `grantedBy` resolving to `armament/W`) that is **not** a `weaponArt` instance, while *W* is equipped. It adds `gainPerHit` per hit (multi-hit cards count each hit). The weapon of the last qualifying hit is remembered for the current card's resolution only: it is cleared when a card is announced by `cardPlayed`, when that card's own effects have finished resolving, at `playerTurnEnd`, on `flaskUsed` and `armamentSwapped`, and by any player-sourced hit on an enemy that no equipped weapon lent (a relic, a flask, a status tick, a loose card); an Art's own hit clears it too. While one is remembered, `enemyStaggered` adds `gainOnStagger` and a build-up burst on an enemy (`procBurst`, or a status meter's `meterFilled`) adds `gainOnBurst` to that weapon. Every gain caps at max, overflow is dropped, and each change that moves the value emits `artChargeChanged { weaponId, value, max, amount, reason: 'hit'|'stagger'|'burst'|'unleash' }`. No RNG is drawn.
+5. **Unleash.** Playing a `weaponArt` instance granted by an equipped *W* whose charge is at max, when that card id has an unleashed form, is an *unleashed play*. Payment, playability, targeting and the card's own effects are unchanged (§12.2's payment rules). The unleashed effects are enqueued immediately **after** the card's own effects, with the same source, target and card reference, so they resolve through the ordinary damage/status math. The meter drops to 0 at the play and the play's `cardPlayed` carries `unleashed: true`; the spend receipts `artChargeChanged` (reason `unleash`) and then `artUnleashed { weaponId, cardId, cardInstanceId }` are emitted right **after** that `cardPlayed` (before its effects resolve), so paced playback shows the meter empty in the play's own beat rather than the payment beat before it. Unleashing is automatic when full; a non-full meter or a loose copy of the same card (no `weaponArt` role or a different lender) plays the plain form and spends nothing. Both new events are bus events (§3.10), so relics and statuses may trigger on them.
+6. **Swap** (`swapArmament`, `changeEquipment`): the meter belongs to the armament, not the hand. A swapped-out weapon keeps its stored value for the rest of the fight but neither gains nor unleashes; swapping it back in resumes from that value. A swapped-in weapon starts from its own stored value (0 if unused this fight).
+7. **Preview.** `previewCard` reports `artCharge: { weaponId, value, max, unleashed }` for a `weaponArt` instance whose lender has a meter, so the hand and HUD read the same answer the play will use.
+8. **Save compatibility.** The combat snapshot carries `artCharge` (a map of non-negative integers, validated when present). A snapshot written before this subsection has no field and restores with every meter at 0; nothing is migrated and no RNG is drawn. The remembered last-hit weapon is transient and not saved — saves happen at committed boundaries where no card is resolving.
+9. **Presentation.** The player's combat frame shows one pip bar per equipped weapon with a meter (weapon name, `value/max` pips, accessible label). A meter that has just become full flashes once; with reduced motion (OS preference or the in-game setting) it shows a static highlight instead. The Art card in hand carries the same pips (on phone widths at the card's top-left edge, which overlapping cards never cover) and, when full, a gold edge and an unleashed strip: a `★ +4 Poise, +1 Vulnerable` line built by `unleashedTemplate` whose numbers are ordinary template tokens (`{unleashed.<i>}`, §3.13) resolved by `previewCard` with the play's own math, reported as `artCharge.textTemplate`. The strip sits at the foot of the card's art band (after the rules text only on a face that withholds the art band), wraps rather than clips, and in an overlapping hand keeps to the card's uncovered step; phone widths print `artCharge.shortTemplate` (`dmg`, and status names shortened by `shortStatusName`, e.g. `Vuln.`) so the whole line reads at resting size. On a phone (portrait or landscape, where the next card covers all but that step) a full Art card instead shows that short line as a one-line tab above the card's top edge, the band no neighbouring card covers (hanging left on the last card, so it stays inside the hand), and the in-card strip is not drawn; the pips there give way to the ★, and the HUD meter keeps them. The engine stays headless; the UI reads `combat.artCharge` through `src/model/artCharge.js`.
+
+10. **Co-op** (`src/engine/coopCombat.js`, one engine listener for both engines). Each seat owns its meters: `P.artCharge = { [armamentId]: integer }`, empty at fight start, and `setActive` points `C.artCharge` at the active seat's map, as it points `C.player` and `C.loadout` — so `engine/artCharge.js` and `model/artCharge.js` read and write the acting seat's meters with no co-op branch in the rules. A qualifying hit must also be the **active seat's own** (`damageDealt.sourcePlayerId === C.playerKey`): every seat's entity shares the id `player`, and a hit another seat's card lands never fills this seat's meter. The co-op play door unleashes exactly as solo's (item 5: payment unchanged, unleashed effects enqueued after the card's own, the meter emptied, `artUnleashed`, `cardPlayed.unleashed`) and ends the resolution the same way. In co-op, `artChargeChanged` and `artUnleashed` also carry `playerId` (the seat); solo events are unchanged. A rejoining seat keeps its body and so its meters; a new seat starts empty. **No save field**: a co-op fight is never persisted (the host saves only at safe boundaries, docs/MULTIPLAYER.md). **Presentation**: the host snapshot carries, per player, `artCharge` — the `artChargeView` rows (weapon, name, Art, value, max, full) — and, per hand card, `artCharge: { weaponId, value, max, unleashed }` from `artUnleashFor`; the combat digest carries `artChargeChanged` / `artUnleashed`. The co-op board draws each seat's meters under its status row (the solo `artChargeMeter`, flashing once when a meter fills) and the active seat's Art card wears the pips, the full edge and the unleashed strip; the strip's numbers are the authored amounts, as every co-op card face is (the co-op client prices, it does not preview). `?shot=coop&shotArt=partial|full` poses the board with meters.
+
+Acceptance (`tests/weapon-art-charge.test.mjs`): accrual per qualifying hit and not from the Art itself; the cap; stagger/burst credit; the unleashed play adds its effects and spends the meter while a non-full play spends nothing; per-weapon values survive a swap out and back; a snapshot round-trips the meter and a snapshot without the field loads at 0; content validation refuses a malformed unleashed form. Screenshots of the combat HUD at a partial and a full meter live in `docs/evidence/game-feel-rework/weapon-art-charge/`. Co-op (`tests/coop-parity.test.mjs`): each seat's meter fills from its own weapon hits only, a full seat's Art unleashes and empties only that seat's meter, and the host snapshot and the co-op board carry both; screenshots in `docs/evidence/game-feel-rework/coop-parity/`.
 
 ### 12.3 Combat HUD, piles, and potions
 
@@ -1940,6 +2126,21 @@ His words: *"I'd like the default stats to be low, with everyone having a total 
 - **Not in this phase:** quest XP (`questLevelXp`, `perQuest`) is still unpaid — nothing listens to `questCompleted` yet; the co-op host (`tools/session.mjs`) offers no board.
 
 *Falsify:* the inn's set includes `questBoard` and the shrine's, chapel's and camp's do not; every town posting a quest opens its board at its inn; a town lists its quest `open` with its reward and speaker; accepting through the exchange moves it to `accepted` and completes nothing, a collect before the objective is refused by name, the report is spoken on return, and the collect pays `rewardCinders` once, writes one `questCompleted` row with `source: 'atlas'` and shows the quest `done` and in the journal; a second collect before or after a reload is refused and pays nothing; Leave changes nothing and an unknown response is refused by name; a Nameless step in history lists the chain as started and its completion moves it to completed (`tests/quest-board.test.mjs`; engine test 91).
+
+### 13.4o Weapon scaling grades, the level-up preview, and the level moment (game-feel rework)
+
+The problem it answers: on the lean scale (§13.4m) a weapon's attack rating read `floor(0.5 × STR)` (`model/ratingFormula.js`, the default formula while `balance.combatRatings` is unset), so the one point a level grants moved a Strike by 0 or 1 and the player could not see what a level bought. The shrine assigned the point and showed no consequence; the spoils door drew an XP bar and no level.
+
+- **A grade is authored per weapon and per attribute.** `content/source/weaponScaling.csv` (`itemId, attributeId, grade`) is a junction table like `equipmentRequirements.csv`: the loader puts the rows on the piece as `scaling: { <attributeId>: <grade> }` (absent when the weapon has none). A grade is one of the keys of `balance.weaponScaling.grades` — shipped **S 2.0, A 1.5, B 1.0, C 0.75, D 0.5** — and an ungraded attribute is written as no row (the card shows `-`). The content door refuses by name an unknown item, an armour row, an unknown attribute, an unknown grade and a duplicate pair.
+- **What a grade prices.** Only the ATTACK role's card — the strike the graded piece throws, rated `ar` or `pr` as its attack profile's `ratingId` names — in `effectiveEquipmentRating`, the one door every card amount goes through (`roleAmountReceipt` hands the run's table in for the attack role only). The same piece's guard and technique cards keep the flat rating even where they read `pr`. For a graded piece each attribute's term becomes
+  `floor(w × min(v, anchor) + c × max(0, v − anchor))` — floored ONCE, so the half-point the anchor's share leaves over (0.5 × 3 = 1.5) is carried into the graded points, never dropped —
+  where `w` is the rating rule's own weight for that attribute (0.5 STR for `ar`) and `c` the grade's coefficient; an attribute the weapon has no grade for keeps the flat term `floor(w × v)` exactly, and `anchor` is `balance.weaponScaling.anchor` (**3**, the lean scale's class stat). The terms are summed and multiplied as before, and the rule's `base` is added. So at or below the anchor a graded weapon reads EXACTLY the flat rating (a stock character's creation damage does not move), and every point above it is paid at the grade: +2 per point on S, +2/+1 alternating on A, +1 on B. Because every shipped coefficient is at least the rule weight it replaces, a graded weapon's term is never below the flat term at any attribute value. `dr`, Poise, Ward, the opt-in `balance.combatRatings` module's attribute receipt and every ungraded piece keep today's formula byte for byte — and while that module is switched on (`balance.combatRatings.enabled`) the fight prices a strike off the player's own ratings, so the attack stamp, the Level-up preview and the shrine's grade fact read flat there too, never promising a grade the fight does not pay.
+- **The run carries the rule it was born under.** `createEquipmentProfileRuleSnapshot` copies `balance.weaponScaling` onto the snapshot as `weaponScaling: { anchor, grades, pieces }`, where `pieces` is every graded armament's own letters as the run was born with them (`{ straightSword: { strength: 'B', … }, … }`). The attack receipt reads a piece's letters from `pieces` (`model/ratingFormula.js pieceGrades`), never the live registry piece, so a content update that regrades a weapon (Straight Sword STR B → S) does not re-price a climb in progress, and a piece `pieces` does not name reads flat for that run; the shrine's grade fact names the run's letter too. `restoreEquipmentProfileRuleSnapshot` validates the table when present (integer anchor ≥ 0, each coefficient finite ≥ 0; `pieces`, when present, an object of armament id → object of known rating attribute → a grade in the snapshot's own table; refused by name) and leaves a snapshot without it alone; `balance.weaponScaling` itself never carries `pieces`. A run (or a saved fight) whose snapshot has no `weaponScaling` reads every weapon flat — no in-flight save is re-priced — a snapshot with the table but no `pieces` (saved before the per-weapon letters rode the run) keeps reading the live piece's letters under its own table, as it did, and a headless fixture without a snapshot reads the live table.
+- **Where the grades are shown.** The equipment card's face carries one fact per grade after Weight — the letter over the attribute (`B` / `STR`), its tooltip saying what a grade pays — and the Armoury's detail list a *Scaling* row (`STR B · DEX C`); `equipmentCardModel` exposes the line as `scaling` (`Scales STR B · DEX C`, null when ungraded). The shrine's Level-up rows lead with the weapon facts for their attribute: `STR A — +2 dmg next point on Greatsword`, the number being the equipped piece's own attack receipt at `v + 1` minus at `v` (the pending value), never a coefficient restated.
+- **The Level-up modal previews the consequence.** `model/levelUpPreview.js levelUpPreview(registries, run, pending)` clones the run, spends the pending points through `applyLevelUp` (the real door: attributes, pools re-derived from the run's snapshot, deficit carried) and reads both runs through the same projections the game uses — `statProjection` for the derived rows and the equipped pieces' attack receipts plus `equipmentKitReceipt` for the other card roles — returning `{ rows: [{ id, kind: 'stat'|'card', label, before, after }] }` for every value that moves. The modal draws `Max HP 42 → 46`, `Slashing Strike 8 → 10` live as the steppers move; nothing is written to the run until Assign. The real run after Assign holds exactly the `after` values.
+- **The level moment at the spoils door.** `combatXpGains` records `levelUps` (the levels this fight climbed, from `awardLevelXp`); the reward screen draws a banner — `LEVEL 5 — 1 point to assign at a Shrine` — when it is positive, reading the level and the waiting points live off the run. It plays `sfx.play('levelUp')` once per mount and animates only when reduced motion is not requested (`ui/motion.js`); under reduced motion it is drawn still. The banner spans the door and stays pinned to the top of its scrolling body, so a long door (an elite's, with the chest row of §3.8.1) never scrolls it away from the choices. An offer saved before the field existed carries no `levelUps` and draws no banner.
+
+*Falsify:* the grade table is S 2 / A 1.5 / B 1 / C 0.75 / D 0.5 with anchor 3; a greatsword (STR S) reads the flat 1 at STR 3 and 3 at STR 4, a battleaxe (STR A) 3 at STR 4 and 4 at STR 5; every graded weapon's attack receipt is at least the flat receipt for every attribute at every value 1–20 and equal to it at or below the anchor; every ungraded piece (the shields, the torch, the lantern, the parrying dagger) and every `dr` receipt equals the flat formula at every attribute value; a snapshot without `weaponScaling` prices a graded weapon flat; a saved run reloaded under content that regrades Straight Sword STR B → S still prices its Strike at B while a new run prices S, a snapshot without `pieces` reads the live letter, and a malformed `pieces` is refused by name; an unknown grade, attribute or item, an armour row and a duplicate are refused by name; the preview's `after` for one and for three pending points equals the run's own values after `applyLevelUp`, and the preview writes nothing to the run; `combatXpGains` carries `levelUps` and an offer without it draws no banner (`tests/weapon-scaling.test.mjs`, `tests/levelup-preview.test.mjs`).
 
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 

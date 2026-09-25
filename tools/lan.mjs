@@ -31,6 +31,33 @@ const BEACON_MS = 2000;
 const HOST_STALE_MS = 6500;
 const WS_MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
+/**
+ * applyGameIntent(game, memberId, msg) → { handled, refusal } — one in-run
+ * intent routed to the authoritative game for `memberId`. `handled` is false
+ * for a message that is not a game intent. `refusal` is the message owed back
+ * to the sender when a reward or catch-up choice is refused
+ * ({ t: 'intentRefused', intent, error }), else null.
+ */
+export function applyGameIntent(g, id, msg) {
+  let res = null;
+  switch (msg.t) {
+    case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
+    case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
+    case 'endTurn': g.combatEndTurn(id); break;
+    case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
+    case 'chooseReward': res = g.chooseReward(id, msg.pick || {}); break;
+    case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
+    case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
+    case 'eventContinue': g.eventContinue(id); break;
+    case 'catchupChoice': res = g.resolveCatchup(id, msg.index, msg.pick || {}); break;
+    default: return { handled: false, refusal: null };
+  }
+  const refusal = res && res.ok === false
+    ? { t: 'intentRefused', intent: msg.t, error: String(res.error || 'refused') }
+    : null;
+  return { handled: true, refusal };
+}
+
 /** Best-guess LAN IPv4 of this machine (for "join at ..." display). */
 export function lanAddress() {
   for (const list of Object.values(networkInterfaces())) {
@@ -217,32 +244,24 @@ export function attachLan(server, { port, root }) {
   }
 
   // Route an in-run intent to the game for this client's member, then push the
-  // new authoritative snapshot to everyone.
-  function onGameIntent(pl, msg) {
+  // new authoritative snapshot to everyone. A refused choice is told to the
+  // sender, never dropped: their door stays open and the screen says why.
+  function onGameIntent(sock, pl, msg) {
     const g = session.game;
     if (!g) return;
     // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
-    switch (msg.t) {
-      case 'resync': broadcastState(); return;
-      case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
-      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
-      case 'endTurn': g.combatEndTurn(id); break;
-      case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
-      case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
-      case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
-      case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
-      case 'eventContinue': g.eventContinue(id); break;
-      case 'catchupChoice': g.resolveCatchup(id, msg.index, msg.pick || {}); break;
-      default: return;
-    }
+    if (msg.t === 'resync') { broadcastState(); return; }
+    const routed = applyGameIntent(g, id, msg);
+    if (!routed.handled) return;
+    if (routed.refusal) sock.write(wsEncode(JSON.stringify(routed.refusal)));
     broadcastState();
   }
 
   function onLobbyMessage(sock, pl, msg) {
     // In-run intents route to the authoritative game (but 'resume' is a lobby
     // action that re-attaches a returning player, so let it through).
-    if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(pl, msg); return; }
+    if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(sock, pl, msg); return; }
     switch (msg.t) {
       case 'hello':
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);

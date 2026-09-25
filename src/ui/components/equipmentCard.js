@@ -75,9 +75,11 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null, run = null } = {}) {
   configureTooltipGlossary(registries);
-  const model = presentation || equipmentCardModel(registries, piece);
+  // `run`, when there is one, is whose snapshot the scaling grades read
+  // (model/equipmentCard.js); creation and previews pass none and read live content.
+  const model = presentation || equipmentCardModel(registries, piece, { run });
   // `inspection: false` MEANS "no door on this face", NOT "this face says
   // everything". The two got conflated, and the second reading won: a caller
   // that made an inert face and bound the door to its WRAPPER — the shop's
@@ -167,7 +169,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     const visible = new Set(cardFields(at, { surface }).visible);
     const facts = variant?.lines
       ? `<span class="epc-facts" data-layout="lines"${rowsAttr(variant.regions.facts)}>${variant.lines.map((row, index) => `<span class="epc-line" data-wireframe-row="${esc(row.id)}"${row.tint ? ` style="--line-tint:${esc(row.tint)}"` : ''}${index >= face.lines ? ' hidden' : ''} ${tip(row.text, row.explanation, 'effect')}>${esc(row.text)}</span>`).join('')}</span>`
-      : `<span class="epc-facts"${rowsAttr(variant?.regions.facts)}>${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.label === 'DR' && f.value > 0 ? `+${f.value}` : f.value)}</strong>${esc(surface === 'creation' ? ({ Attack: 'AR', Defense: 'DR', Weight: 'Wt' }[f.label] || f.label) : f.label)}</span>`).join('')}</span>`;
+      : `<span class="epc-facts"${rowsAttr(variant?.regions.facts)}>${model.facts.map(f => `<span class="epc-fact"${f.grade ? ` data-grade="${esc(f.value)}"` : ''} ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.label === 'DR' && f.value > 0 ? `+${f.value}` : f.value)}</strong>${esc(surface === 'creation' ? ({ Attack: 'AR', Defense: 'DR', Weight: 'Wt' }[f.label] || f.label) : f.label)}</span>`).join('')}</span>`;
     const entries = variant?.entries || model.bonuses;
     const effectsAttrs = variant ? `${rowsAttr(variant.regions.effects)} data-entries="${Math.min(entries.length, face.effects) > 1 ? 'many' : 'one'}"${entries.length > face.effects ? ' data-more' : ''}` : '';
     const effects = entries.map((b, index) => `<span class="epc-bonus"${index >= face.effects ? ' hidden' : ''} ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('')
@@ -219,7 +221,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
         // or flavour explanation at all; the modal's face is at `inspect` and
         // has every one of them. Reading the outer array here is how the door
         // would come to show fewer tags the less the card beside it said.
-        const full = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false, surface });
+        const full = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false, surface, run });
         return openCardInspection({ title: model.name, card: full.card, details: equipmentDetails(full.explanations), opener });
       } });
     // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED, and they tell themselves. A

@@ -21,6 +21,7 @@
 import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
 import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
+import { levelUpPreview, weaponScalingFacts } from '../../model/levelUpPreview.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -41,7 +42,7 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
 // a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
 // names stay on the kit elements because tools/flaskbox.mjs reads them.
-import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFooter } from '../kit/index.js';
+import { el, html, row, stepper, statusText, subtitle, statPair, delta, button, modalFooter } from '../kit/index.js';
 // W1s: the Shrine is a choice body — the options beside their availability,
 // the head's {Status} from the same facts, Continue in the foot when the
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
@@ -49,6 +50,26 @@ import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
 import { t, has } from '../strings.js';
 import { restReview } from '../models/ConfirmationReviewModel.js';
+
+// THE LEVEL-UP PREVIEW PANEL (SPEC §13.4o): every value the pending points
+// move, before → after, in the projection's order — the derived rows, then
+// the cards the equipment prices. Nothing pending says how to start.
+function drawLevelPreview(card, preview, pendingCount) {
+  const host = card.querySelector('[data-level-up-preview]');
+  if (!host) return;
+  const rows = preview.changed.map((row) => el('div', {
+    class: 'level-up-preview-row', dataset: { previewRow: row.id, previewKind: row.kind },
+  }, [
+    el('span', { class: 'lp-name', text: row.label, title: row.label }),
+    delta({ from: row.before, to: row.after }),
+  ]));
+  host.replaceChildren(
+    el('h4', { class: 'as-eyebrow', text: pendingCount ? 'What changes' : 'Preview' }),
+    ...(rows.length ? rows : [el('p', { class: 'level-up-preview-empty', text: pendingCount
+      ? 'Nothing you can see moves yet — this point waits on the next tier.'
+      : 'Step an attribute to see what it changes.' })]),
+  );
+}
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -469,7 +490,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const cards = new Map(attributeCardModels(registries, values, {
         projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+        weaponFacts: weaponScalingFacts(registries, run, values),
       }).map((card) => [card.id, card]));
+      // WHAT THE PENDING POINTS CHANGE (SPEC §13.4o), computed by spending
+      // them through applyLevelUp on a clone — the real door, not a copy of
+      // its arithmetic — and drawn as before → after. The run is untouched
+      // until Assign.
+      const preview = levelUpPreview(registries, run, pending);
       const spec = {
         title: 'Level up',
         modal: true,
@@ -529,6 +556,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         allocation = renderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
+        allocation.card.querySelector('.cc-allocation-rows').before(el('section', {
+          class: 'level-up-preview', dataset: { levelUpPreview: '' }, 'aria-live': 'polite', 'aria-label': t('rest.levelUp.preview'),
+        }));
         allocation.card.addEventListener('keydown', (event) => {
           if (event.key !== 'Tab') return;
           const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -542,6 +572,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           }
         });
       }
+      drawLevelPreview(allocation.card, preview, count);
       const result = allocation.card.querySelector('[data-level-points-result]');
       result.hidden = false;
       result.querySelector('.d-to').textContent = `${level.points - count} remaining`;

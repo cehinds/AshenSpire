@@ -45,6 +45,7 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
+import { chestOptionReferenceProblems, chestOptionDeckProblems } from '../model/rewardChest.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -111,7 +112,7 @@ function classTreeReferenceProblems(run, registries) {
   return problems;
 }
 
-function pendingRewardReferenceProblems(pending, registries) {
+function pendingRewardReferenceProblems(pending, registries, run) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
@@ -131,7 +132,19 @@ function pendingRewardReferenceProblems(pending, registries) {
       if (!registries.cards.has(cardId)) problems.push(`skill draft card '${cardId}' is unknown`);
     }
   }
+  for (const option of (rewards.chest && Array.isArray(rewards.chest.options) && rewards.chest.options) || []) {
+    problems.push(...chestOptionReferenceProblems(registries, option));
+    // An open chest's owned upgrade must still name the card the chooser
+    // shows (present, same cardId). One the chest may no longer upgrade is
+    // NOT refused: the load door's own skill reconcile (below) can upgrade
+    // that very instance, and refusing it would archive the next load
+    // forever. The reward plan draws it spent instead (SPEC §3.8.1).
+    if (!(pending.states && pending.states.chest)) problems.push(...chestOptionDeckProblems(null, run, option, 'chest upgrade'));
+  }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  for (const relicId of Array.isArray(rewards.relicIds) ? rewards.relicIds : []) {
+    if (!registries.relics.has(relicId)) problems.push(`boss relic choice '${relicId}' is unknown`);
+  }
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
   if (rewards.armamentId
       && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
@@ -572,7 +585,7 @@ export function createSaveManager(storage) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
-        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries, run);
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }

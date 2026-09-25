@@ -21,6 +21,7 @@ import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { wrapEmit } from '../src/engine/busHooks.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
@@ -41,7 +42,13 @@ import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
+  rollBossRelicChoices,
+  rollEliteChest,
 } from '../src/engine/encounters.js';
+import { applyChestOption, chestShapeProblems, chestOptionReferenceProblems } from '../src/model/rewardChest.js';
+import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
+import { artChargeView, artUnleashFor } from '../src/model/artCharge.js';
+import { offeredRelicIds, relicChoiceShapeProblems } from '../src/model/rewardplan.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
@@ -108,6 +115,122 @@ function memberRng(seed, index, counters) {
 // refusal that stays whole: a blob where NO member survives — a party of
 // nobody is not a resume, and pretending it resumed would be the silent
 // version of the same loss.
+const isPlainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const isId = (v) => typeof v === 'string' && v.length > 0;
+const isCount = (v) => Number.isInteger(v) && v >= 0;
+
+/**
+ * The SHAPE of a saved co-op reward offer (rollRewardFor), field by field —
+ * the solo save door's pendingReward shape rules (model/state.js) over the
+ * co-op offer, sharing its relic-choice and chest checks. Every field a
+ * restored door reads is checked for its type, not only the ids it names: a
+ * `relicIds` string would otherwise read as no relics on the table, and
+ * Continue would silently forfeit the reward (review of #1287).
+ */
+function offerShapeProblems(registries, offer, path) {
+  if (!isPlainObject(offer)) return [`${path} is not an offer`];
+  const problems = [];
+  const pools = Object.keys(registries.balance.rewards.cinders || {});
+  if (!pools.includes(offer.pool)) problems.push(`${path}.pool must be one of ${pools.join(', ')}`);
+  if (!Array.isArray(offer.cardIds) || offer.cardIds.some((id) => !isId(id))) problems.push(`${path}.cardIds must be an array of card ids`);
+  if (!isCount(offer.cinders)) problems.push(`${path}.cinders must be a non-negative integer`);
+  if (offer.flaskId != null && !isId(offer.flaskId)) problems.push(`${path}.flaskId must be null or a flask id`);
+  if (offer.relicId != null && !isId(offer.relicId)) problems.push(`${path}.relicId must be null or a relic id`);
+  if (offer.relicIds != null) problems.push(...relicChoiceShapeProblems(offer.relicIds, `${path}.relicIds`));
+  if (offer.chest != null) problems.push(...chestShapeProblems(offer.chest, `${path}.chest`));
+  const stone = offer.smithingStoneReceipt;
+  if (stone != null && (!isPlainObject(stone) || !isCount(stone.amount) || !isCount(stone.stoneBalanceAfter))) {
+    problems.push(`${path}.smithingStoneReceipt must be { amount, stoneBalanceAfter } of non-negative integers`);
+  }
+  return problems;
+}
+
+/**
+ * The ids a (well-shaped) saved co-op reward offer names that the registries
+ * do not hold — the solo load door's reference check (engine/save.js
+ * pendingRewardReferenceProblems): its cards, its relic or boss relic
+ * choices, its flask and its stored elite chest.
+ */
+function offerReferenceProblems(registries, offer, path) {
+  const shape = offerShapeProblems(registries, offer, path);
+  if (shape.length) return shape;
+  const problems = [];
+  for (const cardId of offer.cardIds) {
+    if (!registries.cards.has(cardId)) problems.push(`${path} card '${cardId}' is unknown`);
+  }
+  if (offer.relicId && !registries.relics.has(offer.relicId)) problems.push(`${path} relic '${offer.relicId}' is unknown`);
+  for (const relicId of offer.relicIds || []) {
+    if (!registries.relics.has(relicId)) problems.push(`${path} boss relic choice '${relicId}' is unknown`);
+  }
+  if (offer.flaskId && !registries.flasks.has(offer.flaskId)) problems.push(`${path} flask '${offer.flaskId}' is unknown`);
+  for (const option of offer.chest ? offer.chest.options : []) {
+    problems.push(...chestOptionReferenceProblems(registries, option).map((p) => `${path} ${p}`));
+  }
+  return problems;
+}
+
+const CATCHUP_TYPES = ['reward', 'treasure', 'event'];
+
+/**
+ * A restored member's catch-up queue, by the same door: every entry's shape
+ * (the fields resolveCatchup and the client read) and the content it names.
+ */
+function catchupReferenceProblems(registries, catchup) {
+  if (catchup == null) return [];
+  if (!Array.isArray(catchup)) return ['catch-up queue is not a list'];
+  const problems = [];
+  for (const [i, item] of catchup.entries()) {
+    const p = `catch-up entry ${i}`;
+    if (!isPlainObject(item)) { problems.push(`${p} is not an entry`); continue; }
+    if (!CATCHUP_TYPES.includes(item.type)) { problems.push(`${p}.type must be one of ${CATCHUP_TYPES.join(', ')}`); continue; }
+    if (!Number.isInteger(item.act) || item.act < 1) problems.push(`${p}.act must be a positive integer`);
+    if (!isCount(item.floor)) problems.push(`${p}.floor must be a non-negative integer`);
+    if (item.type === 'reward') problems.push(...offerReferenceProblems(registries, item.offer, `${p} offer`));
+    if (item.type === 'treasure') {
+      if (item.relicId != null && !isId(item.relicId)) problems.push(`${p}.relicId must be null or a relic id`);
+      else if (item.relicId && !registries.relics.has(item.relicId)) problems.push(`${p} relic '${item.relicId}' is unknown`);
+    }
+    if (item.type === 'event') {
+      if (!isId(item.eventId)) problems.push(`${p}.eventId must be a non-empty string`);
+      if (item.open != null && (!Array.isArray(item.open) || item.open.some((n) => !isCount(n)))) problems.push(`${p}.open must be null or an array of choice indexes`);
+      if (item.mapNodeId != null && !isId(item.mapNodeId)) problems.push(`${p}.mapNodeId must be null or a node id`);
+      if (item.rng != null && (!isPlainObject(item.rng) || Object.values(item.rng).some((n) => !isCount(n)))) problems.push(`${p}.rng must be a map of stream counters`);
+      if (item.purse != null && !isCount(item.purse)) problems.push(`${p}.purse must be a non-negative integer`);
+      if (item.done != null && (!isPlainObject(item.done) || !isCount(item.done.choiceIndex) || typeof item.done.resultText !== 'string')) {
+        problems.push(`${p}.done must be { choiceIndex, resultText }`);
+      }
+    }
+  }
+  return problems;
+}
+
+const CLAIM_KINDS = ['card', 'relic', 'flask', 'chest'];
+
+/** A restored reward scene's per-seat state: its offer, and its chosen/claimed rows. */
+function rewardSceneSeatProblems(registries, scene, id) {
+  if (!scene || scene.kind !== 'reward') return [];
+  const problems = [];
+  if (Object.hasOwn(scene.offers, id)) problems.push(...offerReferenceProblems(registries, scene.offers[id], 'pending reward offer'));
+  if (Object.hasOwn(scene.chosen, id) && typeof scene.chosen[id] !== 'boolean') problems.push('pending reward chosen flag must be a boolean');
+  if (scene.claimed != null && Object.hasOwn(scene.claimed, id)) {
+    const row = scene.claimed[id];
+    if (!isPlainObject(row) || Object.entries(row).some(([k, v]) => !CLAIM_KINDS.includes(k) || typeof v !== 'boolean')) {
+      problems.push(`pending reward claimed row must map ${CLAIM_KINDS.join('/')} to booleans`);
+    }
+  }
+  return problems;
+}
+
+/** A restored reward scene's own maps (the party's, not one seat's). */
+function rewardSceneProblems(scene) {
+  if (!scene || scene.kind !== 'reward') return [];
+  const problems = [];
+  if (!isPlainObject(scene.offers)) problems.push('reward scene offers must be an object keyed by member');
+  if (!isPlainObject(scene.chosen)) problems.push('reward scene chosen must be an object keyed by member');
+  if (scene.claimed != null && !isPlainObject(scene.claimed)) problems.push('reward scene claimed must be an object keyed by member');
+  return problems;
+}
+
 export function restoreSession(registries, data) {
   const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data });
   return s;
@@ -129,7 +252,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // the one it was already climbing — and a save that names an order must
     // name every seat once.
     const seatOrder = Array.isArray(restore.seatOrder) ? restore.seatOrder : defaultSeatOrder(registries);
-    const seatProblems = seatOrderProblems(seatOrder, registries);
+    const seatProblems = [...seatOrderProblems(seatOrder, registries), ...rewardSceneProblems(restore.scene)];
     if (seatProblems.length) throw new Error(`Malformed session save: ${seatProblems.join('; ')}`);
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
     assertSavedBossReferences(registries, restore.mapGraph, { seat: seatAtTier(seatOrder, mapAct), tier: mapAct });
@@ -192,6 +315,19 @@ export function createSession({ registries, seedString, endless = false, restore
           throw new Error('member record does not carry a run');
         }
         if (typeof md.id !== 'string' || !md.id) throw new Error('member record has no id');
+        // THE SEAT'S OWED CHOICES ARE CHECKED AT THE DOOR (review of #1287):
+        // a pending reward offer, its chosen/claimed rows, or a catch-up entry
+        // that is malformed (a field of the wrong shape reads as nothing owed
+        // and is silently forfeit) or names content this build does not hold
+        // (granted, it crashes a later node). Every field is checked, not
+        // only the ids (offerShapeProblems, the solo door's rules). The seat is
+        // refused with its reason — the save stays evidence, as for any other
+        // poisoned member record.
+        const owed = [
+          ...catchupReferenceProblems(registries, md.catchup),
+          ...rewardSceneSeatProblems(registries, restore.scene, md.id),
+        ];
+        if (owed.length) throw new Error(`Session member '${md.id}' owes malformed or unknown content: ${owed.join('; ')}`);
         if (md.classId !== md.run.class) {
           throw new Error(`Session member '${md.id}' class '${md.classId}' disagrees with run class '${md.run.class}'`);
         }
@@ -473,6 +609,7 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- combat (live shared fight via coopCombat) ---------------------------
   let live = null; // { combat, pool } — the running shared fight
+  let finale = null; // the last frame of a fight that just ended (snapshot only)
   let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
 
   function memberAsPlayer(m) {
@@ -529,13 +666,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // active seat key is the authoritative discriminator. Stamp it at emission
     // time, while that discriminator is still exact, rather than asking the UI
     // to infer a target later from HP or block deltas.
-    const emit = combat.emit;
-    combat.emit = (type, payload = {}) => emit(type,
+    // Through wrapEmit, so a foundation transaction's candidate stamps too.
+    wrapEmit(combat, (ctx, emit) => (type, payload = {}) => emit(type,
       (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
+        ? { ...payload, playerId: payload.playerId ?? ctx.playerKey }
         : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
-          ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
-        : payload);
+          ? { ...payload, playerId: payload.playerId ?? ctx.playerKey }
+        : payload));
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
       const player = member ? combat.players.get(member.id) : null;
@@ -589,9 +726,16 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
     }
+    finale = null;
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
+  }
+
+  // The seat as model/artCharge.js reads a fight: its loadout, its entity and
+  // its own meter map — what coopCombat's setActive exposes for the actor.
+  function seatArtContext(P) {
+    return { registries, loadout: P.loadout, player: P.entity, artCharge: P.artCharge };
   }
 
   function combatScene() {
@@ -600,7 +744,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak', 'artChargeChanged', 'artUnleashed'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
@@ -608,6 +752,7 @@ export function createSession({ registries, seedString, endless = false, restore
         energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
         upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
+        weaponId: e.weaponId, max: e.max, unleashed: e.unleashed,
         stance: e.stance, kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blockRemaining: e.blockRemaining, success: e.success, blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
@@ -651,7 +796,18 @@ export function createSession({ registries, seedString, endless = false, restore
         // so a live meter the host fills was invisible to every co-op player
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
+        // Each Art card's charge, read the way the play door will read it
+        // (SPEC §12.2.1 item 10); a card with no meter carries nothing.
+        hand: P.piles.hand.map((c2) => {
+          const charge = artUnleashFor(seatArtContext(P), c2);
+          return {
+            instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded,
+            ...(charge ? { artCharge: { weaponId: charge.weaponId, value: charge.value, max: charge.max, unleashed: charge.ready } } : {}),
+          };
+        }),
+        // THE SEAT'S WEAPON ART METERS (SPEC §12.2.1 item 10): the HUD rows,
+        // one per equipped weapon with a meter.
+        artCharge: artChargeView(seatArtContext(P)),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -702,6 +858,11 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!live) return { ok: true };
     const c = live.combat;
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
+    // THE FIGHT-ENDING FRAME (SPEC §7.4, co-op): the scene below becomes the
+    // reward door (or the run's end) in this same snapshot, so the killing
+    // receipts ride beside it as a transient `finale` — never persisted,
+    // dropped when the door closes or the next fight starts.
+    finale = combatScene();
     const pool = live.pool;
     const outcome = coopOutcome(c);
     for (const m of livingMembers()) {
@@ -780,20 +941,34 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- rewards + catch-up --------------------------------------------------
   function rollRewardFor(m, pool) {
+    // Handed the seat's run, the offer reads and moves that seat's card-rarity
+    // pity (SPEC §3.8.1), as the solo door does.
     const cardIds = rollCardRewardIds(registries, m.rng, {
-      classId: m.classId, pool, relicIds: m.run.relics,
+      classId: m.classId, pool, relicIds: m.run.relics, run: m.run,
     });
     // Co-op-only cards (StS2): with a real party, every combat reward carries
     // one team-play option on top of the normal class picks.
     if (livingMembers().length > 1) {
       cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
     }
-    const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
+    let cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
-    const relicId = pool === 'elite' || pool === 'boss'
-      ? rollRelicReward(registries, m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
-      : null;
-    return { pool, cardIds, cinders, flaskId, relicId };
+    if (pool === 'boss') {
+      // SPEC §6.1, the solo door's rule per seat: a choice of distinct boss
+      // relics the seat does not hold; none left pays the consolation.
+      const relicIds = rollBossRelicChoices(registries, m.rng, m.run.relics);
+      if (!relicIds.length) cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
+      return { pool, cardIds, cinders, flaskId, relicId: null, relicIds };
+    }
+    if (pool === 'elite') {
+      // THE ELITE CHEST (SPEC §3.8.1, co-op): rolled on this seat's own
+      // stream against its own run and STORED in the offer, so a catch-up
+      // replays these options and never re-rolls. No armament category: the
+      // co-op door grants no armament piece and a seat has no bag for one.
+      const chest = rollEliteChest(registries, m.rng, m.run, { omit: ['armament'] });
+      return { pool, cardIds, cinders, flaskId, ...(chest ? { chest } : {}) };
+    }
+    return { pool, cardIds, cinders, flaskId, relicId: null };
   }
 
   function grantRewards(pool) {
@@ -817,21 +992,94 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'reward', pool, offers: pending, chosen: {}, afterReward: null };
   }
 
+  /**
+   * Can this seat take chest option `index` of `offer` NOW (SPEC §3.8.1,
+   * co-op)? A dry run of the solo grant on a copy of the seat's run. A relic
+   * already in hand on catch-up is still takeable: that door substitutes.
+   */
+  function chestTakeable(m, option, { catchup = false } = {}) {
+    if (!option) return false;
+    if (catchup && option.category === 'relic') return relicLandable(m, option.relicId);
+    const copy = { ...m.run, deck: structuredClone(m.run.deck), relics: [...m.run.relics] };
+    return applyChestOption(registries, copy, option);
+  }
+  /**
+   * Can a catch-up relic `relicId` still land (SPEC §6.1, co-op catch-up)? One
+   * the seat does not hold lands as itself; one an earlier replayed entry
+   * already granted is paid by a substitute — landable only while one is left
+   * to roll (`rarities` as the substitute roll reads them). The check reads the
+   * pool without drawing (a stub pick), so marking the view spends no RNG.
+   */
+  function relicLandable(m, relicId, rarities = {}) {
+    if (!m.run.relics.includes(relicId)) return true;
+    return rollRelicReward(registries, { pick: (_stream, pool) => pool[0] }, m.run.relics, rarities) !== null;
+  }
+  /**
+   * The substitute rarities for a reward offer's relic: a boss door's relic is
+   * replaced by a boss relic, every other by the normal pool.
+   */
+  const substituteRarities = (offer) => (offer && offer.pool === 'boss' ? { rarities: ['boss'] } : {});
+  /** Why a chest pick is refused, or null when it lands. */
+  function chestRefusal(m, offer, index, opts = {}) {
+    const option = offer && offer.chest && Number.isInteger(index) ? offer.chest.options[index] : null;
+    if (!option) return 'no such chest option';
+    return chestTakeable(m, option, opts) ? null : 'that chest option can no longer be taken';
+  }
+
+  /**
+   * The one relic a reward pick lands (SPEC §6.1), or null. `relicId` names
+   * one of the offered ids — the boss choice's door; a bare `takeRelic` takes
+   * the single relic, or on a choice the first offered (a legacy client or a
+   * bot that never names one). Anything not on the table lands nothing, so a
+   * seat can never take two nor one the host did not offer.
+   */
+  function pickedRelic(offer, { relicId = null, takeRelic = false } = {}) {
+    const ids = offeredRelicIds(offer);
+    if (relicId) return ids.includes(relicId) ? relicId : null;
+    return takeRelic ? ids[0] || null : null;
+  }
+
   // A present member takes their card/relic pick (or skips with null).
-  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false } = {}) {
+  function chooseReward(memberId, { cardId = null, takeRelic = false, relicId = null, flask = false, chestIndex = null } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
-    if (cardId && offer.cardIds.includes(cardId)) {
+    // ONE PICK PER SEAT: the screen stages every row and sends the whole door
+    // once on Continue (coop-parity), so a seat that has chosen is done at
+    // this door. A later message — a stale re-send, or a chest pick while the
+    // others choose — is refused whole, never granted on top.
+    if (session.scene.chosen && session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
+    // ONE OF EACH PER SEAT: the screen stays up (and re-sends its whole pick)
+    // after a seat's first tap while the others choose, so a second message
+    // may name the card again, ANOTHER relic of a boss choice (SPEC §6.1) or
+    // another chest option (§3.8.1). What the seat already landed at this door
+    // is kept on the scene and never granted twice.
+    if (!session.scene.claimed) session.scene.claimed = {};
+    const claimed = session.scene.claimed[memberId] || (session.scene.claimed[memberId] = {});
+    // A chest pick that cannot land is refused before anything moves.
+    if (chestIndex != null && !claimed.chest) {
+      const refusal = chestRefusal(m, offer, chestIndex);
+      if (refusal) return { ok: false, error: refusal };
+      applyChestOption(registries, m.run, offer.chest.options[chestIndex]);
+      claimed.chest = true;
+    }
+    if (!claimed.card && cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+      claimed.card = true;
     }
-    if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
-      m.run.relics.push(offer.relicId);
+    const relic = claimed.relic ? null : pickedRelic(offer, { relicId, takeRelic });
+    if (relic && !m.run.relics.includes(relic)) {
+      m.run.relics.push(relic);
+      claimed.relic = true;
     }
-    if (flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
+    if (!claimed.flask && flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) {
       m.run.flasks.push({ flaskId: offer.flaskId });
+      claimed.flask = true;
     }
+    // A relic grant (chest or relic row) may be a flask-growth source: bind
+    // it now, as the solo reward door does, so the next fight carries it.
+    syncFlaskGrowth(registries, m.run);
     session.scene.chosen[memberId] = true;
     // When every present member has chosen, close the reward scene.
     const waiting = Object.keys(session.scene.offers).filter((id) => {
@@ -843,6 +1091,7 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   function closeReward() {
+    finale = null;
     const after = session.scene.afterReward;
     if (after === 'advanceAct') advanceAct();
     else advanceFromNode();
@@ -943,6 +1192,7 @@ export function createSession({ registries, seedString, endless = false, restore
       const relicId = rollRelicReward(registries, m.rng, m.run.relics);
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
+        syncFlaskGrowth(registries, m.run);
       } else {
         m.catchup.push({ type: 'treasure', relicId, act: session.actNumber, floor: session.floor });
       }
@@ -1193,24 +1443,52 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!item) return { ok: false, error: 'bad catch-up index' };
     if (item.type === 'reward') {
       const offer = item.offer;
-      if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
-        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
-      }
+      const boss = offer.pool === 'boss';
       // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
       // entry can have granted the very relic the offer rolled (rolled against
       // the relics the seat held then). The seat is owed a relic, not this
       // one: a substitute is rolled against the relics in hand now (Codex on
-      // #548).
-      if (pick && pick.takeRelic && offer.relicId) {
-        const id = m.run.relics.includes(offer.relicId) ? rollRelicReward(registries, m.rng, m.run.relics, offer.pool === 'boss' ? { rarities: ['boss'] } : {}) : offer.relicId;
-        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+      // #548). With NO SUBSTITUTE LEFT the pick follows its live door (SPEC
+      // §6.1): a boss relic pays the boss consolation, as the boss door pays
+      // it on an empty pool; any other relic — whose live door pays nothing
+      // on an empty pool — is refused before anything moves and the entry
+      // stays, as a stale chest option is (the view marks it unavailable).
+      const chosen = pick ? pickedRelic(offer, pick) : null;
+      if (chosen && !boss && !relicLandable(m, chosen)) return { ok: false, error: 'that relic can no longer be taken' };
+      // THE STORED CHEST (SPEC §3.8.1): the options rolled when the party met
+      // the elite, never re-rolled. A stale pick is refused, the entry stays.
+      if (pick && pick.chestIndex != null) {
+        const refusal = chestRefusal(m, offer, pick.chestIndex, { catchup: true });
+        if (refusal) return { ok: false, error: refusal };
+        const option = offer.chest.options[pick.chestIndex];
+        if (option.category === 'relic' && m.run.relics.includes(option.relicId)) {
+          const id = rollRelicReward(registries, m.rng, m.run.relics);
+          if (!id) return { ok: false, error: 'that chest option can no longer be taken' }; // chestTakeable refuses first
+          m.run.relics.push(id);
+        } else {
+          applyChestOption(registries, m.run, option);
+        }
+      }
+      if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
+        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
+      }
+      if (chosen) {
+        const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, substituteRarities(offer)) : chosen;
+        if (id) m.run.relics.push(id);
+        else if (boss) m.run.cinders += registries.balance.rewards.bossRelicConsolationCinders || 0;
       }
       if (pick && pick.flask && offer.flaskId && m.run.flasks.length < flaskSlotCap(registries.balance)) m.run.flasks.push({ flaskId: offer.flaskId });
+      syncFlaskGrowth(registries, m.run); // a caught-up relic may grow the flask belt
     } else if (item.type === 'treasure') {
       if (pick && pick.takeRelic && item.relicId) {
+        // A treasure room pays nothing on an empty pool, live or solo: a held
+        // relic with no substitute left is refused and the entry stays (the
+        // seat may leave it with an empty pick).
+        if (!relicLandable(m, item.relicId)) return { ok: false, error: 'that relic can no longer be taken' };
         const id = m.run.relics.includes(item.relicId) ? rollRelicReward(registries, m.rng, m.run.relics) : item.relicId;
-        if (id && !m.run.relics.includes(id)) m.run.relics.push(id);
+        if (id) m.run.relics.push(id);
       }
+      syncFlaskGrowth(registries, m.run);
     } else if (item.type === 'event') {
       // THE MISSED EVENT IS CHOSEN NOW, through the door a live choice walks
       // (eventChoice), against THE OPTIONS FROZEN IN THE ENTRY: the choices
@@ -1351,8 +1629,23 @@ export function createSession({ registries, seedString, endless = false, restore
       deckSize: m.run.deck.length, relics: m.run.relics.length, flasks: m.run.flasks.length,
       flaskCharges: structuredClone(m.run.flaskCharges),
       catchup: m.catchup.length,
-      catchupQueue: m.catchup, // rolled options for the reconnect series
+      // Rolled options for the reconnect series; a stored elite chest also
+      // says which of its options can still land (SPEC §3.8.1, co-op).
+      // A stored non-boss relic (a treasure's, or a legacy single-relic row)
+      // says whether it can still land; a boss relic always can (a substitute
+      // or the consolation, SPEC §6.1).
+      catchupQueue: m.catchup.map((item) => catchupView(m, item)),
     };
+  }
+
+  /** A catch-up entry as the member view draws it: the entry plus its takeable marks. */
+  function catchupView(m, item) {
+    if (item.type === 'treasure') return item.relicId ? { ...item, relicTakeable: relicLandable(m, item.relicId) } : item;
+    if (item.type !== 'reward' || !item.offer) return item;
+    const marks = {};
+    if (item.offer.chest) marks.chestTakeable = item.offer.chest.options.map((o) => chestTakeable(m, o, { catchup: true }));
+    if (item.offer.relicId && item.offer.pool !== 'boss') marks.relicTakeable = relicLandable(m, item.offer.relicId);
+    return Object.keys(marks).length ? { ...item, ...marks } : item;
   }
 
   // Serialize the run to plain JSON for host disk-resume. Returns null during a
@@ -1443,6 +1736,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // and why. Identity + reason only — the evidence bytes stay host-side,
       // in serialize().
       refusedMembers: refused.map((r) => ({ id: r.id, name: r.name, reason: r.reason })),
+      ...(finale ? { finale } : {}),
     };
   }
 
@@ -1454,6 +1748,17 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, resolveNode,
     combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
+    // The per-seat offer roll, handed out READ-ONLY so a test can read the
+    // boss door's shape (SPEC §6.1) without walking a party to a boss. The
+    // roll runs on a shadow seat — a clone of the run (its pity counters) and
+    // a fresh stream at the seat's counters — so the seat's stream and pity
+    // are exactly where they were: a peek never moves the real door's roll.
+    rollRewardFor: (memberId, pool) => {
+      const m = members.get(memberId);
+      if (!m) return null;
+      const shadow = { ...m, run: structuredClone(m.run), rng: memberRng(seed, m.index, structuredClone(m.rng.getCounters())) };
+      return rollRewardFor(shadow, pool);
+    },
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

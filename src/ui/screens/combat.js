@@ -31,6 +31,8 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { artChargeMeter, artChargePips, artChargeLabel, unleashedSummary } from '../components/artChargeMeter.js';
+import { artChargeView, unleashedFormFor, artUnleashFor, advanceArtChargeDisplay, newlyFullIds, beatRepaintsHand, pacedArtPreview, labelArtChargeCard } from '../../model/artCharge.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -102,9 +104,8 @@ function pileButton(kind, label) {
   return node;
 }
 
-// The event types that move the displayed hand between beats — the same four
-// applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
-const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+// The event types that repaint the displayed hand between beats live with the
+// charge display rules in model/artCharge.js (beatRepaintsHand).
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -229,6 +230,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
+    // SPEC §7.4 kill cam: did this dispatch win the fight (its last kill is the winning blow)?
+    fightWon: () => combat.result === 'victory',
     // #61: fx beats read a proc row's display data (name/tint/icon) through
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
@@ -610,6 +613,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+  // The Art charge map the screen shows: the paced copy while a timeline
+  // plays, the live one otherwise (so skip / instant land on the final value).
+  const shownArtCharge = () => (disp && disp.artCharge) || combat.artCharge || {};
 
   const words = (value) => String(value || '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -799,7 +805,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
+    // A full Art's unleashed preview, taken before the dispatch that spends
+    // its meter, so the card stays drawn unleashed until its play beat.
+    const artPreviews = {};
+    for (const inst of combat.piles.hand) {
+      if (!artUnleashFor(combat, inst)?.ready) continue;
+      try { artPreviews[inst.instanceId] = previewCard(combat, inst.instanceId); } catch { /* not previewable: drawn plain */ }
+    }
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], artCharge: { ...(combat.artCharge || {}) }, artPreviews };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -823,6 +836,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'arcaneExposureRefused':
           disp.arcaneEvents.push(e);
+          break;
+        // The Art charge pips fill on the hit that earned them (SPEC 12.2.1).
+        case 'artChargeChanged':
+        case 'artUnleashed':
+          advanceArtChargeDisplay(disp.artCharge, [e]);
           break;
         case 'damageDealt':
           if (t) t.block = Math.max(0, t.block - e.blocked);
@@ -1283,6 +1301,57 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let handRenderKey = null;
   const enemyFrames = new Map();
 
+  // Which weapons' Art meters were full at the last paint, so a meter flashes
+  // once when it FILLS rather than on every repaint while full.
+  let artChargeFullBefore = new Set();
+  function newlyFullArtCharges(rows) {
+    const { fresh, next } = newlyFullIds(artChargeFullBefore, rows.filter((row) => row.full).map((row) => row.weaponId));
+    artChargeFullBefore = next;
+    return fresh;
+  }
+  // The same once-only rule for the Art cards in hand, keyed by instance: the
+  // hand rebuilds a card's node whenever the hand's size changes, so the node
+  // itself cannot remember that it already flashed.
+  let artCardsFullBefore = new Set();
+  function statusDisplayName(id) {
+    try { return registries.statuses.get(id).name || id; } catch { return id; }
+  }
+  // The Art card in hand wears its weapon's pips, and the Unleashed marker
+  // when the meter is full (the preview's answer is the play's answer).
+  function decorateArtChargeCards(handList) {
+    for (const node of app.querySelectorAll('.hand .card .art-charge-card')) node.remove();
+    const fullNow = handList.filter((inst) => artUnleashFor(combat, inst, shownArtCharge())?.ready).map((inst) => inst.instanceId);
+    const { fresh: freshlyFull, next } = newlyFullIds(artCardsFullBefore, fullNow);
+    artCardsFullBefore = next;
+    for (const inst of handList) {
+      const node = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(inst.instanceId)}"]`);
+      if (!node) continue;
+      let charge = null;
+      const shown = artUnleashFor(combat, inst, shownArtCharge());
+      if (shown) charge = { weaponId: shown.weaponId, value: shown.value, max: shown.max, unleashed: shown.ready };
+      if (!charge) { delete node.dataset.artCharge; delete node.dataset.artChargeLabel; labelArtChargeCard(node, null); node.classList.remove('art-charge-flash'); continue; }
+      node.dataset.artCharge = charge.unleashed ? 'full' : 'partial';
+      node.classList.toggle('art-charge-flash', charge.unleashed && freshlyFull.has(inst.instanceId));
+      const badge = el('span', { class: 'art-charge-card' });
+      badge.appendChild(artChargePips(charge.value, charge.max));
+      if (charge.unleashed) {
+        const form = unleashedFormFor(registries, inst.cardId);
+        // The card's own unleashed strip (card.js) prints the bonus, so the
+        // marker is the pips alone and moves clear of that strip.
+        badge.title = form ? `Unleashed: ${unleashedSummary(form.effects, statusDisplayName)}` : t('combat.art.unleashed');
+        // On a phone the next card covers all but this card's left step, so
+        // the marker also carries the strip's own compact words and rides
+        // above the card's top edge (styles/combat.css shows it there only).
+        const strip = node.querySelector('.cd-unleashed-short') || node.querySelector('.cd-unleashed-long');
+        if (strip && strip.textContent) badge.appendChild(el('span', { class: 'art-charge-bonus', text: strip.textContent, aria: { hidden: 'true' } }));
+      }
+      node.appendChild(badge);
+      const row = { name: registries.equipment.armaments.find((a) => a.id === charge.weaponId)?.name || charge.weaponId, artName: inst.cardId, value: charge.value, max: charge.max, full: charge.unleashed };
+      node.dataset.artChargeLabel = artChargeLabel(row);
+      labelArtChargeCard(node, node.dataset.artChargeLabel);
+    }
+  }
+
   function renderPlayer() {
     const zone = $('.player-zone');
     const p = combat.player;
@@ -1290,7 +1359,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings(), shownArtCharge()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1316,6 +1385,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    // THE WEAPON ART CHARGE METERS (SPEC §12.2.1): one pip bar per equipped
+    // weapon with a meter; a meter that filled since the last paint flashes.
+    const chargeRows = artChargeView(combat, shownArtCharge());
+    const chargeEl = artChargeMeter(chargeRows, { flashIds: newlyFullArtCharges(chargeRows) });
+    if (chargeEl) {
+      for (const node of chargeEl.querySelectorAll('.art-charge-row')) {
+        const row = chargeRows.find((r) => r.weaponId === node.dataset.weaponId);
+        const form = row && unleashedFormFor(registries, row.artCardId);
+        node.tabIndex = 0;
+        attachTooltip(node, () => `<div class="tt-title">${esc(row.name)} · Art charge ${row.value}/${row.max}</div>${esc(`Hits with ${row.name}'s cards fill this. When full, ${row.artName} is unleashed on its next play${form ? `: ${unleashedSummary(form.effects, statusDisplayName)}` : ''}.`)}`);
+      }
+    }
     if (combat.foundation && p.evade > 0) {
       const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
@@ -1340,7 +1421,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const slots = {
       role: 'player',
       entityId: 'player',
-      leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
+      // The Art charge meters ride overhead, where an enemy shows its intent.
+      leading: [chargeEl, combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
       blockBadge: blockBadge(p),
@@ -1493,7 +1575,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings(), shownArtCharge()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1505,6 +1587,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         let pv = null;
         try {
           if (!heldTurnHand) pv = previewCard(combat, inst.instanceId);
+          // During paced playback the Art's face reads the SHOWN charge: no
+          // unleashed line before the hit that fills the meter has played.
+          if (pv && pv.artCharge) {
+            // A full Art being played has already emptied the live meter, so
+            // its unleashed line comes from the pre-dispatch preview until
+            // the beat that spends it.
+            pv = pacedArtPreview(pv, artUnleashFor(combat, inst, shownArtCharge()), disp && disp.artPreviews ? disp.artPreviews[inst.instanceId] : null);
+          }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
@@ -1517,6 +1607,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
     });
+    decorateArtChargeCards(handList);
     syncHandPager(handList);
     handRenderKey = key;
   }
@@ -2161,10 +2252,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
           }
           // The displayed hand (disp.hand) moves only on the four card events
-          // applyBeatToDisp handles; every other beat — a hit, a heal, a
-          // status — re-rendered every card in the hand for no change. The
-          // flush and the terminal callback still render the whole board.
-          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
+          // applyBeatToDisp handles, and the Art cards in it wear the shown
+          // charge, which moves on the two charge events; every other beat — a
+          // hit, a heal, a status — re-rendered every card in the hand for no
+          // change. The flush and the terminal callback still render the
+          // whole board.
+          if (beatRepaintsHand(beat.events)) renderHand();
           renderControls();
           showPileFeedback(beat.events);
         },

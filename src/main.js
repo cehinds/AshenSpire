@@ -18,6 +18,7 @@ import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 
 import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
+import { artChargeView } from './model/artCharge.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, hasLegacyItemRatingSettings, normalizeAdvancedSettings, presentationConfig } from './model/advancedConfig.js';
@@ -62,6 +63,8 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollEliteChest,
+  rollBossRelicChoices,
   buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
@@ -108,7 +111,9 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, freezeFigures, playKillCam, guardHitFloatParts } from './ui/fx.js';
+import { killCamPlan, hitStopMs } from './ui/models/CombatJuiceModel.js';
+import { playPoseOn } from './ui/services/PoseAnimator.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -781,6 +786,7 @@ function applyDisplaySettings(settings) {
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
   document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
+  document.body.classList.toggle('no-killcam', !settingOn(settings, 'killCam')); // SPEC §7.4 combat juice
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
@@ -1623,7 +1629,7 @@ function rollDrop(source) {
 }
 
 /**
- * collectArmament(id, source) — the one home of the armament bargain, fired
+ * collectArmament(id, source) → false | commit — the one home of the armament bargain, fired
  * when the player TAKES the row (or auto-collect takes it for them): the piece
  * goes into this run's storage so you can use it now, and into the profile's
  * found set so it stays available in every run after — a climb that ends badly
@@ -1640,8 +1646,11 @@ function collectArmament(id, source) {
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
   if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
-  recordCollectedArmament(id, source);
-  return true;
+  // THE PROFILE WAITS FOR THE RUN SAVE. meta.found is durable and outlives a
+  // rollback: written here, a refused reward save rolled the bag back but
+  // left the piece permanently found (and excluded from every later drop).
+  // The reward screen calls this commit only after its save lands.
+  return () => recordCollectedArmament(id, source);
 }
 
 // Called only after collection or a committed trader purchase stored the item.
@@ -2227,6 +2236,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  // `?shotArtCharge=partial|full` — STAND AT A WEAPON ART CHARGE (SPEC
+  // §12.2.1). A reach state like ?shotHand: it writes the fight's own
+  // `artCharge` map, the field a real hit fills, for every equipped weapon
+  // with a meter — half full (at least one pip) or full.
+  if (shotState === 'combat' && shotParams.has('shotArtCharge')) {
+    const mode = shotParams.get('shotArtCharge');
+    if (mode !== 'partial' && mode !== 'full') throw new Error(`?shotArtCharge=${mode}: use 'partial' or 'full'.`);
+    for (const row of artChargeView(combat)) combat.artCharge[row.weaponId] = mode === 'full' ? row.max : Math.max(1, Math.floor(row.max / 2));
+  }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
@@ -2253,6 +2271,14 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[0].arcaneExposure = { ...structuredClone(authored), value: 0 };
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
+  }
+  if (shotState === 'combat' && shotParams.has('shotEnemyHp')) {
+    // `?shotEnemyHp=<n>` — every living enemy starts at most n HP, so one real
+    // card play is the killing blow (SPEC §7.4 kill-cam evidence). Host state
+    // before mount, like the fixtures around it; never written to a save.
+    const hp = Number(shotParams.get('shotEnemyHp'));
+    if (!Number.isInteger(hp) || hp < 1) throw new Error(`?shotEnemyHp=${shotParams.get('shotEnemyHp')}: needs a whole number ≥ 1`);
+    for (const enemy of combat.enemies) if (enemy.alive) enemy.hp = Math.min(enemy.hp, hp);
   }
   if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
     // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
@@ -2345,7 +2371,7 @@ async function onCombatEnd(result, combat, enc) {
   // sentence. Ledger state is read live from the run; only the GAIN is kept,
   // and it is the amount each award SAYS it paid, never a second reading of
   // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelUps: levelAward.levelUps });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2403,13 +2429,17 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = rollSkillDrafts('boss');
     const bossClassDrafts = rollClassDrafts();
+    // SPEC §6.1: a choice of distinct boss relics, keep one. An empty pool
+    // (every boss relic held) pays cinders where the relic stood.
+    const bossRelicIds = rollBossRelicChoices(registries, rng, run.relics);
     const bossRewards = {
       title: victoryTitle(enc),
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
+      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0)
+        + (bossRelicIds.length ? 0 : registries.balance.rewards.bossRelicConsolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn(), run }),
+      relicIds: bossRelicIds,
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2422,18 +2452,23 @@ async function onCombatEnd(result, combat, enc) {
   // schools, and while one is on the table the class-card offer is not.
   const drafts = rollSkillDrafts(enc.pool);
   const classDrafts = rollClassDrafts();
+  // Elites are the mid-run source of armaments; ordinary fights are not
+  // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
+  // no-op there rather than a hidden 0%). Rolled before the chest (their
+  // streams are disjoint, SPEC §3.8.1) so the chest can exclude this piece.
+  const doorArmamentId = rollDrop(enc.pool);
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     classDrafts,
     skillDrafts: drafts,
-    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    // Handed the run, the card offer reads and moves the rarity pity (SPEC §3.8.1).
+    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), run }),
     flaskId: rollFlaskDrop(registries, rng, run),
-    relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
-    // Elites are the mid-run source of armaments; ordinary fights are not
-    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
-    // no-op there rather than a hidden 0%).
-    armamentId: rollDrop(enc.pool),
+    // The elite chest (SPEC §3.8.1) replaces the elite's one random relic:
+    // a visible pick of one big reward from distinct categories.
+    chest: enc.pool === 'elite' ? rollEliteChest(registries, rng, run, { found: saves.loadMeta().found || [], exclude: [doorArmamentId] }) : null,
+    armamentId: doorArmamentId,
     smithingStoneReceipt,
     xpGains,
   };
@@ -2486,6 +2521,7 @@ function beginPendingReward(rewards, { source, after }) {
     chosenCardId: null,
     chosenDraftCardIds: {},
     chosenDraftNodeIds: {},
+    chosenRelicId: null,
   };
   persist();
   return mountPendingReward();
@@ -2702,6 +2738,8 @@ function poseFxShowcase() {
   const enemies = [...document.querySelectorAll('.combatant.enemy .sprite')];
   const player = document.querySelector('.combatant.player .sprite');
   if (!layer || !enemies.length || !player) return;
+  const juice = shotParams.get('shotFx');
+  if (juice === 'hitstop' || juice === 'killcam') { poseCombatJuice(juice, layer, enemies[0], player); return; }
   // Container: THE FX LAYER — these are `position: absolute` children of
   // `.fx-layer`, so the layer is the containing block and the bound, NOT the
   // viewport (the layer is `inset: 0` over the combat board only).
@@ -2762,6 +2800,44 @@ function poseFxShowcase() {
   }
 }
 
+// ?shot=fx&shotFx=hitstop|killcam — SPEC §7.4 combat juice, posed through the
+// SAME fx.js helpers the paced timeline calls, held open (ms = Infinity) so
+// the frame can be photographed. Dev-only; the decisions are the model's.
+function poseCombatJuice(kind, layer, target, player) {
+  const ctx = { layer, combatEl: document.querySelector('.combat') };
+  window.__juiceShot = kind;
+  // floatNum schedules its own removal; a held copy outlives it, paused mid-pop.
+  const hold = (el, atMs) => {
+    if (!el) return;
+    const kept = el.cloneNode(true);
+    kept.style.animationDelay = `-${atMs}ms`;
+    kept.style.animationPlayState = 'paused';
+    el.replaceWith(kept);
+  };
+  if (kind === 'hitstop') {
+    // A 38-damage crit: its float at its in-tier scale, the slash, the victim
+    // on its impact frame, and the attacker held mid-lunge.
+    const parts = guardHitFloatParts({ amount: 38, blocked: 0 });
+    hold(fxFloatNum(layer, target, parts.damage.text, parts.damage.cls, null, { jitter: false, scale: parts.damage.scale }), 200);
+    target.classList.add('hitflash', 'hit-heavy');
+    target.style.setProperty('--hurt-duration', '380ms');
+    player.classList.add('act-attack');
+    for (const a of (player.closest('[data-eid]') || player).getAnimations({ subtree: true })) {
+      const d = Number(a.effect?.getComputedTiming?.().duration);
+      if (Number.isFinite(d)) a.currentTime = d * 0.55;
+    }
+    freezeFigures({ targets: [target], sources: [player] }, Infinity);
+    window.__juiceHitStopMs = hitStopMs(38);
+    return;
+  }
+  // Kill cam on a boss-rank kill: the ✝, the defeated pose, zoom + vignette.
+  hold(fxFloatNum(layer, target, '✝', 'dmg heavy', null, { jitter: false }), 260);
+  playPoseOn(target, 'defeated');
+  const plan = killCamPlan({ rank: 'boss' }, {});
+  playKillCam(ctx, target, { ...plan, ms: Infinity });
+  window.__juiceKillCamMs = plan.ms;
+}
+
 // Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
 // a canned server snapshot through a stub socket — no server/second player
 // needed — so the co-op board/map can be photographed like the solo shots.
@@ -2805,6 +2881,21 @@ function coopCombatShot() {
     },
     party,
   };
+  // `?shotArt=partial|full` (SPEC §12.2.1 item 10): each seat's Weapon Art
+  // meters as the host sends them — artChargeView rows off the class's real
+  // starting loadout — and the viewer's Art card in hand with its charge.
+  const shotArt = shotParams.get('shotArt');
+  if (shotArt === 'partial' || shotArt === 'full') {
+    const seatRows = (classId, charge) => {
+      const seatRun = createRunState({ seed: 1, classId, registries });
+      return artChargeView({ registries, loadout: seatRun.loadout, player: { classId } }, charge);
+    };
+    const [p1, p2] = snapshot.scene.players;
+    const full = shotArt === 'full';
+    p1.artCharge = seatRows('starseer', { ashStaff: full ? 4 : 2 });
+    p2.artCharge = seatRows('reaver', { straightSword: 3, roundShield: full ? 4 : 1 });
+    p1.hand = [...p1.hand.slice(0, 4), { instanceId: 'h-art', cardId: 'starSpark', upgraded: false, artCharge: { weaponId: 'ashStaff', value: full ? 4 : 2, max: 4, unleashed: full } }];
+  }
   if (shotParams.get('shotArcane') === 'matrix') {
     const [locked, immune] = snapshot.scene.enemies;
     locked.arcaneExposure = {
@@ -2878,11 +2969,23 @@ function coopShotParty() {
     { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
 }
-function coopRewardShot() {
+function coopRewardShot(pose = null) {
+  // `?shotReward=bossRelic`: the boss door's choice of three (SPEC §6.1), the
+  // pool's first three in authored order — the host's own shape, no roll.
+  const boss = pose === 'bossRelic';
+  const offer = boss
+    ? { pool: 'boss', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 240, flaskId: null, relicId: null, relicIds: rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, []) }
+    // An elite door carries the seat's chest, as the host rolls it (SPEC
+    // §3.8.1, co-op: no armament category).
+    : { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', chest: { options: [
+      { category: 'relic', relicId: 'forsakenMedallion' },
+      { category: 'upgrade', mode: 'rare', cardId: 'executioner' },
+      { category: 'cinders', cinders: 90, smithingStones: 1 },
+    ] } };
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
     seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
+    scene: { kind: 'reward', pool: offer.pool, chosen: {}, afterReward: null, offers: { p1: offer } },
     party: coopShotParty(),
   };
 }
@@ -3332,6 +3435,14 @@ if (shotState === 'combat-test') {
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
+    // `?shotReward=levelup` — THE LEVEL MOMENT (SPEC §13.4o): the fight just
+    // climbed the character to level 5 and the point waits for a shrine, so
+    // the door opens on the level banner. Authored, like the rest of the pose.
+    // `?shotReward=eliteLevelup` — BOTH AT ONCE: the elite chest and the level
+    // banner on one door, the integration pose for the game-feel rework.
+    const chestPose = pose === 'chest' || pose === 'eliteLevelup';
+    const levelPose = pose === 'levelup' || pose === 'eliteLevelup';
+    if (levelPose) run.level = { xp: 20, level: 5, unspentPoints: 1 };
     const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
@@ -3341,13 +3452,33 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=chest` poses the ELITE door (SPEC §3.8.1): the chest in
+      // the relic's old seat, three authored options, no roll — a relic, a
+      // rare card pre-upgraded and a purse, so every capture is identical.
+      ...(chestPose ? {
+        title: 'ELITE FELLED',
+        chest: { options: [
+          { category: 'relic', relicId: 'forsakenMedallion' },
+          { category: 'upgrade', mode: 'rare', cardId: registries.classes.get(run.class).cardPool.find((id) => registries.cards.get(id).rarity === 'rare') },
+          { category: 'cinders', cinders: registries.balance.rewards.eliteChest.cinders[0], smithingStones: registries.balance.rewards.eliteChest.smithingStones },
+        ] },
+      } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 }, ...(levelPose ? { levelUps: 1 } : {}) },
     };
-    if (pose === 'pending') {
+    // `?shotReward=bossRelic` poses a BOSS door (SPEC §6.1): the relic row is
+    // a choice of three distinct boss relics, the pool's first three the run
+    // does not hold — authored order, no roll — mounted through the real
+    // checkpoint door so the pick persists like a live one.
+    if (pose === 'bossRelic') {
+      delete shotOffer.relicId;
+      delete shotOffer.flaskId;
+      shotOffer.title = 'BOSS DEFEATED';
+      shotOffer.relicIds = rollBossRelicChoices(registries, { pick: (_stream, pool) => pool[0] }, run.relics);
+      beginPendingReward(shotOffer, { source: 'boss', after: 'map' });
+    } else if (pose === 'pending') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved
@@ -3390,7 +3521,15 @@ if (shotState === 'combat-test') {
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
     const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
+    // `?shotEncounter=<id>` — fight a named encounter (e.g. an elite or boss)
+    // from the first node, for SPEC §7.4 kill-cam evidence on a real kill.
+    // An unknown id refuses by name rather than photograph some other fight.
+    const shotEncounter = shotParams.get('shotEncounter');
+    if (shotEncounter && !registries.encounters.all().some((e) => e.id === shotEncounter)) {
+      throw new Error(`?shotEncounter=${shotEncounter}: no such encounter`);
+    }
     if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
+    else if (shotEncounter) enterCombat(startId, shotEncounter);
     else enterNode(startId);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
@@ -3403,7 +3542,7 @@ if (shotState === 'combat-test') {
   }
   coopStubMount(coopMapShot(w == null ? 0 : Number(w)), 'p1');
 } else if (shotState === 'coopreward') {
-  coopStubMount(coopRewardShot(), 'p1');
+  coopStubMount(coopRewardShot(shotParams.get('shotReward')), 'p1');
 } else if (shotState === 'coopshrine') {
   coopStubMount(coopShrineShot(), 'p1');
 } else if (shotState === 'coopcatchup') {

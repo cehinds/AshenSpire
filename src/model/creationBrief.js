@@ -178,7 +178,7 @@ function attributeCycle(weight, perIncrease) {
  * time; every authored label, sentence, rule and equipment gate still comes
  * from its owning registry row.
  */
-export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, weaponFacts = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
@@ -247,9 +247,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
     const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
-    const stated = [...faceFacts, ...scalingFacts];
+    // THE EQUIPPED WEAPON'S GRADE LEADS (SPEC §13.4o): what the next point of
+    // this attribute adds to the Strike in the deck, as the card's own receipt
+    // says it (model/levelUpPreview.js weaponScalingFacts) — handed in by the
+    // shrine, which has a run; creation passes none.
+    const weaponLines = ((weaponFacts && weaponFacts[def.id]) || []).map((fact) => fact.label);
+    const stated = [...weaponLines, ...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
-    const lines = [...feeds, ...scaling, ...unlocks];
+    const lines = [...weaponLines, ...feeds, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,

@@ -236,6 +236,13 @@ export const SFX_RECIPES = {
   //   uiClick: [{ kind: 'tone', type: 'square', freq: 420, to: 420, dur: 0.04, peak: 0.18 }],
   // Wiring buttons to it is a UI-domain call, not mine, and rides the D10/D16
   // follow-up card (nothing checks ids-played == ids-in-table, both ways).
+  // THE LEVEL MOMENT (SPEC §13.4o): the spoils door's level banner, a beat
+  // after `victory` — a bright rising fifth, shorter than the fanfare so it
+  // reads as a second event rather than the fanfare's tail.
+  levelUp: [
+    { kind: 'tone', type: 'sine', freq: 523, to: 784, dur: 0.35, peak: 0.28 },
+    { kind: 'tone', type: 'triangle', freq: 1046, dur: 0.45, peak: 0.16, t0: 0.18 },
+  ],
   victory: [
     // A rising G–B–D–G arpeggio, one layer per note (was a forEach in engine code).
     { kind: 'tone', type: 'triangle', freq: 392, dur: 0.5, peak: 0.32 },

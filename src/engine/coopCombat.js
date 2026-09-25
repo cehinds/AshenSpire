@@ -41,6 +41,7 @@ import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
+import { attachArtCharge, endArtChargeResolution, takeArtUnleash } from './artCharge.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 import { refreshCombatRatings } from './combatRatings.js';
 
@@ -89,6 +90,10 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C._emitEvent = emitEvent;
   attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
+  // The Weapon Art charge meters (SPEC §12.2.1 item 10): the solo listener,
+  // reading and writing the ACTIVE seat's map (setActive points C.artCharge).
+  attachArtCharge(C);
+  C.artCharge = null;
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events
@@ -208,6 +213,9 @@ function addPlayerState(C, p, { initial = false } = {}) {
     skills: p.skills ? structuredClone(p.skills) : {},
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
+    // This seat's Weapon Art charge meters (SPEC §12.2.1 item 10), empty at
+    // fight start; setActive exposes them as C.artCharge.
+    artCharge: {},
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
     ended: false,
@@ -249,6 +257,7 @@ function setActive(C, P) {
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
   C.skills = P ? P.skills : {};
+  C.artCharge = P ? P.artCharge : null;
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
@@ -482,13 +491,25 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   };
   if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
+  // A FULL ART CHARGE UNLEASHES THIS PLAY (SPEC §12.2.1 items 5 and 10): the
+  // solo play door's rule, on the acting seat's meter.
+  const unleash = takeArtUnleash(C, inst);
+  const unleashedEffects = unleash ? unleash.effects : null;
+  if (unleashedEffects) {
+    meta.unleashed = true;
+    for (const action of F.cardActions(C, { effects: unleashedEffects }, p, target, cardRef, meta)) C.enqueue(action);
+  }
   C.emit('cardPlayed', {
+    ...(unleashedEffects ? { unleashed: true } : {}),
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
+  // The spend receipts follow the play they belong to (SPEC §12.2.1 item 5).
+  if (unleash) unleash.announce();
   drainQueue(C);
+  endArtChargeResolution(C);
 
   if (!C.result) {
     // Same framework placement authority as the solo engine (hand parity).

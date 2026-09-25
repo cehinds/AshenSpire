@@ -3,6 +3,7 @@ import { assetUrl } from './assetmap.js';
 import { ENEMY_STATE_SCALE } from '../content/enemyStateArt.js';
 import { ENEMY_STATE_POSES, enemyPresentation, enemyAuraFilter } from './enemyStates.js';
 import { liteRendering } from './performance.js';
+import { stageTimeout, clearStageTimeout } from './services/stageClock.js';
 
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
@@ -36,18 +37,18 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     presentation = enemyPresentation(next);
     host.dataset.buffs = presentation.buffs.join(' ');
     facing.style.filter = enemyAuraFilter(presentation.auraThemes);
-    if (presentation.rest === 'defeated') { clearTimeout(timer); timer = null; }
+    if (presentation.rest === 'defeated') { clearStageTimeout(timer); timer = null; }
     if (!timer) { current = presentation.rest; draw(); }
   }
-  function settle() { clearTimeout(timer); timer = null; current = presentation.rest; draw(); }
+  function settle() { clearStageTimeout(timer); timer = null; current = presentation.rest; draw(); }
   setState(entity);
   return {
-    dispose() { clearTimeout(timer); timer = null; },
+    dispose() { clearStageTimeout(timer); timer = null; },
     enemy: true, poses: ['idle', 'attack', ...ENEMY_STATE_POSES, 'defeated'], setState, settle,
     play(pose, ms = 300) {
       if (liteRendering() && pose !== 'defeated') return false;
       if (presentation.rest === 'defeated' && pose !== 'defeated') return false;
-      clearTimeout(timer);
+      clearStageTimeout(timer);
       if (pose === 'defeated') {
         presentation = { rest: 'defeated', buffs: [], auraThemes: [] };
         host.dataset.buffs = ''; facing.style.filter = 'none'; timer = null;
@@ -55,7 +56,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
       }
       current = pose === 'hit' ? 'hurt' : pose;
       draw();
-      timer = setTimeout(settle, Math.max(0, ms));
+      timer = stageTimeout(host, settle, Math.max(0, ms)); // freezable by hit-stop
       return true;
     },
   };

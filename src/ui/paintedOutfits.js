@@ -10,6 +10,7 @@ import { reducedMotionRequested } from './motion.js';
 import { hintImage } from './imageHints.js';
 import { preloadPoses } from './services/posePreloads.js';
 import { liteRendering } from './performance.js';
+import { stageTimeout, clearStageTimeout } from './services/stageClock.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { animationArt, animationClip, animationTiming, animationView } from '../model/equipmentAnimation.js';
 
@@ -125,7 +126,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   let transition = null, auraState = '';
   let resources = [], active = false;
   let reactionTimer, reactionQueue = [];
-  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  // Every frame step is on the stage clock, so a hit-stop holds it (stageClock.js).
+  const clear = () => { timers.forEach(clearStageTimeout); timers = []; };
   const syncAura = (stateId, fade = false, initialOpacity) => {
     const state = COMBAT_POSE_STATES[stateId];
     const opacity = initialOpacity ?? (Number.parseFloat(getComputedStyle(aura).opacity) || 0);
@@ -181,9 +183,9 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       setPose(stanceClip.frames[Math.min(stanceClip.frames.length - 1, Math.floor(elapsed / stanceClip.frameMs))]);
       stanceClip.frames.forEach((pose, index) => {
         const delay = index * stanceClip.frameMs - elapsed;
-        if (delay > 0) timers.push(setTimeout(() => setPose(pose), delay));
+        if (delay > 0) timers.push(stageTimeout(el, () => setPose(pose), delay));
       });
-      timers.push(setTimeout(settle, duration - elapsed));
+      timers.push(stageTimeout(el, settle, duration - elapsed));
       return;
     }
     const middle = frames[`${resting}Transition`] ? `${resting}Transition` : frames[`${from}Transition`] ? `${from}Transition` : null;
@@ -193,9 +195,9 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     el.dataset.poseTransition = COMBAT_POSE_STATES[resting] ? 'enter' : 'leave';
     if (elapsed < TIME.transitionMidpointMs) {
       setPose(middle, elapsed < TIME.immediateBlendThresholdMs);
-      timers.push(setTimeout(() => setPose(restingPose(), true), TIME.transitionMidpointMs - elapsed));
+      timers.push(stageTimeout(el, () => setPose(restingPose(), true), TIME.transitionMidpointMs - elapsed));
     } else setPose(restingPose());
-    timers.push(setTimeout(() => { transition = null; el.dataset.poseTransition = ''; if (!COMBAT_POSE_STATES[resting]) { auraState = ''; aura.dataset.motif = ''; } }, TIME.transitionMs - elapsed));
+    timers.push(stageTimeout(el, () => { transition = null; el.dataset.poseTransition = ''; if (!COMBAT_POSE_STATES[resting]) { auraState = ''; aura.dataset.motif = ''; } }, TIME.transitionMs - elapsed));
   };
   // A combat screen replaces its DOM between receipts. Carry presentation time
   // across that replacement so an unchanged status neither restarts nor cuts a fade.
@@ -245,8 +247,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       resources = aura;
       const duration = Math.max(TIME.minPlayMs, ms);
       setPose(sequence[0]);
-      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
-      timers.push(setTimeout(() => animation ? settle() : changeRest(current), duration));
+      sequence.slice(1).forEach((p, i) => timers.push(stageTimeout(el, () => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
+      timers.push(stageTimeout(el, () => animation ? settle() : changeRest(current), duration));
       return true;
     },
   });

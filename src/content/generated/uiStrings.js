@@ -290,6 +290,167 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.kind.chest",
+    "extends": "",
+    "short": "Elite chest",
+    "full": "A chest of big rewards: choose one, the rest stay shut.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.chooseOne",
+    "extends": "",
+    "short": "Choose one of {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.took",
+    "extends": "",
+    "short": "<b>{name}</b> taken from the chest.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.eyebrow",
+    "extends": "",
+    "short": "Open the chest",
+    "full": "Pick one reward; the others stay in the chest.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.aria",
+    "extends": "",
+    "short": "Chest rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.unavailable",
+    "extends": "",
+    "short": "Your bag is full",
+    "full": "There is no room in your bag for an armament. Choose another reward.",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.relic",
+    "extends": "",
+    "short": "Relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.upgrade",
+    "extends": "",
+    "short": "Upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.armament",
+    "extends": "",
+    "short": "Armament",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.weaponArt",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.cat.cinders",
+    "extends": "",
+    "short": "Purse",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.upgrade.owned",
+    "extends": "",
+    "short": "Upgrade your <b>{name}</b> to <b>{upgraded}</b>.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.upgrade.rare",
+    "extends": "",
+    "short": "<b>{name}</b> joins the deck already upgraded.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.weaponArt",
+    "extends": "",
+    "short": "<b>{name}</b> joins the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.purse",
+    "extends": "",
+    "short": "{cinders} cinders and {stones} Smithing Stone{plural}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.chest.purseName",
+    "extends": "",
+    "short": "{cinders} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.bossTitle",
+    "extends": "",
+    "short": "Boss relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.choose",
+    "extends": "",
+    "short": "Choose a relic",
+    "full": "Opens the boss's relics; Back returns here.",
+    "tip": "Choose a relic"
+  },
+  {
+    "id": "reward.relic.eyebrow",
+    "extends": "",
+    "short": "Choose a boss relic",
+    "full": "Keep one; the others stay behind.",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.aria",
+    "extends": "",
+    "short": "Boss relic choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.chosen",
+    "extends": "",
+    "short": "<b>{name}</b> is yours.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.confirm",
+    "extends": "common.confirm",
+    "short": "",
+    "full": "Keep the chosen relic.",
+    "tip": ""
+  },
+  {
+    "id": "reward.relic.skip",
+    "extends": "common.skip",
+    "short": "",
+    "full": "Leave every boss relic behind.",
+    "tip": "Skip the boss relic"
+  },
+  {
     "id": "reward.card.joins",
     "extends": "",
     "short": "<b>{name}</b> joins the deck.",
@@ -889,6 +1050,27 @@ export const uiStrings = [
     "extends": "",
     "short": "+{count} other skill{plural}",
     "full": "Tracks the panel does not list.",
+    "tip": ""
+  },
+  {
+    "id": "reward.levelUp.title",
+    "extends": "",
+    "short": "Level {level}",
+    "full": "You reached character level {level}.",
+    "tip": "Level up"
+  },
+  {
+    "id": "reward.levelUp.points",
+    "extends": "",
+    "short": "{points} point{plural} to assign at a Shrine",
+    "full": "Your levels earned attribute points; assign them at any Shrine's Level up.",
+    "tip": ""
+  },
+  {
+    "id": "reward.levelUp.assigned",
+    "extends": "",
+    "short": "Every point assigned",
+    "full": "No attribute point is waiting to be assigned.",
     "tip": ""
   },
   {
@@ -2695,6 +2877,48 @@ export const uiStrings = [
     "extends": "",
     "short": "Live portrait (W1c head)",
     "full": "The head portrait as the catalogue shows it.",
+    "tip": ""
+  },
+  {
+    "id": "combat.art.charge",
+    "extends": "",
+    "short": "Weapon Art charge",
+    "full": "How close each weapon's Art is to its unleashed form.",
+    "tip": ""
+  },
+  {
+    "id": "combat.art.unleash",
+    "extends": "",
+    "short": "Unleash",
+    "full": "The next Weapon Art from this weapon fires unleashed.",
+    "tip": ""
+  },
+  {
+    "id": "combat.art.unleashed",
+    "extends": "",
+    "short": "Unleashed",
+    "full": "This Weapon Art fires its unleashed form.",
+    "tip": ""
+  },
+  {
+    "id": "rest.levelUp.preview",
+    "extends": "",
+    "short": "What the pending points change",
+    "full": "The stats the pending attribute points would change.",
+    "tip": ""
+  },
+  {
+    "id": "settings.killCam",
+    "extends": "",
+    "short": "Kill cam",
+    "full": "A brief slow-motion close-up on the killing blow against an elite or boss, and on the blow that wins a fight. Separate from Screen shake; Reduced motion also turns it off.",
+    "tip": ""
+  },
+  {
+    "id": "coop.intentRefused",
+    "extends": "",
+    "short": "The host refused that choice: {reason}",
+    "full": "The host did not take the choice you sent; your door stays open to choose again.",
     "tip": ""
   }
 ];

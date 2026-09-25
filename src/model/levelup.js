@@ -24,7 +24,7 @@
 
 import { deriveStat } from './derivedStats.js';
 import { orderedAttributes } from './attributes.js';
-import { reconcileRunLoadoutHp } from './loadout.js';
+import { reconcileRunLoadoutHp, stampDeck } from './loadout.js';
 import { note } from './healLedger.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
@@ -225,6 +225,13 @@ export function applyLevelUp(registries, run, attributeId) {
   run.levelUps = (Number.isInteger(run.levelUps) ? run.levelUps : 0) + 1;
   run.levelPoints = (Number.isInteger(run.levelPoints) ? run.levelPoints : 0) + 1;
   rederivePools(registries, run, `point on ${attributeId}`);
+  // THE DECK READS THE POINT NOW, NOT A FIGHT LATER (SPEC §13.4o). Every
+  // equipment-priced card carries its amount stamped on the instance and
+  // combat copies that stamp in; without a restamp here the Strike the
+  // Level-up preview promised (8 → 11) stayed 8 for the whole next fight and
+  // only moved when that fight's end restamped. The pools were reconciled just
+  // above, so this restamp leaves them alone.
+  if (Array.isArray(run.deck) && run.loadout) stampDeck(registries, run, null, { reconcileEquipmentPools: false });
   note(run, {
     kind: 'write',
     site: 'levelup.js:applyLevelUp',

@@ -1,0 +1,44 @@
+# content/source/weaponScaling.csv — per-weapon attribute scaling grades (SPEC §13.4o)
+#
+# One row per (armament, attribute) that the weapon SCALES with. The grade is a
+# key of balance.weaponScaling.grades (S / A / B / C / D); an attribute with no
+# row is ungraded ('-' on the card) and keeps the flat rating weight.
+#
+# A grade prices only the piece's ATTACK rating (ar, or pr for a focus), and only
+# the points ABOVE balance.weaponScaling.anchor: at or below it every weapon
+# reads the flat rating, so a stock character's creation damage does not move,
+# and every point a level buys above it is paid at the grade.
+#
+# A weapon with no rows (every shield, the torch, the lantern, the parrying
+# dagger) keeps today's formula byte for byte.
+itemId,attributeId,grade
+straightSword,strength,B
+straightSword,dexterity,C
+greatsword,strength,S
+dagger,dexterity,A
+shortbow,dexterity,A
+katana,dexterity,B
+katana,strength,C
+halberd,strength,A
+halberd,dexterity,D
+warhammer,strength,S
+twinblade,dexterity,B
+twinblade,strength,D
+battleaxe,strength,A
+frostSpear,strength,B
+frostSpear,dexterity,B
+cinderAxe,strength,A
+
+ashStaff,intelligence,A
+starstoneStaff,intelligence,S
+wyrmhornStaff,intelligence,A
+wyrmhornStaff,wisdom,C
+blightRod,intelligence,B
+blightRod,wisdom,B
+boneSceptre,wisdom,B
+boneSceptre,intelligence,C
+emberlightSceptre,wisdom,S
+goldboughBranch,wisdom,A
+gorefireBrand,wisdom,A
+gorefireBrand,strength,D
+duskChime,wisdom,A

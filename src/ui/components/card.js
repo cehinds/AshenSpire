@@ -122,6 +122,14 @@ export function renderCard(registries, ref, opts = {}) {
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
   const model = playingCardModel(registries, ref, { preview: opts.preview || null });
+  // A weapon Art whose charge meter is full prints its unleashed line after
+  // its own text (SPEC §12.2.1): the template comes from the preview, and its
+  // tokens are in the preview's tokens, so it fills like any card text.
+  // It rides the foot of the art band as its own strip rather than the end of
+  // the rules text: a long rules text clipped it at resting size, and the art
+  // band has room the text band does not. A face that withholds the art band
+  // prints it after the text instead.
+  const unleashedLine = opts.preview && opts.preview.artCharge && opts.preview.artCharge.unleashed && opts.preview.artCharge.textTemplate;
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
   // type band), and one shared row budget below the band that tags and text
@@ -218,8 +226,14 @@ export function renderCard(registries, ref, opts = {}) {
     // still takes its share of the face's row budget, so the card would be the
     // same card with holes rather than a larger-typed one — and a screen
     // reader would announce a field the player cannot see.
+    const unleashedShort = unleashedLine && opts.preview.artCharge.shortTemplate;
+    const unleashedHtml = unleashedLine
+      ? `<span class="cd-unleashed-long">${fillTemplate({ ...def, textTemplate: unleashedLine }, model.tokens, model.baseTokens)}</span>`
+        + (unleashedShort ? `<span class="cd-unleashed-short">${fillTemplate({ ...def, textTemplate: unleashedShort }, model.tokens, model.baseTokens)}</span>` : '')
+      : '';
+    const printedDef = unleashedLine && !visible.has('art') ? { ...def, textTemplate: `${def.textTemplate} ${unleashedLine}` } : def;
     const body = region('type', `<div class="ctype">${esc(model.type.label)}</div>`)
-      + region('effects', `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div>`);
+      + region('effects', `<div class="ctext cd-text">${fillTemplate(printedDef, model.tokens, model.baseTokens)}</div>`);
     // The information button and the chevron are children of the card that
     // `bindCardInspection` appended with their own listeners; a repaint must
     // hand them back rather than take them away.
@@ -258,7 +272,8 @@ export function renderCard(registries, ref, opts = {}) {
         ? `<div class="ctags cd-tags">${tags
             .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
             .join('')}</div>`
-        : '') + '</div>') +
+        : '') +
+      (unleashedHtml ? `<div class="cd-unleashed" data-unleashed-line>${unleashedHtml}</div>` : '') + '</div>') +
       (body ? `<div class="cd-body">${body}</div>` : '') +
       region('footer', metadataBand(def.rarity, opts.owned));
     // Stamp what this paint drew BEFORE the kept children go back on, so the

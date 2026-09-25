@@ -38,6 +38,7 @@ import {
   NODE_RELATIONS,
   VARIABLE_SCOPES,
   CARD_RARITIES,
+  CHEST_CATEGORIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
@@ -54,6 +55,7 @@ import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
+import { weaponScalingProblems } from './ratingFormula.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
   itemRefIdentity,
@@ -114,6 +116,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tagFamilyDomains', // family x domain — which words each family may carry
   'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'propertyRules', // what each `property` tag confers (content/propertyRules.js)
+  'weaponArtUnleashed', // each combat-kit Weapon Art's unleashed form (SPEC §12.2.1)
   // THE TREE the five tag tables and the property rules are views of
   // (content/source/nodes.csv and companions; treeProblems checks it).
   'nodes', // id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
@@ -640,6 +643,7 @@ function collectContentProblems(bundle, errors = []) {
       }
     }
   }
+  validateRewardTuning(b, err);
 
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
@@ -676,6 +680,14 @@ function collectContentProblems(bundle, errors = []) {
       for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
+    }
+  }
+  // Weapon scaling grades (SPEC §13.4o): the anchor and the grade table the
+  // run snapshots at birth. Refused by name, never clamped.
+  if (b.balance && b.balance.weaponScaling !== undefined) {
+    for (const problem of weaponScalingProblems(b.balance.weaponScaling)) {
+      const [path, ...rest] = problem.split(': ');
+      err(path, rest.join(': '));
     }
   }
   if (b.balance && b.balance.deck !== undefined) {
@@ -858,6 +870,11 @@ function collectContentProblems(bundle, errors = []) {
   // may name are exactly the ones the ledger can hold.
   const skillIds = new Set(skillTracks(b).map((t) => t.id));
   const vctx = { ids, err, tagIds, nodeIds, skillIds };
+
+  // WEAPON ART CHARGE (SPEC §12.2.1): the meter's numbers and each combat-kit
+  // Art's unleashed form. Refused by name here so a malformed row never
+  // reaches the engine's one reader (model/artCharge.js).
+  validateWeaponArtCharge(b, vctx);
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -2164,6 +2181,118 @@ function isPlainObject(v) {
 // ---------------------------------------------------------------------------
 
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat'];
+
+// The reward knobs the game-feel rework added (SPEC §3.8.1, §6.1): card pity,
+// the elite chest, the boss relic pick. The engine reads them raw
+// (engine/encounters.js), so a malformed one is refused here BY NAME at boot
+// rather than throwing mid-run when a chest rolls its purse. An absent block
+// is left to the engine's own absence rule; a present one must be whole.
+function validateRewardTuning(b, err) {
+  const rewards = b.balance && b.balance.rewards;
+  if (!isPlainObject(rewards)) return;
+  const int = (v, min) => Number.isInteger(v) && v >= min;
+  const got = (v) => `got ${JSON.stringify(v)}`;
+  const pity = rewards.cardPity;
+  if (pity !== undefined) {
+    const root = 'balance.rewards.cardPity';
+    if (!isPlainObject(pity)) err(root, 'must be an object { offsetStart, offsetStep, offsetMax, rareGuaranteeAfter }');
+    else {
+      for (const key of Object.keys(pity)) if (!['offsetStart', 'offsetStep', 'offsetMax', 'rareGuaranteeAfter'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      for (const key of ['offsetStart', 'offsetMax']) if (!Number.isInteger(pity[key])) err(`${root}.${key}`, `must be an integer (percentage points), ${got(pity[key])}`);
+      if (!int(pity.offsetStep, 0)) err(`${root}.offsetStep`, `must be a non-negative integer, ${got(pity.offsetStep)}`);
+      if (Number.isInteger(pity.offsetStart) && Number.isInteger(pity.offsetMax) && pity.offsetStart > pity.offsetMax) err(`${root}.offsetStart`, `must not exceed offsetMax (${pity.offsetMax}), ${got(pity.offsetStart)}`);
+      if (!int(pity.rareGuaranteeAfter, 1)) err(`${root}.rareGuaranteeAfter`, `must be an integer of at least 1, ${got(pity.rareGuaranteeAfter)}`);
+    }
+  }
+  const chest = rewards.eliteChest;
+  if (chest !== undefined) {
+    const root = 'balance.rewards.eliteChest';
+    if (!isPlainObject(chest)) err(root, 'must be an object { choices, categoryWeights, upgradeOwnedPct, cinders, smithingStones }');
+    else {
+      for (const key of Object.keys(chest)) if (!['choices', 'categoryWeights', 'upgradeOwnedPct', 'cinders', 'smithingStones'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      if (!int(chest.choices, 1)) err(`${root}.choices`, `must be an integer of at least 1, ${got(chest.choices)}`);
+      const weights = chest.categoryWeights;
+      if (!isPlainObject(weights)) err(`${root}.categoryWeights`, `must be an object of category → weight (${CHEST_CATEGORIES.join(', ')})`);
+      else {
+        for (const [category, weight] of Object.entries(weights)) {
+          if (!CHEST_CATEGORIES.includes(category)) err(`${root}.categoryWeights.${category}`, `unknown chest category (known: ${CHEST_CATEGORIES.join(', ')})`);
+          else if (!Number.isFinite(weight) || weight < 0) err(`${root}.categoryWeights.${category}`, `must be a finite non-negative weight, ${got(weight)}`);
+        }
+        if (!CHEST_CATEGORIES.some((c) => Number.isFinite(weights[c]) && weights[c] > 0)) err(`${root}.categoryWeights`, 'must give at least one category a positive weight');
+      }
+      if (!(Number.isFinite(chest.upgradeOwnedPct) && chest.upgradeOwnedPct >= 0 && chest.upgradeOwnedPct <= 100)) err(`${root}.upgradeOwnedPct`, `must be a percent 0–100, ${got(chest.upgradeOwnedPct)}`);
+      const purse = chest.cinders;
+      if (!Array.isArray(purse) || purse.length !== 2 || !int(purse[0], 0) || !int(purse[1], 0)) err(`${root}.cinders`, `must be [lo, hi] non-negative integers, ${got(purse)}`);
+      else if (purse[0] > purse[1]) err(`${root}.cinders`, `lo must not exceed hi, ${got(purse)}`);
+      if (!int(chest.smithingStones, 0)) err(`${root}.smithingStones`, `must be a non-negative integer, ${got(chest.smithingStones)}`);
+    }
+  }
+  // Both boss-reward knobs are required: an absent count rolls no relic
+  // choice at all and an absent consolation pays nothing, so a bundle
+  // missing either would silently strip every boss reward (SPEC §6.1).
+  if (!int(rewards.bossRelicChoices, 1)) err('balance.rewards.bossRelicChoices', `must be an integer of at least 1, ${got(rewards.bossRelicChoices)}`);
+  if (!int(rewards.bossRelicConsolationCinders, 0)) err('balance.rewards.bossRelicConsolationCinders', `must be a non-negative integer, ${got(rewards.bossRelicConsolationCinders)}`);
+}
+
+const WEAPON_ART_CHARGE_KEYS = Object.freeze(['defaultMax', 'maxByWeapon', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']);
+// Unleashed ops that land on whoever resolveTargets picks, so an omitted
+// target is a real (and, on an untargeted Art, self-inflicted) choice.
+const UNLEASHED_AIMED_OPS = Object.freeze(['damage', 'poiseDamage', 'stagger', 'applyStatus', 'arcaneBuildup']);
+function validateWeaponArtCharge(b, vctx) {
+  const { err } = vctx;
+  const rules = b.balance && b.balance.weaponArtCharge;
+  const armaments = (b.equipment && Array.isArray(b.equipment.armaments)) ? b.equipment.armaments : [];
+  const nonNegInt = (value) => Number.isInteger(value) && value >= 0;
+  if (rules !== undefined) {
+    if (!isPlainObject(rules)) err('balance.weaponArtCharge', 'must be an object { defaultMax, maxByWeapon, gainPerHit, gainOnStagger, gainOnBurst }');
+    else {
+      for (const key of Object.keys(rules)) if (!WEAPON_ART_CHARGE_KEYS.includes(key)) err(`balance.weaponArtCharge.${key}`, 'Unknown field');
+      for (const key of ['defaultMax', 'gainPerHit', 'gainOnStagger', 'gainOnBurst']) {
+        if (!nonNegInt(rules[key])) err(`balance.weaponArtCharge.${key}`, `must be a non-negative integer, got ${JSON.stringify(rules[key])}`);
+      }
+      if (rules.maxByWeapon !== undefined) {
+        if (!isPlainObject(rules.maxByWeapon)) err('balance.weaponArtCharge.maxByWeapon', 'must be an object keyed by armament id');
+        else for (const [id, max] of Object.entries(rules.maxByWeapon)) {
+          if (!armaments.some((piece) => piece && piece.id === id)) err(`balance.weaponArtCharge.maxByWeapon.${id}`, `unknown armament '${id}'`);
+          if (!nonNegInt(max)) err(`balance.weaponArtCharge.maxByWeapon.${id}`, `must be a non-negative integer, got ${JSON.stringify(max)}`);
+        }
+      }
+    }
+  }
+  const forms = b.weaponArtUnleashed;
+  if (forms === undefined) {
+    // A missing table is not "nothing to check": with the meter rules set, or
+    // any combat-kit Art to unleash, every Art is owed a form (SPEC §12.2.1).
+    const kitArt = armaments.find((piece) => piece && piece.weaponCardPackage && piece.weaponCardPackage.combatKit && piece.weaponCardPackage.combatKit.artCardId);
+    if (rules !== undefined || kitArt) {
+      err('weaponArtUnleashed', `is missing, but ${rules !== undefined ? 'balance.weaponArtCharge is set' : `the combat-kit Art of '${kitArt.id}' needs an unleashed form`}; the table must be present`);
+    }
+    return;
+  }
+  if (!isPlainObject(forms)) { err('weaponArtUnleashed', 'must be an object keyed by Weapon Art card id'); return; }
+  const cards = new Map((Array.isArray(b.cards) ? b.cards : []).map((card) => [card && card.id, card]));
+  for (const [cardId, form] of Object.entries(forms)) {
+    const path = `weaponArtUnleashed.${cardId}`;
+    const card = cards.get(cardId);
+    if (!card) { err(path, `unknown card '${cardId}'`); continue; }
+    if (!isPlainObject(form)) { err(path, 'must be { effects }'); continue; }
+    for (const key of Object.keys(form)) if (key !== 'effects') err(`${path}.${key}`, 'Unknown field');
+    validateEffects(form.effects, `${path}.effects`, vctx);
+    if (!Array.isArray(form.effects) || !form.effects.length) { err(`${path}.effects`, 'must list at least one effect'); continue; }
+    const cardTargetsEnemy = (card.effects || []).some((eff) => eff && eff.target === 'enemy');
+    form.effects.forEach((eff, i) => {
+      if (eff && eff.target === 'enemy' && !cardTargetsEnemy) err(`${path}.effects[${i}].target`, `'${cardId}' never asks for an enemy target, so its unleashed form may not target 'enemy'`);
+      // An omitted target resolves to the play's target, else its SOURCE: on
+      // an Art with no target that is the player, so a hostile op would land
+      // on the one who played it. It must name who it hits.
+      if (eff && eff.target == null && !cardTargetsEnemy && UNLEASHED_AIMED_OPS.includes(eff.op)) err(`${path}.effects[${i}].target`, `'${cardId}' never asks for an enemy target, so its unleashed '${eff.op}' must name its target (omitted, it lands on the player)`);
+    });
+  }
+  for (const piece of armaments) {
+    const artCardId = piece && piece.weaponCardPackage && piece.weaponCardPackage.combatKit && piece.weaponCardPackage.combatKit.artCardId;
+    if (artCardId && !Object.hasOwn(forms, artCardId)) err(`weaponArtUnleashed.${artCardId}`, `combat-kit Art of '${piece.id}' has no unleashed form`);
+  }
+}
 
 export function validateEffects(effects, path, vctx) {
   const { err } = vctx;

@@ -20,6 +20,7 @@ import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';
 import { relicArtAsset } from '../model/relicArt.js';
+import { stageTimeout, clearStageTimeout } from './services/stageClock.js';
 
 export function relicArtUrl(relic) {
   const path = relicArtAsset(relic);
@@ -673,7 +674,7 @@ function animatedEquippedFigure(classId, equip) {
   let attack = 0;
   let timer = null;
   const settle = () => {
-    if (timer) clearTimeout(timer);
+    if (timer) clearStageTimeout(timer);
     timer = null;
     host.dataset.pose = 'idle';
   };
@@ -693,8 +694,8 @@ function animatedEquippedFigure(classId, equip) {
         attack += 1;
       }
       if (!this.setPose(pose)) return false;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(settle, Math.max(60, ms));
+      if (timer) clearStageTimeout(timer);
+      timer = stageTimeout(host, settle, Math.max(60, ms)); // freezable by hit-stop
       return true;
     },
     settle,

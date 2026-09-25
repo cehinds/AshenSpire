@@ -7131,7 +7131,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard',
+      'useSprites,animSpeed,performanceMode,screenShake,killCam,showPlayedCard',
       'every combat pacing, quality, shake, sprite and played-card switch is under one name');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',
@@ -7147,7 +7147,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'showPlayedCard',
+    for (const key of ['useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'killCam', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);
