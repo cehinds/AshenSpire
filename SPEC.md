@@ -279,7 +279,10 @@ and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
 `value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
 
 Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
-attribute reaches 8. Owner decision, 2026-09-24: this per-attribute rounding is kept
+attribute reaches 8. Two optional fields serve the opening hand alone (§4.1): `attributeBaseline`
+counts only the points above it (each term is floor(max(0, attribute − attributeBaseline) ×
+weight)), and `byClass.<class>` gives a class its own base and weights over the row's bounds.
+Owner decision, 2026-09-24: this per-attribute rounding is kept
 deliberately; rounding the total was declined (so Mana is 4, not 6, at every attribute 5).
 Equipment, relics and statuses are external addends on top (armour
 `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
@@ -291,9 +294,9 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
-| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.45 | — | 4–6 | Per class (`byClass`, below); this shared row serves a fight with no class. Was hand rules `starting`. |
-| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Fitted to hand rules `turn` (2 + floor(max(0, INT − 4) / 5)): equal at INT 0–8 and 10–13, fewer elsewhere (one card at INT 9 and 14–18, up to three by INT 29); every fight, co-op included. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.19 | — | 1–30 | Fitted to hand rules `capacity` (7 + floor(max(0, INT − 1) / 5)): equal for INT 0–20; replaces `balance.handMax`. |
+| Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
+| Draw / turn (`draw`) | 2 | — | — | — | — | 0.1 | — | 2–10 | Preserved (was hand rules `turn`); every fight, co-op included. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.19 | — | 1–30 | Preserved (was hand rules `capacity` and `balance.handMax`). |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
 | PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |
@@ -765,31 +768,6 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
 discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-
-**The opening hand is the class's (owner, 2026-09-24: "Class base 3–5, +1 from stats"; "start
-with 4-6 cards").** `derivedStatRules.byClass.<class>.openingHand` is a full row that replaces the
-shared one for that class; a run snapshots its class's row at birth, so a saved run deals from
-exactly the row it was born with. Each weighs the class's primary attribute at 0.45 within 4–6,
-which deals exactly #1294's clamp(base + floor(max(0, primary − 1) / 2), 4, 6) at every attribute
-value:
-
-| Class | Base | Primary | Standard preset (primary 3) | Primary 1 |
-|---|---|---|---|---|
-| Reaver | 3 | STR | 4 | 4 |
-| Rogue | 4 | DEX | 5 | 4 |
-| Herald | 4 | WIS | 5 | 4 |
-| Starseer | 5 | INT | 6 | 5 |
-
-Levelling a primary attribute can never take the opening hand past 6. Advanced → Stats → Draw &
-hand edits each class's row (`gameConfig.derivedStatRules.byClass.<class>.openingHand.<field>`).
-A configuration or profile from #1294's build carrying `gameConfig.handRules.startingByClass.
-<class>.base|stat` converts into that class's row with a warning, as every retired hand key does;
-a stored or imported opening-hand maximum of exactly 15 (the retired default cap) is dropped with
-a warning so the current cap applies, together with a minimum of 3 riding beside it (the retired
-default floor). A run born before ruleset 7 (a ruleset-6 snapshot, including one started between
-#1294 and this change) opens its fights exactly as #1294 deals them: its class's retired
-`startingByClass` rule, with any tuning its own configuration snapshot carries.
-
 The opening hand is also bounded by the hand size. Unplayed cards are retained by default.
 Later turns draw a **fixed** number by default — the Draw / turn row, never past the hand size;
 fill mode instead draws up to the hand size. Overflow defaults to **discard**: retained cards past
@@ -799,9 +777,31 @@ hand, turn draw and hand size come from its own run's rows, it keeps unplayed ca
 shipped behaviour options and discards what is over its hand size at turn end. A seat or saved
 fight born before ruleset 7 keeps what it had: solo, its hand rules as saved (the retired
 single-stat groups, read exactly); co-op, a fresh hand of its derived draw capped at the retired
-fallback of 5. (Before 2026-09-24 the defaults were fill mode, keep overflow, an opening draw of
-3 + floor(max(0, INT − 10) / 10) and capacity 10; the first 2026-09-24 defaults opened every class
-on 4 + floor(max(0, INT − 1) / 2) within 3–15.)
+fallback of 5.
+
+**The opening hand is the class's (owner, 2026-09-24: "Class base 3–5, +1 from stats"; "start
+with 4-6 cards"; shipped in #1294 and carried into ruleset 7).** The `openingHand` row has a
+**per-class form** (`byClass`): each class states its own base and attribute weights, and the
+row's `min`, `max` and `attributeBaseline` are shared. `attributeBaseline: 1` counts only the
+attribute points above 1, so a weight of 0.5 is exactly #1294's floor(max(0, primary − 1) / 2)
+and the opening hand is clamp(base + floor(max(0, primary − 1) / 2), 4, 6):
+
+| Class | Base | Primary (weight 0.5) | Standard preset (primary 3) | Primary 1 |
+|---|---|---|---|---|
+| Reaver | 3 | STR | 4 | 4 |
+| Rogue | 4 | DEX | 5 | 4 |
+| Herald | 4 | WIS | 5 | 4 |
+| Starseer | 5 | INT | 6 | 5 |
+
+A run snapshots its own class's row (the per-class form resolves at birth and never rides into
+a save or a fight); the shared base 4 and Intelligence weight 0.5 are the fallback for a fight
+with no class (a headless fixture). Advanced → Stats → Draw & hand edits each class's base and
+weights as its own row group (`gameConfig.derivedStatRules.rules.openingHand.byClass.<class>.
+<field>`), beside the shared Min, Max and "attribute points before bonuses". A run started
+between #1294 and ruleset 7 (ruleset 6) opens on #1294's class hand exactly, its own
+`handRules.startingByClass` tuning included; #1294's settings keys convert exactly onto the
+row on import, boot and restore, and a stored or imported opening-hand maximum of exactly 15
+(the retired default cap, with a minimum of 3 beside it) is dropped with a warning first.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to

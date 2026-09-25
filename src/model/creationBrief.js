@@ -54,7 +54,6 @@ import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
 import { isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
-import { handRuleFacts } from './handRules.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -186,7 +185,7 @@ function attributeCycle(weight, perIncrease) {
  * time; every authored label, sentence, rule and equipment gate still comes
  * from its owning registry row.
  */
-export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null } = {}) {
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
@@ -250,7 +249,10 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
         if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
-        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle };
+        // The opening hand's cap is part of its fact (#1294: a Starseer at
+        // base 5 has one card of room before the cap of 6).
+        const cap = id === 'openingHand' && Number.isFinite(row?.max) ? row.max : null;
+        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
     const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
@@ -267,26 +269,15 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // divisor sat at the end. `per N pts`, not `/N`, because a label may
     // already hold a slash ("Actions / turn") and two would read as one rate.
     const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
-    // A SOLO FIGHT'S HAND IS THE HAND RULES', NOT THE DERIVED DRAW ROW
-    // (model/handRules.js `classHandRules`). Given the rules this character's
-    // solo fight is handed, the face states what a point buys there — the class's opening
-    // hand first — and the derived Draw row, which only co-op and headless
-    // fights read, leaves the face for the fold.
-    const handFacts = hand ? handRuleFacts(hand, def.id) : [];
-    const faceFacts = [
-      // The opening hand's cap is part of the fact (a Starseer at base 5 has
-      // one card of room); the turn draw's and capacity's caps are far away.
-      ...handFacts.map(({ label, weight, points, maximum }, index) => `${points ? `+1 ${label} ${cadence(points)}` : `+${weight} ${label} per pt, rounded down`}${index === 0 && label === 'Opening hand' && maximum !== null ? ` (max ${maximum})` : ''}`),
-      ...feedFacts
-        .filter(({ perTier }) => Number.isFinite(perTier))
-        .filter(({ id }) => !(hand && id === 'draw'))
-        .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`),
-    ];
+    // The hand is three rows of the same table (ruleset 7), the class's own
+    // opening hand among them, so it is listed like every other feed.
+    const faceFacts = feedFacts
+      .filter(({ perTier }) => Number.isFinite(perTier))
+      .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
     const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
     const stated = [...faceFacts, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
-    const handLines = handFacts.map(({ label, weight, points, maximum }) => `${label} ${points ? `+1 every ${points} ${points === 1 ? 'point' : 'points'}` : `+floor(${weight} × ${def.shortLabel})`}${maximum !== null ? ` (at most ${maximum})` : ''}`);
-    const lines = [...handLines, ...feeds, ...scaling, ...unlocks];
+    const lines = [...feeds, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,

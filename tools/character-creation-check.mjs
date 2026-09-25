@@ -14,7 +14,7 @@
 //   * Standard seats each class's own preset (model/attributes.js
 //     classAttributePreset), and the resource strip's Hand and Draw chips are
 //     the hand a SOLO fight of that class deals (model/statProjection.js
-//     handResourceRows, read through model/handRules.js classHandRules (the class's own openingHand row) — the
+//     handResourceRows, read through model/statRows.js handStatRows — the
 //     door engine/runCombat.js snapshots) — the legacy derived Draw row is
 //     replaced, not joined;
 //   * the class's primary stat card states the opening-hand effect;
@@ -38,7 +38,8 @@ import { serve } from './serve.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { classAttributePreset, creationMode, orderedAttributes } from '../src/model/attributes.js';
-import { classRuleRow, ruleWeights } from '../src/model/derivedStats.js';
+import { statRow } from '../src/model/statRows.js';
+import { ruleWeights } from '../src/model/derivedStats.js';
 import { handResourceRows } from '../src/model/statProjection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -180,7 +181,8 @@ async function exercise(width, height, screenshotName) {
     await until(`document.querySelectorAll('#cz-primary-stats .cc-attribute-card').length===${orderedAttributes(registries).length}`, `${classId}: Standard stat cards`);
     const preset = classAttributePreset(registries, classId, MODES.standard);
     const hand = expectedHand(classId, preset);
-    const primaryStat = ruleWeights(classRuleRow(registries.derivedStatRules, classId, 'openingHand'))[0][0];
+    // The attribute the class's opening-hand row answers to (its per-class form).
+    const primaryStat = ruleWeights(statRow(registries, { class: classId }, 'openingHand'))[0][0];
     const standard = await shown();
     assert(JSON.stringify(standard.stats) === JSON.stringify(preset), `${at} ${classId}: Standard seats the class preset (${JSON.stringify(standard.stats)})`);
     assert(standard.chips.openingHand?.key === 'Hand' && standard.chips.openingHand.value === hand.opening,

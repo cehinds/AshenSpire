@@ -521,7 +521,7 @@ function derivedRowNote(id) {
   if (['ar', 'dr', 'pr', 'ward'].includes(id)) return ' Only while combat ratings are on. Equipment, relics and statuses add on top.';
   if (id === 'poise') return ' Armour and relic Poise add on top.';
   if (id === 'draw') return ' Cards drawn at the start of each turn after the first (a fixed draw), never past the hand size.';
-  if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size.';
+  if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size. Each class opens on its own base and attribute (the per-class rows); the shared Base and weights apply only to a fight with no class.';
   if (id === 'handSize') return ' The most cards a hand holds, in solo and co-op alike.';
   return '';
 }
@@ -618,17 +618,9 @@ export function startingStatRows(bundle) {
   //   Base · STR · DEX · CON · WIS · INT · Per level · Min · Max
   const derivedDefaults = bundle.derivedStatRules.defaults || {};
   const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-  // A CLASS'S OWN ROW (`byClass.<class>.<id>`, the opening hand since #1294)
-  // is edited with the same fields, beside the shared row it replaces.
-  const classNames = Object.fromEntries((bundle.classes || []).map((cls) => [cls.id, cls.name || cls.label || cls.id]));
-  const editors = [
-    ...Object.entries(bundle.derivedStatRules.rules).map(([id, authored]) => ({ id, authored, path: ['rules', id], prefix: '' })),
-    ...Object.entries(bundle.derivedStatRules.byClass || {}).flatMap(([classId, own]) => Object.entries(own || {})
-      .map(([id, authored]) => ({ id, authored, path: ['byClass', classId, id], prefix: `${classNames[classId] || classId} — ` }))),
-  ];
-  for (const { id, authored, path, prefix } of editors) {
+  for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
     const presentation = bundle.derivedStatRules.presentation[id];
-    const label = `${prefix}${presentation.label}`;
+    const label = presentation.label;
     const rule = { ...derivedDefaults, ...authored };
     // Labels name the row and the field, so a search that finds every "per
     // level" row still tells them apart.
@@ -648,7 +640,7 @@ export function startingStatRows(bundle) {
       // for it would overwrite the reference with one value for every class.
       const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? STAT_ROW_NO_MAX) : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.${path.join('.')}.${field}`, value, title, 'Stats & resources', {
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
         // A hand holds at least one card (model/derivedStats.js).
         min: id === 'handSize' && (field === 'min' || field === 'max') ? 1 : min, step,
         // Filed under this row's own topic of Advanced → Stats
@@ -658,9 +650,40 @@ export function startingStatRows(bundle) {
         // Whole points only: every other term is floored, so a fractional base
         // or bound would be the one way a stat stopped being a whole number.
         ...(['base', 'min', 'max'].includes(field) ? { integer: true } : {}),
-        configPath: ['derivedStatRules', ...path, field],
+        configPath: ['derivedStatRules', 'rules', id, field],
         note: `${note}${derivedRowNote(id)} The value you set is the value a new run is born with; nothing rescales it.`,
       });
+    }
+    // A ROW THAT COUNTS FROM A BASELINE says so (the opening hand counts the
+    // points of its attribute above 1: owner, 2026-09-24, #1294).
+    if (Number.isFinite(rule.attributeBaseline)) {
+      add(`gameConfig.derivedStatRules.rules.${id}.attributeBaseline`, rule.attributeBaseline, `${label} — Attribute points before bonuses`, 'Stats & resources', {
+        min: 0, step: 1, integer: true, advancedGroup: 'Stats', derivedStatId: id, statField: 'attributeBaseline', settingSection: 'Formula',
+        configPath: ['derivedStatRules', 'rules', id, 'attributeBaseline'],
+        note: `Only attribute points above this count toward ${label}: a weight of 0.5 counted from 1 adds a card at 3, 5, 7…${derivedRowNote(id)} Applies to a new run.`,
+      });
+    }
+    // ONE EDITOR PER CLASS for a row with a per-class form (the opening hand:
+    // "give the openingHand stat row a per-class form", owner, 2026-09-24):
+    // that class's base and attribute weights, in the row's own order. Min,
+    // Max and the baseline above are shared.
+    const classNames = Object.fromEntries((bundle.classes || []).map((row) => [row.id, row.name || row.id]));
+    for (const [classId, classRow] of Object.entries(rule.byClass || {})) {
+      const name = classNames[classId] || classId[0].toUpperCase() + classId.slice(1);
+      const classFields = [
+        ['base', `${label} — ${name} — Base`, 0, 1, `The ${name}'s ${label.toLowerCase()} before a single attribute point is spent.`],
+        ...attributeRows.map((attribute) => [attribute.id, `${label} — ${name} — ${attribute.shortLabel || attribute.label} (per ${attribute.label} point)`, 0, 0.01,
+          `Gained from each point of ${attribute.label} for the ${name}, rounded down on its own. 0 ignores ${attribute.label}.`]),
+      ];
+      for (const [field, title, min, step, note] of classFields) {
+        add(`gameConfig.derivedStatRules.rules.${id}.byClass.${classId}.${field}`, classRow[field] ?? 0, title, 'Stats & resources', {
+          min, step, advancedGroup: 'Stats', derivedStatId: id, statField: field, statClass: classId,
+          settingSection: 'Formula',
+          ...(field === 'base' ? { integer: true } : {}),
+          configPath: ['derivedStatRules', 'rules', id, 'byClass', classId, field],
+          note: `${note} Min, Max and the attribute points before bonuses are the row's.${derivedRowNote(id)} Applies to a new run.`,
+        });
+      }
     }
   }
   return [...rows, ...equipmentRequirementRows(bundle)];

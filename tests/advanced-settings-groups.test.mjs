@@ -482,7 +482,6 @@ test('a setting that moves nothing is off the screen and still imports', async (
   // still names it. The file lands; the dead keys are skipped by name (review
   // of #1294), since nothing would ever read them back.
   const legacy = { 'gameConfig.balance.energy': 3, 'gameConfig.balance.draw': 5 };
-
   // The fallback hand size WAS read — by co-op fights — and ruleset 7 made
   // the Hand size stat row govern every fight instead. So it is no row at all,
   // and a file naming it converts rather than refusing: the key is dropped,
@@ -490,8 +489,9 @@ test('a setting that moves nothing is off the screen and still imports', async (
   assert.ok(!rows.some(candidate => candidate.key === 'gameConfig.balance.handMax'), 'handMax is not a row since ruleset 7');
   const warnings = [];
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...legacy, 'gameConfig.balance.handMax': 5 }), contentBundle, {}, [], warnings), {});
-  assert.ok(warnings.some((line) => /no longer used and were skipped\. Everything else in the file was imported\./.test(line)), 'the dead keys are skipped by name');
-  assert.ok(warnings.some((line) => /Stats → Draw & hand → Hand size/.test(line)), 'and handMax points at the row a fight actually uses');
+  assert.equal(warnings.length, 2, warnings.join(' | '));
+  assert.ok(warnings.some((line) => /no longer used and were skipped\. Everything else in the file was imported\./.test(line)), warnings.join(' | '));
+  assert.ok(warnings.some((line) => /Stats → Draw & hand → Hand size/.test(line)), 'and points at the row a fight actually uses');
 });
 
 // ---- ONE HOME PER SETTING (owner, 2026-09-23) -------------------------------
@@ -603,10 +603,10 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.energy.dexterity'), 'Actions');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw row sits beside the hand rules');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.intelligence'), 'Draw & hand');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.attributeBaseline'), 'Draw & hand');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.handSize.max'), 'Draw & hand', 'the one hand size, co-op included');
   assert.equal(topicOf('gameConfig.handRules.drawMode'), 'Draw & hand');
-  assert.equal(topicOf('gameConfig.derivedStatRules.byClass.reaver.openingHand.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
-  assert.equal(topicOf('gameConfig.handRules.startingByClass.reaver.base'), undefined, 'the #1294 per-class keys are retired into the class rows');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.hp.perLevel'), 'HP', 'level growth is part of the trait');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.mana.wisdom'), 'Mana');
   assert.equal(topicOf('gameConfig.balance.mana.minActionCost'), 'Mana');
@@ -621,15 +621,18 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   // Every term of a trait is editable where the trait is — and since ruleset 7
   // every stat has the SAME editor: the same nine fields in the same order.
   for (const id of ['energy', 'openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
-    const own = rows.filter(row => row.derivedStatId === id && row.key.startsWith('gameConfig.derivedStatRules.rules.')).map(row => row.key.split('.').at(-1));
+    const own = rows.filter(row => row.derivedStatId === id && !row.statClass && row.statField !== 'attributeBaseline').map(row => row.key.split('.').at(-1));
     assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'],
       `${id}: base, a weight per attribute, growth per level, bounds`);
   }
-  // A class's own opening hand is the same editor, beside the shared row.
+  // The opening hand's per-class form (owner, 2026-09-24, #1294): each class
+  // edits its own base and weights, in the same order, and the row states the
+  // attribute points it counts from.
   for (const classId of ['reaver', 'rogue', 'herald', 'starseer']) {
-    const own = rows.filter(row => row.key.startsWith(`gameConfig.derivedStatRules.byClass.${classId}.openingHand.`)).map(row => row.key.split('.').at(-1));
-    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'], `${classId} opening hand`);
+    const own = rows.filter(row => row.derivedStatId === 'openingHand' && row.statClass === classId).map(row => row.key.split('.').at(-1));
+    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'], `openingHand.byClass.${classId}`);
   }
+  assert.ok(rows.some(row => row.key === 'gameConfig.derivedStatRules.rules.openingHand.attributeBaseline'));
   // The retired homes are no rows: the rating formula and its multiplier, and
   // the hand rules' single-stat groups (their keys convert on import).
   assert.ok(!rows.some(row => /^gameConfig\.combatRatings\.(multiplier|ratings\.)/.test(row.key)), 'no rating-formula rows');
@@ -747,8 +750,10 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fill',
   }, 'Draw & hand', { intelligence: 9 });
   const opening = hand.examples[0].lines[0];
-  assert.equal(opening.total, 4 + Math.floor(9 * 0.25));
-  assert.match(opening.expression, /^4 base \+ INT 9 × 0\.25 → 2/);
+  // The shared opening-hand row counts the points above 1 (its
+  // `attributeBaseline`, #1294), and says so: 4 + floor((9 − 1) × 0.25) = 6.
+  assert.equal(opening.total, 4 + Math.floor((9 - 1) * 0.25));
+  assert.match(opening.expression, /^4 base \+ INT \(9 − 1\) × 0\.25 → 2/);
   // The legacy Draw conversion (co-op and older fights) is gone: the Draw /
   // turn row IS the draw, so the topic shows the one hand example.
   assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
@@ -769,11 +774,7 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  // Each class opens on its own row (#1294), so every class's is raised.
-  const deepSettings = { 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
-  for (const classId of ['reaver', 'rogue', 'herald', 'starseer']) {
-    Object.assign(deepSettings, { [`gameConfig.derivedStatRules.byClass.${classId}.openingHand.base`]: 20, [`gameConfig.derivedStatRules.byClass.${classId}.openingHand.max`]: 30 });
-  }
+  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -832,7 +833,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   const badHand = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.openingHand.min': 9, 'gameConfig.derivedStatRules.rules.openingHand.max': 2 }, 'Draw & hand');
   assert.match(badHand.refused, /openingHand\.min \(9\) must stay at or below/);
   const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.openingHand.base': 8, 'gameConfig.derivedStatRules.rules.handSize.base': 10 }, 'Draw & hand', { intelligence: 1 });
-  // Authored opening hand at INT 1: 4 base + floor(1 × 0.45) = 4.
+  // Authored opening hand at INT 1, no class: 4 base + floor((1 − 1) × 0.5) = 4.
   assert.equal(hand.examples[0].lines[0].total, 4, 'a refused configuration\'s hand rows never reach a run, so the example shows the authored row');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);

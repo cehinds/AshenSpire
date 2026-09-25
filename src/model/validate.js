@@ -638,13 +638,12 @@ function collectContentProblems(bundle, errors = []) {
     }
     // The hand's shipped behaviour options (content/handRules.js) are the
     // other place a count could creep back; a bundle may carry its own too.
-    for (const group of ['starting', 'turn', 'capacity']) {
-      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}`);
-      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })[group]}, and a copy here is a second home for one number`);
-    }
-    // #1294's per-class opening hand is a class row (derivedStatRules.byClass).
-    for (const [where, source] of [['handRulesDefaults', handRulesDefaults], ['handRules', b.handRules]]) {
-      if (source && source.startingByClass !== undefined) err(`${where}.startingByClass`, 'was retired in derived-stat ruleset 7: each class\'s opening hand is derivedStatRules.byClass.<class>.openingHand');
+    // #1294's per-class opening hand (`startingByClass`) is the openingHand
+    // row's per-class form (`byClass`) since ruleset 7.
+    const retiredHand = { starting: 'openingHand', startingByClass: 'openingHand.byClass', turn: 'draw', capacity: 'handSize' };
+    for (const [group, row] of Object.entries(retiredHand)) {
+      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
+      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
@@ -1255,6 +1254,14 @@ function collectContentProblems(bundle, errors = []) {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
+  // A row's per-class form names shipped classes only: a misspelt class id
+  // would silently open that class on the shared row.
+  const classIds = new Set((b.classes || []).map((row) => row.id));
+  for (const [id, row] of Object.entries(b.derivedStatRules?.rules || {})) {
+    for (const classId of Object.keys((row && typeof row.byClass === 'object' && row.byClass) || {})) {
+      if (!classIds.has(classId)) err(`derivedStatRules.rules.${id}.byClass.${classId}`, `unknown class '${classId}'`);
+    }
+  }
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.

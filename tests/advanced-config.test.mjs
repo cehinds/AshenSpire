@@ -636,25 +636,26 @@ test('a file written on the old, higher defaults still imports', () => {
 // imported here through the REAL rows the screen hands the import door.
 test("the owner's exported 0.7.1 configuration imports through the screen's own rows", async () => {
   const { settingsImportRows } = await import('../src/ui/screens/settings.js');
-  const { createRegistries } = await import('../src/model/registries.js');
-  const { classRuleRow } = await import('../src/model/derivedStats.js');
   const { scaledCards } = await import('../src/model/handRules.js');
+  const { statRow } = await import('../src/model/statRows.js');
+  const { createRegistries } = await import('../src/model/registries.js');
   const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
   const warnings = [];
   const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
-  assert.ok(Object.keys(changes).length > 90, 'everything else in the file lands');
+  assert.ok(Object.keys(changes).length > 80, 'everything else in the file lands');
   assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
-  // Ruleset 7: the hand groups are rows. The file's groups are the shipped
-  // ones, so nothing is fitted and no hand-group key comes back.
-  assert.ok(Object.keys(changes).every((key) => !/^gameConfig\.handRules\.(starting|turn|capacity|startingByClass)\./.test(key)), 'no retired hand key is brought back');
+  // Ruleset 7: the hand groups, the fallback hand size and the rating formula
+  // are stat rows; their keys (and their `settings.` mirrors) convert or drop.
+  assert.ok(Object.keys(changes).every((key) => !/handRules\.(starting|turn|capacity)|balance\.handMax|combatRatings\.ratings/.test(key)), 'no retired key is brought back');
   assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
   assert.ok(warnings.some((line) => /old limits of 3–15 cards were left out, so the current 4–6 applies/.test(line)));
   // "start with 4-6 cards": the imported configuration opens every class there.
-  const configured = createRegistries(configuredContentBundle(contentBundle, changes));
+  const registries = createRegistries(configuredContentBundle(contentBundle, changes));
   const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
   for (const classId of Object.keys(contentBundle.attributeRules.presets.lean)) {
-    const row = classRuleRow(configured.derivedStatRules, classId, 'openingHand');
-    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { strength: 40, dexterity: 40, constitution: 40, wisdom: 40, intelligence: 40 }]) {
+    const row = statRow(registries, { class: classId }, 'openingHand');
+    const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
+    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
       const cards = scaledCards(row, attributes);
       assert.ok(cards >= 4 && cards <= 6, `${classId} opens on ${cards}`);
     }
@@ -663,50 +664,48 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
 
 test('a retired row keeps both spellings importable: inert skipped, live mirror read as its row', () => {
   const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
-  const base = 'gameConfig.handRules.turn.base';
-  // A retired hand key's mirror reads as the key: converted into its row.
+  const base = 'gameConfig.balance.energy';
   const warnings = [];
-  const turn = parseAdvancedConfigFile(file({ [`settings.${base}`]: 3 }), contentBundle, {}, [], warnings);
-  assert.equal(turn['gameConfig.derivedStatRules.rules.draw.base'], 3);
-  assert.ok(Object.keys(turn).every((key) => !key.includes('handRules.turn')));
+  assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${base}`]: 4, 'gameConfig.handRules.drawMode': 'fill' }), contentBundle, {}, [], warnings),
+    { 'gameConfig.handRules.drawMode': 'fill' });
   assert.equal(warnings.length, 1);
   // A hidden creation mode's pool still applies; its mirror alone reads as it.
   const pool = 'gameConfig.startingStats.tuned2.bonusPool';
   assert.deepEqual(parseAdvancedConfigFile(file({ [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
   assert.deepEqual(parseAdvancedConfigFile(file({ [pool]: 9, [`settings.${pool}`]: 9 }), contentBundle, {}, [], []), { [pool]: 9 });
   // A key no row ever had still refuses the file.
-  assert.throws(() => parseAdvancedConfigFile(file({ 'settings.gameConfig.handRules.starting.bogus': 1 }), contentBundle, {}, [], []), /Unknown setting/);
+  assert.throws(() => parseAdvancedConfigFile(file({ 'settings.gameConfig.balance.bogus': 1 }), contentBundle, {}, [], []), /Unknown setting/);
 });
 
 test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 applies', () => {
   const MAX = 'gameConfig.handRules.starting.maximum';
   const MIN = 'gameConfig.handRules.starting.minimum';
-  const classKey = (classId, field) => `gameConfig.derivedStatRules.byClass.${classId}.openingHand.${field}`;
-  const CLASSES = ['reaver', 'rogue', 'herald', 'starseer'];
-  const profile = { settings: { [MAX]: 15, [MIN]: 3, 'gameConfig.handRules.turn.base': 3 } };
+  const ROW = 'gameConfig.derivedStatRules.rules.openingHand.';
+  const profile = { settings: { [MAX]: 15, [MIN]: 3 } };
   const saved = [];
   const warnings = [];
   const settings = bringProfileForward(profile, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
-  assert.ok(Object.keys(settings).every((key) => !key.startsWith('gameConfig.handRules.')), 'no retired hand key stays');
-  assert.ok(Object.keys(settings).every((key) => !key.includes('.byClass.')), 'the retired limits never reach a class row');
-  assert.equal(settings['gameConfig.derivedStatRules.rules.draw.base'], 3, 'the tuned turn draw is its row now');
+  // The retired pair goes, nothing else was tuned, so the shipped row applies.
+  assert.deepEqual(settings, {});
   assert.equal(saved.length, 1, 'written back');
   assert.match(warnings.join(' '), /3–15/);
-  // Only the retired values go: a chosen cap stays (on every class's row),
-  // and a lone floor of 3 is a choice.
+  // Only the retired values go: a chosen cap stays, and a lone floor of 3 is a
+  // choice — each converted onto the opening-hand row (ruleset 7).
   const chosen = { [MAX]: 5, [MIN]: 3 };
   normalizeAdvancedSettings(chosen, contentBundle);
-  for (const classId of CLASSES) assert.deepEqual([chosen[classKey(classId, 'min')], chosen[classKey(classId, 'max')]], [3, 5], classId);
+  assert.equal(chosen[`${ROW}max`], 5);
+  assert.equal(chosen[`${ROW}min`], 3);
+  assert.ok(!Object.hasOwn(chosen, MAX) && !Object.hasOwn(chosen, MIN));
   const capOnly = { [MAX]: 15, [MIN]: 5 };
   normalizeAdvancedSettings(capOnly, contentBundle);
-  for (const classId of CLASSES) assert.deepEqual([capOnly[classKey(classId, 'min')], capOnly[classKey(classId, 'max')]], [5, 6], classId);
+  assert.equal(capOnly[`${ROW}min`], 5);
+  assert.equal(capOnly[`${ROW}max`], 6, 'the retired cap of 15 is not carried into the row');
   // The import door drops it too, in either spelling.
   const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3 } });
   const importWarnings = [];
   const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings);
-  assert.ok(Object.keys(imported).every((key) => !key.startsWith('gameConfig.handRules.')));
-  for (const classId of CLASSES) assert.equal(imported[classKey(classId, 'max')], 6, `${classId}: the current cap applies`);
+  assert.equal(imported[`${ROW}max`], 6);
+  assert.equal(imported[`${ROW}byClass.reaver.strength`], 1 / 3, 'a tuned points-per-card converts exactly, as its weight');
   assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
-  const five = parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle);
-  for (const classId of CLASSES) assert.equal(five[classKey(classId, 'max')], 5);
+  assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
 });

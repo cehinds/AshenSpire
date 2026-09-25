@@ -30,7 +30,6 @@ import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources } from '../../model/statProjection.js';
-import { classHandRules } from '../../model/handRules.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
@@ -103,8 +102,8 @@ export function mountCustomize(app, {
 }) {
   // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
   // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
-  // Draw chips read from the class's own hand rules under these settings,
-  // through the door (`classHandRules`) engine/runCombat.js snapshots.
+  // Draw chips read from the run's own hand rows (its class's opening hand),
+  // the rows engine/runCombat.js snapshots (`handResourceRows`).
   const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -566,11 +565,6 @@ export function mountCustomize(app, {
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
-  /** The rules this character's first fight is handed — the door
-   *  engine/runCombat.js snapshots — for the attribute cards' hand facts. */
-  function creationHandRules(run) {
-    return classHandRules(meta.settings || {}, registries, run);
-  }
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
     // An incomplete draft previews from its OWN mode's class preset — not
@@ -612,7 +606,6 @@ export function mountCustomize(app, {
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-      hand: creationHandRules(run),
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run);
@@ -787,7 +780,6 @@ export function mountCustomize(app, {
       const cards = new Map(attributeCardModels(registries, state.attributes, {
         projection: statProjection(registries, preview),
         equipmentProfiles: rules,
-        hand: creationHandRules(preview),
       }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
@@ -1508,7 +1500,6 @@ export function mountCustomize(app, {
     const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
       projection: specimenProjection,
       equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
-      hand: creationHandRules(specimenRun),
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));

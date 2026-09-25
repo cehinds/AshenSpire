@@ -129,9 +129,10 @@ function previewContext(settings, previewAttributes, previewLevel, forcedRefusal
     // rows, or the configured table's (model/statRows.js).
     ratings: lazy(() => ratingsConfigFor(registries, newRun, configured.balance?.combatRatings || { ...resolveCombatRatings({}, configured), enabled: false })),
     newRun: () => newRun,
-    // The subject's class opens on its own hand (its `byClass` opening-hand
-    // row, #1294), exactly as `createRunCombat` hands a fight.
-    hand: lazy(() => resolveHandRules(settings, handStatRows(registries, newRun && newRun.class === subject.classId ? newRun : { class: subject.classId }, { settings }))),
+    // The subject's class opens on its own hand (the opening-hand row's
+    // per-class form), exactly as `createRunCombat` hands a fight.
+    hand: lazy(() => resolveHandRules(settings, handStatRows(registries,
+      subject.classId && subject.classId !== newRun?.class ? { class: subject.classId } : newRun, { settings }))),
   };
 }
 
@@ -229,7 +230,11 @@ function handExample(ctx) {
     const receipt = statRowValue(handRow(rules, id), { attributes: subject.attributes, level: subject.level || 1, statId: id, lenientAttributes: true });
     const used = Object.entries(receipt.weights).filter(([, weight]) => weight);
     const tiered = receipt.pointsPerIncrease !== 1 || receipt.gain !== 1;
-    const terms = used.map(([attributeId, weight]) => termText(subject.shortLabel[attributeId] || attributeId, subject.attributes[attributeId] || 0, weight, receipt.terms[attributeId]));
+    // A row counted from a baseline (the opening hand counts points above 1)
+    // shows the points it counted, so the product equals the term.
+    const from = Number(handRow(rules, id).attributeBaseline) || 0;
+    const points = (attributeId) => (from ? `(${subject.attributes[attributeId] || 0} − ${from})` : subject.attributes[attributeId] || 0);
+    const terms = used.map(([attributeId, weight]) => termText(subject.shortLabel[attributeId] || attributeId, points(attributeId), weight, receipt.terms[attributeId]));
     let expression = `${num(receipt.base)} base`
       + (terms.length ? (tiered ? ` + ${plural(receipt.tier, 'extra card')} (${terms.join(' + ')})` : ` + ${terms.join(' + ')}`) : '')
       + (receipt.levelBonus ? ` + ${num(receipt.levelBonus)} from level` : '');

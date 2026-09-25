@@ -1,10 +1,6 @@
 import { handRulesDefaults } from '../content/handRules.js';
-import { HAND_STAT_IDS } from './derivedStats.js';
-import { statRowValue } from './derivedStats.js';
-import { HAND_GROUP_ROWS, handStatRows, isLegacyHandGroup, legacyHandRow, statRowCount, hasRetiredOpeningLimits, withoutRetiredOpeningLimits } from './statRows.js';
-// The retired 3–15 opening-hand limits (#1294) are read where every retired
-// hand key is: model/statRows.js. Re-exported so the settings doors keep one name.
-export { hasRetiredOpeningLimits, withoutRetiredOpeningLimits };
+import { HAND_STAT_IDS, statRowValue } from './derivedStats.js';
+import { HAND_GROUP_ROWS, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
@@ -35,7 +31,7 @@ function rowProblems(rows, problems) {
     const row = rows[id];
     if (!row || typeof row !== 'object') { problems.push(`Hand rules: missing ${id} row`); continue; }
     if (!Number.isFinite(row.base) || row.base < 0) problems.push(`Hand rules: invalid ${id}.base`);
-    for (const key of [...ATTRIBUTE_IDS, 'perLevel']) {
+    for (const key of [...ATTRIBUTE_IDS, 'perLevel', 'attributeBaseline']) {
       if (row[key] !== undefined && (!Number.isFinite(row[key]) || row[key] < 0)) problems.push(`Hand rules: invalid ${id}.${key}`);
     }
     for (const key of ['min', 'max']) {
@@ -155,27 +151,24 @@ export function scaledCards(rule, attributes = {}, level = undefined) {
 }
 
 /**
- * classHandRules(settings, registries, run) → the hand rules a fight of this
- * character is handed under these settings: the behaviour options, and the
- * character's own three hand rows — its run's snapshot rows, or for a
- * character not yet born (creation) the live table's rows for its class,
- * whose opening hand is its own (owner, 2026-09-24: "Class base 3–5, +1 from
- * stats", #1294). The ONE door: combat (engine/runCombat.js) snapshots it,
- * and character creation's Hand and Draw chips read it, so the hand a new
- * character is promised is the hand its first fight deals.
+ * scaledCardsReceipt(row, attributes, level) → the count a hand row states,
+ * with its terms: `base`, `bonus` (every attribute and level term), `raw`
+ * before the row's bounds, `min`, `max` and the `value`.
  */
-export function classHandRules(settings = {}, registries = null, run = null) {
-  return resolveHandRules(settings || {}, handStatRows(registries, run, { settings: settings || {} }));
+export function scaledCardsReceipt(rule, attributes = {}, level = undefined) {
+  const row = isLegacyHandGroup(rule) ? legacyHandRow(rule) : rule;
+  const receipt = statRowValue(row, { attributes, level, lenientAttributes: true });
+  return { ...receipt, bonus: receipt.raw - receipt.base };
 }
 
 /**
  * handDrawCount(rules, attributes, { handSize, opening, replacements, level })
  * → how many cards one draw puts into a hand already holding `handSize`: the
- * opening-hand row on the opening draw, otherwise the Draw / turn row (plus
- * any replacements for chosen discards) or a fill to the hand size — never
- * more than the room the hand size leaves. The ONE formula: combat's
- * `turnDrawCount` (engine/handRules.js) deals it and creation's Hand and Draw
- * chips (`handSizeReceipts`) preview it for an empty hand (Codex, #1294).
+ * opening-hand row on the opening draw, otherwise the Draw / turn row (plus any
+ * replacements for chosen discards) or a fill to the hand size — never more
+ * than the room the hand size leaves. The ONE formula: combat's
+ * `turnDrawCount` (engine/handRules.js) deals it and character creation's Hand
+ * and Draw chips (`handSizeReceipts`) preview it for an empty hand (#1294).
  */
 export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = false, replacements = 0, level = undefined } = {}) {
   const capacity = scaledCards(handRow(rules, 'handSize'), attributes, level);
@@ -185,72 +178,20 @@ export function handDrawCount(rules, attributes = {}, { handSize = 0, opening = 
   return { capacity, room, wanted, value: Math.min(room, wanted) };
 }
 
-/** handRowReceipt(rules, id, attributes, level) → the row's `statRowValue` receipt. */
-export function handRowReceipt(rules, id, attributes = {}, level = undefined) {
-  const row = handRow(rules, id);
-  return { ...statRowValue(isLegacyHandGroup(row) ? legacyHandRow(row) : row, { attributes, level, statId: id, lenientAttributes: true }) };
-}
-
 /**
  * handSizeReceipts(rules, attributes, level) → the opening hand, the most one
- * turn draws, and the hand size, each the row's receipt. Both draw values are
+ * turn draws, and the hand size, each with its terms. Both draws are
  * `handDrawCount` into an empty hand — what `turnDrawCount` deals: the stated
  * row (`stated`), limited by the hand size. A fill draw tops the hand up.
  */
 export function handSizeReceipts(rules, attributes = {}, level = undefined) {
-  const capacity = handRowReceipt(rules, 'handSize', attributes, level);
-  const starting = handRowReceipt(rules, 'openingHand', attributes, level);
+  const capacity = scaledCardsReceipt(handRow(rules, 'handSize'), attributes, level);
+  const starting = scaledCardsReceipt(handRow(rules, 'openingHand'), attributes, level);
   const opening = { ...starting, stated: starting.value, capacity: capacity.value, value: handDrawCount(rules, attributes, { opening: true, level }).value };
   const most = handDrawCount(rules, attributes, { level }).value;
-  const turnRow = handRowReceipt(rules, 'draw', attributes, level);
+  const turnRule = scaledCardsReceipt(handRow(rules, 'draw'), attributes, level);
   const turn = rules.drawMode === 'fill'
     ? { fill: true, capacity: capacity.value, value: most }
-    : { ...turnRow, stated: turnRow.value, fill: false, capacity: capacity.value, value: most };
+    : { ...turnRule, stated: turnRule.value, fill: false, capacity: capacity.value, value: most };
   return { opening, turn, capacity };
-}
-
-/**
- * handCadence(row, attrId) → how many points of `attrId` buy one more card
- * while the row is still below its maximum, probed through the row's own
- * formula (`statRowValue`, every other attribute at 0): the cadence the
- * floors actually pay, never an average (Codex, #1253). null when the steps
- * are uneven before the cap or the row never steps.
- */
-function handCadence(row, attrId) {
-  const open = { ...row };
-  delete open.min;
-  delete open.max;
-  const at = (points) => statRowValue(open, { attributes: { [attrId]: points }, statId: 'hand', lenientAttributes: true }).raw;
-  const steps = [];
-  let last = at(0);
-  for (let points = 1; points <= 60 && steps.length < 8; points += 1) {
-    const value = at(points);
-    if (value > last) {
-      if (value - last !== 1) return null;
-      steps.push(points);
-      if (Number.isFinite(row.max) && value > row.max) break;
-    }
-    last = value;
-  }
-  if (!steps.length) return null;
-  const gaps = steps.slice(1).map((points, index) => points - steps[index]);
-  if (!gaps.length) return steps[0];
-  return gaps.every((gap) => gap === gaps[0]) ? gaps[0] : null;
-}
-
-/**
- * handRuleFacts(rules, attrId) → what `attrId` buys in the hand these rules
- * deal, as `{ id, label, weight, points, maximum }` per hand row that weighs
- * it (the opening hand first: it is the one a class's own attribute moves):
- * `points` is the cadence of one more card (`handCadence`). Read by the
- * attribute cards (model/creationBrief.js) with the rules `classHandRules`
- * hands the character's next fight.
- */
-export function handRuleFacts(rules, attrId) {
-  const rows = [['openingHand', 'Opening hand'], ...(rules.drawMode === 'fill' ? [] : [['draw', 'Turn draw']]), ['handSize', 'Hand capacity']];
-  return rows
-    .map(([id, label]) => [id, label, handRow(rules, id)])
-    .map(([id, label, row]) => [id, label, isLegacyHandGroup(row) ? legacyHandRow(row) : row])
-    .filter(([, , row]) => Number(row?.[attrId]) > 0)
-    .map(([id, label, row]) => ({ id, label, weight: row[attrId], points: handCadence(row, attrId), maximum: Number.isFinite(row.max) ? row.max : null }));
 }

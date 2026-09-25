@@ -83,7 +83,7 @@ export const UNIFIED_RULESET_VERSION = 6;
 export const DERIVED_STAT_SNAPSHOT_VERSION = 3;
 export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2, 3]);
 
-const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation', 'byClass'];
+const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
 const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
 const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap', 'perLevel'];
@@ -95,7 +95,16 @@ const UNIFIED_RULE_FIELDS = ['base', 'perLevel', 'cap'];
 // Ruleset 7 states its bounds as `min` / `max` on the row itself (the hand
 // rows carried them as `minimum` / `maximum`), and `cap` retires into `max`.
 const STAT_ROW_DEFAULT_FIELDS = ['perLevel'];
-const STAT_ROW_FIELDS = ['base', 'perLevel', 'min', 'max'];
+const STAT_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline', 'byClass'];
+// A ROW MAY STATE A PER-CLASS FORM (owner, 2026-09-24, on #1294 and #1296:
+// "give the openingHand stat row a per-class form"). `byClass.<classId>` holds
+// that class's base and attribute weights (and, optionally, its own perLevel,
+// min, max or attributeBaseline); everything it does not state is the row's.
+// A class with no entry — or no class at all: a fixture, a preview — reads the
+// shared row. `attributeBaseline` is the attribute points a row counts from:
+// each term is floor(max(0, attribute − attributeBaseline) × weight), so the
+// opening hand's `floor((primary − 1) / 2)` is a weight of 0.5 from 1.
+const CLASS_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline'];
 // Legal only on a snapshot row or an override layer — see the header. The last
 // two carry the retired hand and rating arithmetic (model/statRows.js):
 // `pointsBaseline` is the hand rules' "points before bonuses", subtracted from
@@ -268,6 +277,10 @@ function validateUnifiedRule(out, value, path, options, partial) {
   if (value.pointsBaseline !== undefined && (!Number.isFinite(value.pointsBaseline) || value.pointsBaseline < 0)) {
     problem(out, `${path}.pointsBaseline`, 'must be a finite number >= 0');
   }
+  if (value.attributeBaseline !== undefined && (!Number.isFinite(value.attributeBaseline) || value.attributeBaseline < 0)) {
+    problem(out, `${path}.attributeBaseline`, 'must be a finite number >= 0');
+  }
+  if (value.byClass !== undefined) validateByClass(out, value.byClass, `${path}.byClass`, options);
   if (value.multiplier !== undefined && (!Number.isFinite(value.multiplier) || value.multiplier < 0)) {
     problem(out, `${path}.multiplier`, 'must be a finite number >= 0');
   }
@@ -275,6 +288,32 @@ function validateUnifiedRule(out, value, path, options, partial) {
     if (value[id] === undefined) continue;
     if (!Number.isFinite(value[id]) || value[id] < 0) {
       problem(out, `${path}.${id}`, 'must be a finite number >= 0 — the contribution of one point of this attribute');
+    }
+  }
+}
+
+/** A row's per-class form: one partial row per class id (see CLASS_ROW_FIELDS). */
+function validateByClass(out, value, path, options) {
+  if (!plainObject(value)) { problem(out, path, 'must be a plain object of class id → row'); return; }
+  for (const [classId, row] of Object.entries(value)) {
+    const at = `${path}.${classId}`;
+    if (!plainObject(row)) { problem(out, at, 'must be a plain object'); continue; }
+    unknownFields(out, row, [...CLASS_ROW_FIELDS, ...options.attributeIds], at);
+    if (row.base !== undefined && (!Number.isInteger(row.base) || row.base < 0)) problem(out, `${at}.base`, 'must be a whole number >= 0');
+    validatePerLevelGrowth(out, row.perLevel, `${at}.perLevel`, false);
+    for (const bound of ['min', 'max']) {
+      if (row[bound] !== undefined && row[bound] !== null && (!Number.isInteger(row[bound]) || row[bound] < 0)) {
+        problem(out, `${at}.${bound}`, 'must be null or a whole number >= 0');
+      }
+    }
+    if (Number.isInteger(row.min) && Number.isInteger(row.max) && row.min > row.max) problem(out, `${at}.min`, `must not exceed max (${row.max})`);
+    if (row.attributeBaseline !== undefined && (!Number.isFinite(row.attributeBaseline) || row.attributeBaseline < 0)) {
+      problem(out, `${at}.attributeBaseline`, 'must be a finite number >= 0');
+    }
+    for (const id of options.attributeIds) {
+      if (row[id] !== undefined && (!Number.isFinite(row[id]) || row[id] < 0)) {
+        problem(out, `${at}.${id}`, 'must be a finite number >= 0 — the contribution of one point of this attribute');
+      }
     }
   }
 }
@@ -389,22 +428,27 @@ function normalizeRulePatch(patch, attributeIds) {
  * reader in the retired vocabulary; every reader goes through here instead of
  * indexing `rules` itself.
  */
-export function resolvedRuleRow(table, statId) {
+export function resolvedRuleRow(table, statId, classId = null) {
   const row = table && table.rules && table.rules[statId];
   if (!plainObject(row)) return null;
-  return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row });
+  return rowForClass(normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row }), classId);
 }
 
 /**
- * classRuleRow(table, classId, statId) → the row a character of this class
- * reads from a live table: the class's own row where the table has one
- * (`byClass`), the shared row otherwise. A run reads its snapshot instead,
- * which was resolved per class when the run was born.
+ * rowForClass(row, classId) → the row one class reads: a row with a per-class
+ * form (`byClass`, see CLASS_ROW_FIELDS) answers with that class's base and
+ * weights over the shared bounds; the form itself never rides along, so a
+ * snapshot or a fight states exactly the row it was priced by.
  */
-export function classRuleRow(table, classId, statId) {
-  const own = classId && table && plainObject(table.byClass) && plainObject(table.byClass[classId]) ? table.byClass[classId][statId] : null;
-  if (plainObject(own)) return normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...own });
-  return resolvedRuleRow(table, statId);
+export function rowForClass(row, classId = null) {
+  if (!plainObject(row) || !Object.hasOwn(row, 'byClass')) return row;
+  const { byClass, ...shared } = row;
+  const own = classId && plainObject(byClass) ? byClass[classId] : null;
+  if (!plainObject(own)) return shared;
+  // The class's weights REPLACE the shared ones: a Reaver's opening hand
+  // answers to Strength alone, not Strength on top of the shared Intelligence.
+  const bounds = Object.fromEntries(Object.entries(shared).filter(([key]) => NON_WEIGHT_FIELDS.includes(key)));
+  return { ...bounds, ...structuredClone(own) };
 }
 
 /** Every attribute this row answers to, as `[id, weight]`, weight non-zero. */
@@ -447,20 +491,6 @@ export function derivedStatRuleProblems(source, options = {}) {
   }
   for (const id of Object.keys(source.rules)) {
     if (!DERIVED_STAT_IDS.includes(id)) problem(out, `rules.${id}`, `unknown derived-stat row '${id}'`);
-  }
-  // A CLASS'S OWN ROWS (ruleset 7): a full row in the one shape, which that
-  // class's runs are born with in place of the shared row — the opening hand
-  // is per class (owner, 2026-09-24: "Class base 3–5, +1 from stats", #1294).
-  if (source.byClass !== undefined) {
-    if (!opts.statRows) problem(out, 'byClass', 'is only legal from derived-stat ruleset 7');
-    else if (!plainObject(source.byClass)) problem(out, 'byClass', 'must be a plain object of class id → rows');
-    else for (const [classId, rows] of Object.entries(source.byClass)) {
-      if (!plainObject(rows)) { problem(out, `byClass.${classId}`, 'must be a plain object of row id → row'); continue; }
-      for (const [id, row] of Object.entries(rows)) {
-        if (!DERIVED_STAT_IDS.includes(id)) problem(out, `byClass.${classId}.${id}`, `unknown derived-stat row '${id}'`);
-        else validateRule(out, row, `byClass.${classId}.${id}`, opts, false);
-      }
-    }
   }
   // A HAND HOLDS AT LEAST ONE CARD. The retired capacity group refused a floor
   // or ceiling under 1; the row that replaced it keeps that refusal, or a
@@ -580,16 +610,6 @@ export function resolveDerivedStatRules(source, options = {}) {
       .filter((id) => own(source.rules, id))
       .map((id) => [id, normalizeRule({ ...source.defaults, ...structuredClone(source.rules[id]) })])),
   };
-  // A CLASS'S OWN ROWS REPLACE THE SHARED ONES when the table is resolved for
-  // a character (a run's snapshot is born here with its class's opening hand);
-  // the per-class table itself never rides into a snapshot.
-  const classId = options.classId || (options.classDef && options.classDef.id) || null;
-  const classRows = classId && plainObject(source.byClass) && plainObject(source.byClass[classId]) ? source.byClass[classId] : null;
-  if (classRows) {
-    for (const [id, row] of Object.entries(classRows)) {
-      if (replayed.rules[id]) replayed.rules[id] = normalizeRule({ ...source.defaults, ...structuredClone(row) });
-    }
-  }
   for (const [, layer] of layers) {
     if (!layer) continue;
     // A LAYER PATCHES THE ROWS THE TABLE HAS. Since the row set became a
@@ -721,7 +741,9 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
   for (const [id, weight] of weights) {
     const value = attributes && attributes[id];
     if (!Number.isFinite(value)) throw new Error(`attribute '${id}' is not a finite number`);
-    terms[id] = Math.floor(value * weight + EPSILON);
+    // Counted from `attributeBaseline` when the row states one (0 otherwise).
+    const counted = Number.isFinite(row.attributeBaseline) && row.attributeBaseline > 0 ? Math.max(0, value - row.attributeBaseline) : value;
+    terms[id] = Math.floor(counted * weight + EPSILON);
     points += terms[id];
   }
   const gain = row.gain === undefined ? 1 : gainValue(row.gain, classDef, statId);
@@ -754,7 +776,7 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
  * leaves it out and reads the attribute term alone.
  */
 export function deriveStat(resolved, statId, { attributes, classDef, level = undefined } = {}) {
-  const row = resolvedRuleRow(resolved, statId);
+  const row = resolvedRuleRow(resolved, statId, classDef && classDef.id);
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
   return statRowValue(row, { attributes, classDef, level, statId });
 }
@@ -882,6 +904,9 @@ export function relicAttributeTierFoldProblems(term, rule) {
 function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
   if (!classDef) throw new Error('Host snapshot creation requires a classDef');
   const out = structuredClone(rules);
+  // A RUN SNAPSHOTS ITS OWN CLASS'S ROW: the per-class form resolves here,
+  // with the class-field bases, so a save states the one row it is priced by.
+  for (const [statId, row] of Object.entries(out.rules)) out.rules[statId] = rowForClass(row, classDef.id);
   for (const [statId, row] of Object.entries(out.rules)) {
     row.base = baseValue(row.base, classDef, statId);
     if (row.gain !== undefined) row.gain = gainValue(row.gain, classDef, statId);

@@ -113,7 +113,9 @@ check('the twelve rows answer to the ruled attributes', () => {
     .map(([id, row]) => `${id}:${ruleWeights(row).map(([attr, weight]) => `${attr}x${weight}`).join('+')}`).join(',');
   equal(got, [
     'energy:strengthx0.1+dexterityx0.2+wisdomx0.01+intelligencex0.01',
-    'openingHand:intelligencex0.45',
+    // The opening hand's SHARED weight — the fallback for a fight with no
+    // class; each class reads its own form (checked below).
+    'openingHand:intelligencex0.5',
     'draw:intelligencex0.1',
     'handSize:intelligencex0.19',
     'hp:strengthx0.35+constitutionx4+wisdomx0.1',
@@ -133,7 +135,22 @@ check('only the hand rows are bounded, by their own min and max', () => {
   const got = Object.entries(derivedStatRules.rules)
     .filter(([, row]) => 'min' in row || 'max' in row || 'cap' in row)
     .map(([id, row]) => `${id}:${row.min}..${row.max}${'cap' in row ? ' cap' : ''}`).join(',');
-  equal(got, 'openingHand:3..15,draw:2..10,handSize:1..30', 'bounded rows');
+  equal(got, 'openingHand:4..6,draw:2..10,handSize:1..30', 'bounded rows');
+});
+
+// THE OPENING HAND IS THE CLASS'S (owner, 2026-09-24; #1294): base 3/4/4/5
+// and 0.5 on the primary, counted from 1 — clamp(base + floor((p − 1) / 2), 4, 6).
+check('each class opens on its own row: base and primary weight, counted from 1', () => {
+  equal(derivedStatRules.rules.openingHand.attributeBaseline, 1, 'counted from 1');
+  const got = Object.entries(derivedStatRules.rules.openingHand.byClass)
+    .map(([id, row]) => `${id}:${row.base}+${ruleWeights(row).map(([attr, weight]) => `${attr}x${weight}`).join('+')}`).join(',');
+  equal(got, 'reaver:3+strengthx0.5,rogue:4+dexterityx0.5,herald:4+wisdomx0.5,starseer:5+intelligencex0.5', 'per-class rows');
+  // Reaver (CLASS): STR 1 → 3 raw, held to 4; STR 3 → 4; STR 8 → 6 (3 + floor(7 × 0.5)); STR 12 → 8 raw, held to 6.
+  const reaver = (strength) => deriveStat(resolved(), 'openingHand', { attributes: at({ strength }), classDef: CLASS });
+  equal(reaver(1).raw, 3, 'Reaver STR 1 raw'); equal(reaver(1).value, 4, 'Reaver STR 1 held to 4');
+  equal(reaver(3).value, 4, 'Reaver STR 3'); equal(reaver(8).value, 6, 'Reaver STR 8');
+  equal(reaver(12).raw, 8, 'Reaver STR 12 raw'); equal(reaver(12).value, 6, 'Reaver STR 12 held to 6');
+  equal(reaver(12).terms.strength, 5, 'Reaver STR 12 counts 11 points above 1: floor(11 × 0.5)');
 });
 
 check('the shipped table passes the closed schema', () => {
@@ -254,9 +271,11 @@ check('shipped Energy grows unbounded at high stats; the hand rows hold to their
   const high = (id, attribute) => deriveStat(rules, id, { attributes: at({ [attribute]: 5000 }), classDef: CLASS });
   // 3 + floor(5000 x 0.2); STR, WIS and INT at 1 add nothing.
   equal(high('energy', 'dexterity').value, 1003, 'uncapped high-stat Energy');
-  // 2 + floor(5000 x 0.1) = 502, 4 + floor(5000 x 0.45) = 2254, 7 + floor(5000 x 0.19) = 957.
+  // 2 + floor(5000 x 0.1) = 502, 7 + floor(5000 x 0.19) = 957; the shared
+  // opening hand (no class) 4 + floor(4999 x 0.5) = 2503.
   equal(high('draw', 'intelligence').raw, 502, 'Draw raw'); equal(high('draw', 'intelligence').value, 10, 'Draw max');
-  equal(high('openingHand', 'intelligence').raw, 2254, 'opening hand raw'); equal(high('openingHand', 'intelligence').value, 15, 'opening hand max');
+  const opening = deriveStat(rules, 'openingHand', { attributes: at({ intelligence: 5000 }) });
+  equal(opening.raw, 2503, 'opening hand raw'); equal(opening.value, 6, 'opening hand max');
   equal(high('handSize', 'intelligence').raw, 957, 'hand size raw'); equal(high('handSize', 'intelligence').value, 30, 'hand size max');
 });
 

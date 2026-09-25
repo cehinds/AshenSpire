@@ -3,16 +3,6 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1296",
-    "date": "2026-09-25",
-    "group": "2026-09-25",
-    "summary": "Every stat is set the same way, in one place, and read from one table",
-    "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Each class still opens on its own 4–6 cards, and your hand sizes, HP, Actions, AR, DR, PR and Ward read as before at the starting attributes; Poise is a point or two higher. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
-    "build": "0.7.1.515",
-    "pullRequest": 1296,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1296"
-  },
-  {
     "id": "pr-1300",
     "date": "2026-09-25",
     "group": "2026-09-25",

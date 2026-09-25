@@ -5,7 +5,7 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // The authored bundle remains the default; only keys present in profile
 // settings are projected into a fresh bundle for a new run.
 
-import { handRulesRows, handRulesSettingsProblems, hasRetiredOpeningLimits, withoutRetiredOpeningLimits } from './handRules.js';
+import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
@@ -13,7 +13,7 @@ import {
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, migrateLegacyStatSettings } from './statRows.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningLimits, migrateLegacyStatSettings, withoutRetiredOpeningLimits } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -172,6 +172,8 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
   }
+  // #1294's retired 3–15 opening-hand limits go first, so they are never
+  // converted into the opening-hand row below.
   if (hasRetiredOpeningLimits(settings)) {
     const kept = new Set(withoutRetiredOpeningLimits(Object.entries(settings), warnings).map(([key]) => key));
     for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
@@ -943,9 +945,8 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     setPath(root, row.configPath, value);
   }
   // A Max left at the editor's "no ceiling" value is no bound at all (Codex, #1296).
-  const classRows = Object.values(configured.derivedStatRules?.byClass || {}).flatMap((own) => Object.values(own || {}));
-  for (const row of [...Object.values(configured.derivedStatRules?.rules || {}), ...classRows]) {
-    if (row && row.max === STAT_ROW_NO_MAX) delete row.max;
+  for (const row of Object.values(configured.derivedStatRules?.rules || {})) {
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
   }
   const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
   if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
@@ -1168,19 +1169,9 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
   if (hand && !(Number.isInteger(hand.min) && hand.min >= 1 && (!Number.isFinite(hand.max) || hand.max >= 1))) {
     problems.push(`derivedStatRules.rules.handSize.min (${hand.min}) and max (${hand.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
   }
-  // A class's own row (`byClass.<class>.<id>`) is held to the same bounds.
-  const statRows = [
-    ...Object.entries(configured.derivedStatRules?.rules || {}).map(([id, row]) => [`rules.${id}`, id, row]),
-    ...Object.entries(configured.derivedStatRules?.byClass || {}).flatMap(([classId, own]) => Object.entries(own || {})
-      .map(([id, row]) => [`byClass.${classId}.${id}`, id, row])),
-  ];
-  for (const [path, id, row] of statRows) {
-    if (!row || typeof row !== 'object') continue;
-    if (id === 'handSize' && path.startsWith('byClass.') && !(Number.isInteger(row.min) && row.min >= 1 && (!Number.isFinite(row.max) || row.max >= 1))) {
-      problems.push(`derivedStatRules.${path}.min (${row.min}) and max (${row.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
-    }
+  for (const [id, row] of Object.entries(configured.derivedStatRules?.rules || {})) {
     if (Number.isFinite(row.min) && Number.isFinite(row.max) && row.min > row.max) {
-      problems.push(`derivedStatRules.${path}.min (${row.min}) must stay at or below derivedStatRules.${path}.max (${row.max}).`);
+      problems.push(`derivedStatRules.rules.${id}.min (${row.min}) must stay at or below derivedStatRules.rules.${id}.max (${row.max}).`);
     }
   }
   return problems;
@@ -1275,14 +1266,15 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
-  // A file exported before ruleset 7 carries no `statRows` stamp.
-  const legacyRows = file.statRows !== STAT_ROWS_VERSION;
-  const opened = Object.fromEntries(withoutRetiredOpeningLimits(Object.entries(file.overrides || {}), warnings));
-  const overrides = migrateLegacyStatSettings(migrateCombatRatingSettings(opened, bundle, warnings), warnings, { legacyRows });
+  // A file exported before ruleset 7 carries no `statRows` stamp. #1294's
+  // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
+  // converted into the opening-hand row.
+  const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningLimits(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once.
   if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
-  const entries = withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings);
+  const entries = withoutRetiredOpeningLimits(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);

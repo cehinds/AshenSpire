@@ -62,11 +62,27 @@ export const derivedStatRules = {
     // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
     // pool reads a spread of attributes, not one.
     energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
-    // The hand. Each was a single-attribute rule on INT; the weight below
-    // lands on the old count at INT 3, 5, 8 and 12.
-    // The shared row is the fallback for a character with no class row (a
-    // headless fixture); every shipped class opens on its own row (byClass).
-    openingHand: { base: 4, intelligence: 0.45, min: 4, max: 6 },
+    // The hand. Draw / turn and Hand size were single-attribute rules on INT;
+    // the weight below lands on the old count at INT 3, 5, 8 and 12.
+    //
+    // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
+    // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
+    // each class opens on its own base, plus one card for every two points of
+    // its primary attribute above 1 —
+    //   clamp(base + floor(max(0, primary − 1) / 2), 4, 6)
+    // — which is a weight of 0.5 counted from 1 (`attributeBaseline`). The
+    // Standard presets (primary 3) open 4 / 5 / 5 / 6; all 1s open 4 / 4 / 4 / 5.
+    // The shared base and Intelligence weight are the fallback for a fight
+    // with no class (a headless fixture); every shipped class has its own row.
+    openingHand: {
+      base: 4, intelligence: 0.5, attributeBaseline: 1, min: 4, max: 6,
+      byClass: {
+        reaver: { base: 3, strength: 0.5 },
+        rogue: { base: 4, dexterity: 0.5 },
+        herald: { base: 4, wisdom: 0.5 },
+        starseer: { base: 5, intelligence: 0.5 },
+      },
+    },
     draw: { base: 2, intelligence: 0.1, min: 2, max: 10 },
     handSize: { base: 7, intelligence: 0.19, min: 1, max: 30 },
     hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
@@ -81,22 +97,6 @@ export const derivedStatRules = {
     // ONE Poise: the rating and the pool were two rows for one number. Armour
     // and relics remain its external addends, exactly as HP's equipment bonus.
     poise: { base: 1, strength: 0.5, constitution: 1, wisdom: 0.3, intelligence: 0.2 },
-  },
-  // ---- A CLASS'S OWN ROWS --------------------------------------------------
-  //
-  // THE OPENING HAND IS PER CLASS (owner, 2026-09-24: "start with 4-6 cards
-  // depending on the base (3-5)", "Class base 3–5, +1 from stats", #1294):
-  // each class opens on its own base and its own lead attribute, 4 to 6 cards.
-  // A class's row is a FULL row in the one shape, not a patch, and a run of
-  // that class is born with it in its snapshot in place of the shared row.
-  // The 0.45 weight lands on #1294's clamp(base + floor(max(0, primary − 1) ÷
-  // 2), 4, 6) at every attribute value: the Standard presets (primary 3) open
-  // 4/5/5/6, all 1s open 4/4/4/5.
-  byClass: {
-    reaver: { openingHand: { base: 3, strength: 0.45, min: 4, max: 6 } },
-    rogue: { openingHand: { base: 4, dexterity: 0.45, min: 4, max: 6 } },
-    herald: { openingHand: { base: 4, wisdom: 0.45, min: 4, max: 6 } },
-    starseer: { openingHand: { base: 5, intelligence: 0.45, min: 4, max: 6 } },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //

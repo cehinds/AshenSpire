@@ -4,10 +4,7 @@ import { resolveCard } from '../model/registries.js';
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
   const rules = ctx.handRules;
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
-  // The ONE formula creation's Hand and Draw chips preview (model/handRules.js).
-  const draw = handDrawCount(rules, ctx.attributes, {
-    handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel,
-  });
+  const draw = handDrawCount(rules, ctx.attributes, { handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel });
   ctx.handMax = draw.capacity;
   ctx.pendingDiscardDraw = 0;
   return draw.value;
