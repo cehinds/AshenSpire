@@ -8,18 +8,18 @@
   "clips": {
     "magicChannel": {
       "frames": [
-        "MAGIC-STANCE-READY",
         "MAGIC-ATK-01",
         "MAGIC-ATK-02",
         "MAGIC-ATK-03",
         "MAGIC-ATK-04",
         "MAGIC-ATK-05",
+        "MAGIC-ATK-05",
         "MAGIC-ATK-06",
         "MAGIC-ATK-07",
         "MAGIC-STANCE-READY"
       ],
-      "frameMs": 160,
-      "impactIndex": 5
+      "frameMs": 60,
+      "impactIndex": 4
     },
     "magicStanceReady": {
       "frames": [

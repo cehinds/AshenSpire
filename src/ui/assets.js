@@ -110,6 +110,24 @@ export function spriteMirror(artFaces, side = 'enemy') {
   return artFaces !== SIDE_FACES[side];
 }
 
+// SPEC §7.4.1 idle breath. `sprite-idle` (styles/combat.css) drifts every
+// figure's painting a few px on the standalone `translate` property; the
+// period and the phase are per actor so a row of fighters never bobs in
+// unison. Derived from a stable key (the combatant id), so a re-render keeps
+// the same rhythm. Written on the figure's outer element and inherited.
+export const IDLE_PERIOD_MS = Object.freeze({ min: 2800, max: 3600 });
+export function idleRhythm(key) {
+  let h = 2166136261;
+  for (const ch of String(key ?? '')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const ms = IDLE_PERIOD_MS.min + (h % (IDLE_PERIOD_MS.max - IDLE_PERIOD_MS.min + 1));
+  return { ms, delay: -((h >>> 11) % ms) };
+}
+function applyIdleRhythm(el, key) {
+  const { ms, delay } = idleRhythm(key);
+  el.style.setProperty('--idle-ms', ms + 'ms');
+  el.style.setProperty('--idle-delay', delay + 'ms');
+}
+
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
  * (assets/sprites/enemy_<id>.webp, tools/sprites-blender.py), else the style
@@ -155,16 +173,18 @@ export function enemySprite(enemyDef, entity = {}) {
   //     `matrix(1,0,0,1,12.8,0)`, wobble held `matrix(1,…)` for its whole
   //     550ms, and crumble interpolated -1 → -0.43, flipping THROUGH the
   //     mirror and ending the death animation facing the wrong way.
-  //   · the `img` — `sprite-idle` (infinite) and `enemy-lunge` are aimed at
-  //     `.combatant .sprite > img`. Those selectors are dead today, because
-  //     the img is a grandchild of `.sprite` rather than a child, so the mirror
-  //     would survive there by accident; the day that selector is repaired it
-  //     would break, and it is already carded to be repaired.
+  //   · the `img` — `sprite-idle` (infinite) is aimed at `.facing > img`
+  //     (SPEC §7.4.1). It animates the standalone `translate` property, never
+  //     `transform`, so it composes with this layer's mirror and with the
+  //     painted art's inline foot-line transform — but a `transform` animation
+  //     on the img would still replace that inline transform, so the mirror
+  //     does not belong there either.
   //
   // So: a layer between them that nothing selects. It carries the facing and
   // only the facing.
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
     + 'display:flex;align-items:flex-end;justify-content:center;';
+  applyIdleRhythm(el, entity.id ?? enemyDef.id);
   const facing = document.createElement('div');
   // Same element name as the player figure's layer (classSprite(), and the
   // facing block in styles/ui.css) because it is the same mechanism. WHERE the
@@ -477,6 +497,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
       const host = document.createElement('div');
       host.className = 'class-sprite painted-outfit' + (stage && style === 'animated' ? ' animated' : '');
       host.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
+      applyIdleRhythm(host, figureId || classId);
       host.appendChild(art);
       if (stage) { registerStage(host, stage); registerStage(art, stage); }
       applyMedallion(host);
@@ -486,6 +507,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   const el = document.createElement('div');
   el.className = 'class-sprite';
   el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  applyIdleRhythm(el, figureId || classId);
 
   // THE FACING LAYER, for the same reason enemySprite() has one: any orientation
   // correction must sit on an element that carries NOTHING ELSE. It used to

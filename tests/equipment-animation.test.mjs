@@ -6,13 +6,14 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { armourArtKey } from '../src/model/paintedOutfitArt.js';
 
-const approved = ['STANCE-READY','ATK-07','ATK-04','ATK-02','ATK-03','ATK-05','ATK-01','ATK-04','STANCE-READY'];
+// Combat feel F (SPEC §7.4.1): no leading ready frame, the impact (ATK-05) held, 60 ms steps.
+const approved = ['ATK-07','ATK-04','ATK-02','ATK-03','ATK-05','ATK-05','ATK-01','ATK-04','STANCE-READY'];
 const base = { classId:'reaver', rightId:'greatsword', leftId:null };
 const set = selectEquipmentAnimation(base);
 assert.equal(set.setId,'reaverGreatsword');
 assert.deepEqual(animationClip(set,'attack').frames,approved);
-assert.deepEqual(animationTiming(set,'attack'),{totalMs:900,impactMs:500});
-assert.deepEqual(animationTiming(set,'attack',{lungeMs:130}),{totalMs:450,impactMs:250});
+assert.deepEqual(animationTiming(set,'attack'),{totalMs:540,impactMs:240});
+assert.deepEqual(animationTiming(set,'attack',{lungeMs:130}),{totalMs:270,impactMs:120});
 assert.match(animationView(set,'portrait'),/PORTRAIT.webp$/);
 assert.match(animationView(set,'conversation'),/STANCE-READY.webp$/);
 assert.equal(animationClip(set,'power'),animationClip(set,'buff'));
@@ -59,7 +60,7 @@ for(const outfit of outfitRows){
 }
 const changed=structuredClone(EQUIPMENT_ANIMATIONS);changed.motionProfiles.greatswordTwoHand.clips.greatswordAttack.frameMs=120;
 for(const classId of ['reaver','rogue','herald','starseer'])assert.equal(animationTiming(selectEquipmentAnimation({...base,classId},changed),'attack').totalMs,1080,'one profile edits all classes');
-const swordOrder=['STANCE-READY','DEFEND','ATK-07','BUFF-NO-AURA','ATK-02','ATK-03','ATK-04','ATK-05','ATK-05','STANCE-DEFENSIVE','STANCE-READY'];
+const swordOrder=['ATK-07','ATK-02','ATK-03','ATK-04','ATK-05','ATK-05','ATK-05','STANCE-DEFENSIVE','STANCE-READY'];
 for(const outfit of outfitRows){
  const equipped=createRunState({seed:896,classId:outfit.classId,registries:r}).loadout;
  equipped.sets.armor[equipped.active.armor||0]=outfit.id;
@@ -73,7 +74,7 @@ for(const outfit of outfitRows){
   assert.deepEqual(animationClip(component,'attack').frames,swordOrder);
   assert.deepEqual(animationClip(component,'buff').frames,['BUFF'],'buff keeps its own effect artwork');
   assert.notEqual(component.frames['BUFF-NO-AURA'].file,component.frames.BUFF.file,'attack uses its own aura-free variant');
-  assert.deepEqual(animationTiming(component,'attack'),{totalMs:1100,impactMs:700});
+  assert.deepEqual(animationTiming(component,'attack'),{totalMs:540,impactMs:240});
   const artId=armourArtKey(outfit.classId,outfit.id);
   assert.ok(animationView(component,'portrait').includes('/'+outfit.classId+(artId==='default'?'':'-'+artId)+'/'));
   for(const frame of Object.values(component.frames))assert.ok(existsSync(new URL('../'+frame.file,import.meta.url)),frame.file);
@@ -81,9 +82,9 @@ for(const outfit of outfitRows){
 }
 const swordChanged=structuredClone(EQUIPMENT_ANIMATIONS);
 swordChanged.motionProfiles.swordShield.clips.swordShieldAttack.frameMs=120;
-assert.equal(animationTiming(selectEquipmentAnimation({...base,rightId:'katana',leftId:'roundShield'},swordChanged),'attack').totalMs,1320);
+assert.equal(animationTiming(selectEquipmentAnimation({...base,rightId:'katana',leftId:'roundShield'},swordChanged),'attack').totalMs,1080);
 assert.deepEqual(animationClip(selectEquipmentAnimation(base,swordChanged),'attack').frames,approved,'sword profile edits preserve greatsword order');
-assert.equal(animationTiming(selectEquipmentAnimation(base,swordChanged),'attack').totalMs,900,'sword profile edits preserve greatsword timing');
+assert.equal(animationTiming(selectEquipmentAnimation(base,swordChanged),'attack').totalMs,540,'sword profile edits preserve greatsword timing');
 const run=createRunState({seed:896,classId:'reaver',registries:r});
 function equip(right,left){for(const [slot,id]of [['rightHand',right],['leftHand',left]]){run.loadout.active[slot]=0;run.loadout.sets[slot][0]=id;}run.loadout.sets.armor[run.loadout.active.armor||0]='default';}
 equip('greatsword',null);assert.equal(equipmentAnimationForLoadout(r,run.loadout,'reaver').setId,'reaverGreatsword');

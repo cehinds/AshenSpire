@@ -89,7 +89,7 @@ test('all live armor entries have complete shipped physical frames',()=>{
   for(const b of physical.bindings){
     const s=selectEquipmentAnimation({classId:b.classId,armourId:b.armourId,rightId:null,leftId:null});
     assert.equal(s.setId,b.setId);
-    assert.equal(animationClip(s,'attack').frames.length,9);
+    assert.equal(animationClip(s,'attack').frames.length,10);
   }
 });
 

@@ -22,7 +22,7 @@ for(const outfit of ARMOUR){
  assert.equal(component.motionProfile,'daggerSingle');
  assert.deepEqual(component.authoredEquipment,{rightGroup:'dagger',leftGroup:'empty'});
  assert.deepEqual(animationClip(component,'attack'),sequence);
- assert.deepEqual(animationTiming(component,'attack'),{totalMs:900,impactMs:500});
+ assert.deepEqual(animationTiming(component,'attack'),{totalMs:540,impactMs:240});
  assert.equal(Object.keys(component.frames).length,16);
  assert.match(animationView(component,'conversation'),/CONVERSATION.webp$/);
  assert.match(animationView(component,'buff'),/BUFF.webp$/);
