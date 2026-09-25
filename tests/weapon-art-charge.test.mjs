@@ -16,11 +16,12 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { assertCombatSnapshot } from '../src/model/combatSnapshot.js';
 import { executeAction } from '../src/engine/actions.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
+import { combatRules } from '../src/content/combatRules.js';
 
 const registries = createRegistries(contentBundle);
 const rules = contentBundle.balance.weaponArtCharge;
 
-function fight({ right = 'greatsword', rightSets = null, left = null, seed = 812, classId = 'reaver', ratingsRules = null } = {}) {
+function fight({ right = 'greatsword', rightSets = null, left = null, seed = 812, classId = 'reaver', ratingsRules = null, ruleset = null } = {}) {
   const run = createRunState({ seed, classId, registries });
   run.loadout.active.rightHand = 0;
   run.loadout.sets.rightHand = rightSets ? [...rightSets] : [right, null, null];
@@ -29,7 +30,7 @@ function fight({ right = 'greatsword', rightSets = null, left = null, seed = 812
   run.deck = startingDeckRefs(registries, run.loadout, classId).map((ref, i) => ({ ...ref, instanceId: `art-charge:${i}`, upgraded: false }));
   run.equipmentAttackSlotCount = run.deck.filter((c) => c.equipmentRole === 'attack').length;
   stampDeck(registries, run);
-  const combat = createCombat({ registries, rng: createRng(seed), ...(ratingsRules ? { ratingsRules } : {}), enemyIds: ['wanderingSoldier'], player: {
+  const combat = createCombat({ registries, rng: createRng(seed), ...(ratingsRules ? { ratingsRules } : {}), ...(ruleset ? { ruleset } : {}), enemyIds: ['wanderingSoldier'], player: {
     ...structuredClone(run), classId: run.class, relicIds: run.relics, loadout: run.loadout,
   } });
   // Tough, unstaggerable-by-default targets so a test controls every fill.
@@ -98,6 +99,21 @@ test('each hit with the weapon\'s own cards charges its meter, the Art itself ne
   for (let i = 0; i < max + 3; i++) play(combat, kitAttack('greatsword'));
   assert.equal(combat.artCharge.greatsword, max, 'overflow is dropped at the cap');
   assert.equal(artChargeView(combat)[0].full, true);
+});
+
+// PR #1287 review: with a combat ruleset every play resolves on the foundation
+// transaction's clone. The listener must ride that clone and its charge commit.
+test('with a combat ruleset, a weapon hit still fills its meter and the charge commits', () => {
+  const combat = fight({ ruleset: combatRules });
+  assert.ok(combat.foundation, 'the fight runs under the foundation rules');
+  const { events } = play(combat, kitAttack('greatsword'));
+  assert.ok(events.some((e) => e.type === 'damageDealt' && e.sourceId === 'player'), 'the card hit');
+  assert.deepEqual(events.filter((e) => e.type === 'artChargeChanged').map((e) => [e.weaponId, e.value, e.reason]),
+    [['greatsword', rules.gainPerHit, 'hit']]);
+  assert.equal(combat.artCharge.greatsword, rules.gainPerHit);
+  // The committed combat still listens: a second hit adds to the first.
+  play(combat, kitAttack('greatsword'));
+  assert.equal(combat.artCharge.greatsword, Math.min(artChargeMax(registries, 'greatsword'), 2 * rules.gainPerHit));
 });
 
 test('a stagger caused by the weapon\'s hit adds its bonus charge', () => {

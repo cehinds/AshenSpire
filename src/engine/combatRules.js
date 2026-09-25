@@ -3,6 +3,7 @@
 import { validateCombatRules, validateCombatProfile, validateAttack, allocateInteger, resolveDamageComponents, weaponImpact, groupedResistance } from '../model/combatRules.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
+import { reinstallEmitHooks } from './busHooks.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
@@ -211,6 +212,10 @@ function candidateState(ctx) {
   }
   const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);
+  // The bus listeners and payload stamps (Art charge, skill XP, co-op seat
+  // stamps) wrap `emit`; re-apply them so the candidate is heard as the live
+  // combat is and their state commits with it.
+  reinstallEmitHooks(ctx, candidate);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (ctx.players) candidate.playerIdForEntity = (entity) => {

@@ -21,6 +21,7 @@ import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { wrapEmit } from '../src/engine/busHooks.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
@@ -665,13 +666,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // active seat key is the authoritative discriminator. Stamp it at emission
     // time, while that discriminator is still exact, rather than asking the UI
     // to infer a target later from HP or block deltas.
-    const emit = combat.emit;
-    combat.emit = (type, payload = {}) => emit(type,
+    // Through wrapEmit, so a foundation transaction's candidate stamps too.
+    wrapEmit(combat, (ctx, emit) => (type, payload = {}) => emit(type,
       (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
+        ? { ...payload, playerId: payload.playerId ?? ctx.playerKey }
         : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
-          ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
-        : payload);
+          ? { ...payload, playerId: payload.playerId ?? ctx.playerKey }
+        : payload));
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
       const player = member ? combat.players.get(member.id) : null;

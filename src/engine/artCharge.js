@@ -19,6 +19,7 @@
 // (`sourcePlayerId === playerKey`) count.
 
 import { artChargeRules, artChargeMax, artChargeValue, artUnleashFor, isWeaponEquipped, lendingWeaponOf } from '../model/artCharge.js';
+import { wrapEmit } from './busHooks.js';
 
 function charge(combat, weaponId, amount, reason) {
   if (!weaponId || !(amount > 0)) return;
@@ -97,16 +98,16 @@ export function endArtChargeResolution(combat) {
 
 /** Hook the bus: every emitted event is recorded after its triggers fired. */
 export function attachArtCharge(combat) {
-  const inner = combat.emit;
   combat.artCharge = combat.artCharge || {};
   combat._artChargeLastHit = null;
   combat._artChargeCard = null;
-  combat.emit = (type, payload) => {
+  // Installed through wrapEmit so the foundation transaction's candidate
+  // (a clone) carries it too: a play resolved there still fills the meter.
+  return wrapEmit(combat, (ctx, inner) => (type, payload) => {
     const event = inner(type, payload);
-    recordArtCharge(combat, event);
+    recordArtCharge(ctx, event);
     return event;
-  };
-  return combat;
+  });
 }
 
 /**

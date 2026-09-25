@@ -21,6 +21,10 @@ import { createSession, restoreSession } from '../tools/session.mjs';
 import { applyChestOption } from '../src/model/rewardChest.js';
 import { rollEliteChest } from '../src/engine/encounters.js';
 import { createRng } from '../src/engine/rng.js';
+import { createRunState } from '../src/model/state.js';
+import { createCoopCombat, playCard as coopPlayCard } from '../src/engine/coopCombat.js';
+import { createFoundation, foundationTransaction } from '../src/engine/combatRules.js';
+import { combatRules } from '../src/content/combatRules.js';
 import { receiptJuicePlan, coopFinaleHoldMs, hitStopForEvent, COMBAT_JUICE } from '../src/ui/models/CombatJuiceModel.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
@@ -75,6 +79,44 @@ test('each seat fills only its own meter, from its own weapon hits', () => {
   assert.equal(rows.find((p) => p.id === 'p2').artCharge.find((r) => r.weaponId === 'straightSword').value, 0);
   const changed = S.snapshot().scene.events.filter((e) => e.type === 'artChargeChanged');
   assert.deepEqual(changed.map((e) => [e.playerId, e.weaponId, e.value, e.reason]), [['p1', 'straightSword', RULES.gainPerHit, 'hit']]);
+});
+
+// PR #1287 review: with a combat ruleset every co-op play resolves on the
+// foundation transaction's clone. The Art-charge listener (and the host's seat
+// stamp) must ride that clone, and the seat's charge must commit.
+test('with a combat ruleset, a seat\'s weapon hit still fills its own meter', () => {
+  const players = ['p1', 'p2'].map((id) => {
+    const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
+    return { id, name: id, classId: 'reaver', maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
+      deck: run.deck.map((c, i) => ({ ...c, instanceId: `${id}:${i}` })), loadout: structuredClone(run.loadout), relicIds: [], flasks: [] };
+  });
+  const C = createCoopCombat({ registries: REG, rng: createRng(0x1287), players, enemyIds: ['wanderingSoldier'], ruleset: combatRules });
+  assert.ok(C.foundation, 'the fight runs under the foundation rules');
+  for (const enemy of C.enemies) { enemy.hp = enemy.maxHp = 999; if (enemy.poiseMeter) enemy.poiseMeter.max = 999; }
+  const P = C.players.get('p1');
+  const card = Object.values(P.piles).flat().find(kitStrike('straightSword'));
+  assert.ok(card, 'p1 holds a straight-sword kit strike');
+  for (const pile of Object.values(P.piles)) { const i = pile.indexOf(card); if (i >= 0) pile.splice(i, 1); }
+  P.piles.hand.push(card);
+  Object.assign(P.entity, { energy: 20, stamina: P.entity.maxStamina, mana: P.entity.maxMana });
+  coopPlayCard(C, 'p1', card.instanceId, C.enemies[0].id);
+  assert.equal(C.players.get('p1').artCharge.straightSword, RULES.gainPerHit);
+  assert.deepEqual(C.players.get('p2').artCharge, {});
+});
+
+test('through the host, a foundation-rules fight still charges the seat and stamps its hits', () => {
+  const S = party();
+  const C = fight(S);
+  C.foundation = createFoundation(combatRules, {}, REG); // what a non-null ruleset builds
+  play(S, 'p1', kitStrike('straightSword'));
+  assert.equal(C.players.get('p1').artCharge.straightSword, RULES.gainPerHit);
+  const events = S.snapshot().scene.events;
+  assert.deepEqual(events.filter((e) => e.type === 'artChargeChanged').map((e) => [e.playerId, e.weaponId, e.reason]), [['p1', 'straightSword', 'hit']]);
+  // The host's seat stamp rides the clone too: a hit on a seat, emitted inside
+  // a transaction, still names the seat.
+  const stamped = foundationTransaction(C, (candidate) => candidate.emit('damageDealt', { sourceId: C.enemies[0].id, targetId: 'player', amount: 1, blocked: 0 }));
+  assert.equal(stamped.playerId, C.playerKey);
 });
 
 test('the charge receipt names its seat, and a hit another seat landed charges nobody else', () => {
