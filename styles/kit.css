@@ -4688,8 +4688,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   transform: var(--card-fan-transform, rotate(var(--hand-card-angle))) translateY(var(--lift, 0px)) scale(var(--lift-scale, 1));
   z-index: auto !important;
 }
+/* The state lifts without scaling: the hit lane below undoes lift and angle
+   only, so a scaled card would grow its lane over its neighbours and hover
+   would stick (SPEC §7.4.1). --lift-scale is pinned here because combat.css's
+   generic and co-op hover rules (1.32 / 1.1 / 1.04) would otherwise reach
+   this hand in co-op. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(:hover,.selected,.inspection-selected) {
-  --lift: calc(-1 * var(--hand-selection-lift));
+  --lift: calc(-1 * var(--hand-selection-lift)); --lift-scale: 1;
   z-index: 50 !important;
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art {
