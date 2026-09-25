@@ -220,6 +220,31 @@ test('an ancestor class inside :is() is not the subject', () => {
   assert.equal(c12({ ...r, kit: bad }).length, 1);
 });
 
+// Codex on #1316: @scope's root is the rules' ancestor, so a scoped
+// `.hud-top` grid is a shared-HUD grid and is judged; `:scope` is the root.
+test('a rule inside @scope keeps its scope root', () => {
+  const r = receipt();
+  const grid = `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n`;
+  assert.equal(railUnderMeters(grid), false);
+  const rail = `${r.kit}\n@scope (.shared-hud) { :scope .hud-bottom { position: absolute; } }\n`;
+  assert.equal(c12({ ...r, kit: rail }).length, 1);
+  const fine = `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "meters actions" "rail actions"; } }\n`;
+  assert.equal(railUnderMeters(fine), true);
+});
+
+// Codex on #1316: a grouping rule nested in the base rail rule emits a
+// conditional copy with the base selector; the base is the unconditional
+// rule, so an unrelated nested @media does not hide its position/grid-area.
+test('a nested @media in the base rail rule does not replace the base', () => {
+  const r = receipt();
+  const base = 'position: static; grid-area: rail; min-width: 0; width: 100%;';
+  const kit = r.kit.replace(base, `${base}\n  @media (width < 1px) { color: red; }`);
+  assert.notEqual(kit, r.kit);
+  assert.equal(c12({ ...r, kit }).length, 0);
+  const hung = r.kit.replace(base, `${base}\n  @media (width < 1px) { position: absolute; }`);
+  assert.equal(c12({ ...r, kit: hung }).length, 1);
+});
+
 // Review of #1316: the rail is in flow only if nothing later hangs it again,
 // in the same rule or in a later .hud-bottom rule.
 test('a later declaration that hangs the relic rail again fails C12', () => {

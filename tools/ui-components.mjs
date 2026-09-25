@@ -153,7 +153,7 @@ function splitTop(text, sep) {
 // new one) is descended into, so an unknown grouping rule is judged, not lost.
 const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/;
 
-function parseBlock(src, parent, rules) {
+function parseBlock(src, parent, rules, conditional = false, scopeBlock = false) {
   let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
   const decls = [];
   const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
@@ -178,21 +178,30 @@ function parseBlock(src, parent, rules) {
     if (ch === '}' && depth > 0) {
       if (--depth === 0) {
         const body = src.slice(openAt, j);
-        if (prelude.startsWith('@')) {
-          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules);
+        if (/^@scope\b/.test(prelude)) {
+          // @scope (root): the root is every inner rule's ancestor, and
+          // `:scope` inside is the root itself. Its own block holds rules,
+          // not declarations, so it is not pushed as a rule.
+          const root = prelude.match(/^@scope\s*\(([^)]*)\)/)?.[1].trim();
+          const scope = !root ? parent : parent === null ? root : `:is(${parent}) ${root}`;
+          parseBlock(body, scope, rules, conditional, true);
+        } else if (prelude.startsWith('@')) {
+          // A grouping rule applies only under its condition, so its rules
+          // (and a nested copy of `parent`) are marked conditional.
+          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, true);
         } else if (prelude) {
           const selector = parent === null ? prelude
-            : splitTop(prelude, /,/).map((part) => (part.includes('&') ? part.replace(/&/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
-          parseBlock(body, selector, rules);
+            : splitTop(prelude, /,/).map((part) => (/&|:scope\b/.test(part) ? part.replace(/&|:scope\b/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
+          parseBlock(body, selector, rules, conditional);
         }
       }
       continue;
     }
     if (depth === 0) text += ch;
   }
-  if (parent !== null) {
+  if (parent !== null && !scopeBlock) {
     flushDecls(text);
-    rules.push({ selector: parent, decls });
+    rules.push({ selector: parent, decls, conditional });
   }
   return rules;
 }
@@ -256,10 +265,12 @@ export function railUnderMeters(css) {
 export function railInFlow(css) {
   const rules = cssRules(css)
     .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
-  const base = rules.find((rule) => rule.selector === '.shared-hud .hud-bottom');
-  return Boolean(base)
-    && lastValue(base.decls, ['position']) === 'static'
-    && lastValue(base.decls, ['grid-area']) === 'rail'
+  // The base is every unconditional `.shared-hud .hud-bottom` rule, in order;
+  // a copy a nested @media emits is conditional and is judged only below.
+  const base = rules.filter((rule) => rule.selector === '.shared-hud .hud-bottom' && !rule.conditional).flatMap((rule) => rule.decls);
+  return base.length > 0
+    && lastValue(base, ['position']) === 'static'
+    && lastValue(base, ['grid-area']) === 'rail'
     && !rules.some((rule) => /^(?:absolute|fixed)\b/.test(lastValue(rule.decls, ['position']) || ''));
 }
 
@@ -794,6 +805,8 @@ function selftest() {
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
+    ['drop meters from a scoped HUD grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
+    ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
