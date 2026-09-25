@@ -114,7 +114,13 @@ const TARGETS = [
   { screen: 'title', sel: '.title-screen .tm-name', label: 'ASHEN SPIRE (title)' },
   { screen: 'title', sel: '.title-screen .tm-sub', label: 'title subtitle' },
   { screen: 'title', sel: '.title-screen .title-tagline', label: 'title tagline' },
-  { screen: 'title', sel: '.title-screen .slot-continue', label: 'Continue (highlighted, gold)' },
+  // The HIGHLIGHTED Continue, named as such (Codex P2 on #1282). title.js adds
+  // `is-highlighted` only when a slot is occupied and leaves Continue disabled
+  // when none is, so the bare `.slot-continue` could measure the disabled entry
+  // and call it gold. ?shot=title seeds slot 1 through newRun (src/main.js), and
+  // a fixture that ever stops doing so reads BLIND here, never a quiet wrong
+  // number. selectorContract's S8 holds this row to that selector.
+  { screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' },
   { screen: 'title', sel: '.title-screen #settings', label: 'Settings (menu entry)' },
   // The run-position chip paints its ink in two children (.ck key, .cv value);
   // measuring the parent chip toggled a colour no glyph uses and read no ink.
@@ -595,6 +601,7 @@ const selectorContract = (source) => {
     ["{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", 'S1 current Act metadata selector missing'],
     ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
     ["{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
+    ["{ screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' }", 'S8 Continue row does not require the highlighted, enabled entry'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
   if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
@@ -639,6 +646,10 @@ if (args.includes('--source-selftest')) {
     {
       name: 'combat Cinders points back at removed fight label', expected: 'S7 ',
       source: clean.replace("{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", "{ screen: 'combat', sel: '.topbar .fight-label', label: 'Cinders (combat)' }"),
+    },
+    {
+      name: 'Continue row measures an unhighlighted Continue', expected: 'S8 ',
+      source: clean.replace("sel: '.title-screen .slot-continue.is-highlighted:not([disabled])'", "sel: '.title-screen .slot-continue'"),
     },
   ];
   let failures = 0;

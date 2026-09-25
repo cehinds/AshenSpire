@@ -1244,8 +1244,8 @@ function selftestPlants() {
       // rows a player meets.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: "      + `</div><div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
-      replace: "      + `</div><div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      find: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      replace: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {

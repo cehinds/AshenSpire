@@ -13,7 +13,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardPlayCosts } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
-import { resolveHandRules } from '../src/model/handRules.js';
+import { resolveHandRules, handRulesForClass } from '../src/model/handRules.js';
 import { resolveSwapCostRule } from '../src/model/loadout.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards } from '../tools/simbot.mjs';
@@ -29,7 +29,8 @@ function fight(classId = 'starseer', settings = {}) {
 
 test('a run fight carries the rules a fresh profile gives the live game', () => {
   const { combat } = fight();
-  assert.deepEqual(combat.handRules, resolveHandRules({}, registries.attributes.all()), 'default hand rules');
+  // The class's own opening hand is resolved into the fight (owner, 2026-09-24).
+  assert.deepEqual(combat.handRules, handRulesForClass(resolveHandRules({}, registries.attributes.all()), 'starseer'), 'default hand rules');
   assert.equal(combat.swapCostRule, resolveSwapCostRule(registries, { settings: {} }), 'default swap price');
   if (registries.balance.combatRatings?.enabled) assert.ok(combat.ratingsRules, 'rating rules applied');
 });
