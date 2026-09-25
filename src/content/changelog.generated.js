@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1313",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Combat moves faster and feels alive",
+    "detail": "Playing a card swings at once instead of pausing to pay first, and every attack lands its hit in about a quarter of a second. Enemy turns move along quicker, with a quiet reminder that a click skips them. Every hit now gives a small shake and a white flash, and a fading ghost of the lost health trails behind each bar. Fighters breathe while they wait, enemies crouch before they lunge, damage numbers rise from the body rather than the head, and a hovered card lifts without losing its place in the fan. All of it stays still under reduced motion.",
+    "build": "0.7.1.484",
+    "pullRequest": 1313,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1313"
+  },
+  {
     "id": "pr-1287",
     "date": "2026-09-24",
     "group": "2026-09-24",
