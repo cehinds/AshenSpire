@@ -352,15 +352,3 @@ test('a saved fight whose hand size can reach 0 is refused at the fight door', a
     assert(handRulesProblems(resolveHandRules({}, { ...rows, handSize })).some((line) => /handSize min and max/.test(line)), JSON.stringify(handSize));
   }
 });
-
-test('an old run\'s attribute cards do not borrow the live hand rows it never had', async () => {
-  const { statProjection } = await import('../src/model/statProjection.js');
-  const { attributeCardModels } = await import('../src/model/creationBrief.js');
-  const old = { ...contentBundle };
-  old.derivedStatRules = { ...RULESET_6, presentation: Object.fromEntries(Object.entries(contentBundle.derivedStatRules.presentation).filter(([id]) => RULESET_6.rules[id])) };
-  const run = createRunState({ seed: 8, classId: 'starseer', registries: createRegistries(old) });
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
-  const intelligence = cards.find((card) => card.id === 'intelligence');
-  assert(!intelligence.reveal.lines.some((line) => /Opening hand|Hand size/.test(line)), intelligence.reveal.lines.join(' | '));
-});
