@@ -75,10 +75,11 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
-  autoPickBossRelic, rollEliteChest,
+  autoPickBossRelic,
 } from '../src/engine/encounters.js';
 import { autoTakeChest } from '../src/model/rewardChest.js';
 import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
+import { rollChestThenApplyRows } from './eliteDoor.mjs';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 
 const REG = createRegistries(contentBundle);
@@ -710,16 +711,21 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
 }
 
 function afterVictory(run, rng, pool) {
-  run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
-  if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
-  const flask = rollFlaskDrop(REG, rng, run);
-  if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
-  if (pool === 'elite') {
-    // SPEC §3.8.1: the elite chest, taken the way the reward screen's
-    // auto-collect takes it — a seeded pick among the takeable options. The
-    // bot has no armament bag, so an armament piece is never takeable here.
-    autoTakeChest(REG, run, rollEliteChest(REG, rng, run), (n) => rng.int('cardRewards', 0, n - 1));
+  // SPEC §3.8.1: the elite chest is rolled into the door's offer before any
+  // row is collected (src/main.js), so it reads the deck as it stood at the
+  // door — never a card this same door hands out (tools/eliteDoor.mjs).
+  const chest = rollChestThenApplyRows(REG, rng, run, pool, () => {
+    run.cinders += rollRuneReward(REG, rng, pool, run.relics);
+    const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
+    if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
+    const flask = rollFlaskDrop(REG, rng, run);
+    if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
+  });
+  if (chest) {
+    // Taken the way the reward screen's auto-collect takes it — a seeded pick
+    // among the takeable options. The bot has no armament bag, so an armament
+    // piece is never takeable here.
+    autoTakeChest(REG, run, chest, (n) => rng.int('cardRewards', 0, n - 1));
     syncFlaskGrowth(REG, run); // a chest relic that grows the flask binds the moment it is held, as in play
   }
 }
