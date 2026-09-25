@@ -20,6 +20,9 @@ const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const ROOT = resolve(HERE, '..');
 const WRITE_SHOTS = !process.argv.includes('--no-screenshots');
 const SELFTEST = process.argv.includes('--selftest');
+// --check runs ONLY the #1142 post-settle re-fit case and exits 0/1 on it: a
+// short gate for the one property, without the full persistence drive.
+const CHECK = process.argv.includes('--check');
 const argValue = (name, fallback = '') => {
   const index = process.argv.indexOf(name);
   return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
@@ -102,7 +105,7 @@ function connectCdp(wsUrl) {
   };
 }
 
-async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
+async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } = {}) {
   const browser = BROWSERS.find((candidate) => existsSync(candidate));
   if (!browser) throw new Error('no Chrome or Edge found; set CHROME to a local Chromium executable');
 
@@ -181,6 +184,81 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         cameraViewport: port.dataset.cameraViewport || null,
       };
     })()`);
+
+    // #1142 — THE CAMERA FOLLOWS THE SCROLLPORT AFTER THE FIRST SETTLE. The box
+    // changes with NO window resize (a banner-shaped spacer takes height above
+    // the map frame, as the app's own late layout does), so only the board's
+    // standing watch can see it. The verdict is exact: the solved viewport the
+    // board reports equals clientWidth x clientHeight of the scrollport it is
+    // looking through. Then the same change under an OPEN destination tray: the
+    // selected node must stay CENTRED in the band the tray leaves visible (the
+    // look `centerOnNode` took), not be dropped for the current node's framing.
+    // Within 4 px, unless the scroll is pinned at an edge and centring is not
+    // reachable; merely "inside the band" passed with the fix removed, because
+    // the current node's frame happened to contain the pick.
+    {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+      }, sessionId);
+      await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE` }, sessionId);
+      await waitForMount('the settled 390x844 map', `(() => {
+        const port = document.querySelector('.map-scroll');
+        return !!(port && port.dataset.cameraViewport && port.clientHeight > 0);
+      })()`);
+      await wait(400); // outlast the 120 ms backstop and any settling layout
+      const shape = (state) => `${state.viewportWidth}x${state.viewportHeight}`;
+      const settledState = await readState();
+      await evaluate(`(() => {
+        const spacer = document.createElement('div');
+        spacer.id = 'refit-check-spacer';
+        spacer.style.cssText = 'flex: 0 0 150px; height: 150px;';
+        const frame = document.querySelector('.mapscreen .map-frame');
+        frame.parentNode.insertBefore(spacer, frame);
+      })()`);
+      await wait(400); // the watch debounces 100 ms
+      const changedState = await readState();
+      // The open tray: select a reachable node through the map's own pick.
+      const picked = await evaluate(`(() => {
+        const node = document.querySelector('.map-node.reachable');
+        if (!node) return null;
+        node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        return node.dataset.node;
+      })()`);
+      await waitFor('the open destination tray', `document.querySelector('.map-tray')?.dataset.shown === 'true'`);
+      await wait(400);
+      await evaluate(`document.querySelector('#refit-check-spacer').style.cssText = 'flex: 0 0 40px; height: 40px;'`);
+      await wait(400);
+      const trayState = await readState();
+      const band = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const node = document.querySelector('.map-node[data-node="' + ${JSON.stringify(picked)} + '"]');
+        const reveal = document.querySelector('.map-tray-reveal');
+        if (!port || !node || !reveal) return null;
+        const p = port.getBoundingClientRect();
+        const n = node.getBoundingClientRect();
+        const r = reveal.getBoundingClientRect();
+        const bottom = Math.min(p.top + port.clientHeight, r.top);
+        const y = n.top + n.height / 2;
+        return { y: Math.round(y), top: Math.round(p.top), bottom: Math.round(bottom), selected: node.classList.contains('selected') };
+      })()`);
+      if (screenshots) {
+        const out = resolve(root, 'docs', 'preview', 'map-refit-tray-390x844.png');
+        mkdirSync(resolve(out, '..'), { recursive: true });
+        const png = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+        writeFileSync(out, Buffer.from(png.data, 'base64'));
+      }
+      const exact = (state) => state.cameraViewport === shape(state);
+      results.postSettleRefit = {
+        pass: !!(settledState && changedState && trayState && band)
+          && changedState.viewportHeight !== settledState.viewportHeight
+          && exact(settledState) && exact(changedState) && exact(trayState)
+          && band.selected && band.y > band.top && band.y < band.bottom
+          && (Math.abs(band.y - (band.top + band.bottom) / 2) <= 4
+            || trayState.scrollTop <= 0.5 || trayState.scrollTop >= trayState.maxScrollTop - 0.5),
+        settled: settledState, changed: changedState, tray: trayState, picked, band,
+      };
+    }
+    if (refitOnly) return results;
 
     for (const viewport of VIEWPORTS) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -770,8 +848,21 @@ async function selftest() {
   }
 }
 
+const printRefit = (row) => {
+  const line = (state) => (state ? `solved ${state.cameraViewport} vs scrollport ${state.viewportWidth}x${state.viewportHeight}` : '?');
+  console.log(`${row && row.pass ? 'PASS' : 'FAIL'} post-settle re-fit (#1142) 390x844: `
+    + `settled ${line(row?.settled)}; after box change ${line(row?.changed)}; `
+    + `tray open on ${row?.picked} after box change ${line(row?.tray)}, `
+    + `node y=${row?.band?.y} vs visible band [${row?.band?.top}, ${row?.band?.bottom}] `
+    + `(middle ${row?.band ? (row.band.top + row.band.bottom) / 2 : '?'}), scrollTop ${row?.tray?.scrollTop}/${row?.tray?.maxScrollTop}`);
+  return !!(row && row.pass);
+};
+
 if (SELFTEST) {
   await selftest();
+} else if (CHECK) {
+  const results = await runProbe(ROOT, { refitOnly: true });
+  process.exitCode = printRefit(results.postSettleRefit) ? 0 : 1;
 } else {
   const results = await runProbe(ROOT);
   let failures = 0;
@@ -788,6 +879,7 @@ if (SELFTEST) {
       + `[${row.after.scrollLeft.toFixed(1)},${row.after.scrollTop.toFixed(1)}]`);
     judge(row.pass);
   }
+  judge(printRefit(results.postSettleRefit));
   const fit = results.fitViewport;
   console.log(`${fit && fit.pass ? 'PASS' : 'FAIL'} fit viewport ownership: `
     + `${fit ? fit.before.viewportWidth : '?'}x${fit ? fit.before.viewportHeight : '?'} `
