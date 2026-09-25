@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1324",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the gameplay line catches up with the main line",
+    "detail": "The fight-feel, reward and combat-pacing work now runs on the same stat table, opening hands and resource rules as everything else, with weapon grades priced through that table. Two slips it turned up are fixed: a second curse from an event, or a card bought after your deck shrank, could share a card's identity with one already in your deck.",
+    "build": "0.7.1.524",
+    "pullRequest": 1324,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1324"
+  },
+  {
     "id": "pr-1296",
     "date": "2026-09-25",
     "group": "2026-09-25",
