@@ -57,6 +57,7 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   if (!diff.length) return 0;
   const changed = {};
   const had = {};
+  const seedBefore = settings[SEED_KEY];
   for (const { key, to } of diff) {
     changed[key] = to;
     had[key] = Object.hasOwn(settings, key) ? { value: settings[key] } : null;
@@ -72,6 +73,8 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
       back[key] = before ? before.value : undefined;
       if (before) settings[key] = before.value; else delete settings[key];
     }
+    // The save path dropped the moved keys from the seed record; hand it back.
+    if (seedBefore !== undefined) { back[SEED_KEY] = seedBefore; settings[SEED_KEY] = seedBefore; }
     onChange(back);
     throw new Error('Settings could not be saved on this device.');
   }

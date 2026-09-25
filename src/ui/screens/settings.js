@@ -39,7 +39,7 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { SEED_KEY } from '../../model/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
@@ -1392,8 +1392,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // THE ROW IS THE KIT'S Row·setting: a LabelStack (what the setting does, and
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
+  // The row's Reset sits beside the label, not inside it: the label ellipsises
+  // (kit.css nowrap/overflow), and a long tuning label would clip the button.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}${resetButtonHtml(settings, r)}</span>${note ? `
+        <span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}${note ? `
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const modified = rowModified(settings, r);
@@ -2378,6 +2380,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
     onChange = Object.assign((changes) => {
+      // The save path prunes the seed record in ITS bag (src/main.js); mirror
+      // that here, so a reset or an Undo snapshot built from this bag sees the
+      // record as it is stored, not as it was when the panel opened.
+      const seed = seedAfterChange(settings, changes);
+      if (seed) settings[SEED_KEY] = seed;
       const out = report(changes);
       markModified(container, settings, changes);
       syncHeaderState();

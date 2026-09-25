@@ -127,12 +127,12 @@ async function main() {
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
       { name: 'desktop-class-defaults', width: 1440, height: 900, group: 'Progression', search: 'Reaver', mobile: false },
       { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
-      { name: 'desktop-placement', width: 1440, height: 900, group: 'Battlefield', search: 'default', mobile: false },
+      { name: 'desktop-placement', width: 1440, height: 900, group: 'Battlefield', search: 'preferred', mobile: false },
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
       { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
       { name: 'phone-interface', width: 390, height: 844, group: 'Interface', mobile: true },
       { name: 'phone-export', width: 390, height: 844, group: 'Export', mobile: true },
-      { name: 'phone-placement', width: 390, height: 844, group: 'Battlefield', search: 'default', mobile: true },
+      { name: 'phone-placement', width: 390, height: 844, group: 'Battlefield', search: 'preferred', mobile: true },
     ].filter(shape => !process.argv.includes('--combat-only') && (!process.argv.includes('--settings-files-only') || shape.group === 'Export'))) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
@@ -147,6 +147,8 @@ async function main() {
           input.value = ${JSON.stringify(shape.search)};
           input.dispatchEvent(new Event('input', { bubbles: true }));
         })()`);
+        // The results list is drawn after the input settles, not synchronously.
+        await until("!!document.querySelector('.settings-modal [data-search-results]')", 'search results');
       }
       if (shape.group === 'Export') {
         await evaluate(`(() => {
@@ -195,6 +197,12 @@ async function main() {
       }
       if (shape.search && !state.placementLabels.some((label) => label.toLocaleLowerCase().includes(shape.search.toLocaleLowerCase()))) {
         throw new Error(`${shape.name}: no result names "${shape.search}": ${JSON.stringify(state)}`);
+      }
+      // Every placement control must be reachable from search, by its exact
+      // label (the row Reset sits beside the label, so it is not in it).
+      if (shape.name.endsWith('-placement') && !['Player preferred row (A–F)', 'Enemy preferred row (A–F)', 'Player preferred column', 'Enemy preferred column']
+        .every((label) => state.placementLabels.includes(label))) {
+        throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
       }
       console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
       await capture(shape.name);

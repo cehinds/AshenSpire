@@ -589,3 +589,27 @@ test('Save drops an older preview, and Undo gives promotion ownership back', asy
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /if \(moved\.length && Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore;/);
 });
+
+test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const seed = seedAfterChange\(settings, changes\);\s*if \(seed\) settings\[SEED_KEY\] = seed;/, 'the panel bag mirrors the stored record');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const record = { musicVolume: 40 };
+  const settings = { musicVolume: 40, [SEED_KEY]: record };
+  const calls = [];
+  assert.throws(() => applyProfile(settings, (c) => { calls.push(c); return calls.length === 1 ? { ok: false } : { ok: true }; },
+    { changes: { musicVolume: 70 }, cleared: [] }, {}), /could not be saved/);
+  assert.deepEqual(calls[1], { musicVolume: 40, [SEED_KEY]: record }, 'a refused load hands the record back too');
+  assert.deepEqual(settings, { musicVolume: 40, [SEED_KEY]: record });
+});
+
+test('a row\'s Reset sits beside its label, never inside the ellipsised label', () => {
+  const row = settingsRow('screenShake');
+  const html = settingsRowHtml({ screenShake: !row.def }, row);
+  const label = html.match(/<span class="ls-label"><span class="set-mod-dot" aria-hidden="true"><\/span>([^<]*)<\/span>/);
+  assert.ok(label, 'the label is plain text after the dot');
+  assert.ok(html.indexOf('set-row-reset') > label.index + label[0].length, 'the Reset follows the closed label, inside the label stack');
+  assert.match(html, /<button type="button" class="as-btn set-row-reset[^>]*>Reset<\/button>/, 'a changed row shows its Reset');
+});
