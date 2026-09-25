@@ -574,3 +574,18 @@ test('a Reset that cannot be saved is not left applied, and results reset covers
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
 });
+
+test('Save drops an older preview, and Undo gives promotion ownership back', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /on\('save', async \(btn\) => \{[\s\S]*?generation \+= 1;\s*pending = null;[\s\S]*?const mine = generation;/, 'the save bumps the generation before it snapshots it');
+  assert.match(panel, /before\[SEED_KEY\] = settings\[SEED_KEY\];/, 'a profile load\'s Undo carries the seed record');
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 55, [SEED_KEY]: { screenShake: false } };
+  const seen = [];
+  resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(moved\.length && Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore;/);
+});

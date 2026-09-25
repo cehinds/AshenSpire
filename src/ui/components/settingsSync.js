@@ -8,6 +8,7 @@
 
 import { contentBundle } from '../../content/index.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { SEED_KEY } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
   SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
@@ -281,6 +282,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         try {
           // What every key held before, so Settings can offer Undo.
           const before = Object.fromEntries(profileDiff(settings, pending.parsed, PROMOTED).map(({ key, from }) => [key, from]));
+          // …and which of them the promotion owned, so Undo hands those back too.
+          before[SEED_KEY] = settings[SEED_KEY];
           const moved = applyProfile(settings, onChange, pending.parsed);
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
@@ -300,6 +303,12 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     const on = (name, fn) => mount.querySelector(`[data-sync="${name}"]`)?.addEventListener('click', (event) => fn(event.currentTarget));
     on('load', previewLoad);
     on('save', async (btn) => {
+      // A preview loaded before this save is of the version it replaces:
+      // drop it (and any load still in flight) rather than offer to apply it.
+      generation += 1;
+      pending = null;
+      const box = mount.querySelector('[data-sync-preview]');
+      if (box) { box.hidden = true; box.innerHTML = ''; }
       busy(btn, true, 'Saving…');
       try {
         const keys = profileKeysNow();

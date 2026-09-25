@@ -1289,7 +1289,10 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     onChange(back);
     return snapshot;
   }
-  offerUndo(label, Object.fromEntries(moved.map((key) => [key, snapshot[key]])));
+  const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
+  // Undo puts back which values the promotion owned, as well as the values.
+  if (moved.length && Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore;
+  offerUndo(label, undo);
   return snapshot;
 }
 
