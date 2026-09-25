@@ -1255,6 +1255,13 @@ export function offerUndo(label, snapshot, owner = null) {
 }
 
 /**
+ * dropUndoOffer() — forget any pending Undo. A profile restore refills the
+ * same settings object in place, so the owner check above cannot tell the
+ * restored profile from the one the offer was taken from; the restore says so.
+ */
+export function dropUndoOffer() { undoOffer = null; }
+
+/**
  * resetKeys(settings, onChange, keys, label) → the snapshot taken. Each key goes
  * back to its promoted default when there is one, else is cleared so the row's
  * own default applies; an Undo is offered.

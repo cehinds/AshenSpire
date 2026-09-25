@@ -743,3 +743,11 @@ test('ownership survives a promotion that moved on, and an ownership-only load c
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /if \(moved \|\| seedMoved\) \{\s*offerUndo\(/);
 });
+
+test('a profile restore drops any pending Undo, since it refills the same settings object', async () => {
+  const { readFileSync } = await import('node:fs');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /function applyRestoredSettings\(restored\) \{[\s\S]*?dropUndoOffer\(\);[\s\S]*?for \(const key of Object\.keys\(activeSettings\)\) delete activeSettings\[key\];/);
+  const { dropUndoOffer } = await import('../src/ui/screens/settings.js');
+  assert.equal(typeof dropUndoOffer, 'function');
+});
