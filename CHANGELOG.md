@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-25
 
+- **Shared links to the web edition show a proper title, description and icon** ([#1301](https://github.com/cehinds/AshenSpire/pull/1301), `0.7.1.495`). The web edition's page now carries a description, link-preview tags, an icon and a theme colour, so a shared link shows the game's name and a short description instead of a bare address, and the browser tab shows an icon. Nothing in play changes.
 - **Behind the scenes: the two component catalogs are checked against each other** ([#1297](https://github.com/cehinds/AshenSpire/pull/1297), `0.7.1.493`). Nothing you play changes. The interface-component check now fails when the written component catalog and the interactive one disagree about which components exist, the Armoury's asset family included, so neither can drift out of date.
 
 ## 2026-09-24
