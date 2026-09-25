@@ -4,7 +4,8 @@
 export const characterCreation = {
   "spritePreviewSide": "right",
   "visibleModeIds": [
-    "lean"
+    "lean",
+    "assign"
   ],
   "layout": {
     "classPreviewPercent": 30,

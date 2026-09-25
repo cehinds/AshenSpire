@@ -1,15 +1,13 @@
-import { scaledCards } from '../model/handRules.js';
+import { handDrawCount, scaledCards } from '../model/handRules.js';
 import { resolveCard } from '../model/registries.js';
 
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
   const rules = ctx.handRules;
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
-  ctx.handMax = scaledCards(rules.capacity, ctx.attributes);
-  const room = Math.max(0, ctx.handMax - ctx.piles.hand.length);
-  const wanted = opening ? scaledCards(rules.starting, ctx.attributes)
-    : rules.drawMode === 'fill' ? room : scaledCards(rules.turn, ctx.attributes) + (ctx.pendingDiscardDraw || 0);
+  const draw = handDrawCount(rules, ctx.attributes, { handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0 });
+  ctx.handMax = draw.capacity;
   ctx.pendingDiscardDraw = 0;
-  return Math.min(room, wanted);
+  return draw.value;
 }
 
 export function endTurnCardFate(ctx, card) {

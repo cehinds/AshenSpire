@@ -44,6 +44,7 @@ const PANELS = {
     settings: ctx.settings,
     previewAttributes: ctx.run?.attributes,
     previewLevel: ctx.run ? characterLevelOf(ctx.run) : null,
+    previewClassId: ctx.run?.class || null,
     onChange: ctx.onSettingsChange || (() => {}),
     onOffline: ctx.onOffline,
   }),
