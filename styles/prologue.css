@@ -188,19 +188,23 @@
    The list IS the running order: one row per scene, the playing ones first and
    numbered, anything switched off parked below them. Drag or arrow — both write
    the same `order` keys — and the actions sit at the end of the row they act on. */
-.set-scene-trail{width:100%;min-width:0;display:grid;gap:.5rem}
+.as-row.setting.set-row-scenes{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:.7rem;padding-bottom:1.2rem}
+.as-row.setting.set-row-scenes>.as-labelstack{width:100%;min-width:0}
+.as-row.setting.set-row-scenes>.r-trail{display:grid;flex:none;width:100%;min-width:0;max-width:none;margin:0}
+.set-scene-trail{gap:.7rem}
 .set-scene-list{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
-.set-scene{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.45rem .6rem;border:1px solid var(--line-soft);border-radius:6px;background:var(--bg)}
+.set-scene{display:grid;grid-template-columns:1.3rem minmax(0,1fr) auto;align-items:center;gap:.5rem .7rem;padding:.7rem .8rem;border:1px solid var(--line-soft);border-radius:6px;background:var(--bg)}
 .set-scene[data-live="0"]{opacity:.65}
 .set-scene-grip{cursor:grab;color:var(--muted, #b8ac98);font-size:1.1rem;line-height:1}
 .set-scene-dragging{outline:2px dashed var(--gold);opacity:.9}
-.set-scene-name{flex:1 1 12rem;min-width:0}
+.set-scene-name{grid-column:2;min-width:0;font-weight:600;overflow-wrap:anywhere}
 .set-scene-name em{font-style:normal;color:var(--muted, #b8ac98)}
-.set-scene-at{font-variant-numeric:tabular-nums;color:var(--muted, #b8ac98);white-space:nowrap}
-.set-scene-acts,.set-preset-acts{display:flex;flex-wrap:wrap;gap:.35rem}
+.set-scene-at{grid-column:3;font-variant-numeric:tabular-nums;color:var(--muted, #b8ac98);white-space:nowrap}
+.set-scene-acts{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:.35rem}
+.set-preset-acts{display:flex;flex-wrap:wrap;gap:.35rem}
 .set-scene-acts .as-btn,.set-preset-acts .as-btn{min-height:40px}
 .set-scene-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
-@media(max-width:760px){.set-scene-name{flex-basis:100%}.set-scene-acts{width:100%}}
+@media(max-width:760px){.set-scene-acts{width:100%}}
 
 /* ---- the control band, and every dial the staging writes ------------------
    The buttons are the FRAME's: a band along the bottom of the screen, under
