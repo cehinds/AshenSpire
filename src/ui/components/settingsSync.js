@@ -150,10 +150,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     let path;
     try { path = profilePath(name); } catch (error) { status(error.message); return; }
     if (path === cfg.path) { status(`Already using the “${name}” profile.`); return; }
-    cfg = syncConfig({ ...cfg, path });
+    const next = syncConfig({ ...cfg, path });
+    if (!write(SYNC_STORAGE.config, JSON.stringify(next))) { status(STORAGE_REFUSED); return; }
+    cfg = next;
     generation += 1;
     pending = null;
-    write(SYNC_STORAGE.config, JSON.stringify(cfg));
     write(SYNC_STORAGE.lastSha, null);
     write(SYNC_STORAGE.lastAt, null);
     draw();
@@ -357,10 +358,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('where', () => {
       const raw = {};
       mount.querySelectorAll('[data-sync-field]').forEach((input) => { raw[input.dataset.syncField] = input.value.trim(); });
-      cfg = syncConfig(raw);
+      const next = syncConfig(raw);
+      if (!write(SYNC_STORAGE.config, JSON.stringify(next))) { status(STORAGE_REFUSED); return; }
+      cfg = next;
       generation += 1;
       pending = null;
-      write(SYNC_STORAGE.config, JSON.stringify(cfg));
       write(SYNC_STORAGE.lastSha, null);
       write(SYNC_STORAGE.lastAt, null);
       profiles = null;

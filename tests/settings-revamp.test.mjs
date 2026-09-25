@@ -315,7 +315,7 @@ test('a profile load that finishes after the location changed is dropped', async
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(mine !== generation \|\| !btn\.isConnected\) return;/);
-  assert.match(panel, /cfg = syncConfig\(raw\);\s*generation \+= 1;/);
+  assert.match(panel, /cfg = next;\s*generation \+= 1;/);
 });
 
 test('Changed lists every modified row from every section, and nothing else', async () => {
@@ -472,4 +472,11 @@ test('release promotions and Clear hidden tuning cover every debug-only row, not
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.auto, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
   assert.match(panel, /if \(!write\(SYNC_STORAGE\.includeDevice, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
+});
+
+test('a profile location is adopted only once storage kept it', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const guarded = panel.match(/if \(!write\(SYNC_STORAGE\.config, JSON\.stringify\(next\)\)\) \{ status\(STORAGE_REFUSED\); return; \}\s*cfg = next;/g) || [];
+  assert.equal(guarded.length, 2, 'both the named-profile picker and Use these');
 });
