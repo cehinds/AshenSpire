@@ -4,9 +4,9 @@
 
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
 2. **No FromSoftware assets or proper nouns.** Every new asset goes through `src/ui/assets.js` and gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only).
-3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested from `tests/index.html`, it doesn't belong in the engine.
+3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested headlessly under `node --test`, it doesn't belong in the engine.
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
-5. **Tests green before merge.** Open `tests/index.html` — all assertions pass, zero console errors. New mechanics ship with new assertions.
+5. **Tests green before merge.** `node --test "tests/*.test.mjs"` passes (five scenario tests, 0 failed). New mechanics extend the scenario test that covers them — `combat-rules` for numbers, `solo-run`/`coop` for flow, `content` for data, `ui-screens` for screens — rather than adding new test files.
 
 ## Coordination and release boundary
 
@@ -80,4 +80,4 @@ Full walkthroughs live in `DEVELOPER.md` (lands with M1). Short version:
 - **Enemy:** add to `src/content/enemies/act<N>.js` — hp range, poiseMax, weighted move table with `maxConsecutive`.
 - **Event:** add to `src/content/events.js` — text + choices, each choice a list of run-level effects.
 
-Then add the id to the relevant reward/encounter pool and, for anything with new mechanics, an assertion in `tests/engine.test.js`.
+Then add the id to the relevant reward/encounter pool and, for anything with new mechanics, a row in the matching scenario test (usually `tests/combat-rules.test.mjs`).

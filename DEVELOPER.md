@@ -19,9 +19,7 @@ CI hydrates these files, and historical build readers verify their content hashe
 Hand management lives in `src/content/handRules.js` (defaults),
 `src/model/handRules.js` (settings and stat formula), and
 `src/engine/handRules.js` (draw/retention/discard planning). Solo combat takes a
-per-fight snapshot from profile settings; legacy snapshots omit it. Run
-`node --test tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
-for the focused rules, persistence and settings checks. Advanced → Stats →
+per-fight snapshot from profile settings; legacy snapshots omit it. `tests/combat-rules.test.mjs` covers the hand rules. Advanced → Stats →
 Draw & hand keeps the starting-hand, turn-draw, capacity and discard controls
 together, under a live worked example.
 
@@ -39,7 +37,7 @@ The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBA
 Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
-`node tests/run-node.mjs` includes its focused engine regression suite.
+`tests/content.test.mjs` runs that `--check`.
 
 Layout numbers (sizes, positions, layers, timings, which parts appear) are
 authored as JSON in `content/config/`, the third authored tree after
@@ -47,7 +45,7 @@ authored as JSON in `content/config/`, the third authored tree after
 the sections, and the `"$name"` variables. `node tools/config-build.mjs`
 compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 `tools/launch.mjs` runs it before every build. `--check` is the drift gate that
-`tests/run-node.mjs` runs, and `tools/content-build.mjs` refuses a config file
+`tests/content.test.mjs` runs, and `tools/content-build.mjs` refuses a config file
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
@@ -56,7 +54,6 @@ shim or the generated module.
 the approved wireframes at real device sizes on a snapping grid, edits any
 value with its unit and variables, validates the tree with `compileEntries`
 before writing, keeps backups, and opens the live game at the chosen size.
-`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
 `node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
@@ -67,18 +64,11 @@ Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
 compatibility alias. Resolve the chosen terminal through
 `bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
-metadata resolve their original act boss without consuming RNG. Run
-`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
-LAN choice and real save-manager round trips.
+metadata resolve their original act boss without consuming RNG. `tests/solo-run.test.mjs` and `tests/coop.test.mjs` cover boss selection
+and save round trips.
 Loading validates explicit and legacy boss references before accepting a save.
 Existing destination labels refresh from current content without changing the
-saved graph's paths, encounter identities, selection or RNG counters. Run
-`node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
-for content-update regressions in solo and LAN restoration.
-Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
-moves, phases, seeded encounter reachability and ten named boss locations.
-`node tests/branchingBosses.test.mjs` covers map and save compatibility.
-`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+saved graph's paths, encounter identities, selection or RNG counters. `node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
@@ -97,8 +87,7 @@ encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
 stages expose their existing authored idle bounds. The shared formation fit
 reduces all art together when space is limited, retaining per-row depth and
 ground anchors. Names, health bars and their inspection targets do not shrink.
-Run `node --test tests/combat-sprite-scale.test.mjs` and
-`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+Run `node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
 `COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
 Playwright and Edge and covers elite/boss ratios, feet, health bars, card
 selection and returning from an enemy turn at desktop and narrow widths.
@@ -112,12 +101,10 @@ commits. Stored ownership, equipped sets, capacity, currency and stock revisions
 are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
-Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. How many cards a shelf of resting cards
+How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
-`.card-shelf` in styles/kit.css, and checked by
-`node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
+`.card-shelf` in styles/kit.css. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
@@ -140,34 +127,26 @@ node tools/content-build.mjs           # content/source/* → src/content/genera
 node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/ (entities, terms, assets, …)
 node tools/config-build.mjs --check    # drift gate: the generated UI config is current
 
-# tests (22 assertions, SPEC §8)
-node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
-node tests/run-node.mjs --no-selftests    # the fast half: engine suite, every *.test.mjs, tool verdicts
-node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftest known-bad corpus
-# or open tests/index.html in a browser — same suite, green/red list
+# tests — five broad scenario tests, one node:test test() each
+node --test "tests/*.test.mjs"
 ```
 
-Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
-(skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
-than `.github`) and hands them to one `node --test`. A new test file needs no
-registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
-map with the reason. `.github/workflows/tests.yml` runs the two halves as two
-Linux jobs on every pull request into `dev` and every push to `dev`; the
-bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes)
-run as their own step in the self-test job.
+The suite is five files in `tests/`, each a single scenario test: `solo-run`
+(every class through seeded acts 1–3 with save/load at every step),
+`combat-rules` (the engine's exact numbers as one table), `coop` (a seeded
+party through the host and the LAN door), `content` (bundle validity,
+content/config drift, linkcheck, statusreach, closedsets, asset paths) and
+`ui-screens` (every screen mounted from real game states). Quote the glob:
+Node 22's `--test` does not accept a bare directory. There is no custom runner
+and no registration; a new `tests/*.test.mjs` is picked up by the glob.
 
-```
-# what raises the red failure banner, and what must not
-node --test tests/debug-banner.test.mjs
-```
-
-The failure banner (`src/ui/debuglog.js`) is the game's one claim that a control
-died, so it must never make that claim about a working screen. `window.onerror`
-also carries browser *notifications* — `ResizeObserver loop completed with
-undelivered notifications` is the one a player met, arriving with no filename and
-no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
-and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
-`tests/debug-banner.test.mjs` holds both edges.
+CI (`.github/workflows/tests.yml`, ubuntu only) runs that command, plus a
+build-integrity job: `release-series`, `buildversion --check`,
+`verify-shipped`, `mobile-art --check`, then `launch --build-only` (the
+bundler refuses a bundle that does not parse) and a `git diff --exit-code` of
+the shipped files. `dev-preview.yml` adds the browser smoke (`external-play`,
+`startup-gate`); `receipts.yml` holds the process gates (`receipts --check`,
+`about-changelog`).
 
 ## The CI door: a tool's silence is not its success (#12)
 
@@ -221,31 +200,8 @@ grammar is silence, loudly, with the tool named.
 --selftest` runs the *tool's* self-test; the separator is required.
 
 Adding a grammar row is a contract change and ships with a plant in
-`node tools/verdict.mjs --selftest`, which runs first in CI so the door is never
-trusted unwatched. The two known-bads the contract requires live at
-`tests/fixtures/verdict/silent_exit_zero.mjs` (prints nothing, exits 0) and
-`tests/fixtures/verdict/vacuous_green.mjs` (well-formed verdict counting zero);
-the assertion must fail on both.
-
-**A step that never runs never reaches the door**, so `node
-tools/workflow-lint.mjs` reads `.github/workflows/*.yml` as text and refuses a
-step with no `run:`/`uses:`, and any **duplicate key at any mapping level** —
-top-level keys, job IDs, job keys, step keys, `with:` blocks. YAML resolves
-duplicates last-wins silently, and a parser has thrown that evidence away
-before you can check it.
-
-**It reads a CLOSED set of YAML forms, and an unknown form is refused by name**
-— file, line, and the text — never treated as "nothing here". That is the same
-call `verdict.mjs` makes about a grammar it does not speak, and it is the safe
-direction: an unknown form silently skipped is how a duplicate key gets through
-a duplicate-key checker. **The cost is stated rather than discovered: the day
-someone writes a legal form this linter has not learned, CI goes red until it
-learns it.** Anchors, aliases and tags (`&a`, `*a`, `!tag`) are refused on
-purpose — an alias can expand into a mapping whose keys the linter would never
-see. **Whether this should instead be a real YAML parse is an open dependency
-question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
-enforces that by refusing bare specifiers); the refusal is what makes the gap
-loud in the meantime.
+`node tools/verdict.mjs --selftest`; its two required known-bads (prints
+nothing and exits 0; a well-formed verdict counting zero) are inline plants.
 
 ## Plants and the same door (`tools/doorplant.mjs`)
 
@@ -254,13 +210,8 @@ FILE BYTES into a copy of this checkout, the tool is run whole from that copy,
 and the run must fail *by the red that plant names*. `doorplant.mjs` is the only
 home of that mechanic; the tools supply the plants and the reds.
 
-```bash
-node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no browser, no port
-node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
-```
-
-Both run on every pull request in `dev-preview.yml`, because a corpus that has
-stopped being able to arm is green for the wrong reason and nothing else notices.
+Nothing in CI runs the `--selftest` arms any more; run a tool's arm by hand
+when you change that tool.
 
 **Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to
 the plant.** The committed blobs are LF and Linux CI checks out LF, but a Windows
@@ -272,8 +223,7 @@ in CI, and both failures read `PLANT SITE DRIFTED` — the same words real drift
 produces, about two sites that had not moved. Single-line plants were unaffected,
 which is what made it look arbitrary. `doorplant` now re-expresses each plant in
 the target file's own line ending before matching and writes the replacement back
-in that ending; `plantsites.mjs` already compared LF-normalised views, so this is
-the same rule at the stage that edits bytes.
+in that ending.
 
 **So do not "repair" a drifted plant by spelling `\r\n` into its find-string** —
 that is a plant which only arms on Windows, and it will read as drifted the next
@@ -281,10 +231,7 @@ time anyone runs the corpus on Linux. Author `\n` and let the harness translate.
 
 `PLANT SITE DRIFTED` still means exactly one thing: the site is absent in the
 file's own ending **and** exactly as authored, so the plant never armed and the
-corpus is proving less than it claims. It is a hard red, never a skip. The known
-backlog of genuinely drifted sites is pinned in `tools/plantsites-baseline.json`,
-and `--check` fails in both directions — a site that starts resolving again must
-be recorded in the same change, or the freed slack hides the next regression.
+corpus is proving less than it claims. It is a hard red, never a skip.
 
 **Verifying a line-ending claim: count bytes, not lines.** Git Bash's
 `grep -c $'\r$'` reports every line of an LF file as matching, so it cannot tell
@@ -417,7 +364,7 @@ Run at least:
 node tools/content-build.mjs --check
 node tools/ui-components.mjs --selftest
 node tools/tray-components.mjs
-node tests/run-node.mjs
+node --test "tests/*.test.mjs"
 ```
 
 Cold-boot startup changes additionally run the rendered input contract and its
@@ -464,7 +411,7 @@ Rewording the game is then a spreadsheet edit and a rebuild, touching no code:
 ```bash
 node tools/content-build.mjs      # csv → src/content/generated/uiStrings.js
 node tools/uistrings.mjs --check  # the ratchet, below
-node tests/run-node.mjs           # tests/ui-strings.test.mjs holds the rules
+node --test "tests/*.test.mjs"    # content.test.mjs checks every literal string id
 ```
 
 **The migration is a one-way street.** Most screens still hold their own
@@ -584,8 +531,7 @@ name plate). A chain's steps open in the dialogue screen, one beat per
 blank-line paragraph of the event's `text`. Both event screens commit a choice
 through `commitEventChoice` (`src/engine/quests.js`); do not call
 `executeRunEffects` and `recordEventChoice` separately, or completion is
-skipped. `node --test tests/quest-dialogue.test.mjs` covers the door, the
-validation refusals and the dialogue model.
+skipped.
 
 > Each walkthrough above is **validation-checked**: add the snippet and run the
 > suite — test 15 (content validation) rejects unknown fields, bad enums,
@@ -760,7 +706,7 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 
 The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
 
-Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
+Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
 
 ### Every-weapon card preview
 Open `weapon-cards-preview.html` through the local server to browse every canonical
@@ -832,7 +778,6 @@ importer reads both.
 `run.prologue` stores a version, pending/complete status and scene index; new
 runs snapshot the effective overrides in the existing advanced-config snapshot.
 Old saves bypass the opening. The completion callback persists before revealing
-the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
-immutability, class lines, destination, and interrupted save recovery.
+the map.
 ### Ratings and starting pools
-Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its formula (base, a weight per attribute, growth per level), rating formula and constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.
+Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its formula (base, a weight per attribute, growth per level), rating formula and constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup.
