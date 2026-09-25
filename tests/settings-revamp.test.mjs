@@ -803,5 +803,31 @@ test('an Undo survives a save and a reopen of the same profile, and never reache
   assert.ok(pendingUndo(), 'the load\'s own Undo is offered');
   dropUndoOffer();
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.equal((screen.match(/Object\.assign\(settings, changes\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'both configuration imports drop a pending Undo');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'both configuration imports drop a pending Undo');
+});
+
+test('a sync profile loaded by hand with Load settings keeps the ownership it records', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { importOwnership } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile, advancedConfigExport } = await import('../src/model/advancedConfig.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: musicVolume 40 is the player's own; sfxVolume 30 is the promotion's.
+  const text = profileText({ musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } }, keys);
+  // Device B: the same musicVolume, but still the promotion's there; sfxVolume the player's.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40 } };
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB) };
+  Object.assign(deviceB, saved); // what the import door saves
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'ownership follows the file, as on A');
+  const next = seedSettingsDefaults(deviceB, { digest: 'd', values: { musicVolume: 50, sfxVolume: 35 } });
+  assert.equal(next.musicVolume, undefined, 'a later promotion leaves the player\'s value alone');
+  assert.equal(next.sfxVolume, 35, 'and moves the promotion\'s on');
+  // An ordinary export carries no ownership: the import leaves it to the save path.
+  const plain = advancedConfigExport({ musicVolume: 40 }, {}, keys);
+  assert.deepEqual(importOwnership(plain, { musicVolume: 40 }, deviceB), {});
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings\) \};/g) || []).length, 2, 'both Load settings doors apply it');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'and still start a new Undo generation');
 });

@@ -151,6 +151,33 @@ export function profileText(settings, keys, build = {}) {
 }
 
 /**
+ * importOwnership(text, changes, settings) → { [SEED_KEY]: record } to save
+ * with a file imported by hand, or {} when ownership is left to the save path.
+ *
+ * A profile downloaded from the sync panel can be loaded with Load settings
+ * too, and it says which of its values are promoted defaults
+ * (`promotionOwned`). The import takes that over for every key it sets, as a
+ * sync load does: a listed key is the promotion's at the file's value (so
+ * seeding moves it on, or back to its code default), any other key it sets is
+ * the player's. A file without the field (an ordinary export, or a profile
+ * from before it) changes nothing here: the save path's pruning applies.
+ * An import only merges, so keys the file leaves out keep their ownership.
+ */
+export function importOwnership(text, changes, settings) {
+  let listed = null;
+  try { listed = JSON.parse(text)?.promotionOwned; } catch { return {}; }
+  if (!Array.isArray(listed)) return {};
+  const owned = new Set(listed.filter((key) => typeof key === 'string'));
+  const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+  const next = { ...record };
+  for (const [key, value] of Object.entries(changes || {})) {
+    if (owned.has(key)) next[key] = value; else delete next[key];
+  }
+  const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(record).sort());
+  return same ? {} : { [SEED_KEY]: next };
+}
+
+/**
  * profileChanges(text, bundle, settings, rows, keys) → { changes, cleared, warnings }
  *
  * `changes` is what the profile sets. `cleared` is every key this device has

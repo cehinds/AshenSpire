@@ -41,6 +41,7 @@ import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
+import { importOwnership } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
@@ -3197,15 +3198,18 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
-        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const text = await file.text();
+        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
           throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
         }
         if (!container.isConnected) return;
-        const result = onChange(changes);
+        // A sync profile loaded by hand keeps the ownership it records.
+        const saved = { ...changes, ...importOwnership(text, changes, settings) };
+        const result = onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
-        Object.assign(settings, changes);
+        Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
@@ -3702,9 +3706,12 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     try {
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
       const warnings = [];
-      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
-      if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
-      Object.assign(settings, changes);
+      const text = await file.text();
+      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+      // A sync profile loaded by hand keeps the ownership it records.
+      const saved = { ...changes, ...importOwnership(text, changes, settings) };
+      if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
+      Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
