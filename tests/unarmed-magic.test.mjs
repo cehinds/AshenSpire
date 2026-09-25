@@ -34,7 +34,7 @@ test('shipped defaults select magic cast and buff for every armor while physical
     assert.deepEqual(animationClip(animation, 'cast'), magic.clips.magicChannel);
     assert.deepEqual(animationClip(animation, 'power'), magic.clips.magicBuff);
     assert.deepEqual(animationClip(animation, 'attack'), physical.clips.physicalAttack);
-    assert.deepEqual(animationTiming(animation, 'cast'), { totalMs: 1440, impactMs: 800 });
+    assert.deepEqual(animationTiming(animation, 'cast'), { totalMs: 540, impactMs: 240 });
     for (const [role, clip] of Object.entries(physical.references)) assert.equal(animation.references[role], clip);
     for (const [id, clip] of Object.entries(magic.clips)) {
       assert.deepEqual(animation.clips[id], clip, `${binding.setId}/${id} remains configurable`);

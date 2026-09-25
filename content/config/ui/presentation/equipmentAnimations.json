@@ -30451,18 +30451,18 @@
           },
           "greatswordAttack": {
             "frames": [
-              "STANCE-READY",
               "ATK-07",
               "ATK-04",
               "ATK-02",
               "ATK-03",
               "ATK-05",
+              "ATK-05",
               "ATK-01",
               "ATK-04",
               "STANCE-READY"
             ],
-            "frameMs": 100,
-            "impactIndex": 5
+            "frameMs": 60,
+            "impactIndex": 4
           },
           "enterStance": {
             "frames": [
@@ -30586,20 +30586,18 @@
           },
           "swordShieldAttack": {
             "frames": [
-              "STANCE-READY",
-              "DEFEND",
               "ATK-07",
-              "BUFF-NO-AURA",
               "ATK-02",
               "ATK-03",
               "ATK-04",
               "ATK-05",
               "ATK-05",
+              "ATK-05",
               "STANCE-DEFENSIVE",
               "STANCE-READY"
             ],
-            "frameMs": 100,
-            "impactIndex": 7
+            "frameMs": 60,
+            "impactIndex": 4
           },
           "enterStance": {
             "frames": [
@@ -30699,18 +30697,19 @@
           },
           "physicalAttack": {
             "frames": [
-              "STANCE-READY",
               "ATK-01",
               "ATK-02",
               "ATK-03",
               "ATK-04",
               "ATK-05",
+              "ATK-05",
               "ATK-06",
+              "ATK-07",
               "ATK-07",
               "STANCE-READY"
             ],
-            "frameMs": 140,
-            "impactIndex": 5
+            "frameMs": 60,
+            "impactIndex": 4
           },
           "physicalDefend": {
             "frames": [
@@ -30784,18 +30783,18 @@
           },
           "magicChannel": {
             "frames": [
-              "MAGIC-STANCE-READY",
               "MAGIC-ATK-01",
               "MAGIC-ATK-02",
               "MAGIC-ATK-03",
               "MAGIC-ATK-04",
               "MAGIC-ATK-05",
+              "MAGIC-ATK-05",
               "MAGIC-ATK-06",
               "MAGIC-ATK-07",
               "MAGIC-STANCE-READY"
             ],
-            "frameMs": 160,
-            "impactIndex": 5
+            "frameMs": 60,
+            "impactIndex": 4
           },
           "magicStanceReady": {
             "frames": [
@@ -31013,18 +31012,18 @@
           },
           "twinSwordAttack": {
             "frames": [
-              "STANCE-READY",
               "ATK-01",
               "ATK-02",
               "ATK-03",
+              "ATK-04",
               "ATK-04",
               "ATK-05",
               "ATK-06",
               "ATK-07",
               "STANCE-READY"
             ],
-            "frameMs": 120,
-            "impactIndex": 4
+            "frameMs": 65,
+            "impactIndex": 3
           },
           "enterStance": {
             "frames": [
@@ -31162,18 +31161,18 @@
           },
           "daggerAttack": {
             "frames": [
-              "STANCE-READY",
               "ATK-01",
               "ATK-02",
               "ATK-03",
               "ATK-04",
               "ATK-05",
+              "ATK-05",
               "ATK-06",
               "ATK-07",
               "STANCE-READY"
             ],
-            "frameMs": 100,
-            "impactIndex": 5
+            "frameMs": 60,
+            "impactIndex": 4
           },
           "conversation": {
             "frames": [

@@ -1,17 +1,15 @@
 {
   "frames": [
-    "STANCE-READY",
-    "DEFEND",
     "ATK-07",
-    "BUFF-NO-AURA",
     "ATK-02",
     "ATK-03",
     "ATK-04",
     "ATK-05",
     "ATK-05",
+    "ATK-05",
     "STANCE-DEFENSIVE",
     "STANCE-READY"
   ],
-  "frameMs": 100,
-  "impactIndex": 7
+  "frameMs": 60,
+  "impactIndex": 4
 }
