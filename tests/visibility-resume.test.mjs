@@ -162,18 +162,49 @@ function liveDragOps(combat, played) {
   };
 }
 
+// THE CYCLE IS A TABLE. Each page-lifecycle event → the target the browser
+// fires it on (Page Lifecycle API: `freeze`/`resume` on document; HTML:
+// `visibilitychange` on document, `pagehide`/`pageshow`/`blur`/`focus` on
+// window). The inventory below checks that every lifecycle listener pinned in
+// KNOWN listens on the target this table fires at, so a pinned listener can
+// never sit on a target the cycle does not reach.
+const LIFECYCLE_TARGET = { visibilitychange: 'document', freeze: 'document', resume: 'document', pagehide: 'window', pageshow: 'window', blur: 'window', focus: 'window' };
+// Going to the background and coming back, in spec order: lose focus, hide,
+// pagehide, freeze — then resume, pageshow, show, regain focus.
+const CYCLE = [
+  { event: 'blur' },
+  { event: 'visibilitychange', hidden: true },
+  { event: 'pagehide' },
+  { event: 'freeze' },
+  { event: 'resume' },
+  { event: 'pageshow' },
+  { event: 'visibilitychange', hidden: false },
+  { event: 'focus' },
+];
 function backgroundAndResume() {
-  hidden = true;
-  doc.dispatchEvent(new Event('visibilitychange'));
-  win.dispatchEvent(new Event('blur'));
-  win.dispatchEvent(new Event('pagehide'));
-  win.dispatchEvent(new Event('freeze'));
-  win.dispatchEvent(new Event('resume'));
-  win.dispatchEvent(new Event('pageshow'));
-  win.dispatchEvent(new Event('focus'));
-  hidden = false;
-  doc.dispatchEvent(new Event('visibilitychange'));
+  for (const step of CYCLE) {
+    if ('hidden' in step) hidden = step.hidden;
+    (LIFECYCLE_TARGET[step.event] === 'document' ? doc : win).dispatchEvent(new Event(step.event));
+  }
 }
+
+test('the cycle fires every lifecycle event in the table, on its table target', () => {
+  assert.deepEqual([...new Set(CYCLE.map((s) => s.event))].sort(), Object.keys(LIFECYCLE_TARGET).sort(), 'every table event is in the cycle');
+  const seen = [];
+  const probes = [];
+  for (const [target, node] of [['window', win], ['document', doc]]) {
+    for (const event of Object.keys(LIFECYCLE_TARGET)) {
+      const probe = () => seen.push(`${target} ${event}`);
+      node.addEventListener(event, probe);
+      probes.push(() => node.removeEventListener(event, probe));
+    }
+  }
+  const wasHidden = hidden;
+  backgroundAndResume();
+  hidden = wasHidden;
+  probes.forEach((off) => off());
+  assert.deepEqual(seen, CYCLE.map((s) => `${LIFECYCLE_TARGET[s.event]} ${s.event}`));
+});
 
 test('the drag ops are live: an UNcancelled drag through finishCardDrag really plays the card', () => {
   // The control for the test below — without it, "nothing changed" could mean
@@ -302,7 +333,7 @@ const KNOWN = {
 // (also `?.` and `['addEventListener']`), or a bare global call. An element's
 // own listener (`el.addEventListener`, `window.visualViewport?.addEventListener`)
 // is not the page and is not listed.
-const CALL = /(?:\b(?:window|document|globalThis|self)\s*(?:\??\.\s*|\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
+const CALL = /(?:\b(window|document|globalThis|self)\s*(?:\??\.\s*|\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
 
 // MEMBER WRITES ON THE PAGE, closed at the receiver rather than per spelling:
 // any assignment to a member of window/document/globalThis/self, and any
@@ -399,10 +430,29 @@ function objectKeys(piece, verb) {
   });
 }
 
-/** Every write to a member of the page in one file's text, one entry each. */
-export function pageWriteSites(text) {
+// BOUNDARY — WHAT THIS SCAN CANNOT SEE, AND WHAT GUARDS IT INSTEAD. The scan
+// reads text, so it is closed at the receiver only for writes whose receiver
+// is written out: `window.x =`, `window[k] =`, Object.assign / defineProperty /
+// defineProperties / Reflect.set / Reflect.defineProperty on it. It does NOT
+// see:
+//   - destructuring targets: `({ onpagehide: window.onpagehide } = handlers)`;
+//   - `with (window) onpagehide = f`;
+//   - code built from strings: `eval(…)`, `new Function(…)`, `setTimeout('…')`;
+//   - writes through an aliased receiver: `const w = window; w.onpagehide = f`,
+//     or a receiver passed in as a parameter.
+// Nothing in src/ uses any of these on a page member today. For code that runs
+// at import, the runtime setter capture above (window/document on<lifecycle>
+// setters and addEventListener, wrapped before input.js and gesture.js load)
+// is the guard: it sees the write however it was spelled. A further finding of
+// one of these shapes is answered by this note, not by more scanning, unless it
+// shows real src/ code slipping past or a hole in the runtime capture (owner
+// direction on #1298).
+
+// Every write to a member of the page in one file's text: { entry, receiver }.
+function writeSites(text) {
   const code = blankNonCode(text);
   const sites = [];
+  const receiverAt = (at) => code.slice(at).match(/^(window|document|globalThis|self)/)[1];
   for (const m of code.matchAll(MEMBER)) {
     let key, end;
     if (m[1]) { key = `.${m[1]}`; end = m.index + m[0].length; }
@@ -411,17 +461,24 @@ export function pageWriteSites(text) {
       end = closing(code, open) + 1;
       key = keyEntry(text.slice(open + 1, end - 1));
     }
-    if (ASSIGN.test(code.slice(end, end + 5))) sites.push(key);
+    if (ASSIGN.test(code.slice(end, end + 5))) sites.push({ entry: key, receiver: receiverAt(m.index) });
   }
   for (const m of code.matchAll(DEFINE)) {
     const verb = m[1].replace(/\s+/g, '');
+    const receiver = m[0].match(/(window|document|globalThis|self)\s*,$/)[1];
     const open = code.indexOf('(', m.index);
     const args = pieces(text, code, open + 1, closing(code, open)).slice(1);
-    if (/assign$/.test(verb)) for (const source of args) sites.push(...objectKeys(source, verb));
-    else if (/defineProperties$/.test(verb)) sites.push(...(args[0] ? objectKeys(args[0], verb) : []));
-    else if (args[0]) sites.push(keyEntry(args[0].text));
+    const add = (entry) => sites.push({ entry, receiver });
+    if (/assign$/.test(verb)) for (const source of args) objectKeys(source, verb).forEach(add);
+    else if (/defineProperties$/.test(verb)) (args[0] ? objectKeys(args[0], verb) : []).forEach(add);
+    else if (args[0]) add(keyEntry(args[0].text));
   }
   return sites;
+}
+
+/** Every write to a member of the page in one file's text, one entry each. */
+export function pageWriteSites(text) {
+  return writeSites(text).map((s) => s.entry);
 }
 
 function firstArgument(text, start) {
@@ -437,12 +494,19 @@ function firstArgument(text, start) {
   return text.slice(start, i).trim().replace(/\s+/g, ' ');
 }
 
+// Every page-listener call site with the target it listens on: `document` for
+// the document, `window` for window/globalThis/self or a bare global.
+function listenerSites(text) {
+  const target = (receiver) => (receiver === 'document' ? 'document' : 'window');
+  return [
+    ...[...text.matchAll(CALL)].map((m) => ({ entry: firstArgument(text, m.index + m[0].length), target: target(m[1]) })),
+    ...writeSites(text).map((s) => ({ entry: s.entry, target: target(s.receiver) })),
+  ];
+}
+
 /** Every page-listener call site in one file's text, one entry each. */
 export function pageListenerSites(text) {
-  const sites = [];
-  for (const m of text.matchAll(CALL)) sites.push(firstArgument(text, m.index + m[0].length));
-  sites.push(...pageWriteSites(text));
-  return sites;
+  return listenerSites(text).map((s) => s.entry);
 }
 
 // What an entry is: a literal event ('blur', or the handler property .onblur),
@@ -486,6 +550,21 @@ export function inventoryProblems(files, known = KNOWN) {
   return problems;
 }
 
+/** Every pinned lifecycle listener whose target is not the one the cycle fires its event at. */
+export function cycleProblems(files, known = KNOWN) {
+  const problems = [];
+  for (const [file, text] of Object.entries(files)) {
+    const pinned = new Set((known[file] || []).map((e) => (Array.isArray(e) ? e[0] : e)));
+    for (const { entry, target } of listenerSites(text)) {
+      const event = literalEvent(entry);
+      if (!LIFECYCLE_EVENTS.includes(event) || !pinned.has(entry)) continue;
+      if (!LIFECYCLE_TARGET[event]) problems.push(`${file}: ${entry} on ${target} is pinned, but '${event}' is not in the cycle table (LIFECYCLE_TARGET/CYCLE) — add it with its spec target so the cycle runs it`);
+      else if (LIFECYCLE_TARGET[event] !== target) problems.push(`${file}: ${entry} is pinned on ${target}, but the cycle fires '${event}' on ${LIFECYCLE_TARGET[event]} — the listener would never run in the cycle`);
+    }
+  }
+  return problems;
+}
+
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
@@ -499,6 +578,10 @@ test('every page listener call site in src/ is pinned, and each lifecycle or com
   assert.deepEqual(inventoryProblems(SRC), []);
 });
 
+test('every pinned lifecycle listener listens on the target the cycle fires its event at', () => {
+  assert.deepEqual(cycleProblems(SRC), []);
+});
+
 test('the listeners the booted modules registered at runtime are the pinned ones', () => {
   // Captured while the behaviour test ran initInput and trackGesture.
   assert.ok(captured.length > 0, 'runtime capture saw registrations');
@@ -508,6 +591,10 @@ test('the listeners the booted modules registered at runtime are the pinned ones
     const named = args.some((a) => literalEvent(a) === type);
     const computed = args.some((a) => kindOf(a).kind === 'computed');
     assert.ok(named || computed, `${file} registered '${type}' on ${target}${property ? ` via on${type}` : ''} at runtime, and KNOWN has no site that could be it`);
+  }
+  for (const c of captured) {
+    if (c.file === '(outside src)' || !LIFECYCLE_EVENTS.includes(c.type)) continue;
+    assert.equal(c.target, LIFECYCLE_TARGET[c.type], `${c.file} registered '${c.type}' on ${c.target} at runtime; the cycle fires it on ${LIFECYCLE_TARGET[c.type] || 'nothing'}`);
   }
   const lifecycle = captured.filter((c) => LIFECYCLE_EVENTS.includes(c.type) && c.file !== '(outside src)').map((c) => `${c.file} ${c.type}`);
   assert.ok(lifecycle.includes('src/ui/input.js blur') && lifecycle.includes('src/ui/gesture.js blur'), `both blur listeners were really registered: ${lifecycle.join(', ')}`);
@@ -593,4 +680,26 @@ test('known-bad: every form of writing a member of the page is a call site, at t
     "el.onblur = f; input['onpagehide'] = f; Object.assign(el, { onpagehide: f });",
     'if (window.onpagehide === f || document.title == t) run(window.innerWidth);',
   ].join('\n'))), []);
+});
+
+test('known-bad: a pinned lifecycle listener on a target the cycle does not fire at is caught', () => {
+  const file = 'src/ui/screens/map.js';
+  const pin = (entry) => ({ ...KNOWN, [file]: [...KNOWN[file], [entry, 'planted with a reason, so only the target check can object']] });
+  for (const [extra, entry, target] of [
+    ["document.addEventListener('freeze', save); // spec target, so fine", "'freeze'", null],
+    ["window.addEventListener('freeze', save);", "'freeze'", 'window'],
+    ["globalThis.addEventListener('resume', save);", "'resume'", 'window'],
+    ["document.addEventListener('pagehide', save);", "'pagehide'", 'document'],
+    ["document.addEventListener('blur', save);", "'blur'", 'document'],
+    ['addEventListener(`visibilitychange`, save);', '`visibilitychange`', 'window'],
+    ['window.onfreeze = save;', '.onfreeze', 'window'],
+    ['Object.assign(document, { onpagehide: save });', '.onpagehide', 'document'],
+    ["window.addEventListener('beforeunload', save);", "'beforeunload'", 'window'],
+  ]) {
+    const files = plant(file, extra);
+    assert.deepEqual(inventoryProblems(files, pin(entry)), [], `the plant is pinned: ${extra}`);
+    const problems = cycleProblems(files, pin(entry));
+    if (!target) assert.deepEqual(problems, [], `${extra} is on its spec target`);
+    else assert.ok(problems.some((p) => p.startsWith(`${file}: ${entry}`) && p.includes(target)), `not caught: ${extra}\n${problems.join('\n')}`);
+  }
 });
