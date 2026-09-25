@@ -767,3 +767,20 @@ test('ownership covers gameConfig.* overrides and keys the current promotion dro
   const next = seedSettingsDefaults(device, { digest: 'c', values: {} });
   assert.ok(Object.hasOwn(next, 'musicVolume') && next.musicVolume === undefined, 'seeding clears it back to the code default');
 });
+
+test('a promoted advanced gameConfig value stays the promotion\'s on a loading device', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const adv = 'gameConfig.combatRatings.resistance.physicalK';
+  // Device A: both values are the promotion's; musicVolume is the player's.
+  const deviceA = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [adv, 'sfxVolume']);
+  const deviceB = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30, musicVolume: 40 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.ok(parsed.promotionOwned.includes(adv));
+  applyProfile(deviceB, () => ({ ok: true }), parsed, { [adv]: 120, sfxVolume: 30, musicVolume: 40 });
+  assert.deepEqual(deviceB[SEED_KEY], { [adv]: 120, sfxVolume: 30 }, 'the advanced key keeps its promotion ownership');
+});
