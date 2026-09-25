@@ -1,5 +1,5 @@
 // tests/solo-run.test.mjs — THE SOLO RUN SCENARIO. One broad test in place of
-// many narrow ones: every class climbs seeded acts 1-3 through the real engine
+// many narrow ones: every class climbs seeded runs toward act 3 through the real engine
 // and model (the tools/runsim.mjs greedy bot, with the main.js run loop around
 // it), and at EVERY node, every reward row and one committed turn of every
 // fight the run goes through the real save door (createSaveManager →
@@ -631,7 +631,7 @@ function legacySaves() {
   return out;
 }
 
-test('solo run scenario: every class climbs seeded acts 1-3 through the real save door, deterministically', () => {
+test('solo run scenario: seeded solo climbs through acts 1-3 stay valid across save/load and replay', () => {
   const t0 = Date.now();
   const stats = {
     runs: 0, victories: 0, maxAct: 1, fights: 0, bosses: 0, bossChoices: 0, chests: 0, chestsTaken: 0, relicsTaken: 0,
@@ -640,10 +640,20 @@ test('solo run scenario: every class climbs seeded acts 1-3 through the real sav
   };
   const classes = REG.classes.all().map((c) => c.id);
   assert.ok(classes.length >= 3, 'every playable class is in the scenario');
+  // Structural progress per class, not a balance outcome: how far each climb
+  // got (floor, act) and how many fights it resolved, win or lose.
+  const progress = {};
   for (const classId of classes) {
+    const p = progress[classId] = { climbs: 0, minFights: Infinity, maxFloor: 0, maxAct: 0 };
     for (const [i, seed] of SEEDS.entries()) {
       const bold = i % 2 === 1;
+      const fightsBefore = stats.fights;
       const a = playRun(classId, seed, true, stats, bold);
+      const fights = stats.fights - fightsBefore;
+      assert.ok(a.victory || a.dead, `[${classId} seed ${seed}] the climb ended without a victory or a death`);
+      assert.ok(fights >= 1, `[${classId} seed ${seed}] the climb resolved no fight`);
+      p.climbs++; p.minFights = Math.min(p.minFights, fights);
+      p.maxFloor = Math.max(p.maxFloor, a.run.floor); p.maxAct = Math.max(p.maxAct, a.run.actNumber);
       const b = playRun(classId, seed, false, { ...stats }, bold);
       stats.runs++; stats.saves += a.saveCount;
       if (a.victory) stats.victories++;
@@ -699,8 +709,12 @@ test('solo run scenario: every class climbs seeded acts 1-3 through the real sav
 
   // The corpus really exercised what it claims to.
   const ms = Date.now() - t0;
-  const summary = JSON.stringify({ ...stats, ms });
-  assert.ok(stats.victories >= 1 && stats.maxAct === 3, `some climb reaches act 3 and wins: ${summary}`);
+  const summary = JSON.stringify({ ...stats, ms, progress });
+  for (const [classId, p] of Object.entries(progress)) {
+    assert.equal(p.climbs, SEEDS.length, `[${classId}] every seed was climbed: ${summary}`);
+    assert.ok(p.maxFloor >= 2, `[${classId}] some climb got past its first floor: ${summary}`);
+  }
+  assert.ok(stats.victories >= 1 && stats.maxAct === 3, `the corpus reaches act 3 and a boss victory (acts 2-3 doors walked): ${summary}`);
   assert.ok(stats.bosses >= 2 && stats.bossChoices >= 1, `boss doors and relic choices were exercised: ${summary}`);
   assert.ok(stats.chests >= 1 && stats.chestsTaken >= 1, `an elite chest was opened and taken: ${summary}`);
   assert.ok(stats.graces >= 1 && stats.events >= 1 && stats.levelUps >= 1, `graces, events and level-ups happened: ${summary}`);
