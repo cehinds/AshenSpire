@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-25",
     "summary": "Shared links to the web edition show a proper title, description and icon",
     "detail": "The web edition's page now carries a description, link-preview tags, an icon and a theme colour, so a shared link shows the game's name and a short description instead of a bare address, and the browser tab shows an icon. Nothing in play changes.",
-    "build": "0.7.1.499",
+    "build": "0.7.1.500",
     "pullRequest": 1301,
     "url": "https://github.com/cehinds/AshenSpire/pull/1301"
+  },
+  {
+    "id": "pr-1303",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: three changes that landed without a changelog entry now have one",
+    "detail": "Nothing you see changes. #1305, #1307 and #1310 were merged straight to the development line without an entry here; their receipts are written after the fact under 2026-09-24, each stamped at the first build that contains it.",
+    "build": "0.7.1.498",
+    "pullRequest": 1303,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1303"
   },
   {
     "id": "pr-1282",
@@ -123,6 +133,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1309"
   },
   {
+    "id": "pr-1310",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The opening scene editor lays out more clearly, and the first journey scene is framed better",
+    "detail": "In Advanced Settings → Opening sequence → Scenes, the editor's layout controls are reworked, and the first step of the journey ships with new default framing. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.485",
+    "pullRequest": 1310,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1310"
+  },
+  {
     "id": "pr-1304",
     "date": "2026-09-24",
     "group": "2026-09-24",
@@ -171,6 +191,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.471",
     "pullRequest": 1308,
     "url": "https://github.com/cehinds/AshenSpire/pull/1308"
+  },
+  {
+    "id": "pr-1307",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "Crownfall's skyline gains two distant towers, and the traveller can be resized by dragging",
+    "detail": "The Crownfall journey painting now shows a snow-dusted tower on the left summit and a faintly volcanic one on the right, with the Ashen Spire still dominant between them. In the opening scene editor, the Traveller tab adds a gold handle over the preview: drag it to resize the figure, drag the figure to move it, with desktop and phone placed separately. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1307,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1307"
+  },
+  {
+    "id": "pr-1305",
+    "date": "2026-09-24",
+    "group": "2026-09-24",
+    "summary": "The prologue's last scene puts your traveller on the road, and you can place it yourself",
+    "detail": "The final journey scene used to stand the traveller on the bridge parapet beside the road; on desktop and phone it now stands on the road itself. Advanced Settings → Opening sequence → Scenes gains a Place traveller action: drag the figure in the painting, or set its position and size exactly, with separate values for desktop and phone. This receipt was written after the merge, stamped at the first build that contains it.",
+    "build": "0.7.1.471",
+    "pullRequest": 1305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1305"
   },
   {
     "id": "pr-1302",
