@@ -500,43 +500,51 @@
 
 /* ---------- ability / relic / status fx ---------- */
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
-   knocked right (struck from the player's side), the player left. A heavy hit
-   (≥15, the same threshold as screen shake) recoils further with a tilt. */
+   knocked right (struck from the player's side), the player left. The flash
+   opens on ONE WHITE FRAME (a white silhouette for the first 10%, ≈22 ms of a
+   220 ms hit — the impact frame), then the red tint. A heavy hit (≥15, where
+   the screen shake steps up to its 3–4 px band) recoils further. Reduce
+   flashes drops the whole class (fx.js flash, coop.js recoil). */
 .sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
 .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
 .player .sprite.hitflash > :first-child { animation-name: hit-player; }
 .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
 .player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy; }
 @keyframes hitflash {
-  0%, 32.99% { filter: none; }
+  0%, 9.99% { filter: brightness(0) invert(1); }
+  10%, 32.99% { filter: none; }
   33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
   67%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(4px); }
 }
 @keyframes hit-enemy {
-  0%, 32.99% { filter: none; }
+  0%, 9.99% { filter: brightness(0) invert(1); }
+  10%, 32.99% { filter: none; }
   33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
   67%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(13px); }
 }
 @keyframes hit-player {
-  0%, 32.99% { filter: none; }
+  0%, 9.99% { filter: brightness(0) invert(1); }
+  10%, 32.99% { filter: none; }
   33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
   67%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(-13px); }
 }
 @keyframes hit-enemy-heavy {
-  0%, 32.99% { filter: none; }
+  0%, 9.99% { filter: brightness(0) invert(1); }
+  10%, 32.99% { filter: none; }
   33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
   67%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(26px); }
 }
 @keyframes hit-player-heavy {
-  0%, 32.99% { filter: none; }
+  0%, 9.99% { filter: brightness(0) invert(1); }
+  10%, 32.99% { filter: none; }
   33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
   67%, 100% { filter: none; }
   0%, 100% { transform: none; }
@@ -622,7 +630,13 @@
   100% { opacity: 0; transform: translateY(-48px) scale(1); }
 }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
-@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
+/* Amplitude is fx.js shakePx(): 1–2 px below 15 damage, ≤4 px at 15+ (SPEC §7.4). */
+@keyframes shake {
+  0%, 100% { transform: translate(0); }
+  25% { transform: translate(var(--shake-px, 4px), calc(var(--shake-px, 4px) * -0.75)); }
+  50% { transform: translate(calc(var(--shake-px, 4px) * -1), calc(var(--shake-px, 4px) * 0.5)); }
+  75% { transform: translate(calc(var(--shake-px, 4px) * 0.75), calc(var(--shake-px, 4px) * 0.75)); }
+}
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */

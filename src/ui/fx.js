@@ -2,9 +2,10 @@ import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
-// Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
-// skips to end-state; shake ≤4 px only for hits ≥15; Bleed bursts and
-// Staggers get the loud treatment (they're the theme).
+// Rules: every animation ≤300 ms; queued events play one stepMs apart (80 ms
+// in the fast-float path); a click skips to end-state; every landed hit
+// shakes, ≤2 px below 15 and ≤4 px at 15+; Bleed bursts and Staggers get the
+// loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
@@ -445,10 +446,27 @@ function banner(layer, text, cls = '') {
   setTimeout(() => el.remove(), 320);
 }
 
-function shake(combatEl) {
-  if (!combatEl) return;
+/**
+ * Screen-shake amplitude for a hit's residual damage (SPEC §7.4), in px:
+ * every hit that lands kicks the camera, scaled by damage — 1 → 2 px across
+ * the chip and normal tiers, 3 → 4 px across heavy up to crit, and never more
+ * than 4. Guard-absorbed damage never shakes. Thresholds are CombatJuiceModel's.
+ */
+export const SHAKE_MAX_PX = 4;
+export function shakePx(residual) {
+  const T = COMBAT_JUICE.sizing.damageTiers;
+  const n = Number(residual) || 0;
+  if (n <= 0) return 0;
+  const ramp = (v, lo, hi) => Math.min(1, Math.max(0, (v - lo) / Math.max(1, hi - lo)));
+  const px = n < T.heavyAt ? 1 + ramp(n, 1, T.heavyAt - 1) : 3 + ramp(n, T.heavyAt, T.critAt);
+  return Math.min(SHAKE_MAX_PX, Math.round(px * 2) / 2);
+}
+
+function shake(combatEl, px = SHAKE_MAX_PX) {
+  if (!combatEl || !(px > 0)) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
+  combatEl.style.setProperty('--shake-px', `${Math.min(SHAKE_MAX_PX, px)}px`);
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -1048,10 +1066,8 @@ function baseVisualFor(e, beatKind, paced = false) {
         // it as long as the flash it belongs to. (Its settle timer is on the
         // stage clock, which the hit-stop below holds — no +stop here.)
         playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (heavy) {
-          flash(anchor, 'hit-heavy', 380, stop);
-          shake(ctx.combatEl);
-        }
+        if (heavy) flash(anchor, 'hit-heavy', 380, stop);
+        shake(ctx.combatEl, shakePx(parts.residual));
         if (stop > 0) freezeFigures({ targets: [anchor], sources: [ctx.anchorFor(e.sourceId)] }, stop);
         return stop;
       };
