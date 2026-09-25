@@ -381,3 +381,19 @@ test('a rail rule that stops displaying the rail fails C12', () => {
   assert.equal(c12({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: flex; }\n` }).length, 0);
   assert.match(r.kit, /\.shared-hud \.hud-bottom:empty \{[^}]*display: none/);
 });
+
+// Review of #1316: the `:empty` exemption holds only where `:empty` sits on
+// the rail's own compound, not on another :is() argument or inside :not/:has.
+test('only an :empty on the rail itself may hide the rail', () => {
+  const r = receipt();
+  for (const extra of [
+    '.shared-hud :is(.hud-bottom, .x:empty) { display: none; }',
+    '.shared-hud .hud-bottom:is(:empty, .x) { display: none; }',
+    '.shared-hud .hud-bottom:not(:empty) { display: none; }',
+    '.shared-hud .hud-bottom:has(:empty) { display: none; }',
+  ]) assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 1, extra);
+  for (const extra of [
+    '.shared-hud :is(.hud-bottom:empty, .x) { display: none; }',
+    '.shared-hud .hud-bottom:is(:empty) { display: none; }',
+  ]) assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 0, extra);
+});

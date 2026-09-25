@@ -240,19 +240,28 @@ export function cssRules(css) {
 // `.hud-bottom:has(> .x)` has subject `.hud-bottom` and `.hud-bottom .relic`
 // has subject `.relic`; `:is(.hud-bottom)` has subject `.hud-bottom`.
 function subjectOf(part) {
+  return subjectAlternatives(part).join(' ');
+}
+
+// The same subject, kept as its alternatives: each is one compound that a
+// single element matches whole, with every :is()/:where()/:matches() argument
+// spliced in as its own alternative, so `.a:is(.b, .c)` is `.a.b` and `.a.c`,
+// never `.a.b.c`. Used where two simple selectors must sit on one element.
+function subjectAlternatives(part) {
   const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
   const compound = compounds.at(-1) || '';
   // A pseudo-element (`::before`, or the legacy one-colon four) is its own
   // box, so the compound names no element this check is about.
-  if (/::|:(?:before|after|first-line|first-letter)(?![\w-])/i.test(compound.replace(/\([^()]*\)/g, ''))) return '';
+  if (/::|:(?:before|after|first-line|first-letter)(?![\w-])/i.test(compound.replace(/\([^()]*\)/g, ''))) return [];
   // :is() / :where() / :matches() match the element itself, so each of their
   // arguments contributes ITS OWN subject (recursively): `:is(.a > .b)` has
   // subject `.b`, not `.a .b`. Any other functional pseudo's arguments
   // (:has, :not, :nth-child) are not the subject and are dropped.
-  let out = ''; let i = 0;
+  let alts = ['']; let i = 0;
+  const append = (text) => { alts = alts.map((alt) => alt + text); };
   while (i < compound.length) {
     const open = compound.indexOf('(', i);
-    if (open < 0) { out += compound.slice(i); break; }
+    if (open < 0) { append(compound.slice(i)); break; }
     let depth = 0; let close = open;
     for (; close < compound.length; close++) {
       if (compound[close] === '(') depth++;
@@ -260,11 +269,14 @@ function subjectOf(part) {
     }
     const head = compound.slice(i, open);
     const matchesSelf = /:(?:is|where|matches|-webkit-any)$/i.test(head);
-    out += head.replace(/:(?:is|where|matches|-webkit-any)$/i, '');
-    if (matchesSelf) out += ` ${splitTop(compound.slice(open + 1, close), /,/).map(subjectOf).join(' ')} `;
+    append(head.replace(/:(?:is|where|matches|-webkit-any)$/i, ''));
+    if (matchesSelf) {
+      const inner = splitTop(compound.slice(open + 1, close), /,/).flatMap(subjectAlternatives);
+      alts = alts.flatMap((alt) => inner.map((sub) => alt + sub));
+    }
     i = close + 1;
   }
-  return out;
+  return alts;
 }
 const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
 // `all` sets every property at once, so it counts as a write to each.
@@ -326,7 +338,10 @@ export function railInFlow(css) {
       // Display too: none or contents takes the rail out of the grid. Only a
       // rule whose subject is `:empty` may hide it (a rail with no relics).
       || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
-        && !splitTop(rule.selector, /,/).every((part) => /:empty(?![\w-])/i.test(subjectOf(part)))));
+        // `:empty` must sit on the rail's own compound alternative: in
+        // `:is(.hud-bottom, .x:empty)` it is on `.x`, not on the rail.
+        && !splitTop(rule.selector, /,/).every((part) => subjectAlternatives(part)
+          .filter((alt) => hasClass(alt, 'hud-bottom')).every((alt) => /:empty(?![\w-])/i.test(alt)))));
 }
 
 export function receipt() {
@@ -866,6 +881,7 @@ function selftest() {
     ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
     ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
     ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
+    ['hide the rail behind an :empty on another :is() argument', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud :is(.hud-bottom, .x:empty) { display: none; }\n` })],
     ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
     ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
     ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
