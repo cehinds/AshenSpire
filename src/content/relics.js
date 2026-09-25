@@ -47,13 +47,19 @@ export const relics = [
     name: 'Starstone Shard',
     rarity: 'starter',
     passives: {
+      // A2 Starseer starvation: Max HP +14 (34 -> 48) and Magic damage 1 -> 2;
+      // Mana stays 1. With every #1284 row live, `node tools/runsim.mjs 120
+      // --seeded-seats` (seat order drawn per run): Starseer 51/120 wins, 40
+      // without the +14 HP (elite deaths 6 -> 14), 21 with this relic as it
+      // shipped before (+1 Magic, no HP; 27 elite and 25 normal deaths).
       modifiers: [
         { tag: 'resource.flat', resource: 'mana', amount: 1 },
-        { tag: 'damage.school.flat', school: 'magic', amount: 1 },
+        { tag: 'damage.school.flat', school: 'magic', amount: 2 },
+        { tag: 'resource.flat', resource: 'hp', amount: 14 },
       ],
     },
     icon: '💠',
-    textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
+    textTemplate: 'Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
