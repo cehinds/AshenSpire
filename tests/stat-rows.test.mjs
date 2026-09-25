@@ -510,4 +510,10 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   assert(str.reveal.lines.some((line) => /^AR: floor\(0\.75 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
   assert.match(str.face.summary, /AR weight 0\.75 \(max 3\)/, 'the cap reaches the face beside the other feeds');
   assert.doesNotMatch(con.face.summary, /weight/, 'an uncapped rating stays off a face that has feeds');
+  // A weight with no exact cycle still says its cap (Codex, #1321).
+  const odd = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.strength': 0.3333, 'gameConfig.derivedStatRules.rules.hp.max': 40 }));
+  const oddRun = createRunState({ seed: 6, classId: 'reaver', registries: odd });
+  const oddStr = attributeCardModels(odd, oddRun.attributes, { projection: statProjection(odd, oddRun) }).find((card) => card.id === 'strength');
+  assert(oddStr.reveal.lines.includes('HP scales with Strength (at most 40)'), oddStr.reveal.lines.join(' | '));
+  assert.match(oddStr.face.summary, /HP scales \(max 40\)/);
 });

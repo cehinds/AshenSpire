@@ -259,13 +259,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
         // cycle is the fewest points after which every floor lands exactly;
         // a rule with no such cycle short enough to read says it scales.
         const cycle = attributeCycle(weight, perIncrease);
-        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1 };
         // A ROW'S CAP IS PART OF ITS FACT (#1294: a Starseer at base 5 has one
         // card of room before the cap of 6). Since ruleset 7 every row may
         // carry a Max, so every bounded fact says where its points stop paying
-        // (Codex, #1296): the run's own row, or the table's when there is none.
+        // (Codex, #1296) — a weight with no exact cycle included (Codex,
+        // #1321): the run's own row, or the table's when there is none.
         const bound = row ? row.max : rule.max;
         const cap = Number.isFinite(bound) ? bound : null;
+        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1, cap };
         return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
@@ -273,7 +274,7 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const scaling = ratingFacts.map(({ line }) => line);
     const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
       ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
-      : `${label} scales with ${def.label}`));
+      : `${label} scales with ${def.label}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`));
     // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
     // flavor text instead of useful information"). The flavour is still the
     // fold's opening sentence — it is colour, and colour is not what a player
@@ -288,10 +289,14 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
       .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
+    // A row that only "scales" (no exact cycle) still says its cap on the face.
+    const scalingCaps = feedFacts
+      .filter(({ perTier, cap }) => !Number.isFinite(perTier) && cap !== null && cap !== undefined)
+      .map(({ label, cap }) => `${label} scales (max ${cap})`);
     // A capped rating always reaches the face: its points stop paying at the
     // cap, which the other feeds never say (Codex, #1321).
     const scalingFacts = (faceFacts.length ? ratingFacts.filter(({ cap }) => cap !== null) : ratingFacts).map(({ summary }) => summary);
-    const stated = [...faceFacts, ...scalingFacts];
+    const stated = [...faceFacts, ...scalingCaps, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
     return {
