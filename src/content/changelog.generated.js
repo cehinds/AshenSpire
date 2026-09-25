@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-25",
     "group": "2026-09-25",
     "summary": "Stat settings say where their limits stop a number",
-    "detail": "When a stat's Min or Max changes it, the worked examples in Advanced → Stats now say so, and each attribute card says where its points stop paying. Mana's Max can no longer be set below 1. A settings file from before the one-row stats that changed a single field of a combat rating keeps that rating's other old weights instead of picking up the new ones beside it. A saved fight with an impossible character level is set aside instead of resumed wrong.",
-    "build": "0.7.1.532",
+    "detail": "When a stat's Min or Max changes it, the worked examples in Advanced → Stats now say so, and each attribute card says where its points stop paying. Mana's Max can no longer be set below 1. A settings file from before the one-row stats that changed a single field of a combat rating keeps that rating's other old weights instead of picking up the new ones beside it (a profile a development build has already converted since #1296 keeps the conversion it got). A saved fight with an impossible character level is set aside instead of resumed wrong.",
+    "build": "0.7.1.534",
     "pullRequest": 1321,
     "url": "https://github.com/cehinds/AshenSpire/pull/1321"
+  },
+  {
+    "id": "pr-1325",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the 1.0 checklist catches up",
+    "detail": "Docs only. docs/FINISH.md ticks what the last merges finished: loading a newer save mid-climb, a real-menu reload that restarts the fight, the map keeping your picked destination on a resize, background and resume, the credits check, the UI component checks, pull-request receipts and the version note. It also lists what those merges left open, such as other ways a failed load can still drop the climb in hand.",
+    "build": "0.7.1.526",
+    "pullRequest": 1325,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1325"
   },
   {
     "id": "pr-1316",
