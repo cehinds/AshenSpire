@@ -82,18 +82,18 @@
         },
         "twinSwordAttack": {
           "frames": [
-            "STANCE-READY",
             "ATK-01",
             "ATK-02",
             "ATK-03",
+            "ATK-04",
             "ATK-04",
             "ATK-05",
             "ATK-06",
             "ATK-07",
             "STANCE-READY"
           ],
-          "frameMs": 120,
-          "impactIndex": 4
+          "frameMs": 65,
+          "impactIndex": 3
         },
         "enterStance": {
           "frames": [
