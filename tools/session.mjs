@@ -19,6 +19,7 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
+import { joinDeck } from '../src/model/skills.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { wrapEmit } from '../src/engine/busHooks.js';
@@ -349,7 +350,7 @@ export function createSession({ registries, seedString, endless = false, restore
         delete md.run.migratedFromRunSchemaVersion;
         delete md.run.reprojectedZones; // no ledger is open on a member record; the re-projection stands
         members.set(md.id, {
-          id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
+          id: md.id, name: md.name, index: md.index, get classId() { return this.run.class; }, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
@@ -426,7 +427,12 @@ export function createSession({ registries, seedString, endless = false, restore
       id,
       name: String(name || 'Forsaken').slice(0, 18),
       index,
-      classId,
+      // THE MEMBER'S CLASS IS ITS RUN'S, read rather than copied: a choice's
+      // swapClass (plan phase 5c) writes run.class through the run-effect
+      // door wherever the choice resolves (the live room, a catch-up), and a
+      // copy left behind is refused by the restore door ("class ... disagrees
+      // with run class") and read by the reward and poise readers.
+      get classId() { return this.run.class; },
       connected: true,
       tint: tint || 'gold', // chosen accent — colors this hero's sprite for everyone
       spriteStyle: spriteStyle || DEFAULT_SPRITE_STYLE, // animated poses / rendered PNG / classic SVG / sigil glyph
@@ -1065,7 +1071,7 @@ export function createSession({ registries, seedString, endless = false, restore
       claimed.chest = true;
     }
     if (!claimed.card && cardId && offer.cardIds.includes(cardId)) {
-      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+      joinDeck(registries, m.run, { instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
       claimed.card = true;
     }
     const relic = claimed.relic ? null : pickedRelic(offer, { relicId, takeRelic });
@@ -1470,7 +1476,7 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
-        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
+        joinDeck(registries, m.run, { instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
       if (chosen) {
         const id = m.run.relics.includes(chosen) ? rollRelicReward(registries, m.rng, m.run.relics, substituteRarities(offer)) : chosen;
@@ -1533,10 +1539,6 @@ export function createSession({ registries, seedString, endless = false, restore
         // live stream is not moved (Codex on #548).
         const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
         executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
-        // A CHOICE CAN SWAP THE CLASS (plan phase 5c, swapClass): the member's
-        // own copy of the class follows the run's, or the restore door refuses
-        // the seat and the reward and poise readers keep the old card.
-        if (m.run.class !== m.classId) m.classId = m.run.class;
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room

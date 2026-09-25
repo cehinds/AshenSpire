@@ -60,6 +60,7 @@
 // run output too, not only here (SPEC §8 clause 5) — a header is read by the
 // author, the output by whoever is about to trust the number.
 
+import { joinDeck } from '../src/model/skills.js';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
@@ -717,7 +718,7 @@ function afterVictory(run, rng, pool) {
   const chest = rollChestThenApplyRows(REG, rng, run, pool, () => {
     run.cinders += rollRuneReward(REG, rng, pool, run.relics);
     const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
-    if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
+    if (cards.length) joinDeck(REG, run, { instanceId: run._id(), cardId: cards[0], upgraded: false });
     const flask = rollFlaskDrop(REG, rng, run);
     if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
   });

@@ -1,5 +1,6 @@
 // Merchant transactions: plans are inert; commits revalidate before mutation.
 import { carriedIds, pieceItemRef } from './loadout.js';
+import { joinDeck } from './skills.js';
 import { ownerItemRef } from './cardMounts.js';
 import { mountRows } from './cardExtraction.js';
 
@@ -39,7 +40,7 @@ export function commitArmamentPurchase(registries, run, quote) {
   }
   // No callback or fallible derivation inside this mutation group.
   if (plan.kind === 'armament') run.loadout.storage = [...(run.loadout.storage || []), plan.item.id];
-  else run.deck.push(instance);
+  else joinDeck(registries, run, instance);
   run.cinders -= plan.cost;
   run.shopStock[plan.shelf].splice(run.shopStock[plan.shelf].indexOf(plan.item), 1);
   run.shopStock.tradeRevision = plan.revision + 1;

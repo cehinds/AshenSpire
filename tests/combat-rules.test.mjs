@@ -268,12 +268,12 @@ const ROWS = [
       return { same: a.order === b.order, reshuffled: a.shuffles >= 2, drawn: a.order.split(',').length };
     },
     expect: { same: true, reshuffled: true, drawn: 15 } },
-  // 4 handFull receipts, not 1: each overflow lands in discard, the empty draw
-  // pile reshuffles it back, and the next draw overflows it again.
-  { name: 'draws past the 10-card hand go to discard as handFull (overflow re-cycles: 4 receipts)',
+  // One handFull receipt: the one card left in the draw pile overflows, and a
+  // full hand never reshuffles the discard to overflow it again.
+  { name: 'draws past the 10-card hand go to discard as handFull, never reshuffling for the overflow',
     setup: () => makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] }),
     actions: (c) => { play(c, 'tBigDraw'); return { hand: c.piles.hand.length, handFull: log(c, 'cardDiscarded', (e) => e.reason === 'handFull').length }; },
-    expect: { hand: 10, handFull: 4 } },
+    expect: { hand: 10, handFull: 1 } },
   { name: 'Exhaust on play, Ethereal exhausts at turn end, Retain stays in hand',
     setup: () => makeCombat({ stamina: 4, deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] }),
     actions: (c) => {

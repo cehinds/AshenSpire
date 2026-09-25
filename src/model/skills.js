@@ -221,6 +221,21 @@ export function reconcileSkillUpgrades(registries, run) {
 }
 
 /**
+ * joinDeck(registries, run, ...cards) → reconcileSkillUpgrades' receipt. THE
+ * ONE DOOR A CARD JOINS THE RUN'S DECK BY (a reward row, a track's draft, a
+ * chest, an event's addCardToDeck, a shop purchase, a co-op grant): the
+ * cards are pushed and the skill threshold's standing rule is asked at once,
+ * so a card that joins while a track of its school stands past
+ * balance.skill.upgradeAt is upgraded at grant time — not only by the load
+ * door's reconcile, which would change the deck across a reload.
+ */
+export function joinDeck(registries, run, ...cards) {
+  if (!Array.isArray(run.deck)) run.deck = [];
+  run.deck.push(...cards);
+  return reconcileSkillUpgrades(registries, run);
+}
+
+/**
  * spendSkillDraft(run, skillId) → true when a queued draft was spent. The
  * reward door's one write to the ledger's draft count.
  */

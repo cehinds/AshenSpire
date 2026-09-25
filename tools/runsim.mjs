@@ -27,7 +27,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId, joinDeck } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
@@ -329,13 +329,13 @@ function applyDoorRows(run, rng, pool) {
       const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
       if (!ids.length) break;
       spendSkillDraft(run, track.id);
-      run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
+      joinDeck(REG, run, { instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
       drafts += 1;
     }
   }
   skillDraftsTaken += drafts;
   const cards = drafts || classDrafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics, run });
-  if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
+  if (cards.length) joinDeck(REG, run, { instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
 }

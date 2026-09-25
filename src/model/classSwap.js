@@ -47,6 +47,12 @@ export function swapRunClass(registries, run, classId) {
     if (free && !sets.armor.includes(free.id)) sets.armor[0] = free.id;
     if (run.loadout.active) run.loadout.active.armor = Math.max(0, sets.armor.findIndex((id) => !!id));
   }
+  // THE CREATION ARMOUR GRANT GOES WITH THE OLD CLASS'S SETS: it names a set
+  // keyed to the class the run was born as, which the new class cannot wear,
+  // and a live grant naming another class than the player's is refused by the
+  // mid-fight snapshot door (combatSnapshot.js). Cleared, it is null — the
+  // shape every validator accepts — and the set it named is on the receipt.
+  if (run.loadout && run.loadout.creationArmourGrant) run.loadout.creationArmourGrant = null;
   run.class = classId;
   // The armour changed hands, so the deck is restamped and the equipment
   // pools reconciled as the loadout screen does after any change (the review
